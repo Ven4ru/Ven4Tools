@@ -1,0 +1,17 @@
+## .NET Core
+bin/
+obj/
+*.user
+*.bak
+*.cache
+*.tmp
+**/wpftmp/
+
+## VS Code
+.vscode/
+
+## Output
+Output/
+*.exe
+*.dll
+*.pdb

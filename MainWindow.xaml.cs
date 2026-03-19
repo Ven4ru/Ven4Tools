@@ -35,6 +35,68 @@ private readonly AvailabilityChecker availabilityChecker = null!;
         private string selectedInstallDrive = "C:\\";
         private string systemDrive = "C:\\";
 
+private async void BtnCheckUpdate_Click(object sender, RoutedEventArgs e)
+{
+    btnCheckUpdate.IsEnabled = false;
+    
+    var updateWindow = new UpdateCheckWindow();
+    updateWindow.Owner = this;
+    updateWindow.ShowDialog();
+    
+    btnCheckUpdate.IsEnabled = true;
+}
+
+// Добавляем проверку при старте (опционально)
+private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+{
+    // Проверяем обновления при старте
+    _ = CheckForUpdatesOnStartupAsync();
+}
+
+private async Task CheckForUpdatesOnStartupAsync()
+{
+    try
+    {
+        // Ждём немного, чтобы не мешать загрузке
+        await Task.Delay(2000);
+        
+        using var service = new UpdateService("Ven4ru", "Ven4Tools");
+        var info = await service.CheckForUpdateAsync();
+        
+        if (info.HasUpdate && info.IsCritical)
+        {
+            // Для критических обновлений показываем сразу
+            Dispatcher.Invoke(() =>
+            {
+                var updateWindow = new UpdateCheckWindow();
+                updateWindow.Owner = this;
+                updateWindow.ShowDialog();
+            });
+        }
+        else if (info.HasUpdate)
+        {
+            // Для обычных - меняем цвет кнопки
+            Dispatcher.Invoke(() =>
+            {
+                btnCheckUpdate.Background = System.Windows.Media.Brushes.Orange;
+                btnCheckUpdate.ToolTip = $"Доступно обновление {info.LatestVersion}";
+            });
+        }
+    }
+    catch (Exception ex)
+    {
+        // Тихо логируем ошибки при старте
+        try
+        {
+            string logPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Ven4Tools", "startup_errors.log");
+            
+            File.AppendAllText(logPath, $"{DateTime.Now} - {ex.Message}\n");
+        }
+        catch { }
+    }
+}
         public MainWindow()
         {
             if (!IsRunAsAdmin())
