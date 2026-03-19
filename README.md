@@ -1,6 +1,3 @@
-cd C:\Users\123\Downloads\Ven4Tools
-
-@'
 # Ven4Tools — Умный установщик программ для Windows
 
 [![GitHub release](https://img.shields.io/github/v/release/Ven4ru/Ven4Tools)](https://github.com/Ven4ru/Ven4Tools/releases/latest)
@@ -46,7 +43,6 @@ cd C:\Users\123\Downloads\Ven4Tools
 ## 📜 Лицензия
 
 MIT License — можно использовать, модифицировать и распространять свободно.
-'@ | Out-File -FilePath README.md -Encoding UTF8
 
 # Добавим файл в Git
 git add README.md
