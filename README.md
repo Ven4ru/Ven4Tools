@@ -43,8 +43,3 @@
 ## 📜 Лицензия
 
 MIT License — можно использовать, модифицировать и распространять свободно.
-
-# Добавим файл в Git
-git add README.md
-git commit -m "Add README"
-git push origin main
