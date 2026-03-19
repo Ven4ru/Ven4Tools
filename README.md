@@ -1,0 +1,54 @@
+cd C:\Users\123\Downloads\Ven4Tools
+
+@'
+# Ven4Tools — Умный установщик программ для Windows
+
+[![GitHub release](https://img.shields.io/github/v/release/Ven4ru/Ven4Tools)](https://github.com/Ven4ru/Ven4Tools/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Ven4ru/Ven4Tools/total)](https://github.com/Ven4ru/Ven4Tools/releases)
+[![License](https://img.shields.io/github/license/Ven4ru/Ven4Tools)](LICENSE)
+
+**Ven4Tools** — бесплатная программа с открытым исходным кодом для автоматической установки популярного софта на Windows. Работает сразу после установки системы — не требует предустановленного .NET или других компонентов.
+
+## 🎯 Возможности
+
+✅ **70+ предустановленных приложений** в 10 категориях  
+✅ **Умная установка**: сначала winget, потом прямые ссылки  
+✅ **Проверка доступности** — зелёные/красные индикаторы  
+✅ **Выбор диска для установки** с проверкой свободного места  
+✅ **Свои приложения** — добавление с поиском в winget  
+✅ **Установка Office** (любая версия + язык)  
+✅ **Турбобуст** — отключение для ноутбуков  
+✅ **Активация** — встроенный MAS (Microsoft Activation Scripts)  
+✅ **Портативный режим** — можно носить на флешке  
+✅ **Автообновления** — кнопка "Что нового" ведёт на последний релиз  
+
+## 📦 Установка
+
+Скачайте последний релиз:  
+👉 [Ven4Tools_Setup_2.2.0.exe](https://github.com/Ven4ru/Ven4Tools/releases/latest)
+
+При установке можно выбрать:
+- **Обычный режим** — в Program Files, с деинсталлятором
+- **Портативный режим** — в любую папку, без записи в реестр
+
+## 🧠 Системные требования
+
+- Windows 10/11 (64-bit)
+- 200 МБ свободного места
+- Права администратора для обычной установки
+
+## 🤝 Как помочь проекту
+
+⭐ Поставьте звезду на GitHub  
+🐛 Сообщайте о багах в [Issues](https://github.com/Ven4ru/Ven4Tools/issues)  
+💡 Предлагайте идеи новых функций  
+
+## 📜 Лицензия
+
+MIT License — можно использовать, модифицировать и распространять свободно.
+'@ | Out-File -FilePath README.md -Encoding UTF8
+
+# Добавим файл в Git
+git add README.md
+git commit -m "Add README"
+git push origin main
