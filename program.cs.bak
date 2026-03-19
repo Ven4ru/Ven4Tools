@@ -1,0 +1,33 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Windows.Forms;
+
+namespace Loader
+{
+    class Program
+    {
+        static void Main()
+        {
+            try
+            {
+                // Распаковываем основной exe из ресурсов
+                string mainExe = Path.Combine(Path.GetTempPath(), "Ven4Deploy.exe");
+                File.WriteAllBytes(mainExe, Properties.Resources.Ven4Deploy);
+                
+                // Запускаем
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = mainExe,
+                    UseShellExecute = true,
+                    Verb = "runas"
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка запуска: {ex.Message}", "Ven4Deploy Loader", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+}

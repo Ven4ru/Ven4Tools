@@ -1,0 +1,54 @@
+<Window x:Class="Ven4Tools.Services.UserAppDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Добавить своё приложение" Height="500" Width="550"
+        WindowStartupLocation="CenterOwner" Background="#2d2d2d" Foreground="White"
+        ResizeMode="NoResize">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Название программы:" FontWeight="Bold" Margin="0,0,0,5"/>
+        <TextBox x:Name="txtName" Grid.Row="1" Margin="0,0,0,10" Padding="5" 
+                 Background="#3d3d3d" Foreground="White"/>
+
+        <TextBlock Text="Категория:" Grid.Row="2" FontWeight="Bold" Margin="0,0,0,5"/>
+        <ComboBox x:Name="cmbCategory" Grid.Row="3" Margin="0,0,0,10" 
+                  Background="#3d3d3d" Foreground="White" Height="30">
+            <ComboBoxItem Content="Браузеры" Tag="Браузеры"/>
+            <ComboBoxItem Content="Офис" Tag="Офис"/>
+            <ComboBoxItem Content="Графика" Tag="Графика"/>
+            <ComboBoxItem Content="Разработка" Tag="Разработка"/>
+            <ComboBoxItem Content="Мессенджеры" Tag="Мессенджеры"/>
+            <ComboBoxItem Content="Мультимедиа" Tag="Мультимедиа"/>
+            <ComboBoxItem Content="Системные" Tag="Системные"/>
+            <ComboBoxItem Content="Игровые сервисы" Tag="ИгровыеСервисы"/>
+            <ComboBoxItem Content="Драйверпаки" Tag="Драйверпаки"/>
+            <ComboBoxItem Content="Другое" Tag="Другое"/>
+        </ComboBox>
+
+        <TextBlock Text="ID для Winget (опционально):" Grid.Row="4" FontWeight="Bold" Margin="0,0,0,5"/>
+        <TextBox x:Name="txtWingetId" Grid.Row="5" Margin="0,0,0,10" Padding="5" 
+                 Background="#3d3d3d" Foreground="White"/>
+
+        <TextBlock Text="Прямая ссылка для скачивания:" Grid.Row="6" FontWeight="Bold" Margin="0,0,0,5"/>
+        <TextBox x:Name="txtUrl" Grid.Row="7" Margin="0,0,0,10" Padding="5" 
+                 Background="#3d3d3d" Foreground="White"/>
+
+        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button x:Name="btnOk" Content="Добавить" Width="100" Height="30" 
+                    Background="#0078D7" Foreground="White" Click="BtnOk_Click" Margin="0,0,10,0"/>
+            <Button x:Name="btnCancel" Content="Отмена" Width="100" Height="30" 
+                    Background="#666666" Foreground="White" Click="BtnCancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
