@@ -22,7 +22,7 @@
 ## 📦 Установка
 
 Скачайте последний релиз:  
-👉 [Ven4Tools_Setup_2.2.1.exe](https://github.com/Ven4ru/Ven4Tools/releases/latest)
+👉 [Ven4Tools_Setup_2.2.3.exe](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 
 При установке можно выбрать:
 - **Обычный режим** — в Program Files, с деинсталлятором
