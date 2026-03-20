@@ -7,7 +7,6 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
@@ -45,12 +44,9 @@ namespace Ven4Tools.Services
 
             currentVersion = version != null 
                 ? $"{version.Major}.{version.Minor}.{version.Build}" 
-                : "2.2.0";
+                : "2.2.2";
         }
 
-        /// <summary>
-        /// Проверяет наличие обновлений на GitHub
-        /// </summary>
         public async Task<UpdateInfo> CheckForUpdateAsync()
         {
             var result = new UpdateInfo
@@ -62,9 +58,8 @@ namespace Ven4Tools.Services
             try
             {
                 ReportProgress("🔍 Проверка обновлений...", 10);
-
                 string apiUrl = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases/latest";
-                
+
                 using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
                 using var response = await httpClient.SendAsync(request);
 
@@ -83,7 +78,6 @@ namespace Ven4Tools.Services
                     return result;
                 }
 
-                // Находим установщик
                 var asset = release.assets.FirstOrDefault(a => 
                     a.name.Contains("Setup", StringComparison.OrdinalIgnoreCase) && 
                     a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
@@ -94,10 +88,8 @@ namespace Ven4Tools.Services
                     return result;
                 }
 
-                // Парсим версию
                 string latestVersion = release.tag_name.TrimStart('v');
-                
-                // Сравниваем версии
+
                 if (CompareVersions(latestVersion, currentVersion) > 0)
                 {
                     result.HasUpdate = true;
@@ -106,10 +98,8 @@ namespace Ven4Tools.Services
                     result.ReleaseNotes = release.body;
                     result.ReleaseDate = release.published_at;
                     result.FileSize = asset.size;
-                    
-                    // Определяем приоритет по тексту релиза
                     result.Priority = DeterminePriority(release.body);
-                    
+
                     ReportProgress($"✅ Найдена версия {latestVersion}", 50);
                 }
 
@@ -129,27 +119,14 @@ namespace Ven4Tools.Services
 
             var lowerNotes = releaseNotes.ToLowerInvariant();
 
-            // Критическое обновление
-            if (lowerNotes.Contains("[critical]") || 
-                lowerNotes.Contains("🔴") ||
-                lowerNotes.Contains("критическое") ||
-                lowerNotes.Contains("security") ||
-                lowerNotes.Contains("важное"))
-            {
+            if (lowerNotes.Contains("[critical]") || lowerNotes.Contains("🔴") ||
+                lowerNotes.Contains("критическое") || lowerNotes.Contains("security"))
                 return UpdatePriority.Critical;
-            }
 
-            // Рекомендуемое обновление
-            if (lowerNotes.Contains("[recommended]") ||
-                lowerNotes.Contains("🔸") ||
-                lowerNotes.Contains("рекомендуется") ||
-                lowerNotes.Contains("improvement") ||
-                lowerNotes.Contains("улучшение"))
-            {
+            if (lowerNotes.Contains("[recommended]") || lowerNotes.Contains("🔸") ||
+                lowerNotes.Contains("рекомендуется") || lowerNotes.Contains("улучшение"))
                 return UpdatePriority.Recommended;
-            }
 
-            // По умолчанию - минорное
             return UpdatePriority.Minor;
         }
 
@@ -170,16 +147,13 @@ namespace Ven4Tools.Services
             return 0;
         }
 
-        /// <summary>
-        /// Скачивает и запускает обновление
-        /// </summary>
-        public async Task<bool> DownloadAndInstallAsync(UpdateInfo updateInfo, 
+        public async Task<bool> DownloadAndInstallSilentlyAsync(UpdateInfo updateInfo,
             CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(updateInfo.DownloadUrl))
                 return false;
 
-            string tempFile = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Setup_{updateInfo.LatestVersion}.exe");
+            string installerPath = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Setup_{updateInfo.LatestVersion}.exe");
 
             try
             {
@@ -196,7 +170,7 @@ namespace Ven4Tools.Services
                 var bytesDownloaded = 0L;
 
                 await using var contentStream = await response.Content.ReadAsStreamAsync();
-                await using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write);
+                await using var fileStream = new FileStream(installerPath, FileMode.Create, FileAccess.Write);
 
                 var buffer = new byte[8192];
                 int bytesRead;
@@ -216,22 +190,31 @@ namespace Ven4Tools.Services
 
                 ReportProgress("✅ Скачивание завершено", 95);
 
-                // Запускаем установщик
-                var psi = new ProcessStartInfo
-                {
-                    FileName = tempFile,
-                    UseShellExecute = true,
-                    Verb = "runas",
-                    Arguments = "/SILENT /VERYSILENT"
-                };
+                string currentExe = Process.GetCurrentProcess().MainModule!.FileName;
+                string appDir = Path.GetDirectoryName(currentExe)!;
+                string updaterDll = Path.Combine(appDir, "Ven4Tools.Updater.dll");
 
-                Process.Start(psi);
+                if (!File.Exists(updaterDll))
+                {
+                    DebugLog($"❌ Апдейтер не найден: {updaterDll}");
+                    return false;
+                }
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = $"\"{updaterDll}\" \"{installerPath}\" /silent",
+                    UseShellExecute = true,
+                    CreateNoWindow = true
+                });
+
+                await Task.Delay(500);
                 return true;
             }
             catch (Exception ex)
             {
-                try { File.Delete(tempFile); } catch { }
-                throw new Exception($"Ошибка скачивания: {ex.Message}", ex);
+                try { File.Delete(installerPath); } catch { }
+                throw;
             }
         }
 
@@ -244,6 +227,19 @@ namespace Ven4Tools.Services
                 BytesDownloaded = downloaded,
                 TotalBytes = total
             });
+        }
+
+        private void DebugLog(string message)
+        {
+            try
+            {
+                string logPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Ven4Tools", "update_service.log");
+                Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+                File.AppendAllText(logPath, $"{DateTime.Now:HH:mm:ss.fff} - {message}\n");
+            }
+            catch { }
         }
 
         public void Dispose()

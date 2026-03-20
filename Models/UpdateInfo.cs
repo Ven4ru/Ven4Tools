@@ -1,10 +1,13 @@
+using System;
+using System.Collections.Generic;
+
 namespace Ven4Tools.Models
 {
     public enum UpdatePriority
     {
-        Minor = 0,      // Можно игнорировать
-        Recommended = 1, // Рекомендуется, но не обязательно
-        Critical = 2     // Обязательное обновление
+        Minor = 0,
+        Recommended = 1,
+        Critical = 2
     }
 
     public class UpdateInfo
@@ -18,12 +21,11 @@ namespace Ven4Tools.Models
         public long FileSize { get; set; }
         public DateTime? ReleaseDate { get; set; }
         public UpdatePriority Priority { get; set; }
-        
-        // Вспомогательные свойства
+
         public bool IsCritical => Priority == UpdatePriority.Critical;
         public bool IsRecommended => Priority == UpdatePriority.Recommended;
         public bool IsMinor => Priority == UpdatePriority.Minor;
-        
+
         public string PriorityDisplay => Priority switch
         {
             UpdatePriority.Minor => "🔹 Минорное",
@@ -48,5 +50,7 @@ namespace Ven4Tools.Models
         public string name { get; set; } = string.Empty;
         public string browser_download_url { get; set; } = string.Empty;
         public long size { get; set; }
+        public string? content_type { get; set; }
+        public DateTime created_at { get; set; }
     }
 }

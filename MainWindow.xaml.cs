@@ -29,8 +29,7 @@ private readonly AvailabilityChecker availabilityChecker = null!;
         private Dictionary<string, AvailabilityChecker.AvailabilityStatus> availabilityStatus = new();
 
         private const string TurboBoostRegPath = @"SYSTEM\ControlSet001\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7";
-        private readonly string yandexFolderUrl = "https://disk.yandex.ru/d/4xXp0-7IBWOgJw";
-        
+               
         // Для выбора диска
         private string selectedInstallDrive = "C:\\";
         private string systemDrive = "C:\\";
@@ -38,11 +37,9 @@ private readonly AvailabilityChecker availabilityChecker = null!;
 private async void BtnCheckUpdate_Click(object sender, RoutedEventArgs e)
 {
     btnCheckUpdate.IsEnabled = false;
-    
     var updateWindow = new UpdateCheckWindow();
     updateWindow.Owner = this;
     updateWindow.ShowDialog();
-    
     btnCheckUpdate.IsEnabled = true;
 }
 
@@ -97,28 +94,36 @@ private async Task CheckForUpdatesOnStartupAsync()
         catch { }
     }
 }
-        public MainWindow()
-        {
-            if (!IsRunAsAdmin())
-            {
-                RestartAsAdmin();
-                return;
-            }
+public MainWindow()
+{
+    if (!IsRunAsAdmin())
+    {
+        RestartAsAdmin();
+        return;
+    }
 
-            InitializeComponent();
-            
-            appManager = new AppManager();
-            installService = new InstallationService();
-            availabilityChecker = new AvailabilityChecker();
-            
-            txtAdminStatus.Text = "✅ Активированы права администратора";
-            InitCategoryPanels();
-            LoadAvailableDisks();
-            LoadApps();
-            
-            UpdateSpaceStatus();
-            
-                try
+    InitializeComponent();
+    
+    appManager = new AppManager();
+    installService = new InstallationService();
+    availabilityChecker = new AvailabilityChecker();
+    
+    txtAdminStatus.Text = "✅ Активированы права администратора";
+    
+    // Устанавливаем начальную версию в заголовок
+    var version = System.Reflection.Assembly.GetExecutingAssembly()
+        .GetName()
+        .Version;
+    string currentVersion = "2.2.3";  // Жёстко задаём версию
+    txtVersionTitle.Text = $"Ven4Tools v{currentVersion}";
+    
+    InitCategoryPanels();
+    LoadAvailableDisks();
+    LoadApps();
+    
+    UpdateSpaceStatus();
+    
+    try
     {
         File.AppendAllText(@"C:\Users\Ven4\debug_constructor.log", 
             $"{DateTime.Now}: Конструктор, готовимся вызвать CheckForUpdatesOnStartup\n");
@@ -1337,55 +1342,66 @@ private async void UpdateSpaceStatus()
         #endregion
 
         #region Проверка обновлений
-
+private void UpdateWindowTitle(string? newVersion = null)
+{
+    var version = System.Reflection.Assembly.GetExecutingAssembly()
+        .GetName()
+        .Version;
+    string currentVersion = version != null 
+        ? $"{version.Major}.{version.Minor}.{version.Build}" 
+        : "2.2.0";
+    
+    if (!string.IsNullOrEmpty(newVersion))
+    {
+        txtVersionTitle.Text = $"Ven4Tools v{currentVersion} (⚠️ Доступна версия {newVersion})";
+        txtVersionTitle.Foreground = System.Windows.Media.Brushes.Orange;
+    }
+    else
+    {
+        txtVersionTitle.Text = $"Ven4Tools v{currentVersion}";
+        txtVersionTitle.Foreground = System.Windows.Media.Brushes.White;
+    }
+}
 private async Task CheckForUpdatesOnStartup()
 {
     try
     {
-        File.AppendAllText(@"C:\Users\Ven4\debug_startup.log", 
-            $"{DateTime.Now}: Начало метода\n");
+        await Task.Delay(2000);
         
-        await Task.Delay(500);
+        using var service = new UpdateService("Ven4ru", "Ven4Tools");
+        var info = await service.CheckForUpdateAsync();
         
-        await Dispatcher.InvokeAsync(() =>
+        if (info.HasUpdate)
         {
-            File.AppendAllText(@"C:\Users\Ven4\debug_startup.log", 
-                $"{DateTime.Now}: Создаём окно...\n");
-            
-            var updateWindow = new UpdateCheckWindow(yandexFolderUrl)
+            Dispatcher.Invoke(() =>
             {
-                Owner = this
-            };
-            
-            File.AppendAllText(@"C:\Users\Ven4\debug_startup.log", 
-                $"{DateTime.Now}: Окно создано, показываем...\n");
-            
-            updateWindow.ShowDialog();
-            
-            File.AppendAllText(@"C:\Users\Ven4\debug_startup.log", 
-                $"{DateTime.Now}: Окно закрыто\n");
-        });
-        
-        File.AppendAllText(@"C:\Users\Ven4\debug_startup.log", 
-            $"{DateTime.Now}: После Dispatcher\n");
+                UpdateWindowTitle(info.LatestVersion);
+                
+                if (info.IsCritical)
+                {
+                    var updateWindow = new UpdateCheckWindow();
+                    updateWindow.Owner = this;
+                    updateWindow.ShowDialog();
+                }
+                else
+                {
+                    btnCheckUpdate.Background = System.Windows.Media.Brushes.Orange;
+                    btnCheckUpdate.ToolTip = $"Доступно обновление {info.LatestVersion}";
+                }
+            });
+        }
     }
     catch (Exception ex)
     {
-        File.AppendAllText(@"C:\Users\Ven4\debug_startup.log", 
-            $"{DateTime.Now}: Ошибка - {ex.Message}\n");
+        try
+        {
+            string logPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Ven4Tools", "startup_errors.log");
+            File.AppendAllText(logPath, $"{DateTime.Now} - {ex.Message}\n");
+        }
+        catch { }
     }
-} 
-
-
-private async void BtnCheckUpdate_Click(object sender, RoutedEventArgs e)
-{
-    btnCheckUpdate.IsEnabled = false;
-    var updateWindow = new UpdateCheckWindow(yandexFolderUrl)
-    {
-        Owner = this
-    };
-    updateWindow.ShowDialog();
-    btnCheckUpdate.IsEnabled = true;
 }
 
 #endregion

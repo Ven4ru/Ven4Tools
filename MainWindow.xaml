@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Ven4Tools.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ven4Tools v2.1" Height="950" Width="1200" MinHeight="750" MinWidth="1000"
+        Title="Ven4Tools" Height="950" Width="1200" MinHeight="750" MinWidth="1000"
         WindowStartupLocation="CenterScreen" Background="#1e1e1e">
     
     <Window.Resources>

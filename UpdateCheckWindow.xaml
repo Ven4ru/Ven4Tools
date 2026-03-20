@@ -1,7 +1,7 @@
 <Window x:Class="Ven4Tools.UpdateCheckWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Проверка обновлений" Height="500" Width="600"
+        Title="Проверка обновлений" Height="650" Width="600"
         WindowStartupLocation="CenterOwner" Background="#2d2d2d" Foreground="White"
         ResizeMode="NoResize" WindowStyle="ToolWindow">
 
@@ -19,62 +19,84 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Статус и прогресс -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,15">
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
             <TextBlock x:Name="txtStatus" Text="🔍 Проверка обновлений..." 
                        Foreground="#FFA500" FontSize="16" FontWeight="Bold" 
                        HorizontalAlignment="Center" TextWrapping="Wrap"/>
-
             <ProgressBar x:Name="progressBar" Height="15" 
                          Background="#444" Foreground="#ADD8E6" 
                          Margin="0,10,0,0" Minimum="0" Maximum="100"/>
-
             <TextBlock x:Name="txtSizeInfo" Foreground="#888" FontSize="11"
                        HorizontalAlignment="Center" Margin="0,5,0,0" Visibility="Collapsed"/>
         </StackPanel>
 
-        <!-- Результат -->
+        <!-- Панель результата -->
         <StackPanel Grid.Row="1" x:Name="panelResult" Visibility="Collapsed">
             <TextBlock x:Name="txtResultTitle" FontSize="18" FontWeight="Bold" 
-                       HorizontalAlignment="Center" Margin="0,0,0,5"/>
-
-            <!-- Приоритет обновления -->
+                       HorizontalAlignment="Center" Margin="0,0,0,10"/>
             <TextBlock x:Name="txtPriority" FontSize="14" FontWeight="Bold"
                        HorizontalAlignment="Center" Margin="0,0,0,10"
                        Visibility="Collapsed"/>
-
             <TextBlock x:Name="txtVersionInfo" FontSize="14" 
                        HorizontalAlignment="Center" Margin="0,0,0,15"
                        TextWrapping="Wrap"/>
-
-            <!-- Список изменений -->
+            <Border x:Name="txtCriticalWarning" Visibility="Collapsed"
+                    Background="#8B0000" CornerRadius="5" Padding="10" Margin="0,0,0,15">
+                <TextBlock Text="⚠️ КРИТИЧЕСКОЕ ОБНОВЛЕНИЕ ⚠️" 
+                           FontWeight="Bold" HorizontalAlignment="Center"
+                           Foreground="White"/>
+            </Border>
             <TextBlock Text="Что нового:" FontWeight="Bold" Margin="0,0,0,5"
                        Visibility="{Binding ElementName=scrollChangelog, Path=Visibility}"/>
-
             <ScrollViewer x:Name="scrollChangelog" MaxHeight="200" Margin="0,0,0,15"
                           Visibility="Collapsed" Background="#1e1e1e" BorderBrush="#444"
                           VerticalScrollBarVisibility="Auto">
                 <TextBlock x:Name="txtChangelog" TextWrapping="Wrap" 
                            Foreground="#00FF00" FontFamily="Consolas" FontSize="12" 
-                           Padding="10"/>
+                           Padding="10" Margin="5"/>
             </ScrollViewer>
-
-            <!-- Информация о релизе -->
-            <TextBlock x:Name="txtReleaseDate" Foreground="#888" 
-                       HorizontalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                <TextBlock Text="📅 Релиз: " Foreground="#888"/>
+                <TextBlock x:Name="txtReleaseDate" Foreground="#888"/>
+            </StackPanel>
         </StackPanel>
 
+        <!-- Лог отладки -->
+        <GroupBox Grid.Row="3" Header="📋 Лог отладки" Foreground="#FFA500" 
+                  BorderBrush="#444" Margin="0,10,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBox x:Name="txtDebugLog" Grid.Row="0" 
+                         Background="#1e1e1e" Foreground="#00FF00"
+                         FontFamily="Consolas" FontSize="10"
+                         TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                         IsReadOnly="True" Margin="5"/>
+                <WrapPanel Grid.Row="1" HorizontalAlignment="Right" Margin="5">
+                    <Button x:Name="btnCopyDebug" Content="📋 Копировать лог" 
+                            Background="#4CAF50" Foreground="White" Height="28" Width="120"
+                            Click="BtnCopyDebug_Click" Margin="0,0,5,0"/>
+                    <Button x:Name="btnClearDebug" Content="🧹 Очистить" 
+                            Background="#666666" Foreground="White" Height="28" Width="80"
+                            Click="BtnClearDebug_Click"/>
+                </WrapPanel>
+            </Grid>
+        </GroupBox>
+
         <!-- Кнопки -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,15,0,0">
-            <Button x:Name="btnUpdate" Content="📥 Обновить" Width="150" 
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+            <Button x:Name="btnUpdate" Content="📥 Скачать обновление" Width="180" 
                     Background="#0078D7" Foreground="White" 
                     Click="BtnUpdate_Click" Margin="0,0,10,0" Visibility="Collapsed"/>
-
-            <Button x:Name="btnCancel" Content="Отмена" Width="100" 
-                    Background="#666666" Foreground="White" 
-                    Click="BtnCancel_Click"/>
+            <Button x:Name="btnCancel" Content="Закрыть" Width="100" 
+                    Background="#666666" Foreground="White" Click="BtnCancel_Click"/>
         </StackPanel>
     </Grid>
 </Window>

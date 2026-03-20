@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,15 +19,41 @@ namespace Ven4Tools
         private const string REPO_OWNER = "Ven4ru";
         private const string REPO_NAME = "Ven4Tools";
 
+        private StringBuilder debugLog = new StringBuilder();
+        private readonly string debugLogPath;
+
         public UpdateCheckWindow()
         {
             InitializeComponent();
             this.Loaded += async (s, e) => await CheckForUpdateAsync();
             this.Closing += UpdateCheckWindow_Closing;
+
+            debugLogPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Ven4Tools", "update_debug.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(debugLogPath)!);
+        }
+
+        private void DebugLog(string message)
+        {
+            string timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
+            string logLine = $"[{timestamp}] {message}";
+
+            debugLog.AppendLine(logLine);
+
+            Dispatcher.Invoke(() =>
+            {
+                txtDebugLog.AppendText(logLine + "\n");
+                txtDebugLog.ScrollToEnd();
+            });
+
+            try { File.AppendAllText(debugLogPath, logLine + "\n"); } catch { }
         }
 
         private async Task CheckForUpdateAsync()
         {
+            DebugLog("=== Начало проверки обновлений ===");
+
             var progress = new Progress<UpdateService.UpdateProgress>(p =>
             {
                 txtStatus.Text = p.Status;
@@ -56,18 +83,16 @@ namespace Ven4Tools
                 }
 
                 if (updateInfo.HasUpdate)
-                {
                     ShowUpdateAvailable();
-                }
                 else
-                {
                     ShowNoUpdate();
-                }
             }
             catch (Exception ex)
             {
                 ShowError($"Ошибка: {ex.Message}");
             }
+
+            DebugLog("=== Проверка завершена ===");
         }
 
         private void ShowUpdateAvailable()
@@ -75,19 +100,20 @@ namespace Ven4Tools
             txtStatus.Text = "🎉 Доступно обновление!";
             txtStatus.Foreground = System.Windows.Media.Brushes.LightGreen;
 
-            // Показываем приоритет
-            txtPriority.Text = updateInfo!.PriorityDisplay;
-            txtPriority.Visibility = Visibility.Visible;
-
-            // Окрашиваем приоритет в соответствующий цвет
-            txtPriority.Foreground = updateInfo.Priority switch
+            if (txtPriority != null)
             {
-                UpdatePriority.Critical => System.Windows.Media.Brushes.Red,
-                UpdatePriority.Recommended => System.Windows.Media.Brushes.Orange,
-                _ => System.Windows.Media.Brushes.LightGreen
-            };
+                txtPriority.Text = updateInfo!.PriorityDisplay;
+                txtPriority.Visibility = Visibility.Visible;
 
-            txtVersionInfo.Text = $"Версия {updateInfo.CurrentVersion} → {updateInfo.LatestVersion}";
+                txtPriority.Foreground = updateInfo.Priority switch
+                {
+                    UpdatePriority.Critical => System.Windows.Media.Brushes.Red,
+                    UpdatePriority.Recommended => System.Windows.Media.Brushes.Orange,
+                    _ => System.Windows.Media.Brushes.LightGreen
+                };
+            }
+
+            txtVersionInfo.Text = $"Версия {updateInfo!.CurrentVersion} → {updateInfo.LatestVersion}";
 
             if (!string.IsNullOrEmpty(updateInfo.ReleaseNotes))
             {
@@ -95,12 +121,13 @@ namespace Ven4Tools
                 scrollChangelog.Visibility = Visibility.Visible;
             }
 
-            // Для критических обновлений меняем поведение
+            btnUpdate.Visibility = Visibility.Visible;
+
             if (updateInfo.IsCritical)
             {
                 btnUpdate.Content = "🔴 ОБНОВИТЬ СЕЙЧАС";
                 btnUpdate.Background = System.Windows.Media.Brushes.DarkRed;
-                btnCancel.Visibility = Visibility.Collapsed; // Убираем кнопку отмены
+                btnCancel.Visibility = Visibility.Collapsed;
             }
 
             panelResult.Visibility = Visibility.Visible;
@@ -110,7 +137,6 @@ namespace Ven4Tools
         {
             txtStatus.Text = "✅ У вас актуальная версия";
             txtStatus.Foreground = System.Windows.Media.Brushes.LightGreen;
-
             txtVersionInfo.Text = $"Версия {updateInfo?.CurrentVersion} — последняя доступная.";
             panelResult.Visibility = Visibility.Visible;
         }
@@ -119,10 +145,8 @@ namespace Ven4Tools
         {
             txtStatus.Text = "❌ Ошибка проверки";
             txtStatus.Foreground = System.Windows.Media.Brushes.LightCoral;
-
             txtVersionInfo.Text = error;
             panelResult.Visibility = Visibility.Visible;
-
             LogError(error);
         }
 
@@ -139,17 +163,14 @@ namespace Ven4Tools
                 progressBar.Visibility = Visibility.Visible;
                 progressBar.Value = 0;
 
-                bool success = await updateService!.DownloadAndInstallAsync(
+                bool success = await updateService!.DownloadAndInstallSilentlyAsync(
                     updateInfo,
                     cancellationTokenSource?.Token ?? CancellationToken.None);
 
                 if (success)
                 {
-                    // Для критических обновлений закрываем программу
                     if (updateInfo.IsCritical)
-                    {
                         Application.Current.Shutdown();
-                    }
                     else
                     {
                         MessageBox.Show(
@@ -157,7 +178,6 @@ namespace Ven4Tools
                             "Обновление",
                             MessageBoxButton.OK,
                             MessageBoxImage.Information);
-
                         Application.Current.Shutdown();
                     }
                 }
@@ -172,16 +192,14 @@ namespace Ven4Tools
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
-            // Для критических обновлений - закрываем программу
             if (updateInfo?.IsCritical == true)
             {
-                var result = MessageBox.Show(
+                MessageBox.Show(
                     "Это критическое обновление безопасности. Без него работа программы невозможна.\n\n" +
                     "Программа будет закрыта. Скачайте обновление вручную с GitHub.",
                     "Критическое обновление",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
-
                 Application.Current.Shutdown();
             }
             else
@@ -191,18 +209,38 @@ namespace Ven4Tools
             }
         }
 
-        private void UpdateCheckWindow_Closing(object sender, CancelEventArgs e)
+        private void BtnCopyDebug_Click(object sender, RoutedEventArgs e)
         {
-            // Если это критическое обновление и пользователь пытается закрыть окно без обновления
+            try
+            {
+                Clipboard.SetText(debugLog.ToString());
+                MessageBox.Show("Лог скопирован в буфер обмена", "Готово",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка копирования: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnClearDebug_Click(object sender, RoutedEventArgs e)
+        {
+            debugLog.Clear();
+            txtDebugLog.Clear();
+            try { File.WriteAllText(debugLogPath, string.Empty); } catch { }
+        }
+
+        private void UpdateCheckWindow_Closing(object? sender, CancelEventArgs e)
+        {
             if (updateInfo?.IsCritical == true && !updateInfo.HasUpdate)
             {
-                var result = MessageBox.Show(
+                MessageBox.Show(
                     "Это критическое обновление безопасности. Без него работа программы невозможна.\n\n" +
                     "Программа будет закрыта.",
                     "Критическое обновление",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
-
                 Application.Current.Shutdown();
             }
 
@@ -217,10 +255,8 @@ namespace Ven4Tools
                 string logPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "Ven4Tools", "update_errors.log");
-
                 Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
-                File.AppendAllText(logPath,
-                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {error}\n");
+                File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {error}\n");
             }
             catch { }
         }

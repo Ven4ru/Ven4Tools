@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Text.Json;
+using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
 {
@@ -14,14 +15,6 @@ namespace Ven4Tools.Services
         public bool Templated { get; set; }
     }
 
-    public class UpdateInfo
-    {
-        public bool HasUpdate { get; set; }
-        public string? LatestVersion { get; set; }
-        public string? DownloadUrl { get; set; }
-        public string? ReleaseNotes { get; set; }
-        public string? Error { get; set; }
-    }
 
     public class UpdateChecker
     {
@@ -63,7 +56,7 @@ public async Task<UpdateInfo> CheckForUpdateAsync()
         string? latestVersion = await GetLatestVersionFromDisk();
                 
                 if (string.IsNullOrEmpty(latestVersion))
-                    return new UpdateInfo { HasUpdate = false };
+                    return new Models.UpdateInfo { HasUpdate = false };
                 
                 if (currentVersion != latestVersion)
                 {
@@ -79,7 +72,7 @@ public async Task<UpdateInfo> CheckForUpdateAsync()
                     };
                 }
                 
-                return new UpdateInfo { HasUpdate = false };
+                return new Models.UpdateInfo { HasUpdate = false };
             }
             catch (Exception ex)
             {
