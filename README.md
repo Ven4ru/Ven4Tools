@@ -73,3 +73,47 @@ dotnet publish -c Release -r win-x64 --self-contained true
 # Сборка лаунчера
 cd ../Ven4Tools.Launcher
 dotnet publish -c Release -r win-x64 --self-contained true
+
+Вот этот блок кодом для вставки в README.md:
+
+```markdown
+## 📁 Структура проекта
+
+```
+Ven4Tools/
+├── Ven4Tools.exe              # Основная программа
+├── Ven4Tools.Launcher.exe     # Лаунчер (обновления)
+├── Services/                  # Сервисы
+│   ├── InstallationService.cs # Установка приложений
+│   ├── AvailabilityChecker.cs # Проверка доступности
+│   └── ...
+├── Models/                    # Модели данных
+├── Installer/                 # Скрипт установщика Inno Setup
+└── icon.ico                   # Иконка программы
+```
+
+---
+
+## 📄 Лицензия
+
+Проект распространяется под лицензией **MIT**.
+
+---
+
+## 👨‍💻 Автор
+
+**Ven4ru**
+
+---
+
+## ⚠️ Важно
+
+> **При использовании кода или идей из этого репозитория обязательно указывайте источник:**  
+> [https://github.com/Ven4ru/Ven4Tools](https://github.com/Ven4ru/Ven4Tools)
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ for Windows users</sub>
+</div>
+```
