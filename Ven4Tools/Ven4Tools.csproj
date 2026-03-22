@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>disable</ImplicitUsings>
+    
+    <!-- Self-contained (но НЕ Single File) -->
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>false</PublishSingleFile>
+    <DebugType>none</DebugType>
+    
+    <!-- Application settings -->
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <AssemblyName>Ven4Tools</AssemblyName>
+<Version>2.2.4</Version>
+<AssemblyVersion>2.2.4</AssemblyVersion>
+    
+    <!-- Явная точка входа -->
+    <StartupObject>Ven4Tools.App</StartupObject>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
+    
+  </ItemGroup>
+
+</Project>

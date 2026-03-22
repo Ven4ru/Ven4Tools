@@ -1,0 +1,296 @@
+<Window x:Class="Ven4Tools.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ven4Tools" Height="950" Width="1200" MinHeight="750" MinWidth="1000"
+        WindowStartupLocation="CenterScreen" Background="#1e1e1e">
+    
+    <Window.Resources>
+        <Style TargetType="GroupBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="5"/>
+        </Style>
+        
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0,2,0,2"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        
+        <Style x:Key="InstalledCheckBox" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+            <Setter Property="Foreground" Value="#888"/>
+            <Setter Property="Opacity" Value="0.7"/>
+        </Style>
+        
+        <Style TargetType="Button">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        
+        <Style TargetType="Expander">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#2d2d2d"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="150"/>
+            <RowDefinition Height="200"/>
+        </Grid.RowDefinitions>
+
+        <!-- Статус администратора и заголовок -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,15">
+            <TextBlock x:Name="txtAdminStatus" Text="✅ Активированы права администратора" 
+                       Foreground="#00FF00" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="txtVersionTitle" Text="Ven4Tools v2.1" Foreground="White" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Основная двухколоночная область -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="35*"/>
+                <ColumnDefinition Width="65*"/>
+            </Grid.ColumnDefinitions>
+
+<!-- ЛЕВАЯ КОЛОНКА: список приложений -->
+<GroupBox Grid.Column="0" Header="📋 Каталог приложений" Foreground="White" 
+          BorderBrush="#444" Margin="0,0,15,0" FontSize="14" FontWeight="Bold">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" 
+                  Background="#1e1e1e" Padding="5">
+        <StackPanel Margin="5">
+            <Expander Header="Браузеры" IsExpanded="True" Foreground="White" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelБраузеры" Margin="20,5,0,5"/>
+            </Expander>
+            
+            <Expander Header="Офис" IsExpanded="True" Foreground="White" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelОфис" Margin="20,5,0,5"/>
+            </Expander>
+            
+            <Expander Header="Графика" IsExpanded="True" Foreground="White" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelГрафика" Margin="20,5,0,5"/>
+            </Expander>
+            
+            <Expander Header="Разработка" IsExpanded="True" Foreground="White" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelРазработка" Margin="20,5,0,5"/>
+            </Expander>
+            
+            <Expander Header="Мессенджеры" IsExpanded="True" Foreground="White" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelМессенджеры" Margin="20,5,0,5"/>
+            </Expander>
+            
+            <Expander Header="Мультимедиа" IsExpanded="True" Foreground="White" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelМультимедиа" Margin="20,5,0,5"/>
+            </Expander>
+            
+            <Expander Header="Системные" IsExpanded="True" Foreground="White" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelСистемные" Margin="20,5,0,5"/>
+            </Expander>
+            
+            <Expander Header="🎮 Игровые сервисы" IsExpanded="True" Foreground="#00FF00" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelИгровыеСервисы" Margin="20,5,0,5"/>
+            </Expander>
+            
+            <Expander Header="🖥️ Драйверпаки" IsExpanded="True" Foreground="#00BFFF" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelДрайверпаки" Margin="20,5,0,5"/>
+            </Expander>
+            
+            <Expander Header="Другое" IsExpanded="True" Foreground="#FFA500" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelДругое" Margin="20,5,0,5"/>
+            </Expander>
+            
+            <Expander Header="Пользовательские" IsExpanded="True" Foreground="#FFA500" Background="#2d2d2d" 
+                      BorderBrush="#444" BorderThickness="1" Margin="0,0,0,5">
+                <StackPanel x:Name="PanelПользовательские" Margin="20,5,0,5"/>
+            </Expander>
+        </StackPanel>
+    </ScrollViewer>
+</GroupBox>
+
+            <!-- ПРАВАЯ КОЛОНКА: панель управления -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Background="#1e1e1e" BorderBrush="#333" BorderThickness="1" Padding="10">
+                
+                <Grid Margin="0,5,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+<!-- Блок 1: Установка приложений -->
+<GroupBox Grid.Row="0" Grid.Column="0" Header="📦 Установка приложений" 
+          Foreground="White" BorderBrush="#444" Padding="10" Margin="0,0,0,0" Height="Auto">
+    <StackPanel>
+        <WrapPanel HorizontalAlignment="Center" Margin="0,0,0,5">
+            <Button x:Name="btnInstall" Content="🚀 Установить" 
+                    Background="#0078D7" Foreground="White" Click="InstallSelected_Click"
+                    Padding="12,6" MinWidth="100" Margin="2"/>
+            <Button x:Name="btnCancelInstall" Content="⏹️ Отмена" 
+                    Background="#666666" Foreground="White" Click="CancelInstall_Click" IsEnabled="False"
+                    Padding="12,6" MinWidth="80" Margin="2"/>
+        </WrapPanel>
+        
+        <Button x:Name="btnAddApp" Content="➕ Добавить своё" 
+                Background="#2d7d2d" Foreground="White" Click="BtnAddApp_Click" 
+                HorizontalAlignment="Stretch" Padding="10,6" Margin="2"/>
+        
+        <!-- НОВАЯ КНОПКА: Очистить всё -->
+        <Button x:Name="btnClearAllUserApps" Content="🗑️ Очистить всё" 
+                Background="#8B0000" Foreground="White" Click="BtnClearAllUserApps_Click"
+                HorizontalAlignment="Stretch" Padding="10,6" Margin="2"
+                ToolTip="Удалить ВСЕ пользовательские приложения (очистить файл apps.json)"/>
+    </StackPanel>
+</GroupBox>
+
+                    <!-- Блок 2: Системные настройки -->
+                    <GroupBox Grid.Row="0" Grid.Column="2" Header="⚡ Системные настройки" 
+                              Foreground="White" BorderBrush="#444" Padding="10" Margin="0,0,0,0" Height="Auto">
+                        <StackPanel>
+                            <Button Content="📦 Office" 
+                                    Background="#D83B01" Foreground="White" Click="BtnInstallOffice_Click"
+                                    Padding="10,6" HorizontalAlignment="Stretch" Margin="2"/>
+                            <Button x:Name="btnDisableTurboBoost" Content="⚡ Турбобуст выкл" 
+                                    Background="#FF8C00" Foreground="White" Click="BtnDisableTurboBoost_Click"
+                                    Padding="10,6" HorizontalAlignment="Stretch" Margin="2"/>
+                            <Button x:Name="btnEnableTurboBoost" Content="🔄 Турбобуст вкл" 
+                                    Background="#666666" Foreground="White" Click="BtnEnableTurboBoost_Click"
+                                    Padding="10,6" HorizontalAlignment="Stretch" Margin="2"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Блок 3: Активация -->
+                    <GroupBox Grid.Row="1" Grid.Column="0" Header="🔑 Активация" 
+                              Foreground="White" BorderBrush="#444" Padding="10" Margin="0,10,0,0" Height="Auto">
+                        <StackPanel>
+                            <Button x:Name="btnRunActivator" Content="🔑 Интерактивный MAS" 
+                                    Background="#4CAF50" Foreground="White" Click="BtnRunActivator_Click" 
+                                    HorizontalAlignment="Stretch" Padding="10,6" Margin="0,0,0,8"/>
+                            
+                            <Separator Background="#444" Margin="0,2,0,5"/>
+                            
+                            <TextBlock Text="Online KMS:" Foreground="#888" FontSize="10" Margin="0,0,0,3"/>
+                            
+                            <WrapPanel HorizontalAlignment="Center">
+                                <ComboBox x:Name="cmbActivationType" Width="110" Margin="0,0,2,0" Height="30">
+                                    <ComboBoxItem Content="Windows" Tag="/K-Windows"/>
+                                    <ComboBoxItem Content="Office" Tag="/K-Office"/>
+                                    <ComboBoxItem Content="Project" Tag="/K-ProjectVisio"/>
+                                    <ComboBoxItem Content="Всё" Tag="/K-WindowsOffice"/>
+                                    <ComboBoxItem Content="Удалить" Tag="/K-Uninstall"/>
+                                </ComboBox>
+                                <Button x:Name="btnRunActivation" Content="OK" Width="50" Height="30"
+                                        Background="#0078D7" Foreground="White" Click="RunActivation_Click"
+                                        Padding="5,2"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </GroupBox>
+
+<!-- Блок 4: Состояние и выбор диска -->
+<GroupBox Grid.Row="1" Grid.Column="2" Header="📊 Состояние и диск" 
+          Foreground="White" BorderBrush="#444" Padding="10" Margin="0,10,0,0" Height="Auto">
+    <StackPanel>
+        <!-- Выбор диска -->
+        <TextBlock Text="Выберите диск для установки:" Foreground="#FFA500" FontSize="11" Margin="0,0,0,3"/>
+        <ComboBox x:Name="cmbAvailableDisks" Margin="0,0,0,5" 
+                  Background="White" Foreground="Black" Height="30"
+                  SelectionChanged="CmbAvailableDisks_SelectionChanged">
+            <ComboBox.Resources>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="Background" Value="White"/>
+                    <Setter Property="Foreground" Value="Black"/>
+                    <Setter Property="BorderBrush" Value="LightGray"/>
+                </Style>
+            </ComboBox.Resources>
+        </ComboBox>
+        
+        <!-- Информация о месте -->
+        <TextBlock x:Name="txtSpaceStatus" Text="💾 ... МБ" 
+                   Foreground="#FFA500" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+        
+        <!-- Прогресс установки -->
+        <ProgressBar x:Name="installProgressBar" Height="15" Margin="0,0,0,5" 
+                     Background="#444" Foreground="#ADD8E6" Minimum="0" Maximum="100" Value="0"/>
+        
+        <!-- Общий статус -->
+        <TextBlock x:Name="txtOverallStatus" Text="Готов" Foreground="#FFA500" 
+                   HorizontalAlignment="Center" FontSize="12" Margin="0,0,0,5"/>
+        
+        <!-- Кнопки -->
+        <Button x:Name="btnRefreshAvailability" Content="🔄 Проверить доступность" 
+                Background="#4CAF50" Foreground="White" Click="RefreshAvailability_Click"
+                HorizontalAlignment="Stretch" Padding="5" Margin="0,5,0,0" Height="30"/>
+        
+      
+        <!-- Легенда статусов -->
+        <WrapPanel HorizontalAlignment="Center" Margin="0,5,0,0">
+            <TextBlock Text="✅" Foreground="LightGreen" Margin="0,0,2,0"/>
+            <TextBlock Text="доступно" Foreground="White" FontSize="10" Margin="0,0,10,0"/>
+            <TextBlock Text="❌" Foreground="LightCoral" Margin="0,0,2,0"/>
+            <TextBlock Text="недоступно" Foreground="White" FontSize="10"/>
+        </WrapPanel>
+    </StackPanel>
+</GroupBox>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Прогресс по каждой программе -->
+        <GroupBox Grid.Row="2" Header="📈 Прогресс установки по программам" Foreground="White" BorderBrush="#444" 
+                  Margin="0,10,0,10" Padding="5" FontSize="13">
+            <ListBox x:Name="lstAppProgress" Background="#1e1e1e" BorderBrush="#333" Foreground="#00FF00" 
+                     FontFamily="Consolas" FontSize="12" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="3">
+                            <TextBlock Text="{Binding AppName}" Width="160" Foreground="#FFA500"/>
+                            <ProgressBar Width="120" Height="14" Minimum="0" Maximum="100" 
+                                         Value="{Binding Percentage}" Margin="5,0" Foreground="#ADD8E6"/>
+                            <TextBlock Text="{Binding Status}" Margin="5,0,0,0" Foreground="White" Width="150"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </GroupBox>
+
+        <!-- Лог установки -->
+        <GroupBox Grid.Row="3" Header="📝 Лог установки" Foreground="White" BorderBrush="#444" Padding="5" FontSize="13">
+            <TextBox x:Name="txtInstallLog" Background="#1e1e1e" Foreground="#00FF00" 
+                     FontFamily="Consolas" FontSize="12" IsReadOnly="True" 
+                     TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+        </GroupBox>
+    </Grid>
+</Window>

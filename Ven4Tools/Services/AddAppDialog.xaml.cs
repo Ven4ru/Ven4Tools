@@ -1,0 +1,172 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using Ven4Tools.Models;
+
+namespace Ven4Tools.Services
+{
+    public partial class AddAppDialog : Window
+    {
+        public AppInfo? Result { get; private set; }
+        private ObservableCollection<WingetPackage> searchResults = new();
+
+        public AddAppDialog()
+        {
+            InitializeComponent();
+            lstSearchResults.ItemsSource = searchResults;
+        }
+
+        private async void BtnSearchWinget_Click(object sender, RoutedEventArgs e)
+        {
+            string query = txtName.Text.Trim();
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                MessageBox.Show("Введите название программы для поиска.", "Информация", 
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            pbSearchProgress.Visibility = Visibility.Visible;
+            panelSearchResults.Visibility = Visibility.Collapsed;
+            searchResults.Clear();
+            txtNoResults.Visibility = Visibility.Collapsed;
+
+            try
+            {
+                var results = await Task.Run(() => SearchWingetPackages(query));
+                
+                foreach (var pkg in results)
+                {
+                    searchResults.Add(pkg);
+                }
+
+                if (searchResults.Count > 0)
+                {
+                    panelSearchResults.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    txtNoResults.Visibility = Visibility.Visible;
+                    panelSearchResults.Visibility = Visibility.Visible;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при поиске в winget: {ex.Message}", "Ошибка", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                pbSearchProgress.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private List<WingetPackage> SearchWingetPackages(string query)
+        {
+            var results = new List<WingetPackage>();
+
+            try
+            {
+                string args = $"search --name \"{query}\" --source winget --accept-source-agreements";
+                
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "winget.exe",
+                    Arguments = args,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+
+                using (var process = Process.Start(psi))
+                {
+                    if (process == null) return results;
+
+                    string output = process.StandardOutput.ReadToEnd();
+                    process.WaitForExit();
+
+                    var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    bool headerPassed = false;
+                    foreach (var line in lines)
+                    {
+                        if (!headerPassed && line.Contains("--"))
+                        {
+                            headerPassed = true;
+                            continue;
+                        }
+                        if (!headerPassed || line.StartsWith("Имя") || string.IsNullOrWhiteSpace(line))
+                            continue;
+
+                        var parts = Regex.Split(line, @"\s{2,}");
+                        if (parts.Length >= 3)
+                        {
+                            var pkg = new WingetPackage
+                            {
+                                Name = parts[0].Trim(),
+                                Id = parts[1].Trim(),
+                                Version = parts[2].Trim(),
+                                Source = parts.Length > 3 ? parts[3].Trim() : "winget"
+                            };
+                            results.Add(pkg);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка поиска: {ex.Message}");
+            }
+
+            return results;
+        }
+
+        private void BtnOk_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtName.Text))
+            {
+                MessageBox.Show("Введите название программы", "Ошибка", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string wingetId = txtWingetId.Text.Trim();
+            if (lstSearchResults.SelectedItem is WingetPackage selected)
+            {
+                wingetId = selected.Id;
+            }
+
+            var app = new AppInfo
+            {
+                Id = string.IsNullOrWhiteSpace(wingetId) 
+                    ? "User." + Guid.NewGuid().ToString("N") 
+                    : wingetId,
+                DisplayName = txtName.Text,
+                Category = AppCategory.Пользовательские,  // Всегда в пользовательские
+                IsUserAdded = true
+            };
+
+            if (!string.IsNullOrWhiteSpace(txtUrl.Text))
+            {
+                app.InstallerUrls.Add(txtUrl.Text);
+            }
+
+            Result = app;
+            DialogResult = true;
+            Close();
+        }
+
+        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
+        }
+    }
+}
