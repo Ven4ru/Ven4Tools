@@ -76,10 +76,8 @@ dotnet publish -c Release -r win-x64 --self-contained true
 
 Вот этот блок кодом для вставки в README.md:
 
-```markdown
 ## 📁 Структура проекта
 
-```
 Ven4Tools/
 ├── Ven4Tools.exe              # Основная программа
 ├── Ven4Tools.Launcher.exe     # Лаунчер (обновления)
