@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-22 17:48:32",
+  "lastUpdated": "2026-03-22 17:50:41",
   "apps": [
     {
       "id": "7zip",
@@ -235,30 +235,6 @@
       "name": "WinRAR",
       "category": "Системные",
       "wingetId": "RARLab.WinRAR",
-      "downloadUrl": "",
-      "version": "",
-      "size": "",
-      "official": true,
-      "iconUrl": "",
-      "description": ""
-    },
-    {
-      "id": "ed08e0eb-5d49-4a00-b650-0b3c36aaca73",
-      "name": "Google Chrome",
-      "category": "Другое",
-      "wingetId": "Google.Chrome",
-      "downloadUrl": "",
-      "version": "",
-      "size": "",
-      "official": true,
-      "iconUrl": "",
-      "description": ""
-    },
-    {
-      "id": "2308f55b-fb6d-4ea9-98c6-c2508320353d",
-      "name": "Google Chrome",
-      "category": "Браузеры",
-      "wingetId": "Google.Chrome",
       "downloadUrl": "",
       "version": "",
       "size": "",
