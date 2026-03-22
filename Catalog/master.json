@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-22 17:34:20",
+  "lastUpdated": "2026-03-22 17:48:32",
   "apps": [
     {
       "id": "7zip",
@@ -259,6 +259,18 @@
       "name": "Google Chrome",
       "category": "Браузеры",
       "wingetId": "Google.Chrome",
+      "downloadUrl": "",
+      "version": "",
+      "size": "",
+      "official": true,
+      "iconUrl": "",
+      "description": ""
+    },
+    {
+      "id": "408501cc-3f54-43e8-a9aa-33e4b083d0b4",
+      "name": "Adobe Acrobat",
+      "category": "Другое",
+      "wingetId": "Adobe.Acrobat.Pro",
       "downloadUrl": "",
       "version": "",
       "size": "",
