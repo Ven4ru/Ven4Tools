@@ -60,22 +60,6 @@
 
 ---
 
-## 🔨 Сборка из исходников
-
-```bash
-# Клонируйте репозиторий
-git clone https://github.com/Ven4ru/Ven4Tools.git
-cd Ven4Tools
-
-# Сборка основной программы
-dotnet publish -c Release -r win-x64 --self-contained true
-
-# Сборка лаунчера
-cd ../Ven4Tools.Launcher
-dotnet publish -c Release -r win-x64 --self-contained true
-
-Вот этот блок кодом для вставки в README.md:
-
 ## 📁 Структура проекта
 
 Ven4Tools/
