@@ -1,0 +1,14 @@
+﻿{
+  "userAdds": {
+    "7zip": { "count": 0, "wingetIds": [], "urls": [] },
+    "firefox": { "count": 0, "wingetIds": [], "urls": [] },
+    "googlechrome": { "count": 0, "wingetIds": [], "urls": [] },
+    "vlc": { "count": 0, "wingetIds": [], "urls": [] },
+    "libreoffice": { "count": 0, "wingetIds": [], "urls": [] },
+    "telegram": { "count": 0, "wingetIds": [], "urls": [] },
+    "discord": { "count": 0, "wingetIds": [], "urls": [] },
+    "notepadplusplus": { "count": 0, "wingetIds": [], "urls": [] }
+  },
+  "overrides": {},
+  "lastUpdate": "2025-03-22 16:30:00"
+}
