@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-24 02:09:32",
+  "lastUpdated": "2026-03-24 02:10:08",
   "apps": [
     {
       "id": "7zip",
@@ -139,6 +139,18 @@
       "name": "WinRAR",
       "category": "Системные",
       "wingetId": "RARLab.WinRAR",
+      "downloadUrl": "",
+      "version": "",
+      "size": "",
+      "official": true,
+      "iconUrl": "",
+      "description": ""
+    },
+    {
+      "id": "a3190575-7602-4527-9d89-b5ed2e2a01fc",
+      "name": "Яндекс браузер",
+      "category": "Другое",
+      "wingetId": "Browser",
       "downloadUrl": "",
       "version": "",
       "size": "",
