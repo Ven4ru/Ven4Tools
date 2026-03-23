@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-24 00:17:45",
+  "lastUpdated": "2026-03-24 00:21:56",
   "apps": [
     {
       "id": "7zip",
@@ -85,18 +85,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Система контроля версий для разработчиков."
-    },
-    {
-      "id": "nodejs",
-      "name": "Node.js",
-      "category": "Разработка",
-      "wingetId": "OpenJS.NodeJS",
-      "downloadUrl": "https://nodejs.org/dist/v22.13.1/node-v22.13.1-x64.msi",
-      "version": "22.13.1",
-      "size": "~35 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "JavaScript-среда выполнения для серверных приложений."
     },
     {
       "id": "spotify",
