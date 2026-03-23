@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-24 00:10:51",
+  "lastUpdated": "2026-03-24 00:17:45",
   "apps": [
     {
       "id": "7zip",
@@ -97,18 +97,6 @@
       "official": true,
       "iconUrl": "",
       "description": "JavaScript-среда выполнения для серверных приложений."
-    },
-    {
-      "id": "python",
-      "name": "Python",
-      "category": "Разработка",
-      "wingetId": "Python.Python.3.13",
-      "downloadUrl": "https://www.python.org/ftp/python/3.13.2/python-3.13.2-amd64.exe",
-      "version": "3.13.2",
-      "size": "~30 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Язык программирования Python с установщиком."
     },
     {
       "id": "spotify",
