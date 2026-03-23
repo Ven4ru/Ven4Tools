@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;  // ← ДОБАВЬТЕ ЭТУ СТРОКУ
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Input;
 using Microsoft.Win32;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
-using System.Windows.Input;  // Добавить эту строку
 
 namespace Ven4Tools
 {
@@ -27,7 +28,8 @@ private readonly AvailabilityChecker availabilityChecker = null!;
         private Dictionary<string, CheckBox> appCheckBoxes = new();
         private Dictionary<AppCategory, StackPanel> categoryPanels = new();
         private Dictionary<string, AvailabilityChecker.AvailabilityStatus> availabilityStatus = new();
-
+private MasterCatalog? _catalog;
+private CatalogLoaderService? _catalogLoader;
         private const string TurboBoostRegPath = @"SYSTEM\ControlSet001\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7";
                
         // Для выбора диска
@@ -36,6 +38,7 @@ private readonly AvailabilityChecker availabilityChecker = null!;
 
 
 // Добавляем проверку при старте (опционально)
+
 
 public MainWindow()
 {
@@ -46,34 +49,39 @@ public MainWindow()
     }
 
     InitializeComponent();
-    
+    _catalogLoader = new CatalogLoaderService();
+    Loaded += async (s, e) => await LoadCatalogAndRefreshAsync();
     appManager = new AppManager();
     installService = new InstallationService();
     availabilityChecker = new AvailabilityChecker();
     
     txtAdminStatus.Text = "✅ Активированы права администратора";
     
-    // Устанавливаем начальную версию в заголовок
-    var version = System.Reflection.Assembly.GetExecutingAssembly()
-        .GetName()
-        .Version;
-    string currentVersion = "2.2.4";  // Жёстко задаём версию
+    // Устанавливаем версию
+    string currentVersion = "2.3.0";
     txtVersionTitle.Text = $"Ven4Tools v{currentVersion}";
     
     InitCategoryPanels();
     LoadAvailableDisks();
-    LoadApps();
     
+    // LoadApps будет вызван после загрузки каталога
     UpdateSpaceStatus();
     
     try
     {
         File.AppendAllText(@"C:\Users\Ven4\debug_constructor.log", 
-            $"{DateTime.Now}: Конструктор, готовимся вызвать CheckForUpdatesOnStartup\n");
+            $"{DateTime.Now}: Конструктор выполнен\n");
     }
     catch { }
-    
-    
+}
+
+private void AddLog(string message)
+{
+    Dispatcher.Invoke(() =>
+    {
+        txtInstallLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
+        txtInstallLog.ScrollToEnd();
+    });
 }
 
         public void LogMessage(string message)
@@ -180,35 +188,410 @@ private async void LoadApps()
 {
     try
     {
-        var apps = appManager.GetAllApps();
-        
-        foreach (var app in apps)
+        // Очищаем старые панели
+        foreach (var panel in categoryPanels.Values)
         {
-            if (categoryPanels.TryGetValue(app.Category, out var panel) && panel != null)
+            panel.Children.Clear();
+        }
+        appCheckBoxes.Clear();
+        availabilityStatus.Clear();
+        
+        AddLog($"Каталог содержит {_catalog?.Apps.Count ?? 0} приложений");
+        
+        // Загружаем приложения из каталога
+        if (_catalog != null && _catalog.Apps.Any())
+        {
+            AddLog($"Загружаем приложения из каталога ({_catalog.Apps.Count} шт.)");
+            
+            foreach (var app in _catalog.Apps)
             {
-                var checkBox = new CheckBox
-                {
-                    Content = app.DisplayName,
-                    Tag = app.Id,
-                    Foreground = Brushes.Gray,
-                    Margin = new Thickness(0, 2, 0, 2),
-                    ToolTip = "⚠️ Проверка доступности..."
-                };
-
-                panel.Children.Add(checkBox);
-                appCheckBoxes[app.Id] = checkBox;
+                var category = GetCategoryFromString(app.Category);
                 
-                // Запускаем проверку для этого приложения в фоне
-                _ = CheckSingleAppAvailability(app.Id);
+                if (categoryPanels.TryGetValue(category, out var panel) && panel != null)
+                {
+                    var checkBox = new CheckBox
+                    {
+                        Content = app.Name,
+                        Tag = app.Id,
+                        Foreground = Brushes.Gray,
+                        Margin = new Thickness(0, 2, 0, 2),
+                        ToolTip = "Проверка доступности..."
+                    };
+
+                    panel.Children.Add(checkBox);
+                    appCheckBoxes[app.Id] = checkBox;
+                    _ = CheckAppAvailabilityFromCatalog(app);
+                }
+                else
+                {
+                    AddLog($"Категория '{app.Category}' не найдена, добавляем в 'Другое'");
+                    if (categoryPanels.TryGetValue(AppCategory.Другое, out var otherPanel))
+                    {
+                        var checkBox = new CheckBox
+                        {
+                            Content = app.Name,
+                            Tag = app.Id,
+                            Foreground = Brushes.Gray,
+                            Margin = new Thickness(0, 2, 0, 2),
+                            ToolTip = "Проверка доступности..."
+                        };
+                        otherPanel.Children.Add(checkBox);
+                        appCheckBoxes[app.Id] = checkBox;
+                        _ = CheckAppAvailabilityFromCatalog(app);
+                    }
+                }
             }
+            
+            LogMessage($"Загружено {_catalog.Apps.Count} приложений из каталога");
+        }
+        else
+        {
+            AddLog("Каталог пуст или не загружен");
         }
         
-        LogMessage($"📋 Загружено {apps.Count} приложений. Проверка доступности запущена...");
-        LoadSavedSelection();
+        // Загружаем пользовательские приложения
+        var userApps = appManager.GetAllApps().Where(a => a.IsUserAdded).ToList();
+        if (userApps.Any())
+        {
+            AddLog($"Загружаем пользовательские приложения ({userApps.Count} шт.)");
+            
+            foreach (var app in userApps)
+            {
+                AddUserAppToUI(app);
+            }
+            
+            LogMessage($"Загружено {userApps.Count} пользовательских приложений");
+        }
     }
     catch (Exception ex)
     {
-        LogMessage($"❌ Ошибка при загрузке приложений: {ex.Message}");
+        LogMessage($"Ошибка при загрузке приложений: {ex.Message}");
+        AddLog($"Ошибка: {ex.Message}");
+    }
+}
+
+// Добавь этот метод в класс MainWindow
+private void AddUserAppToUI(AppInfo app)
+{
+    var checkBox = new CheckBox
+    {
+        Content = app.DisplayName,
+        Tag = app.Id,
+        Foreground = Brushes.Orange,
+        Margin = new Thickness(0, 2, 0, 2),
+        ToolTip = "👤 Пользовательское приложение"
+    };
+    
+    var removeButton = new Button
+    {
+        Content = "❌",
+        Width = 20,
+        Height = 20,
+        Margin = new Thickness(5, 0, 0, 0),
+        Tag = app.Id,
+        Background = new SolidColorBrush(Color.FromRgb(100, 0, 0)),
+        Foreground = Brushes.White,
+        FontSize = 10,
+        Padding = new Thickness(0),
+        ToolTip = "Удалить из списка"
+    };
+    removeButton.Click += (s, args) => RemoveUserApp(app.Id);
+    
+    var panel = new StackPanel { Orientation = Orientation.Horizontal };
+    panel.Children.Add(checkBox);
+    panel.Children.Add(removeButton);
+    
+    PanelПользовательские.Children.Add(panel);
+    appCheckBoxes[app.Id] = checkBox;
+}
+
+
+private async Task LoadCatalogAndRefreshAsync()
+{
+    try
+    {
+        if (_catalogLoader == null) return;
+        
+        _catalog = await _catalogLoader.LoadCatalogAsync();
+        
+        string sourceText = _catalog.Source switch
+        {
+            "online" => "🌐 Каталог загружен из интернета",
+            "cache" => "💾 Каталог из кэша (интернет недоступен)",
+            "embedded" => "📀 Встроенный каталог (минимальный набор)",
+            _ => "❓ Неизвестный источник"
+        };
+        
+        AddLog(sourceText);
+        AddLog($"Загружено приложений: {_catalog.Apps.Count}");
+        
+        // ВЫЗЫВАЕМ ЗАГРУЗКУ ПРИЛОЖЕНИЙ ПОСЛЕ КАТАЛОГА
+        LoadApps();
+    }
+    catch (Exception ex)
+    {
+        AddLog($"Ошибка загрузки каталога: {ex.Message}");
+    }
+}
+
+private async Task CheckAppAvailabilityFromCatalog(Models.App catalogApp)
+{
+    try
+    {
+        // Преобразуем модель каталога в AppInfo для совместимости
+        var appInfo = new AppInfo
+        {
+            Id = catalogApp.Id,
+            DisplayName = catalogApp.Name,
+            Category = GetCategoryFromString(catalogApp.Category),
+            InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl) 
+                ? new List<string> { catalogApp.DownloadUrl } 
+                : new List<string>(),
+            RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
+            IsUserAdded = false
+        };
+        
+        // Проверяем доступность
+        var availabilityResult = await availabilityChecker.CheckAppAvailabilityWithSize(appInfo);
+        var status = availabilityResult.Status;
+        var size = availabilityResult.SizeMB;
+        
+        await Dispatcher.InvokeAsync(() =>
+        {
+            if (appCheckBoxes.TryGetValue(catalogApp.Id, out var checkBox))
+            {
+                availabilityStatus[catalogApp.Id] = status;
+                
+                switch (status)
+                {
+                    case AvailabilityChecker.AvailabilityStatus.Available:
+                        checkBox.Foreground = Brushes.LightGreen;
+                        checkBox.ToolTip = $"✅ Доступно для установки ({(size > 0 ? $"~{size} МБ" : "размер неизвестен")})";
+                        checkBox.IsEnabled = true;
+                        LogMessage($"✅ {catalogApp.Name} доступен" + (size > 0 ? $" (~{size} МБ)" : ""));
+                        break;
+                        
+                    case AvailabilityChecker.AvailabilityStatus.Unavailable:
+                        checkBox.Foreground = Brushes.LightCoral;
+                        checkBox.ToolTip = "❌ Недоступно";
+                        checkBox.IsEnabled = false;
+                        AddSuggestionButtonFromCatalog(catalogApp, checkBox);
+                        LogMessage($"❌ {catalogApp.Name} недоступен");
+                        break;
+                        
+                    default:
+                        checkBox.Foreground = Brushes.Gray;
+                        checkBox.ToolTip = "⚠️ Статус неизвестен";
+                        checkBox.IsEnabled = true;
+                        break;
+                }
+                
+                checkBox.InvalidateVisual();
+            }
+        });
+    }
+    catch (Exception ex)
+    {
+        LogMessage($"❌ Ошибка при проверке {catalogApp.Name}: {ex.Message}");
+    }
+}
+private async void BtnRefreshCatalog_Click(object sender, RoutedEventArgs e)
+{
+    AddLog("🔄 Обновление каталога с GitHub...");
+    
+    try
+    {
+        // 1. Показываем текущий URL
+        var url = "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/master.json";
+        AddLog($"📡 URL: {url}");
+        
+        // 2. Проверяем версию на GitHub напрямую
+        using var client = new HttpClient();
+        client.Timeout = TimeSpan.FromSeconds(5);
+        client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+        
+        var response = await client.GetAsync(url);
+        AddLog($"📡 HTTP статус: {response.StatusCode}");
+        
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            AddLog($"📦 Размер JSON: {json.Length} байт");
+            
+            // Ищем дату обновления
+            var dateMatch = System.Text.RegularExpressions.Regex.Match(json, @"""lastUpdated"":\s*""([^""]+)""");
+            if (dateMatch.Success)
+            {
+                AddLog($"📅 Версия на GitHub: {dateMatch.Groups[1].Value}");
+            }
+        }
+        
+        // 3. Очищаем кэш
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+var catalogCachePath = Path.Combine(localAppData, "Ven4Tools", "catalog_cache.json");
+
+AddLog($"🗑️ Путь к кэшу: {catalogCachePath}");
+
+if (File.Exists(catalogCachePath))
+{
+    AddLog($"🗑️ Файл существует, размер: {new FileInfo(catalogCachePath).Length} байт");
+    File.Delete(catalogCachePath);
+    AddLog("🗑️ Кэш удалён");
+    
+    // Проверяем, что удалилось
+    if (File.Exists(catalogCachePath))
+    {
+        AddLog("❌ Ошибка: кэш не удалился!");
+    }
+    else
+    {
+        AddLog("✅ Кэш успешно удалён");
+    }
+}
+else
+{
+    AddLog("⚠️ Кэш не найден");
+}
+        
+        // 4. Загружаем свежий каталог
+        AddLog("📥 Загружаем свежий каталог...");
+        _catalog = await _catalogLoader.LoadCatalogAsync();
+        
+        AddLog($"📦 Загружено приложений: {_catalog.Apps.Count}");
+        AddLog($"📅 Версия в загруженном каталоге: {_catalog.LastUpdated}");
+        AddLog($"🌐 Источник: {_catalog.Source}");
+        
+        // 5. Перезагружаем UI
+        AddLog("🔄 Перезагружаем интерфейс...");
+        LoadApps();
+        
+        AddLog("✅ Каталог успешно обновлён");
+    }
+    catch (Exception ex)
+    {
+        AddLog($"❌ Ошибка: {ex.Message}");
+        AddLog($"📋 StackTrace: {ex.StackTrace}");
+    }
+}
+private AppCategory GetCategoryFromString(string category)
+{
+    return category switch
+    {
+        "Браузеры" => AppCategory.Браузеры,
+        "Офис" => AppCategory.Офис,
+        "Графика" => AppCategory.Графика,
+        "Разработка" => AppCategory.Разработка,
+        "Мессенджеры" => AppCategory.Мессенджеры,
+        "Мультимедиа" => AppCategory.Мультимедиа,
+        "Системные" => AppCategory.Системные,
+        "Игровые сервисы" => AppCategory.ИгровыеСервисы,
+        "Драйверпаки" => AppCategory.Драйверпаки,
+        _ => AppCategory.Другое
+    };
+}
+
+private int ParseSizeToMB(string size)
+{
+    if (string.IsNullOrEmpty(size)) return 100;
+    
+    try
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(size, @"(\d+(?:\.\d+)?)");
+        if (match.Success && double.TryParse(match.Value, out double value))
+        {
+            if (size.Contains("GB", StringComparison.OrdinalIgnoreCase))
+                return (int)(value * 1024);
+            return (int)value;
+        }
+    }
+    catch { }
+    return 100;
+}
+
+private void AddSuggestionButtonFromCatalog(Models.App catalogApp, CheckBox checkBox)
+{
+    var parentPanel = VisualTreeHelper.GetParent(checkBox) as StackPanel;
+    if (parentPanel == null) return;
+
+    var existingButton = parentPanel.Children
+        .OfType<Button>()
+        .FirstOrDefault(b => b.Tag?.ToString() == catalogApp.Id + "_suggest");
+    
+    if (existingButton != null) return;
+
+    var newRow = new StackPanel 
+    { 
+        Orientation = Orientation.Horizontal,
+        Margin = new Thickness(0, 2, 0, 2)
+    };
+
+    var newCheckBox = new CheckBox
+    {
+        Content = checkBox.Content,
+        Tag = checkBox.Tag,
+        Foreground = checkBox.Foreground,
+        Margin = new Thickness(0, 0, 5, 0),
+        IsChecked = checkBox.IsChecked,
+        ToolTip = checkBox.ToolTip,
+        IsEnabled = checkBox.IsEnabled
+    };
+
+    var suggestButton = new Button
+    {
+        Content = "🔄",
+        Width = 20,
+        Height = 20,
+        Margin = new Thickness(0, 0, 0, 0),
+        Tag = catalogApp.Id + "_suggest",
+        Background = new SolidColorBrush(Color.FromRgb(255, 140, 0)),
+        Foreground = Brushes.White,
+        FontSize = 10,
+        Padding = new Thickness(0),
+        ToolTip = "Предложить альтернативный источник",
+        Cursor = Cursors.Hand,
+        VerticalAlignment = VerticalAlignment.Center
+    };
+    
+    suggestButton.Click += async (s, e) => await SuggestAlternativeForCatalog(catalogApp);
+
+    newRow.Children.Add(newCheckBox);
+    newRow.Children.Add(suggestButton);
+
+    int index = parentPanel.Children.IndexOf(checkBox);
+    parentPanel.Children.RemoveAt(index);
+    parentPanel.Children.Insert(index, newRow);
+
+    appCheckBoxes[catalogApp.Id] = newCheckBox;
+}
+
+private async Task SuggestAlternativeForCatalog(Models.App catalogApp)
+{
+    try
+    {
+        var dialog = new AlternativeSourceDialog(catalogApp.Name)
+        {
+            Owner = this
+        };
+        
+        if (dialog.ShowDialog() == true)
+        {
+            if (dialog.SelectedPackage != null)
+            {
+                AddLog($"🔍 Сохранена альтернатива для {catalogApp.Name}: {dialog.SelectedPackage.Id}");
+                await Task.Delay(500);
+                await CheckAppAvailabilityFromCatalog(catalogApp);
+            }
+            else if (!string.IsNullOrEmpty(dialog.CustomUrl))
+            {
+                AddLog($"💾 Для {catalogApp.Name} сохранена ссылка: {dialog.CustomUrl}");
+                await Task.Delay(500);
+                await CheckAppAvailabilityFromCatalog(catalogApp);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        AddLog($"❌ Ошибка при поиске альтернативы: {ex.Message}");
     }
 }
 
@@ -918,48 +1301,86 @@ private async void UpdateSpaceStatus()
             LogMessage($"🔄 Повторная установка: {retryCompleted} успешно, {retryFailed} ошибок");
         }
 
-        private void BtnAddApp_Click(object sender, RoutedEventArgs e)
+private async void BtnAddApp_Click(object sender, RoutedEventArgs e)
+{
+    // 1. Проверяем, нужно ли спрашивать согласие
+    var consentService = new ConsentService();
+    var shouldAsk = await consentService.ShouldAskForConsentAsync();
+    
+    bool allowStats = true;
+    
+    if (shouldAsk)
+    {
+        var dialog = new Views.ConsentDialog();
+        dialog.Owner = this;
+        
+        if (dialog.ShowDialog() == true)
         {
-            var dialog = new AddAppDialog { Owner = this };
-            if (dialog.ShowDialog() == true && dialog.Result != null)
-            {
-                appManager.AddUserApp(dialog.Result);
-                
-                var checkBox = new CheckBox
-                {
-                    Content = dialog.Result.DisplayName,
-                    Tag = dialog.Result.Id,
-                    Foreground = Brushes.Orange,
-                    Margin = new Thickness(0, 2, 0, 2),
-                    ToolTip = "👤 Пользовательское приложение"
-                };
-                
-                var removeButton = new Button
-                {
-                    Content = "❌",
-                    Width = 20,
-                    Height = 20,
-                    Margin = new Thickness(5, 0, 0, 0),
-                    Tag = dialog.Result.Id,
-                    Background = new SolidColorBrush(Color.FromRgb(100, 0, 0)),
-                    Foreground = Brushes.White,
-                    FontSize = 10,
-                    Padding = new Thickness(0),
-                    ToolTip = "Удалить из списка"
-                };
-                removeButton.Click += (s, args) => RemoveUserApp(dialog.Result.Id);
-                
-                var panel = new StackPanel { Orientation = Orientation.Horizontal };
-                panel.Children.Add(checkBox);
-                panel.Children.Add(removeButton);
-                
-                PanelПользовательские.Children.Add(panel);
-                appCheckBoxes[dialog.Result.Id] = checkBox;
-                
-                LogMessage($"➕ Добавлено пользовательское приложение: {dialog.Result.DisplayName}");
-            }
+            allowStats = dialog.AllowStats;
+            await consentService.SaveConsentAsync(allowStats);
         }
-
+        else
+        {
+            return;
+        }
+    }
+    else
+    {
+        allowStats = await consentService.IsStatsAllowedAsync();
+    }
+    
+    // 2. Открываем диалог добавления
+    var addDialog = new AddAppDialog { Owner = this };
+    if (addDialog.ShowDialog() == true && addDialog.Result != null)
+    {
+        var newApp = addDialog.Result;
+        
+        // 3. Добавляем в user.json
+        appManager.AddUserApp(newApp);
+        
+        // 4. Добавляем в UI (используем общий метод)
+        AddUserAppToUI(newApp);
+        
+        // 5. Отправляем статистику, если разрешено
+        if (allowStats)
+        {
+            var statsService = new StatsService();
+            
+            // Определяем Winget ID для статистики
+            string? wingetId = null;
+            
+            // Пытаемся найти приложение в основном каталоге
+            if (_catalog != null)
+            {
+                var catalogApp = _catalog.Apps.FirstOrDefault(a => a.Name == newApp.DisplayName);
+                if (catalogApp != null && !string.IsNullOrEmpty(catalogApp.WingetId))
+                {
+                    wingetId = catalogApp.WingetId;
+                }
+            }
+            
+            // Если не нашли в каталоге, используем AlternativeId
+            if (string.IsNullOrEmpty(wingetId) && !string.IsNullOrEmpty(newApp.AlternativeId))
+            {
+                wingetId = newApp.AlternativeId;
+            }
+            
+            await statsService.TrackUserAddAsync(
+                newApp.Id, 
+                wingetId,
+                newApp.InstallerUrls.FirstOrDefault()
+            );
+            
+            LogMessage($"📊 Статистика отправлена" + (!string.IsNullOrEmpty(wingetId) ? $" (Winget ID: {wingetId})" : ""));
+        }
+        else
+        {
+            LogMessage("🔒 Статистика не отправляется (вы отказались)");
+        }
+        
+        LogMessage($"➕ Добавлено пользовательское приложение: {newApp.DisplayName}");
+    }
+}
         private void RemoveUserApp(string appId)
         {
             var result = MessageBox.Show("Удалить приложение из списка?", "Подтверждение", 

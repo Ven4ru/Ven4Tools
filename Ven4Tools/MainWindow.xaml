@@ -250,10 +250,26 @@
                    HorizontalAlignment="Center" FontSize="12" Margin="0,0,0,5"/>
         
         <!-- Кнопки -->
-        <Button x:Name="btnRefreshAvailability" Content="🔄 Проверить доступность" 
-                Background="#4CAF50" Foreground="White" Click="RefreshAvailability_Click"
-                HorizontalAlignment="Stretch" Padding="5" Margin="0,5,0,0" Height="30"/>
-        
+<StackPanel HorizontalAlignment="Center" Margin="0,5,0,0">
+    <Button x:Name="btnRefreshAvailability" 
+            Content="🔄 Проверить доступность" 
+            Background="#4CAF50" 
+            Foreground="White" 
+            Width="200" 
+            Height="32" 
+            Margin="0,0,0,8"
+            FontWeight="SemiBold"
+            Click="RefreshAvailability_Click"/>
+    <Button x:Name="btnRefreshCatalog" 
+            Content="📥 Обновить каталог" 
+            Background="#2196F3" 
+            Foreground="White" 
+            Width="200" 
+            Height="32" 
+            Margin="0,0,0,0"
+            FontWeight="SemiBold"
+            Click="BtnRefreshCatalog_Click"/>
+</StackPanel>
       
         <!-- Легенда статусов -->
         <WrapPanel HorizontalAlignment="Center" Margin="0,5,0,0">
