@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-24 02:12:07",
+  "lastUpdated": "2026-03-24 02:29:53",
   "apps": [
     {
       "id": "7zip",
@@ -157,6 +157,18 @@
       "official": true,
       "iconUrl": "",
       "description": ""
+    },
+    {
+      "id": "49544ed9-01d0-47b7-a3d6-c9e0e9acf3d6",
+      "name": "yandex",
+      "category": "Другое",
+      "wingetId": "Browser",
+      "downloadUrl": "",
+      "version": "113.0.5230.86",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Описание отсутствует"
     }
   ]
 }
