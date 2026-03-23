@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-24 00:21:56",
+  "lastUpdated": "2026-03-24 00:30:47",
   "apps": [
     {
       "id": "7zip",
@@ -133,18 +133,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Мгновенный поиск файлов на компьютере."
-    },
-    {
-      "id": "greenshot",
-      "name": "Greenshot",
-      "category": "Системные",
-      "wingetId": "Greenshot.Greenshot",
-      "downloadUrl": "https://github.com/greenshot/greenshot/releases/download/Greenshot-RELEASE-1.2.10.6/Greenshot-INSTALLER-1.2.10.6-RELEASE.exe",
-      "version": "1.2.10",
-      "size": "~15 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Мощный инструмент для создания скриншотов."
     },
     {
       "id": "keepass",
