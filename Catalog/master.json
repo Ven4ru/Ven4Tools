@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-24 00:30:47",
+  "lastUpdated": "2026-03-24 00:42:52",
   "apps": [
     {
       "id": "7zip",
@@ -109,18 +109,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Программа для записи и стриминга видео."
-    },
-    {
-      "id": "gimp",
-      "name": "GIMP",
-      "category": "Графика",
-      "wingetId": "GIMP.GIMP",
-      "downloadUrl": "https://download.gimp.org/pub/gimp/v2.10/windows/gimp-2.10.38-setup-1.exe",
-      "version": "2.10.38",
-      "size": "~280 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Свободный растровый графический редактор."
     },
     {
       "id": "everything",
