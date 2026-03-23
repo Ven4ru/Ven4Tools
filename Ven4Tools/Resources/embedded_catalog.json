@@ -1,0 +1,30 @@
+﻿{
+  "version": 1,
+  "lastUpdated": "2025-03-23 10:00:00",
+  "apps": [
+    {
+      "id": "7zip",
+      "name": "7-Zip",
+      "category": "Системные",
+      "wingetId": "7zip.7zip",
+      "downloadUrl": "https://www.7-zip.org/a/7z2409-x64.exe",
+      "version": "24.09",
+      "size": "1.5 MB",
+      "official": true,
+      "offlineCapable": true,
+      "description": "Архиватор с высокой степенью сжатия"
+    },
+    {
+      "id": "firefox",
+      "name": "Mozilla Firefox",
+      "category": "Браузеры",
+      "wingetId": "Mozilla.Firefox",
+      "downloadUrl": "https://download.mozilla.org/?product=firefox-latest&os=win64&lang=ru",
+      "version": "136.0",
+      "size": "~60 MB",
+      "official": true,
+      "offlineCapable": false,
+      "description": "Быстрый и безопасный браузер"
+    }
+  ]
+}
