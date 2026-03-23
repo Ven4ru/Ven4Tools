@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-24 02:45:23",
+  "lastUpdated": "2026-03-24 02:45:46",
   "apps": [
     {
       "id": "7zip",
@@ -145,6 +145,18 @@
       "official": true,
       "iconUrl": "",
       "description": ""
+    },
+    {
+      "id": "db53d778-139e-487b-b0b4-f72d3193de79",
+      "name": "python",
+      "category": "Другое",
+      "wingetId": "3.13",
+      "downloadUrl": "",
+      "version": "Unknown",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Описание отсутствует"
     }
   ]
 }
