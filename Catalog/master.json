@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-24 02:10:08",
+  "lastUpdated": "2026-03-24 02:10:20",
   "apps": [
     {
       "id": "7zip",
@@ -149,7 +149,7 @@
     {
       "id": "a3190575-7602-4527-9d89-b5ed2e2a01fc",
       "name": "Яндекс браузер",
-      "category": "Другое",
+      "category": "Браузеры",
       "wingetId": "Browser",
       "downloadUrl": "",
       "version": "",
