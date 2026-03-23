@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Ven4Tools.Models;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Services
 {
@@ -128,7 +129,7 @@ namespace Ven4Tools.Services
             return results;
         }
 
-        private void BtnOk_Click(object sender, RoutedEventArgs e)
+        private async void BtnOk_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtName.Text))
             {
@@ -137,19 +138,22 @@ namespace Ven4Tools.Services
                 return;
             }
 
-            string wingetId = txtWingetId.Text.Trim();
+            string wingetIdValue = txtWingetId.Text.Trim();
+            string? selectedWingetId = null;
+            
             if (lstSearchResults.SelectedItem is WingetPackage selected)
             {
-                wingetId = selected.Id;
+                wingetIdValue = selected.Id;
+                selectedWingetId = selected.Id;
             }
 
             var app = new AppInfo
             {
-                Id = string.IsNullOrWhiteSpace(wingetId) 
+                Id = string.IsNullOrWhiteSpace(wingetIdValue) 
                     ? "User." + Guid.NewGuid().ToString("N") 
-                    : wingetId,
+                    : wingetIdValue,
                 DisplayName = txtName.Text,
-                Category = AppCategory.Пользовательские,  // Всегда в пользовательские
+                Category = AppCategory.Пользовательские,
                 IsUserAdded = true
             };
 
@@ -159,6 +163,33 @@ namespace Ven4Tools.Services
             }
 
             Result = app;
+            
+            // Отправка статистики
+            try
+            {
+                var consentService = new ConsentService();
+                var allowStats = await consentService.IsStatsAllowedAsync();
+                
+                if (allowStats)
+                {
+                    var statsService = new StatsService();
+                    await statsService.TrackUserAddAsync(
+                        app.Id,
+                        selectedWingetId,
+                        txtUrl.Text.Trim()
+                    );
+                    Debug.WriteLine($"Статистика отправлена для {app.DisplayName}");
+                }
+                else
+                {
+                    Debug.WriteLine("Статистика не отправляется (пользователь отказался)");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка статистики: {ex.Message}");
+            }
+            
             DialogResult = true;
             Close();
         }

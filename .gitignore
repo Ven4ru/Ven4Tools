@@ -1,0 +1,48 @@
+﻿# Binaries
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio
+.vs/
+
+# Token storage (GitHub token protection)
+token.dat
+*.token
+*.secret
+**/token.dat
+
+# GitHub tokens
+ghp_*
+
+# Backup files
+*.backup
+*.old
+
+# Runtime data
+*.log
+*.cache
+*.tmp
+
+# NuGet packages
+packages/
+*.nupkg
+
+# Publish output
+publish/
