@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 00:49:48",
+  "lastUpdated": "2026-03-25 01:16:25",
   "apps": [
     {
       "id": "7zip",
@@ -153,6 +153,18 @@
       "wingetId": "Python.Python.3.14",
       "downloadUrl": "",
       "version": "Unknown",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Описание отсутствует"
+    },
+    {
+      "id": "06488520-ba5d-4dc4-beb9-cdd790e0ce0a",
+      "name": "Yandex Browser",
+      "category": "Другое",
+      "wingetId": "",
+      "downloadUrl": "",
+      "version": "25.12.5.693",
       "size": "~100 MB",
       "official": true,
       "iconUrl": "",
