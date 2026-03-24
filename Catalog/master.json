@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:19:48",
+  "lastUpdated": "2026-03-25 01:20:50",
   "apps": [
     {
       "id": "7zip",
@@ -201,6 +201,18 @@
       "wingetId": "CrystalDewWorld.CrystalDiskMark.AoiEdition",
       "downloadUrl": "",
       "version": "9.0.2",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Описание отсутствует"
+    },
+    {
+      "id": "3d8de6e0-4a61-4c66-9b52-03d5f3f732b9",
+      "name": "Driver Booster Pro 13",
+      "category": "Другое",
+      "wingetId": "",
+      "downloadUrl": "https://disk.yandex.ru/d/6gUHS4QWiZgkIg",
+      "version": "latest",
       "size": "~100 MB",
       "official": true,
       "iconUrl": "",
