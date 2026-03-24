@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 00:00:05",
+  "lastUpdated": "2026-03-25 00:49:48",
   "apps": [
     {
       "id": "7zip",
@@ -150,7 +150,7 @@
       "id": "db53d778-139e-487b-b0b4-f72d3193de79",
       "name": "python",
       "category": "Разработка",
-      "wingetId": "Python.123",
+      "wingetId": "Python.Python.3.14",
       "downloadUrl": "",
       "version": "Unknown",
       "size": "~100 MB",
