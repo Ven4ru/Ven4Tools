@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:23:01",
+  "lastUpdated": "2026-03-25 01:23:05",
   "apps": [
     {
       "id": "7zip",
@@ -109,18 +109,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Программа для записи и стриминга видео."
-    },
-    {
-      "id": "keepass",
-      "name": "KeePass",
-      "category": "Системные",
-      "wingetId": "DominikReichl.KeePass",
-      "downloadUrl": "https://downloads.sourceforge.net/keepass/KeePass-2.57.1-Setup.exe",
-      "version": "2.57.1",
-      "size": "~5 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Менеджер паролей с открытым исходным кодом."
     },
     {
       "id": "86ea58e6-fb20-43e1-b1ae-609c12536434",
