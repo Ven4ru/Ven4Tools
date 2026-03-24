@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:23:53",
+  "lastUpdated": "2026-03-25 01:24:30",
   "apps": [
     {
       "id": "7zip",
@@ -213,6 +213,18 @@
       "wingetId": "Blizzard.BattleNet",
       "downloadUrl": "",
       "version": "1.19.0.3190",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Описание отсутствует"
+    },
+    {
+      "id": "f9ebd537-dda5-41de-9d51-9828191d215e",
+      "name": "AIDA64 EXTREME",
+      "category": "Другое",
+      "wingetId": "FinalWire.AIDA64.Extreme",
+      "downloadUrl": "",
+      "version": "8.25",
       "size": "~100 MB",
       "official": true,
       "iconUrl": "",
