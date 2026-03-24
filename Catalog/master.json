@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:16:25",
+  "lastUpdated": "2026-03-25 01:16:52",
   "apps": [
     {
       "id": "7zip",
@@ -160,9 +160,9 @@
     },
     {
       "id": "06488520-ba5d-4dc4-beb9-cdd790e0ce0a",
-      "name": "Yandex Browser",
+      "name": "Yandex",
       "category": "Другое",
-      "wingetId": "",
+      "wingetId": "Yandex.Browser",
       "downloadUrl": "",
       "version": "25.12.5.693",
       "size": "~100 MB",
