@@ -82,10 +82,21 @@
             </Grid>
         </Border>
         
- <StackPanel Grid.Row="3" Orientation="Vertical" HorizontalAlignment="Center">
+<StackPanel Grid.Row="3" Orientation="Vertical" HorizontalAlignment="Center">
     <!-- Первая строка: основные кнопки -->
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-        <Button Name="BtnInstall" 
+        <Button x:Name="BtnSelectPath" 
+                Content="📁 Выбрать папку" 
+                Width="110" 
+                Height="40"
+                Margin="0,0,10,0"
+                Background="#2196F3" 
+                Foreground="White"
+                BorderThickness="0"
+                Cursor="Hand"
+                FontSize="12"
+                Click="BtnSelectPath_Click"/>
+        <Button x:Name="BtnInstall" 
                 Content="📥 Установить" 
                 Width="110" 
                 Height="40"
@@ -96,7 +107,7 @@
                 Cursor="Hand"
                 FontSize="12"
                 Click="BtnInstall_Click"/>
-        <Button Name="BtnUpdate" 
+        <Button x:Name="BtnUpdate" 
                 Content="🔄 Обновить" 
                 Width="110" 
                 Height="40"
@@ -107,7 +118,7 @@
                 Cursor="Hand"
                 FontSize="12"
                 Click="BtnUpdate_Click"/>
-        <Button Name="BtnLaunch" 
+        <Button x:Name="BtnLaunch" 
                 Content="🚀 Запустить" 
                 Width="110" 
                 Height="40"
@@ -118,7 +129,7 @@
                 Cursor="Hand"
                 FontSize="12"
                 Click="BtnLaunch_Click"/>
-        <Button Name="CloseButton" 
+        <Button x:Name="CloseButton" 
                 Content="❌ Закрыть" 
                 Width="110" 
                 Height="40"
@@ -132,7 +143,7 @@
     
     <!-- Вторая строка: дополнительные кнопки -->
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-        <Button Name="BtnRefresh" 
+        <Button x:Name="BtnRefresh" 
                 Content="🔄 Обновить статус" 
                 Width="120" 
                 Height="35"
@@ -142,6 +153,17 @@
                 Cursor="Hand"
                 FontSize="11"
                 Click="BtnRefresh_Click"/>
+        <Button x:Name="BtnFeedback" 
+                Content="📧 Обратная связь" 
+                Width="120" 
+                Height="35"
+                Margin="10,0,0,0"
+                Background="#FF9800" 
+                Foreground="White"
+                BorderThickness="0"
+                Cursor="Hand"
+                FontSize="11"
+                Click="BtnFeedback_Click"/>
     </StackPanel>
 </StackPanel>
     </Grid>

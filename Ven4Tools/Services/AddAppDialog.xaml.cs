@@ -129,40 +129,47 @@ namespace Ven4Tools.Services
             return results;
         }
 
-        private async void BtnOk_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtName.Text))
-            {
-                MessageBox.Show("Введите название программы", "Ошибка", 
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+private async void BtnOk_Click(object sender, RoutedEventArgs e)
+{
+    if (string.IsNullOrWhiteSpace(txtName.Text))
+    {
+        MessageBox.Show("Введите название программы", "Ошибка", 
+            MessageBoxButton.OK, MessageBoxImage.Warning);
+        return;
+    }
 
-            string wingetIdValue = txtWingetId.Text.Trim();
-            string? selectedWingetId = null;
-            
-            if (lstSearchResults.SelectedItem is WingetPackage selected)
-            {
-                wingetIdValue = selected.Id;
-                selectedWingetId = selected.Id;
-            }
+    string wingetIdValue = txtWingetId.Text.Trim();
+    string? selectedWingetId = null;
+    
+    if (lstSearchResults.SelectedItem is WingetPackage selected)
+    {
+        wingetIdValue = selected.Id;
+        selectedWingetId = selected.Id;
+    }
 
-            var app = new AppInfo
-            {
-                Id = string.IsNullOrWhiteSpace(wingetIdValue) 
-                    ? "User." + Guid.NewGuid().ToString("N") 
-                    : wingetIdValue,
-                DisplayName = txtName.Text,
-                Category = AppCategory.Пользовательские,
-                IsUserAdded = true
-            };
+    // Важно: если выбран winget пакет, используем его ID как основной
+    var app = new AppInfo
+    {
+        Id = !string.IsNullOrWhiteSpace(wingetIdValue) && wingetIdValue != "User." 
+            ? wingetIdValue 
+            : "User." + Guid.NewGuid().ToString("N"),
+        DisplayName = txtName.Text,
+        Category = AppCategory.Пользовательские,
+        IsUserAdded = true
+    };
 
-            if (!string.IsNullOrWhiteSpace(txtUrl.Text))
-            {
-                app.InstallerUrls.Add(txtUrl.Text);
-            }
+    // Если выбран пакет, добавляем его как альтернативный источник
+    if (!string.IsNullOrEmpty(selectedWingetId))
+    {
+        app.AlternativeId = selectedWingetId;
+    }
 
-            Result = app;
+    if (!string.IsNullOrWhiteSpace(txtUrl.Text))
+    {
+        app.InstallerUrls.Add(txtUrl.Text);
+    }
+
+    Result = app;
             
             // Отправка статистики
             try
@@ -172,7 +179,7 @@ namespace Ven4Tools.Services
                 
                 if (allowStats)
                 {
-                    var statsService = new StatsService();
+                    var statsService = StatsService.Instance;
                     await statsService.TrackUserAddAsync(
                         app.Id,
                         selectedWingetId,
