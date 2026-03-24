@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using Ven4Tools.Models;
+using System.Diagnostics;
 
 namespace Ven4Tools.Services
 {
@@ -34,7 +35,62 @@ namespace Ven4Tools.Services
             LoadAlternativeSources();
             LoadHiddenApps();
         }
+public void AddCatalogApp(AppInfo app)
+{
+    lock (lockObj)
+    {
+        var existing = apps.FirstOrDefault(a => a.Id == app.Id);
+        if (existing == null)
+        {
+            apps.Add(app);
+        }
+        else
+        {
+            existing.DisplayName = app.DisplayName;
+            existing.Category = app.Category;
+            existing.InstallerUrls = app.InstallerUrls;
+            existing.AlternativeId = app.AlternativeId;
+        }
+    }
+}
+/// <summary>
+/// Применяет сохранённые альтернативы к приложениям из свежего каталога
+/// </summary>
+/// <summary>
+/// Применяет сохранённые пользователем альтернативы к приложениям из MasterCatalog
+/// </summary>
+/// <summary>
+/// Применяет сохранённые альтернативы к приложениям из каталога
+/// </summary>
+public void ApplyAlternativesToCatalog(MasterCatalog catalog)
+{
+    if (catalog?.Apps == null || catalog.Apps.Count == 0)
+        return;
 
+    int appliedCount = 0;
+
+    foreach (var catalogApp in catalog.Apps)
+    {
+        // Получаем локальную версию приложения с альтернативами
+        var localApp = GetAppById(catalogApp.Id);
+        if (localApp != null && !string.IsNullOrEmpty(localApp.AlternativeId))
+        {
+            // Сохраняем AlternativeId в локальной копии (AppInfo)
+            localApp.AlternativeId = localApp.AlternativeId;
+
+            // Если в альтернативе есть свои ссылки — тоже сохраняем
+            if (localApp.InstallerUrls != null && localApp.InstallerUrls.Count > 0)
+            {
+                localApp.InstallerUrls = new List<string>(localApp.InstallerUrls);
+            }
+
+            appliedCount++;
+            Debug.WriteLine($"[ApplyAlternatives] Для {catalogApp.Id} применена альтернатива: {localApp.AlternativeId}");
+        }
+    }
+
+    Debug.WriteLine($"[ApplyAlternativesToCatalog] Применено альтернатив: {appliedCount}");
+}
         private bool DetectPortableMode()
         {
             try
@@ -106,7 +162,7 @@ namespace Ven4Tools.Services
 
         public bool IsAppHidden(string appId) => hiddenApps.Contains(appId);
 
-private void LoadAlternativeSources()
+public void LoadAlternativeSources()
 {
     try
     {
@@ -125,9 +181,8 @@ private void LoadAlternativeSources()
                     if (!string.IsNullOrEmpty(kvp.Value.WingetId))
                     {
                         app.AlternativeId = kvp.Value.WingetId;
-                        Console.WriteLine($"Applied alternative winget ID {kvp.Value.WingetId} to {app.DisplayName}");
+                        System.Diagnostics.Debug.WriteLine($"Applied alternative winget ID {kvp.Value.WingetId} to {app.DisplayName}");
                         
-                        // Добавляем в InstallerUrls если есть приоритет
                         if (kvp.Value.Priority)
                         {
                             // Приоритетный источник
@@ -144,63 +199,77 @@ private void LoadAlternativeSources()
                 }
                 else
                 {
-                    Console.WriteLine($"App {kvp.Key} not found for alternative source");
+                    System.Diagnostics.Debug.WriteLine($"App {kvp.Key} not found for alternative source");
                 }
             }
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error loading alternatives: {ex.Message}");
+        System.Diagnostics.Debug.WriteLine($"Error loading alternatives: {ex.Message}");
     }
 }
 
-public void SaveAlternativeSource(string appId, string? wingetId, string? url, bool priority = false)
-{
-    try
-    {
-        if (!alternatives.ContainsKey(appId))
+        public void SaveAlternativeSource(string appId, string? wingetId, string? url, bool priority = false)
         {
-            alternatives[appId] = new AlternativeSource();
-        }
-        
-        if (!string.IsNullOrEmpty(wingetId))
-        {
-            alternatives[appId].WingetId = wingetId;
-            alternatives[appId].Priority = priority;
-            
-            // НЕМЕДЛЕННО применяем к приложению
-            var app = apps.FirstOrDefault(a => a.Id == appId);
-            if (app != null)
+            try
             {
-                app.AlternativeId = wingetId;
-                Console.WriteLine($"Applied alternative {wingetId} to {app.DisplayName} immediately");
-            }
-        }
-        
-        if (!string.IsNullOrEmpty(url))
-        {
-            alternatives[appId].Url = url;
-            alternatives[appId].UrlPriority = priority;
-            
-            var app = apps.FirstOrDefault(a => a.Id == appId);
-            if (app != null && !app.InstallerUrls.Contains(url))
-            {
-                if (priority)
-                    app.InstallerUrls.Insert(0, url);
+                System.Diagnostics.Debug.WriteLine($"SaveAlternativeSource called: appId={appId}, wingetId={wingetId}, url={url}");
+                System.Diagnostics.Debug.WriteLine($"Alternatives path: {alternativesPath}");
+
+                if (!alternatives.ContainsKey(appId))
+                {
+                    alternatives[appId] = new AlternativeSource();
+                }
+
+                if (!string.IsNullOrEmpty(wingetId))
+                {
+                    alternatives[appId].WingetId = wingetId;
+                    alternatives[appId].Priority = priority;
+                    alternatives[appId].LastUpdated = DateTime.Now;
+
+                    var app = apps.FirstOrDefault(a => a.Id == appId);
+                    if (app != null)
+                    {
+                        app.AlternativeId = wingetId;
+                        System.Diagnostics.Debug.WriteLine($"Applied AlternativeId={wingetId} to {app.DisplayName}");
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(url))
+                {
+                    alternatives[appId].Url = url;
+                    alternatives[appId].UrlPriority = priority;
+                    alternatives[appId].LastUpdated = DateTime.Now;
+
+                    var app = apps.FirstOrDefault(a => a.Id == appId);
+                    if (app != null && !app.InstallerUrls.Contains(url))
+                    {
+                        if (priority)
+                            app.InstallerUrls.Insert(0, url);
+                        else
+                            app.InstallerUrls.Add(url);
+                    }
+                }
+
+                SaveAlternatives();
+
+                // Проверяем, что файл создался
+                if (File.Exists(alternativesPath))
+                {
+                    var content = File.ReadAllText(alternativesPath);
+                    System.Diagnostics.Debug.WriteLine($"Alternatives saved, file size: {content.Length}");
+                }
                 else
-                    app.InstallerUrls.Add(url);
+                {
+                    System.Diagnostics.Debug.WriteLine($"ERROR: Alternatives file not created at {alternativesPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error saving alternative: {ex.Message}");
             }
         }
-        
-        alternatives[appId].LastUpdated = DateTime.Now;
-        SaveAlternatives();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error saving alternative: {ex.Message}");
-    }
-}
 
         public void IncrementAlternativeSuccess(string appId)
         {
@@ -235,19 +304,24 @@ public void SaveAlternativeSource(string appId, string? wingetId, string? url, b
 
         public Dictionary<string, AlternativeSource> GetAllAlternatives() => alternatives;
 
-        private void SaveAlternatives()
-        {
-            try
-            {
-                string? directory = Path.GetDirectoryName(alternativesPath);
-                if (directory != null)
-                    Directory.CreateDirectory(directory);
-                    
-                File.WriteAllText(alternativesPath, 
-                    JsonSerializer.Serialize(alternatives, new JsonSerializerOptions { WriteIndented = true }));
-            }
-            catch { }
-        }
+private void SaveAlternatives()
+{
+    try
+    {
+        string? directory = Path.GetDirectoryName(alternativesPath);
+        if (directory != null)
+            Directory.CreateDirectory(directory);
+            
+        var json = JsonSerializer.Serialize(alternatives, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(alternativesPath, json);
+        
+        System.Diagnostics.Debug.WriteLine($"Saved alternatives to: {alternativesPath}");
+    }
+    catch (Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine($"Error saving alternatives: {ex.Message}");
+    }
+}
 
         public List<AppInfo> GetAllApps() => apps
             .Where(a => !hiddenApps.Contains(a.Id))
