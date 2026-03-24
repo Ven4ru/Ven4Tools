@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:17:48",
+  "lastUpdated": "2026-03-25 01:18:57",
   "apps": [
     {
       "id": "7zip",
@@ -177,6 +177,18 @@
       "wingetId": "Yandex.Disk",
       "downloadUrl": "",
       "version": "3.2.46.5114",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Описание отсутствует"
+    },
+    {
+      "id": "1b506f94-f6fc-4faf-8e94-89282b26dbcc",
+      "name": "CrystalDiskInfo",
+      "category": "Другое",
+      "wingetId": "CrystalDewWorld.CrystalDiskInfo",
+      "downloadUrl": "",
+      "version": "9.8.0",
       "size": "~100 MB",
       "official": true,
       "iconUrl": "",
