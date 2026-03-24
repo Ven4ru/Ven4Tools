@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
+using Microsoft.Win32;
 using Ven4Tools.Launcher.Models;
 using Ven4Tools.Launcher.Services;
 
@@ -12,42 +13,100 @@ namespace Ven4Tools.Launcher;
 public partial class MainWindow : Window
 {
     private readonly UpdateService _updateService;
-    private string? _mainAppPath;
+    private string? _installPath;
     private UpdateInfo? _currentUpdateInfo;
     private bool _isInstalling = false;
+    
+    // Ключ реестра для сохранения пути (для установленной версии)
+    private const string RegistryKey = @"Software\Ven4Tools";
+    private const string RegistryValue = "InstallPath";
     
     public MainWindow()
     {
         InitializeComponent();
         _updateService = new UpdateService();
-        _mainAppPath = FindVen4Tools();
         
-        AddLog($"Лаунчер запущен, путь: {AppDomain.CurrentDomain.BaseDirectory}");
-        AddLog($"Программа найдена: {_mainAppPath ?? "нет"}");
+        // Загружаем сохранённый путь
+        _installPath = LoadInstallPath();
+        
+        AddLog($"Лаунчер запущен из: {AppDomain.CurrentDomain.BaseDirectory}");
+        AddLog($"Сохранённый путь: {_installPath ?? "не задан"}");
         
         Loaded += async (s, e) => await InitializeAsync();
     }
     
-    private string? FindVen4Tools()
+    /// <summary>
+    /// Загружает сохранённый путь установки клиента
+    /// </summary>
+    private string? LoadInstallPath()
     {
-        string[] paths = {
-            @"C:\Program Files\Ven4Tools\Ven4Tools.exe",
-            @"C:\Program Files (x86)\Ven4Tools\Ven4Tools.exe",
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Ven4Tools.exe"),
-            @"C:\Ven4Tools_New\Ven4Tools.exe"
-        };
-        
-        foreach (string path in paths)
+        // Проверяем портативный режим
+        var portableMarker = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Portable.dat");
+        if (File.Exists(portableMarker))
         {
-            if (File.Exists(path))
+            // Портативный режим — путь в файле рядом с лаунчером
+            var pathFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Portable.path");
+            if (File.Exists(pathFile))
             {
-                AddLog($"Найдена программа: {path}");
-                return path;
+                var path = File.ReadAllText(pathFile).Trim();
+                if (Directory.Exists(path))
+                    return path;
             }
+            return null;
         }
         
-        AddLog("Программа не найдена");
+        // Установленный режим — читаем из реестра
+        try
+        {
+            using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RegistryKey))
+            {
+                var path = key?.GetValue(RegistryValue)?.ToString();
+                if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                    return path;
+            }
+        }
+        catch { }
+        
         return null;
+    }
+    
+    /// <summary>
+    /// Сохраняет путь установки клиента
+    /// </summary>
+    private void SaveInstallPath(string path)
+    {
+        // Проверяем портативный режим
+        var portableMarker = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Portable.dat");
+        if (File.Exists(portableMarker))
+        {
+            var pathFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Portable.path");
+            File.WriteAllText(pathFile, path);
+            AddLog($"✅ Путь сохранён (портативный): {path}");
+            return;
+        }
+        
+        // Установленный режим — пишем в реестр
+        try
+        {
+            using (var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(RegistryKey))
+            {
+                key?.SetValue(RegistryValue, path);
+                AddLog($"✅ Путь сохранён в реестр: {path}");
+            }
+        }
+        catch (Exception ex)
+        {
+            AddLog($"❌ Ошибка сохранения пути: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Проверяет, существует ли клиент по указанному пути
+    /// </summary>
+    private bool IsClientExists(string? path)
+    {
+        if (string.IsNullOrEmpty(path)) return false;
+        return File.Exists(Path.Combine(path, "Ven4Tools.exe"));
     }
     
     private async Task InitializeAsync()
@@ -56,10 +115,15 @@ public partial class MainWindow : Window
         {
             AddLog("Проверка обновлений...");
             
-            if (_currentUpdateInfo == null)
-            {
-                _currentUpdateInfo = await _updateService.CheckForUpdateAsync(_mainAppPath);
-            }
+            // Проверяем, есть ли клиент по сохранённому пути
+            bool clientExists = IsClientExists(_installPath);
+            
+            // Получаем путь к клиенту (если есть)
+            string? clientPath = clientExists && _installPath != null
+                ? Path.Combine(_installPath, "Ven4Tools.exe")
+                : null;
+            
+            _currentUpdateInfo = await _updateService.CheckForUpdateAsync(clientPath);
             
             if (_currentUpdateInfo == null)
             {
@@ -68,24 +132,40 @@ public partial class MainWindow : Window
                 return;
             }
             
-            if (!_currentUpdateInfo.IsInstalled)
+            // Всегда показываем кнопку выбора папки
+            BtnSelectPath.Visibility = Visibility.Visible;
+            
+            if (!clientExists)
             {
-                StatusText.Text = "Ven4Tools не установлен";
-                AddLog("Программа не найдена. Нажмите 'Установить' для загрузки.");
+                StatusText.Text = $"Клиент не установлен. Путь: {_installPath ?? "не выбран"}";
+                AddLog($"Клиент не найден. Путь: {_installPath ?? "не выбран"}");
+                
+                BtnInstall.Visibility = Visibility.Visible;
+                BtnUpdate.Visibility = Visibility.Collapsed;
+                BtnLaunch.Visibility = Visibility.Collapsed;
                 StatusText.Foreground = System.Windows.Media.Brushes.Orange;
             }
             else if (_currentUpdateInfo.HasUpdate)
             {
-                StatusText.Text = $"Доступно обновление {_currentUpdateInfo.LatestVersion}";
+                StatusText.Text = $"Доступно обновление {_currentUpdateInfo.LatestVersion} (текущая: {_currentUpdateInfo.CurrentVersion})";
                 AddLog($"Текущая версия: {_currentUpdateInfo.CurrentVersion}");
                 AddLog($"Новая версия: {_currentUpdateInfo.LatestVersion}");
+                AddLog($"Путь: {_installPath}");
+                
+                BtnInstall.Visibility = Visibility.Collapsed;
+                BtnUpdate.Visibility = Visibility.Visible;
+                BtnLaunch.Visibility = Visibility.Visible;
                 StatusText.Foreground = System.Windows.Media.Brushes.LightBlue;
             }
             else
             {
-                StatusText.Text = "Ven4Tools готов к запуску";
+                StatusText.Text = $"Ven4Tools готов к запуску (версия {_currentUpdateInfo.CurrentVersion})";
                 AddLog($"Версия: {_currentUpdateInfo.CurrentVersion}");
-                AddLog("Нажмите 'Запустить' для старта программы.");
+                AddLog($"Путь: {_installPath}");
+                
+                BtnInstall.Visibility = Visibility.Collapsed;
+                BtnUpdate.Visibility = Visibility.Collapsed;
+                BtnLaunch.Visibility = Visibility.Visible;
                 StatusText.Foreground = System.Windows.Media.Brushes.LightGreen;
             }
             
@@ -99,7 +179,97 @@ public partial class MainWindow : Window
         }
     }
     
+    private void BtnSelectPath_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog();
+        dialog.Title = "Выберите папку для установки Ven4Tools";
+        dialog.Multiselect = false;
+        
+        if (dialog.ShowDialog() == true)
+        {
+            _installPath = dialog.FolderName;
+            SaveInstallPath(_installPath);
+            AddLog($"✅ Выбран путь: {_installPath}");
+            
+            // Обновляем статус
+            _ = InitializeAsync();
+        }
+    }
+    
     private async void BtnInstall_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isInstalling) return;
+        
+        // Если путь не выбран — предлагаем выбрать
+        if (string.IsNullOrEmpty(_installPath))
+        {
+            BtnSelectPath_Click(sender, e);
+            if (string.IsNullOrEmpty(_installPath)) return;
+        }
+        
+        _isInstalling = true;
+        ProgressBar.Visibility = Visibility.Visible;
+        ProgressBar.IsIndeterminate = false;
+        ProgressBar.Value = 0;
+        ProgressBar.Maximum = 100;
+        
+        try
+        {
+            AddLog($"Начинаем установку клиента в: {_installPath}");
+            StatusText.Text = "Установка...";
+            
+            var progress = new Progress<string>(msg =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    StatusText.Text = msg;
+                    AddLog(msg);
+                });
+            });
+            
+            var success = await _updateService.InstallClientAsync(_installPath!, progress);
+            
+            if (success)
+            {
+                ProgressBar.Value = 100;
+                StatusText.Text = "Установка завершена";
+                AddLog("✅ Клиент успешно установлен");
+                
+                await InitializeAsync();
+                
+                var result = MessageBox.Show(
+                    "Клиент успешно установлен.\n\nЗапустить Ven4Tools сейчас?",
+                    "Установка завершена",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+                
+                if (result == MessageBoxResult.Yes)
+                {
+                    LaunchClient();
+                    Close();
+                }
+            }
+            else
+            {
+                AddLog("❌ Ошибка установки клиента");
+                StatusText.Text = "Ошибка установки";
+                MessageBox.Show("Не удалось установить клиент.\nПроверьте интернет-соединение и попробуйте снова.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            AddLog($"❌ Ошибка: {ex.Message}");
+            StatusText.Text = "Ошибка";
+        }
+        finally
+        {
+            ProgressBar.Visibility = Visibility.Collapsed;
+            _isInstalling = false;
+        }
+    }
+    
+    private async void BtnUpdate_Click(object sender, RoutedEventArgs e)
     {
         if (_isInstalling) return;
         
@@ -111,131 +281,78 @@ public partial class MainWindow : Window
         
         try
         {
-            AddLog("Начинаем процесс установки...");
+            AddLog($"Начинаем обновление клиента в: {_installPath}");
+            StatusText.Text = "Обновление...";
             
-            if (_currentUpdateInfo == null)
+            var progress = new Progress<string>(msg =>
             {
-                _currentUpdateInfo = await _updateService.CheckForUpdateAsync(_mainAppPath);
-                if (_currentUpdateInfo == null || string.IsNullOrEmpty(_currentUpdateInfo.DownloadUrl))
+                Dispatcher.Invoke(() =>
                 {
-                    AddLog("Не удалось получить ссылку для скачивания");
-                    StatusText.Text = "Ошибка: нет ссылки";
-                    return;
-                }
-            }
-            
-            var tempFile = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Setup_{DateTime.Now:yyyyMMdd_HHmmss}.exe");
-            AddLog($"Временный файл: {Path.GetFileName(tempFile)}");
-            
-            var lastUpdateTime = DateTime.Now;
-            var lastPercent = 0;
-            
-            var progress = new Progress<double>(p =>
-            {
-                var percent = (int)(p * 100);
-                var now = DateTime.Now;
-                
-                if ((now - lastUpdateTime).TotalMilliseconds >= 100 || percent >= 100)
-                {
-                    lastUpdateTime = now;
-                    Dispatcher.Invoke(() =>
-                    {
-                        if (percent != lastPercent)
-                        {
-                            lastPercent = percent;
-                            ProgressBar.Value = percent;
-                            StatusText.Text = $"Скачивание: {percent}%";
-                            
-                            if (percent % 25 == 0 || percent == 100)
-                            {
-                                AddLog($"Загружено: {percent}%");
-                            }
-                        }
-                    });
-                }
+                    StatusText.Text = msg;
+                    AddLog(msg);
+                });
             });
             
-            AddLog("Начинаю загрузку установщика...");
-            StatusText.Text = "Скачивание: 0%";
-            
-            var success = await _updateService.DownloadAndInstallAsync(
-                _currentUpdateInfo.DownloadUrl, 
-                tempFile, 
-                progress);
+            var success = await _updateService.InstallClientAsync(_installPath!, progress);
             
             if (success)
             {
                 ProgressBar.Value = 100;
-                StatusText.Text = "Скачивание: 100%";
+                StatusText.Text = "Обновление завершено";
+                AddLog("✅ Клиент успешно обновлён");
                 
-                ProgressBar.IsIndeterminate = true;
-                StatusText.Text = "Установка...";
-                AddLog("Установщик запущен! Ждем завершения установки...");
+                await InitializeAsync();
                 
-                await Task.Delay(5000);
+                var result = MessageBox.Show(
+                    "Клиент успешно обновлён.\n\nЗапустить Ven4Tools сейчас?",
+                    "Обновление завершено",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
                 
-                _mainAppPath = FindVen4Tools();
-                _currentUpdateInfo = await _updateService.CheckForUpdateAsync(_mainAppPath);
-                
-                if (_currentUpdateInfo != null && _currentUpdateInfo.IsInstalled)
+                if (result == MessageBoxResult.Yes)
                 {
-                    AddLog($"Программа успешно установлена!");
-                    AddLog($"Путь: {_mainAppPath}");
-                    StatusText.Text = "Установка завершена";
-                    ProgressBar.Visibility = Visibility.Collapsed;
-                    await InitializeAsync();
-                }
-                else
-                {
-                    AddLog("Программа не обнаружена после установки");
-                    AddLog("Нажмите 'Обновить статус' для повторной проверки");
-                    StatusText.Text = "Установка завершена, но программа не найдена";
-                    ProgressBar.IsIndeterminate = false;
-                    ProgressBar.Visibility = Visibility.Collapsed;
+                    LaunchClient();
+                    Close();
                 }
             }
             else
             {
-                AddLog("Ошибка при скачивании");
-                StatusText.Text = "Ошибка установки";
-                ProgressBar.Visibility = Visibility.Collapsed;
+                AddLog("❌ Ошибка обновления клиента");
+                StatusText.Text = "Ошибка обновления";
+                MessageBox.Show("Не удалось обновить клиент.\nПроверьте интернет-соединение и попробуйте снова.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         catch (Exception ex)
         {
-            AddLog($"Ошибка: {ex.Message}");
+            AddLog($"❌ Ошибка: {ex.Message}");
             StatusText.Text = "Ошибка";
-            ProgressBar.Visibility = Visibility.Collapsed;
         }
         finally
         {
+            ProgressBar.Visibility = Visibility.Collapsed;
             _isInstalling = false;
         }
     }
     
-    // Важно: этот метод НЕ async, НЕ void, НЕ await
-    private void BtnUpdate_Click(object sender, RoutedEventArgs e)
-    {
-        BtnInstall_Click(sender, e);
-    }
-    
-    private async void BtnLaunch_Click(object sender, RoutedEventArgs e)
+    private void LaunchClient()
     {
         try
         {
-            if (string.IsNullOrEmpty(_mainAppPath) || !File.Exists(_mainAppPath))
+            if (string.IsNullOrEmpty(_installPath)) return;
+            
+            var clientPath = Path.Combine(_installPath, "Ven4Tools.exe");
+            if (!File.Exists(clientPath))
             {
-                AddLog("Программа не найдена");
-                MessageBox.Show("Программа не найдена. Нажмите 'Установить' сначала.",
-                    "Ven4Tools Launcher", MessageBoxButton.OK, MessageBoxImage.Warning);
+                AddLog("Клиент не найден");
                 return;
             }
             
-            AddLog($"Запуск Ven4Tools из: {_mainAppPath}");
+            AddLog($"Запуск Ven4Tools из: {clientPath}");
             
             var process = Process.Start(new ProcessStartInfo
             {
-                FileName = _mainAppPath,
+                FileName = clientPath,
                 UseShellExecute = true,
                 Verb = "runas"
             });
@@ -243,42 +360,60 @@ public partial class MainWindow : Window
             if (process != null)
             {
                 AddLog($"Процесс запущен (ID: {process.Id})");
-                await Task.Delay(2000);
-                
-                if (!process.HasExited)
-                {
-                    AddLog("Программа работает");
-                    await Task.Delay(500);
-                    Close();
-                }
-                else
-                {
-                    AddLog("Процесс завершился сразу после запуска");
-                    AddLog("Возможно, программа запустилась в фоновом режиме");
-                }
-            }
-            else
-            {
-                AddLog("Не удалось запустить процесс");
-            }
-        }
-        catch (System.ComponentModel.Win32Exception ex)
-        {
-            if (ex.NativeErrorCode == 1223)
-            {
-                AddLog("Пользователь отменил запрос прав администратора");
-                MessageBox.Show("Для работы Ven4Tools требуются права администратора.\n" +
-                    "Пожалуйста, разрешите запуск при следующем запросе.",
-                    "Ven4Tools Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            else
-            {
-                AddLog($"Ошибка запуска: {ex.Message}");
             }
         }
         catch (Exception ex)
         {
-            AddLog($"Ошибка: {ex.Message}");
+            AddLog($"Ошибка запуска: {ex.Message}");
+        }
+    }
+    
+    private async void BtnLaunch_Click(object sender, RoutedEventArgs e)
+    {
+        LaunchClient();
+        await Task.Delay(500);
+        Close();
+    }
+    
+    private async void BtnRefresh_Click(object sender, RoutedEventArgs e)
+    {
+        AddLog("Обновление статуса...");
+        await InitializeAsync();
+    }
+    
+    private void BtnFeedback_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var appVersion = "2.3.0";
+            var osVersion = Environment.OSVersion.VersionString;
+            
+            var title = Uri.EscapeDataString($"Лаунчер: обратная связь");
+            var body = Uri.EscapeDataString(
+                $"## Версия лаунчера\n{appVersion}\n\n" +
+                $"## ОС\n{osVersion}\n\n" +
+                $"## Описание\n\n" +
+                $"### Что случилось?\n\n" +
+                $"### Как воспроизвести?\n\n" +
+                $"### Ожидаемое поведение\n\n");
+            
+            var url = $"https://github.com/Ven4ru/Ven4Tools/issues/new?title={title}&body={body}";
+            
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+            
+            AddLog("📧 Открыта форма обратной связи");
+        }
+        catch (Exception ex)
+        {
+            AddLog($"❌ Ошибка: {ex.Message}");
+            MessageBox.Show("Не удалось открыть форму обратной связи.\n" +
+                            "Пожалуйста, напишите на GitHub вручную:\n" +
+                            "https://github.com/Ven4ru/Ven4Tools/issues",
+                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
     
@@ -286,14 +421,6 @@ public partial class MainWindow : Window
     {
         AddLog("Закрытие лаунчера");
         Close();
-    }
-    
-    private async void BtnRefresh_Click(object sender, RoutedEventArgs e)
-    {
-        AddLog("Обновление статуса...");
-        _mainAppPath = FindVen4Tools();
-        _currentUpdateInfo = await _updateService.CheckForUpdateAsync(_mainAppPath);
-        await InitializeAsync();
     }
     
     private void AddLog(string message)

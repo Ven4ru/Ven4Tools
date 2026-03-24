@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
 {
-    public class AvailabilityChecker
+    public class AvailabilityChecker : IDisposable
     {
         private readonly HttpClient httpClient;
         private readonly Dictionary<string, CachedAvailability> cache = new();
@@ -42,75 +43,27 @@ namespace Ven4Tools.Services
             public string? Source { get; set; }
         }
 
-        // Старый метод для обратной совместимости
-        public async Task<AvailabilityStatus> CheckAppAvailability(AppInfo app)
-        {
-            var result = await CheckAppAvailabilityWithSize(app);
-            return result.Status;
-        }
+public async Task<(AvailabilityStatus Status, long SizeMB)> CheckAppAvailabilityWithSize(AppInfo app)
+{
+    string wingetId = !string.IsNullOrEmpty(app.AlternativeId) 
+        ? app.AlternativeId 
+        : app.Id ?? string.Empty;
 
-        public async Task<AppAvailabilityResult> CheckAppAvailabilityWithSize(AppInfo app)
-        {
-            var result = new AppAvailabilityResult { Status = AvailabilityStatus.Unavailable, SizeMB = 0 };
+    Debug.WriteLine($"[Availability] Проверка {app.DisplayName ?? app.Id} → Winget ID: {wingetId}");
 
-            // Проверяем кеш
-            if (cache.TryGetValue(app.Id, out var cached) && 
-                DateTime.Now - cached.Timestamp < cacheDuration)
-            {
-                result.Status = cached.Status;
-                result.SizeMB = cached.SizeMB;
-                return result;
-            }
+    // Если есть прямые ссылки — можно проверять их в первую очередь (по желанию)
+    if (app.InstallerUrls != null && app.InstallerUrls.Count > 0)
+    {
+        // твой старый код проверки по URL (HEAD) — оставь, если он есть
+    }
 
-            // 1. Проверяем альтернативный ID
-            if (!string.IsNullOrEmpty(app.AlternativeId))
-            {
-                var (status, size) = await GetWingetPackageInfo(app.AlternativeId);
-                if (status == AvailabilityStatus.Available)
-                {
-                    result.Status = status;
-                    result.SizeMB = size;
-                    result.Source = $"winget:{app.AlternativeId}";
-                    CacheResult(app.Id, result);
-                    return result;
-                }
-            }
-            
-            // 2. Проверяем оригинальный ID
-            if (result.Status != AvailabilityStatus.Available && 
-                !string.IsNullOrEmpty(app.Id) && !app.Id.StartsWith("User."))
-            {
-                var (status, size) = await GetWingetPackageInfo(app.Id);
-                if (status == AvailabilityStatus.Available)
-                {
-                    result.Status = status;
-                    result.SizeMB = size;
-                    result.Source = $"winget:{app.Id}";
-                    CacheResult(app.Id, result);
-                    return result;
-                }
-            }
+    // Для приложений без ссылок или с AlternativeId — используем winget
+    var result = await GetWingetPackageInfo(wingetId);
 
-            // 3. Проверяем прямые ссылки
-            if (app.InstallerUrls.Any())
-            {
-                foreach (var url in app.InstallerUrls)
-                {
-                    var (status, size) = await GetUrlInfo(url);
-                    if (status == AvailabilityStatus.Available)
-                    {
-                        result.Status = status;
-                        result.SizeMB = size;
-                        result.Source = url;
-                        CacheResult(app.Id, result);
-                        return result;
-                    }
-                }
-            }
+    Debug.WriteLine($"[Availability] Результат для {app.DisplayName ?? app.Id}: {(result.Status == AvailabilityStatus.Available ? "✅" : "❌")} (~{result.SizeMB} МБ)");
 
-            CacheResult(app.Id, result);
-            return result;
-        }
+    return result;
+}
 
         private void CacheResult(string appId, AppAvailabilityResult result)
         {
@@ -122,41 +75,63 @@ namespace Ven4Tools.Services
             };
         }
 
-        private async Task<(AvailabilityStatus Status, long SizeMB)> GetWingetPackageInfo(string appId)
+private async Task<(AvailabilityStatus Status, long SizeMB)> GetWingetPackageInfo(string appId)
+{
+    Debug.WriteLine("=== WINGET CHECK START === ID: '" + appId + "' ===");
+
+    try
+    {
+        string args = $"show --id \"{appId}\" --exact --source winget --accept-source-agreements";
+
+        var psi = new ProcessStartInfo
         {
-            try
-            {
-                string args = $"show --id {appId} --exact --source winget --accept-source-agreements";
-                
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "winget.exe",
-                    Arguments = args,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
+            FileName = "winget.exe",
+            Arguments = args,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            StandardOutputEncoding = System.Text.Encoding.UTF8,
+            StandardErrorEncoding = System.Text.Encoding.UTF8
+        };
 
-                using (var process = Process.Start(psi))
-                {
-                    if (process == null) return (AvailabilityStatus.Unavailable, 0);
-                    
-                    string output = await process.StandardOutput.ReadToEndAsync();
-                    await process.WaitForExitAsync();
-
-                    if (process.ExitCode == 0)
-                    {
-                        long size = ParseWingetSize(output);
-                        return (AvailabilityStatus.Available, size > 0 ? size : 100);
-                    }
-                }
-            }
-            catch { }
-
+        using var process = Process.Start(psi);
+        if (process == null)
+        {
+            Debug.WriteLine("!!! НЕ УДАЛОСЬ ЗАПУСТИТЬ WINGET !!!");
             return (AvailabilityStatus.Unavailable, 0);
         }
+
+        string output = await process.StandardOutput.ReadToEndAsync();
+        string error = await process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+
+        Debug.WriteLine($"ExitCode = {process.ExitCode} | Output length = {output.Length}");
+
+        bool success = process.ExitCode == 0 &&
+                       (output.Contains("Version", StringComparison.OrdinalIgnoreCase) ||
+                        output.Contains("Found", StringComparison.OrdinalIgnoreCase));
+
+        if (success)
+        {
+            Debug.WriteLine("!!! WINGET УСПЕШНО НАШЁЛ ПАКЕТ !!! Python.Python.3.14 работает");
+            long size = ParseWingetSize(output);
+            return (AvailabilityStatus.Available, size > 0 ? size : 120);
+        }
+        else
+        {
+            Debug.WriteLine("!!! WINGET НЕ НАШЁЛ !!! Первые 800 символов:");
+            Debug.WriteLine(output.Substring(0, Math.Min(800, output.Length)));
+        }
+    }
+    catch (Exception ex)
+    {
+        Debug.WriteLine($"!!! ИСКЛЮЧЕНИЕ: {ex.Message}");
+    }
+
+    Debug.WriteLine("=== WINGET CHECK END (НЕУДАЧА) ===");
+    return (AvailabilityStatus.Unavailable, 0);
+}
 
         private long ParseWingetSize(string output)
         {
@@ -230,6 +205,11 @@ namespace Ven4Tools.Services
             catch { }
             
             return (AvailabilityStatus.Unavailable, 0);
+        }
+
+        public void Dispose()
+        {
+            httpClient?.Dispose();
         }
     }
 }

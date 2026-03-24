@@ -49,48 +49,71 @@ namespace Ven4Tools.Launcher.Services
             }
         }
 
-public async Task<bool> DownloadFile(string url, string destPath, IProgress<double>? progress = null)
-{
-    try
-    {
-        using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-        response.EnsureSuccessStatusCode();
-        
-        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-        var bytesDownloaded = 0L;
-        
-        await using var contentStream = await response.Content.ReadAsStreamAsync();
-        await using var fileStream = new System.IO.FileStream(destPath, System.IO.FileMode.Create);
-        
-        var buffer = new byte[81920];
-        int bytesRead;
-        
-        while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
+        /// <summary>
+        /// Получает asset клиента (client.zip) из последнего релиза
+        /// </summary>
+        public async Task<GitHubAsset?> GetClientZipAsset()
         {
-            await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
-            bytesDownloaded += bytesRead;
+            var release = await GetLatestRelease();
+            if (release?.assets == null) return null;
             
-            if (totalBytes > 0 && progress != null)
+            // Ищем asset с именем client.zip (без учёта регистра)
+            return release.assets.FirstOrDefault(a => 
+                a.name != null && 
+                a.name.Equals("client.zip", StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// Получает URL для скачивания client.zip
+        /// </summary>
+        public async Task<string?> GetClientZipDownloadUrl()
+        {
+            var asset = await GetClientZipAsset();
+            return asset?.browser_download_url;
+        }
+
+        public async Task<bool> DownloadFile(string url, string destPath, IProgress<double>? progress = null)
+        {
+            try
             {
-                var percent = (double)bytesDownloaded / totalBytes;
-                progress.Report(percent);
+                using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                response.EnsureSuccessStatusCode();
                 
-                // Отладка в консоль (не в UI)
-                Console.WriteLine($"[DEBUG] Progress: {(int)(percent * 100)}%");
+                var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                var bytesDownloaded = 0L;
+                
+                await using var contentStream = await response.Content.ReadAsStreamAsync();
+                await using var fileStream = new System.IO.FileStream(destPath, System.IO.FileMode.Create);
+                
+                var buffer = new byte[81920];
+                int bytesRead;
+                
+                while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
+                {
+                    await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
+                    bytesDownloaded += bytesRead;
+                    
+                    if (totalBytes > 0 && progress != null)
+                    {
+                        var percent = (double)bytesDownloaded / totalBytes;
+                        progress.Report(percent);
+                        
+                        // Отладка в консоль (не в UI)
+                        Console.WriteLine($"[DEBUG] Progress: {(int)(percent * 100)}%");
+                    }
+                }
+                
+                // Принудительно отправляем 100%
+                progress?.Report(1.0);
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] Download error: {ex.Message}");
+                return false;
             }
         }
-        
-        // Принудительно отправляем 100%
-        progress?.Report(1.0);
-        
-        return true;
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"[DEBUG] Download error: {ex.Message}");
-        return false;
-    }
-}
 
         public void Dispose()
         {

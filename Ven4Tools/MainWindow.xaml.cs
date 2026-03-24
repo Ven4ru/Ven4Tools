@@ -54,7 +54,6 @@ public MainWindow()
     appManager = new AppManager();
     installService = new InstallationService();
     availabilityChecker = new AvailabilityChecker();
-    
     txtAdminStatus.Text = "✅ Активированы права администратора";
     
     // Устанавливаем версию
@@ -73,15 +72,6 @@ public MainWindow()
             $"{DateTime.Now}: Конструктор выполнен\n");
     }
     catch { }
-}
-
-private void AddLog(string message)
-{
-    Dispatcher.Invoke(() =>
-    {
-        txtInstallLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
-        txtInstallLog.ScrollToEnd();
-    });
 }
 
         public void LogMessage(string message)
@@ -201,9 +191,9 @@ private async void LoadApps()
         // Загружаем приложения из каталога
         if (_catalog != null && _catalog.Apps.Any())
         {
-            AddLog($"Загружаем приложения из каталога ({_catalog.Apps.Count} шт.)");
+            AddLog($"Загружаем приложения из каталога ({(_catalog?.Apps.Count ?? 0)} шт.)");
             
-            foreach (var app in _catalog.Apps)
+            foreach (var app in _catalog?.Apps ?? Enumerable.Empty<Models.App>())
             {
                 var category = GetCategoryFromString(app.Category);
                 
@@ -242,7 +232,7 @@ private async void LoadApps()
                 }
             }
             
-            LogMessage($"Загружено {_catalog.Apps.Count} приложений из каталога");
+            LogMessage($"Загружено {(_catalog?.Apps.Count ?? 0)} приложений из каталога");
         }
         else
         {
@@ -313,7 +303,7 @@ private async Task LoadCatalogAndRefreshAsync()
         if (_catalogLoader == null) return;
         
         _catalog = await _catalogLoader.LoadCatalogAsync();
-        
+        SyncCatalogToAppManager();
         string sourceText = _catalog.Source switch
         {
             "online" => "🌐 Каталог загружен из интернета",
@@ -338,30 +328,48 @@ private async Task CheckAppAvailabilityFromCatalog(Models.App catalogApp)
 {
     try
     {
-        // Преобразуем модель каталога в AppInfo для совместимости
-        var appInfo = new AppInfo
+        AddLog($"🔍 Проверка доступности: {catalogApp.Name}");
+
+        // Пытаемся взять AppInfo из AppManager (там уже применены альтернативы)
+        AppInfo appInfo = appManager.GetAppById(catalogApp.Id);
+
+        if (appInfo == null)
         {
-            Id = catalogApp.Id,
-            DisplayName = catalogApp.Name,
-            Category = GetCategoryFromString(catalogApp.Category),
-            InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl) 
-                ? new List<string> { catalogApp.DownloadUrl } 
-                : new List<string>(),
-            RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
-            IsUserAdded = false
-        };
-        
-        // Проверяем доступность
+            AddLog($"   → Приложение {catalogApp.Name} не найдено в AppManager, создаём...");
+            
+            appInfo = new AppInfo
+            {
+                Id = catalogApp.Id,
+                DisplayName = catalogApp.Name,
+                Category = GetCategoryFromString(catalogApp.Category),
+                InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl) 
+                    ? new List<string> { catalogApp.DownloadUrl } 
+                    : new List<string>(),
+                AlternativeId = catalogApp.WingetId,
+                SilentArgs = "/S",
+                RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
+                IsUserAdded = false
+            };
+        }
+        else
+        {
+            AddLog($"   → Найдено в AppManager, AlternativeId = {appInfo.AlternativeId ?? "нет"}");
+        }
+
+        // Логируем, что реально используется
+        AddLog($"   → Winget ID для проверки: {appInfo.AlternativeId ?? appInfo.Id}");
+        AddLog($"   → Ссылки: {(appInfo.InstallerUrls.Any() ? string.Join(", ", appInfo.InstallerUrls) : "нет")}");
+
         var availabilityResult = await availabilityChecker.CheckAppAvailabilityWithSize(appInfo);
         var status = availabilityResult.Status;
         var size = availabilityResult.SizeMB;
-        
+
         await Dispatcher.InvokeAsync(() =>
         {
             if (appCheckBoxes.TryGetValue(catalogApp.Id, out var checkBox))
             {
                 availabilityStatus[catalogApp.Id] = status;
-                
+
                 switch (status)
                 {
                     case AvailabilityChecker.AvailabilityStatus.Available:
@@ -370,7 +378,7 @@ private async Task CheckAppAvailabilityFromCatalog(Models.App catalogApp)
                         checkBox.IsEnabled = true;
                         LogMessage($"✅ {catalogApp.Name} доступен" + (size > 0 ? $" (~{size} МБ)" : ""));
                         break;
-                        
+
                     case AvailabilityChecker.AvailabilityStatus.Unavailable:
                         checkBox.Foreground = Brushes.LightCoral;
                         checkBox.ToolTip = "❌ Недоступно";
@@ -378,14 +386,14 @@ private async Task CheckAppAvailabilityFromCatalog(Models.App catalogApp)
                         AddSuggestionButtonFromCatalog(catalogApp, checkBox);
                         LogMessage($"❌ {catalogApp.Name} недоступен");
                         break;
-                        
+
                     default:
                         checkBox.Foreground = Brushes.Gray;
                         checkBox.ToolTip = "⚠️ Статус неизвестен";
                         checkBox.IsEnabled = true;
                         break;
                 }
-                
+
                 checkBox.InvalidateVisual();
             }
         });
@@ -393,6 +401,70 @@ private async Task CheckAppAvailabilityFromCatalog(Models.App catalogApp)
     catch (Exception ex)
     {
         LogMessage($"❌ Ошибка при проверке {catalogApp.Name}: {ex.Message}");
+    }
+}
+private void BtnFeedback_Click(object sender, RoutedEventArgs e)
+{
+    try
+    {
+        // Собираем информацию о системе
+        var osVersion = Environment.OSVersion.VersionString;
+        var appVersion = "2.3.0";
+        var logPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "logs", $"install_{DateTime.Now:yyyy-MM-dd}.log");
+        
+        var logExists = File.Exists(logPath) ? "✅ Лог есть" : "❌ Лога нет";
+        
+        // Формируем тело issue
+        var title = Uri.EscapeDataString($"Обратная связь: {appVersion}");
+        var body = Uri.EscapeDataString(
+            $"## Версия\n{appVersion}\n\n" +
+            $"## ОС\n{osVersion}\n\n" +
+            $"## Описание проблемы\n\n" +
+            $"### Что случилось?\n\n" +
+            $"### Как воспроизвести?\n\n" +
+            $"### Ожидаемое поведение\n\n" +
+            $"{logExists}\n\n" +
+            $"### Лог\n```\n{GetLastLogLines()}\n```");
+        
+        var url = $"https://github.com/Ven4ru/Ven4Tools/issues/new?title={title}&body={body}";
+        
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = url,
+            UseShellExecute = true
+        });
+        
+        AddLog("📧 Открыта форма обратной связи");
+    }
+    catch (Exception ex)
+    {
+        AddLog($"❌ Ошибка открытия обратной связи: {ex.Message}");
+        MessageBox.Show("Не удалось открыть форму обратной связи.\n" +
+                        "Пожалуйста, напишите на GitHub вручную:\n" +
+                        "https://github.com/Ven4ru/Ven4Tools/issues",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+    }
+}
+
+private string GetLastLogLines(int lines = 50)
+{
+    try
+    {
+        var logPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "logs", $"install_{DateTime.Now:yyyy-MM-dd}.log");
+        
+        if (!File.Exists(logPath)) return "Лог не найден";
+        
+        var allLines = File.ReadAllLines(logPath);
+        var lastLines = allLines.Skip(Math.Max(0, allLines.Length - lines)).ToArray();
+        return string.Join("\n", lastLines);
+    }
+    catch
+    {
+        return "Не удалось прочитать лог";
     }
 }
 private async void BtnRefreshCatalog_Click(object sender, RoutedEventArgs e)
@@ -457,11 +529,16 @@ else
         AddLog("📥 Загружаем свежий каталог...");
         _catalog = await _catalogLoader.LoadCatalogAsync();
         
-        AddLog($"📦 Загружено приложений: {_catalog.Apps.Count}");
-        AddLog($"📅 Версия в загруженном каталоге: {_catalog.LastUpdated}");
-        AddLog($"🌐 Источник: {_catalog.Source}");
-        
-        // 5. Перезагружаем UI
+        AddLog($"📦 Загружено приложений: {(_catalog?.Apps.Count ?? 0)}");
+        AddLog($"📅 Версия в загруженном каталоге: {_catalog?.LastUpdated ?? "неизвестно"}");
+
+        // === ПРИМЕНЯЕМ СОХРАНЁННЫЕ АЛЬТЕРНАТИВЫ ===
+        appManager.LoadAlternativeSources();
+        appManager.ApplyAlternativesToCatalog(_catalog);
+AddLog("🔄 Сохранённые альтернативы применены к каталогу");
+        // ===========================================
+
+        // 5. Перезагружаем интерфейс
         AddLog("🔄 Перезагружаем интерфейс...");
         LoadApps();
         
@@ -568,22 +645,44 @@ private async Task SuggestAlternativeForCatalog(Models.App catalogApp)
 {
     try
     {
-        var dialog = new AlternativeSourceDialog(catalogApp.Name)
-        {
-            Owner = this
-        };
-        
+        AddLog($"🔍 Поиск альтернативы для: {catalogApp.Name}");
+
+        var dialog = new AlternativeSourceDialog(catalogApp.Name) { Owner = this };
+
         if (dialog.ShowDialog() == true)
         {
+            bool saved = false;
+
             if (dialog.SelectedPackage != null)
             {
-                AddLog($"🔍 Сохранена альтернатива для {catalogApp.Name}: {dialog.SelectedPackage.Id}");
-                await Task.Delay(500);
-                await CheckAppAvailabilityFromCatalog(catalogApp);
+                AddLog($"   → Сохраняем Winget ID: {dialog.SelectedPackage.Id}");
+
+                appManager.SaveAlternativeSource(
+                    catalogApp.Id,
+                    dialog.SelectedPackage.Id,
+                    null,
+                    dialog.UseWingetFirst);
+
+                saved = true;
             }
             else if (!string.IsNullOrEmpty(dialog.CustomUrl))
             {
-                AddLog($"💾 Для {catalogApp.Name} сохранена ссылка: {dialog.CustomUrl}");
+                AddLog($"   → Сохраняем ссылку: {dialog.CustomUrl}");
+
+                appManager.SaveAlternativeSource(
+                    catalogApp.Id,
+                    null,
+                    dialog.CustomUrl,
+                    dialog.UseUrlFirst);
+
+                saved = true;
+            }
+
+            if (saved)
+            {
+                AddLog($"✅ Альтернатива сохранена для {catalogApp.Name}");
+
+                // Принудительно обновляем статус
                 await Task.Delay(500);
                 await CheckAppAvailabilityFromCatalog(catalogApp);
             }
@@ -591,7 +690,7 @@ private async Task SuggestAlternativeForCatalog(Models.App catalogApp)
     }
     catch (Exception ex)
     {
-        AddLog($"❌ Ошибка при поиске альтернативы: {ex.Message}");
+        AddLog($"❌ Ошибка при сохранении альтернативы: {ex.Message}");
     }
 }
 
@@ -599,21 +698,24 @@ private async Task CheckSingleAppAvailability(string appId, int attempt = 1)
 {
     try
     {
-        var app = appManager.GetAllApps().FirstOrDefault(a => a.Id == appId);
-        if (app == null) return;
-
-        // ОТЛАДКА
-        Debug.WriteLine($"\n=== Checking {app.DisplayName} (attempt {attempt}) ===");
-        Debug.WriteLine($"Original ID: {app.Id}");
-        Debug.WriteLine($"Alternative ID: {app.AlternativeId ?? "null"}");
-        Debug.WriteLine($"URLs: {string.Join(", ", app.InstallerUrls)}");
-
-        // Получаем результат с размером
-        var availabilityResult = await availabilityChecker.CheckAppAvailabilityWithSize(app);
-        var status = availabilityResult.Status; // Извлекаем статус
-        var size = availabilityResult.SizeMB;   // Извлекаем размер
+        AddLog($"🔍 CheckSingleAppAvailability для {appId}, попытка {attempt}");
         
-        Debug.WriteLine($"Status result: {status}, Size: {size} MB");
+        var app = appManager.GetAllApps().FirstOrDefault(a => a.Id == appId);
+        if (app == null)
+        {
+            AddLog($"   ❌ Приложение {appId} не найдено в appManager");
+            return;
+        }
+
+        AddLog($"   📦 App из appManager: {app.DisplayName}");
+        AddLog($"   🆔 Альтернативный ID: {app.AlternativeId ?? "НЕТ"}");
+        AddLog($"   🔗 Ссылки: {(app.InstallerUrls.Any() ? string.Join(", ", app.InstallerUrls) : "нет")}");
+
+        var availabilityResult = await availabilityChecker.CheckAppAvailabilityWithSize(app);
+        var status = availabilityResult.Status;
+        var size = availabilityResult.SizeMB;
+        
+        AddLog($"   Результат: {status}, Размер: {(size > 0 ? $"~{size} МБ" : "неизвестен")}");
 
         await Dispatcher.InvokeAsync(() =>
         {
@@ -621,7 +723,6 @@ private async Task CheckSingleAppAvailability(string appId, int attempt = 1)
             {
                 availabilityStatus[appId] = status;
                 
-                // Убираем старую кнопку
                 var parentPanel = VisualTreeHelper.GetParent(checkBox) as Panel;
                 if (parentPanel != null)
                 {
@@ -632,7 +733,6 @@ private async Task CheckSingleAppAvailability(string appId, int attempt = 1)
                     if (oldButton != null)
                     {
                         parentPanel.Children.Remove(oldButton);
-                        Debug.WriteLine("Removed suggestion button");
                     }
                 }
                 
@@ -642,8 +742,7 @@ private async Task CheckSingleAppAvailability(string appId, int attempt = 1)
                         checkBox.Foreground = Brushes.LightGreen;
                         checkBox.ToolTip = $"✅ Доступно для установки ({(size > 0 ? $"~{size} МБ" : "размер неизвестен")})";
                         checkBox.IsEnabled = true;
-                        LogMessage($"✅ {app.DisplayName} теперь доступен" + (size > 0 ? $" (~{size} МБ)" : ""));
-                        Debug.WriteLine($"✅ {app.DisplayName} стал доступен");
+                        AddLog($"✅ {app.DisplayName} доступен" + (size > 0 ? $" (~{size} МБ)" : ""));
                         break;
                         
                     case AvailabilityChecker.AvailabilityStatus.Unavailable:
@@ -651,18 +750,16 @@ private async Task CheckSingleAppAvailability(string appId, int attempt = 1)
                         {
                             checkBox.Foreground = Brushes.Gray;
                             checkBox.ToolTip = $"⏳ Повторная проверка... ({attempt}/3)";
-                            Debug.WriteLine($"⏳ Повторная проверка {app.DisplayName} через 2с");
+                            AddLog($"⏳ Повторная проверка {app.DisplayName} через 2с");
                             _ = Task.Delay(2000).ContinueWith(_ => 
                                 CheckSingleAppAvailability(appId, attempt + 1));
                         }
                         else
                         {
                             checkBox.Foreground = Brushes.LightCoral;
-                            checkBox.ToolTip = "❌ Временно недоступно после 3 попыток";
+                            checkBox.ToolTip = "❌ Недоступно";
                             checkBox.IsEnabled = false;
-                            AddSuggestionButton(app, checkBox);
-                            LogMessage($"❌ {app.DisplayName} недоступен после {attempt} попыток");
-                            Debug.WriteLine($"❌ {app.DisplayName} окончательно недоступен");
+                            AddLog($"❌ {app.DisplayName} недоступен");
                         }
                         break;
                         
@@ -679,9 +776,34 @@ private async Task CheckSingleAppAvailability(string appId, int attempt = 1)
     }
     catch (Exception ex)
     {
-        LogMessage($"❌ Ошибка при проверке {appId}: {ex.Message}");
-        Debug.WriteLine($"Exception: {ex}");
+        AddLog($"❌ Ошибка при проверке {appId}: {ex.Message}");
     }
+}
+
+private void RefreshAllColors_Click(object sender, RoutedEventArgs e)
+{
+    AddLog("🔄 Принудительное обновление цветов...");
+    
+    foreach (var kvp in appCheckBoxes)
+    {
+        if (availabilityStatus.TryGetValue(kvp.Key, out var status))
+        {
+            var newColor = status == AvailabilityChecker.AvailabilityStatus.Available 
+                ? Brushes.LightGreen 
+                : Brushes.LightCoral;
+            
+            kvp.Value.Foreground = newColor;
+            kvp.Value.InvalidateVisual();
+            
+            AddLog($"   {kvp.Key} -> {(newColor == Brushes.LightGreen ? "зелёный" : "красный")}");
+        }
+        else
+        {
+            AddLog($"   {kvp.Key} -> статус не найден, оставляем как есть");
+        }
+    }
+    
+    AddLog("✅ Обновление цветов завершено");
 }
 
 private void AddSuggestionButton(AppInfo app, CheckBox checkBox)
@@ -747,77 +869,89 @@ private void AddSuggestionButton(AppInfo app, CheckBox checkBox)
     // Обновляем ссылку в словаре
     appCheckBoxes[app.Id] = newCheckBox;
 }
-
-private async Task SuggestAlternative(AppInfo app)
+public void AddLog(string message)
 {
-    try
+    Dispatcher.Invoke(() =>
     {
-        var dialog = new AlternativeSourceDialog(app.DisplayName)
-        {
-            Owner = this
-        };
-        
-        if (dialog.ShowDialog() == true)
-        {
-            bool changes = false;
-            
-if (dialog.SelectedPackage != null)
-{
-    Debug.WriteLine($"Saving alternative: {dialog.SelectedPackage.Id} for {app.Id}");
-    LogMessage($"🔍 Сохраняю альтернативу: {dialog.SelectedPackage.Id}");
-    
-    appManager.SaveAlternativeSource(
-        app.Id,
-        dialog.SelectedPackage.Id,
-        null,
-        priority: dialog.UseWingetFirst);
-    
-    // Проверим, что альтернатива действительно сохранилась
-    var savedApp = appManager.GetAppById(app.Id);
-    Debug.WriteLine($"App after save: AlternativeId={savedApp?.AlternativeId}");
-    
-    changes = true;
+        txtInstallLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
+        txtInstallLog.ScrollToEnd();
+    });
 }
-            
-            if (!string.IsNullOrEmpty(dialog.CustomUrl))
+        private async Task SuggestAlternative(AppInfo app)
+        {
+            try
             {
-                appManager.SaveAlternativeSource(
-                    app.Id,
-                    null,
-                    dialog.CustomUrl,
-                    priority: dialog.UseUrlFirst);
-                
-                LogMessage($"💾 Для {app.DisplayName} сохранена ссылка: {dialog.CustomUrl}");
-                changes = true;
+                AddLog($"🔍 Поиск альтернативы для: {app.DisplayName}");
+
+                var dialog = new AlternativeSourceDialog(app.DisplayName)
+                {
+                    Owner = this
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    bool changes = false;
+
+                    if (dialog.SelectedPackage != null)
+                    {
+                        AddLog($"DEBUG: Выбран пакет: {dialog.SelectedPackage.Id}");
+
+                        appManager.SaveAlternativeSource(
+                            app.Id,
+                            dialog.SelectedPackage.Id,
+                            null,
+                            priority: dialog.UseWingetFirst);
+
+                            
+    // 🆕 ПРОВЕРЯЕМ, ЧТО СОХРАНИЛОСЬ
+    var savedApp = appManager.GetAppById(app.Id);
+    AddLog($"DEBUG: После сохранения AlternativeId = '{savedApp?.AlternativeId}'");
+
+                        // ОТПРАВЛЯЕМ СТАТИСТИКУ
+                        await StatsService.Instance.TrackOverrideAsync(app.Id, dialog.SelectedPackage.Id, null, false);
+
+                        AddLog($"✅ Сохранён Winget ID: {dialog.SelectedPackage.Id} для {app.DisplayName}");
+                        changes = true;
+                    }
+
+                    if (!string.IsNullOrEmpty(dialog.CustomUrl))
+                    {
+                        AddLog($"DEBUG: Указана ссылка: {dialog.CustomUrl}");
+
+                        appManager.SaveAlternativeSource(
+                            app.Id,
+                            null,
+                            dialog.CustomUrl,
+                            priority: dialog.UseUrlFirst);
+
+                        await StatsService.Instance.TrackOverrideAsync(app.Id, null, dialog.CustomUrl, false);
+
+                        AddLog($"✅ Сохранена ссылка: {dialog.CustomUrl} для {app.DisplayName}");
+                        changes = true;
+                    }
+
+                    if (changes)
+                    {
+                        if (availabilityStatus.ContainsKey(app.Id))
+                            availabilityStatus.Remove(app.Id);
+
+                        if (appCheckBoxes.TryGetValue(app.Id, out var checkBox))
+                        {
+                            checkBox.Foreground = Brushes.Gray;
+                            checkBox.ToolTip = "⏳ Проверка...";
+                            checkBox.IsEnabled = true;
+                        }
+
+                        await Task.Delay(500);
+                        await CheckSingleAppAvailability(app.Id);
+                    }
+                }
             }
-            
-            if (changes)
+            catch (Exception ex)
             {
-                // Очищаем старый статус
-                if (availabilityStatus.ContainsKey(app.Id))
-                {
-                    availabilityStatus.Remove(app.Id);
-                }
-                
-                // Сбрасываем чекбокс в исходное состояние
-                if (appCheckBoxes.TryGetValue(app.Id, out var checkBox))
-                {
-                    checkBox.Foreground = Brushes.Gray;
-                    checkBox.ToolTip = "⚠️ Проверка доступности...";
-                    checkBox.IsEnabled = true; // Временно включаем
-                }
-                
-                // Запускаем проверку
-                await Task.Delay(500);
-                await CheckSingleAppAvailability(app.Id);
+                AddLog($"❌ Ошибка при поиске альтернативы: {ex.Message}");
             }
         }
-    }
-    catch (Exception ex)
-    {
-        LogMessage($"❌ Ошибка при поиске альтернативы: {ex.Message}");
-    }
-}
         private void LoadSavedSelection()
         {
             try
@@ -841,16 +975,82 @@ if (dialog.SelectedPackage != null)
 
 
 
-private void RefreshAvailability_Click(object sender, RoutedEventArgs e)
+private async void RefreshAvailability_Click(object sender, RoutedEventArgs e)
 {
-    // Перезапускаем проверку для всех приложений
-    foreach (var appId in appCheckBoxes.Keys.ToList())
+    AddLog("🔄 Перезапущена проверка доступности");
+    
+    // Проверяем приложения из каталога
+    if (_catalog != null)
     {
-        _ = CheckSingleAppAvailability(appId);
+        foreach (var app in _catalog.Apps)
+        {
+            // Очищаем кеш
+            if (availabilityStatus.ContainsKey(app.Id))
+                availabilityStatus.Remove(app.Id);
+            
+            // Сбрасываем цвет
+            if (appCheckBoxes.TryGetValue(app.Id, out var checkBox))
+            {
+                checkBox.Foreground = Brushes.Gray;
+                checkBox.ToolTip = "⏳ Проверка...";
+                checkBox.IsEnabled = true;
+                checkBox.InvalidateVisual();
+            }
+            
+            // Запускаем проверку
+            _ = CheckAppAvailabilityFromCatalog(app);
+        }
     }
-    LogMessage("🔄 Перезапущена проверка доступности");
+    
+    // Проверяем пользовательские приложения
+    var userApps = appManager.GetAllApps().Where(a => a.IsUserAdded).ToList();
+    foreach (var app in userApps)
+    {
+        if (availabilityStatus.ContainsKey(app.Id))
+            availabilityStatus.Remove(app.Id);
+        
+        if (appCheckBoxes.TryGetValue(app.Id, out var checkBox))
+        {
+            checkBox.Foreground = Brushes.Gray;
+            checkBox.ToolTip = "⏳ Проверка...";
+            checkBox.IsEnabled = true;
+            checkBox.InvalidateVisual();
+        }
+        
+        _ = CheckSingleAppAvailability(app.Id);
+    }
+    
+    AddLog("✅ Проверка запущена для всех приложений");
 }
-
+private void SyncCatalogToAppManager()
+{
+    if (_catalog == null) return;
+    
+    foreach (var catalogApp in _catalog.Apps)
+    {
+        var existing = appManager.GetAppById(catalogApp.Id);
+        if (existing == null)
+        {
+            // Создаём AppInfo из каталога
+            var appInfo = new AppInfo
+            {
+                Id = catalogApp.Id,
+                DisplayName = catalogApp.Name,
+                Category = GetCategoryFromString(catalogApp.Category),
+                InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl) 
+                    ? new List<string> { catalogApp.DownloadUrl } 
+                    : new List<string>(),
+                AlternativeId = catalogApp.WingetId,
+                RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
+                IsUserAdded = false
+            };
+            
+            // Добавляем в appManager
+            appManager.AddCatalogApp(appInfo);
+            AddLog($"📦 Добавлено в appManager: {catalogApp.Name} (ID: {catalogApp.Id})");
+        }
+    }
+}
 private async void UpdateSpaceStatus()
 {
     try
@@ -1301,86 +1501,85 @@ private async void UpdateSpaceStatus()
             LogMessage($"🔄 Повторная установка: {retryCompleted} успешно, {retryFailed} ошибок");
         }
 
-private async void BtnAddApp_Click(object sender, RoutedEventArgs e)
-{
-    // 1. Проверяем, нужно ли спрашивать согласие
-    var consentService = new ConsentService();
-    var shouldAsk = await consentService.ShouldAskForConsentAsync();
-    
-    bool allowStats = true;
-    
-    if (shouldAsk)
-    {
-        var dialog = new Views.ConsentDialog();
-        dialog.Owner = this;
-        
-        if (dialog.ShowDialog() == true)
+        private async void BtnAddApp_Click(object sender, RoutedEventArgs e)
         {
-            allowStats = dialog.AllowStats;
-            await consentService.SaveConsentAsync(allowStats);
-        }
-        else
-        {
-            return;
-        }
-    }
-    else
-    {
-        allowStats = await consentService.IsStatsAllowedAsync();
-    }
-    
-    // 2. Открываем диалог добавления
-    var addDialog = new AddAppDialog { Owner = this };
-    if (addDialog.ShowDialog() == true && addDialog.Result != null)
-    {
-        var newApp = addDialog.Result;
-        
-        // 3. Добавляем в user.json
-        appManager.AddUserApp(newApp);
-        
-        // 4. Добавляем в UI (используем общий метод)
-        AddUserAppToUI(newApp);
-        
-        // 5. Отправляем статистику, если разрешено
-        if (allowStats)
-        {
-            var statsService = new StatsService();
-            
-            // Определяем Winget ID для статистики
-            string? wingetId = null;
-            
-            // Пытаемся найти приложение в основном каталоге
-            if (_catalog != null)
+            // 1. Проверяем, нужно ли спрашивать согласие
+            var consentService = new ConsentService();
+            var shouldAsk = await consentService.ShouldAskForConsentAsync();
+
+            bool allowStats = true;
+
+            if (shouldAsk)
             {
-                var catalogApp = _catalog.Apps.FirstOrDefault(a => a.Name == newApp.DisplayName);
-                if (catalogApp != null && !string.IsNullOrEmpty(catalogApp.WingetId))
+                var dialog = new Views.ConsentDialog();
+                dialog.Owner = this;
+
+                if (dialog.ShowDialog() == true)
                 {
-                    wingetId = catalogApp.WingetId;
+                    allowStats = dialog.AllowStats;
+                    await consentService.SaveConsentAsync(allowStats);
+                }
+                else
+                {
+                    return;
                 }
             }
-            
-            // Если не нашли в каталоге, используем AlternativeId
-            if (string.IsNullOrEmpty(wingetId) && !string.IsNullOrEmpty(newApp.AlternativeId))
+            else
             {
-                wingetId = newApp.AlternativeId;
+                allowStats = await consentService.IsStatsAllowedAsync();
             }
-            
-            await statsService.TrackUserAddAsync(
-                newApp.Id, 
-                wingetId,
-                newApp.InstallerUrls.FirstOrDefault()
-            );
-            
-            LogMessage($"📊 Статистика отправлена" + (!string.IsNullOrEmpty(wingetId) ? $" (Winget ID: {wingetId})" : ""));
+
+            // 2. Открываем диалог добавления
+            var addDialog = new AddAppDialog { Owner = this };
+            if (addDialog.ShowDialog() == true && addDialog.Result != null)
+            {
+                var newApp = addDialog.Result;
+
+                // 3. Добавляем в user.json
+                appManager.AddUserApp(newApp);
+
+                // 4. Добавляем в UI (используем общий метод)
+                AddUserAppToUI(newApp);
+
+                // 5. Отправляем статистику, если разрешено
+                if (allowStats)
+                {
+                    // Определяем Winget ID для статистики
+                    string? wingetId = null;
+
+                    // Пытаемся найти приложение в основном каталоге
+                    if (_catalog != null)
+                    {
+                        var catalogApp = _catalog?.Apps.FirstOrDefault(a => a.Name == newApp.DisplayName);
+                        if (catalogApp != null && !string.IsNullOrEmpty(catalogApp.WingetId))
+                        {
+                            wingetId = catalogApp.WingetId;
+                        }
+                    }
+
+                    // Если не нашли в каталоге, используем AlternativeId
+                    if (string.IsNullOrEmpty(wingetId) && !string.IsNullOrEmpty(newApp.AlternativeId))
+                    {
+                        wingetId = newApp.AlternativeId;
+                    }
+
+                    // Используем синглтон StatsService.Instance
+                    await StatsService.Instance.TrackUserAddAsync(
+                        newApp.Id,
+                        wingetId,
+                        newApp.InstallerUrls.FirstOrDefault()
+                    );
+
+                    LogMessage($"📊 Статистика отправлена" + (!string.IsNullOrEmpty(wingetId) ? $" (Winget ID: {wingetId})" : ""));
+                }
+                else
+                {
+                    LogMessage("🔒 Статистика не отправляется (вы отказались)");
+                }
+
+                LogMessage($"➕ Добавлено пользовательское приложение: {newApp.DisplayName}");
+            }
         }
-        else
-        {
-            LogMessage("🔒 Статистика не отправляется (вы отказались)");
-        }
-        
-        LogMessage($"➕ Добавлено пользовательское приложение: {newApp.DisplayName}");
-    }
-}
         private void RemoveUserApp(string appId)
         {
             var result = MessageBox.Show("Удалить приложение из списка?", "Подтверждение", 

@@ -10,31 +10,31 @@ using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
 {
-    public class InstallationService
+    public class InstallationService : IDisposable
     {
-        private readonly HttpClient httpClient;
-        private readonly string logPath;
-        private readonly object logLock = new object();
+        private readonly HttpClient _httpClient;
+        private readonly string _logPath;
+        private readonly object _logLock = new object();
 
         public InstallationService()
         {
-            httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
-            httpClient.Timeout = TimeSpan.FromSeconds(30);
-            
-            logPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Ven4Tools", "logs", $"install_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
-            
-            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+            _httpClient = new HttpClient();
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var logsFolder = Path.Combine(appData, "Ven4Tools", "logs");
+            Directory.CreateDirectory(logsFolder);
+
+            _logPath = Path.Combine(logsFolder, $"install_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
         }
 
         public async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallAppAsync(
-    AppInfo app, string[] wingetSources, CancellationToken token, 
-    IProgress<AppInstallProgress> progress, string installDrive)
+            AppInfo app, string[] wingetSources, CancellationToken token,
+            IProgress<AppInstallProgress> progress, string installDrive)
         {
             var appProgress = new AppInstallProgress { AppId = app.Id, AppName = app.DisplayName };
-            
+
             try
             {
                 Log($"Начало установки: {app.DisplayName}");
@@ -50,11 +50,11 @@ namespace Ven4Tools.Services
                     foreach (var source in wingetSources)
                     {
                         token.ThrowIfCancellationRequested();
-                        
+
                         appProgress.Status = $"Winget ({source})...";
                         appProgress.Percentage = 10;
                         progress.Report(appProgress);
-                        
+
                         bool success = await RunWingetAsync(primaryId, source, token);
                         if (success)
                         {
@@ -62,6 +62,9 @@ namespace Ven4Tools.Services
                             appProgress.Percentage = 100;
                             progress.Report(appProgress);
                             Log($"✅ {app.DisplayName} установлено через Winget ({source}) с ID: {primaryId}");
+
+                            await StatsService.Instance.TrackOverrideAsync(app.Id, primaryId, null, true);
+
                             return (true, "Установлено через Winget", appProgress);
                         }
                     }
@@ -74,33 +77,33 @@ namespace Ven4Tools.Services
                     foreach (var url in app.InstallerUrls)
                     {
                         token.ThrowIfCancellationRequested();
-                        
+
                         appProgress.Status = $"📥 Скачивание...";
                         appProgress.Percentage = 20;
                         progress.Report(appProgress);
-                        
+
                         string tempFile = Path.Combine(Path.GetTempPath(), $"{app.Id}_{Guid.NewGuid()}.exe");
-                        
+
                         try
                         {
-                            using (var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token))
+                            using (var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token))
                             {
                                 response.EnsureSuccessStatusCode();
                                 var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                                
+
                                 using (var contentStream = await response.Content.ReadAsStreamAsync())
                                 using (var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None))
                                 {
                                     var buffer = new byte[8192];
                                     var totalBytesRead = 0L;
                                     int bytesRead;
-                                    
+
                                     while ((bytesRead = await contentStream.ReadAsync(buffer, token)) > 0)
                                     {
                                         token.ThrowIfCancellationRequested();
                                         await fileStream.WriteAsync(buffer, 0, bytesRead, token);
                                         totalBytesRead += bytesRead;
-                                        
+
                                         if (totalBytes != -1)
                                         {
                                             appProgress.Percentage = 20 + (int)((double)totalBytesRead / totalBytes * 30);
@@ -137,15 +140,18 @@ namespace Ven4Tools.Services
                                     }
                                     await Task.Delay(100, token);
                                 }
-                                
+
                                 try { File.Delete(tempFile); } catch { }
-                                
+
                                 if (process.ExitCode == 0)
                                 {
                                     appProgress.Status = "✅ Установлено";
                                     appProgress.Percentage = 100;
                                     progress.Report(appProgress);
                                     Log($"✅ {app.DisplayName} установлено через прямую ссылку: {url}");
+
+                                    await StatsService.Instance.TrackOverrideAsync(app.Id, null, url, true);
+
                                     return (true, "Установлено", appProgress);
                                 }
                             }
@@ -184,7 +190,7 @@ namespace Ven4Tools.Services
         private async Task<bool> RunWingetAsync(string appId, string source, CancellationToken token)
         {
             string args = $"/c winget install --id {appId} -e --source {source} --accept-package-agreements --accept-source-agreements --disable-interactivity";
-            
+
             var psi = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
@@ -199,17 +205,17 @@ namespace Ven4Tools.Services
 
             using (var process = new Process { StartInfo = psi, EnableRaisingEvents = true })
             {
-                process.OutputDataReceived += (s, e) => 
-                { 
-                    if (!string.IsNullOrEmpty(e.Data) && !token.IsCancellationRequested) 
+                process.OutputDataReceived += (s, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data) && !token.IsCancellationRequested)
                     {
                         Log($"Winget [{appId}]: {e.Data}");
                     }
                 };
-                
-                process.ErrorDataReceived += (s, e) => 
-                { 
-                    if (!string.IsNullOrEmpty(e.Data) && !token.IsCancellationRequested) 
+
+                process.ErrorDataReceived += (s, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data) && !token.IsCancellationRequested)
                     {
                         Log($"Winget ERROR [{appId}]: {e.Data}");
                     }
@@ -252,15 +258,20 @@ namespace Ven4Tools.Services
         {
             try
             {
-                lock (logLock)
+                lock (_logLock)
                 {
-                    File.AppendAllText(logPath, $"{DateTime.Now:HH:mm:ss} - {message}\n");
+                    File.AppendAllText(_logPath, $"{DateTime.Now:HH:mm:ss} - {message}\n");
                 }
             }
             catch { }
         }
 
-        public string GetLogPath() => logPath;
+        public string GetLogPath() => _logPath;
+
+        public void Dispose()
+        {
+            _httpClient?.Dispose();
+        }
     }
 
     public class AppInstallProgress

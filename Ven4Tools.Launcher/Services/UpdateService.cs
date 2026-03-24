@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Ven4Tools.Launcher.Models;
+using System.IO.Compression;
 
 namespace Ven4Tools.Launcher.Services;
 
@@ -31,7 +32,76 @@ public class UpdateService : IDisposable
             return "0.0.0.0";
         }
     }
+    public async Task<bool> DownloadClientZipAsync(string destZipPath, IProgress<double>? progress = null)
+{
+    var asset = await _gitHubService.GetClientZipAsset();
+    if (asset == null || string.IsNullOrEmpty(asset.browser_download_url))
+        return false;
     
+    return await _gitHubService.DownloadFile(asset.browser_download_url, destZipPath, progress);
+}
+
+public async Task<bool> InstallClientAsync(string installPath, IProgress<string>? progress = null)
+{
+    try
+    {
+        var tempZip = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Client_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
+        var tempExtract = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Extract_{DateTime.Now:yyyyMMdd_HHmmss}");
+        
+        progress?.Report("Скачивание клиента...");
+        
+        // 1. Скачиваем ZIP
+        var downloadSuccess = await DownloadClientZipAsync(tempZip, null);
+        if (!downloadSuccess) return false;
+        
+        progress?.Report("Распаковка...");
+        
+        // 2. Распаковываем
+        if (Directory.Exists(tempExtract))
+            Directory.Delete(tempExtract, true);
+        Directory.CreateDirectory(tempExtract);
+        ZipFile.ExtractToDirectory(tempZip, tempExtract);
+        
+        progress?.Report("Копирование файлов...");
+        
+        // 3. Копируем файлы (сохраняя пользовательские данные)
+        CopyClientFiles(tempExtract, installPath);
+        
+        // 4. Очистка
+        File.Delete(tempZip);
+        Directory.Delete(tempExtract, true);
+        
+        progress?.Report("Готово!");
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DEBUG] Install error: {ex.Message}");
+        return false;
+    }
+}
+
+private void CopyClientFiles(string sourceDir, string destDir)
+{
+    Directory.CreateDirectory(destDir);
+    
+    foreach (var file in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+    {
+        var relativePath = Path.GetRelativePath(sourceDir, file);
+        
+        // Пропускаем папку Data — пользовательские данные не трогаем
+        if (relativePath.StartsWith("Data" + Path.DirectorySeparatorChar))
+            continue;
+        
+        var destFile = Path.Combine(destDir, relativePath);
+        var destFileDir = Path.GetDirectoryName(destFile);
+        
+        if (!string.IsNullOrEmpty(destFileDir))
+            Directory.CreateDirectory(destFileDir);
+        
+        File.Copy(file, destFile, true);
+    }
+}
     public async Task<UpdateInfo> CheckForUpdateAsync(string? appPath)
 {
     var result = new UpdateInfo
@@ -45,7 +115,6 @@ public class UpdateService : IDisposable
     Console.WriteLine($"[DEBUG] IsInstalled={result.IsInstalled}");
     Console.WriteLine($"[DEBUG] CurrentVersion={result.CurrentVersion}");
     
-    // Если программа установлена, выводим дополнительную информацию
     if (result.IsInstalled && appPath != null)
     {
         try
@@ -74,15 +143,15 @@ public class UpdateService : IDisposable
         result.LatestVersion = release.tag_name.TrimStart('v');
         Console.WriteLine($"[DEBUG] LatestVersion={result.LatestVersion}");
         
-        // Ищем файл установщика
-        var installer = release.assets?.FirstOrDefault(a => 
-            a.name != null && (a.name.Contains("Setup") || a.name.Contains("Installer") || a.name.EndsWith(".exe")));
+        // 🆕 Ищем client.zip вместо установщика
+        var clientZip = release.assets?.FirstOrDefault(a => 
+            a.name != null && a.name.Equals("client.zip", StringComparison.OrdinalIgnoreCase));
         
-        if (installer != null)
+        if (clientZip != null)
         {
-            result.DownloadUrl = installer.browser_download_url;
-            result.FileSize = installer.size;
-            Console.WriteLine($"[DEBUG] Found installer: {installer.name}");
+            result.DownloadUrl = clientZip.browser_download_url;
+            result.FileSize = clientZip.size;
+            Console.WriteLine($"[DEBUG] Found client.zip: {clientZip.name}");
             Console.WriteLine($"[DEBUG] DownloadUrl={result.DownloadUrl}");
         }
         else
@@ -90,7 +159,7 @@ public class UpdateService : IDisposable
             var availableFiles = release.assets != null 
                 ? string.Join(", ", release.assets.Select(a => a.name)) 
                 : "нет файлов";
-            result.Error = $"Не найден установщик. Доступные: {availableFiles}";
+            result.Error = $"Не найден client.zip в релизе. Доступные: {availableFiles}";
             Console.WriteLine($"[DEBUG] {result.Error}");
         }
         

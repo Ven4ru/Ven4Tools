@@ -34,7 +34,6 @@ namespace Ven4Tools
             this.appName = appName;
             this.Loaded += async (s, e) => await LoadWingetResults();
             
-            // Изначально отключаем чекбокс winget
             chkPriorityWinget.IsEnabled = false;
         }
 
@@ -82,7 +81,7 @@ namespace Ven4Tools
             try
             {
                 string args = $"search --name \"{query}\" --source winget --accept-source-agreements";
-                
+
                 var psi = new ProcessStartInfo
                 {
                     FileName = "winget.exe",
@@ -103,6 +102,7 @@ namespace Ven4Tools
 
                     var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                     bool headerPassed = false;
+
                     foreach (var line in lines)
                     {
                         if (!headerPassed && line.Contains("--"))
@@ -110,10 +110,13 @@ namespace Ven4Tools
                             headerPassed = true;
                             continue;
                         }
+
                         if (!headerPassed || line.StartsWith("Имя") || string.IsNullOrWhiteSpace(line))
                             continue;
 
+                        // Надёжный парсер через разделение по нескольким пробелам
                         var parts = Regex.Split(line, @"\s{2,}");
+
                         if (parts.Length >= 3)
                         {
                             var pkg = new WingetPackage
@@ -123,17 +126,60 @@ namespace Ven4Tools
                                 Version = parts[2].Trim(),
                                 Source = parts.Length > 3 ? parts[3].Trim() : "winget"
                             };
-                            results.Add(pkg);
+
+                            // ID должен содержать точку (настоящий winget ID)
+                            if (pkg.Id.Contains('.'))
+                            {
+                                results.Add(pkg);
+                                Debug.WriteLine($"Found: {pkg.Name} → {pkg.Id} ({pkg.Version})");
+                            }
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка поиска: {ex.Message}");
+                Debug.WriteLine($"SearchWinget error: {ex.Message}");
             }
 
-            return results;
+            // Убираем дубликаты по ID
+            return results
+                .GroupBy(p => p.Id)
+                .Select(g => g.First())
+                .Take(15)
+                .ToList();
+        }
+
+        private void TxtManualId_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(txtManualId.Text))
+            {
+                var manualPackage = new WingetPackage
+                {
+                    Name = "Ручной ввод",
+                    Id = txtManualId.Text.Trim(),
+                    Version = "manual",
+                    Source = "manual"
+                };
+                
+                if (!cmbResults.Items.Cast<WingetPackage>().Any(p => p.Id == manualPackage.Id))
+                {
+                    var list = cmbResults.ItemsSource as List<WingetPackage>;
+                    if (list != null)
+                    {
+                        list.Insert(0, manualPackage);
+                        cmbResults.SelectedItem = manualPackage;
+                    }
+                }
+                else
+                {
+                    cmbResults.SelectedItem = cmbResults.Items.Cast<WingetPackage>()
+                        .FirstOrDefault(p => p.Id == manualPackage.Id);
+                }
+                
+                hasWingetResults = true;
+                btnOk.IsEnabled = true;
+            }
         }
 
         private void CmbResults_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -154,11 +200,29 @@ namespace Ven4Tools
 
         private void BtnOk_Click(object sender, RoutedEventArgs e)
         {
-            // Сохраняем настройки приоритета только для выбранных источников
             if (hasWingetResults && cmbResults.SelectedItem != null)
             {
-                SelectedPackage = (WingetPackage)cmbResults.SelectedItem;
+                var selected = (WingetPackage)cmbResults.SelectedItem;
+                
+                // Показываем подтверждение
+                string message = $"Вы выбрали:\n\n" +
+                                 $"Название: {selected.Name}\n" +
+                                 $"ID: {selected.Id}\n" +
+                                 $"Версия: {selected.Version}\n\n" +
+                                 $"Будет сохранён ID: {selected.Id}";
+                
+                var result = MessageBox.Show(message, "Подтверждение выбора", 
+                    MessageBoxButton.YesNo, MessageBoxImage.Question);
+                
+                if (result == MessageBoxResult.No)
+                {
+                    return;
+                }
+                
+                SelectedPackage = selected;
                 UseWingetFirst = chkPriorityWinget.IsChecked == true;
+                
+                Debug.WriteLine($"SAVED: {selected.Id}");
             }
             
             if (!string.IsNullOrWhiteSpace(txtUrl.Text))
@@ -182,6 +246,18 @@ namespace Ven4Tools
                 MessageBox.Show("Выберите источник или укажите ссылку", 
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
+            }
+            
+            if (!string.IsNullOrWhiteSpace(txtManualId?.Text) && SelectedPackage == null)
+            {
+                SelectedPackage = new WingetPackage
+                {
+                    Name = "Ручной ввод",
+                    Id = txtManualId.Text.Trim(),
+                    Version = "manual",
+                    Source = "manual"
+                };
+                UseWingetFirst = chkPriorityWinget.IsChecked == true;
             }
             
             DialogResult = true;

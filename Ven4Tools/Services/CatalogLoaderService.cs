@@ -24,27 +24,27 @@ namespace Ven4Tools.Services
             _remoteUrl = "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/master.json";
         }
 
-        public async Task<MasterCatalog> LoadCatalogAsync()
-        {
-            var remote = await TryLoadRemoteAsync();
-            if (remote != null)
-            {
-                remote.Source = "online";
-                await SaveToCacheAsync(remote);
-                return remote;
-            }
+public async Task<MasterCatalog> LoadCatalogAsync()
+{
+    var remote = await TryLoadRemoteAsync();
+    if (remote != null)
+    {
+        remote.Source = "online";
+        await SaveToCacheAsync(remote);
+        return remote;
+    }
 
-            var cached = await TryLoadFromCacheAsync();
-            if (cached != null)
-            {
-                cached.Source = "cache";
-                return cached;
-            }
+    var cached = await TryLoadFromCacheAsync();
+    if (cached != null)
+    {
+        cached.Source = "cache";
+        return cached;
+    }
 
-            var embedded = LoadEmbeddedCatalog();
-            embedded.Source = "embedded";
-            return embedded;
-        }
+    var embedded = LoadEmbeddedCatalog();
+    embedded.Source = "embedded";
+    return embedded;
+}
 
         private async Task<MasterCatalog?> TryLoadRemoteAsync()
         {
