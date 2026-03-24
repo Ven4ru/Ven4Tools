@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:23:05",
+  "lastUpdated": "2026-03-25 01:23:44",
   "apps": [
     {
       "id": "7zip",
@@ -201,6 +201,18 @@
       "wingetId": "samlab-ws.SnappyDriverInstaller 1.23.9 (R2309)",
       "downloadUrl": "https://driveroff.net/drv/SDI_1.26.1.7z",
       "version": "Tag: sdi",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Описание отсутствует"
+    },
+    {
+      "id": "d7387b85-6c7e-42c2-9c07-99708c466633",
+      "name": "Battle.Net",
+      "category": "Другое",
+      "wingetId": "Blizzard.BattleNet",
+      "downloadUrl": "",
+      "version": "1.19.0.3190",
       "size": "~100 MB",
       "official": true,
       "iconUrl": "",
