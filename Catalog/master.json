@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:23:44",
+  "lastUpdated": "2026-03-25 01:23:53",
   "apps": [
     {
       "id": "7zip",
@@ -209,7 +209,7 @@
     {
       "id": "d7387b85-6c7e-42c2-9c07-99708c466633",
       "name": "Battle.Net",
-      "category": "Другое",
+      "category": "Игровые сервисы",
       "wingetId": "Blizzard.BattleNet",
       "downloadUrl": "",
       "version": "1.19.0.3190",
