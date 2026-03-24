@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:22:49",
+  "lastUpdated": "2026-03-25 01:23:01",
   "apps": [
     {
       "id": "7zip",
@@ -109,18 +109,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Программа для записи и стриминга видео."
-    },
-    {
-      "id": "everything",
-      "name": "Everything",
-      "category": "Системные",
-      "wingetId": "voidtools.Everything",
-      "downloadUrl": "https://www.voidtools.com/Everything-1.4.1.1026.x64.zip",
-      "version": "1.4.1",
-      "size": "~2 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Мгновенный поиск файлов на компьютере."
     },
     {
       "id": "keepass",
