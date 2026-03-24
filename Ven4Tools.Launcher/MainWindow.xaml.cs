@@ -135,10 +135,10 @@ public partial class MainWindow : Window
             // Всегда показываем кнопку выбора папки
             BtnSelectPath.Visibility = Visibility.Visible;
             
-            if (!clientExists)
-            {
-                StatusText.Text = $"Клиент не установлен. Путь: {_installPath ?? "не выбран"}";
-                AddLog($"Клиент не найден. Путь: {_installPath ?? "не выбран"}");
+if (!clientExists)
+{
+    StatusText.Text = "Клиент не установлен.\n\n1. Нажмите 'Выбрать папку'\n2. Выберите место (например, D:\\)\n3. Лаунчер создаст папку Ven4Tools\n4. Нажмите 'Установить'";
+    AddLog("Клиент не найден. Выберите папку для установки.");
                 
                 BtnInstall.Visibility = Visibility.Visible;
                 BtnUpdate.Visibility = Visibility.Collapsed;
@@ -179,22 +179,44 @@ public partial class MainWindow : Window
         }
     }
     
-    private void BtnSelectPath_Click(object sender, RoutedEventArgs e)
+private void BtnSelectPath_Click(object sender, RoutedEventArgs e)
+{
+    var dialog = new Microsoft.Win32.OpenFolderDialog();
+    dialog.Title = "Выберите место для установки Ven4Tools\n(будет создана папка Ven4Tools)";
+    dialog.Multiselect = false;
+
+    if (dialog.ShowDialog() == true)
     {
-        var dialog = new Microsoft.Win32.OpenFolderDialog();
-        dialog.Title = "Выберите папку для установки Ven4Tools";
-        dialog.Multiselect = false;
-        
-        if (dialog.ShowDialog() == true)
+        // Формируем конечный путь: выбранная_папка\Ven4Tools
+        string parentPath = dialog.FolderName;
+        _installPath = Path.Combine(parentPath, "Ven4Tools");
+
+        // Создаём папку (и родительскую, если нужно)
+        try
         {
-            _installPath = dialog.FolderName;
-            SaveInstallPath(_installPath);
-            AddLog($"✅ Выбран путь: {_installPath}");
-            
-            // Обновляем статус
-            _ = InitializeAsync();
+            if (!Directory.Exists(_installPath))
+            {
+                Directory.CreateDirectory(_installPath);
+                AddLog($"📁 Папка создана: {_installPath}");
+            }
+            else
+            {
+                AddLog($"📁 Папка уже существует: {_installPath}");
+            }
         }
+        catch (Exception ex)
+        {
+            AddLog($"❌ Не удалось создать папку: {ex.Message}");
+            MessageBox.Show($"Не удалось создать папку:\n{ex.Message}", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        SaveInstallPath(_installPath);
+        AddLog($"✅ Выбран путь: {_installPath}");
+        _ = InitializeAsync();
     }
+}
     
     private async void BtnInstall_Click(object sender, RoutedEventArgs e)
     {
