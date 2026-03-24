@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:21:08",
+  "lastUpdated": "2026-03-25 01:22:49",
   "apps": [
     {
       "id": "7zip",
@@ -213,6 +213,18 @@
       "wingetId": "",
       "downloadUrl": "https://disk.yandex.ru/d/6gUHS4QWiZgkIg",
       "version": "latest",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Описание отсутствует"
+    },
+    {
+      "id": "6045cf8b-62cc-40ef-81d7-14ee3389c348",
+      "name": "SDI Lite 1.26.1",
+      "category": "Драйверпаки",
+      "wingetId": "samlab-ws.SnappyDriverInstaller 1.23.9 (R2309)",
+      "downloadUrl": "https://driveroff.net/drv/SDI_1.26.1.7z",
+      "version": "Tag: sdi",
       "size": "~100 MB",
       "official": true,
       "iconUrl": "",
