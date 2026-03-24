@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:19:06",
+  "lastUpdated": "2026-03-25 01:19:27",
   "apps": [
     {
       "id": "7zip",
@@ -189,6 +189,18 @@
       "wingetId": "CrystalDewWorld.CrystalDiskInfo",
       "downloadUrl": "",
       "version": "9.8.0",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Описание отсутствует"
+    },
+    {
+      "id": "df8700ba-2e38-435e-99e5-89457410d9fc",
+      "name": "CrystalDiskMark",
+      "category": "Другое",
+      "wingetId": "CrystalDewWorld.CrystalDiskMark.AoiEdition",
+      "downloadUrl": "",
+      "version": "9.0.2",
       "size": "~100 MB",
       "official": true,
       "iconUrl": "",
