@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:20:50",
+  "lastUpdated": "2026-03-25 01:21:08",
   "apps": [
     {
       "id": "7zip",
@@ -209,7 +209,7 @@
     {
       "id": "3d8de6e0-4a61-4c66-9b52-03d5f3f732b9",
       "name": "Driver Booster Pro 13",
-      "category": "Другое",
+      "category": "Драйверпаки",
       "wingetId": "",
       "downloadUrl": "https://disk.yandex.ru/d/6gUHS4QWiZgkIg",
       "version": "latest",
