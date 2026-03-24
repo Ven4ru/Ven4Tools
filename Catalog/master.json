@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:18:57",
+  "lastUpdated": "2026-03-25 01:19:06",
   "apps": [
     {
       "id": "7zip",
@@ -185,7 +185,7 @@
     {
       "id": "1b506f94-f6fc-4faf-8e94-89282b26dbcc",
       "name": "CrystalDiskInfo",
-      "category": "Другое",
+      "category": "Системные",
       "wingetId": "CrystalDewWorld.CrystalDiskInfo",
       "downloadUrl": "",
       "version": "9.8.0",
