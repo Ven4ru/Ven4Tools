@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-25 01:19:27",
+  "lastUpdated": "2026-03-25 01:19:37",
   "apps": [
     {
       "id": "7zip",
@@ -197,7 +197,7 @@
     {
       "id": "df8700ba-2e38-435e-99e5-89457410d9fc",
       "name": "CrystalDiskMark",
-      "category": "Другое",
+      "category": "Системные",
       "wingetId": "CrystalDewWorld.CrystalDiskMark.AoiEdition",
       "downloadUrl": "",
       "version": "9.0.2",
