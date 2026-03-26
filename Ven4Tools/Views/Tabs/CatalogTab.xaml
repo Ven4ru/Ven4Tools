@@ -1,0 +1,103 @@
+<UserControl x:Class="Ven4Tools.Views.Tabs.CatalogTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource ContentBackground}">
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- Левая панель: список приложений (растягиваем по высоте) -->
+        <GroupBox Header="📦 Приложения" Grid.Column="0" Margin="0,0,10,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <Expander Header="🌐 Браузеры" IsExpanded="True">
+                        <StackPanel x:Name="PanelБраузеры" Margin="15,3,0,3"/>
+                    </Expander>
+                    <Expander Header="📁 Офис" IsExpanded="True">
+                        <StackPanel x:Name="PanelОфис" Margin="15,3,0,3"/>
+                    </Expander>
+                    <Expander Header="🎨 Графика" IsExpanded="True">
+                        <StackPanel x:Name="PanelГрафика" Margin="15,3,0,3"/>
+                    </Expander>
+                    <Expander Header="💻 Разработка" IsExpanded="True">
+                        <StackPanel x:Name="PanelРазработка" Margin="15,3,0,3"/>
+                    </Expander>
+                    <Expander Header="💬 Мессенджеры" IsExpanded="True">
+                        <StackPanel x:Name="PanelМессенджеры" Margin="15,3,0,3"/>
+                    </Expander>
+                    <Expander Header="🎵 Мультимедиа" IsExpanded="True">
+                        <StackPanel x:Name="PanelМультимедиа" Margin="15,3,0,3"/>
+                    </Expander>
+                    <Expander Header="⚙️ Системные" IsExpanded="True">
+                        <StackPanel x:Name="PanelСистемные" Margin="15,3,0,3"/>
+                    </Expander>
+                    <Expander Header="🎮 Игровые сервисы" IsExpanded="True">
+                        <StackPanel x:Name="PanelИгровыеСервисы" Margin="15,3,0,3"/>
+                    </Expander>
+                    <Expander Header="🖨️ Драйверпаки" IsExpanded="True">
+                        <StackPanel x:Name="PanelДрайверпаки" Margin="15,3,0,3"/>
+                    </Expander>
+                    <Expander Header="📎 Другое" IsExpanded="True">
+                        <StackPanel x:Name="PanelДругое" Margin="15,3,0,3"/>
+                    </Expander>
+                    <Expander Header="👤 Пользовательские" IsExpanded="True">
+                        <StackPanel x:Name="PanelПользовательские" Margin="15,3,0,3"/>
+                    </Expander>
+                </StackPanel>
+            </ScrollViewer>
+        </GroupBox>
+        
+        <!-- Правая панель: управление (растягиваем по высоте) -->
+        <StackPanel Grid.Column="1">
+            <GroupBox Header="🚀 Действия">
+                <StackPanel>
+                    <Button x:Name="btnInstall" Content="🚀 Установить" Height="35" Margin="3"/>
+                    <Button x:Name="btnCancelInstall" Content="⏹️ Отмена" Height="35" Margin="3" IsEnabled="False"/>
+                    <Button x:Name="btnAddApp" Content="➕ Добавить своё" Height="35" Margin="3"/>
+                    <Button x:Name="btnClearAllUserApps" Content="🗑️ Очистить всё" Height="35" Margin="3"/>
+                    <Button x:Name="btnRefreshCatalog" Content="🔄 Обновить каталог" Height="35" Margin="3"/>
+                    <Button x:Name="btnRefreshAvailability" Content="🔍 Проверить доступность" Height="35" Margin="3" Click="RefreshAvailability_Click"/>
+                    <Button x:Name="btnSuggestAlternatives" Content="🔄 Предложить альтернативы для недоступных" Height="35" Margin="3"/>
+                </StackPanel>
+            </GroupBox>
+            
+            <GroupBox Header="💾 Диск установки" Margin="0,10,0,0">
+                <StackPanel>
+                    <ComboBox x:Name="cmbAvailableDisks" Height="28"/>
+                    <TextBlock x:Name="txtSpaceStatus" FontSize="10" Margin="0,5,0,0"/>
+                    <ProgressBar x:Name="installProgressBar" Height="8" Margin="0,5,0,0" Minimum="0" Maximum="100" Value="0"/>
+                    <TextBlock x:Name="txtOverallStatus" Text="Готов" FontSize="10" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                </StackPanel>
+            </GroupBox>
+            
+            <GroupBox Header="📋 Лог установки" Margin="0,10,0,0" Height="200">
+                <TextBox x:Name="txtInstallLog" 
+                         Background="{DynamicResource CardBackground}" 
+                         Foreground="{DynamicResource TextPrimary}"
+                         FontFamily="Consolas" FontSize="10"
+                         IsReadOnly="True" TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"/>
+            </GroupBox>
+            
+            <GroupBox Header="📊 Прогресс установки" Margin="0,10,0,0" Height="150">
+                <ListBox x:Name="lstAppProgress" Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding AppName}" Width="200" Foreground="{DynamicResource TextPrimary}"/>
+                                <TextBlock Text="{Binding Status}" Width="200" Foreground="{DynamicResource TextSecondary}"/>
+                                <ProgressBar Width="100" Height="15" Value="{Binding Percentage}" Margin="5,0" 
+                                             Background="{DynamicResource BorderBrush}" 
+                                             Foreground="{DynamicResource AccentColor}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
+        </StackPanel>
+    </Grid>
+</UserControl>
+
+
