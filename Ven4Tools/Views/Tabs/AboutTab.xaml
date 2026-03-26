@@ -1,0 +1,60 @@
+<UserControl x:Class="Ven4Tools.Views.Tabs.AboutTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource ContentBackground}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20" HorizontalAlignment="Center">
+            <Image Source="/icon.ico" Width="96" Height="96" Margin="0,20,0,20"/>
+            
+            <TextBlock Text="Ven4Tools" FontSize="32" FontWeight="Bold" 
+                       Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="txtVersion" FontSize="14" 
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,5,0,20"/>
+            
+            <TextBlock Text="Инструмент для автоматической установки программ" 
+                       Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"
+                       HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+            
+            <GroupBox Header="📋 О программе" Margin="0,0,0,15" Width="500">
+                <StackPanel Margin="10">
+                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}">
+                        Ven4Tools — это удобный установщик программ для Windows.
+                        
+                        • Поддержка winget и прямых ссылок
+                        • Каталог популярных приложений
+                        • Добавление своих программ
+                        • Установка Microsoft Office
+                        • Активация Windows и Office
+                        • Автоматическая проверка доступности
+                        • Альтернативные источники для недоступных приложений
+                    </TextBlock>
+                </StackPanel>
+            </GroupBox>
+            
+            <GroupBox Header="🔧 Используемые технологии" Margin="0,0,0,15" Width="500">
+                <StackPanel Margin="10">
+                    <TextBlock Foreground="{DynamicResource TextSecondary}">
+                        • .NET 8.0 / WPF
+                        • winget (Windows Package Manager)
+                        • PowerShell Core
+                        • Microsoft Activation Scripts (MAS)
+                    </TextBlock>
+                </StackPanel>
+            </GroupBox>
+            
+            <GroupBox Header="📌 Ссылки" Margin="0,0,0,15" Width="500">
+                <StackPanel Margin="10">
+                    <Button x:Name="btnGitHub" Content="🐙 GitHub репозиторий" 
+                            Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"/>
+                    <Button x:Name="btnFeedback" Content="📧 Обратная связь" 
+                            Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"/>
+                    <Button x:Name="btnReportIssue" Content="🐛 Сообщить о проблеме" 
+                            Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"/>
+                </StackPanel>
+            </GroupBox>
+            
+            <TextBlock Text="© 2024-2025 Ven4ru. Свободное программное обеспечение." 
+                       Foreground="{DynamicResource TextSecondary}" FontSize="10" Margin="0,20,0,10"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

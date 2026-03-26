@@ -1,0 +1,939 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Input;
+using Microsoft.Win32;
+using Ven4Tools.Models;
+using Ven4Tools.Services;
+
+namespace Ven4Tools.Views.Tabs
+{
+    public partial class CatalogTab : UserControl
+    {
+        
+        private readonly string[] wingetSources = { "winget", "msstore", "custom" };
+        private readonly SemaphoreSlim installSemaphore = new SemaphoreSlim(2);
+        private bool isCancelled = false;
+        private CancellationTokenSource? cancellationTokenSource;
+        private readonly AppManager appManager = null!;
+        private readonly InstallationService installService = null!;
+        private readonly AvailabilityChecker availabilityChecker = null!;
+        private Dictionary<string, CheckBox> appCheckBoxes = new();
+        private Dictionary<AppCategory, StackPanel> categoryPanels = new();
+        private Dictionary<string, AvailabilityChecker.AvailabilityStatus> availabilityStatus = new();
+        private MasterCatalog? _catalog;
+        private CatalogLoaderService? _catalogLoader;
+        
+        // Для выбора диска
+        private string selectedInstallDrive = "C:\\";
+        private string systemDrive = "C:\\";
+        
+        // Событие для логирования
+        public event Action<string>? LogMessage;
+        
+        public CatalogTab()
+        {
+            InitializeComponent();
+            
+            _catalogLoader = new CatalogLoaderService();
+            appManager = new AppManager();
+            installService = new InstallationService();
+            availabilityChecker = new AvailabilityChecker();
+            
+            InitCategoryPanels();
+            LoadAvailableDisks();
+            
+            Loaded += async (s, e) => await LoadCatalogAndRefreshAsync();
+            
+            // Подписываемся на события кнопок
+            btnInstall.Click += InstallSelected_Click;
+            btnCancelInstall.Click += CancelInstall_Click;
+            btnAddApp.Click += BtnAddApp_Click;
+            btnClearAllUserApps.Click += BtnClearAllUserApps_Click;
+            btnRefreshCatalog.Click += BtnRefreshCatalog_Click;
+            btnRefreshAvailability.Click += RefreshAvailability_Click;
+            cmbAvailableDisks.SelectionChanged += CmbAvailableDisks_SelectionChanged;
+        }
+        
+        private void InitCategoryPanels()
+        {
+            categoryPanels[AppCategory.Браузеры] = PanelБраузеры;
+            categoryPanels[AppCategory.Офис] = PanelОфис;
+            categoryPanels[AppCategory.Графика] = PanelГрафика;
+            categoryPanels[AppCategory.Разработка] = PanelРазработка;
+            categoryPanels[AppCategory.Мессенджеры] = PanelМессенджеры;
+            categoryPanels[AppCategory.Мультимедиа] = PanelМультимедиа;
+            categoryPanels[AppCategory.Системные] = PanelСистемные;
+            categoryPanels[AppCategory.ИгровыеСервисы] = PanelИгровыеСервисы;
+            categoryPanels[AppCategory.Драйверпаки] = PanelДрайверпаки;
+            categoryPanels[AppCategory.Другое] = PanelДругое;
+            categoryPanels[AppCategory.Пользовательские] = PanelПользовательские;
+        }
+        
+        private void LoadAvailableDisks()
+        {
+            try
+            {
+                systemDrive = Path.GetPathRoot(Environment.SystemDirectory)?.TrimEnd('\\') ?? "C:";
+
+                var drives = DriveInfo.GetDrives()
+                    .Where(d => d.DriveType == DriveType.Fixed && d.IsReady)
+                    .Select(d => new
+                    {
+                        Name = d.RootDirectory.FullName.TrimEnd('\\'),
+                        Space = $"{d.Name.TrimEnd('\\')} ({d.AvailableFreeSpace / 1024 / 1024 / 1024:F1} ГБ свободно)"
+                    })
+                    .ToList();
+
+                cmbAvailableDisks.ItemsSource = drives;
+                cmbAvailableDisks.DisplayMemberPath = "Space";
+                cmbAvailableDisks.SelectedValuePath = "Name";
+
+                var systemDisk = drives.FirstOrDefault(d => d.Name == systemDrive);
+                if (systemDisk != null)
+                {
+                    cmbAvailableDisks.SelectedValue = systemDrive;
+                    selectedInstallDrive = systemDrive + "\\";
+                }
+                else if (drives.Any())
+                {
+                    cmbAvailableDisks.SelectedIndex = 0;
+                    selectedInstallDrive = drives.First().Name + "\\";
+                }
+
+                UpdateDiskSpaceInfo();
+            }
+            catch (Exception ex)
+            {
+                AddLog($"⚠️ Ошибка получения списка дисков: {ex.Message}");
+            }
+        }
+        
+        private void CmbAvailableDisks_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cmbAvailableDisks.SelectedValue != null)
+            {
+                selectedInstallDrive = cmbAvailableDisks.SelectedValue.ToString() + "\\";
+                UpdateDiskSpaceInfo();
+                UpdateSpaceStatus();
+            }
+        }
+        
+        private void UpdateDiskSpaceInfo()
+        {
+            try
+            {
+                string disk = selectedInstallDrive.TrimEnd('\\');
+                var drive = new DriveInfo(disk);
+
+                if (drive.IsReady)
+                {
+                    long freeSpaceGB = drive.AvailableFreeSpace / 1024 / 1024 / 1024;
+                    long totalSpaceGB = drive.TotalSize / 1024 / 1024 / 1024;
+
+                    txtSpaceStatus.Text = $"💾 Диск {disk} | Свободно: {freeSpaceGB} ГБ / {totalSpaceGB} ГБ";
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog($"⚠️ Ошибка обновления информации о диске: {ex.Message}");
+            }
+        }
+        
+        private async Task LoadCatalogAndRefreshAsync()
+        {
+            try
+            {
+                if (_catalogLoader == null) return;
+
+                var loadedCatalog = await _catalogLoader.LoadCatalogAsync();
+                
+                if (loadedCatalog == null)
+                {
+                    AddLog("❌ Ошибка: не удалось загрузить каталог");
+                    return;
+                }
+                
+                _catalog = loadedCatalog;
+                SyncCatalogToAppManager();
+                
+                string sourceText = _catalog.Source switch
+                {
+                    "online" => "🌐 Каталог загружен из интернета",
+                    "cache" => "💾 Каталог из кэша (интернет недоступен)",
+                    "embedded" => "📀 Встроенный каталог (минимальный набор)",
+                    _ => "❓ Неизвестный источник"
+                };
+
+                AddLog(sourceText);
+                AddLog($"Загружено приложений: {_catalog.Apps.Count}");
+
+                LoadApps();
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Ошибка загрузки каталога: {ex.Message}");
+            }
+        }
+        
+        private void LoadApps()
+        {
+            try
+            {
+                foreach (var panel in categoryPanels.Values)
+                {
+                    panel.Children.Clear();
+                }
+                appCheckBoxes.Clear();
+                availabilityStatus.Clear();
+
+                if (_catalog == null)
+                {
+                    AddLog("⚠️ Каталог не загружен");
+                    return;
+                }
+
+                AddLog($"Каталог содержит {_catalog.Apps.Count} приложений");
+
+                // Загружаем приложения из каталога
+                foreach (var app in _catalog.Apps)
+                {
+                    var category = GetCategoryFromString(app.Category);
+
+                    if (categoryPanels.TryGetValue(category, out var panel) && panel != null)
+                    {
+                        var checkBox = new CheckBox
+                        {
+                            Content = app.Name,
+                            Tag = app.Id,
+                            Foreground = new SolidColorBrush(Color.FromRgb(128, 128, 128)), // серый до проверки
+                            Margin = new Thickness(0, 2, 0, 2),
+                            ToolTip = "⏳ Проверка доступности..."
+                        };
+
+                        panel.Children.Add(checkBox);
+                        appCheckBoxes[app.Id] = checkBox;
+                        _ = CheckAppAvailabilityFromCatalog(app);
+                    }
+                }
+
+                // Загружаем пользовательские приложения (оранжевые)
+                var userApps = appManager.GetAllApps().Where(a => a.IsUserAdded).ToList();
+                foreach (var app in userApps)
+                {
+                    AddUserAppToUI(app);
+                }
+
+                AddLog($"Загружено {_catalog.Apps.Count} приложений из каталога, {userApps.Count} пользовательских");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Ошибка при загрузке приложений: {ex.Message}");
+            }
+        }
+        
+        private void AddUserAppToUI(AppInfo app)
+        {
+            var checkBox = new CheckBox
+            {
+                Content = app.DisplayName,
+                Tag = app.Id,
+                Foreground = new SolidColorBrush(Color.FromRgb(255, 140, 0)), // оранжевый для пользовательских
+                Margin = new Thickness(0, 2, 0, 2),
+                ToolTip = "👤 Пользовательское приложение"
+            };
+
+            var removeButton = new Button
+            {
+                Content = "❌",
+                Width = 20,
+                Height = 20,
+                Margin = new Thickness(5, 0, 0, 0),
+                Tag = app.Id,
+                Background = new SolidColorBrush(Color.FromRgb(100, 0, 0)),
+                Foreground = Brushes.White,
+                FontSize = 10,
+                Padding = new Thickness(0),
+                ToolTip = "Удалить из списка"
+            };
+            removeButton.Click += (s, args) => RemoveUserApp(app.Id);
+
+            var panel = new StackPanel { Orientation = Orientation.Horizontal };
+            panel.Children.Add(checkBox);
+            panel.Children.Add(removeButton);
+
+            PanelПользовательские.Children.Add(panel);
+            appCheckBoxes[app.Id] = checkBox;
+            availabilityStatus[app.Id] = AvailabilityChecker.AvailabilityStatus.Available; // пользовательские считаем доступными
+        }
+        
+        private void RemoveUserApp(string appId)
+        {
+            var result = MessageBox.Show("Удалить приложение из списка?", "Подтверждение",
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    appManager.RemoveUserApp(appId);
+
+                    var toRemove = PanelПользовательские.Children
+                        .OfType<StackPanel>()
+                        .FirstOrDefault(sp => sp.Children
+                            .OfType<CheckBox>()
+                            .Any(c => c.Tag?.ToString() == appId));
+
+                    if (toRemove != null)
+                    {
+                        PanelПользовательские.Children.Remove(toRemove);
+                    }
+
+                    appCheckBoxes.Remove(appId);
+                    availabilityStatus.Remove(appId);
+
+                    AddLog($"🗑️ Удалено пользовательское приложение");
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"❌ Ошибка при удалении: {ex.Message}");
+                }
+            }
+        }
+        
+private async Task CheckAppAvailabilityFromCatalog(Models.App catalogApp)
+{
+    AddLog("ПРОВЕРКА: " + catalogApp.Name);
+    try
+    {
+        AddLog("  → Получаем AppInfo для " + catalogApp.Name);
+        AppInfo? appInfo = appManager.GetAppById(catalogApp.Id);
+
+        if (appInfo == null)
+        {
+            AddLog("  → AppInfo не найден, создаём новый");
+            appInfo = new AppInfo
+            {
+                Id = catalogApp.Id,
+                DisplayName = catalogApp.Name,
+                Category = GetCategoryFromString(catalogApp.Category),
+                InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl)
+                    ? new List<string> { catalogApp.DownloadUrl }
+                    : new List<string>(),
+                AlternativeId = catalogApp.WingetId,
+                SilentArgs = "/S",
+                RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
+                IsUserAdded = false
+            };
+        }
+        else
+        {
+            AddLog("  → AppInfo найден, AlternativeId = " + (appInfo.AlternativeId ?? "нет"));
+        }
+
+        AddLog("  → Вызываем CheckAppAvailabilityWithSize для " + catalogApp.Name);
+        var availabilityResult = await availabilityChecker.CheckAppAvailabilityWithSize(appInfo);
+        AddLog("  → Результат: " + availabilityResult.Status + ", размер: " + availabilityResult.SizeMB);
+        
+        var status = availabilityResult.Status;
+        var size = availabilityResult.SizeMB;
+
+        await Dispatcher.InvokeAsync(() =>
+        {
+            if (appCheckBoxes.TryGetValue(catalogApp.Id, out var checkBox))
+            {
+                AddLog("  → Обновляем UI для " + catalogApp.Name);
+                availabilityStatus[catalogApp.Id] = status;
+
+                switch (status)
+                {
+                    case AvailabilityChecker.AvailabilityStatus.Available:
+                        checkBox.Foreground = Brushes.LightGreen;
+                        checkBox.ToolTip = $"✅ Доступно для установки ({(size > 0 ? $"~{size} МБ" : "размер неизвестен")})";
+                        checkBox.IsEnabled = true;
+                        AddLog("  → Установлен ЗЕЛЁНЫЙ цвет для " + catalogApp.Name);
+                        break;
+                    case AvailabilityChecker.AvailabilityStatus.Unavailable:
+                        checkBox.Foreground = Brushes.LightCoral;
+                        checkBox.ToolTip = "❌ Недоступно";
+                        checkBox.IsEnabled = false;
+                        AddLog("  → Установлен КРАСНЫЙ цвет для " + catalogApp.Name);
+                        break;
+                    default:
+                        checkBox.Foreground = Brushes.Gray;
+                        checkBox.ToolTip = "⚠️ Статус неизвестен";
+                        checkBox.IsEnabled = true;
+                        AddLog("  → Установлен СЕРЫЙ цвет для " + catalogApp.Name);
+                        break;
+                }
+
+                checkBox.InvalidateVisual();
+            }
+        });
+    }
+    catch (Exception ex)
+    {
+        AddLog($"❌ ОШИБКА при проверке {catalogApp.Name}: {ex.Message}");
+        AddLog($"   StackTrace: {ex.StackTrace}");
+    }
+}
+        
+        private async Task CheckSingleAppAvailability(string appId, int attempt = 1)
+        {
+            try
+            {
+                var app = appManager.GetAllApps().FirstOrDefault(a => a.Id == appId);
+                if (app == null) return;
+
+                var availabilityResult = await availabilityChecker.CheckAppAvailabilityWithSize(app);
+                var status = availabilityResult.Status;
+                var size = availabilityResult.SizeMB;
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (appCheckBoxes.TryGetValue(appId, out var checkBox))
+                    {
+                        availabilityStatus[appId] = status;
+
+                        switch (status)
+                        {
+                            case AvailabilityChecker.AvailabilityStatus.Available:
+                                checkBox.Foreground = new SolidColorBrush(Color.FromRgb(144, 238, 144)); // светло-зелёный
+                                checkBox.ToolTip = $"✅ Доступно для установки ({(size > 0 ? $"~{size} МБ" : "размер неизвестен")})";
+                                checkBox.IsEnabled = true;
+                                break;
+                            case AvailabilityChecker.AvailabilityStatus.Unavailable:
+                                if (attempt < 3)
+                                {
+                                    checkBox.Foreground = new SolidColorBrush(Color.FromRgb(128, 128, 128)); // серый
+                                    checkBox.ToolTip = $"⏳ Повторная проверка... ({attempt}/3)";
+                                    _ = Task.Delay(2000).ContinueWith(_ => CheckSingleAppAvailability(appId, attempt + 1));
+                                }
+                                else
+                                {
+                                    checkBox.Foreground = new SolidColorBrush(Color.FromRgb(240, 128, 128)); // светло-красный
+                                    checkBox.ToolTip = "❌ Недоступно";
+                                    checkBox.IsEnabled = false;
+                                }
+                                break;
+                            default:
+                                checkBox.Foreground = new SolidColorBrush(Color.FromRgb(128, 128, 128)); // серый
+                                checkBox.ToolTip = "⚠️ Статус неизвестен";
+                                checkBox.IsEnabled = true;
+                                break;
+                        }
+                        
+                        checkBox.InvalidateVisual();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка при проверке {appId}: {ex.Message}");
+            }
+        }
+        
+        private void SyncCatalogToAppManager()
+        {
+            if (_catalog == null) return;
+
+            foreach (var catalogApp in _catalog.Apps)
+            {
+                var existing = appManager.GetAppById(catalogApp.Id);
+                if (existing == null)
+                {
+                    var appInfo = new AppInfo
+                    {
+                        Id = catalogApp.Id,
+                        DisplayName = catalogApp.Name,
+                        Category = GetCategoryFromString(catalogApp.Category),
+                        InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl)
+                            ? new List<string> { catalogApp.DownloadUrl }
+                            : new List<string>(),
+                        AlternativeId = catalogApp.WingetId,
+                        RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
+                        IsUserAdded = false
+                    };
+                    appManager.AddCatalogApp(appInfo);
+                }
+            }
+        }
+        
+        private AppCategory GetCategoryFromString(string category)
+        {
+            return category switch
+            {
+                "Браузеры" => AppCategory.Браузеры,
+                "Офис" => AppCategory.Офис,
+                "Графика" => AppCategory.Графика,
+                "Разработка" => AppCategory.Разработка,
+                "Мессенджеры" => AppCategory.Мессенджеры,
+                "Мультимедиа" => AppCategory.Мультимедиа,
+                "Системные" => AppCategory.Системные,
+                "Игровые сервисы" => AppCategory.ИгровыеСервисы,
+                "Драйверпаки" => AppCategory.Драйверпаки,
+                _ => AppCategory.Другое
+            };
+        }
+        
+        private int ParseSizeToMB(string size)
+        {
+            if (string.IsNullOrEmpty(size)) return 100;
+            try
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(size, @"(\d+(?:\.\d+)?)");
+                if (match.Success && double.TryParse(match.Value, out double value))
+                {
+                    if (size.Contains("GB", StringComparison.OrdinalIgnoreCase))
+                        return (int)(value * 1024);
+                    return (int)value;
+                }
+            }
+            catch { }
+            return 100;
+        }
+        
+        private List<string> GetSelectedApps()
+        {
+            return appCheckBoxes
+                .Where(kv => kv.Value.IsChecked == true && kv.Value.IsEnabled)
+                .Select(kv => kv.Key)
+                .ToList();
+        }
+        
+        private async void InstallSelected_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedApps = GetSelectedApps();
+            if (selectedApps.Count == 0)
+            {
+                MessageBox.Show("Выберите хотя бы одну программу!", "Ven4Tools", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            lstAppProgress.Items.Clear();
+            installProgressBar.Value = 0;
+            isCancelled = false;
+            btnInstall.IsEnabled = false;
+            btnCancelInstall.IsEnabled = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            var token = cancellationTokenSource.Token;
+
+            var allApps = appManager.GetAllApps();
+            var appsToInstall = allApps.Where(a => selectedApps.Contains(a.Id)).ToList();
+            var progressDict = new Dictionary<string, AppInstallProgress>();
+
+            AddLog($"💾 Установка на диск: {selectedInstallDrive}");
+
+            var progress = new Progress<AppInstallProgress>(p =>
+            {
+                progressDict[p.AppId] = p;
+
+                var existing = lstAppProgress.Items.OfType<AppInstallProgress>().FirstOrDefault(x => x.AppId == p.AppId);
+                if (existing != null)
+                {
+                    existing.Status = p.Status;
+                    existing.Percentage = p.Percentage;
+                    lstAppProgress.Items.Refresh();
+                }
+                else
+                {
+                    lstAppProgress.Items.Add(p);
+                }
+
+                if (progressDict.Values.All(x => x.Percentage >= 100 || x.Status.Contains("Ошибка") || x.Status.Contains("Отменено")))
+                {
+                    installProgressBar.Value = 100;
+                }
+                else
+                {
+                    installProgressBar.Value = progressDict.Values.Average(x => x.Percentage);
+                }
+            });
+
+            txtOverallStatus.Text = $"⏳ Установка 0/{appsToInstall.Count}...";
+
+            int completed = 0;
+            int failed = 0;
+
+            var tasks = appsToInstall.Select(app => Task.Run(async () =>
+            {
+                await installSemaphore.WaitAsync();
+                try
+                {
+                    if (token.IsCancellationRequested) return;
+
+                    var result = await installService.InstallAppAsync(app, wingetSources, token, progress, selectedInstallDrive);
+
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        if (result.Success)
+                        {
+                            completed++;
+                            if (appCheckBoxes.TryGetValue(app.Id, out var cb))
+                            {
+                                cb.Foreground = new SolidColorBrush(Color.FromRgb(136, 136, 136)); // серый после установки
+                                cb.Opacity = 0.7;
+                                cb.IsEnabled = false;
+                                cb.ToolTip = "✅ Установлено";
+                            }
+                        }
+                        else
+                        {
+                            failed++;
+                        }
+                        txtOverallStatus.Text = $"⏳ Установка: {completed + failed}/{appsToInstall.Count} (✅ {completed} | ❌ {failed})";
+                    });
+                }
+                finally
+                {
+                    installSemaphore.Release();
+                }
+            }, token));
+
+            try
+            {
+                await Task.WhenAll(tasks);
+                txtOverallStatus.Text = $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed}";
+                appManager.SaveSelectedApps(GetSelectedApps());
+            }
+            catch (OperationCanceledException)
+            {
+                txtOverallStatus.Text = "⏹️ Установка отменена";
+            }
+            finally
+            {
+                btnInstall.IsEnabled = true;
+                btnCancelInstall.IsEnabled = false;
+                cancellationTokenSource?.Dispose();
+                cancellationTokenSource = null;
+                UpdateSpaceStatus();
+            }
+        }
+        
+        private void CancelInstall_Click(object sender, RoutedEventArgs e)
+        {
+            if (cancellationTokenSource != null && !isCancelled)
+            {
+                var result = MessageBox.Show(
+                    "Вы действительно хотите прервать установку?",
+                    "Подтверждение отмены",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    isCancelled = true;
+                    cancellationTokenSource?.Cancel();
+                    btnCancelInstall.IsEnabled = false;
+                    txtOverallStatus.Text = "⏹️ Установка прервана";
+                }
+            }
+        }
+        
+        private async void BtnAddApp_Click(object sender, RoutedEventArgs e)
+        {
+            var consentService = new ConsentService();
+            var shouldAsk = await consentService.ShouldAskForConsentAsync();
+
+            bool allowStats = true;
+
+            if (shouldAsk)
+            {
+                var dialog = new Views.ConsentDialog();
+                if (dialog.ShowDialog() == true)
+                {
+                    allowStats = dialog.AllowStats;
+                    await consentService.SaveConsentAsync(allowStats);
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else
+            {
+                allowStats = await consentService.IsStatsAllowedAsync();
+            }
+
+            var addDialog = new Services.AddAppDialog();
+            if (addDialog.ShowDialog() == true && addDialog.Result != null)
+            {
+                var newApp = addDialog.Result;
+                appManager.AddUserApp(newApp);
+                AddUserAppToUI(newApp);
+
+                if (allowStats)
+                {
+                    string? wingetId = null;
+                    if (_catalog != null)
+                    {
+                        var catalogApp = _catalog.Apps.FirstOrDefault(a => a.Name == newApp.DisplayName);
+                        if (catalogApp != null && !string.IsNullOrEmpty(catalogApp.WingetId))
+                        {
+                            wingetId = catalogApp.WingetId;
+                        }
+                    }
+                    if (string.IsNullOrEmpty(wingetId) && !string.IsNullOrEmpty(newApp.AlternativeId))
+                    {
+                        wingetId = newApp.AlternativeId;
+                    }
+                    await StatsService.Instance.TrackUserAddAsync(newApp.Id, wingetId, newApp.InstallerUrls.FirstOrDefault());
+                }
+
+                AddLog($"➕ Добавлено пользовательское приложение: {newApp.DisplayName}");
+            }
+        }
+        
+        private async void BtnClearAllUserApps_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                "Вы действительно хотите удалить ВСЕ пользовательские приложения?",
+                "Полная очистка",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    string configPath;
+                    string appDataPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "Ven4Tools");
+
+                    string exeDir = AppDomain.CurrentDomain.BaseDirectory;
+                    string portableMarker = Path.Combine(exeDir, "portable.dat");
+
+                    if (File.Exists(portableMarker))
+                    {
+                        configPath = Path.Combine(exeDir, "Data", "apps.json");
+                    }
+                    else
+                    {
+                        configPath = Path.Combine(appDataPath, "apps.json");
+                    }
+
+                    if (File.Exists(configPath))
+                    {
+                        File.Delete(configPath);
+                    }
+
+                    string selectionPath = configPath + ".selection";
+                    if (File.Exists(selectionPath))
+                    {
+                        File.Delete(selectionPath);
+                    }
+
+                    AddLog($"✅ Файл пользовательских приложений очищен");
+                    ReloadAllApps();
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"❌ Ошибка при удалении: {ex.Message}");
+                }
+            }
+        }
+        
+        private void ReloadAllApps()
+        {
+            try
+            {
+                PanelБраузеры.Children.Clear();
+                PanelОфис.Children.Clear();
+                PanelГрафика.Children.Clear();
+                PanelРазработка.Children.Clear();
+                PanelМессенджеры.Children.Clear();
+                PanelМультимедиа.Children.Clear();
+                PanelСистемные.Children.Clear();
+                PanelИгровыеСервисы.Children.Clear();
+                PanelДрайверпаки.Children.Clear();
+                PanelДругое.Children.Clear();
+                PanelПользовательские.Children.Clear();
+
+                appCheckBoxes.Clear();
+                availabilityStatus.Clear();
+
+                LoadApps();
+                AddLog("🔄 Список приложений перезагружен");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка при перезагрузке: {ex.Message}");
+            }
+        }
+        
+        private async void BtnRefreshCatalog_Click(object sender, RoutedEventArgs e)
+        {
+            AddLog("🔄 Обновление каталога с GitHub...");
+            
+            try
+            {
+                var url = "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/master.json";
+                AddLog($"📡 URL: {url}");
+
+                using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromSeconds(5);
+                client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+
+                var response = await client.GetAsync(url);
+                AddLog($"📡 HTTP статус: {response.StatusCode}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    AddLog($"📦 Размер JSON: {json.Length} байт");
+
+                    var dateMatch = System.Text.RegularExpressions.Regex.Match(json, @"""lastUpdated"":\s*""([^""]+)""");
+                    if (dateMatch.Success)
+                    {
+                        AddLog($"📅 Версия на GitHub: {dateMatch.Groups[1].Value}");
+                    }
+                }
+
+                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var catalogCachePath = Path.Combine(localAppData, "Ven4Tools", "catalog_cache.json");
+
+                if (File.Exists(catalogCachePath))
+                {
+                    File.Delete(catalogCachePath);
+                    AddLog("🗑️ Кэш удалён");
+                }
+
+                if (_catalogLoader == null)
+                {
+                    AddLog("❌ Ошибка: загрузчик каталога не инициализирован");
+                    return;
+                }
+
+                var loadedCatalog = await _catalogLoader.LoadCatalogAsync();
+
+                if (loadedCatalog == null)
+                {
+                    AddLog("❌ Ошибка: не удалось загрузить каталог");
+                    return;
+                }
+
+                _catalog = loadedCatalog;
+                SyncCatalogToAppManager();
+                
+                appManager.LoadAlternativeSources();
+                appManager.ApplyAlternativesToCatalog(_catalog);
+                
+                AddLog($"📦 Загружено приложений: {_catalog.Apps.Count}");
+                
+                LoadApps();
+                AddLog("✅ Каталог успешно обновлён");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка: {ex.Message}");
+            }
+        }
+        
+        private async void RefreshAvailability_Click(object sender, RoutedEventArgs e)
+        {
+            AddLog("🔄 Перезапущена проверка доступности");
+
+            if (_catalog != null)
+            {
+                foreach (var app in _catalog.Apps)
+                {
+                    if (availabilityStatus.ContainsKey(app.Id))
+                        availabilityStatus.Remove(app.Id);
+
+                    if (appCheckBoxes.TryGetValue(app.Id, out var checkBox))
+                    {
+                        checkBox.Foreground = new SolidColorBrush(Color.FromRgb(128, 128, 128)); // серый
+                        checkBox.ToolTip = "⏳ Проверка...";
+                        checkBox.IsEnabled = true;
+                    }
+                    _ = CheckAppAvailabilityFromCatalog(app);
+                }
+            }
+
+            var userApps = appManager.GetAllApps().Where(a => a.IsUserAdded).ToList();
+            foreach (var app in userApps)
+            {
+                if (availabilityStatus.ContainsKey(app.Id))
+                    availabilityStatus.Remove(app.Id);
+
+                if (appCheckBoxes.TryGetValue(app.Id, out var checkBox))
+                {
+                    checkBox.Foreground = new SolidColorBrush(Color.FromRgb(128, 128, 128)); // серый
+                    checkBox.ToolTip = "⏳ Проверка...";
+                    checkBox.IsEnabled = true;
+                }
+                _ = CheckSingleAppAvailability(app.Id);
+            }
+
+            AddLog("✅ Проверка запущена для всех приложений");
+        }
+        
+        private async void UpdateSpaceStatus()
+        {
+            try
+            {
+                var selected = GetSelectedApps();
+                long totalRequired = 0;
+
+                foreach (var appId in selected)
+                {
+                    var app = appManager.GetAppById(appId);
+                    if (app != null)
+                    {
+                        var result = await availabilityChecker.CheckAppAvailabilityWithSize(app);
+                        if (result.Status == AvailabilityChecker.AvailabilityStatus.Available)
+                        {
+                            totalRequired += result.SizeMB;
+                        }
+                        else
+                        {
+                            totalRequired += 100;
+                        }
+                    }
+                }
+
+                string disk = selectedInstallDrive.TrimEnd('\\');
+                var drive = new DriveInfo(disk);
+
+                if (drive.IsReady)
+                {
+                    long availableMB = drive.AvailableFreeSpace / 1024 / 1024;
+
+                    if (availableMB >= totalRequired)
+                    {
+                        txtSpaceStatus.Text = $"💾 Диск {disk} | Требуется: ~{totalRequired} МБ | Доступно: {availableMB} МБ ✅";
+                        txtSpaceStatus.Foreground = new SolidColorBrush(Color.FromRgb(0, 255, 0));
+                    }
+                    else
+                    {
+                        txtSpaceStatus.Text = $"💾 Диск {disk} | Требуется: ~{totalRequired} МБ | Доступно: {availableMB} МБ ❌ Мало места!";
+                        txtSpaceStatus.Foreground = new SolidColorBrush(Color.FromRgb(255, 100, 100));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog($"⚠️ Ошибка проверки места: {ex.Message}");
+            }
+        }
+        
+        public void AddLog(string message)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                txtInstallLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
+                txtInstallLog.ScrollToEnd();
+            });
+            LogMessage?.Invoke(message);
+        }
+    }
+}

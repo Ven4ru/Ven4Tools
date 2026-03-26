@@ -1,257 +1,174 @@
 <Window x:Class="Ven4Tools.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ven4Tools" Height="950" Width="1200" MinHeight="750" MinWidth="1000"
-        WindowStartupLocation="CenterScreen" Background="#1e1e1e">
-
+        Title="Ven4Tools" Height="950" Width="1300" MinHeight="750" MinWidth="1100"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource WindowBackground}">
+    
     <Window.Resources>
-        <Style TargetType="GroupBox">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#444"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Padding" Value="5"/>
-        </Style>
-
-        <Style TargetType="CheckBox">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Margin" Value="0,2,0,2"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="FontSize" Value="12"/>
-        </Style>
-
-        <Style x:Key="InstalledCheckBox" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
-            <Setter Property="Foreground" Value="#888"/>
-            <Setter Property="Opacity" Value="0.7"/>
-        </Style>
-
-        <Style TargetType="Button">
-            <Setter Property="Height" Value="35"/>
-            <Setter Property="Margin" Value="3"/>
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="11"/>
+        <!-- Стиль для кнопок навигации -->
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="48"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderThickness="0,0,0,1" 
+                                BorderBrush="{DynamicResource BorderBrush}">
+                            <Grid Margin="16,0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock x:Name="Icon" 
+                                               Text="{TemplateBinding Tag}" 
+                                               Margin="0,0,12,0"
+                                               FontSize="18"
+                                               VerticalAlignment="Center"
+                                               Foreground="{TemplateBinding Foreground}"/>
+                                    <TextBlock x:Name="ContentText" 
+                                               Text="{TemplateBinding Content}" 
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               Foreground="{TemplateBinding Foreground}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#505050"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
-
-        <Style TargetType="ComboBox">
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Margin" Value="3"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="Black"/>
-            <Setter Property="FontSize" Value="11"/>
-        </Style>
-
-        <Style TargetType="Expander">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="#2d2d2d"/>
-            <Setter Property="BorderBrush" Value="#444"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Margin" Value="0,0,0,3"/>
+        
+        <!-- Стиль для активной кнопки навигации -->
+        <Style x:Key="ActiveNavButtonStyle" TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+            <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,3,0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
         </Style>
     </Window.Resources>
-
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="130"/>
-            <RowDefinition Height="180"/>
-        </Grid.RowDefinitions>
-
-<!-- Статус администратора и заголовок -->
-<StackPanel Grid.Row="0" Margin="0,0,0,10">
-    <TextBlock x:Name="txtAdminStatus" Text="✅ Активированы права администратора" 
-               Foreground="#00FF00" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center"/>
-    <TextBlock x:Name="txtVersionTitle" Text="Ven4Tools v2.3" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"/>
     
-    <!-- 🆕 Кнопка обратной связи под версией -->
-    <Button x:Name="btnFeedback" 
-            Content="📧 Обратная связь" 
-            Width="130" 
-            Height="28"
-            Background="#FF9800" 
-            Foreground="White"
-            Click="BtnFeedback_Click"
-            HorizontalAlignment="Center"
-            Margin="0,8,0,0"
-            ToolTip="Сообщить о проблеме или предложить идею"/>
-</StackPanel>
-
-        <!-- Основная двухколоночная область -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- ЛЕВАЯ КОЛОНКА: список приложений -->
-            <GroupBox Grid.Column="0" Header="📋 Каталог приложений" Foreground="White" 
-                      BorderBrush="#444" Margin="0,0,10,0" FontSize="13" FontWeight="Bold">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" 
-                              Background="#1e1e1e" Padding="3">
-                    <StackPanel>
-                        <Expander Header="Браузеры" IsExpanded="True">
-                            <StackPanel x:Name="PanelБраузеры" Margin="15,3,0,3"/>
-                        </Expander>
-                        <Expander Header="Офис" IsExpanded="True">
-                            <StackPanel x:Name="PanelОфис" Margin="15,3,0,3"/>
-                        </Expander>
-                        <Expander Header="Графика" IsExpanded="True">
-                            <StackPanel x:Name="PanelГрафика" Margin="15,3,0,3"/>
-                        </Expander>
-                        <Expander Header="Разработка" IsExpanded="True">
-                            <StackPanel x:Name="PanelРазработка" Margin="15,3,0,3"/>
-                        </Expander>
-                        <Expander Header="Мессенджеры" IsExpanded="True">
-                            <StackPanel x:Name="PanelМессенджеры" Margin="15,3,0,3"/>
-                        </Expander>
-                        <Expander Header="Мультимедиа" IsExpanded="True">
-                            <StackPanel x:Name="PanelМультимедиа" Margin="15,3,0,3"/>
-                        </Expander>
-                        <Expander Header="Системные" IsExpanded="True">
-                            <StackPanel x:Name="PanelСистемные" Margin="15,3,0,3"/>
-                        </Expander>
-                        <Expander Header="🎮 Игровые сервисы" IsExpanded="True">
-                            <StackPanel x:Name="PanelИгровыеСервисы" Margin="15,3,0,3"/>
-                        </Expander>
-                        <Expander Header="🖥️ Драйверпаки" IsExpanded="True">
-                            <StackPanel x:Name="PanelДрайверпаки" Margin="15,3,0,3"/>
-                        </Expander>
-                        <Expander Header="Другое" IsExpanded="True">
-                            <StackPanel x:Name="PanelДругое" Margin="15,3,0,3"/>
-                        </Expander>
-                        <Expander Header="Пользовательские" IsExpanded="True">
-                            <StackPanel x:Name="PanelПользовательские" Margin="15,3,0,3"/>
-                        </Expander>
-                    </StackPanel>
-                </ScrollViewer>
-            </GroupBox>
-
-            <!-- ПРАВАЯ КОЛОНКА: 4 блока в сетке 2x2 -->
-            <Grid Grid.Column="1" Margin="10,0,0,0">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- Левая панель навигации -->
+        <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}">
+            <Grid>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Блок 1: Установка приложений -->
-                <GroupBox Grid.Row="0" Grid.Column="0" Header="📦 Установка" 
-                          Foreground="White" BorderBrush="#444" Margin="0,0,5,5">
-                    <StackPanel>
-                        <Button x:Name="btnInstall" Content="🚀 Установить" 
-                                Background="#0078D7" Foreground="White" Click="InstallSelected_Click"/>
-                        <Button x:Name="btnCancelInstall" Content="⏹️ Отмена" 
-                                Background="#666666" Foreground="White" Click="CancelInstall_Click" IsEnabled="False"/>
-                        <Button x:Name="btnAddApp" Content="➕ Добавить своё" 
-                                Background="#2d7d2d" Foreground="White" Click="BtnAddApp_Click"/>
-                        <Button x:Name="btnClearAllUserApps" Content="🗑️ Очистить всё" 
-                                Background="#8B0000" Foreground="White" Click="BtnClearAllUserApps_Click"
-                                ToolTip="Удалить ВСЕ пользовательские приложения"/>
+                
+                <!-- Логотип и название -->
+                <Border Grid.Row="0" Height="80" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
+                        <Image Source="/icon.ico" Width="32" Height="32" Margin="0,0,12,0"/>
+                        <TextBlock Text="Ven4Tools" FontSize="20" FontWeight="Bold" 
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   VerticalAlignment="Center"/>
                     </StackPanel>
-                </GroupBox>
-
-                <!-- Блок 2: Системные настройки -->
-                <GroupBox Grid.Row="0" Grid.Column="1" Header="⚡ Система" 
-                          Foreground="White" BorderBrush="#444" Margin="5,0,0,5">
-                    <StackPanel>
-                        <Button Content="📦 Office" Background="#D83B01" Foreground="White" Click="BtnInstallOffice_Click"/>
-                        <Button x:Name="btnDisableTurboBoost" Content="⚡ Турбобуст выкл" 
-                                Background="#FF8C00" Foreground="White" Click="BtnDisableTurboBoost_Click"/>
-                        <Button x:Name="btnEnableTurboBoost" Content="🔄 Турбобуст вкл" 
-                                Background="#666666" Foreground="White" Click="BtnEnableTurboBoost_Click"/>
-                    </StackPanel>
-                </GroupBox>
-
-                <!-- Блок 3: Активация -->
-                <GroupBox Grid.Row="1" Grid.Column="0" Header="🔑 Активация" 
-                          Foreground="White" BorderBrush="#444" Margin="0,5,5,0">
-                    <StackPanel>
-                        <Button x:Name="btnRunActivator" Content="🔑 Интерактивный MAS" 
-                                Background="#4CAF50" Foreground="White" Click="BtnRunActivator_Click"/>
-
-                        <Separator Background="#444" Margin="0,5,0,5"/>
-
-                        <TextBlock Text="Online KMS:" Foreground="#888" FontSize="10" Margin="0,0,0,3"/>
-                        <WrapPanel HorizontalAlignment="Center">
-                            <ComboBox x:Name="cmbActivationType" Width="100">
-                                <ComboBoxItem Content="Windows" Tag="/K-Windows"/>
-                                <ComboBoxItem Content="Office" Tag="/K-Office"/>
-                                <ComboBoxItem Content="Project" Tag="/K-ProjectVisio"/>
-                                <ComboBoxItem Content="Всё" Tag="/K-WindowsOffice"/>
-                                <ComboBoxItem Content="Удалить" Tag="/K-Uninstall"/>
-                            </ComboBox>
-                            <Button x:Name="btnRunActivation" Content="OK" Width="45" Height="30"
-                                    Background="#0078D7" Foreground="White" Click="RunActivation_Click"/>
-                        </WrapPanel>
-                    </StackPanel>
-                </GroupBox>
-
-                <!-- Блок 4: Состояние и диск -->
-                <GroupBox Grid.Row="1" Grid.Column="1" Header="📊 Состояние" 
-                          Foreground="White" BorderBrush="#444" Margin="5,5,0,0">
-                    <StackPanel>
-                        <ComboBox x:Name="cmbAvailableDisks" Height="28" 
-                                  SelectionChanged="CmbAvailableDisks_SelectionChanged"/>
-                        <TextBlock x:Name="txtSpaceStatus" Text="💾 ... МБ" 
-                                   Foreground="#FFA500" FontSize="10" HorizontalAlignment="Center"/>
-                        <ProgressBar x:Name="installProgressBar" Height="12" Margin="0,3,0,3" 
-                                     Background="#444" Foreground="#ADD8E6" Minimum="0" Maximum="100" Value="0"/>
-                        <TextBlock x:Name="txtOverallStatus" Text="Готов" Foreground="#FFA500" 
-                                   HorizontalAlignment="Center" FontSize="11"/>
-
-                        <Button x:Name="btnRefreshAvailability" Content="🔄 Проверить доступность" 
-                                Background="#4CAF50" Foreground="White" Click="RefreshAvailability_Click"
-                                Height="28" Margin="0,2,0,2"/>
-                        <Button x:Name="btnRefreshCatalog" Content="📥 Обновить каталог" 
-                                Background="#2196F3" Foreground="White" Click="BtnRefreshCatalog_Click"
-                                Height="28" Margin="0,2,0,2"/>
-                        <Button x:Name="btnRefreshColors" Content="🎨 Обновить цвета" 
-                                Height="28" Background="#9C27B0" Foreground="White"
-                                Click="RefreshAllColors_Click"
-                                ToolTip="Принудительно обновить цвета доступности"/>
-
-                        <WrapPanel HorizontalAlignment="Center" Margin="0,5,0,0">
-                            <TextBlock Text="✅" Foreground="LightGreen" Margin="0,0,2,0"/>
-                            <TextBlock Text="доступно" Foreground="White" FontSize="9" Margin="0,0,8,0"/>
-                            <TextBlock Text="❌" Foreground="LightCoral" Margin="0,0,2,0"/>
-                            <TextBlock Text="недоступно" Foreground="White" FontSize="9"/>
-                        </WrapPanel>
-                    </StackPanel>
-                </GroupBox>
+                </Border>
+                
+                <!-- Кнопки навигации -->
+                <StackPanel Grid.Row="1" Margin="0,20,0,0">
+                    <Button x:Name="btnCatalogTab" 
+                            Style="{StaticResource NavButtonStyle}"
+                            Tag="📦" 
+                            Content="Каталог"
+                            Click="NavigateToCatalog"/>
+                    <Button x:Name="btnSystemTab" 
+                            Style="{StaticResource NavButtonStyle}"
+                            Tag="⚙️" 
+                            Content="Система"
+                            Click="NavigateToSystem"/>
+                    <Button x:Name="btnOfficeTab" 
+                            Style="{StaticResource NavButtonStyle}"
+                            Tag="📁" 
+                            Content="Office"
+                            Click="NavigateToOffice"/>
+                    <Button x:Name="btnActivationTab" 
+                            Style="{StaticResource NavButtonStyle}"
+                            Tag="🔑" 
+                            Content="Активация"
+                            Click="NavigateToActivation"/>
+                    <Button x:Name="btnAboutTab" 
+                            Style="{StaticResource NavButtonStyle}"
+                            Tag="ℹ️" 
+                            Content="О программе"
+                            Click="NavigateToAbout"/>
+                </StackPanel>
+                
+                <!-- Нижняя панель (тема и статус) -->
+                <StackPanel Grid.Row="2" Margin="16,0,16,20">
+                    <Separator Background="{DynamicResource BorderBrush}" Margin="0,0,0,15"/>
+                    
+                    <!-- Переключатель темы -->
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="🌙" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ToggleButton x:Name="btnThemeToggle" 
+                                      Grid.Column="1"
+                                      Height="32"
+                                      Background="{DynamicResource BorderBrush}"
+                                      BorderThickness="0"
+                                      Checked="ToggleTheme"
+                                      Unchecked="ToggleTheme">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Grid>
+                                        <Border Background="{DynamicResource BorderBrush}" CornerRadius="16" Height="32">
+                                            <Grid>
+                                                <Rectangle x:Name="Thumb" Fill="{DynamicResource AccentColor}" 
+                                                           Width="28" Height="28" RadiusX="14" RadiusY="14"
+                                                           HorizontalAlignment="Left" Margin="2"/>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                    <TextBlock Text="🌙" Margin="5,0,20,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextPrimary}"/>
+                                                    <TextBlock Text="☀️" Margin="20,0,5,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextPrimary}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+                                            <Setter TargetName="Thumb" Property="Margin" Value="0,0,2,0"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                    </Grid>
+                    
+                    <TextBlock x:Name="txtStatusBar" 
+                               Text="✅ Готово" 
+                               Foreground="{DynamicResource TextSecondary}" 
+                               FontSize="11"
+                               TextAlignment="Center"/>
+                </StackPanel>
             </Grid>
-        </Grid>
-
-        <!-- Прогресс по каждой программе -->
-        <GroupBox Grid.Row="2" Header="📈 Прогресс установки" Foreground="White" BorderBrush="#444" 
-                  Margin="0,5,0,5" Padding="3" FontSize="12">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Height="110">
-                <ListBox x:Name="lstAppProgress" Background="#1e1e1e" BorderBrush="#333" Foreground="#00FF00" 
-                         FontFamily="Consolas" FontSize="10">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Margin="2">
-                                <TextBlock Text="{Binding AppName}" Width="140" Foreground="#FFA500"/>
-                                <ProgressBar Width="100" Height="10" Minimum="0" Maximum="100" 
-                                             Value="{Binding Percentage}" Margin="3,0" Foreground="#ADD8E6"/>
-                                <TextBlock Text="{Binding Status}" Margin="3,0,0,0" Foreground="White" Width="130"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </ScrollViewer>
-        </GroupBox>
-
-        <!-- Лог установки -->
-        <GroupBox Grid.Row="3" Header="📝 Лог установки" Foreground="White" BorderBrush="#444" Padding="3" FontSize="12">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                <TextBox x:Name="txtInstallLog" Background="#1e1e1e" Foreground="#00FF00" 
-                         FontFamily="Consolas" FontSize="10" IsReadOnly="True" 
-                         TextWrapping="Wrap" Height="150"/>
-            </ScrollViewer>
-        </GroupBox>
+        </Border>
+        
+        <!-- Правая область контента -->
+        <Border Grid.Column="1" Background="{DynamicResource ContentBackground}">
+            <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden"/>
+        </Border>
     </Grid>
 </Window>
