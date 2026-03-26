@@ -24,37 +24,42 @@ namespace Ven4Tools.Services
             _remoteUrl = "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/master.json";
         }
 
-        public async Task<MasterCatalog> LoadCatalogAsync()
-        {
-            var remote = await TryLoadRemoteAsync();
-            if (remote != null)
-            {
-                remote.Source = "online";
-                await SaveToCacheAsync(remote);
-                return remote;
-            }
+public async Task<MasterCatalog> LoadCatalogAsync()
+{
+    var remote = await TryLoadRemoteAsync();
+    if (remote != null)
+    {
+        remote.Source = "online";
+        await SaveToCacheAsync(remote);
+        return remote;
+    }
 
-            var cached = await TryLoadFromCacheAsync();
-            if (cached != null)
-            {
-                cached.Source = "cache";
-                return cached;
-            }
+    var cached = await TryLoadFromCacheAsync();
+    if (cached != null)
+    {
+        cached.Source = "cache";
+        return cached;
+    }
 
-            var embedded = LoadEmbeddedCatalog();
-            embedded.Source = "embedded";
-            return embedded;
-        }
+    var embedded = LoadEmbeddedCatalog();
+    embedded.Source = "embedded";
+    return embedded;
+}
 
         private async Task<MasterCatalog?> TryLoadRemoteAsync()
         {
             try
             {
+                // Добавляем случайный параметр для обхода кэша
+                var nocacheUrl = _remoteUrl + "?t=" + DateTime.Now.Ticks;
+                
                 using var client = new HttpClient();
                 client.Timeout = TimeSpan.FromSeconds(5);
                 client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+                client.DefaultRequestHeaders.Add("Cache-Control", "no-cache, no-store, must-revalidate");
+                client.DefaultRequestHeaders.Add("Pragma", "no-cache");
 
-                var json = await client.GetStringAsync(_remoteUrl);
+                var json = await client.GetStringAsync(nocacheUrl);
                 return JsonConvert.DeserializeObject<MasterCatalog>(json);
             }
             catch
