@@ -13,10 +13,12 @@ namespace Ven4Tools.Launcher
         private NotifyIcon? _notifyIcon;
         private bool _minimizeToTray = true;
         private string _settingsPath;
+        private string _installPath = "";
         
         public MainWindow()
         {
             InitializeComponent();
+            btnLaunchApp.Click += BtnLaunchApp_Click;
             
             string appData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
             Directory.CreateDirectory(appData);
@@ -24,6 +26,16 @@ namespace Ven4Tools.Launcher
             
             LoadSettings();
             CreateTrayIcon();
+            
+            if (string.IsNullOrEmpty(_installPath))
+            {
+                txtInstallPath.Text = "Не выбрана (будет использована папка с лаунчером)";
+                _installPath = AppDomain.CurrentDomain.BaseDirectory;
+            }
+            else
+            {
+                txtInstallPath.Text = _installPath;
+            }
             
             Loaded += async (s, e) => await CheckForUpdatesAsync();
         }
@@ -39,6 +51,7 @@ namespace Ven4Tools.Launcher
                     if (settings != null)
                     {
                         _minimizeToTray = settings.MinimizeToTray ?? true;
+                        _installPath = settings.InstallPath ?? "";
                     }
                 }
             }
@@ -49,11 +62,27 @@ namespace Ven4Tools.Launcher
         {
             try
             {
-                var settings = new { MinimizeToTray = _minimizeToTray };
+                var settings = new { MinimizeToTray = _minimizeToTray, InstallPath = _installPath };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(_settingsPath, json);
             }
             catch { }
+        }
+        
+        private void BtnSelectFolder_Click(object sender, RoutedEventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = "Выберите папку для установки Ven4Tools";
+                dialog.ShowNewFolderButton = true;
+                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    _installPath = dialog.SelectedPath;
+                    txtInstallPath.Text = _installPath;
+                    SaveSettings();
+                    AddLog($"📁 Папка установки изменена: {_installPath}");
+                }
+            }
         }
         
         private void CreateTrayIcon()
@@ -71,7 +100,6 @@ namespace Ven4Tools.Launcher
                 var contextMenu = new ContextMenuStrip();
                 contextMenu.Items.Add("Показать окно", null, (s, e) => ShowWindow());
                 contextMenu.Items.Add("Проверить обновления", null, async (s, e) => await CheckForUpdatesAsync());
-                contextMenu.Items.Add("Запустить Ven4Tools", null, (s, e) => LaunchMainApp());
                 contextMenu.Items.Add("-");
                 contextMenu.Items.Add("Выход", null, (s, e) => ExitApplication());
                 
@@ -173,7 +201,7 @@ namespace Ven4Tools.Launcher
                 {
                     AddLog("✅ Обновление установлено! Запускаем...");
                     await Task.Delay(1000);
-                    LaunchMainApp();
+                    BtnLaunchApp_Click(null, null);
                 }
                 else
                 {
@@ -192,48 +220,54 @@ namespace Ven4Tools.Launcher
         
         private async void BtnLaunchApp_Click(object sender, RoutedEventArgs e)
         {
-            AddLog("=== ЗАПУСК ВЕН4ТУЛЗ ===");
-            await LaunchMainAppAsync();
-        }
-        
-        private async Task LaunchMainAppAsync()
-        {
-            try
+            AddLog("=== ЗАПУСК VEN4TOOLS ===");
+            
+            string clientPath = Path.Combine(_installPath, "Ven4Tools.exe");
+            AddLog($"Проверка пути: {clientPath}");
+            
+            var updateService = new UpdateService();
+            
+            if (!File.Exists(clientPath))
             {
-                var updateService = new UpdateService();
-                string clientPath = updateService.GetClientPath();
+                AddLog("📥 Клиент не найден. Скачиваю последнюю версию...");
                 
-                if (string.IsNullOrEmpty(clientPath))
+                progressDownload.Value = 0;
+                txtDownloadStatus.Text = "Скачивание: 0%";
+                
+                var progress = new Progress<int>(p => 
                 {
-                    AddLog("📥 Клиент не найден. Скачиваю последнюю версию...");
-                    
-                    var progress = new Progress<int>(p => 
-                    {
-                        AddLog($"Скачивание: {p}%");
-                    });
-                    
-                    bool success = await updateService.DownloadAndExtractClientAsync("2.3.1", progress);
-                    
-                    if (success)
-                    {
-                        AddLog("✅ Клиент скачан и распакован");
-                        clientPath = updateService.GetClientPath();
-                    }
-                    else
-                    {
-                        AddLog("❌ Ошибка скачивания клиента");
-                        return;
-                    }
+                    progressDownload.Value = p;
+                    txtDownloadStatus.Text = $"Скачивание: {p}%";
+                    AddLog($"Скачивание: {p}%");
+                });
+                
+                bool success = await updateService.DownloadAndExtractClientAsync("2.3.1", _installPath, progress);
+                
+                if (success)
+                {
+                    AddLog("✅ Клиент скачан и распакован");
+                    txtDownloadStatus.Text = "Готово";
+                    clientPath = Path.Combine(_installPath, "Ven4Tools.exe");
                 }
                 else
                 {
-                    AddLog("✅ Клиент уже есть в папке Client");
+                    AddLog("❌ Ошибка скачивания клиента");
+                    txtDownloadStatus.Text = "Ошибка";
+                    return;
                 }
+            }
+            else
+            {
+                AddLog("✅ Клиент уже есть в папке установки");
+                txtDownloadStatus.Text = "Готов";
+            }
+            
+            if (File.Exists(clientPath))
+            {
+                AddLog($"🚀 Запуск клиента: {clientPath}");
                 
-                if (!string.IsNullOrEmpty(clientPath) && File.Exists(clientPath))
+                try
                 {
-                    AddLog($"🚀 Запуск клиента: {clientPath}");
-                    
                     var psi = new ProcessStartInfo
                     {
                         FileName = clientPath,
@@ -241,30 +275,18 @@ namespace Ven4Tools.Launcher
                         Verb = "runas"
                     };
                     
-                    try
-                    {
-                        var process = Process.Start(psi);
-                        AddLog($"✅ Клиент запущен (PID: {process?.Id ?? 0})");
-                    }
-                    catch (Exception ex)
-                    {
-                        AddLog($"❌ Ошибка запуска: {ex.Message}");
-                    }
+                    var process = Process.Start(psi);
+                    AddLog($"✅ Клиент запущен (PID: {process?.Id ?? 0})");
                 }
-                else
+                catch (Exception ex)
                 {
-                    AddLog("❌ Не удалось найти клиент");
+                    AddLog($"❌ Ошибка запуска: {ex.Message}");
                 }
             }
-            catch (Exception ex)
+            else
             {
-                AddLog($"❌ Ошибка: {ex.Message}");
+                AddLog("❌ Не удалось найти клиент");
             }
-        }
-        
-        private void LaunchMainApp()
-        {
-            _ = LaunchMainAppAsync();
         }
         
         private void BtnExit_Click(object sender, RoutedEventArgs e)
