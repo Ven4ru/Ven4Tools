@@ -1,0 +1,38 @@
+﻿<Window x:Class="Ven4Tools.OfficeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Установка Microsoft Office" Height="300" Width="450"
+        WindowStartupLocation="CenterOwner" Background="#2d2d2d" Foreground="White"
+        ResizeMode="NoResize">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Выберите версию Office:" FontWeight="Bold" Margin="0,0,0,5" Foreground="White"/>
+        <ComboBox x:Name="cmbOfficeVersion" Grid.Row="1" Margin="0,0,0,10" 
+                  Background="White" Foreground="Black" Height="30"
+                  DisplayMemberPath="Key" SelectedValuePath="Value"/>
+
+        <TextBlock Text="Язык интерфейса:" Grid.Row="2" FontWeight="Bold" Margin="0,0,0,5" Foreground="White"/>
+        <ComboBox x:Name="cmbOfficeLanguage" Grid.Row="3" Margin="0,0,0,15" 
+                  Background="White" Foreground="Black" Height="30"/>
+        
+        <CheckBox x:Name="chkSaveInstaller" Grid.Row="4" Content="Сохранить установщик после установки" 
+                  Foreground="White" Margin="0,0,0,10" IsChecked="False"/>
+        
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button x:Name="btnInstall" Content="Скачать и установить" Width="160" Height="35"
+                    Background="#D83B01" Foreground="White" FontWeight="Bold" 
+                    Click="BtnInstall_Click" Margin="0,0,10,0"/>
+            <Button x:Name="btnCancel" Content="Отмена" Width="100" Height="35"
+                    Background="#666666" Foreground="White" FontWeight="Bold" 
+                    Click="BtnCancel_Click" IsEnabled="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

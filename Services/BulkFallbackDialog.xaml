@@ -1,0 +1,181 @@
+<Window x:Class="Ven4Tools.Services.BulkFallbackDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Ven4Tools.Services"
+        xmlns:SystemWindows="clr-namespace:System.Windows;assembly=PresentationFramework"
+        Title="Проблемы с установкой" Height="650" Width="850"
+        WindowStartupLocation="CenterOwner" Background="#2d2d2d" Foreground="White"
+        ResizeMode="CanResize" MinHeight="550" MinWidth="750">
+    
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Background" Value="#2d2d2d"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="BorderThickness" Value="0 0 0 1"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+        
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#3d3d3d"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="BorderBrush" Value="#555"/>
+        </Style>
+        
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0,0,15,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Height" Value="30"/>
+        </Style>
+        
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="BorderBrush" Value="LightGray"/>
+            <Setter Property="BorderThickness" Value="0 0 0 1"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="⚠️ Не удалось установить некоторые программы" 
+                   Foreground="#FFA500" FontSize="18" FontWeight="Bold" 
+                   HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+        <TextBlock Grid.Row="1" TextWrapping="Wrap" Margin="0,0,0,15"
+                   Text="Выберите действие для каждой программы. При выборе 'Игнорировать' вы можете оставить программу в каталоге или удалить её." 
+                   Foreground="White" HorizontalAlignment="Center"/>
+
+        <!-- Список проблемных программ -->
+        <ListBox x:Name="lstFailedApps" Grid.Row="2" 
+                 Background="#1e1e1e" BorderBrush="#444" 
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 SelectionMode="Single" Margin="0,0,0,15">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border BorderBrush="#444" BorderThickness="0 0 0 1" Padding="10">
+                        <StackPanel>
+                            <!-- Название программы -->
+                            <TextBlock Text="{Binding DisplayName}" 
+                                       Foreground="#FFA500" FontWeight="Bold" 
+                                       FontSize="14" Margin="0,0,0,5"/>
+                            
+                            <!-- Оригинальный ID (если есть) -->
+                            <TextBlock Text="{Binding OriginalId}" 
+                                       Foreground="#888" FontSize="10" 
+                                       Margin="0,0,0,5"
+                                       Visibility="{Binding HasOriginalId, Converter={StaticResource BoolToVis}}"/>
+                            
+                            <!-- Радио-кнопки выбора действия -->
+                            <WrapPanel Margin="0,5,0,5">
+                                <RadioButton GroupName="{Binding AppId}" 
+                                             Content="⏭️ Игнорировать" 
+                                             IsChecked="{Binding Skip}" 
+                                             Foreground="White" Margin="0,0,15,0"/>
+                                <RadioButton GroupName="{Binding AppId}" 
+                                             Content="🔍 Из каталога winget" 
+                                             IsChecked="{Binding SearchWinget}" 
+                                             Foreground="White" Margin="0,0,15,0"/>
+                                <RadioButton GroupName="{Binding AppId}" 
+                                             Content="🔗 Заменить ссылкой" 
+                                             IsChecked="{Binding ReplaceWithUrl}" 
+                                             Foreground="White"/>
+                            </WrapPanel>
+                            
+                            <!-- Поле для поиска в winget (появляется при выборе "Из каталога winget") -->
+                            <StackPanel Visibility="{Binding IsSearchMode, Converter={StaticResource BoolToVis}}" 
+                                        Margin="20,5,0,5">
+                                
+                                <!-- Индикатор загрузки -->
+                                <StackPanel Orientation="Horizontal" Visibility="{Binding IsSearching, Converter={StaticResource BoolToVis}}">
+                                    <ProgressBar Height="15" Width="150" IsIndeterminate="True" 
+                                                 Background="#444" Foreground="#ADD8E6" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Поиск в winget..." Foreground="#888" FontSize="11" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <!-- Результаты поиска -->
+                                <StackPanel Visibility="{Binding HasResults, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="Найденные версии:" Foreground="#888" FontSize="11" Margin="0,5,0,3"/>
+                                    <ComboBox ItemsSource="{Binding SearchResults}" 
+                                              Width="400" Height="30" 
+                                              DisplayMemberPath="DisplayName"
+                                              SelectedItem="{Binding SelectedPackage}"
+                                              Margin="0,0,0,5"/>
+                                </StackPanel>
+                                
+                                <!-- Сообщение об отсутствии результатов -->
+                                <TextBlock Text="❌ Ничего не найдено в winget" 
+                                           Foreground="#FF6347" FontSize="11" 
+                                           Visibility="{Binding HasNoResults, Converter={StaticResource BoolToVis}}"
+                                           Margin="0,2,0,0"/>
+                            </StackPanel>
+                            
+                            <!-- Поле для ввода ссылки (появляется при выборе "Заменить ссылкой") -->
+                            <StackPanel Visibility="{Binding IsUrlMode, Converter={StaticResource BoolToVis}}" 
+                                        Margin="20,5,0,5">
+                                <TextBlock Text="Введите прямую ссылку на установщик:" Foreground="#888" FontSize="11" Margin="0,0,0,3"/>
+                                <TextBox Text="{Binding NewUrl, UpdateSourceTrigger=PropertyChanged}" 
+                                         Width="400" Height="30"
+                                         ToolTip="например: https://example.com/setup.exe"
+                                         Background="#3d3d3d" Foreground="White"/>
+                            </StackPanel>
+                            
+                            <!-- Опции для игнорирования (появляются при выборе "Игнорировать") -->
+                            <StackPanel Visibility="{Binding ShowIgnoreOptions, Converter={StaticResource BoolToVis}}" 
+                                        Margin="20,5,0,5" Orientation="Horizontal">
+                                <RadioButton GroupName="IgnoreOptions" 
+                                             Content="📌 Оставить в каталоге" 
+                                             IsChecked="{Binding KeepInCatalog}" 
+                                             Foreground="#FFA500" Margin="0,0,15,0"/>
+                                <RadioButton GroupName="IgnoreOptions" 
+                                             Content="🗑️ Удалить из каталога" 
+                                             IsChecked="{Binding RemoveFromCatalog}" 
+                                             Foreground="#FF6347" Margin="0,0,15,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Чекбокс для запоминания выбора -->
+        <CheckBox x:Name="chkRememberChoices" Grid.Row="3"
+                  Content="🔐 Запомнить этот выбор для будущих установок" 
+                  Foreground="#FFA500" 
+                  Margin="0,0,0,10"
+                  IsChecked="True"
+                  ToolTip="При следующей установке программа автоматически использует выбранные источники"/>
+
+        <TextBlock Grid.Row="4" Text="Выберите действие для каждой программы. Для поиска в winget программа использует название приложения автоматически." 
+                   Foreground="#888" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+        <!-- Кнопки действий -->
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,0">
+            <Button x:Name="btnApplyReplace" Content="✅ Заменить выбранные" Width="160" Height="35" 
+                    Background="#0078D7" Foreground="White" FontWeight="Bold" 
+                    Click="BtnApplyReplace_Click" Margin="0,0,10,0"/>
+            <Button x:Name="btnApplySkip" Content="⏭️ Игнорировать выбранное" Width="180" Height="35" 
+                    Background="#666666" Foreground="White" FontWeight="Bold" 
+                    Click="BtnApplySkip_Click" Margin="0,0,10,0"/>
+            <Button x:Name="btnSkipAll" Content="⏭️ Игнорировать всё" Width="140" Height="35" 
+                    Background="#8B0000" Foreground="White" FontWeight="Bold" 
+                    Click="BtnSkipAll_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

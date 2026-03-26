@@ -1,0 +1,121 @@
+<Window x:Class="Ven4Tools.AlternativeSourceDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Выбор альтернативного источника" Height="350" Width="500"
+        WindowStartupLocation="CenterOwner" Background="#2d2d2d" Foreground="White"
+        ResizeMode="NoResize" WindowStyle="ToolWindow">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Заголовок -->
+            <RowDefinition Height="Auto"/>
+            <!-- Текст "Найденные варианты" -->
+            <RowDefinition Height="Auto"/>
+            <!-- Прогресс-бар -->
+            <RowDefinition Height="Auto"/>
+            <!-- ComboBox + чекбокс -->
+            <RowDefinition Height="Auto"/>
+            <!-- Разделитель -->
+            <RowDefinition Height="Auto"/>
+            <!-- Своя ссылка -->
+            <RowDefinition Height="Auto"/>
+            <!-- Подсказка по приоритету -->
+            <RowDefinition Height="Auto"/>
+            <!-- Кнопки -->
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок -->
+        <TextBlock Grid.Row="0" Text="Выберите альтернативный источник" 
+                   Foreground="#FFA500" FontSize="14" FontWeight="Bold" 
+                   HorizontalAlignment="Center" Margin="0,0,0,15"/>
+
+        <!-- Результаты поиска в winget -->
+        <TextBlock Grid.Row="1" Text="Найденные варианты в winget:" 
+                   Foreground="#888" FontSize="11" Margin="0,0,0,3"/>
+
+        <ProgressBar x:Name="pbSearch" Grid.Row="2" Height="3" IsIndeterminate="True" 
+                     Visibility="Visible" Background="#444" Foreground="#ADD8E6" 
+                     Margin="0,0,0,5"/>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+            <ComboBox x:Name="cmbResults" 
+              Background="White" Foreground="Black" Height="30"
+              Width="350"
+              SelectionChanged="CmbResults_SelectionChanged">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}" Width="180" FontWeight="SemiBold" Foreground="Black"/>
+                            <TextBlock Text=" (" Foreground="Gray"/>
+                            <TextBlock Text="{Binding Id}" Foreground="Blue" FontFamily="Consolas"/>
+                            <TextBlock Text=")" Foreground="Gray"/>
+                            <TextBlock Text=" — " Foreground="Gray" Margin="5,0"/>
+                            <TextBlock Text="{Binding Version}" Foreground="Green" FontFamily="Consolas"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <CheckBox x:Name="chkPriorityWinget" 
+              Content="Приоритет"
+              Foreground="White"
+              Margin="10,0,0,0"
+              VerticalAlignment="Center"
+              IsChecked="False"
+              ToolTip="Использовать этот источник первым"/>
+        </StackPanel>
+
+        <!-- Ручной ввод ID -->
+        <TextBlock Grid.Row="4" Text="Или введите Winget ID вручную:" Foreground="#888" FontSize="11" Margin="0,5,0,3"/>
+        <TextBox x:Name="txtManualId" Grid.Row="5" 
+         Background="#3d3d3d" Foreground="White" 
+         Height="30" Padding="5"
+         TextChanged="TxtManualId_TextChanged"
+         ToolTip="Например: Python.Python.3.14"/>
+
+        <!-- Разделитель -->
+        <Rectangle Grid.Row="4" Height="1" Fill="#444" Margin="0,5,0,10" 
+                   HorizontalAlignment="Stretch"/>
+
+        <!-- Своя ссылка -->
+        <StackPanel Grid.Row="5" Margin="0,9,0,0" Height="74" Width="480">
+            <TextBlock Text="Или укажите свою ссылку:" 
+                       Foreground="#888" FontSize="11" Margin="0,0,0,3"/>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBox x:Name="txtUrl" Background="#3d3d3d" Foreground="White" 
+                         Height="30" Padding="5" Width="350"
+                         TextChanged="TxtUrl_TextChanged"/>
+
+                <CheckBox x:Name="chkPriorityUrl" 
+                          Content="Приоритет"
+                          Foreground="White"
+                          Margin="10,0,0,0"
+                          VerticalAlignment="Center"
+                          IsChecked="False"/>
+            </StackPanel>
+
+            <TextBlock Text="например: https://example.com/setup.exe" 
+                       Foreground="#666" FontSize="10" Margin="0,2,0,0"/>
+        </StackPanel>
+
+        <!-- Подсказка по приоритету -->
+        <TextBlock Grid.Row="6" Text="Источник с галочкой 'Приоритет' будет использоваться первым"
+                   Foreground="#FFA500" FontSize="10" 
+                   HorizontalAlignment="Center" Margin="0,15,0,10"/>
+
+        <!-- Кнопки -->
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0"/>
+        <Button x:Name="btnOk" Content="Сохранить"
+                    Background="#0078D7" Foreground="White" 
+                    Click="BtnOk_Click" Margin="133,18,247,-43" IsEnabled="False" Grid.Row="7"/>
+        <Button x:Name="btnCancel" Content="Отмена"
+                    Background="#666666" Foreground="White" 
+                    Click="BtnCancel_Click" Margin="238,18,142,-43" Grid.Row="7"/>
+    </Grid>
+</Window>
