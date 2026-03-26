@@ -102,17 +102,19 @@ Remove-Item '" + tempFile + @"'
             }
         }
         
-        public async Task<bool> DownloadAndExtractClientAsync(string version, IProgress<int> progress = null)
+        public async Task<bool> DownloadAndExtractClientAsync(string version, string clientDir, IProgress<int> progress = null)
         {
             try
             {
                 string downloadUrl = $"https://github.com/Ven4ru/Ven4Tools/releases/download/v{version}/Ven4Tools_Client_v{version}.zip";
                 string tempZip = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Client_{version}.zip");
-                string clientDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Client");
                 
                 Directory.CreateDirectory(clientDir);
                 
                 using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromSeconds(60);
+                client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
+                
                 using var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
                 response.EnsureSuccessStatusCode();
                 
@@ -123,13 +125,24 @@ Remove-Item '" + tempFile + @"'
                 var buffer = new byte[8192];
                 long totalRead = 0;
                 int bytesRead;
+                int lastPercent = -1;
                 
                 while ((bytesRead = await stream.ReadAsync(buffer)) > 0)
                 {
                     await fs.WriteAsync(buffer, 0, bytesRead);
                     totalRead += bytesRead;
-                    progress?.Report((int)((double)totalRead / total * 100));
+                    if (total > 0)
+                    {
+                        int percent = (int)((double)totalRead / total * 100);
+                        if (percent != lastPercent)
+                        {
+                            lastPercent = percent;
+                            progress?.Report(percent);
+                        }
+                    }
                 }
+                
+                fs.Close();
                 
                 System.IO.Compression.ZipFile.ExtractToDirectory(tempZip, clientDir, true);
                 File.Delete(tempZip);
@@ -143,9 +156,8 @@ Remove-Item '" + tempFile + @"'
             }
         }
         
-        public string GetClientPath()
+        public string GetClientPath(string clientDir)
         {
-            string clientDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Client");
             string clientExe = Path.Combine(clientDir, "Ven4Tools.exe");
             return File.Exists(clientExe) ? clientExe : "";
         }
