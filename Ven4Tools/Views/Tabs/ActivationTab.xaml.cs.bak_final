@@ -1,0 +1,234 @@
+using System;
+using System.Diagnostics;
+using System.Management;
+using System.Windows;
+using System.Windows.Controls;
+using System.Threading.Tasks;
+
+namespace Ven4Tools.Views.Tabs
+{
+    public partial class ActivationTab : UserControl
+    {
+        public event Action<string>? LogMessage;
+        
+        public ActivationTab()
+        {
+            InitializeComponent();
+            
+            btnActivateWindows.Click += BtnActivateWindows_Click;
+            btnActivateOffice.Click += BtnActivateOffice_Click;
+            btnCheckStatus.Click += BtnCheckStatus_Click;
+            btnInteractiveMAS.Click += BtnInteractiveMAS_Click;
+            
+            Loaded += ActivationTab_Loaded;
+        }
+        
+        private async void ActivationTab_Loaded(object sender, RoutedEventArgs e)
+        {
+            await CheckActivationStatusAsync();
+        }
+        
+        private async Task CheckActivationStatusAsync()
+        {
+            try
+            {
+                txtWindowsStatus.Text = "Проверка...";
+                txtOfficeStatus.Text = "Проверка...";
+                
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        using (var searcher = new ManagementObjectSearcher("SELECT LicenseStatus, ApplicationID FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL"))
+                        {
+                            foreach (var obj in searcher.Get())
+                            {
+                                int status = Convert.ToInt32(obj["LicenseStatus"]);
+                                string appId = obj["ApplicationID"]?.ToString() ?? "";
+                                
+                                if (appId.Contains("Windows"))
+                                {
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        txtWindowsStatus.Text = status switch
+                                        {
+                                            1 => "✅ Активирована",
+                                            0 => "❌ Не активирована",
+                                            _ => "⚠️ Неизвестно"
+                                        };
+                                        txtWindowsStatus.Foreground = status == 1 ? 
+                                            new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightGreen) : 
+                                            new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightCoral);
+                                    });
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            txtWindowsStatus.Text = "⚠️ Ошибка";
+                            txtWindowsStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Orange);
+                            AddLog($"❌ Ошибка проверки Windows: {ex.Message}");
+                        });
+                    }
+                });
+                
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Office\ClickToRun\Configuration"))
+                        {
+                            if (key != null)
+                            {
+                                var status = key.GetValue("ProductReleaseIds");
+                                if (status != null)
+                                {
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        txtOfficeStatus.Text = "✅ Установлен (статус активации проверьте в Office)";
+                                        txtOfficeStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightGreen);
+                                    });
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Office\16.0\Common\Licensing"))
+                        {
+                            if (key != null)
+                            {
+                                Dispatcher.Invoke(() =>
+                                {
+                                    txtOfficeStatus.Text = "✅ Office установлен";
+                                    txtOfficeStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightGreen);
+                                });
+                                return;
+                            }
+                        }
+                        
+                        Dispatcher.Invoke(() =>
+                        {
+                            txtOfficeStatus.Text = "❓ Office не обнаружен";
+                            txtOfficeStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightCoral);
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            txtOfficeStatus.Text = "⚠️ Ошибка";
+                            txtOfficeStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Orange);
+                            AddLog($"❌ Ошибка проверки Office: {ex.Message}");
+                        });
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка проверки статуса: {ex.Message}");
+            }
+        }
+        
+        private void BtnInteractiveMAS_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                AddLog("🚀 Запуск интерактивного режима MAS...");
+                
+                string command = "irm https://get.activated.win | iex";
+                
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = $"-NoExit -Command \"{command}\"",
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+                
+                Process.Start(psi);
+                AddLog("✅ Интерактивный MAS запущен в отдельном окне");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка запуска: {ex.Message}");
+                MessageBox.Show($"Ошибка запуска: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        private void BtnActivateWindows_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string parameter = rdbHwid.IsChecked == true ? "/hwid" : "/kms38";
+                RunActivationCommand(parameter);
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка: {ex.Message}");
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        private void BtnActivateOffice_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string parameter = rdbOhook.IsChecked == true ? "/ohook" : "/kms";
+                RunActivationCommand(parameter);
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка: {ex.Message}");
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        private void RunActivationCommand(string parameter)
+        {
+            try
+            {
+                AddLog($"🔑 Запуск активации с параметром {parameter}...");
+                
+                string command = $"& ([ScriptBlock]::Create((curl.exe -s --doh-url https://1.1.1.1/dns-query https://get.activated.win | Out-String))) {parameter}";
+                
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = $"-NoExit -Command \"{command}\"",
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+                
+                Process.Start(psi);
+                AddLog($"✅ Активация запущена в отдельном окне");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка запуска: {ex.Message}");
+                throw;
+            }
+        }
+        
+        private async void BtnCheckStatus_Click(object sender, RoutedEventArgs e)
+        {
+            btnCheckStatus.IsEnabled = false;
+            await CheckActivationStatusAsync();
+            btnCheckStatus.IsEnabled = true;
+            AddLog("🔄 Статус активации обновлён");
+        }
+        
+        private void AddLog(string message)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                txtActivationLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
+                txtActivationLog.ScrollToEnd();
+            });
+            LogMessage?.Invoke(message);
+        }
+    }
+}

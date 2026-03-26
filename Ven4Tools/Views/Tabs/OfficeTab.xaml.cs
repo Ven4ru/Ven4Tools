@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -7,20 +7,30 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using Microsoft.Win32;
 
-namespace Ven4Tools
+namespace Ven4Tools.Views.Tabs
 {
-    public partial class OfficeWindow : Window
+    public partial class OfficeTab : UserControl
     {
-        private readonly MainWindow mainWindow;
         private HttpClient? httpClient;
         private CancellationTokenSource? cancellationTokenSource;
         private bool isCancelled = false;
         private string? originalCountryCode;
         
-        private readonly Dictionary<string, string> officeVersions;
-        private readonly string[] officeLanguages;
+        public event Action<string>? LogMessage;
+        
+        private readonly Dictionary<string, string> officeVersions = new()
+        {
+            { "Office 365 ProPlus", "O365ProPlusRetail" },
+            { "Office 2024 ProPlus", "ProPlus2024Retail" },
+            { "Office 2021 Professional", "Professional2021Retail" },
+            { "Office 2019 Professional", "Professional2019Retail" },
+            { "Office 2016 Professional", "ProPlusRetail" }
+        };
+        
+        private readonly string[] officeLanguages = { "ru-ru", "en-us", "de-de", "fr-fr", "es-es", "it-it", "zh-cn", "ja-jp" };
         
         private readonly Dictionary<string, string> officeDirectLinks = new()
         {
@@ -30,16 +40,19 @@ namespace Ven4Tools
             { "Professional2019Retail", "https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=Professional2019Retail&platform=x64&language={0}&version=O16GA" },
             { "ProPlusRetail", "https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlusRetail&platform=x64&language={0}&version=O16GA" }
         };
-
-        public OfficeWindow(Dictionary<string, string> versions, string[] languages, MainWindow main)
+        
+        public OfficeTab()
         {
             InitializeComponent();
-            officeVersions = versions;
-            officeLanguages = languages;
-            mainWindow = main;
             
-            SaveOriginalCountryCode();
-
+            InitializeHttpClient();
+            FillComboBoxes();
+            
+            btnInstallOffice.Click += BtnInstallOffice_Click;
+        }
+        
+        private void InitializeHttpClient()
+        {
             var handler = new HttpClientHandler
             {
                 AllowAutoRedirect = true,
@@ -55,15 +68,19 @@ namespace Ven4Tools
             httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
             httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
             httpClient.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
-
+        }
+        
+        private void FillComboBoxes()
+        {
             cmbOfficeVersion.ItemsSource = officeVersions;
+            cmbOfficeVersion.DisplayMemberPath = "Key";
+            cmbOfficeVersion.SelectedValuePath = "Value";
             cmbOfficeVersion.SelectedIndex = 0;
+            
             cmbOfficeLanguage.ItemsSource = officeLanguages;
             cmbOfficeLanguage.SelectedIndex = 0;
-            
-            this.Closing += OfficeWindow_Closing!;
         }
-
+        
         private void SaveOriginalCountryCode()
         {
             try
@@ -75,7 +92,7 @@ namespace Ven4Tools
             }
             catch { originalCountryCode = null; }
         }
-
+        
         private bool SetCountryCode(string countryCode)
         {
             try
@@ -91,11 +108,11 @@ namespace Ven4Tools
             }
             catch (Exception ex)
             {
-                mainWindow.LogMessage($"⚠️ Ошибка при установке CountryCode: {ex.Message}");
+                AddLog($"⚠️ Ошибка при установке CountryCode: {ex.Message}");
             }
             return false;
         }
-
+        
         private bool RestoreOriginalCountryCode()
         {
             try
@@ -114,78 +131,39 @@ namespace Ven4Tools
             }
             catch (Exception ex)
             {
-                mainWindow.LogMessage($"⚠️ Ошибка при восстановлении CountryCode: {ex.Message}");
+                AddLog($"⚠️ Ошибка при восстановлении CountryCode: {ex.Message}");
             }
             return false;
         }
-
-        private void OfficeWindow_Closing(object sender, CancelEventArgs e)
+        
+        private async void BtnInstallOffice_Click(object sender, RoutedEventArgs e)
         {
-            if (cancellationTokenSource != null && !cancellationTokenSource.IsCancellationRequested && !isCancelled)
-            {
-                var result = MessageBox.Show(
-                    "Установка ещё не завершена. Всё равно закрыть окно?",
-                    "Подтверждение",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-                
-                if (result == MessageBoxResult.No)
-                {
-                    e.Cancel = true;
-                    return;
-                }
-                RestoreOriginalCountryCode();
-                CancelDownload();
-            }
-            else RestoreOriginalCountryCode();
-        }
-
-        private void BtnCancel_Click(object sender, RoutedEventArgs e)
-        {
-            RestoreOriginalCountryCode();
-            CancelDownload();
-            mainWindow.LogMessage("❌ Установка Office отменена пользователем");
-            DialogResult = false;
-            Close();
-        }
-
-        private void CancelDownload()
-        {
-            if (cancellationTokenSource != null && !cancellationTokenSource.IsCancellationRequested)
-            {
-                isCancelled = true;
-                cancellationTokenSource.Cancel();
-            }
-        }
-
-        private async void BtnInstall_Click(object sender, RoutedEventArgs e)
-        {
-            if (cmbOfficeVersion.SelectedItem == null || cmbOfficeLanguage.SelectedItem == null) 
+            if (cmbOfficeVersion.SelectedItem == null || cmbOfficeLanguage.SelectedItem == null)
                 return;
-
+            
             var version = (KeyValuePair<string, string>)cmbOfficeVersion.SelectedItem;
             string productId = version.Value;
             string lang = cmbOfficeLanguage.SelectedItem.ToString()!;
             string displayName = version.Key;
-
-            btnInstall.IsEnabled = false;
-            btnCancel.IsEnabled = true;
+            
+            btnInstallOffice.IsEnabled = false;
             isCancelled = false;
             cancellationTokenSource = new CancellationTokenSource();
             var token = cancellationTokenSource.Token;
-
-            mainWindow.LogMessage($"\n📦 Установка {displayName} ({lang})...");
-
+            
+            AddLog($"\n📦 Установка {displayName} ({lang})...");
+            
             try
             {
-                mainWindow.LogMessage($"🌎 Установка CountryCode = US для обхода блокировок...");
+                SaveOriginalCountryCode();
+                AddLog($"🌎 Установка CountryCode = US для обхода блокировок...");
                 SetCountryCode("US");
                 await Task.Delay(500, token);
-
+                
                 string downloadUrl = string.Format(officeDirectLinks[productId], lang);
                 string tempFile = Path.Combine(Path.GetTempPath(), $"OfficeSetup_{Guid.NewGuid():N}.exe");
                 
-                mainWindow.LogMessage($"📥 Скачивание...");
+                AddLog($"📥 Скачивание...");
                 
                 using (var response = await httpClient!.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, token))
                 {
@@ -194,30 +172,45 @@ namespace Ven4Tools
                     using (var contentStream = await response.Content.ReadAsStreamAsync())
                     using (var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
-                        await contentStream.CopyToAsync(fileStream, token);
+                        var buffer = new byte[8192];
+                        int bytesRead;
+                        long totalRead = 0;
+                        long? totalSize = response.Content.Headers.ContentLength;
+                        
+                        while ((bytesRead = await contentStream.ReadAsync(buffer, token)) > 0)
+                        {
+                            await fileStream.WriteAsync(buffer, 0, bytesRead, token);
+                            totalRead += bytesRead;
+                            
+                            if (totalSize.HasValue)
+                            {
+                                int percent = (int)((double)totalRead / totalSize.Value * 100);
+                                AddLog($"📥 Скачивание: {percent}%");
+                            }
+                        }
                     }
                 }
-
+                
                 if (token.IsCancellationRequested || isCancelled)
                 {
                     try { File.Delete(tempFile); } catch { }
-                    mainWindow.LogMessage($"⏹️ Скачивание прервано");
+                    AddLog($"⏹️ Скачивание прервано");
                     return;
                 }
-
+                
                 var fileInfo = new FileInfo(tempFile);
-                mainWindow.LogMessage($"✅ Скачано: {fileInfo.Length / 1024 / 1024:F1} MB");
-                mainWindow.LogMessage($"🚀 Запуск установки...");
-
+                AddLog($"✅ Скачано: {fileInfo.Length / 1024 / 1024:F1} MB");
+                AddLog($"🚀 Запуск установки...");
+                
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = tempFile,
                     UseShellExecute = true,
                     Verb = "runas"
                 });
-
-                mainWindow.LogMessage($"✅ Установщик запущен!");
-
+                
+                AddLog($"✅ Установщик запущен!");
+                
                 if (chkSaveInstaller.IsChecked != true)
                 {
                     _ = Task.Run(async () =>
@@ -226,7 +219,7 @@ namespace Ven4Tools
                         try { File.Delete(tempFile); } catch { }
                     });
                 }
-
+                
                 MessageBox.Show(
                     $"Установщик {displayName} запущен!\n\n" +
                     $"Файл сохранён: {tempFile}\n" +
@@ -234,19 +227,16 @@ namespace Ven4Tools
                     "Установка запущена",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
-
-                DialogResult = true;
-                Close();
             }
             catch (OperationCanceledException)
             {
-                mainWindow.LogMessage($"⏹️ Скачивание отменено");
+                AddLog($"⏹️ Скачивание отменено");
             }
             catch (Exception ex)
             {
                 if (!isCancelled)
                 {
-                    mainWindow.LogMessage($"❌ Ошибка: {ex.Message}");
+                    AddLog($"❌ Ошибка: {ex.Message}");
                     MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -255,7 +245,13 @@ namespace Ven4Tools
                 RestoreOriginalCountryCode();
                 cancellationTokenSource?.Dispose();
                 cancellationTokenSource = null;
+                btnInstallOffice.IsEnabled = true;
             }
+        }
+        
+        private void AddLog(string message)
+        {
+            LogMessage?.Invoke(message);
         }
     }
 }
