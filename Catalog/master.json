@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:12:14",
+  "lastUpdated": "2026-03-28 00:12:27",
   "apps": [
     {
       "id": "firefox",
@@ -186,7 +186,7 @@
       "id": "calibre",
       "name": "Calibre",
       "category": "Офис",
-      "wingetId": "Calibre.Calibre",
+      "wingetId": "calibre.calibre",
       "downloadUrl": "https://download.calibre-ebook.com/7.26.0/calibre-64bit-7.26.0.msi",
       "version": "7.26.0",
       "size": "~110 MB",
