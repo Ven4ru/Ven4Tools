@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:18:57",
+  "lastUpdated": "2026-03-28 00:19:04",
   "apps": [
     {
       "id": "firefox",
@@ -793,18 +793,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Лаунчер для игр Ubisoft: Assassin's Creed, Far Cry, Rainbow Six."
-    },
-    {
-      "id": "itch",
-      "name": "itch.io",
-      "category": "Игровые сервисы",
-      "wingetId": "itchio.itch",
-      "downloadUrl": "https://itch.io/app/download?platform=windows",
-      "version": "26.1.0",
-      "size": "~55 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Платформа для независимых игр и инди-разработчиков."
     },
     {
       "id": "driver-booster",
