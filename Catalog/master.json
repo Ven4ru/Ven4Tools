@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:14:47",
+  "lastUpdated": "2026-03-28 00:14:59",
   "apps": [
     {
       "id": "firefox",
@@ -457,18 +457,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Платформа для совместной работы и видеозвонков."
-    },
-    {
-      "id": "viber",
-      "name": "Viber",
-      "category": "Мессенджеры",
-      "wingetId": "Viber.Viber",
-      "downloadUrl": "https://download.cdn.viber.com/desktop/windows/ViberSetup.exe",
-      "version": "24.3.0.0",
-      "size": "~75 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Мессенджер с акцентом на звонки и стикеры."
     },
     {
       "id": "signal",
