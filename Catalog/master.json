@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:31:26",
+  "lastUpdated": "2026-03-28 00:31:52",
   "apps": [
     {
       "id": "firefox",
@@ -845,7 +845,7 @@
     {
       "id": "c7eb3257-c77e-451e-8b3a-74041c1e7326",
       "name": "MSI Afterburner",
-      "category": "Другое",
+      "category": "Системные",
       "wingetId": "Guru3D.Afterburner",
       "downloadUrl": "",
       "version": "4.6.6",
