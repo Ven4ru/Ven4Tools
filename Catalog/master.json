@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:13:04",
+  "lastUpdated": "2026-03-28 00:13:30",
   "apps": [
     {
       "id": "firefox",
@@ -265,18 +265,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Полноценный 3D-пакет: моделирование, анимация, рендеринг."
-    },
-    {
-      "id": "paintdotnet",
-      "name": "paint.net",
-      "category": "Графика",
-      "wingetId": "paintdotnet.paintdotnet",
-      "downloadUrl": "https://github.com/paintdotnet/release/releases/download/v5.1.5/paint.net.5.1.5.install.x64.exe",
-      "version": "5.1.5",
-      "size": "~25 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Простой и мощный редактор изображений для Windows."
     },
     {
       "id": "darktable",
