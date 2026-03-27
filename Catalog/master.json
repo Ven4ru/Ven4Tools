@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:19:23",
+  "lastUpdated": "2026-03-28 00:19:39",
   "apps": [
     {
       "id": "firefox",
@@ -565,18 +565,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Минималистичный видеоплеер с клавиатурным управлением."
-    },
-    {
-      "id": "musicbee",
-      "name": "MusicBee",
-      "category": "Мультимедиа",
-      "wingetId": "MusicBee.MusicBee",
-      "downloadUrl": "https://getmusicbee.com/downloads/InstallMusicBee_3_5_8698.exe",
-      "version": "3.5.8698",
-      "size": "~25 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Мощный аудиоплеер с библиотекой и тегами."
     },
     {
       "id": "mpc-hc",
