@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:19:43",
+  "lastUpdated": "2026-03-28 00:19:52",
   "apps": [
     {
       "id": "firefox",
@@ -781,18 +781,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Антивирус для защиты от вредоносного ПО."
-    },
-    {
-      "id": "keepass",
-      "name": "KeePass Password Safe",
-      "category": "Другое",
-      "wingetId": "KeePass.KeePass",
-      "downloadUrl": "https://sourceforge.net/projects/keepass/files/KeePass%202.x/2.57.1/KeePass-2.57.1-Setup.exe/download",
-      "version": "2.57.1",
-      "size": "~4 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Менеджер паролей с открытым исходным кодом."
     },
     {
       "id": "aida64",
