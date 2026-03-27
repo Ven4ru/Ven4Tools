@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:13:30",
+  "lastUpdated": "2026-03-28 00:13:50",
   "apps": [
     {
       "id": "firefox",
@@ -277,18 +277,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Профессиональная обработка RAW-фотографий."
-    },
-    {
-      "id": "photoscape-x",
-      "name": "PhotoScape X",
-      "category": "Графика",
-      "wingetId": "Photoscape.PhotoscapeX",
-      "downloadUrl": "https://www.photoscape.org/ps/main/download.php?d=photoscapex",
-      "version": "4.2.4",
-      "size": "~95 MB",
-      "official": false,
-      "iconUrl": "",
-      "description": "Простой редактор с пакетной обработкой, коллажами и GIF-анимацией."
     },
     {
       "id": "canva",
