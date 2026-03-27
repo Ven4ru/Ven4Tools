@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:12:27",
+  "lastUpdated": "2026-03-28 00:13:04",
   "apps": [
     {
       "id": "firefox",
@@ -205,18 +205,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Классический бесплатный офисный пакет."
-    },
-    {
-      "id": "pdf24",
-      "name": "PDF24 Creator",
-      "category": "Офис",
-      "wingetId": "PDF24.PDF24",
-      "downloadUrl": "https://download.pdf24.org/pdf24-11.25.0.msi",
-      "version": "11.25.0",
-      "size": "~65 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Универсальный инструмент для работы с PDF: создание, конвертация, слияние."
     },
     {
       "id": "drawio",
