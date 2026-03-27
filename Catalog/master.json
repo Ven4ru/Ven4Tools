@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:18:01",
+  "lastUpdated": "2026-03-28 00:18:07",
   "apps": [
     {
       "id": "firefox",
@@ -889,18 +889,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Обновление драйверов NVIDIA, оптимизация игр, запись видео."
-    },
-    {
-      "id": "intel-driver-assistant",
-      "name": "Intel Driver Assistant",
-      "category": "Драйверпаки",
-      "wingetId": "Intel.DSA",
-      "downloadUrl": "https://www.intel.com/content/dam/support/us/en/documents/software/Intel-Driver-Support-Assistant.exe",
-      "version": "25.1.1.1",
-      "size": "~2 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Автоматическое обновление драйверов Intel."
     },
     {
       "id": "wushowhide",
