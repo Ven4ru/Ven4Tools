@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:18:15",
+  "lastUpdated": "2026-03-28 00:18:19",
   "apps": [
     {
       "id": "firefox",
@@ -877,18 +877,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Мощный офлайн-инсталлятор драйверов с огромной базой."
-    },
-    {
-      "id": "wushowhide",
-      "name": "wushowhide.diagcab",
-      "category": "Драйверпаки",
-      "wingetId": "Microsoft.WuShowHide",
-      "downloadUrl": "https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c65-1d6ad4e464b2/wushowhide.diagcab",
-      "version": "1.0",
-      "size": "~0.5 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Скрытие нежелательных обновлений драйверов в Windows Update."
     },
     {
       "id": "malwarebytes",
