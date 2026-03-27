@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:17:52",
+  "lastUpdated": "2026-03-28 00:17:58",
   "apps": [
     {
       "id": "firefox",
@@ -925,18 +925,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Скрытие нежелательных обновлений драйверов в Windows Update."
-    },
-    {
-      "id": "display-driver-uninstaller",
-      "name": "Display Driver Uninstaller",
-      "category": "Драйверпаки",
-      "wingetId": "WagnardSoft.DisplayDriverUninstaller",
-      "downloadUrl": "https://www.wagnardsoft.com/DDU/download/DDU%20v18.0.8.5.exe",
-      "version": "18.0.8.5",
-      "size": "~2 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Полное удаление драйверов NVIDIA/AMD/Intel."
     },
     {
       "id": "msi-center",
