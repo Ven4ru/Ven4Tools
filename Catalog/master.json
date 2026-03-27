@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:19:16",
+  "lastUpdated": "2026-03-28 00:19:23",
   "apps": [
     {
       "id": "firefox",
@@ -541,18 +541,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Бесплатный редактор аудио с открытым исходным кодом."
-    },
-    {
-      "id": "kodi",
-      "name": "Kodi",
-      "category": "Мультимедиа",
-      "wingetId": "Kodi.Kodi",
-      "downloadUrl": "https://mirrors.kodi.tv/releases/windows/win64/kodi-21.2-Omega-x64.exe",
-      "version": "21.2",
-      "size": "~140 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Медиацентр для организации коллекции фильмов и сериалов."
     },
     {
       "id": "handbrake",
