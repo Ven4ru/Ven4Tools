@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:20:34",
+  "lastUpdated": "2026-03-28 00:20:41",
   "apps": [
     {
       "id": "firefox",
@@ -133,18 +133,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Совместимый с MS Office редактор с облачной интеграцией."
-    },
-    {
-      "id": "wps-office",
-      "name": "WPS Office",
-      "category": "Офис",
-      "wingetId": "Kingsoft.WPSOffice",
-      "downloadUrl": "https://wdl1.pcfg.cache.wpscdn.com/wpsdl/WinWPSPro/2024/18.6.1.0/WPSOffice_18.6.1.0.exe",
-      "version": "18.6.1",
-      "size": "~260 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Бесплатный офисный пакет с отличной совместимостью с форматами Microsoft."
     },
     {
       "id": "foxit-reader",
