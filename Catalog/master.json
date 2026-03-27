@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:14:30",
+  "lastUpdated": "2026-03-28 00:14:47",
   "apps": [
     {
       "id": "firefox",
@@ -433,18 +433,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Корпоративный мессенджер с интеграциями."
-    },
-    {
-      "id": "whatsapp",
-      "name": "WhatsApp Desktop",
-      "category": "Мессенджеры",
-      "wingetId": "WhatsApp.WhatsApp",
-      "downloadUrl": "https://web.whatsapp.com/desktop/windows/release/x64/WhatsAppSetup.exe",
-      "version": "2.2501.6.0",
-      "size": "~120 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Официальное приложение WhatsApp для Windows."
     },
     {
       "id": "zoom",
