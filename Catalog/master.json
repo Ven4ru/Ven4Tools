@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:18:07",
+  "lastUpdated": "2026-03-28 00:18:11",
   "apps": [
     {
       "id": "firefox",
@@ -901,18 +901,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Скрытие нежелательных обновлений драйверов в Windows Update."
-    },
-    {
-      "id": "msi-center",
-      "name": "MSI Center",
-      "category": "Драйверпаки",
-      "wingetId": "MSI.MSICenter",
-      "downloadUrl": "https://download.msi.com/uti_exe/nb/MSI-Center.zip",
-      "version": "2.0.44.0",
-      "size": "~90 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Центр управления для устройств MSI."
     },
     {
       "id": "malwarebytes",
