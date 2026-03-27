@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:18:46",
+  "lastUpdated": "2026-03-28 00:18:50",
   "apps": [
     {
       "id": "firefox",
@@ -829,18 +829,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Платформа для независимых игр и инди-разработчиков."
-    },
-    {
-      "id": "amazon-games",
-      "name": "Amazon Games",
-      "category": "Игровые сервисы",
-      "wingetId": "Amazon.AmazonGames",
-      "downloadUrl": "https://download.amazongames.com/AmazonGamesSetup.exe",
-      "version": "2.3.0.0",
-      "size": "~75 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Лаунчер для игр Amazon Prime Gaming и New World."
     },
     {
       "id": "driver-booster",
