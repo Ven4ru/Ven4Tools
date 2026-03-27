@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:14:59",
+  "lastUpdated": "2026-03-28 00:17:37",
   "apps": [
     {
       "id": "firefox",
@@ -937,18 +937,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Полное удаление драйверов NVIDIA/AMD/Intel."
-    },
-    {
-      "id": "driverstore-explorer",
-      "name": "DriverStore Explorer",
-      "category": "Драйверпаки",
-      "wingetId": "DriverStoreExplorer.DriverStoreExplorer",
-      "downloadUrl": "https://github.com/lostindark/DriverStoreExplorer/releases/download/v0.11.99/DriverStoreExplorer.v0.11.99.zip",
-      "version": "0.11.99",
-      "size": "~0.5 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Управление хранилищем драйверов Windows."
     },
     {
       "id": "asus-armoury-crate",
