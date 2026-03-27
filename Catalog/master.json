@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:20:41",
+  "lastUpdated": "2026-03-28 00:21:14",
   "apps": [
     {
       "id": "firefox",
@@ -529,18 +529,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Конвертер видео с поддержкой большинства форматов."
-    },
-    {
-      "id": "mpc-hc",
-      "name": "MPC-HC",
-      "category": "Мультимедиа",
-      "wingetId": "MPC-HC.MPC-HC",
-      "downloadUrl": "https://github.com/clsid2/mpc-hc/releases/download/2.3.6/MPC-HC.2.3.6.x64.exe",
-      "version": "2.3.6",
-      "size": "~18 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Лёгкий и быстрый видеоплеер с минимальным потреблением ресурсов."
     },
     {
       "id": "7zip",
