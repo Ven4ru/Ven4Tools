@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:19:39",
+  "lastUpdated": "2026-03-28 00:19:43",
   "apps": [
     {
       "id": "firefox",
@@ -553,18 +553,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Конвертер видео с поддержкой большинства форматов."
-    },
-    {
-      "id": "mpv",
-      "name": "mpv.net",
-      "category": "Мультимедиа",
-      "wingetId": "mpv.net.mpv.net",
-      "downloadUrl": "https://github.com/mpvnet-player/mpv.net/releases/download/6.0.3.0/mpv.net-6.0.3.0-installer.exe",
-      "version": "6.0.3",
-      "size": "~50 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Минималистичный видеоплеер с клавиатурным управлением."
     },
     {
       "id": "mpc-hc",
