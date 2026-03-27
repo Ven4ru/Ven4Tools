@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:19:04",
+  "lastUpdated": "2026-03-28 00:19:16",
   "apps": [
     {
       "id": "firefox",
@@ -541,18 +541,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Бесплатный редактор аудио с открытым исходным кодом."
-    },
-    {
-      "id": "foobar2000",
-      "name": "foobar2000",
-      "category": "Мультимедиа",
-      "wingetId": "foobar2000.foobar2000",
-      "downloadUrl": "https://www.foobar2000.org/files/foobar2000_v2.24.3.exe",
-      "version": "2.24.3",
-      "size": "~12 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Аудиоплеер с широкими возможностями настройки."
     },
     {
       "id": "kodi",
