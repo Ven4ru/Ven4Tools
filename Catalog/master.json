@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:21:14",
+  "lastUpdated": "2026-03-28 00:31:26",
   "apps": [
     {
       "id": "firefox",
@@ -841,6 +841,18 @@
       "official": true,
       "iconUrl": "",
       "description": "Детальная информация о процессоре, памяти и материнской плате."
+    },
+    {
+      "id": "c7eb3257-c77e-451e-8b3a-74041c1e7326",
+      "name": "MSI Afterburner",
+      "category": "Другое",
+      "wingetId": "Guru3D.Afterburner",
+      "downloadUrl": "",
+      "version": "4.6.6",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Описание отсутствует"
     }
   ]
 }
