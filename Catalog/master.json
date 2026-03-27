@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:18:50",
+  "lastUpdated": "2026-03-28 00:18:54",
   "apps": [
     {
       "id": "firefox",
@@ -781,18 +781,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Лаунчер без DRM и агрегатор библиотек из других платформ."
-    },
-    {
-      "id": "xbox",
-      "name": "Xbox",
-      "category": "Игровые сервисы",
-      "wingetId": "Microsoft.Xbox",
-      "downloadUrl": "https://www.microsoft.com/store/apps/9MV0B5HZVK9Z",
-      "version": "2503.1001.3.0",
-      "size": "~120 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Игры Xbox Game Pass для ПК."
     },
     {
       "id": "playstation-plus",
