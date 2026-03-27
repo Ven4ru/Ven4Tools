@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:18:19",
+  "lastUpdated": "2026-03-28 00:18:46",
   "apps": [
     {
       "id": "firefox",
@@ -817,18 +817,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Лаунчер для игр Ubisoft: Assassin's Creed, Far Cry, Rainbow Six."
-    },
-    {
-      "id": "ea-app",
-      "name": "EA App",
-      "category": "Игровые сервисы",
-      "wingetId": "EA.EAApp",
-      "downloadUrl": "https://origin-a.akamaihd.net/EA-Desktop-Client-Download/installer-releases/EAappInstaller.exe",
-      "version": "13.350.0.5841",
-      "size": "~95 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Лаунчер для игр Electronic Arts: Battlefield, FIFA, The Sims."
     },
     {
       "id": "itch",
