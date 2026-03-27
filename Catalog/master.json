@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:18:11",
+  "lastUpdated": "2026-03-28 00:18:15",
   "apps": [
     {
       "id": "firefox",
@@ -877,18 +877,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Мощный офлайн-инсталлятор драйверов с огромной базой."
-    },
-    {
-      "id": "nvidia-geforce-experience",
-      "name": "NVIDIA GeForce Experience",
-      "category": "Драйверпаки",
-      "wingetId": "NVIDIA.GeForceExperience",
-      "downloadUrl": "https://us.download.nvidia.com/GFE/GFEClient/3.28.0.417/GeForce_Experience_v3.28.0.417.exe",
-      "version": "3.28.0.417",
-      "size": "~220 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Обновление драйверов NVIDIA, оптимизация игр, запись видео."
     },
     {
       "id": "wushowhide",
