@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:14:05",
+  "lastUpdated": "2026-03-28 00:14:30",
   "apps": [
     {
       "id": "firefox",
@@ -373,18 +373,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Платформа для тестирования API и работы с запросами."
-    },
-    {
-      "id": "sourcetree",
-      "name": "SourceTree",
-      "category": "Разработка",
-      "wingetId": "Atlassian.SourceTree",
-      "downloadUrl": "https://product-downloads.atlassian.com/software/sourcetree/windows/ga/SourceTree-3.4.19-x64.exe",
-      "version": "3.4.19",
-      "size": "~45 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Графический клиент для Git и Mercurial."
     },
     {
       "id": "notepad-plus-plus",
