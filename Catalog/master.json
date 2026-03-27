@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-27 15:00:00",
+  "lastUpdated": "2026-03-27 17:30:00",
   "apps": [
     {
       "id": "firefox",
@@ -12,10 +12,10 @@
       "size": "~65 MB",
       "official": true,
       "iconUrl": "",
-      "description": "Быстрый, безопасный и приватный браузер от Mozilla."
+      "description": "Быстрый, безопасный и приватный браузер с открытым исходным кодом."
     },
     {
-      "id": "googlechrome",
+      "id": "google-chrome",
       "name": "Google Chrome",
       "category": "Браузеры",
       "wingetId": "Google.Chrome",
@@ -24,19 +24,31 @@
       "size": "~75 MB",
       "official": true,
       "iconUrl": "",
-      "description": "Браузер от Google с быстрой синхронизацией."
+      "description": "Самый популярный браузер с интеграцией сервисов Google."
     },
     {
-      "id": "yandexbrowser",
-      "name": "Яндекс.Браузер",
+      "id": "microsoft-edge",
+      "name": "Microsoft Edge",
       "category": "Браузеры",
-      "wingetId": "Yandex.Browser",
-      "downloadUrl": "https://browser.yandex.ru/download/?os=win&bitness=64",
-      "version": "25.3.1.968",
-      "size": "~95 MB",
+      "wingetId": "Microsoft.Edge",
+      "downloadUrl": "https://go.microsoft.com/fwlink/?linkid=2108834&Channel=Stable&language=ru",
+      "version": "134.0.3124.68",
+      "size": "~90 MB",
       "official": true,
       "iconUrl": "",
-      "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса."
+      "description": "Современный браузер от Microsoft на базе Chromium."
+    },
+    {
+      "id": "opera",
+      "name": "Opera",
+      "category": "Браузеры",
+      "wingetId": "Opera.Opera",
+      "downloadUrl": "https://net.geo.opera.com/opera/stable/windows",
+      "version": "117.0.5408.72",
+      "size": "~85 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами."
     },
     {
       "id": "brave",
@@ -51,10 +63,70 @@
       "description": "Браузер с фокусом на приватность и встроенным блокировщиком рекламы."
     },
     {
+      "id": "yandex-browser",
+      "name": "Яндекс.Браузер",
+      "category": "Браузеры",
+      "wingetId": "Yandex.Browser",
+      "downloadUrl": "https://browser.yandex.ru/download/?os=win&bitness=64",
+      "version": "25.3.1.968",
+      "size": "~95 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса."
+    },
+    {
+      "id": "vivaldi",
+      "name": "Vivaldi",
+      "category": "Браузеры",
+      "wingetId": "Vivaldi.Vivaldi",
+      "downloadUrl": "https://downloads.vivaldi.com/stable/Vivaldi.7.2.3621.73.x64.exe",
+      "version": "7.2.3621.73",
+      "size": "~95 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Браузер для тех, кто любит настройки и кастомизацию."
+    },
+    {
+      "id": "tor-browser",
+      "name": "Tor Browser",
+      "category": "Браузеры",
+      "wingetId": "TorProject.TorBrowser",
+      "downloadUrl": "https://dist.torproject.org/torbrowser/14.0.7/torbrowser-install-win64-14.0.7.exe",
+      "version": "14.0.7",
+      "size": "~110 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Анонимный браузер с маршрутизацией через сеть Tor."
+    },
+    {
+      "id": "waterfox",
+      "name": "Waterfox",
+      "category": "Браузеры",
+      "wingetId": "Waterfox.Waterfox",
+      "downloadUrl": "https://cdn.waterfox.net/releases/waterfox/G6.0.20/Waterfox%20G6.0.20%20Setup.exe",
+      "version": "G6.0.20",
+      "size": "~85 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Форк Firefox с акцентом на производительность и приватность."
+    },
+    {
+      "id": "floorp",
+      "name": "Floorp",
+      "category": "Браузеры",
+      "wingetId": "Floorp.Floorp",
+      "downloadUrl": "https://github.com/Floorp-Projects/Floorp/releases/download/v11.21.0/floorp-11.21.0-win64.installer.exe",
+      "version": "11.21.0",
+      "size": "~90 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Японский форк Firefox с уникальными функциями кастомизации."
+    },
+    {
       "id": "libreoffice",
       "name": "LibreOffice",
       "category": "Офис",
-      "wingetId": "LibreOffice.LibreOffice",
+      "wingetId": "TheDocumentFoundation.LibreOffice",
       "downloadUrl": "https://download.documentfoundation.org/libreoffice/stable/24.8.4/win/x86_64/LibreOffice_24.8.4_Win_x86-64.msi",
       "version": "24.8.4",
       "size": "~320 MB",
@@ -99,10 +171,82 @@
       "description": "Быстрый и лёгкий PDF-ридер с возможностью редактирования."
     },
     {
+      "id": "adobe-acrobat-reader",
+      "name": "Adobe Acrobat Reader",
+      "category": "Офис",
+      "wingetId": "Adobe.Acrobat.Reader.64-bit",
+      "downloadUrl": "https://ardownload2.adobe.com/pub/adobe/reader/win/AcrobatDC/2500120147/AcroRdrDCx642500120147_MUI.exe",
+      "version": "25.001.20147",
+      "size": "~210 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Стандарт для работы с PDF-документами от Adobe."
+    },
+    {
+      "id": "sumatra-pdf",
+      "name": "SumatraPDF",
+      "category": "Офис",
+      "wingetId": "SumatraPDF.SumatraPDF",
+      "downloadUrl": "https://www.sumatrapdfreader.org/dl/rel/3.5.2/SumatraPDF-3.5.2-64-install.exe",
+      "version": "3.5.2",
+      "size": "~10 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Минималистичный и быстрый просмотрщик PDF, EPUB, MOBI."
+    },
+    {
+      "id": "calibre",
+      "name": "Calibre",
+      "category": "Офис",
+      "wingetId": "Calibre.Calibre",
+      "downloadUrl": "https://download.calibre-ebook.com/7.26.0/calibre-64bit-7.26.0.msi",
+      "version": "7.26.0",
+      "size": "~110 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Мощный менеджер электронных книг и конвертер форматов."
+    },
+    {
+      "id": "openoffice",
+      "name": "Apache OpenOffice",
+      "category": "Офис",
+      "wingetId": "Apache.OpenOffice",
+      "downloadUrl": "https://downloads.apache.org/openoffice/4.1.15/binaries/ru/Apache_OpenOffice_4.1.15_Win_x64_install_ru.exe",
+      "version": "4.1.15",
+      "size": "~180 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Классический бесплатный офисный пакет."
+    },
+    {
+      "id": "pdf24",
+      "name": "PDF24 Creator",
+      "category": "Офис",
+      "wingetId": "PDF24.PDF24",
+      "downloadUrl": "https://download.pdf24.org/pdf24-11.25.0.msi",
+      "version": "11.25.0",
+      "size": "~65 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Универсальный инструмент для работы с PDF: создание, конвертация, слияние."
+    },
+    {
+      "id": "drawio",
+      "name": "draw.io",
+      "category": "Офис",
+      "wingetId": "JGraph.Draw",
+      "downloadUrl": "https://github.com/jgraph/drawio-desktop/releases/download/v25.0.1/draw.io-25.0.1-windows-installer.exe",
+      "version": "25.0.1",
+      "size": "~85 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Создание диаграмм, схем и визуализаций."
+    },
+    {
       "id": "gimp",
       "name": "GIMP",
       "category": "Графика",
-      "wingetId": "GIMP.GIMP",
+      "wingetId": "GIMP.GIMP.2",
       "downloadUrl": "https://download.gimp.org/mirror/pub/gimp/v3.0/windows/gimp-3.0.0-setup.exe",
       "version": "3.0.0",
       "size": "~280 MB",
@@ -126,7 +270,7 @@
       "id": "krita",
       "name": "Krita",
       "category": "Графика",
-      "wingetId": "Krita.Krita",
+      "wingetId": "KDE.Krita",
       "downloadUrl": "https://download.kde.org/stable/krita/5.2.6/krita-x64-5.2.6-setup.exe",
       "version": "5.2.6",
       "size": "~200 MB",
@@ -138,13 +282,73 @@
       "id": "blender",
       "name": "Blender",
       "category": "Графика",
-      "wingetId": "Blender.Blender",
+      "wingetId": "BlenderFoundation.Blender",
       "downloadUrl": "https://download.blender.org/release/Blender4.3/blender-4.3.2-windows-x64.msi",
       "version": "4.3.2",
       "size": "~360 MB",
       "official": true,
       "iconUrl": "",
       "description": "Полноценный 3D-пакет: моделирование, анимация, рендеринг."
+    },
+    {
+      "id": "paintdotnet",
+      "name": "paint.net",
+      "category": "Графика",
+      "wingetId": "paintdotnet.paintdotnet",
+      "downloadUrl": "https://github.com/paintdotnet/release/releases/download/v5.1.5/paint.net.5.1.5.install.x64.exe",
+      "version": "5.1.5",
+      "size": "~25 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Простой и мощный редактор изображений для Windows."
+    },
+    {
+      "id": "darktable",
+      "name": "darktable",
+      "category": "Графика",
+      "wingetId": "darktable.darktable",
+      "downloadUrl": "https://github.com/darktable-org/darktable/releases/download/release-5.0.1/darktable-5.0.1-x64.exe",
+      "version": "5.0.1",
+      "size": "~110 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Профессиональная обработка RAW-фотографий."
+    },
+    {
+      "id": "photoscape-x",
+      "name": "PhotoScape X",
+      "category": "Графика",
+      "wingetId": "Photoscape.PhotoscapeX",
+      "downloadUrl": "https://www.photoscape.org/ps/main/download.php?d=photoscapex",
+      "version": "4.2.4",
+      "size": "~95 MB",
+      "official": false,
+      "iconUrl": "",
+      "description": "Простой редактор с пакетной обработкой, коллажами и GIF-анимацией."
+    },
+    {
+      "id": "canva",
+      "name": "Canva Desktop",
+      "category": "Графика",
+      "wingetId": "Canva.Canva",
+      "downloadUrl": "https://desktop.canva.com/latest/CanvaSetup.exe",
+      "version": "1.98.0",
+      "size": "~250 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Дизайн для всех: презентации, соцсети, печатная продукция."
+    },
+    {
+      "id": "aseprite",
+      "name": "Aseprite",
+      "category": "Графика",
+      "wingetId": "Aseprite.Aseprite",
+      "downloadUrl": "https://github.com/aseprite/aseprite/releases/download/v1.3.13/Aseprite-v1.3.13-x64.zip",
+      "version": "1.3.13",
+      "size": "~35 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Профессиональный инструмент для пиксельной графики и анимации."
     },
     {
       "id": "vscode",
@@ -157,6 +361,18 @@
       "official": true,
       "iconUrl": "",
       "description": "Легкий, но мощный редактор кода от Microsoft."
+    },
+    {
+      "id": "visual-studio-community",
+      "name": "Visual Studio Community",
+      "category": "Разработка",
+      "wingetId": "Microsoft.VisualStudio.2022.Community",
+      "downloadUrl": "https://aka.ms/vs/17/release/vs_community.exe",
+      "version": "17.12.4",
+      "size": "~1500 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Полноценная IDE для .NET, C++, Python и других языков."
     },
     {
       "id": "python",
@@ -195,6 +411,66 @@
       "description": "Система контроля версий с Bash-эмулятором."
     },
     {
+      "id": "docker-desktop",
+      "name": "Docker Desktop",
+      "category": "Разработка",
+      "wingetId": "Docker.DockerDesktop",
+      "downloadUrl": "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe",
+      "version": "4.38.0",
+      "size": "~520 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Контейнеризация приложений для разработки и тестирования."
+    },
+    {
+      "id": "postman",
+      "name": "Postman",
+      "category": "Разработка",
+      "wingetId": "Postman.Postman",
+      "downloadUrl": "https://dl.pstmn.io/download/latest/win64",
+      "version": "11.28.1",
+      "size": "~140 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Платформа для тестирования API и работы с запросами."
+    },
+    {
+      "id": "sourcetree",
+      "name": "SourceTree",
+      "category": "Разработка",
+      "wingetId": "Atlassian.SourceTree",
+      "downloadUrl": "https://product-downloads.atlassian.com/software/sourcetree/windows/ga/SourceTree-3.4.19-x64.exe",
+      "version": "3.4.19",
+      "size": "~45 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Графический клиент для Git и Mercurial."
+    },
+    {
+      "id": "notepad-plus-plus",
+      "name": "Notepad++",
+      "category": "Разработка",
+      "wingetId": "Notepad++.Notepad++",
+      "downloadUrl": "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.7/npp.8.7.Installer.x64.exe",
+      "version": "8.7",
+      "size": "~5 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Мощный текстовый редактор с подсветкой синтаксиса."
+    },
+    {
+      "id": "github-desktop",
+      "name": "GitHub Desktop",
+      "category": "Разработка",
+      "wingetId": "GitHub.GitHubDesktop",
+      "downloadUrl": "https://central.github.com/deployments/desktop/desktop/latest/win32",
+      "version": "3.4.8",
+      "size": "~120 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Официальный клиент GitHub для работы с репозиториями."
+    },
+    {
       "id": "telegram",
       "name": "Telegram Desktop",
       "category": "Мессенджеры",
@@ -222,13 +498,25 @@
       "id": "slack",
       "name": "Slack",
       "category": "Мессенджеры",
-      "wingetId": "Slack.Slack",
+      "wingetId": "SlackTechnologies.Slack",
       "downloadUrl": "https://slack.com/ssb/download-win64",
       "version": "4.42.130",
       "size": "~110 MB",
       "official": true,
       "iconUrl": "",
       "description": "Корпоративный мессенджер с интеграциями."
+    },
+    {
+      "id": "whatsapp",
+      "name": "WhatsApp Desktop",
+      "category": "Мессенджеры",
+      "wingetId": "WhatsApp.WhatsApp",
+      "downloadUrl": "https://web.whatsapp.com/desktop/windows/release/x64/WhatsAppSetup.exe",
+      "version": "2.2501.6.0",
+      "size": "~120 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Официальное приложение WhatsApp для Windows."
     },
     {
       "id": "zoom",
@@ -241,6 +529,66 @@
       "official": true,
       "iconUrl": "",
       "description": "Видеоконференции, вебинары и командная работа."
+    },
+    {
+      "id": "microsoft-teams",
+      "name": "Microsoft Teams",
+      "category": "Мессенджеры",
+      "wingetId": "Microsoft.Teams",
+      "downloadUrl": "https://teams.microsoft.com/downloads/desktopurl?env=production&plat=windows&arch=x64&download=true",
+      "version": "25016.120.3272.4897",
+      "size": "~110 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Платформа для совместной работы и видеозвонков."
+    },
+    {
+      "id": "viber",
+      "name": "Viber",
+      "category": "Мессенджеры",
+      "wingetId": "Viber.Viber",
+      "downloadUrl": "https://download.cdn.viber.com/desktop/windows/ViberSetup.exe",
+      "version": "24.3.0.0",
+      "size": "~75 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Мессенджер с акцентом на звонки и стикеры."
+    },
+    {
+      "id": "signal",
+      "name": "Signal",
+      "category": "Мессенджеры",
+      "wingetId": "OpenWhisperSystems.Signal",
+      "downloadUrl": "https://updates.signal.org/desktop/signal-desktop-win-7.33.0.exe",
+      "version": "7.33.0",
+      "size": "~100 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Защищённый мессенджер с end-to-end шифрованием."
+    },
+    {
+      "id": "element",
+      "name": "Element",
+      "category": "Мессенджеры",
+      "wingetId": "Element.Element",
+      "downloadUrl": "https://packages.element.io/desktop/install/win32/x64/Element%20Setup.exe",
+      "version": "1.11.85",
+      "size": "~85 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Децентрализованный мессенджер на базе Matrix."
+    },
+    {
+      "id": "mattermost",
+      "name": "Mattermost",
+      "category": "Мессенджеры",
+      "wingetId": "Mattermost.MattermostDesktop",
+      "downloadUrl": "https://releases.mattermost.com/desktop/5.10.0/mattermost-desktop-5.10.0-win-x64.exe",
+      "version": "5.10.0",
+      "size": "~90 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Альтернатива Slack с открытым исходным кодом."
     },
     {
       "id": "vlc",
@@ -291,6 +639,78 @@
       "description": "Бесплатный редактор аудио с открытым исходным кодом."
     },
     {
+      "id": "foobar2000",
+      "name": "foobar2000",
+      "category": "Мультимедиа",
+      "wingetId": "foobar2000.foobar2000",
+      "downloadUrl": "https://www.foobar2000.org/files/foobar2000_v2.24.3.exe",
+      "version": "2.24.3",
+      "size": "~12 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Аудиоплеер с широкими возможностями настройки."
+    },
+    {
+      "id": "kodi",
+      "name": "Kodi",
+      "category": "Мультимедиа",
+      "wingetId": "Kodi.Kodi",
+      "downloadUrl": "https://mirrors.kodi.tv/releases/windows/win64/kodi-21.2-Omega-x64.exe",
+      "version": "21.2",
+      "size": "~140 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Медиацентр для организации коллекции фильмов и сериалов."
+    },
+    {
+      "id": "handbrake",
+      "name": "HandBrake",
+      "category": "Мультимедиа",
+      "wingetId": "HandBrake.HandBrake",
+      "downloadUrl": "https://github.com/HandBrake/HandBrake/releases/download/1.9.2/HandBrake-1.9.2-x86_64-Win_GUI.exe",
+      "version": "1.9.2",
+      "size": "~40 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Конвертер видео с поддержкой большинства форматов."
+    },
+    {
+      "id": "mpv",
+      "name": "mpv.net",
+      "category": "Мультимедиа",
+      "wingetId": "mpv.net.mpv.net",
+      "downloadUrl": "https://github.com/mpvnet-player/mpv.net/releases/download/6.0.3.0/mpv.net-6.0.3.0-installer.exe",
+      "version": "6.0.3",
+      "size": "~50 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Минималистичный видеоплеер с клавиатурным управлением."
+    },
+    {
+      "id": "musicbee",
+      "name": "MusicBee",
+      "category": "Мультимедиа",
+      "wingetId": "MusicBee.MusicBee",
+      "downloadUrl": "https://getmusicbee.com/downloads/InstallMusicBee_3_5_8698.exe",
+      "version": "3.5.8698",
+      "size": "~25 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Мощный аудиоплеер с библиотекой и тегами."
+    },
+    {
+      "id": "mpc-hc",
+      "name": "MPC-HC",
+      "category": "Мультимедиа",
+      "wingetId": "MPC-HC.MPC-HC",
+      "downloadUrl": "https://github.com/clsid2/mpc-hc/releases/download/2.3.6/MPC-HC.2.3.6.x64.exe",
+      "version": "2.3.6",
+      "size": "~18 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Лёгкий и быстрый видеоплеер с минимальным потреблением ресурсов."
+    },
+    {
       "id": "7zip",
       "name": "7-Zip",
       "category": "Системные",
@@ -327,6 +747,66 @@
       "description": "Мгновенный поиск файлов по имени."
     },
     {
+      "id": "crystaldiskinfo",
+      "name": "CrystalDiskInfo",
+      "category": "Системные",
+      "wingetId": "CrystalDewWorld.CrystalDiskInfo",
+      "downloadUrl": "https://osdn.net/projects/crystaldiskinfo/downloads/79235/CrystalDiskInfo9_6_0.exe/",
+      "version": "9.6.0",
+      "size": "~4.5 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Мониторинг состояния жёстких дисков и SSD."
+    },
+    {
+      "id": "crystaldiskmark",
+      "name": "CrystalDiskMark",
+      "category": "Системные",
+      "wingetId": "CrystalDewWorld.CrystalDiskMark",
+      "downloadUrl": "https://osdn.net/projects/crystaldiskmark/downloads/79630/CrystalDiskMark8_0_6.exe/",
+      "version": "8.0.6",
+      "size": "~4 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Тестирование производительности накопителей."
+    },
+    {
+      "id": "greenshot",
+      "name": "Greenshot",
+      "category": "Системные",
+      "wingetId": "Greenshot.Greenshot",
+      "downloadUrl": "https://github.com/greenshot/greenshot/releases/download/Greenshot-RELEASE-1.2.10.6/Greenshot-INSTALLER-1.2.10.6-RELEASE.exe",
+      "version": "1.2.10.6",
+      "size": "~6 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Мощный инструмент для создания скриншотов."
+    },
+    {
+      "id": "sharex",
+      "name": "ShareX",
+      "category": "Системные",
+      "wingetId": "ShareX.ShareX",
+      "downloadUrl": "https://github.com/ShareX/ShareX/releases/download/v16.1.0/ShareX-16.1.0-setup.exe",
+      "version": "16.1.0",
+      "size": "~12 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Скриншоты, запись экрана, загрузка файлов."
+    },
+    {
+      "id": "windirstat",
+      "name": "WinDirStat",
+      "category": "Системные",
+      "wingetId": "WinDirStat.WinDirStat",
+      "downloadUrl": "https://windirstat.net/download/windirstat1_1_2_setup.exe",
+      "version": "1.1.2",
+      "size": "~1.2 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Анализ использования дискового пространства."
+    },
+    {
       "id": "yandex-disk",
       "name": "Яндекс.Диск",
       "category": "Системные",
@@ -337,6 +817,18 @@
       "official": true,
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов."
+    },
+    {
+      "id": "powertoys",
+      "name": "Microsoft PowerToys",
+      "category": "Системные",
+      "wingetId": "Microsoft.PowerToys",
+      "downloadUrl": "https://github.com/microsoft/PowerToys/releases/download/v0.89.0/PowerToysSetup-0.89.0-x64.exe",
+      "version": "0.89.0",
+      "size": "~120 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Набор утилит для повышения производительности Windows."
     },
     {
       "id": "steam",
@@ -387,6 +879,78 @@
       "description": "Лаунчер без DRM и агрегатор библиотек из других платформ."
     },
     {
+      "id": "xbox",
+      "name": "Xbox",
+      "category": "Игровые сервисы",
+      "wingetId": "Microsoft.Xbox",
+      "downloadUrl": "https://www.microsoft.com/store/apps/9MV0B5HZVK9Z",
+      "version": "2503.1001.3.0",
+      "size": "~120 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Игры Xbox Game Pass для ПК."
+    },
+    {
+      "id": "playstation-plus",
+      "name": "PlayStation Plus",
+      "category": "Игровые сервисы",
+      "wingetId": "Sony.PlayStationPC",
+      "downloadUrl": "https://www.playstation.com/static/sfc/installer/PlayStationPCSetup.exe",
+      "version": "1.0.0",
+      "size": "~35 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Игры PlayStation на ПК."
+    },
+    {
+      "id": "ubisoft-connect",
+      "name": "Ubisoft Connect",
+      "category": "Игровые сервисы",
+      "wingetId": "Ubisoft.Connect",
+      "downloadUrl": "https://static.u.ubi.com/ubisoft-connect/latest/UbisoftConnectInstaller.exe",
+      "version": "155.1.0.11247",
+      "size": "~85 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Лаунчер для игр Ubisoft: Assassin's Creed, Far Cry, Rainbow Six."
+    },
+    {
+      "id": "ea-app",
+      "name": "EA App",
+      "category": "Игровые сервисы",
+      "wingetId": "EA.EAApp",
+      "downloadUrl": "https://origin-a.akamaihd.net/EA-Desktop-Client-Download/installer-releases/EAappInstaller.exe",
+      "version": "13.350.0.5841",
+      "size": "~95 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Лаунчер для игр Electronic Arts: Battlefield, FIFA, The Sims."
+    },
+    {
+      "id": "itch",
+      "name": "itch.io",
+      "category": "Игровые сервисы",
+      "wingetId": "itchio.itch",
+      "downloadUrl": "https://itch.io/app/download?platform=windows",
+      "version": "26.1.0",
+      "size": "~55 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Платформа для независимых игр и инди-разработчиков."
+    },
+    {
+      "id": "amazon-games",
+      "name": "Amazon Games",
+      "category": "Игровые сервисы",
+      "wingetId": "Amazon.AmazonGames",
+      "downloadUrl": "https://download.amazongames.com/AmazonGamesSetup.exe",
+      "version": "2.3.0.0",
+      "size": "~75 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Лаунчер для игр Amazon Prime Gaming и New World."
+    },
+    {
       "id": "driver-booster",
       "name": "Driver Booster Pro",
       "category": "Драйверпаки",
@@ -411,7 +975,7 @@
       "description": "Мощный офлайн-инсталлятор драйверов с огромной базой."
     },
     {
-      "id": "nvidia-experience",
+      "id": "nvidia-geforce-experience",
       "name": "NVIDIA GeForce Experience",
       "category": "Драйверпаки",
       "wingetId": "NVIDIA.GeForceExperience",
@@ -423,16 +987,88 @@
       "description": "Обновление драйверов NVIDIA, оптимизация игр, запись видео."
     },
     {
-      "id": "amd-auto-detect",
-      "name": "AMD Auto Detect",
+      "id": "amd-software",
+      "name": "AMD Software Adrenalin",
       "category": "Драйверпаки",
       "wingetId": "AMD.ADrenalin",
-      "downloadUrl": "https://www.amd.com/system/files/AMD-Auto-Detect-Setup.exe",
-      "version": "1.0.0",
+      "downloadUrl": "https://www.amd.com/system/files/AMD-Software-Adrenalin-24.9.1-Win11-Win10-Auto-Detect-Installer.exe",
+      "version": "24.9.1",
       "size": "~3 MB",
       "official": true,
       "iconUrl": "",
       "description": "Автоматическое определение и установка драйверов AMD."
+    },
+    {
+      "id": "intel-driver-assistant",
+      "name": "Intel Driver Assistant",
+      "category": "Драйверпаки",
+      "wingetId": "Intel.DSA",
+      "downloadUrl": "https://www.intel.com/content/dam/support/us/en/documents/software/Intel-Driver-Support-Assistant.exe",
+      "version": "25.1.1.1",
+      "size": "~2 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Автоматическое обновление драйверов Intel."
+    },
+    {
+      "id": "wushowhide",
+      "name": "wushowhide.diagcab",
+      "category": "Драйверпаки",
+      "wingetId": "Microsoft.WuShowHide",
+      "downloadUrl": "https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c65-1d6ad4e464b2/wushowhide.diagcab",
+      "version": "1.0",
+      "size": "~0.5 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Скрытие нежелательных обновлений драйверов в Windows Update."
+    },
+    {
+      "id": "display-driver-uninstaller",
+      "name": "Display Driver Uninstaller",
+      "category": "Драйверпаки",
+      "wingetId": "WagnardSoft.DisplayDriverUninstaller",
+      "downloadUrl": "https://www.wagnardsoft.com/DDU/download/DDU%20v18.0.8.5.exe",
+      "version": "18.0.8.5",
+      "size": "~2 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Полное удаление драйверов NVIDIA/AMD/Intel."
+    },
+    {
+      "id": "driverstore-explorer",
+      "name": "DriverStore Explorer",
+      "category": "Драйверпаки",
+      "wingetId": "DriverStoreExplorer.DriverStoreExplorer",
+      "downloadUrl": "https://github.com/lostindark/DriverStoreExplorer/releases/download/v0.11.99/DriverStoreExplorer.v0.11.99.zip",
+      "version": "0.11.99",
+      "size": "~0.5 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Управление хранилищем драйверов Windows."
+    },
+    {
+      "id": "asus-armoury-crate",
+      "name": "ASUS Armoury Crate",
+      "category": "Драйверпаки",
+      "wingetId": "ASUS.ArmouryCrate",
+      "downloadUrl": "https://dlcdnets.asus.com/pub/ASUS/mb/14Apps/ArmouryCrateInstallTool.zip",
+      "version": "5.9.9.0",
+      "size": "~45 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Центр управления для устройств ASUS."
+    },
+    {
+      "id": "msi-center",
+      "name": "MSI Center",
+      "category": "Драйверпаки",
+      "wingetId": "MSI.MSICenter",
+      "downloadUrl": "https://download.msi.com/uti_exe/nb/MSI-Center.zip",
+      "version": "2.0.44.0",
+      "size": "~90 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Центр управления для устройств MSI."
     },
     {
       "id": "malwarebytes",
@@ -447,18 +1083,6 @@
       "description": "Антивирус для защиты от вредоносного ПО."
     },
     {
-      "id": "aida64",
-      "name": "AIDA64 Extreme",
-      "category": "Другое",
-      "wingetId": "FinalWire.AIDA64.Extreme",
-      "downloadUrl": "https://download.aida64.com/aida64extreme700.exe",
-      "version": "7.00.6700",
-      "size": "~45 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Диагностика и тестирование компонентов компьютера."
-    },
-    {
       "id": "keepass",
       "name": "KeePass Password Safe",
       "category": "Другое",
@@ -471,6 +1095,18 @@
       "description": "Менеджер паролей с открытым исходным кодом."
     },
     {
+      "id": "aida64",
+      "name": "AIDA64 Extreme",
+      "category": "Другое",
+      "wingetId": "FinalWire.AIDA64.Extreme",
+      "downloadUrl": "https://download.aida64.com/aida64extreme700.exe",
+      "version": "7.00.6700",
+      "size": "~45 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Диагностика и тестирование компонентов компьютера."
+    },
+    {
       "id": "hwmonitor",
       "name": "HWMonitor",
       "category": "Другое",
@@ -481,6 +1117,78 @@
       "official": true,
       "iconUrl": "",
       "description": "Мониторинг температуры, напряжений и частот."
+    },
+    {
+      "id": "rclone",
+      "name": "Rclone",
+      "category": "Другое",
+      "wingetId": "Rclone.Rclone",
+      "downloadUrl": "https://downloads.rclone.org/rclone-current-windows-amd64.zip",
+      "version": "1.69.1",
+      "size": "~28 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Консольный клиент для облачных хранилищ."
+    },
+    {
+      "id": "f.lux",
+      "name": "f.lux",
+      "category": "Другое",
+      "wingetId": "flux.flux",
+      "downloadUrl": "https://justgetflux.com/flux-setup.exe",
+      "version": "4.138",
+      "size": "~1.2 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Автоматическая настройка цветовой температуры экрана."
+    },
+    {
+      "id": "autohotkey",
+      "name": "AutoHotkey",
+      "category": "Другое",
+      "wingetId": "AutoHotkey.AutoHotkey",
+      "downloadUrl": "https://www.autohotkey.com/download/ahk-install.exe",
+      "version": "2.0.18",
+      "size": "~3 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Скриптовый язык для автоматизации действий."
+    },
+    {
+      "id": "wiztree",
+      "name": "WizTree",
+      "category": "Другое",
+      "wingetId": "AntibodySoftware.WizTree",
+      "downloadUrl": "https://diskanalyzer.com/files/wiztree_4_22_portable.zip",
+      "version": "4.22",
+      "size": "~4 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Самый быстрый анализатор дискового пространства."
+    },
+    {
+      "id": "bleachbit",
+      "name": "BleachBit",
+      "category": "Другое",
+      "wingetId": "BleachBit.BleachBit",
+      "downloadUrl": "https://download.bleachbit.org/bleachbit-4.6.2-setup.exe",
+      "version": "4.6.2",
+      "size": "~25 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Очистка системы и освобождение места на диске."
+    },
+    {
+      "id": "cpu-z",
+      "name": "CPU-Z",
+      "category": "Другое",
+      "wingetId": "CPUID.CPU-Z",
+      "downloadUrl": "https://www.cpuid.com/downloads/cpu-z/cpu-z_2.12-en.exe",
+      "version": "2.12",
+      "size": "~3 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Детальная информация о процессоре, памяти и материнской плате."
     }
   ]
 }
