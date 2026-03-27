@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-03-28 00:19:52",
+  "lastUpdated": "2026-03-28 00:20:34",
   "apps": [
     {
       "id": "firefox",
@@ -181,18 +181,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Минималистичный и быстрый просмотрщик PDF, EPUB, MOBI."
-    },
-    {
-      "id": "calibre",
-      "name": "Calibre",
-      "category": "Офис",
-      "wingetId": "calibre.calibre",
-      "downloadUrl": "https://download.calibre-ebook.com/7.26.0/calibre-64bit-7.26.0.msi",
-      "version": "7.26.0",
-      "size": "~110 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Мощный менеджер электронных книг и конвертер форматов."
     },
     {
       "id": "openoffice",
