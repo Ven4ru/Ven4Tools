@@ -16,8 +16,8 @@
     <!-- Application settings -->
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>Ven4Tools</AssemblyName>
-    <Version>2.3.1</Version>
-    <AssemblyVersion>2.3.1</AssemblyVersion>
+    <Version>2.3.2</Version>
+    <AssemblyVersion>2.3.2</AssemblyVersion>
     
     <!-- Явная точка входа -->
     <StartupObject>Ven4Tools.App</StartupObject>
@@ -30,6 +30,7 @@
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Management" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

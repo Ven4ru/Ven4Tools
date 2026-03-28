@@ -4,48 +4,42 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Ven4Tools.Launcher.Models;  // ← ДОБАВИТЬ ЭТУ СТРОКУ
 
 namespace Ven4Tools.Launcher.Services
 {
-    public class UpdateInfo
-    {
-        public string Version { get; set; } = "";
-        public string DownloadUrl { get; set; } = "";
-        public string ReleaseNotes { get; set; } = "";
-        public bool HasUpdate { get; set; }
-    }
-
     public class UpdateService
     {
         private const string GitHubApiUrl = "https://api.github.com/repos/Ven4ru/Ven4Tools/releases/latest";
-        
+
         public async Task<UpdateInfo?> CheckForUpdatesAsync()
         {
             try
             {
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
-                
+
                 var response = await client.GetAsync(GitHubApiUrl);
                 if (!response.IsSuccessStatusCode) return null;
-                
+
                 var json = await response.Content.ReadAsStringAsync();
                 dynamic? release = JsonConvert.DeserializeObject(json);
                 if (release == null) return null;
-                
+
                 string remoteVersion = release.tag_name?.ToString()?.TrimStart('v') ?? "";
                 string downloadUrl = release.assets?[0]?.browser_download_url?.ToString() ?? "";
                 string releaseNotes = release.body?.ToString() ?? "";
-                
+
                 var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.3.0";
                 bool hasUpdate = CompareVersions(remoteVersion, currentVersion) > 0;
-                
+
                 return new UpdateInfo
                 {
-                    Version = remoteVersion,
+                    HasUpdate = hasUpdate,
+                    LatestVersion = remoteVersion,
                     DownloadUrl = downloadUrl,
                     ReleaseNotes = releaseNotes,
-                    HasUpdate = hasUpdate
+                    FileSize = 0
                 };
             }
             catch (Exception ex)
@@ -54,23 +48,23 @@ namespace Ven4Tools.Launcher.Services
                 return null;
             }
         }
-        
+
         public async Task<bool> DownloadAndInstallUpdateAsync()
         {
             try
             {
                 var updateInfo = await CheckForUpdatesAsync();
                 if (updateInfo == null || !updateInfo.HasUpdate) return false;
-                
-                string tempFile = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Launcher_{updateInfo.Version}.exe");
-                
+
+                string tempFile = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Launcher_{updateInfo.LatestVersion}.exe");
+
                 using var client = new HttpClient();
                 using var response = await client.GetAsync(updateInfo.DownloadUrl);
                 response.EnsureSuccessStatusCode();
-                
+
                 using var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write);
                 await response.Content.CopyToAsync(fs);
-                
+
                 string scriptPath = Path.Combine(Path.GetTempPath(), "update_launcher.ps1");
                 string launcherPath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
                 string script = @"
@@ -84,7 +78,7 @@ try {
 Remove-Item '" + tempFile + @"'
 ";
                 File.WriteAllText(scriptPath, script);
-                
+
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
@@ -92,7 +86,7 @@ Remove-Item '" + tempFile + @"'
                     UseShellExecute = true,
                     CreateNoWindow = true
                 });
-                
+
                 return true;
             }
             catch (Exception ex)
@@ -101,67 +95,7 @@ Remove-Item '" + tempFile + @"'
                 return false;
             }
         }
-        
-        public async Task<bool> DownloadAndExtractClientAsync(string version, string clientDir, IProgress<int> progress = null)
-        {
-            try
-            {
-                string downloadUrl = $"https://github.com/Ven4ru/Ven4Tools/releases/download/v{version}/Ven4Tools_Client_v{version}.zip";
-                string tempZip = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Client_{version}.zip");
-                
-                Directory.CreateDirectory(clientDir);
-                
-                using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromSeconds(60);
-                client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
-                
-                using var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
-                response.EnsureSuccessStatusCode();
-                
-                var total = response.Content.Headers.ContentLength ?? -1;
-                using var fs = new FileStream(tempZip, FileMode.Create, FileAccess.Write);
-                using var stream = await response.Content.ReadAsStreamAsync();
-                
-                var buffer = new byte[8192];
-                long totalRead = 0;
-                int bytesRead;
-                int lastPercent = -1;
-                
-                while ((bytesRead = await stream.ReadAsync(buffer)) > 0)
-                {
-                    await fs.WriteAsync(buffer, 0, bytesRead);
-                    totalRead += bytesRead;
-                    if (total > 0)
-                    {
-                        int percent = (int)((double)totalRead / total * 100);
-                        if (percent != lastPercent)
-                        {
-                            lastPercent = percent;
-                            progress?.Report(percent);
-                        }
-                    }
-                }
-                
-                fs.Close();
-                
-                System.IO.Compression.ZipFile.ExtractToDirectory(tempZip, clientDir, true);
-                File.Delete(tempZip);
-                
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Ошибка скачивания клиента: {ex.Message}");
-                return false;
-            }
-        }
-        
-        public string GetClientPath(string clientDir)
-        {
-            string clientExe = Path.Combine(clientDir, "Ven4Tools.exe");
-            return File.Exists(clientExe) ? clientExe : "";
-        }
-        
+
         private int CompareVersions(string v1, string v2)
         {
             var parts1 = v1.Split('.');

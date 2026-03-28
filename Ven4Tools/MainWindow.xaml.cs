@@ -23,7 +23,15 @@ namespace Ven4Tools
             
             btnThemeToggle.IsChecked = false;
         }
-        
+        private void InitializeButtons()
+{
+    btnNetworkTab = new Button();
+}
+        private void NavigateToNetwork(object? sender, RoutedEventArgs? e)
+{
+    SetActiveButton(btnNetworkTab);
+    MainFrame.Navigate(new NetworkTab());
+}
         private void NavigateToCatalog(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnCatalogTab);
@@ -64,16 +72,15 @@ namespace Ven4Tools
             MainFrame.Navigate(aboutTab);
         }
         
-        private void SetActiveButton(Button activeButton)
-        {
-            var buttons = new[] { btnCatalogTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab };
-            foreach (var btn in buttons)
-            {
-                btn.Style = (Style)FindResource("NavButtonStyle");
-            }
-            activeButton.Style = (Style)FindResource("ActiveNavButtonStyle");
-        }
-        
+private void SetActiveButton(Button activeButton)
+{
+    var buttons = new[] { btnCatalogTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab };
+    foreach (var btn in buttons)
+    {
+        if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");
+    }
+    activeButton.Style = (Style)FindResource("ActiveNavButtonStyle");
+}
         private void ToggleTheme(object sender, RoutedEventArgs e)
         {
             bool isDark = btnThemeToggle.IsChecked == false;

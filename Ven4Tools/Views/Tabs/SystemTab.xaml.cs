@@ -5,6 +5,7 @@ using System.Management;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
 {
@@ -12,6 +13,7 @@ namespace Ven4Tools.Views.Tabs
     {
         private const string TurboBoostRegPath = @"SYSTEM\ControlSet001\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7";
         
+
         public event Action<string>? LogMessage;
         
         public SystemTab()
@@ -29,7 +31,8 @@ namespace Ven4Tools.Views.Tabs
             
             LoadSettings();
         }
-        
+
+
         private void SystemTab_Loaded(object sender, RoutedEventArgs e)
         {
             LoadSystemInfo();

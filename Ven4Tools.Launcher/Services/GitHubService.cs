@@ -1,3 +1,4 @@
+// Services/GitHubService.cs
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,6 @@ namespace Ven4Tools.Launcher.Services
         private readonly string repoOwner;
         private readonly string repoName;
 
-        // Конструктор по умолчанию для Ven4Tools
         public GitHubService() : this("Ven4ru", "Ven4Tools")
         {
         }
@@ -23,23 +23,26 @@ namespace Ven4Tools.Launcher.Services
         {
             this.repoOwner = repoOwner;
             this.repoName = repoName;
-            
+
             httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
             httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
             httpClient.Timeout = TimeSpan.FromSeconds(15);
         }
 
+        /// <summary>
+        /// Получение последнего релиза
+        /// </summary>
         public async Task<GitHubRelease?> GetLatestRelease()
         {
             try
             {
                 string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases/latest";
                 using var response = await httpClient.GetAsync(url);
-                
+
                 if (!response.IsSuccessStatusCode)
                     return null;
-                
+
                 string json = await response.Content.ReadAsStringAsync();
                 return JsonSerializer.Deserialize<GitHubRelease>(json);
             }
@@ -50,69 +53,146 @@ namespace Ven4Tools.Launcher.Services
         }
 
         /// <summary>
-        /// Получает asset клиента (client.zip) из последнего релиза
+        /// Получение всех релизов
         /// </summary>
-        public async Task<GitHubAsset?> GetClientZipAsset()
-        {
-            var release = await GetLatestRelease();
-            if (release?.assets == null) return null;
-            
-            // Ищем asset с именем client.zip (без учёта регистра)
-            return release.assets.FirstOrDefault(a => 
-                a.name != null && 
-                a.name.Equals("client.zip", StringComparison.OrdinalIgnoreCase));
-        }
-
-        /// <summary>
-        /// Получает URL для скачивания client.zip
-        /// </summary>
-        public async Task<string?> GetClientZipDownloadUrl()
-        {
-            var asset = await GetClientZipAsset();
-            return asset?.browser_download_url;
-        }
-
-        public async Task<bool> DownloadFile(string url, string destPath, IProgress<double>? progress = null)
+        public async Task<List<GitHubRelease>> GetAllReleases()
         {
             try
             {
-                using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-                response.EnsureSuccessStatusCode();
-                
-                var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                var bytesDownloaded = 0L;
-                
-                await using var contentStream = await response.Content.ReadAsStreamAsync();
-                await using var fileStream = new System.IO.FileStream(destPath, System.IO.FileMode.Create);
-                
-                var buffer = new byte[81920];
-                int bytesRead;
-                
-                while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
-                {
-                    await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
-                    bytesDownloaded += bytesRead;
-                    
-                    if (totalBytes > 0 && progress != null)
-                    {
-                        var percent = (double)bytesDownloaded / totalBytes;
-                        progress.Report(percent);
-                        
-                        // Отладка в консоль (не в UI)
-                        Console.WriteLine($"[DEBUG] Progress: {(int)(percent * 100)}%");
-                    }
-                }
-                
-                // Принудительно отправляем 100%
-                progress?.Report(1.0);
-                
-                return true;
+                string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases";
+                using var response = await httpClient.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                    return new List<GitHubRelease>();
+
+                string json = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<List<GitHubRelease>>(json) ?? new List<GitHubRelease>();
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"[DEBUG] Download error: {ex.Message}");
-                return false;
+                return new List<GitHubRelease>();
             }
+        }
+
+        /// <summary>
+        /// Получение списка доступных версий клиента
+        /// </summary>
+        public async Task<List<ClientVersionInfo>> GetAvailableClientVersions()
+        {
+            var versions = new List<ClientVersionInfo>();
+            var releases = await GetAllReleases();
+
+            foreach (var release in releases)
+            {
+                var version = release.tag_name?.TrimStart('v');
+                if (string.IsNullOrEmpty(version)) continue;
+
+                // Ищем asset клиента (может быть назван по-разному)
+                var clientAsset = release.assets?.FirstOrDefault(a =>
+                    a.name != null &&
+                    (a.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
+                     a.name.Contains("Ven4Tools", StringComparison.OrdinalIgnoreCase)) &&
+                    a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                    !a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase));
+
+                if (clientAsset != null)
+                {
+                    versions.Add(new ClientVersionInfo
+                    {
+                        Version = version,
+                        DownloadUrl = clientAsset.browser_download_url ?? "",
+                        ReleaseDate = release.published_at,
+                        ReleaseNotes = release.body,
+                        IsLatest = releases.First() == release,
+                        FileSize = clientAsset.size
+                    });
+                }
+            }
+
+            return versions.OrderByDescending(v => v.Version).ToList();
+        }
+
+        /// <summary>
+        /// Проверка, есть ли обновление лаунчера
+        /// </summary>
+/// <summary>
+/// Проверка, есть ли обновление лаунчера
+/// </summary>
+public async Task<UpdateInfo?> CheckLauncherUpdate(string currentVersion)
+{
+    try
+    {
+        var latest = await GetLatestRelease();
+        if (latest?.tag_name == null) return null;
+
+        string latestVersion = latest.tag_name.TrimStart('v');
+        bool hasUpdate = CompareVersions(latestVersion, currentVersion) > 0;
+
+        // Ищем asset лаунчера
+        var launcherAsset = latest.assets?.FirstOrDefault(a =>
+            a.name != null &&
+            a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase) &&
+            a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+
+        return new UpdateInfo
+        {
+            HasUpdate = hasUpdate,
+            CurrentVersion = currentVersion,
+            LatestVersion = latestVersion,
+            DownloadUrl = launcherAsset?.browser_download_url,
+            ReleaseNotes = latest.body,
+            FileSize = launcherAsset?.size ?? 0
+        };
+    }
+    catch
+    {
+        return null;
+    }
+}
+/// <summary>
+/// Получение последней стабильной версии winget с GitHub
+/// </summary>
+public async Task<string?> GetLatestWingetVersionAsync()
+{
+    try
+    {
+        string url = "https://api.github.com/repos/microsoft/winget-cli/releases/latest";
+        using var response = await httpClient.GetAsync(url);
+        
+        if (!response.IsSuccessStatusCode)
+            return null;
+        
+        string json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        
+        if (root.TryGetProperty("tag_name", out var tagProp))
+        {
+            string tag = tagProp.GetString() ?? "";
+            return tag.TrimStart('v');
+        }
+        
+        return null;
+    }
+    catch
+    {
+        return null;
+    }
+}
+        /// <summary>
+        /// Сравнение версий
+        /// </summary>
+        private int CompareVersions(string v1, string v2)
+        {
+            var parts1 = v1.Split('.');
+            var parts2 = v2.Split('.');
+            for (int i = 0; i < Math.Max(parts1.Length, parts2.Length); i++)
+            {
+                int num1 = i < parts1.Length ? int.Parse(parts1[i]) : 0;
+                int num2 = i < parts2.Length ? int.Parse(parts2[i]) : 0;
+                if (num1 != num2) return num1.CompareTo(num2);
+            }
+            return 0;
         }
 
         public void Dispose()
