@@ -1,0 +1,84 @@
+<UserControl x:Class="Ven4Tools.Views.Tabs.NetworkTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource ContentBackground}">
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+            
+            <TextBlock Text="🌐 Сетевые инструменты" FontSize="24" FontWeight="Bold" 
+                       Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20"/>
+            
+            <TextBlock Text="Инструменты для обхода блокировок и настройки сети" 
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,20" TextWrapping="Wrap"/>
+            
+            <!-- ========== ZAPRET БЛОК ========== -->
+            <GroupBox Header="🚀 Обход блокировок (zapret)" Margin="0,0,0,15">
+                <StackPanel>
+                    <TextBlock x:Name="txtZapretStatus" Text="Статус: не установлен" 
+                               Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,5"/>
+                    
+                    <TextBlock x:Name="txtZapretState" Text="Готов" 
+                               Foreground="{DynamicResource TextSecondary}" 
+                               FontSize="11" Margin="0,0,0,10"/>
+                    
+                    <!-- Кнопка установки -->
+                    <Button x:Name="btnInstallZapret" Content="📥 Установить zapret" 
+                            Click="BtnInstallZapret_Click" Height="35" Margin="0,5"/>
+                    
+                    <!-- Панель действий -->
+                    <StackPanel x:Name="btnZapretActions" Visibility="Collapsed">
+                        <Button Content="📟 Открыть меню service.bat" 
+                                Click="BtnOpenServiceMenu_Click" Height="35" Margin="0,5"
+                                Background="{DynamicResource AccentColor}"
+                                ToolTip="Открыть главное меню для настройки стратегий"/>
+                        
+                        <Button Content="📁 Открыть папку с zapret" 
+                                Click="BtnOpenZapretFolder_Click" Height="35" Margin="0,5"/>
+                        
+                        <Button Content="📖 Открыть документацию" 
+                                Click="BtnOpenDocumentation_Click" Height="35" Margin="0,5"/>
+                        
+                        <Button x:Name="btnRemoveZapret" Content="🗑️ Удалить zapret" 
+                                Click="BtnRemoveZapret_Click" Height="35" Margin="0,5"
+                                Background="#8B0000" Foreground="White"/>
+                    </StackPanel>
+                    
+                    <!-- Предупреждение -->
+                    <Border Background="#332222" CornerRadius="4" Padding="8" Margin="0,8,0,0">
+                        <TextBlock Text="⚠️ ВНИМАНИЕ: Zapret устанавливает системный драйвер WinDivert.
+Может конфликтовать с антивирусами, античитами и VPN.
+Используйте на свой страх и риск." 
+                                   Foreground="#FFA500" FontSize="9" TextWrapping="Wrap"/>
+                    </Border>
+                    
+                    <TextBlock Text="💡 После установки нажмите 'Открыть меню service.bat', выберите стратегию и установите в автозапуск"
+                               Foreground="{DynamicResource TextSecondary}" FontSize="9" 
+                               TextWrapping="Wrap" Margin="0,5,0,0"/>
+                </StackPanel>
+            </GroupBox>
+            
+            <!-- ========== ДРУГИЕ СЕТЕВЫЕ ИНСТРУМЕНТЫ ========== -->
+            <GroupBox Header="⚙️ Дополнительные настройки" Margin="0,0,0,15">
+                <StackPanel>
+                    <Button Content="🔧 Проверить DNS" Click="BtnCheckDns_Click" Height="35" Margin="0,5"/>
+                    <Button Content="🔄 Сбросить сетевые настройки" Click="BtnResetNetwork_Click" Height="35" Margin="0,5"/>
+                    <TextBlock Text="ℹ️ Эти инструменты могут потребовать перезагрузки" 
+                               Foreground="{DynamicResource TextSecondary}" FontSize="10" Margin="0,5,0,0"/>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="📋 Лог установки" Margin="0,10,0,0">
+    <TextBox x:Name="txtInstallLog" 
+             Background="{DynamicResource CardBackground}" 
+             Foreground="{DynamicResource TextPrimary}"
+             FontFamily="Consolas" FontSize="10"
+             IsReadOnly="True" TextWrapping="Wrap"
+             VerticalScrollBarVisibility="Auto"
+             Height="150"/>
+</GroupBox>
+            <!-- Информация -->
+            <TextBlock Text="📌 Автор сетевых инструментов: Flowseal (github.com/Flowseal)" 
+                       Foreground="{DynamicResource TextSecondary}" FontSize="10" Margin="0,10,0,0"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
