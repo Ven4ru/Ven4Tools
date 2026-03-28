@@ -3,9 +3,10 @@
 [![GitHub release](https://img.shields.io/github/v/release/Ven4ru/Ven4Tools)](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Ven4ru/Ven4Tools/total)](https://github.com/Ven4ru/Ven4Tools/releases)
 [![License](https://img.shields.io/github/license/Ven4ru/Ven4Tools)](LICENSE)
-[![Downloads latest](https://img.shields.io/github/downloads/Ven4ru/Ven4Tools/latest/total)](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 
 **Ven4Tools** — бесплатная программа с открытым исходным кодом для автоматической установки популярного софта на Windows. Работает сразу после установки системы — **не требует установленного .NET** или других компонентов.
+
+---
 
 ## 🎯 Возможности
 
@@ -17,21 +18,40 @@
 ✅ **Альтернативные источники** для недоступных приложений  
 ✅ **Установка Office** (любая версия + язык)  
 ✅ **Активация** — встроенный MAS (Microsoft Activation Scripts)  
-✅ **Сворачивание в трей** — работает в фоне  
+✅ **🌐 DPI-сервис zapret** — для улучшения сетевой доступности  
 ✅ **Автообновление** — лаунчер сам обновляет клиент  
+✅ **Выбор версии** — можно запустить любую предыдущую версию  
+
+---
+
+## 🌐 DPI-сервис zapret
+
+Во вкладке **"Сеть"** добавлена интеграция [zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube) от [Flowseal](https://github.com/Flowseal).
+
+**Что это даёт:**
+- Возможность настройки сетевого трафика для доступа к различным сервисам
+- Автоматическое скачивание и распаковка zapret
+- Управление через встроенное меню `service.bat`
+
+**⚠️ Важно:** Сервис использует системный драйвер WinDivert. Рекомендуется ознакомиться с документацией перед использованием. Ven4Tools только скачивает и распаковывает файлы, всю настройку пользователь выполняет самостоятельно через встроенное меню.
+
+---
 
 ## 📦 Установка
 
 ### Вариант 1: Скачать лаунчер (рекомендуется)
-1. Скачайте `Ven4Tools_Launcher_v2.3.1.zip` из [релиза](https://github.com/Ven4ru/Ven4Tools/releases/latest)
+1. Скачайте `Ven4Tools_Launcher_v2.3.2.exe.zip` из [релиза](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 2. Распакуйте в любую папку
 3. Запустите `Ven4Tools.Launcher.exe`
-4. Выберите папку для установки (или оставьте по умолчанию)
-5. Нажмите "Запустить Ven4Tools" — лаунчер скачает и установит программу
+4. Лаунчер проверит компоненты, предложит установить winget
+5. Выберите версию клиента и нажмите "Загрузить Ven4Tools"
+6. После загрузки нажмите "Запустить Ven4Tools"
 
 ### Вариант 2: Скачать полный клиент
-- Скачайте `Ven4Tools_Client_v2.3.1.zip` и распакуйте в любую папку
-- Запустите `Ven4Tools.exe` (требуется .NET 8.0 Runtime)
+- Скачайте `Ven4Tools_Client_v2.3.2.zip` и распакуйте в любую папку
+- Запустите `Ven4Tools.exe` (требуется .NET Runtime)
+
+---
 
 ## 🧠 Системные требования
 
@@ -40,11 +60,23 @@
 - Права администратора для установки программ
 - Интернет для первого запуска (клиент скачивается автоматически)
 
+---
+
 ## 🤝 Как помочь проекту
 
 ⭐ Поставьте звезду на GitHub  
 🐛 Сообщайте о багах в [Issues](https://github.com/Ven4ru/Ven4Tools/issues)  
 💡 Предлагайте идеи новых функций  
+
+---
+
+## 🙏 Благодарности
+
+Интеграция DPI-сервиса основана на проекте:
+
+👉 **[zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube)** от [Flowseal](https://github.com/Flowseal)
+
+---
 
 ## 📜 Лицензия MIT с указанием авторства
 
