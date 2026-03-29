@@ -72,9 +72,12 @@
 
 ## 🙏 Благодарности
 
-Интеграция DPI-сервиса основана на проекте:
+Этот проект использует следующие открытые разработки:
 
-👉 **[zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube)** от [Flowseal](https://github.com/Flowseal)
+- **[zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube)** от [Flowseal](https://github.com/Flowseal) — DPI-сервис для настройки сетевого трафика
+- **[Microsoft Activation Scripts (MAS)](https://github.com/massgravel/Microsoft-Activation-Scripts)** от [massgravel](https://github.com/massgravel) — инструменты активации Windows и Office
+
+Огромное спасибо авторам за их работу и вклад в открытое программное обеспечение!
 
 ---
 
