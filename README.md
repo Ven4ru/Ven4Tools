@@ -7,7 +7,8 @@
 
 **Ven4Tools** — бесплатная программа с открытым исходным кодом для автоматической установки популярного софта на Windows. Работает сразу после установки системы — **не требует установленного .NET** или других компонентов.
 
-<img width="500" height="500" alt="ed9QUIjclCIuhp9-BWfIAICfRTRP9Xc4ePIpuglFauG6_y9yA8wgplseW6QZTnUOo_puIe5M13M5Mml8_bcA_Oik" src="https://github.com/user-attachments/assets/c6092f13-9f29-4e30-a089-cb838b8941ba" />
+<img width="1616" height="640" alt="logo_client" src="https://github.com/user-attachments/assets/903da832-5793-48a4-99ba-29d4b6f3e3e7" />
+
 
 ---
 
