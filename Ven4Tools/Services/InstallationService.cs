@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Ven4Tools.Models;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Services
 {
@@ -112,6 +113,36 @@ namespace Ven4Tools.Services
                                     }
                                 }
                             }
+
+                            // Проверка SHA256
+appProgress.Status = "🔐 Проверка SHA256...";
+appProgress.Percentage = 55;
+
+progress.Report(appProgress);
+
+bool hashValid = await HashHelper.VerifyHashAsync(
+    tempFile,
+    app.Sha256 ?? "");
+
+if (!hashValid)
+{
+    Log($"❌ SHA256 mismatch: {app.DisplayName}");
+
+    try
+    {
+        File.Delete(tempFile);
+    }
+    catch
+    {
+    }
+
+    appProgress.Status = "❌ Ошибка SHA256";
+    progress.Report(appProgress);
+
+    return (false, "SHA256 mismatch", appProgress);
+}
+
+Log($"✅ SHA256 verified: {app.DisplayName}");
 
                             token.ThrowIfCancellationRequested();
 
