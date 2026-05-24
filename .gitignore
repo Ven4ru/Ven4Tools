@@ -46,3 +46,11 @@ packages/
 
 # Publish output
 publish/
+
+# Backup files
+*.bak
+*.old
+
+# Temporary publish
+publish/
+
