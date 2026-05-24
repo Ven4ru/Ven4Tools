@@ -19,6 +19,7 @@ namespace Ven4Tools.Models
 
     public class AppInfo
     {
+        public string? Sha256 { get; set; }
         public string Id { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public AppCategory Category { get; set; }
