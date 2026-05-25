@@ -18,7 +18,7 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class CatalogTab : UserControl
     {
-        private readonly string[] wingetSources = { "winget", "msstore", "custom" };
+        private readonly string[] wingetSources = { "winget", "msstore" };
         private readonly SemaphoreSlim installSemaphore = new SemaphoreSlim(2);
         private bool isCancelled = false;
         private CancellationTokenSource? cancellationTokenSource;
@@ -32,6 +32,7 @@ namespace Ven4Tools.Views.Tabs
         private CatalogLoaderService? _catalogLoader;
         private string selectedInstallDrive = "C:\\";
         private string systemDrive = "C:\\";
+        private bool _isCheckingAvailability = false;
         
         public event Action<string>? LogMessage;
         
@@ -198,6 +199,8 @@ namespace Ven4Tools.Views.Tabs
 
                 AddLog($"Каталог содержит {_catalog.Apps.Count} приложений");
 
+                var availabilityTasks = new List<Task>();
+
                 foreach (var app in _catalog.Apps)
                 {
                     var category = GetCategoryFromString(app.Category);
@@ -210,7 +213,7 @@ namespace Ven4Tools.Views.Tabs
                             Foreground = Brushes.Gray,
                             Margin = new Thickness(0, 0, 5, 0)
                         };
-                        
+
                         var checkBox = new CheckBox
                         {
                             Content = textBlock,
@@ -221,7 +224,7 @@ namespace Ven4Tools.Views.Tabs
 
                         panel.Children.Add(checkBox);
                         appCheckBoxes[app.Id] = checkBox;
-                        _ = CheckAppAvailabilityFromCatalog(app);
+                        availabilityTasks.Add(CheckAppAvailabilityFromCatalog(app));
                     }
                 }
 
@@ -232,6 +235,14 @@ namespace Ven4Tools.Views.Tabs
                 }
 
                 AddLog($"Загружено {_catalog.Apps.Count} приложений из каталога, {userApps.Count} пользовательских");
+                AddLog("⏳ Проверка доступности запущена...");
+
+                _ = Task.WhenAll(availabilityTasks).ContinueWith(_ =>
+                {
+                    int available = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
+                    int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
+                    AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
+                });
             }
             catch (Exception ex)
             {
@@ -503,41 +514,50 @@ namespace Ven4Tools.Views.Tabs
         
         private async void RefreshAvailability_Click(object sender, RoutedEventArgs e)
         {
-            AddLog("🔄 Перезапущена проверка доступности");
+            if (_isCheckingAvailability) return;
+            _isCheckingAvailability = true;
+            btnRefreshAvailability.IsEnabled = false;
+            availabilityChecker.ClearCache();
+            availabilityStatus.Clear();
+
+            AddLog("🔄 Запущена свежая проверка доступности...");
+
+            var tasks = new List<Task>();
 
             if (_catalog != null)
             {
                 foreach (var app in _catalog.Apps)
                 {
-                    if (availabilityStatus.ContainsKey(app.Id))
-                        availabilityStatus.Remove(app.Id);
-
                     if (appCheckBoxes.TryGetValue(app.Id, out var checkBox) && checkBox.Content is TextBlock tb)
                     {
                         tb.Foreground = Brushes.Gray;
                         checkBox.ToolTip = "⏳ Проверка...";
                         checkBox.IsEnabled = true;
                     }
-                    _ = CheckAppAvailabilityFromCatalog(app);
+                    tasks.Add(CheckAppAvailabilityFromCatalog(app));
                 }
             }
 
             var userApps = appManager.GetAllApps().Where(a => a.IsUserAdded).ToList();
             foreach (var app in userApps)
             {
-                if (availabilityStatus.ContainsKey(app.Id))
-                    availabilityStatus.Remove(app.Id);
-
                 if (appCheckBoxes.TryGetValue(app.Id, out var checkBox) && checkBox.Content is TextBlock tb)
                 {
                     tb.Foreground = Brushes.Gray;
                     checkBox.ToolTip = "⏳ Проверка...";
                     checkBox.IsEnabled = true;
                 }
-                _ = CheckSingleAppAvailability(app.Id);
+                tasks.Add(CheckSingleAppAvailability(app.Id));
             }
 
-            AddLog("✅ Проверка запущена для всех приложений");
+            await Task.WhenAll(tasks);
+
+            int available = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
+            int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
+            AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
+
+            btnRefreshAvailability.IsEnabled = true;
+            _isCheckingAvailability = false;
         }
         
         private async void BtnSuggestAlternatives_Click(object sender, RoutedEventArgs e)
@@ -567,7 +587,7 @@ namespace Ven4Tools.Views.Tabs
                 if (dialog.ShowDialog() == true && dialog.Applied)
                 {
                     foreach (var item in dialog.FailedApps.Where(x => x.SearchWinget && x.SelectedPackage != null))
-                        appManager.SaveAlternativeSource(item.AppId, item.SelectedPackage.Id, null);
+                        appManager.SaveAlternativeSource(item.AppId, item.SelectedPackage!.Id, null);
                     foreach (var item in dialog.FailedApps.Where(x => x.ReplaceWithUrl && !string.IsNullOrWhiteSpace(x.NewUrl)))
                         appManager.SaveAlternativeSource(item.AppId, null, item.NewUrl);
 
@@ -735,7 +755,7 @@ namespace Ven4Tools.Views.Tabs
             }
         }
         
-        private async void BtnClearAllUserApps_Click(object sender, RoutedEventArgs e)
+        private void BtnClearAllUserApps_Click(object sender, RoutedEventArgs e)
         {
             var result = MessageBox.Show("Вы действительно хотите удалить ВСЕ пользовательские приложения?", "Полная очистка",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning);

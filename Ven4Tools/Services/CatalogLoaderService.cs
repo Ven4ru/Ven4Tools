@@ -10,7 +10,7 @@ namespace Ven4Tools.Services
 {
     public class CatalogLoaderService
     {
-        private readonly HttpClient _httpClient = new();
+        private readonly HttpClient _httpClient;
 
         private const string RemoteCatalogUrl =
             "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/master.json";
@@ -20,6 +20,13 @@ namespace Ven4Tools.Services
                 AppDomain.CurrentDomain.BaseDirectory,
                 "Data",
                 "master.json");
+
+        public CatalogLoaderService()
+        {
+            _httpClient = new HttpClient();
+            _httpClient.Timeout = TimeSpan.FromSeconds(15);
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+        }
 
         public async Task<MasterCatalog> LoadCatalogAsync()
         {
@@ -35,9 +42,9 @@ namespace Ven4Tools.Services
                     _localCatalogPath,
                     remoteJson);
 
-                Console.WriteLine("Loaded ONLINE catalog");
-
-                return Deserialize(remoteJson);
+                var catalog = Deserialize(remoteJson);
+                catalog.Source = "online";
+                return catalog;
             }
             catch
             {
@@ -46,12 +53,12 @@ namespace Ven4Tools.Services
                     string localJson =
                         await File.ReadAllTextAsync(_localCatalogPath);
 
-                    Console.WriteLine("Loaded OFFLINE catalog");
-
-                    return Deserialize(localJson);
+                    var catalog = Deserialize(localJson);
+                    catalog.Source = "cache";
+                    return catalog;
                 }
 
-                return new MasterCatalog();
+                return new MasterCatalog { Source = "embedded" };
             }
         }
 
