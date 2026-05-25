@@ -1,7 +1,9 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Management;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
@@ -18,25 +20,36 @@ namespace Ven4Tools.Views.Tabs
 
         public event Action<string>? LogMessage;
         
+        private bool _initialized = false;
+
         public SystemTab()
         {
             InitializeComponent();
-            
+
             Loaded += SystemTab_Loaded;
-            
+
             chkAutoStart.Click += ToggleAutoStart;
+            chkNotifications.Click += (_, _) => SaveSettings();
+            chkUpdateNotifications.Click += (_, _) => SaveSettings();
+            sliderCatalogTimeout.ValueChanged += (_, e) => { txtCatalogTimeout.Text = $"{(int)e.NewValue} сек"; SaveSettings(); };
+            sliderCheckTimeout.ValueChanged += (_, e) => { txtCheckTimeout.Text = $"{(int)e.NewValue} сек"; SaveSettings(); };
             btnCopySystemInfo.Click += BtnCopySystemInfo_Click;
             btnOpenLogs.Click += BtnOpenLogs_Click;
+            btnOpenLatestLog.Click += BtnOpenLatestLog_Click;
             btnClearLogs.Click += BtnClearLogs_Click;
+            btnCheckUpdates.Click += BtnCheckUpdates_Click;
             btnDisableTurboBoost.Click += BtnDisableTurboBoost_Click;
             btnEnableTurboBoost.Click += BtnEnableTurboBoost_Click;
-            
+
             LoadSettings();
         }
 
 
         private void SystemTab_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_initialized) return;
+            _initialized = true;
+
             LoadSystemInfo();
             LoadAutoStartStatus();
 
@@ -45,23 +58,49 @@ namespace Ven4Tools.Views.Tabs
                 AddLog(turbo.Value ? "⚡ Турбобуст: включён" : "⚡ Турбобуст: отключён");
         }
         
+        private string SettingsPath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "settings.json");
+
         private void LoadSettings()
         {
             try
             {
-                var appData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
-                var settingsPath = Path.Combine(appData, "settings.json");
-                
-                if (File.Exists(settingsPath))
+                if (File.Exists(SettingsPath))
                 {
-                    var json = File.ReadAllText(settingsPath);
+                    var json = File.ReadAllText(SettingsPath);
                     dynamic? settings = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
                     if (settings != null)
                     {
-                        chkNotifications.IsChecked = settings.Notifications ?? true;
-                        chkUpdateNotifications.IsChecked = settings.UpdateNotifications ?? true;
+                        chkNotifications.IsChecked = (bool?)settings.Notifications ?? true;
+                        chkUpdateNotifications.IsChecked = (bool?)settings.UpdateNotifications ?? true;
+
+                        double catalogTimeout = (double?)settings.CatalogTimeout ?? 10;
+                        double checkTimeout = (double?)settings.CheckTimeout ?? 15;
+                        sliderCatalogTimeout.Value = Math.Clamp(catalogTimeout, 3, 30);
+                        sliderCheckTimeout.Value = Math.Clamp(checkTimeout, 5, 60);
+                        txtCatalogTimeout.Text = $"{(int)sliderCatalogTimeout.Value} сек";
+                        txtCheckTimeout.Text = $"{(int)sliderCheckTimeout.Value} сек";
                     }
                 }
+            }
+            catch { }
+        }
+
+        private void SaveSettings()
+        {
+            try
+            {
+                var settings = new
+                {
+                    Notifications = chkNotifications.IsChecked ?? true,
+                    UpdateNotifications = chkUpdateNotifications.IsChecked ?? true,
+                    CatalogTimeout = (int)sliderCatalogTimeout.Value,
+                    CheckTimeout = (int)sliderCheckTimeout.Value
+                };
+                Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+                File.WriteAllText(SettingsPath, Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented));
+                AppSettings.NotifyChanged();
             }
             catch { }
         }
@@ -175,6 +214,87 @@ namespace Ven4Tools.Views.Tabs
             catch (Exception ex)
             {
                 AddLog($"❌ Ошибка открытия папки логов: {ex.Message}");
+            }
+        }
+
+        private void BtnOpenLatestLog_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "logs");
+                if (!Directory.Exists(logsPath)) { AddLog("📋 Логов нет"); return; }
+
+                var latestLog = Directory.GetFiles(logsPath, "install_*.log")
+                    .OrderByDescending(f => f)
+                    .FirstOrDefault();
+
+                if (latestLog == null) { AddLog("📋 Файлы логов не найдены"); return; }
+
+                var lines = File.ReadAllLines(latestLog);
+                var preview = string.Join("\n", lines.Skip(Math.Max(0, lines.Length - 50)));
+                txtLatestLog.Text = preview;
+
+                Process.Start(new ProcessStartInfo { FileName = "notepad.exe", Arguments = latestLog, UseShellExecute = true });
+                AddLog($"📄 Открыт лог: {Path.GetFileName(latestLog)}");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка: {ex.Message}");
+            }
+        }
+
+        private async void BtnCheckUpdates_Click(object sender, RoutedEventArgs e)
+        {
+            btnCheckUpdates.IsEnabled = false;
+            txtUpdatesLog.Text = "⏳ Проверка...";
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "winget",
+                    Arguments = "upgrade --include-unknown --source winget",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+
+                using var process = Process.Start(psi);
+                if (process == null) { txtUpdatesLog.Text = "❌ Не удалось запустить winget"; return; }
+
+                string output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                var upgradable = output.Split('\n')
+                    .Where(l => !string.IsNullOrWhiteSpace(l)
+                             && !l.TrimStart().StartsWith("Name")
+                             && !l.TrimStart().StartsWith("-")
+                             && !l.TrimStart().StartsWith("The ")
+                             && l.Contains("  "))
+                    .Select(l => l.Trim())
+                    .Where(l => l.Length > 0)
+                    .ToList();
+
+                if (upgradable.Count > 0)
+                {
+                    txtUpdatesLog.Text = $"🔔 Доступно обновлений: {upgradable.Count}\n\n" + string.Join("\n", upgradable);
+                    AddLog($"🔔 Доступно обновлений winget: {upgradable.Count}");
+                }
+                else
+                {
+                    txtUpdatesLog.Text = "✅ Все установленные приложения актуальны";
+                    AddLog("✅ Обновлений winget не найдено");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtUpdatesLog.Text = $"❌ Ошибка: {ex.Message}";
+                AddLog($"❌ Ошибка проверки обновлений: {ex.Message}");
+            }
+            finally
+            {
+                btnCheckUpdates.IsEnabled = true;
             }
         }
         

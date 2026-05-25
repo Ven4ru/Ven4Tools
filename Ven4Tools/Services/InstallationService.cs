@@ -150,10 +150,14 @@ Log($"✅ SHA256 verified: {app.DisplayName}");
                             appProgress.Percentage = 60;
                             progress.Report(appProgress);
 
+                            string silentArgs = app.SilentArgs;
+                            if (string.IsNullOrWhiteSpace(silentArgs) && ProfileService.Current.SilentInstall)
+                                silentArgs = "/S";
+
                             var psi = new ProcessStartInfo
                             {
                                 FileName = tempFile,
-                                Arguments = app.SilentArgs,
+                                Arguments = silentArgs,
                                 UseShellExecute = true,
                                 Verb = "runas",
                                 WindowStyle = ProcessWindowStyle.Hidden
@@ -220,7 +224,12 @@ Log($"✅ SHA256 verified: {app.DisplayName}");
 
         private async Task<bool> RunWingetAsync(string appId, string source, CancellationToken token)
         {
-            string args = $"/c winget install --id {appId} -e --source {source} --accept-package-agreements --accept-source-agreements --disable-interactivity";
+            var profile = ProfileService.Current;
+            string silent = profile.SilentInstall ? " --silent" : "";
+            string location = !string.IsNullOrWhiteSpace(profile.DefaultInstallFolder)
+                ? $" --location \"{profile.DefaultInstallFolder}\""
+                : "";
+            string args = $"/c winget install --id {appId} -e --source {source} --accept-package-agreements --accept-source-agreements --disable-interactivity{silent}{location}";
 
             var psi = new ProcessStartInfo
             {

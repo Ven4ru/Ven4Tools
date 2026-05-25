@@ -180,90 +180,49 @@ public async Task<bool> InstallAsync()
             throw new IOException("Не удалось распаковать архив после 5 попыток");
         }
         
-// 🔥 НАХОДИМ КОРНЕВУЮ ПАПКУ (где лежит service.bat)
+// Ищем корневую папку с service.bat
 var extractedFolders = Directory.GetDirectories(extractPath);
-Log($"📁 Найдено папок в распакованном архиве: {extractedFolders.Length}");
-
-// Выводим все папки для отладки
-for (int i = 0; i < extractedFolders.Length; i++)
-{
-    string folderName = Path.GetFileName(extractedFolders[i]);
-    Log($"   Папка {i + 1}: {folderName}");
-}
-
 string? rootFolder = null;
 
-// Сначала проверяем корневую папку extractPath (там может быть service.bat)
 if (File.Exists(Path.Combine(extractPath, "service.bat")))
 {
     rootFolder = extractPath;
-    Log($"✅ Найден service.bat в корне распакованной папки");
 }
 else
 {
-    // Ищем папку, в которой есть service.bat
     foreach (var folder in extractedFolders)
     {
         if (File.Exists(Path.Combine(folder, "service.bat")))
         {
             rootFolder = folder;
-            Log($"✅ Найден service.bat в папке: {Path.GetFileName(folder)}");
             break;
         }
     }
 }
 
-// Если не нашли папку с service.bat, ищем service.bat рекурсивно
 if (rootFolder == null)
 {
-    Log("⚠️ service.bat не найден в корне и в первых папках, ищем рекурсивно...");
-    
     var allFiles = Directory.GetFiles(extractPath, "service.bat", SearchOption.AllDirectories);
     if (allFiles.Any())
-    {
         rootFolder = Path.GetDirectoryName(allFiles.First());
-        Log($"✅ Найден service.bat в: {rootFolder}");
-    }
 }
 
-// Если всё ещё не нашли — берём первую папку и надеемся на лучшее
 if (rootFolder == null)
 {
-    if (extractedFolders.Length > 0)
-    {
-        rootFolder = extractedFolders.First();
-        Log($"⚠️ Не найдена папка с service.bat, берём первую: {rootFolder}");
-    }
-    else
-    {
-        rootFolder = extractPath;
-        Log($"⚠️ Нет папок, копируем корневую папку: {rootFolder}");
-    }
+    rootFolder = extractedFolders.Length > 0 ? extractedFolders.First() : extractPath;
+    Log($"⚠️ service.bat не найден, копируем из: {Path.GetFileName(rootFolder)}");
+}
+else
+{
+    Log($"✅ Найден service.bat в: {Path.GetFileName(rootFolder)}");
 }
 
-Log($"📁 Копирование из {rootFolder} в {_basePath}...");
-Log($"📁 Содержимое исходной папки: {string.Join(", ", Directory.GetFiles(rootFolder).Select(Path.GetFileName).Take(10))}");
+Log("📁 Копирование файлов...");
+await CopyDirectoryWithRetryAsync(rootFolder, _basePath);
 
-CopyDirectoryWithRetry(rootFolder, _basePath);
-        
-        // 🔥 ПРОВЕРЯЕМ, ЧТО service.bat НА МЕСТЕ
-        Log("📁 Проверка результата...");
-        if (File.Exists(_servicePath))
+        if (!File.Exists(_servicePath))
         {
-            Log($"✅ service.bat найден по адресу: {_servicePath}");
-        }
-        else
-        {
-            Log($"❌ service.bat НЕ НАЙДЕН!");
-            var foundBats = Directory.GetFiles(_basePath, "service.bat", SearchOption.AllDirectories);
-            if (foundBats.Any())
-            {
-                Log($"   Найден в: {foundBats.First()}");
-            }
-            else
-            {
-                Log("   service.bat отсутствует во всех подпапках");
-            }
+            Log($"❌ service.bat не найден после копирования в {_basePath}");
         }
         
         // Очистка временных файлов
@@ -300,22 +259,8 @@ CopyDirectoryWithRetry(rootFolder, _basePath);
     }
 }
         
-        private void CopyDirectoryWithRetry(string source, string destination, int maxRetries = 3)
+        private async Task CopyDirectoryWithRetryAsync(string source, string destination, int maxRetries = 3)
         {
-            Log("📁 Проверка распакованных файлов...");
-if (Directory.Exists(_basePath))
-{
-    var files = Directory.GetFiles(_basePath, "*", SearchOption.AllDirectories).Take(10);
-    Log($"   Найдено файлов: {Directory.GetFiles(_basePath, "*", SearchOption.AllDirectories).Length}");
-    foreach (var file in files)
-    {
-        Log($"     {Path.GetFileName(file)}");
-    }
-}
-else
-{
-    Log("❌ Папка назначения не существует!");
-}
             for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
                 try
@@ -325,7 +270,7 @@ else
                         string targetDir = dir.Replace(source, destination);
                         Directory.CreateDirectory(targetDir);
                     }
-                    
+
                     foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
                     {
                         string targetFile = file.Replace(source, destination);
@@ -336,7 +281,7 @@ else
                 catch (IOException) when (attempt < maxRetries)
                 {
                     Log($"⚠️ Копирование не удалось, попытка {attempt}/{maxRetries}...");
-                    System.Threading.Thread.Sleep(500);
+                    await Task.Delay(500);
                 }
             }
         }
@@ -375,35 +320,29 @@ public async Task<bool> RemoveAsync()
     {
         Log("🗑️ Удаление zapret...");
         
-        // Удаляем службы без открытия окон
+        // Удаляем службы — требуется elevation для работы с драйвером WinDivert
         var psi = new ProcessStartInfo
         {
             FileName = _servicePath,
             Arguments = "2",
-            UseShellExecute = false,      // ← НЕ используем шелл
-            CreateNoWindow = true,        // ← НЕ создаём окно
-            RedirectStandardOutput = true,
-            RedirectStandardError = true
+            UseShellExecute = true,
+            Verb = "runas",
+            WorkingDirectory = _basePath,
+            WindowStyle = ProcessWindowStyle.Minimized
         };
-        
+
         using var process = Process.Start(psi);
         if (process != null)
         {
-            // Ждём завершения с таймаутом
             var timeout = Task.Delay(30000);
             var exit = process.WaitForExitAsync();
-            
+
             var completed = await Task.WhenAny(exit, timeout);
             if (completed == timeout)
             {
                 Log("⚠️ Таймаут удаления служб, продолжаем...");
                 try { process.Kill(); } catch { }
             }
-            
-            // Логируем вывод для отладки
-            string output = await process.StandardOutput.ReadToEndAsync();
-            if (!string.IsNullOrEmpty(output))
-                Log($"   Вывод: {output.Trim()}");
         }
         
         await Task.Delay(2000);

@@ -159,12 +159,6 @@ public void LoadAlternativeSources()
                     if (!string.IsNullOrEmpty(kvp.Value.WingetId))
                     {
                         app.AlternativeId = kvp.Value.WingetId;
-                        System.Diagnostics.Debug.WriteLine($"Applied alternative winget ID {kvp.Value.WingetId} to {app.DisplayName}");
-                        
-                        if (kvp.Value.Priority)
-                        {
-                            // Приоритетный источник
-                        }
                     }
                     
                     if (!string.IsNullOrEmpty(kvp.Value.Url) && !app.InstallerUrls.Contains(kvp.Value.Url))
@@ -175,30 +169,18 @@ public void LoadAlternativeSources()
                             app.InstallerUrls.Add(kvp.Value.Url);
                     }
                 }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"App {kvp.Key} not found for alternative source");
-                }
             }
         }
     }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"Error loading alternatives: {ex.Message}");
-    }
+    catch { }
 }
 
         public void SaveAlternativeSource(string appId, string? wingetId, string? url, bool priority = false)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"SaveAlternativeSource called: appId={appId}, wingetId={wingetId}, url={url}");
-                System.Diagnostics.Debug.WriteLine($"Alternatives path: {alternativesPath}");
-
                 if (!alternatives.ContainsKey(appId))
-                {
                     alternatives[appId] = new AlternativeSource();
-                }
 
                 if (!string.IsNullOrEmpty(wingetId))
                 {
@@ -208,10 +190,7 @@ public void LoadAlternativeSources()
 
                     var app = apps.FirstOrDefault(a => a.Id == appId);
                     if (app != null)
-                    {
                         app.AlternativeId = wingetId;
-                        System.Diagnostics.Debug.WriteLine($"Applied AlternativeId={wingetId} to {app.DisplayName}");
-                    }
                 }
 
                 if (!string.IsNullOrEmpty(url))
@@ -231,22 +210,8 @@ public void LoadAlternativeSources()
                 }
 
                 SaveAlternatives();
-
-                // Проверяем, что файл создался
-                if (File.Exists(alternativesPath))
-                {
-                    var content = File.ReadAllText(alternativesPath);
-                    System.Diagnostics.Debug.WriteLine($"Alternatives saved, file size: {content.Length}");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"ERROR: Alternatives file not created at {alternativesPath}");
-                }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error saving alternative: {ex.Message}");
-            }
+            catch { }
         }
 
         public void IncrementAlternativeSuccess(string appId)
@@ -292,20 +257,21 @@ private void SaveAlternatives()
             
         var json = JsonSerializer.Serialize(alternatives, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(alternativesPath, json);
-        
-        System.Diagnostics.Debug.WriteLine($"Saved alternatives to: {alternativesPath}");
     }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"Error saving alternatives: {ex.Message}");
-    }
+    catch { }
 }
 
-        public List<AppInfo> GetAllApps() => apps
-            .Where(a => !hiddenApps.Contains(a.Id))
-            .OrderBy(a => a.Category)
-            .ThenBy(a => a.DisplayName)
-            .ToList();
+        public List<AppInfo> GetAllApps()
+        {
+            List<AppInfo> snapshot;
+            lock (lockObj)
+                snapshot = apps.ToList();
+            return snapshot
+                .Where(a => !hiddenApps.Contains(a.Id))
+                .OrderBy(a => a.Category)
+                .ThenBy(a => a.DisplayName)
+                .ToList();
+        }
 
         public AppInfo? GetAppById(string appId)
         {

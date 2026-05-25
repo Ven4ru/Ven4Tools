@@ -27,6 +27,7 @@ namespace Ven4Tools.Views.Tabs
         private readonly AvailabilityChecker availabilityChecker = null!;
         private readonly InstalledAppsService installedAppsService = new();
         private readonly UserAppsService _userAppsService = new();
+        private readonly FavoritesService _favoritesService = new();
         private Dictionary<string, CheckBox> appCheckBoxes = new();
         private Dictionary<AppCategory, StackPanel> categoryPanels = new();
         private Dictionary<string, AvailabilityChecker.AvailabilityStatus> availabilityStatus = new();
@@ -35,7 +36,11 @@ namespace Ven4Tools.Views.Tabs
         private string selectedInstallDrive = "C:\\";
         private string systemDrive = "C:\\";
         private bool _isCheckingAvailability = false;
-        
+        private bool _initialized = false;
+        private bool _showFavoritesOnly = false;
+        private CancellationTokenSource? _searchDebounce;
+        private Action? _profileChangedHandler;
+
         public event Action<string>? LogMessage;
         
         // Categories visible per mode
@@ -61,19 +66,42 @@ namespace Ven4Tools.Views.Tabs
             InitCategoryPanels();
             LoadAvailableDisks();
 
-            ProfileService.Changed += () => Dispatcher.Invoke(ApplyProfileFilters);
-            UserSession.Changed += OnUserSessionChanged;
+            _profileChangedHandler = () => Dispatcher.Invoke(ApplyProfileFilters);
 
-            Loaded += async (s, e) => await LoadCatalogAndRefreshAsync();
+            Loaded += async (s, e) =>
+            {
+                ProfileService.Changed += _profileChangedHandler;
+                UserSession.Changed += OnUserSessionChanged;
+                AppSettings.Changed += OnAppSettingsChanged;
+                if (!_initialized)
+                {
+                    _initialized = true;
+                    await LoadCatalogAndRefreshAsync();
+                }
+            };
+            Unloaded += (_, _) =>
+            {
+                ProfileService.Changed -= _profileChangedHandler;
+                UserSession.Changed -= OnUserSessionChanged;
+                AppSettings.Changed -= OnAppSettingsChanged;
+            };
             
             btnInstall.Click += InstallSelected_Click;
             btnCancelInstall.Click += CancelInstall_Click;
+            btnCheckUpdates.Click += BtnCheckUpdates_Click;
             btnAddApp.Click += BtnAddApp_Click;
             btnClearAllUserApps.Click += BtnClearAllUserApps_Click;
             btnRefreshCatalog.Click += BtnRefreshCatalog_Click;
             btnRefreshAvailability.Click += RefreshAvailability_Click;
             btnSuggestAlternatives.Click += BtnSuggestAlternatives_Click;
             cmbAvailableDisks.SelectionChanged += CmbAvailableDisks_SelectionChanged;
+            txtSearch.TextChanged += TxtSearch_TextChanged;
+            txtSearch.GotFocus += (_, _) => { if (txtSearch.Text == (string)txtSearch.Tag) txtSearch.Text = ""; };
+            txtSearch.LostFocus += (_, _) => { if (string.IsNullOrWhiteSpace(txtSearch.Text)) txtSearch.Text = (string)txtSearch.Tag; };
+            txtSearch.Text = (string)txtSearch.Tag;
+            btnClearSearch.Click += (_, _) => { txtSearch.Text = (string)txtSearch.Tag; };
+            btnFavoritesOnly.Click += BtnFavoritesOnly_Click;
+            btnFavoritesOnly.Foreground = new SolidColorBrush(Color.FromRgb(100, 100, 100));
         }
         
         private void InitCategoryPanels()
@@ -162,6 +190,7 @@ namespace Ven4Tools.Views.Tabs
         
         private async Task LoadCatalogAndRefreshAsync()
         {
+            ShowLoading();
             try
             {
                 if (_catalogLoader == null) return;
@@ -197,6 +226,10 @@ namespace Ven4Tools.Views.Tabs
             catch (Exception ex)
             {
                 AddLog($"Ошибка загрузки каталога: {ex.Message}");
+            }
+            finally
+            {
+                HideLoading();
             }
         }
 
@@ -256,9 +289,12 @@ namespace Ven4Tools.Views.Tabs
 
                 var availabilityTasks = new List<Task>();
 
-                var appsToShow = ProfileService.Current.DefaultSort == "alpha"
-                    ? _catalog.Apps.OrderBy(a => a.Name).ToList()
-                    : _catalog.Apps;
+                var appsToShow = ProfileService.Current.DefaultSort switch
+                {
+                    "alpha"    => _catalog.Apps.OrderBy(a => a.Name).ToList(),
+                    "category" => _catalog.Apps.OrderBy(a => a.Category).ThenBy(a => a.Name).ToList(),
+                    _          => _catalog.Apps  // "popularity" = редакционный порядок из каталога
+                };
 
                 foreach (var app in appsToShow)
                 {
@@ -277,11 +313,14 @@ namespace Ven4Tools.Views.Tabs
                         {
                             Content = textBlock,
                             Tag = app.Id,
-                            Margin = new Thickness(0, 2, 0, 2),
                             ToolTip = "⏳ Проверка доступности..."
                         };
 
-                        panel.Children.Add(checkBox);
+                        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
+                        row.Children.Add(checkBox);
+                        row.Children.Add(MakeStarButton(app.Id));
+
+                        panel.Children.Add(row);
                         appCheckBoxes[app.Id] = checkBox;
                         availabilityTasks.Add(CheckAppAvailabilityFromCatalog(app));
                     }
@@ -298,13 +337,13 @@ namespace Ven4Tools.Views.Tabs
 
                 ApplyProfileFilters();
 
-                _ = Task.WhenAll(availabilityTasks).ContinueWith(async _ =>
+                _ = Task.WhenAll(availabilityTasks).ContinueWith(_ =>
                 {
                     int available = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
                     int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
                     AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
-                    await UpdateInstalledStatusAsync();
-                });
+                    return UpdateInstalledStatusAsync();
+                }).Unwrap();
             }
             catch (Exception ex)
             {
@@ -344,8 +383,9 @@ namespace Ven4Tools.Views.Tabs
             };
             removeButton.Click += (s, args) => RemoveUserApp(app.Id);
 
-            var panel = new StackPanel { Orientation = Orientation.Horizontal };
+            var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
             panel.Children.Add(checkBox);
+            panel.Children.Add(MakeStarButton(app.Id));
             panel.Children.Add(removeButton);
 
             PanelПользовательские.Children.Add(panel);
@@ -457,10 +497,11 @@ namespace Ven4Tools.Views.Tabs
         {
             try
             {
-                var parentPanel = VisualTreeHelper.GetParent(checkBox) as StackPanel;
-                if (parentPanel == null) return;
+                // checkBox lives inside a row StackPanel; that row lives in the category StackPanel
+                var rowPanel = VisualTreeHelper.GetParent(checkBox) as StackPanel;
+                if (rowPanel == null) return;
 
-                var existingButton = parentPanel.Children.OfType<Button>().FirstOrDefault(b => b.Tag?.ToString() == catalogApp.Id + "_suggest");
+                var existingButton = rowPanel.Children.OfType<Button>().FirstOrDefault(b => b.Tag?.ToString() == catalogApp.Id + "_suggest");
                 if (existingButton != null) return;
 
                 var suggestButton = new Button
@@ -478,14 +519,7 @@ namespace Ven4Tools.Views.Tabs
                     Margin = new Thickness(5, 0, 0, 0)
                 };
                 suggestButton.Click += async (s, e) => await SuggestAlternativeForCatalog(catalogApp);
-
-                int index = parentPanel.Children.IndexOf(checkBox);
-                parentPanel.Children.RemoveAt(index);
-                
-                var newRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
-                newRow.Children.Add(checkBox);
-                newRow.Children.Add(suggestButton);
-                parentPanel.Children.Insert(index, newRow);
+                rowPanel.Children.Add(suggestButton);
             }
             catch (Exception ex)
             {
@@ -551,7 +585,7 @@ namespace Ven4Tools.Views.Tabs
                                 {
                                     tb.Foreground = Brushes.Gray;
                                     checkBox.ToolTip = $"⏳ Повторная проверка... ({attempt}/3)";
-                                    _ = Task.Delay(2000).ContinueWith(_ => CheckSingleAppAvailability(appId, attempt + 1));
+                                    _ = Task.Delay(2000).ContinueWith(_ => CheckSingleAppAvailability(appId, attempt + 1)).Unwrap();
                                 }
                                 else
                                 {
@@ -830,15 +864,8 @@ namespace Ven4Tools.Views.Tabs
             {
                 try
                 {
-                    string configPath;
-                    string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
-                    string exeDir = AppDomain.CurrentDomain.BaseDirectory;
-                    string portableMarker = Path.Combine(exeDir, "portable.dat");
-                    configPath = File.Exists(portableMarker) ? Path.Combine(exeDir, "Data", "apps.json") : Path.Combine(appDataPath, "apps.json");
-                    if (File.Exists(configPath)) File.Delete(configPath);
-                    string selectionPath = configPath + ".selection";
-                    if (File.Exists(selectionPath)) File.Delete(selectionPath);
-                    AddLog($"✅ Файл пользовательских приложений очищен");
+                    appManager.ClearUserApps();
+                    AddLog("✅ Пользовательские приложения очищены");
                     ReloadAllApps();
                 }
                 catch (Exception ex) { AddLog($"❌ Ошибка при удалении: {ex.Message}"); }
@@ -1032,7 +1059,10 @@ namespace Ven4Tools.Views.Tabs
             foreach (var kvp in appCheckBoxes)
             {
                 if (kvp.Value.ToolTip?.ToString()?.StartsWith("✓") == true)
-                    kvp.Value.Visibility = Visibility.Collapsed;
+                {
+                    var row = VisualTreeHelper.GetParent(kvp.Value) as FrameworkElement ?? kvp.Value;
+                    row.Visibility = Visibility.Collapsed;
+                }
             }
         }
 
@@ -1067,6 +1097,395 @@ namespace Ven4Tools.Views.Tabs
             // Re-apply hide installed if needed
             if (ProfileService.Current.HideInstalled)
                 ApplyHideInstalled();
+        }
+
+        private void OnAppSettingsChanged()
+        {
+            _catalogLoader?.UpdateTimeout(AppSettings.CatalogTimeout);
+            availabilityChecker.UpdateTimeout(AppSettings.CheckTimeout);
+        }
+
+        // ── Search & Favorites filter ─────────────────────────────────────────
+        private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            string text = txtSearch.Text;
+            bool isPlaceholder = text == (string)txtSearch.Tag;
+            string query = isPlaceholder ? "" : text;
+
+            btnClearSearch.Visibility = query.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            int visible = FilterApps(query);
+
+            _searchDebounce?.Cancel();
+
+            if (query.Length >= 2 && visible == 0)
+            {
+                pnlWingetSuggestions.Visibility = Visibility.Visible;
+                pnlWingetResults.Children.Clear();
+                txtWingetStatus.Text = "⏳ Поиск в winget...";
+                txtWingetStatus.Visibility = Visibility.Visible;
+
+                _searchDebounce = new CancellationTokenSource();
+                var token = _searchDebounce.Token;
+                _ = Task.Delay(600, token).ContinueWith(async t =>
+                {
+                    if (t.IsCanceled) return;
+                    var results = await SearchWingetAsync(query, token);
+                    if (!token.IsCancellationRequested)
+                        await Dispatcher.InvokeAsync(() => ShowWingetSuggestions(query, results));
+                });
+            }
+            else
+            {
+                HideWingetSuggestions();
+            }
+        }
+
+        private void BtnFavoritesOnly_Click(object sender, RoutedEventArgs e)
+        {
+            _showFavoritesOnly = !_showFavoritesOnly;
+            btnFavoritesOnly.Foreground = _showFavoritesOnly
+                ? new SolidColorBrush(Color.FromRgb(255, 215, 0))
+                : new SolidColorBrush(Color.FromRgb(100, 100, 100));
+            btnFavoritesOnly.ToolTip = _showFavoritesOnly ? "Показать все" : "Только избранные";
+
+            string query = txtSearch.Text == (string)txtSearch.Tag ? "" : txtSearch.Text;
+            FilterApps(query);
+            HideWingetSuggestions();
+        }
+
+        private int FilterApps(string searchText)
+        {
+            bool hasSearch = !string.IsNullOrWhiteSpace(searchText);
+            bool filtered = hasSearch || _showFavoritesOnly;
+            string lower = searchText.ToLower();
+
+            if (!filtered)
+            {
+                foreach (var kvp in categoryPanels)
+                    foreach (FrameworkElement child in kvp.Value.Children)
+                        child.Visibility = Visibility.Visible;
+                ApplyProfileFilters();
+                return -1;
+            }
+
+            int totalVisible = 0;
+
+            foreach (var kvp in categoryPanels)
+            {
+                int panelVisible = 0;
+                foreach (FrameworkElement child in kvp.Value.Children)
+                {
+                    string? label = GetChildLabel(child);
+                    string? appId = GetChildAppId(child);
+
+                    bool matchSearch = !hasSearch || (label?.ToLower().Contains(lower) == true);
+                    bool matchFav = !_showFavoritesOnly || (appId != null && _favoritesService.IsFavorite(appId));
+
+                    bool visible = matchSearch && matchFav;
+                    child.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+                    if (visible) { panelVisible++; totalVisible++; }
+                }
+
+                if (kvp.Value.Parent is Expander expander)
+                {
+                    expander.Visibility = panelVisible > 0 ? Visibility.Visible : Visibility.Collapsed;
+                    if (panelVisible > 0) expander.IsExpanded = true;
+                }
+            }
+
+            return totalVisible;
+        }
+
+        private static string? GetChildLabel(FrameworkElement child)
+        {
+            if (child is CheckBox cb && cb.Content is TextBlock tb)
+                return tb.Text;
+            if (child is StackPanel sp)
+            {
+                var innerCb = sp.Children.OfType<CheckBox>().FirstOrDefault();
+                if (innerCb?.Content is TextBlock innerTb)
+                    return innerTb.Text;
+            }
+            return null;
+        }
+
+        private static string? GetChildAppId(FrameworkElement child)
+        {
+            if (child is CheckBox cb)
+                return cb.Tag?.ToString();
+            if (child is StackPanel sp)
+            {
+                var innerCb = sp.Children.OfType<CheckBox>().FirstOrDefault();
+                return innerCb?.Tag?.ToString();
+            }
+            return null;
+        }
+
+        // ── Winget search suggestions ─────────────────────────────────────────
+        private async Task<List<(string Name, string Id)>> SearchWingetAsync(string query, CancellationToken token)
+        {
+            var results = new List<(string Name, string Id)>();
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "winget",
+                    Arguments = $"search \"{query}\" --source winget --accept-source-agreements",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+
+                using var process = Process.Start(psi);
+                if (process == null) return results;
+
+                string output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync(token);
+
+                var lines = output.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                int dataStart = -1;
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    if (lines[i].TrimStart().StartsWith("---"))
+                    {
+                        dataStart = i + 1;
+                        break;
+                    }
+                }
+
+                if (dataStart < 0) return results;
+
+                foreach (var line in lines.Skip(dataStart).Take(7))
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    var parts = System.Text.RegularExpressions.Regex.Split(line.Trim(), @"\s{2,}");
+                    if (parts.Length >= 2)
+                    {
+                        string name = parts[0].Trim();
+                        string id = parts[1].Trim();
+                        if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(id) && id.Contains("."))
+                            results.Add((name, id));
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch { }
+
+            return results;
+        }
+
+        private void ShowWingetSuggestions(string query, List<(string Name, string Id)> packages)
+        {
+            pnlWingetResults.Children.Clear();
+            txtWingetStatus.Visibility = Visibility.Collapsed;
+
+            if (packages.Count == 0)
+            {
+                txtWingetStatus.Text = $"😕 Ничего не найдено в winget по запросу «{query}»";
+                txtWingetStatus.Visibility = Visibility.Visible;
+                return;
+            }
+
+            foreach (var (name, id) in packages)
+            {
+                var btn = new Button
+                {
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Margin = new Thickness(0, 1, 0, 1),
+                    Height = 26,
+                    Padding = new Thickness(6, 0, 6, 0),
+                    Background = Brushes.Transparent,
+                    BorderThickness = new Thickness(0),
+                    Cursor = Cursors.Hand,
+                    FontSize = 12,
+                    ToolTip = id
+                };
+
+                var panel = new StackPanel { Orientation = Orientation.Horizontal };
+                panel.Children.Add(new TextBlock
+                {
+                    Text = "➕  ",
+                    Foreground = (Brush)FindResource("AccentColor"),
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+                panel.Children.Add(new TextBlock
+                {
+                    Text = name,
+                    Foreground = (Brush)FindResource("TextPrimary"),
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+                panel.Children.Add(new TextBlock
+                {
+                    Text = $"  ({id})",
+                    Foreground = (Brush)FindResource("TextSecondary"),
+                    FontSize = 10,
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+                btn.Content = panel;
+
+                var captureName = name;
+                var captureId = id;
+                btn.Click += (_, _) => AddWingetSuggestion(captureName, captureId);
+                pnlWingetResults.Children.Add(btn);
+            }
+        }
+
+        private void HideWingetSuggestions()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                pnlWingetSuggestions.Visibility = Visibility.Collapsed;
+                pnlWingetResults.Children.Clear();
+            });
+        }
+
+        private async void AddWingetSuggestion(string name, string id)
+        {
+            if (!UserSession.IsLoggedIn)
+            {
+                var prompt = MessageBox.Show(
+                    $"Добавить «{name}» в локальный список?\n\nДля синхронизации между устройствами войдите в аккаунт.",
+                    "Добавить приложение", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (prompt != MessageBoxResult.Yes) return;
+            }
+
+            if (appManager.GetAppById(id) != null)
+            {
+                AddLog($"ℹ️ {name} уже есть в списке");
+                return;
+            }
+
+            var newApp = new AppInfo
+            {
+                Id = id,
+                DisplayName = name,
+                Category = AppCategory.Другое,
+                AlternativeId = id,
+                InstallerUrls = new List<string>(),
+                SilentArgs = "",
+                IsUserAdded = true
+            };
+
+            appManager.AddUserApp(newApp);
+            AddUserAppToUI(newApp);
+
+            if (UserSession.IsLoggedIn)
+                await _userAppsService.SaveAsync(UserSession.UserId, newApp);
+
+            AddLog($"➕ Добавлено из winget: {name} ({id})");
+
+            txtSearch.Text = (string)txtSearch.Tag;
+            HideWingetSuggestions();
+        }
+
+        // ── Loading indicator ─────────────────────────────────────────────────
+        private void ShowLoading() =>
+            Dispatcher.Invoke(() => txtLoadingStatus.Visibility = Visibility.Visible);
+
+        private void HideLoading() =>
+            Dispatcher.Invoke(() => txtLoadingStatus.Visibility = Visibility.Collapsed);
+
+        // ── Favorites ─────────────────────────────────────────────────────────
+        private Button MakeStarButton(string appId)
+        {
+            bool fav = _favoritesService.IsFavorite(appId);
+            var btn = new Button
+            {
+                Content = fav ? "★" : "☆",
+                Width = 20,
+                Height = 20,
+                Margin = new Thickness(4, 0, 0, 0),
+                Tag = appId,
+                Background = System.Windows.Media.Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Foreground = fav
+                    ? new SolidColorBrush(Color.FromRgb(255, 215, 0))
+                    : new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                FontSize = 14,
+                Padding = new Thickness(0),
+                VerticalContentAlignment = VerticalAlignment.Center,
+                ToolTip = fav ? "Убрать из избранного" : "Добавить в избранное",
+                Cursor = Cursors.Hand
+            };
+            btn.Click += StarButton_Click;
+            return btn;
+        }
+
+        private void StarButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn || btn.Tag is not string appId) return;
+            _favoritesService.Toggle(appId);
+            bool fav = _favoritesService.IsFavorite(appId);
+            btn.Content = fav ? "★" : "☆";
+            btn.Foreground = fav
+                ? new SolidColorBrush(Color.FromRgb(255, 215, 0))
+                : new SolidColorBrush(Color.FromRgb(100, 100, 100));
+            btn.ToolTip = fav ? "Убрать из избранного" : "Добавить в избранное";
+        }
+
+        // ── Update check ──────────────────────────────────────────────────────
+        private async void BtnCheckUpdates_Click(object sender, RoutedEventArgs e)
+        {
+            btnCheckUpdates.IsEnabled = false;
+            AddLog("🔔 Проверка обновлений через winget...");
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "winget",
+                    Arguments = "upgrade --include-unknown --source winget",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+
+                using var process = Process.Start(psi);
+                if (process == null) { AddLog("❌ Не удалось запустить winget"); return; }
+
+                string output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                var lines = output.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                int dataStart = -1;
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    if (lines[i].TrimStart().StartsWith("---")) { dataStart = i + 1; break; }
+                }
+
+                var upgradable = dataStart >= 0
+                    ? lines.Skip(dataStart)
+                           .Where(l => !string.IsNullOrWhiteSpace(l) && l.Contains("  "))
+                           .Select(l => l.Trim())
+                           .Where(l => l.Length > 0)
+                           .ToList()
+                    : new List<string>();
+
+                if (upgradable.Count > 0)
+                {
+                    AddLog($"🔔 Доступно обновлений: {upgradable.Count}");
+                    foreach (var line in upgradable.Take(10))
+                        AddLog($"  • {line}");
+                    if (upgradable.Count > 10)
+                        AddLog($"  ... и ещё {upgradable.Count - 10}");
+                }
+                else
+                {
+                    AddLog("✅ Все установленные приложения актуальны");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog($"⚠️ Ошибка проверки обновлений: {ex.Message}");
+            }
+            finally
+            {
+                btnCheckUpdates.IsEnabled = true;
+            }
         }
 
         public void AddLog(string message)

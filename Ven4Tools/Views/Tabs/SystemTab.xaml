@@ -101,10 +101,32 @@
             <!-- Логи -->
             <GroupBox Header="📋 Логи" Margin="0,0,0,15">
                 <StackPanel>
-                    <Button x:Name="btnOpenLogs" Content="📁 Открыть папку с логами" 
+                    <StackPanel Orientation="Horizontal" Margin="10,10,10,5">
+                        <Button x:Name="btnOpenLogs" Content="📁 Открыть папку"
+                                Height="35" Width="150" Margin="0,0,10,0"/>
+                        <Button x:Name="btnOpenLatestLog" Content="📄 Последний лог"
+                                Height="35" Width="155" Margin="0,0,10,0"/>
+                        <Button x:Name="btnClearLogs" Content="🗑️ Очистить"
+                                Height="35" Width="100"/>
+                    </StackPanel>
+                    <TextBox x:Name="txtLatestLog" Margin="10,0,10,10" Height="100"
+                             Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
+                             FontFamily="Consolas" FontSize="10" IsReadOnly="True"
+                             VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
+                             Text="Нажмите «Последний лог» для просмотра..."/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Обновления приложений -->
+            <GroupBox Header="🔔 Обновления приложений" Margin="0,0,0,15">
+                <StackPanel>
+                    <Button x:Name="btnCheckUpdates" Content="🔍 Проверить обновления"
                             Height="35" Margin="10" HorizontalAlignment="Left" Width="200"/>
-                    <Button x:Name="btnClearLogs" Content="🗑️ Очистить логи" 
-                            Height="35" Margin="10,0,10,10" HorizontalAlignment="Left" Width="150"/>
+                    <TextBox x:Name="txtUpdatesLog" Margin="10,0,10,10" Height="100"
+                             Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
+                             FontFamily="Consolas" FontSize="10" IsReadOnly="True"
+                             VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
+                             Text="Нажмите «Проверить обновления» для проверки..."/>
                 </StackPanel>
             </GroupBox>
             
@@ -119,8 +141,8 @@
                         <Button x:Name="btnEnableTurboBoost" Content="✅ Включить Turbo Boost" 
                                 Height="35" Width="180"/>
                     </StackPanel>
-                    <TextBlock Text="⚠️ Требуется перезагрузка для применения изменений" 
-                               Foreground="#FFA500" FontSize="11" Margin="10,5,10,10"/>
+                    <TextBlock Text="ℹ️ Изменение применяется немедленно, перезагрузка не требуется"
+                               Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="10,5,10,10"/>
                 </StackPanel>
             </GroupBox>
         </StackPanel>

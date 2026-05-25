@@ -7,54 +7,103 @@
             <ColumnDefinition Width="2*"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        
-        <!-- Левая панель: список приложений (растягиваем по высоте) -->
+
+        <!-- Левая панель: список приложений -->
         <GroupBox Header="📦 Приложения" Grid.Column="0" Margin="0,0,10,0">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <StackPanel>
-                    <Expander Header="🌐 Браузеры" IsExpanded="True">
-                        <StackPanel x:Name="PanelБраузеры" Margin="15,3,0,3"/>
-                    </Expander>
-                    <Expander Header="📁 Офис" IsExpanded="True">
-                        <StackPanel x:Name="PanelОфис" Margin="15,3,0,3"/>
-                    </Expander>
-                    <Expander Header="🎨 Графика" IsExpanded="True">
-                        <StackPanel x:Name="PanelГрафика" Margin="15,3,0,3"/>
-                    </Expander>
-                    <Expander Header="💻 Разработка" IsExpanded="True">
-                        <StackPanel x:Name="PanelРазработка" Margin="15,3,0,3"/>
-                    </Expander>
-                    <Expander Header="💬 Мессенджеры" IsExpanded="True">
-                        <StackPanel x:Name="PanelМессенджеры" Margin="15,3,0,3"/>
-                    </Expander>
-                    <Expander Header="🎵 Мультимедиа" IsExpanded="True">
-                        <StackPanel x:Name="PanelМультимедиа" Margin="15,3,0,3"/>
-                    </Expander>
-                    <Expander Header="⚙️ Системные" IsExpanded="True">
-                        <StackPanel x:Name="PanelСистемные" Margin="15,3,0,3"/>
-                    </Expander>
-                    <Expander Header="🎮 Игровые сервисы" IsExpanded="True">
-                        <StackPanel x:Name="PanelИгровыеСервисы" Margin="15,3,0,3"/>
-                    </Expander>
-                    <Expander Header="🖨️ Драйверпаки" IsExpanded="True">
-                        <StackPanel x:Name="PanelДрайверпаки" Margin="15,3,0,3"/>
-                    </Expander>
-                    <Expander Header="📎 Другое" IsExpanded="True">
-                        <StackPanel x:Name="PanelДругое" Margin="15,3,0,3"/>
-                    </Expander>
-                    <Expander Header="👤 Пользовательские" IsExpanded="True">
-                        <StackPanel x:Name="PanelПользовательские" Margin="15,3,0,3"/>
-                    </Expander>
-                </StackPanel>
-            </ScrollViewer>
+            <DockPanel>
+                <!-- Поиск -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="txtSearch" Height="28"
+                             Background="{DynamicResource CardBackground}"
+                             Foreground="{DynamicResource TextPrimary}"
+                             BorderBrush="{DynamicResource BorderBrush}"
+                             VerticalContentAlignment="Center" Padding="5,0"
+                             Tag="🔍 Поиск приложений..."/>
+                    <Button x:Name="btnClearSearch" Grid.Column="1" Content="✕"
+                            Width="28" Height="28" Margin="4,0,0,0"
+                            Visibility="Collapsed"/>
+                    <Button x:Name="btnFavoritesOnly" Grid.Column="2" Content="★"
+                            Width="28" Height="28" Margin="4,0,0,0"
+                            FontSize="16" ToolTip="Только избранные"
+                            Background="Transparent" BorderThickness="1"/>
+                </Grid>
+
+                <!-- Загрузка -->
+                <TextBlock x:Name="txtLoadingStatus" DockPanel.Dock="Top"
+                           Text="⏳ Загрузка каталога..."
+                           Foreground="{DynamicResource AccentColor}"
+                           FontSize="11" Margin="0,0,0,5"
+                           Visibility="Collapsed"/>
+
+                <!-- Winget подсказки -->
+                <Border x:Name="pnlWingetSuggestions" DockPanel.Dock="Top"
+                        Background="{DynamicResource CardBackground}"
+                        BorderBrush="{DynamicResource AccentColor}"
+                        BorderThickness="1" CornerRadius="3"
+                        Margin="0,0,0,6" Visibility="Collapsed">
+                    <StackPanel Margin="8,6">
+                        <TextBlock Text="🔍 Не нашли в каталоге? Результаты из winget:"
+                                   Foreground="{DynamicResource AccentColor}"
+                                   FontSize="11" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <StackPanel x:Name="pnlWingetResults"/>
+                        <TextBlock x:Name="txtWingetStatus"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="11" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Border>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <Expander Header="🌐 Браузеры" IsExpanded="True">
+                            <StackPanel x:Name="PanelБраузеры" Margin="15,3,0,3"/>
+                        </Expander>
+                        <Expander Header="📁 Офис" IsExpanded="True">
+                            <StackPanel x:Name="PanelОфис" Margin="15,3,0,3"/>
+                        </Expander>
+                        <Expander Header="🎨 Графика" IsExpanded="True">
+                            <StackPanel x:Name="PanelГрафика" Margin="15,3,0,3"/>
+                        </Expander>
+                        <Expander Header="💻 Разработка" IsExpanded="True">
+                            <StackPanel x:Name="PanelРазработка" Margin="15,3,0,3"/>
+                        </Expander>
+                        <Expander Header="💬 Мессенджеры" IsExpanded="True">
+                            <StackPanel x:Name="PanelМессенджеры" Margin="15,3,0,3"/>
+                        </Expander>
+                        <Expander Header="🎵 Мультимедиа" IsExpanded="True">
+                            <StackPanel x:Name="PanelМультимедиа" Margin="15,3,0,3"/>
+                        </Expander>
+                        <Expander Header="⚙️ Системные" IsExpanded="True">
+                            <StackPanel x:Name="PanelСистемные" Margin="15,3,0,3"/>
+                        </Expander>
+                        <Expander Header="🎮 Игровые сервисы" IsExpanded="True">
+                            <StackPanel x:Name="PanelИгровыеСервисы" Margin="15,3,0,3"/>
+                        </Expander>
+                        <Expander Header="🖨️ Драйверпаки" IsExpanded="True">
+                            <StackPanel x:Name="PanelДрайверпаки" Margin="15,3,0,3"/>
+                        </Expander>
+                        <Expander Header="📎 Другое" IsExpanded="True">
+                            <StackPanel x:Name="PanelДругое" Margin="15,3,0,3"/>
+                        </Expander>
+                        <Expander Header="👤 Пользовательские" IsExpanded="True">
+                            <StackPanel x:Name="PanelПользовательские" Margin="15,3,0,3"/>
+                        </Expander>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
         </GroupBox>
-        
-        <!-- Правая панель: управление (растягиваем по высоте) -->
+
+        <!-- Правая панель: управление -->
         <StackPanel Grid.Column="1">
             <GroupBox Header="🚀 Действия">
                 <StackPanel>
                     <Button x:Name="btnInstall" Content="🚀 Установить" Height="35" Margin="3"/>
                     <Button x:Name="btnCancelInstall" Content="⏹️ Отмена" Height="35" Margin="3" IsEnabled="False"/>
+                    <Button x:Name="btnCheckUpdates" Content="🔔 Обновления" Height="35" Margin="3"/>
                     <Button x:Name="btnAddApp" Content="➕ Добавить своё" Height="35" Margin="3"/>
                     <Button x:Name="btnClearAllUserApps" Content="🗑️ Очистить всё" Height="35" Margin="3"/>
                     <Button x:Name="btnRefreshCatalog" Content="🔄 Обновить каталог" Height="35" Margin="3"/>
@@ -62,7 +111,7 @@
                     <Button x:Name="btnSuggestAlternatives" Content="🔄 Предложить альтернативы для недоступных" Height="35" Margin="3"/>
                 </StackPanel>
             </GroupBox>
-            
+
             <GroupBox Header="💾 Диск установки" Margin="0,10,0,0">
                 <StackPanel>
                     <ComboBox x:Name="cmbAvailableDisks" Height="28"/>
@@ -71,16 +120,16 @@
                     <TextBlock x:Name="txtOverallStatus" Text="Готов" FontSize="10" HorizontalAlignment="Center" Margin="0,5,0,0"/>
                 </StackPanel>
             </GroupBox>
-            
+
             <GroupBox Header="📋 Лог установки" Margin="0,10,0,0" Height="200">
-                <TextBox x:Name="txtInstallLog" 
-                         Background="{DynamicResource CardBackground}" 
+                <TextBox x:Name="txtInstallLog"
+                         Background="{DynamicResource CardBackground}"
                          Foreground="{DynamicResource TextPrimary}"
                          FontFamily="Consolas" FontSize="10"
                          IsReadOnly="True" TextWrapping="Wrap"
                          VerticalScrollBarVisibility="Auto"/>
             </GroupBox>
-            
+
             <GroupBox Header="📊 Прогресс установки" Margin="0,10,0,0" Height="150">
                 <ListBox x:Name="lstAppProgress" Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}">
                     <ListBox.ItemTemplate>
@@ -88,8 +137,8 @@
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding AppName}" Width="200" Foreground="{DynamicResource TextPrimary}"/>
                                 <TextBlock Text="{Binding Status}" Width="200" Foreground="{DynamicResource TextSecondary}"/>
-                                <ProgressBar Width="100" Height="15" Value="{Binding Percentage}" Margin="5,0" 
-                                             Background="{DynamicResource BorderBrush}" 
+                                <ProgressBar Width="100" Height="15" Value="{Binding Percentage}" Margin="5,0"
+                                             Background="{DynamicResource BorderBrush}"
                                              Foreground="{DynamicResource AccentColor}"/>
                             </StackPanel>
                         </DataTemplate>
@@ -99,5 +148,3 @@
         </StackPanel>
     </Grid>
 </UserControl>
-
-

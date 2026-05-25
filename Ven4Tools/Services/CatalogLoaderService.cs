@@ -27,8 +27,13 @@ namespace Ven4Tools.Services
         public CatalogLoaderService()
         {
             _httpClient = new HttpClient();
-            _httpClient.Timeout = TimeSpan.FromSeconds(15);
+            _httpClient.Timeout = TimeSpan.FromSeconds(AppSettings.CatalogTimeout);
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+        }
+
+        public void UpdateTimeout(int seconds)
+        {
+            _httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(3, seconds));
         }
 
         public async Task<MasterCatalog> LoadCatalogAsync()

@@ -44,7 +44,11 @@ namespace Ven4Tools.Models
         {
             try
             {
-                if (Services.ProfileService.Current.NoLocalStorage) return;
+                if (UserId == 0 || Services.ProfileService.Current.NoLocalStorage)
+                {
+                    if (File.Exists(_sessionPath)) File.Delete(_sessionPath);
+                    return;
+                }
                 Directory.CreateDirectory(Path.GetDirectoryName(_sessionPath)!);
                 var data = new { UserId, Name, Email, IsAdmin };
                 File.WriteAllText(_sessionPath, JsonConvert.SerializeObject(data));
