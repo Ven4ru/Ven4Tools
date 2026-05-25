@@ -109,7 +109,8 @@ namespace Ven4Tools.Launcher.Services
                 }
             }
 
-            return versions.OrderByDescending(v => v.Version).ToList();
+            versions.Sort((a, b) => CompareVersions(b.Version, a.Version));
+            return versions;
         }
 
         /// <summary>
@@ -182,14 +183,14 @@ public async Task<string?> GetLatestWingetVersionAsync()
         /// <summary>
         /// Сравнение версий
         /// </summary>
-        private int CompareVersions(string v1, string v2)
+        private static int CompareVersions(string v1, string v2)
         {
             var parts1 = v1.Split('.');
             var parts2 = v2.Split('.');
             for (int i = 0; i < Math.Max(parts1.Length, parts2.Length); i++)
             {
-                int num1 = i < parts1.Length ? int.Parse(parts1[i]) : 0;
-                int num2 = i < parts2.Length ? int.Parse(parts2[i]) : 0;
+                int num1 = i < parts1.Length && int.TryParse(parts1[i], out var x) ? x : 0;
+                int num2 = i < parts2.Length && int.TryParse(parts2[i], out var y) ? y : 0;
                 if (num1 != num2) return num1.CompareTo(num2);
             }
             return 0;
