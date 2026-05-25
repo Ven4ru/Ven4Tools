@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-25 02:51:32",
+  "lastUpdated": "2026-05-25 03:05:39",
   "apps": [
     {
       "id": "firefox",
@@ -52,7 +52,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
-      "sha256": "e9babea2087e1cfc3be0a5c1ebd465fc51a94c024d32c9def8fba151d23f0525"
+      "sha256": "8511b66ba7b8be50507949cf2bda87f520926d1557df0805b740d6420b124a56"
     },
     {
       "id": "brave",
@@ -673,7 +673,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов.",
-      "sha256": "fde48a7769050e66807f941f256522345616e28559d1af247377c220387d006d"
+      "sha256": "5b604b7876e0dda6cf89afbb1dc7267b6e645697c1af1b590089a2c9ad38a2d8"
     },
     {
       "id": "powertoys",
