@@ -25,8 +25,11 @@ namespace Ven4Tools.Launcher
         private UpdateBackgroundService? _updateService;
         private bool _backgroundUpdates = true;
         private bool _autostart = false;
+        private bool _startMinimized = false;
         private string _lastNotifiedLauncherVersion = "";
         private string _lastNotifiedClientVersion = "";
+        private ToolStripMenuItem? _trayItemAutostart;
+        private ToolStripMenuItem? _trayItemBgUpdates;
         
         public MainWindow()
         {
@@ -39,6 +42,10 @@ namespace Ven4Tools.Launcher
             LoadSettings();
             CreateTrayIcon();
             StartBackgroundService();
+            SyncCheckboxes();
+
+            if (_startMinimized)
+                Loaded += (s, e) => Hide();
             
             if (string.IsNullOrEmpty(_installPath))
             {
@@ -71,6 +78,7 @@ namespace Ven4Tools.Launcher
                         _installPath = settings.InstallPath ?? "";
                         _backgroundUpdates = settings.BackgroundUpdates ?? true;
                         _autostart = settings.Autostart ?? false;
+                        _startMinimized = settings.StartMinimized ?? false;
                         _lastNotifiedLauncherVersion = settings.LastNotifiedLauncherVersion ?? "";
                         _lastNotifiedClientVersion = settings.LastNotifiedClientVersion ?? "";
                     }
@@ -89,6 +97,7 @@ namespace Ven4Tools.Launcher
                     InstallPath = _installPath,
                     BackgroundUpdates = _backgroundUpdates,
                     Autostart = _autostart,
+                    StartMinimized = _startMinimized,
                     LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
                     LastNotifiedClientVersion = _lastNotifiedClientVersion
                 };
@@ -785,32 +794,37 @@ private bool IsRunAsAdmin()
                     Text = "Ven4Tools Launcher"
                 };
 
-                var itemAutostart = new ToolStripMenuItem("Запускать при старте Windows")
+                _trayItemAutostart = new ToolStripMenuItem("Запускать при старте Windows")
                 {
                     Checked = GetAutostart(),
                     CheckOnClick = true
                 };
-                itemAutostart.CheckedChanged += (s, e) =>
+                _trayItemAutostart.CheckedChanged += (s, e) =>
                 {
-                    _autostart = itemAutostart.Checked;
+                    _autostart = _trayItemAutostart.Checked;
                     SetAutostart(_autostart);
                     SaveSettings();
+                    Dispatcher.Invoke(() => chkAutostart.IsChecked = _autostart);
                 };
 
-                var itemBgUpdates = new ToolStripMenuItem("Проверять обновления в фоне")
+                _trayItemBgUpdates = new ToolStripMenuItem("Проверять обновления в фоне")
                 {
                     Checked = _backgroundUpdates,
                     CheckOnClick = true
                 };
-                itemBgUpdates.CheckedChanged += (s, e) =>
+                _trayItemBgUpdates.CheckedChanged += (s, e) =>
                 {
-                    _backgroundUpdates = itemBgUpdates.Checked;
+                    _backgroundUpdates = _trayItemBgUpdates.Checked;
                     if (_backgroundUpdates)
                         _updateService?.Start();
                     else
                         _updateService?.Stop();
                     SaveSettings();
+                    Dispatcher.Invoke(() => chkBackgroundUpdates.IsChecked = _backgroundUpdates);
                 };
+
+                var itemAutostart = _trayItemAutostart;
+                var itemBgUpdates = _trayItemBgUpdates;
 
                 var contextMenu = new ContextMenuStrip();
                 contextMenu.Items.Add("Показать окно", null, (s, e) => Dispatcher.Invoke(ShowWindow));
@@ -838,8 +852,10 @@ private bool IsRunAsAdmin()
 
         private void StartBackgroundService()
         {
-            var launcherVersion = System.Reflection.Assembly.GetExecutingAssembly()
-                .GetName().Version?.ToString() ?? "2.3.2";
+            var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            var launcherVersion = ver != null
+                ? $"{ver.Major}.{ver.Minor}.{ver.Build}"
+                : "2.3.2";
 
             _updateService = new UpdateBackgroundService(launcherVersion, () => _clientPath)
             {
@@ -851,6 +867,38 @@ private bool IsRunAsAdmin()
 
             if (_backgroundUpdates)
                 _updateService.Start();
+        }
+
+        private void SyncCheckboxes()
+        {
+            chkBackgroundUpdates.IsChecked = _backgroundUpdates;
+            chkStartMinimized.IsChecked = _startMinimized;
+            chkAutostart.IsChecked = _autostart;
+        }
+
+        private void ChkBackgroundUpdates_Click(object sender, RoutedEventArgs e)
+        {
+            _backgroundUpdates = chkBackgroundUpdates.IsChecked == true;
+            if (_trayItemBgUpdates != null) _trayItemBgUpdates.Checked = _backgroundUpdates;
+            if (_backgroundUpdates)
+                _updateService?.Start();
+            else
+                _updateService?.Stop();
+            SaveSettings();
+        }
+
+        private void ChkStartMinimized_Click(object sender, RoutedEventArgs e)
+        {
+            _startMinimized = chkStartMinimized.IsChecked == true;
+            SaveSettings();
+        }
+
+        private void ChkAutostart_Click(object sender, RoutedEventArgs e)
+        {
+            _autostart = chkAutostart.IsChecked == true;
+            if (_trayItemAutostart != null) _trayItemAutostart.Checked = _autostart;
+            SetAutostart(_autostart);
+            SaveSettings();
         }
 
         private void OnUpdateAvailable(string type, UpdateInfo info)
