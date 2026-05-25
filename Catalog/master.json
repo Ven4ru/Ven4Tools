@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-25 07:28:57",
+  "lastUpdated": "2026-05-25 09:22:53",
   "changelog": [
     {
       "version": 2,
@@ -729,19 +729,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Лаунчер для игр Ubisoft: Assassin's Creed, Far Cry, Rainbow Six."
-    },
-    {
-      "id": "driver-booster",
-      "name": "Driver Booster Pro",
-      "category": "Драйверпаки",
-      "wingetId": "IObit.DriverBooster",
-      "downloadUrl": "https://cdn.iobit.com/dl/driver_booster_setup.exe",
-      "version": "13.2.0",
-      "size": "31.9 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Автоматическое обновление драйверов и игровых компонентов.",
-      "sha256": "bf9db0567fd8b7f4bf4132fa16b0f55dacd144977d631d41d0ab115227a5e320"
     },
     {
       "id": "snappy-driver",
