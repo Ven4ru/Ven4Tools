@@ -1,0 +1,82 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:s="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Category Selection Window -->
+    <s:String x:Key="cat_window_title">Добро пожаловать в Ven4Tools!</s:String>
+    <s:String x:Key="cat_window_subtitle">Выберите режим отображения каталога приложений</s:String>
+
+    <s:String x:Key="cat_basic_icon">🚀</s:String>
+    <s:String x:Key="cat_basic_title">Базовый</s:String>
+    <s:String x:Key="cat_basic_sub">Быстрый старт Windows</s:String>
+    <s:String x:Key="cat_basic_desc">Браузеры, офис, мультимедиа и системные утилиты — всё необходимое для быстрого ввода ПК в работу</s:String>
+
+    <s:String x:Key="cat_ext_icon">⚙️</s:String>
+    <s:String x:Key="cat_ext_title">Расширенный</s:String>
+    <s:String x:Key="cat_ext_sub">Для энтузиастов</s:String>
+    <s:String x:Key="cat_ext_desc">Всё базовое плюс инструменты разработки, редакторы, графика и мессенджеры</s:String>
+
+    <s:String x:Key="cat_full_icon">💎</s:String>
+    <s:String x:Key="cat_full_title">Полный</s:String>
+    <s:String x:Key="cat_full_sub">Весь каталог</s:String>
+    <s:String x:Key="cat_full_desc">Все доступные приложения без исключений, включая игровые сервисы и пакеты драйверов</s:String>
+
+    <s:String x:Key="cat_continue">Продолжить</s:String>
+
+    <!-- Profile Window -->
+    <s:String x:Key="prof_title">Профиль</s:String>
+    <s:String x:Key="prof_tab_catalog">📦 Каталог</s:String>
+    <s:String x:Key="prof_tab_ui">🎨 Интерфейс</s:String>
+    <s:String x:Key="prof_tab_install">🔧 Установка</s:String>
+    <s:String x:Key="prof_tab_notif">🔔 Уведомления</s:String>
+    <s:String x:Key="prof_tab_privacy">🔒 Приватность</s:String>
+
+    <!-- Catalog tab -->
+    <s:String x:Key="prof_catalog_mode_label">Режим каталога:</s:String>
+    <s:String x:Key="prof_catalog_mode_basic">Базовый</s:String>
+    <s:String x:Key="prof_catalog_mode_extended">Расширенный</s:String>
+    <s:String x:Key="prof_catalog_mode_full">Полный</s:String>
+    <s:String x:Key="prof_catalog_sort_label">Сортировка по умолчанию:</s:String>
+    <s:String x:Key="prof_catalog_sort_alpha">По алфавиту</s:String>
+    <s:String x:Key="prof_catalog_sort_category">По категории</s:String>
+    <s:String x:Key="prof_catalog_sort_popularity">По популярности</s:String>
+    <s:String x:Key="prof_catalog_hide_installed">Скрывать уже установленные приложения</s:String>
+    <s:String x:Key="prof_catalog_free_only">Показывать только бесплатные</s:String>
+
+    <!-- UI tab -->
+    <s:String x:Key="prof_ui_theme_label">Тема:</s:String>
+    <s:String x:Key="prof_ui_theme_dark">🌙 Тёмная</s:String>
+    <s:String x:Key="prof_ui_theme_light">☀️ Светлая</s:String>
+    <s:String x:Key="prof_ui_lang_label">Язык интерфейса:</s:String>
+    <s:String x:Key="prof_ui_lang_auto">Автоопределение (системный)</s:String>
+    <s:String x:Key="prof_ui_lang_ru">Русский</s:String>
+    <s:String x:Key="prof_ui_lang_en">English</s:String>
+    <s:String x:Key="prof_ui_compact">Компактный режим каталога</s:String>
+    <s:String x:Key="prof_ui_descriptions">Показывать описания приложений в каталоге</s:String>
+
+    <!-- Install tab -->
+    <s:String x:Key="prof_install_silent">Тихая установка (без диалогов подтверждения)</s:String>
+    <s:String x:Key="prof_install_auto_deps">Устанавливать зависимости автоматически</s:String>
+    <s:String x:Key="prof_install_folder_label">Папка установки по умолчанию:</s:String>
+    <s:String x:Key="prof_install_folder_browse">Обзор...</s:String>
+
+    <!-- Notifications tab -->
+    <s:String x:Key="prof_notif_app_updates">Уведомлять об обновлениях приложений из каталога</s:String>
+    <s:String x:Key="prof_notif_new_apps">Уведомлять о новых приложениях в каталоге</s:String>
+
+    <!-- Privacy tab -->
+    <s:String x:Key="prof_privacy_sync_favorites">Синхронизировать избранное между устройствами</s:String>
+    <s:String x:Key="prof_privacy_history">Сохранять историю установок</s:String>
+    <s:String x:Key="prof_privacy_stats">Анонимная статистика использования</s:String>
+    <s:String x:Key="prof_privacy_stats_hint">Помогает нам улучшать подборку приложений</s:String>
+
+    <!-- Buttons -->
+    <s:String x:Key="prof_save">Сохранить</s:String>
+    <s:String x:Key="prof_cancel">Отмена</s:String>
+    <s:String x:Key="prof_reset">Сбросить настройки</s:String>
+    <s:String x:Key="prof_lang_restart">Язык изменён. Перезапустите программу для полного применения.</s:String>
+
+    <!-- Sidebar -->
+    <s:String x:Key="sidebar_profile">⚙ Профиль</s:String>
+
+</ResourceDictionary>
