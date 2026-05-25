@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-25 07:23:07",
+  "lastUpdated": "2026-05-25 07:26:42",
   "apps": [
     {
       "id": "firefox",
@@ -79,18 +79,6 @@
       "iconUrl": "",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
       "sha256": "2ce6b85c88057ec21d86b781562b8e55850c6c88a7138de2ace4de8bc6f8d599"
-    },
-    {
-      "id": "vivaldi",
-      "name": "Vivaldi",
-      "category": "Браузеры",
-      "wingetId": "Vivaldi.Vivaldi",
-      "downloadUrl": "https://downloads.vivaldi.com/stable/Vivaldi.7.2.3621.73.x64.exe",
-      "version": "7.2.3621.73",
-      "size": "~95 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Браузер для тех, кто любит настройки и кастомизацию."
     },
     {
       "id": "libreoffice",
