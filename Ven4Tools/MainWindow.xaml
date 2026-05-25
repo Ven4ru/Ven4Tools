@@ -122,6 +122,38 @@
                 
                 <!-- Нижняя панель (тема и статус) -->
                 <StackPanel Grid.Row="2" Margin="16,0,16,20">
+
+                    <!-- Блок пользователя -->
+                    <Border x:Name="pnlUserLoggedIn" Visibility="Collapsed"
+                            Background="{DynamicResource CardBackground}"
+                            CornerRadius="8" Padding="10,8" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="txtUserAvatar" Text="👤" FontSize="22"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock x:Name="txtUserName" Text="" FontSize="13"
+                                           FontWeight="Bold" TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextPrimary}"/>
+                                <TextBlock x:Name="txtUserEmail" Text="" FontSize="10"
+                                           TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextSecondary}"/>
+                            </StackPanel>
+                            <Button Grid.Column="2" x:Name="btnLogout" Content="Выйти"
+                                    Height="26" Padding="6,2" FontSize="11" FontWeight="Normal"
+                                    Margin="4,0,0,0" Click="BtnLogout_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <Button x:Name="btnLogin" Content="👤  Войти в аккаунт"
+                            Height="38" Margin="0,0,0,10"
+                            Visibility="Visible"
+                            Click="BtnLogin_Click"/>
+
                     <Separator Background="{DynamicResource BorderBrush}" Margin="0,0,0,15"/>
                     
                     <!-- Переключатель темы -->

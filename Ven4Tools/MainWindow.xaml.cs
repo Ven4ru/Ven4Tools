@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Ven4Tools.Models;
+using Ven4Tools.Views;
 using Ven4Tools.Views.Tabs;
 
 namespace Ven4Tools
@@ -20,8 +22,11 @@ namespace Ven4Tools
             }
             
             NavigateToCatalog(null, null);
-            
+
             btnThemeToggle.IsChecked = false;
+
+            UserSession.Changed += UpdateUserUI;
+            UpdateUserUI();
         }
         private void InitializeButtons()
 {
@@ -146,6 +151,38 @@ private void SetActiveButton(Button activeButton)
             {
                 txtStatusBar.Text = message.Length > 50 ? message.Substring(0, 47) + "..." : message;
             });
+        }
+
+        private void UpdateUserUI()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (UserSession.IsLoggedIn)
+                {
+                    txtUserName.Text = UserSession.Name;
+                    txtUserEmail.Text = UserSession.Email;
+                    pnlUserLoggedIn.Visibility = Visibility.Visible;
+                    btnLogin.Visibility = Visibility.Collapsed;
+                    txtStatusBar.Text = $"👋 Привет, {UserSession.Name}!";
+                }
+                else
+                {
+                    pnlUserLoggedIn.Visibility = Visibility.Collapsed;
+                    btnLogin.Visibility = Visibility.Visible;
+                }
+            });
+        }
+
+        private void BtnLogin_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new LoginWindow { Owner = this };
+            win.ShowDialog();
+        }
+
+        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            UserSession.Logout();
+            txtStatusBar.Text = "✅ Вы вышли из аккаунта";
         }
     }
 }
