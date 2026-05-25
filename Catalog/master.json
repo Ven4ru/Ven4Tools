@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-25 07:26:42",
+  "lastUpdated": "2026-05-25 07:28:57",
   "apps": [
     {
       "id": "firefox",
@@ -52,7 +52,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
-      "sha256": "cdfa904fac1702f349e831d6cc6f92ee37930466ddc899f8f1b2ebee029a5ca6"
+      "sha256": "d55e54c97b9abaa4092192e4cbd586ff27388e288ee4c0ab59384c29834bc0eb"
     },
     {
       "id": "brave",
@@ -78,7 +78,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
-      "sha256": "2ce6b85c88057ec21d86b781562b8e55850c6c88a7138de2ace4de8bc6f8d599"
+      "sha256": "ca0a2c5cb852917e62a6ed7039b91fdb73aca1d4668347a58f9cbdd6da90d3e4"
     },
     {
       "id": "libreoffice",
@@ -637,7 +637,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов.",
-      "sha256": "fca78d375321d1b534d3487fa4656caa322b9fc69911fe4a0249a7d81c0f338e"
+      "sha256": "6471c8890ca8e76c76fec92d34291d5128b3e58ce7ad8ef230f61c924a21862a"
     },
     {
       "id": "powertoys",
