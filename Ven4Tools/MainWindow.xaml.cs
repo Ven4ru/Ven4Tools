@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Ven4Tools.Models;
+using Ven4Tools.Services;
 using Ven4Tools.Views;
 using Ven4Tools.Views.Tabs;
 
@@ -11,22 +12,27 @@ namespace Ven4Tools
 {
     public partial class MainWindow : Window
     {
+        private bool _categorySelectionShown = false;
+
         public MainWindow()
         {
             InitializeComponent();
-            
+
             if (!IsRunAsAdmin())
             {
                 RestartAsAdmin();
                 return;
             }
-            
+
             NavigateToCatalog(null, null);
 
-            btnThemeToggle.IsChecked = false;
+            // Sync theme toggle with saved profile
+            btnThemeToggle.IsChecked = ProfileService.Current.Theme == "light";
 
             UserSession.Changed += UpdateUserUI;
             UpdateUserUI();
+
+            Loaded += (s, e) => ShowCategorySelectionIfNeeded();
         }
         private void InitializeButtons()
 {
@@ -89,37 +95,10 @@ private void SetActiveButton(Button activeButton)
         private void ToggleTheme(object sender, RoutedEventArgs e)
         {
             bool isDark = btnThemeToggle.IsChecked == false;
-            
-            var resources = Application.Current.Resources;
-            
-            if (isDark)
-            {
-                // Тёмная тема
-                resources["WindowBackground"] = new SolidColorBrush(Color.FromRgb(30, 30, 30));
-                resources["SidebarBackground"] = new SolidColorBrush(Color.FromRgb(45, 45, 45));
-                resources["ContentBackground"] = new SolidColorBrush(Color.FromRgb(37, 37, 38));
-                resources["CardBackground"] = new SolidColorBrush(Color.FromRgb(45, 45, 45));
-                resources["TextPrimary"] = new SolidColorBrush(Color.FromRgb(255, 255, 255));
-                resources["TextSecondary"] = new SolidColorBrush(Color.FromRgb(204, 204, 204));
-                resources["BorderBrush"] = new SolidColorBrush(Color.FromRgb(61, 61, 61));
-                resources["AccentColor"] = new SolidColorBrush(Color.FromRgb(0, 120, 212));
-                resources["HeaderForeground"] = new SolidColorBrush(Color.FromRgb(255, 255, 255));
-                txtStatusBar.Text = "🌙 Тёмная тема";
-            }
-            else
-            {
-                // Светлая тема
-                resources["WindowBackground"] = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-                resources["SidebarBackground"] = new SolidColorBrush(Color.FromRgb(248, 248, 248));
-                resources["ContentBackground"] = new SolidColorBrush(Color.FromRgb(245, 245, 245));
-                resources["CardBackground"] = new SolidColorBrush(Color.FromRgb(255, 255, 255));
-                resources["TextPrimary"] = new SolidColorBrush(Color.FromRgb(30, 30, 30));
-                resources["TextSecondary"] = new SolidColorBrush(Color.FromRgb(100, 100, 100));
-                resources["BorderBrush"] = new SolidColorBrush(Color.FromRgb(220, 220, 220));
-                resources["AccentColor"] = new SolidColorBrush(Color.FromRgb(0, 120, 212));
-                resources["HeaderForeground"] = new SolidColorBrush(Color.FromRgb(30, 30, 30));
-                txtStatusBar.Text = "☀️ Светлая тема";
-            }
+            ThemeService.ApplyDark(isDark);
+            ProfileService.Current.Theme = isDark ? "dark" : "light";
+            ProfileService.Save();
+            txtStatusBar.Text = isDark ? "🌙 Тёмная тема" : "☀️ Светлая тема";
         }
         
         private bool IsRunAsAdmin()
@@ -164,6 +143,7 @@ private void SetActiveButton(Button activeButton)
                     pnlUserLoggedIn.Visibility = Visibility.Visible;
                     btnLogin.Visibility = Visibility.Collapsed;
                     txtStatusBar.Text = $"👋 Привет, {UserSession.Name}!";
+                    ShowCategorySelectionIfNeeded();
                 }
                 else
                 {
@@ -183,6 +163,25 @@ private void SetActiveButton(Button activeButton)
         {
             UserSession.Logout();
             txtStatusBar.Text = "✅ Вы вышли из аккаунта";
+        }
+
+        private void BtnProfile_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new ProfileWindow { Owner = this };
+            win.ShowDialog();
+            // Sync theme toggle in case profile changed theme
+            btnThemeToggle.IsChecked = ProfileService.Current.Theme == "light";
+        }
+
+        private void ShowCategorySelectionIfNeeded()
+        {
+            if (_categorySelectionShown) return;
+            if (!UserSession.IsLoggedIn || ProfileService.Current.HasSelectedCategory) return;
+            _categorySelectionShown = true;
+
+            var win = new CategorySelectionWindow { Owner = this };
+            if (win.ShowDialog() != true)
+                _categorySelectionShown = false;
         }
     }
 }
