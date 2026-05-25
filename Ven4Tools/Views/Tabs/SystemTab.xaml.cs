@@ -12,6 +12,8 @@ namespace Ven4Tools.Views.Tabs
     public partial class SystemTab : UserControl
     {
         private const string TurboBoostRegPath = @"SYSTEM\ControlSet001\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7";
+        private const string TurboSubgroup = "54533251-82be-4824-96c1-47b60b740d00";
+        private const string TurboSetting  = "be337238-0d82-4146-a960-4f3749d470c7";
         
 
         public event Action<string>? LogMessage;
@@ -37,6 +39,10 @@ namespace Ven4Tools.Views.Tabs
         {
             LoadSystemInfo();
             LoadAutoStartStatus();
+
+            bool? turbo = GetTurboBoostState();
+            if (turbo.HasValue)
+                AddLog(turbo.Value ? "⚡ Турбобуст: включён" : "⚡ Турбобуст: отключён");
         }
         
         private void LoadSettings()
@@ -198,76 +204,108 @@ namespace Ven4Tools.Views.Tabs
             }
         }
         
-        private int GetTurboBoostAttributes()
-        {
-            try
-            {
-                using (var key = Registry.LocalMachine.OpenSubKey(TurboBoostRegPath))
-                {
-                    if (key == null) return -1;
-                    var val = key.GetValue("Attributes");
-                    return val != null ? Convert.ToInt32(val) : -1;
-                }
-            }
-            catch { return -1; }
-        }
-        
-        private void SetTurboBoostAttributes(int value)
-        {
-            try
-            {
-                using (var key = Registry.LocalMachine.OpenSubKey(TurboBoostRegPath, writable: true))
-                {
-                    if (key == null)
-                    {
-                        using (var newKey = Registry.LocalMachine.CreateSubKey(TurboBoostRegPath))
-                        {
-                            newKey.SetValue("Attributes", value, RegistryValueKind.DWord);
-                        }
-                    }
-                    else
-                    {
-                        key.SetValue("Attributes", value, RegistryValueKind.DWord);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                AddLog($"❌ Ошибка установки атрибутов турбобуста: {ex.Message}");
-                throw;
-            }
-        }
-        
         private void BtnDisableTurboBoost_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                SetTurboBoostAttributes(2);
-                MessageBox.Show("✅ Турбобуст отключён (Attributes = 2).\n\nПосле перезагрузки в настройках электропитания появится пункт управления.",
+                ApplyTurboBoost(false);
+                AddLog("⚡ Турбобуст отключён");
+                MessageBox.Show("✅ Турбобуст отключён.\nИзменение применено немедленно — перезагрузка не требуется.",
                     "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                AddLog("⚡ Турбобуст отключën");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"❌ Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 AddLog($"❌ Ошибка при отключении турбобуста: {ex.Message}");
+                MessageBox.Show($"❌ Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
         private void BtnEnableTurboBoost_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                SetTurboBoostAttributes(1);
-                MessageBox.Show("✅ Турбобуст включён (Attributes = 1).\n\nПосле перезагрузки пункт управления Turbo Boost вернётся к стандартному поведению.",
-                    "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                ApplyTurboBoost(true);
                 AddLog("⚡ Турбобуст включён");
+                MessageBox.Show("✅ Турбобуст включён.\nИзменение применено немедленно — перезагрузка не требуется.",
+                    "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"❌ Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 AddLog($"❌ Ошибка при включении турбобуста: {ex.Message}");
+                MessageBox.Show($"❌ Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void ApplyTurboBoost(bool enable)
+        {
+            int value = enable ? 1 : 0;
+
+            // Применяем для AC (от сети) и DC (от батареи)
+            RunPowerCfg($"-setacvalueindex SCHEME_CURRENT {TurboSubgroup} {TurboSetting} {value}");
+            RunPowerCfg($"-setdcvalueindex SCHEME_CURRENT {TurboSubgroup} {TurboSetting} {value}");
+
+            // Активируем схему чтобы применить изменения
+            RunPowerCfg("-setactive SCHEME_CURRENT");
+
+            // Делаем настройку видимой в панели управления
+            SetTurboBoostAttributes(2);
+        }
+
+        private bool? GetTurboBoostState()
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "powercfg",
+                    Arguments = $"/query SCHEME_CURRENT {TurboSubgroup} {TurboSetting}",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+                using var process = Process.Start(psi);
+                string output = process?.StandardOutput.ReadToEnd() ?? "";
+                process?.WaitForExit();
+
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    output, @"Current AC Power Setting Index:\s*0x(\w+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (match.Success)
+                    return Convert.ToInt32(match.Groups[1].Value, 16) != 0;
+            }
+            catch { }
+            return null;
+        }
+
+        private void RunPowerCfg(string args)
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "powercfg",
+                Arguments = args,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            using var process = Process.Start(psi) ?? throw new Exception("Не удалось запустить powercfg");
+            process.WaitForExit();
+            if (process.ExitCode != 0)
+            {
+                string err = process.StandardError.ReadToEnd();
+                throw new Exception($"powercfg завершился с ошибкой {process.ExitCode}: {err}");
+            }
+        }
+
+        private void SetTurboBoostAttributes(int value)
+        {
+            try
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(TurboBoostRegPath, writable: true)
+                    ?? Registry.LocalMachine.CreateSubKey(TurboBoostRegPath);
+                key.SetValue("Attributes", value, RegistryValueKind.DWord);
+            }
+            catch { }
         }
         
         private void AddLog(string message)
