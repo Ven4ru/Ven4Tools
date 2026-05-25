@@ -37,18 +37,31 @@ namespace Ven4Tools.Views.Tabs
         
         public event Action<string>? LogMessage;
         
+        // Categories visible per mode
+        private static readonly HashSet<AppCategory> BasicCategories = new()
+        {
+            AppCategory.Браузеры, AppCategory.Офис, AppCategory.Мультимедиа,
+            AppCategory.Системные, AppCategory.Другое
+        };
+        private static readonly HashSet<AppCategory> ExtendedCategories = new(BasicCategories)
+        {
+            AppCategory.Разработка, AppCategory.Графика, AppCategory.Мессенджеры
+        };
+
         public CatalogTab()
         {
             InitializeComponent();
-            
+
             _catalogLoader = new CatalogLoaderService();
             appManager = new AppManager();
             installService = new InstallationService();
             availabilityChecker = new AvailabilityChecker();
-            
+
             InitCategoryPanels();
             LoadAvailableDisks();
-            
+
+            ProfileService.Changed += () => Dispatcher.Invoke(ApplyProfileFilters);
+
             Loaded += async (s, e) => await LoadCatalogAndRefreshAsync();
             
             btnInstall.Click += InstallSelected_Click;
@@ -203,7 +216,11 @@ namespace Ven4Tools.Views.Tabs
 
                 var availabilityTasks = new List<Task>();
 
-                foreach (var app in _catalog.Apps)
+                var appsToShow = ProfileService.Current.DefaultSort == "alpha"
+                    ? _catalog.Apps.OrderBy(a => a.Name).ToList()
+                    : _catalog.Apps;
+
+                foreach (var app in appsToShow)
                 {
                     var category = GetCategoryFromString(app.Category);
 
@@ -238,6 +255,8 @@ namespace Ven4Tools.Views.Tabs
 
                 AddLog($"Загружено {_catalog.Apps.Count} приложений из каталога, {userApps.Count} пользовательских");
                 AddLog("⏳ Проверка доступности запущена...");
+
+                ApplyProfileFilters();
 
                 _ = Task.WhenAll(availabilityTasks).ContinueWith(async _ =>
                 {
@@ -958,6 +977,52 @@ namespace Ven4Tools.Views.Tabs
 
             if (installedCount > 0)
                 AddLog($"📦 Уже установлено: {installedCount} из {appCheckBoxes.Count} приложений");
+
+            // Hide installed if profile setting is on
+            if (ProfileService.Current.HideInstalled)
+                ApplyHideInstalled();
+        }
+
+        private void ApplyHideInstalled()
+        {
+            foreach (var kvp in appCheckBoxes)
+            {
+                if (kvp.Value.ToolTip?.ToString()?.StartsWith("✓") == true)
+                    kvp.Value.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void ApplyProfileFilters()
+        {
+            var mode = ProfileService.Current.CatalogMode;
+            bool compact = ProfileService.Current.CompactMode;
+
+            foreach (var kvp in categoryPanels)
+            {
+                // Show/hide expander based on catalog mode
+                if (kvp.Value.Parent is System.Windows.Controls.Expander expander)
+                {
+                    bool visible = mode switch
+                    {
+                        "basic"    => BasicCategories.Contains(kvp.Key),
+                        "extended" => ExtendedCategories.Contains(kvp.Key),
+                        _          => true
+                    };
+                    expander.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+                }
+
+                // Compact mode: adjust checkbox margins
+                var margin = compact ? new Thickness(0, 0, 0, 0) : new Thickness(0, 2, 0, 2);
+                foreach (var child in kvp.Value.Children)
+                {
+                    if (child is System.Windows.FrameworkElement fe)
+                        fe.Margin = margin;
+                }
+            }
+
+            // Re-apply hide installed if needed
+            if (ProfileService.Current.HideInstalled)
+                ApplyHideInstalled();
         }
 
         public void AddLog(string message)
