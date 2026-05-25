@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-25 07:17:21",
+  "lastUpdated": "2026-05-25 07:20:44",
   "apps": [
     {
       "id": "firefox",
@@ -52,7 +52,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
-      "sha256": "c7f2a3718a5ba94d5ed1fe1ae7fc7719d007905031f56de8393d36b7be9abc7a"
+      "sha256": "cdfa904fac1702f349e831d6cc6f92ee37930466ddc899f8f1b2ebee029a5ca6"
     },
     {
       "id": "brave",
@@ -78,7 +78,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
-      "sha256": "2b6d8b4b6223e3d8d6e81128ddb5975f28d42505f509797e10919ff9c7b86736"
+      "sha256": "2ce6b85c88057ec21d86b781562b8e55850c6c88a7138de2ace4de8bc6f8d599"
     },
     {
       "id": "vivaldi",
@@ -355,7 +355,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Платформа для тестирования API и работы с запросами.",
-      "sha256": "681e3ad4f7235039d5e71319053a4950cd9836cc0d3ded88a40959511adae4a5"
+      "sha256": "2504eca416239e0cc9a27d72a042f6585552c8ad273e5308d4bc7d2eba3d4f13"
     },
     {
       "id": "notepad-plus-plus",
@@ -661,7 +661,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов.",
-      "sha256": "793d0768b425bcba0d81661dd1791dfc21e34a536fb61a11830f86bbb428b1d7"
+      "sha256": "fca78d375321d1b534d3487fa4656caa322b9fc69911fe4a0249a7d81c0f338e"
     },
     {
       "id": "powertoys",
