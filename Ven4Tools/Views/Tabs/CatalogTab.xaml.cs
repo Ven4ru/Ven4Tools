@@ -161,7 +161,8 @@ namespace Ven4Tools.Views.Tabs
                 
                 _catalog = loadedCatalog;
                 SyncCatalogToAppManager();
-                
+                appManager.LoadAlternativeSources();
+
                 string sourceText = _catalog.Source switch
                 {
                     "online" => "🌐 Каталог загружен из интернета",

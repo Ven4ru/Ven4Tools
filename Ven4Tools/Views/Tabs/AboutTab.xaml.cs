@@ -5,23 +5,88 @@ using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
 {
     public partial class AboutTab : UserControl
     {
         public event Action<string>? LogMessage;
-        
+
         public AboutTab()
         {
             InitializeComponent();
-            
+
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             txtVersion.Text = $"Версия {version?.ToString() ?? "2.3.0"}";
-            
+
             btnGitHub.Click += BtnGitHub_Click;
             btnFeedback.Click += BtnFeedback_Click;
             btnReportIssue.Click += BtnReportIssue_Click;
+
+            PopulateChangelog();
+
+            CatalogLoaderService.CatalogReady += OnCatalogReady;
+            Unloaded += (s, e) => CatalogLoaderService.CatalogReady -= OnCatalogReady;
+        }
+
+        private void OnCatalogReady(Models.MasterCatalog _)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                pnlChangelog.Children.Clear();
+                PopulateChangelog();
+            });
+        }
+
+        private void PopulateChangelog()
+        {
+            var entries = CatalogLoaderService.LoadedCatalog?.Changelog;
+
+            if (entries == null || entries.Count == 0)
+            {
+                pnlChangelog.Children.Add(new TextBlock
+                {
+                    Text = "История изменений будет доступна после загрузки каталога.",
+                    Foreground = (Brush)FindResource("TextSecondary"),
+                    TextWrapping = TextWrapping.Wrap
+                });
+                return;
+            }
+
+            foreach (var entry in entries.OrderByDescending(e => e.Version))
+            {
+                var block = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
+
+                block.Children.Add(new TextBlock
+                {
+                    Text = $"v{entry.Version}  ·  {entry.Date}",
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = (Brush)FindResource("TextPrimary")
+                });
+
+                if (!string.IsNullOrEmpty(entry.Message))
+                    block.Children.Add(new TextBlock
+                    {
+                        Text = entry.Message,
+                        Foreground = (Brush)FindResource("TextSecondary"),
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(0, 2, 0, 0)
+                    });
+
+                if (entry.AddedApps?.Count > 0)
+                    block.Children.Add(new TextBlock
+                    {
+                        Text = $"+ {string.Join(", ", entry.AddedApps)}",
+                        Foreground = new SolidColorBrush(Color.FromRgb(100, 200, 100)),
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(0, 2, 0, 0),
+                        FontSize = 11
+                    });
+
+                pnlChangelog.Children.Add(block);
+            }
         }
         
         private void BtnGitHub_Click(object sender, RoutedEventArgs e)

@@ -14,7 +14,10 @@ namespace Ven4Tools.Models
 
         [JsonProperty("apps")]
         public List<App> Apps { get; set; } = new List<App>();
-        
+
+        [JsonProperty("changelog")]
+        public List<CatalogChangelogEntry> Changelog { get; set; } = new List<CatalogChangelogEntry>();
+
         [JsonIgnore]
         public string Source { get; set; } = "online";
     }
