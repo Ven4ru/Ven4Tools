@@ -1,0 +1,118 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Ven4Tools.Launcher.Models;
+
+namespace Ven4Tools.Launcher.Services
+{
+    public class UpdateBackgroundService : IDisposable
+    {
+        private Timer? _timer;
+        private CancellationTokenSource _cts = new CancellationTokenSource();
+        private readonly string _launcherVersion;
+        private readonly Func<string> _getClientPath;
+        private readonly GitHubService _github = new GitHubService();
+
+        public string LastNotifiedLauncherVersion { get; set; } = "";
+        public string LastNotifiedClientVersion { get; set; } = "";
+
+        // type: "launcher" or "client"
+        public event Action<string, UpdateInfo>? UpdateAvailable;
+
+        public UpdateBackgroundService(string launcherVersion, Func<string> getClientPath)
+        {
+            _launcherVersion = launcherVersion;
+            _getClientPath = getClientPath;
+        }
+
+        public void Start()
+        {
+            // Сбрасываем токен отмены (мог быть отменён через Stop)
+            if (_cts.IsCancellationRequested)
+                _cts = new CancellationTokenSource();
+
+            if (_timer == null)
+                _timer = new Timer(async _ => await CheckAllAsync(), null,
+                    TimeSpan.FromSeconds(60), TimeSpan.FromHours(3));
+            else
+                _timer.Change(TimeSpan.FromSeconds(60), TimeSpan.FromHours(3));
+        }
+
+        public void Stop()
+        {
+            _cts.Cancel();
+            _timer?.Change(Timeout.Infinite, Timeout.Infinite);
+        }
+
+        public async Task CheckNowAsync() => await CheckAllAsync();
+
+        private async Task CheckAllAsync()
+        {
+            if (_cts.IsCancellationRequested) return;
+            try { await CheckLauncherAsync(); } catch { }
+            if (_cts.IsCancellationRequested) return;
+            try { await CheckClientAsync(); } catch { }
+        }
+
+        private async Task CheckLauncherAsync()
+        {
+            var info = await _github.CheckLauncherUpdate(_launcherVersion);
+            if (info?.HasUpdate != true) return;
+            if (info.LatestVersion == LastNotifiedLauncherVersion) return;
+            if (_cts.IsCancellationRequested) return;
+
+            LastNotifiedLauncherVersion = info.LatestVersion!;
+            UpdateAvailable?.Invoke("launcher", info);
+        }
+
+        private async Task CheckClientAsync()
+        {
+            string clientExe = Path.Combine(_getClientPath(), "Ven4Tools.exe");
+            if (!File.Exists(clientExe)) return;
+
+            var versionInfo = FileVersionInfo.GetVersionInfo(clientExe);
+            string installedVersion = versionInfo.FileVersion ?? "0.0.0";
+
+            var versions = await _github.GetAvailableClientVersions();
+            var latest = versions.FirstOrDefault(v => v.IsLatest);
+            if (latest == null) return;
+
+            if (CompareVersions(latest.Version, installedVersion) <= 0) return;
+            if (latest.Version == LastNotifiedClientVersion) return;
+            if (_cts.IsCancellationRequested) return;
+
+            LastNotifiedClientVersion = latest.Version;
+            UpdateAvailable?.Invoke("client", new UpdateInfo
+            {
+                HasUpdate = true,
+                CurrentVersion = installedVersion,
+                LatestVersion = latest.Version,
+                DownloadUrl = latest.DownloadUrl,
+                ReleaseNotes = latest.ReleaseNotes
+            });
+        }
+
+        private static int CompareVersions(string v1, string v2)
+        {
+            var p1 = v1.Split('.');
+            var p2 = v2.Split('.');
+            for (int i = 0; i < Math.Max(p1.Length, p2.Length); i++)
+            {
+                int n1 = i < p1.Length && int.TryParse(p1[i], out var x) ? x : 0;
+                int n2 = i < p2.Length && int.TryParse(p2[i], out var y) ? y : 0;
+                if (n1 != n2) return n1.CompareTo(n2);
+            }
+            return 0;
+        }
+
+        public void Dispose()
+        {
+            _cts.Cancel();
+            _timer?.Dispose();
+            _github.Dispose();
+        }
+    }
+}

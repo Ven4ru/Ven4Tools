@@ -22,6 +22,11 @@ namespace Ven4Tools.Launcher
         private List<ClientVersionInfo> _availableVersions = new();
         private ClientVersionInfo? _selectedVersion;
         private bool _detailsPanelOpen = false;
+        private UpdateBackgroundService? _updateService;
+        private bool _backgroundUpdates = true;
+        private bool _autostart = false;
+        private string _lastNotifiedLauncherVersion = "";
+        private string _lastNotifiedClientVersion = "";
         
         public MainWindow()
         {
@@ -33,6 +38,7 @@ namespace Ven4Tools.Launcher
 
             LoadSettings();
             CreateTrayIcon();
+            StartBackgroundService();
             
             if (string.IsNullOrEmpty(_installPath))
             {
@@ -63,17 +69,29 @@ namespace Ven4Tools.Launcher
                     {
                         _minimizeToTray = settings.MinimizeToTray ?? true;
                         _installPath = settings.InstallPath ?? "";
+                        _backgroundUpdates = settings.BackgroundUpdates ?? true;
+                        _autostart = settings.Autostart ?? false;
+                        _lastNotifiedLauncherVersion = settings.LastNotifiedLauncherVersion ?? "";
+                        _lastNotifiedClientVersion = settings.LastNotifiedClientVersion ?? "";
                     }
                 }
             }
             catch { }
         }
-        
+
         private void SaveSettings()
         {
             try
             {
-                var settings = new { MinimizeToTray = _minimizeToTray, InstallPath = _installPath };
+                var settings = new
+                {
+                    MinimizeToTray = _minimizeToTray,
+                    InstallPath = _installPath,
+                    BackgroundUpdates = _backgroundUpdates,
+                    Autostart = _autostart,
+                    LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
+                    LastNotifiedClientVersion = _lastNotifiedClientVersion
+                };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(_settingsPath, json);
             }
@@ -167,7 +185,7 @@ private void CmbVersions_SelectionChanged(object sender, System.Windows.Controls
             // Автоматически открываем панель, если она закрыта
             if (!_detailsPanelOpen)
             {
-                BtnToggleDetails_Click(null, null);
+                BtnToggleDetails_Click(this, new RoutedEventArgs());
             }
         }
         
@@ -546,7 +564,7 @@ if (updateInfo != null && updateInfo.HasUpdate)
     if (updateResult == MessageBoxResult.Yes)
     {
         btnInstallUpdate.IsEnabled = true;
-        BtnInstallUpdate_Click(sender, e);  // ← убрали await
+        await InstallUpdateCoreAsync();
     }
 }
 else
@@ -766,20 +784,142 @@ private bool IsRunAsAdmin()
                     Visible = true,
                     Text = "Ven4Tools Launcher"
                 };
-                
+
+                var itemAutostart = new ToolStripMenuItem("Запускать при старте Windows")
+                {
+                    Checked = GetAutostart(),
+                    CheckOnClick = true
+                };
+                itemAutostart.CheckedChanged += (s, e) =>
+                {
+                    _autostart = itemAutostart.Checked;
+                    SetAutostart(_autostart);
+                    SaveSettings();
+                };
+
+                var itemBgUpdates = new ToolStripMenuItem("Проверять обновления в фоне")
+                {
+                    Checked = _backgroundUpdates,
+                    CheckOnClick = true
+                };
+                itemBgUpdates.CheckedChanged += (s, e) =>
+                {
+                    _backgroundUpdates = itemBgUpdates.Checked;
+                    if (_backgroundUpdates)
+                        _updateService?.Start();
+                    else
+                        _updateService?.Stop();
+                    SaveSettings();
+                };
+
                 var contextMenu = new ContextMenuStrip();
-                contextMenu.Items.Add("Показать окно", null, (s, e) => ShowWindow());
-                contextMenu.Items.Add("Проверить обновления", null, async (s, e) => await CheckForUpdatesAsync());
+                contextMenu.Items.Add("Показать окно", null, (s, e) => Dispatcher.Invoke(ShowWindow));
+                contextMenu.Items.Add("Проверить обновления", null, async (s, e) =>
+                {
+                    await (_updateService?.CheckNowAsync() ?? Task.CompletedTask);
+                    // InvokeAsync<Task> возвращает DispatcherOperation<Task> — .Task.Unwrap() даёт inner Task
+                    await Dispatcher.InvokeAsync(async () => await CheckForUpdatesAsync()).Task.Unwrap();
+                });
+                contextMenu.Items.Add("-");
+                contextMenu.Items.Add(itemAutostart);
+                contextMenu.Items.Add(itemBgUpdates);
                 contextMenu.Items.Add("-");
                 contextMenu.Items.Add("Выход", null, (s, e) => ExitApplication());
-                
+
                 _notifyIcon.ContextMenuStrip = contextMenu;
-                _notifyIcon.DoubleClick += (s, e) => ShowWindow();
+                _notifyIcon.DoubleClick += (s, e) => Dispatcher.Invoke(ShowWindow);
+                _notifyIcon.BalloonTipClicked += (s, e) => Dispatcher.Invoke(ShowWindow);
             }
             catch (Exception ex)
             {
                 AddLog($"⚠️ Ошибка создания иконки в трее: {ex.Message}");
             }
+        }
+
+        private void StartBackgroundService()
+        {
+            var launcherVersion = System.Reflection.Assembly.GetExecutingAssembly()
+                .GetName().Version?.ToString() ?? "2.3.2";
+
+            _updateService = new UpdateBackgroundService(launcherVersion, () => _clientPath)
+            {
+                LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
+                LastNotifiedClientVersion = _lastNotifiedClientVersion
+            };
+
+            _updateService.UpdateAvailable += OnUpdateAvailable;
+
+            if (_backgroundUpdates)
+                _updateService.Start();
+        }
+
+        private void OnUpdateAvailable(string type, UpdateInfo info)
+        {
+            // Все операции — на UI-потоке: и запись полей, и SaveSettings, и UI-обновления.
+            // Это устраняет race condition с ThreadPool-потоком таймера.
+            try
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    if (type == "launcher") _lastNotifiedLauncherVersion = info.LatestVersion ?? "";
+                    else _lastNotifiedClientVersion = info.LatestVersion ?? "";
+                    SaveSettings();
+
+                    string title = type == "launcher"
+                        ? $"Обновление лаунчера {info.LatestVersion}"
+                        : $"Новая версия Ven4Tools {info.LatestVersion}";
+
+                    string notes = info.ReleaseNotes ?? "Подробности — в окне лаунчера.";
+                    notes = System.Text.RegularExpressions.Regex.Replace(notes, @"[#*`\-]", "").Trim();
+                    if (notes.Length > 250) notes = notes.Substring(0, 247) + "...";
+
+                    AddLog($"🔔 {title}");
+                    AddLog($"   {notes.Replace('\n', ' ')}");
+
+                    _notifyIcon?.ShowBalloonTip(
+                        8000,
+                        title,
+                        $"v{info.CurrentVersion} → v{info.LatestVersion}\n\n{notes}",
+                        ToolTipIcon.Info);
+
+                    if (type == "launcher")
+                        btnInstallUpdate.IsEnabled = true;
+                });
+            }
+            catch { } // Dispatcher может быть выключен при завершении приложения
+        }
+
+        private static bool GetAutostart()
+        {
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
+                return key?.GetValue("Ven4Tools.Launcher") != null;
+            }
+            catch { return false; }
+        }
+
+        private static void SetAutostart(bool enable)
+        {
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", writable: true);
+                if (key == null) return;
+
+                if (enable)
+                {
+                    string exe = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                    if (string.IsNullOrEmpty(exe)) return; // single-file publish — MainModule может быть null
+                    key.SetValue("Ven4Tools.Launcher", $"\"{exe}\"");
+                }
+                else
+                {
+                    key.DeleteValue("Ven4Tools.Launcher", throwOnMissingValue: false);
+                }
+            }
+            catch { }
         }
         
         private void ShowWindow()
@@ -805,6 +945,7 @@ private bool IsRunAsAdmin()
             }
             else if (result == MessageBoxResult.No)
             {
+                _updateService?.Dispose();
                 _notifyIcon?.Dispose();
                 System.Windows.Application.Current.Shutdown();
             }
@@ -816,6 +957,7 @@ private bool IsRunAsAdmin()
         
         private void ExitApplication()
         {
+            _updateService?.Dispose();
             _notifyIcon?.Dispose();
             System.Windows.Application.Current.Shutdown();
         }
@@ -860,19 +1002,26 @@ private bool IsRunAsAdmin()
         
         private async void BtnInstallUpdate_Click(object sender, RoutedEventArgs e)
         {
+            await InstallUpdateCoreAsync();
+        }
+
+        private async Task InstallUpdateCoreAsync()
+        {
             try
             {
                 AddLog("📥 Начинаем скачивание обновления лаунчера...");
                 btnInstallUpdate.IsEnabled = false;
-                
+
                 var updateService = new UpdateService();
                 var result = await updateService.DownloadAndInstallUpdateAsync();
-                
+
                 if (result)
                 {
-                    AddLog("✅ Обновление установлено! Запускаем...");
-                    await Task.Delay(1000);
-                    BtnLaunchApp_Click(null, null);
+                    // Скрипт запущен: через 2 сек скопирует новый exe и перезапустит лаунчер.
+                    // Выходим, чтобы освободить exe для замены.
+                    AddLog("✅ Скрипт обновления запущен. Лаунчер перезапустится через несколько секунд...");
+                    await Task.Delay(500);
+                    ExitApplication();
                 }
                 else
                 {
@@ -885,7 +1034,8 @@ private bool IsRunAsAdmin()
             }
             finally
             {
-                btnInstallUpdate.IsEnabled = true;
+                if (IsLoaded)
+                    btnInstallUpdate.IsEnabled = true;
             }
         }
         
