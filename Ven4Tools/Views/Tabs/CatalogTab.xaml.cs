@@ -895,7 +895,7 @@ namespace Ven4Tools.Views.Tabs
                 var url = "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/master.json";
                 AddLog($"📡 URL: {url}");
                 using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromSeconds(5);
+                client.Timeout = TimeSpan.FromSeconds(AppSettings.CatalogTimeout);
                 client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
                 var response = await client.GetAsync(url);
                 AddLog($"📡 HTTP статус: {response.StatusCode}");
@@ -1242,6 +1242,7 @@ namespace Ven4Tools.Views.Tabs
                 using var process = Process.Start(psi);
                 if (process == null) return results;
 
+                using var reg = token.Register(() => { try { process.Kill(); } catch { } });
                 string output = await process.StandardOutput.ReadToEndAsync();
                 await process.WaitForExitAsync(token);
 
