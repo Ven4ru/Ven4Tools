@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-25 04:34:02",
+  "lastUpdated": "2026-05-25 05:23:47",
   "apps": [
     {
       "id": "firefox",
@@ -52,7 +52,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
-      "sha256": "2e6f2518b72966e6d19440fccf445acf4748f0abf3762aace92533a0b20392d5"
+      "sha256": "c7f2a3718a5ba94d5ed1fe1ae7fc7719d007905031f56de8393d36b7be9abc7a"
     },
     {
       "id": "brave",
@@ -78,7 +78,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
-      "sha256": "0a06a0f95f4a2d48eda5a004186ff7ecdc9609ad6e3dd21286e18ffa783e6f8a"
+      "sha256": "2b6d8b4b6223e3d8d6e81128ddb5975f28d42505f509797e10919ff9c7b86736"
     },
     {
       "id": "vivaldi",
@@ -673,7 +673,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов.",
-      "sha256": "ad2aed25de54e7a30844fad7d49fadf1fb188af17f838ffed21e7cc529da587b"
+      "sha256": "793d0768b425bcba0d81661dd1791dfc21e34a536fb61a11830f86bbb428b1d7"
     },
     {
       "id": "powertoys",
