@@ -25,6 +25,7 @@ namespace Ven4Tools.Views.Tabs
         private readonly AppManager appManager = null!;
         private readonly InstallationService installService = null!;
         private readonly AvailabilityChecker availabilityChecker = null!;
+        private readonly InstalledAppsService installedAppsService = new();
         private Dictionary<string, CheckBox> appCheckBoxes = new();
         private Dictionary<AppCategory, StackPanel> categoryPanels = new();
         private Dictionary<string, AvailabilityChecker.AvailabilityStatus> availabilityStatus = new();
@@ -237,11 +238,12 @@ namespace Ven4Tools.Views.Tabs
                 AddLog($"Загружено {_catalog.Apps.Count} приложений из каталога, {userApps.Count} пользовательских");
                 AddLog("⏳ Проверка доступности запущена...");
 
-                _ = Task.WhenAll(availabilityTasks).ContinueWith(_ =>
+                _ = Task.WhenAll(availabilityTasks).ContinueWith(async _ =>
                 {
                     int available = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
                     int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
                     AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
+                    await UpdateInstalledStatusAsync();
                 });
             }
             catch (Exception ex)
@@ -682,6 +684,7 @@ namespace Ven4Tools.Views.Tabs
                 await Task.WhenAll(tasks);
                 txtOverallStatus.Text = $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed}";
                 appManager.SaveSelectedApps(GetSelectedApps());
+                _ = UpdateInstalledStatusAsync();
             }
             catch (OperationCanceledException)
             {
@@ -925,6 +928,37 @@ namespace Ven4Tools.Views.Tabs
             catch (Exception ex) { AddLog($"⚠️ Ошибка проверки места: {ex.Message}"); }
         }
         
+        private async Task UpdateInstalledStatusAsync()
+        {
+            await installedAppsService.RefreshAsync();
+
+            int installedCount = 0;
+
+            await Dispatcher.InvokeAsync(() =>
+            {
+                foreach (var kvp in appCheckBoxes)
+                {
+                    var appInfo = appManager.GetAppById(kvp.Key);
+                    string wingetId = !string.IsNullOrEmpty(appInfo?.AlternativeId)
+                        ? appInfo!.AlternativeId
+                        : kvp.Key;
+
+                    if (installedAppsService.IsInstalled(wingetId) && kvp.Value.Content is TextBlock tb)
+                    {
+                        string version = installedAppsService.GetInstalledVersion(wingetId);
+                        tb.Foreground = new SolidColorBrush(Color.FromRgb(100, 149, 237));
+                        kvp.Value.ToolTip = string.IsNullOrEmpty(version)
+                            ? "✓ Уже установлено"
+                            : $"✓ Установлено ({version})";
+                        installedCount++;
+                    }
+                }
+            });
+
+            if (installedCount > 0)
+                AddLog($"📦 Уже установлено: {installedCount} из {appCheckBoxes.Count} приложений");
+        }
+
         public void AddLog(string message)
         {
             Dispatcher.Invoke(() =>
