@@ -44,6 +44,7 @@ namespace Ven4Tools.Models
         {
             try
             {
+                if (Services.ProfileService.Current.NoLocalStorage) return;
                 Directory.CreateDirectory(Path.GetDirectoryName(_sessionPath)!);
                 var data = new { UserId, Name, Email, IsAdmin };
                 File.WriteAllText(_sessionPath, JsonConvert.SerializeObject(data));

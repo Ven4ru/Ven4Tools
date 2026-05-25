@@ -26,6 +26,7 @@ namespace Ven4Tools.Views.Tabs
         private readonly InstallationService installService = null!;
         private readonly AvailabilityChecker availabilityChecker = null!;
         private readonly InstalledAppsService installedAppsService = new();
+        private readonly UserAppsService _userAppsService = new();
         private Dictionary<string, CheckBox> appCheckBoxes = new();
         private Dictionary<AppCategory, StackPanel> categoryPanels = new();
         private Dictionary<string, AvailabilityChecker.AvailabilityStatus> availabilityStatus = new();
@@ -61,6 +62,7 @@ namespace Ven4Tools.Views.Tabs
             LoadAvailableDisks();
 
             ProfileService.Changed += () => Dispatcher.Invoke(ApplyProfileFilters);
+            UserSession.Changed += OnUserSessionChanged;
 
             Loaded += async (s, e) => await LoadCatalogAndRefreshAsync();
             
@@ -188,11 +190,49 @@ namespace Ven4Tools.Views.Tabs
                 AddLog($"Загружено приложений: {_catalog.Apps.Count}");
 
                 LoadApps();
+
+                if (UserSession.IsLoggedIn)
+                    await SyncUserAppsFromServerAsync();
             }
             catch (Exception ex)
             {
                 AddLog($"Ошибка загрузки каталога: {ex.Message}");
             }
+        }
+
+        private void OnUserSessionChanged()
+        {
+            _ = Dispatcher.InvokeAsync(async () =>
+            {
+                // Clear previous user's apps from UI and local storage
+                var userApps = appManager.GetAllApps().Where(a => a.IsUserAdded).ToList();
+                foreach (var app in userApps)
+                {
+                    appCheckBoxes.Remove(app.Id);
+                    availabilityStatus.Remove(app.Id);
+                }
+                PanelПользовательские.Children.Clear();
+                appManager.ClearUserApps();
+
+                if (UserSession.IsLoggedIn)
+                    await SyncUserAppsFromServerAsync();
+            });
+        }
+
+        private async Task SyncUserAppsFromServerAsync()
+        {
+            if (!UserSession.IsLoggedIn) return;
+            var serverApps = await _userAppsService.FetchAsync(UserSession.UserId);
+            int added = 0;
+            foreach (var app in serverApps)
+            {
+                if (appManager.GetAppById(app.Id) != null) continue;
+                appManager.AddUserApp(app);
+                await Dispatcher.InvokeAsync(() => AddUserAppToUI(app));
+                added++;
+            }
+            if (added > 0)
+                AddLog($"☁️ Синхронизировано {added} приложений с аккаунта");
         }
         
         private void LoadApps()
@@ -323,6 +363,8 @@ namespace Ven4Tools.Views.Tabs
                 try
                 {
                     appManager.RemoveUserApp(appId);
+                    if (UserSession.IsLoggedIn)
+                        _ = _userAppsService.DeleteAsync(UserSession.UserId, appId);
 
                     var toRemove = PanelПользовательские.Children
                         .OfType<StackPanel>()
@@ -760,6 +802,8 @@ namespace Ven4Tools.Views.Tabs
                 var newApp = addDialog.Result;
                 appManager.AddUserApp(newApp);
                 AddUserAppToUI(newApp);
+                if (UserSession.IsLoggedIn)
+                    _ = _userAppsService.SaveAsync(UserSession.UserId, newApp);
 
                 if (allowStats)
                 {

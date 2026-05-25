@@ -69,6 +69,13 @@
     <s:String x:Key="prof_privacy_history">Save installation history</s:String>
     <s:String x:Key="prof_privacy_stats">Anonymous usage statistics</s:String>
     <s:String x:Key="prof_privacy_stats_hint">Helps us improve the app selection</s:String>
+    <s:String x:Key="prof_privacy_device_label">Data on this device</s:String>
+    <s:String x:Key="prof_privacy_no_local_storage">Don't save session on this device</s:String>
+    <s:String x:Key="prof_privacy_no_local_storage_hint">You will need to sign in every time you launch the app</s:String>
+    <s:String x:Key="prof_privacy_delete_local">🗑 Delete data from this computer</s:String>
+    <s:String x:Key="prof_privacy_delete_title">Delete local data</s:String>
+    <s:String x:Key="prof_privacy_delete_confirm">Delete local data? This will clear: session, app list and catalog cache. Your account data on the server will remain.</s:String>
+    <s:String x:Key="prof_privacy_delete_done">Data deleted. You have been signed out.</s:String>
 
     <!-- Buttons -->
     <s:String x:Key="prof_save">Save</s:String>

@@ -1,4 +1,7 @@
+using System;
+using System.IO;
 using System.Windows;
+using Ven4Tools.Models;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.Views
@@ -57,9 +60,10 @@ namespace Ven4Tools.Views
             chkNotifNew.IsChecked     = p.NotifyNewApps;
 
             // Privacy
-            chkSyncFavorites.IsChecked = p.SyncFavorites;
-            chkHistory.IsChecked       = p.SaveInstallHistory;
-            chkStats.IsChecked         = p.AnonymousStats;
+            chkSyncFavorites.IsChecked  = p.SyncFavorites;
+            chkHistory.IsChecked        = p.SaveInstallHistory;
+            chkStats.IsChecked          = p.AnonymousStats;
+            chkNoLocalStorage.IsChecked = p.NoLocalStorage;
         }
 
         private void RbTheme_Checked(object sender, RoutedEventArgs e)
@@ -103,9 +107,10 @@ namespace Ven4Tools.Views
             p.DefaultInstallFolder = txtInstallFolder.Text.Trim();
             p.NotifyAppUpdates = chkNotifUpdates.IsChecked == true;
             p.NotifyNewApps    = chkNotifNew.IsChecked == true;
-            p.SyncFavorites    = chkSyncFavorites.IsChecked == true;
+            p.SyncFavorites      = chkSyncFavorites.IsChecked == true;
             p.SaveInstallHistory = chkHistory.IsChecked == true;
-            p.AnonymousStats   = chkStats.IsChecked == true;
+            p.AnonymousStats     = chkStats.IsChecked == true;
+            p.NoLocalStorage     = chkNoLocalStorage.IsChecked == true;
 
             // Language
             string newLang = cmbLang.SelectedIndex switch { 1 => "ru", 2 => "en", _ => "auto" };
@@ -127,6 +132,38 @@ namespace Ven4Tools.Views
                     MessageBoxButton.OK, MessageBoxImage.Information);
 
             DialogResult = true;
+        }
+
+        private void BtnDeleteLocalData_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                LocalizationService.T("prof_privacy_delete_confirm"),
+                LocalizationService.T("prof_privacy_delete_title"),
+                MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            string appData = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
+
+            DeleteIfExists(Path.Combine(appData, "session.json"));
+            DeleteIfExists(Path.Combine(appData, "apps.json"));
+            DeleteIfExists(Path.Combine(appData, "apps.json.selection"));
+            DeleteIfExists(Path.Combine(appData, "catalog_cache.json"));
+
+            UserSession.Logout();
+
+            MessageBox.Show(
+                LocalizationService.T("prof_privacy_delete_done"),
+                LocalizationService.T("prof_privacy_delete_title"),
+                MessageBoxButton.OK, MessageBoxImage.Information);
+
+            DialogResult = true;
+        }
+
+        private static void DeleteIfExists(string path)
+        {
+            try { if (File.Exists(path)) File.Delete(path); } catch { }
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
