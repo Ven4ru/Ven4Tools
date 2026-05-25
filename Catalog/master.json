@@ -1,6 +1,20 @@
 {
   "version": 2,
   "lastUpdated": "2026-05-25 07:28:57",
+  "changelog": [
+    {
+      "version": 2,
+      "date": "2026-05-25",
+      "addedApps": [],
+      "message": "Обновлены SHA256 и размеры для 52 приложений. Удалены Vivaldi, Waterfox, Tor Browser."
+    },
+    {
+      "version": 1,
+      "date": "2026-04-01",
+      "addedApps": ["firefox", "google-chrome", "telegram", "discord", "vlc", "7zip", "notepad-plus-plus", "vscode", "git", "steam"],
+      "message": "Первоначальный релиз каталога. 68 приложений в 9 категориях."
+    }
+  ],
   "apps": [
     {
       "id": "firefox",
