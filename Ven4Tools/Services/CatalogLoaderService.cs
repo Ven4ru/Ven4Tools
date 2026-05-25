@@ -10,6 +10,9 @@ namespace Ven4Tools.Services
 {
     public class CatalogLoaderService
     {
+        public static MasterCatalog? LoadedCatalog { get; private set; }
+        public static event Action<MasterCatalog>? CatalogReady;
+
         private readonly HttpClient _httpClient;
 
         private const string RemoteCatalogUrl =
@@ -44,6 +47,8 @@ namespace Ven4Tools.Services
 
                 var catalog = Deserialize(remoteJson);
                 catalog.Source = "online";
+                LoadedCatalog = catalog;
+                CatalogReady?.Invoke(catalog);
                 return catalog;
             }
             catch
@@ -55,10 +60,15 @@ namespace Ven4Tools.Services
 
                     var catalog = Deserialize(localJson);
                     catalog.Source = "cache";
+                    LoadedCatalog = catalog;
+                    CatalogReady?.Invoke(catalog);
                     return catalog;
                 }
 
-                return new MasterCatalog { Source = "embedded" };
+                var empty = new MasterCatalog { Source = "embedded" };
+                LoadedCatalog = empty;
+                CatalogReady?.Invoke(empty);
+                return empty;
             }
         }
 
