@@ -13,50 +13,64 @@
                        Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,20" TextWrapping="Wrap"/>
             
             <!-- ========== ZAPRET БЛОК ========== -->
-            <GroupBox Header="🚀 Обход блокировок (zapret)" Margin="0,0,0,15">
-                <StackPanel>
-                    <TextBlock x:Name="txtZapretStatus" Text="Статус: не установлен" 
-                               Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,5"/>
-                    
-                    <TextBlock x:Name="txtZapretState" Text="Готов" 
-                               Foreground="{DynamicResource TextSecondary}" 
-                               FontSize="11" Margin="0,0,0,10"/>
-                    
-                    <!-- Кнопка установки -->
-                    <Button x:Name="btnInstallZapret" Content="📥 Установить zapret" 
-                            Click="BtnInstallZapret_Click" Height="35" Margin="0,5"/>
-                    
-                    <!-- Панель действий -->
-                    <StackPanel x:Name="btnZapretActions" Visibility="Collapsed">
-                        <Button Content="📟 Открыть меню service.bat" 
-                                Click="BtnOpenServiceMenu_Click" Height="35" Margin="0,5"
-                                Background="{DynamicResource AccentColor}"
-                                ToolTip="Открыть главное меню для настройки стратегий"/>
-                        
-                        <Button Content="📁 Открыть папку с zapret" 
-                                Click="BtnOpenZapretFolder_Click" Height="35" Margin="0,5"/>
-                        
-                        <Button Content="📖 Открыть документацию" 
-                                Click="BtnOpenDocumentation_Click" Height="35" Margin="0,5"/>
-                        
-                        <Button x:Name="btnRemoveZapret" Content="🗑️ Удалить zapret" 
-                                Click="BtnRemoveZapret_Click" Height="35" Margin="0,5"
-                                Background="#8B0000" Foreground="White"/>
-                    </StackPanel>
-                    
-                    <!-- Предупреждение -->
-                    <Border Background="#332222" CornerRadius="4" Padding="8" Margin="0,8,0,0">
-                        <TextBlock Text="⚠️ ВНИМАНИЕ: Zapret устанавливает системный драйвер WinDivert.
+            <Grid Margin="0,0,0,15">
+                <GroupBox Header="🚀 Обход блокировок (zapret)">
+                    <StackPanel>
+                        <TextBlock x:Name="txtZapretStatus" Text="Статус: не установлен"
+                                   Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,5"/>
+
+                        <TextBlock x:Name="txtZapretState" Text="Готов"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="11" Margin="0,0,0,10"/>
+
+                        <!-- Кнопка установки -->
+                        <Button x:Name="btnInstallZapret" Content="📥 Установить zapret"
+                                Click="BtnInstallZapret_Click" Height="35" Margin="0,5"/>
+
+                        <!-- Панель действий -->
+                        <StackPanel x:Name="btnZapretActions" Visibility="Collapsed">
+                            <Button Content="📟 Открыть меню service.bat"
+                                    Click="BtnOpenServiceMenu_Click" Height="35" Margin="0,5"
+                                    Background="{DynamicResource AccentColor}"
+                                    ToolTip="Открыть главное меню для настройки стратегий"/>
+
+                            <Button Content="📁 Открыть папку с zapret"
+                                    Click="BtnOpenZapretFolder_Click" Height="35" Margin="0,5"/>
+
+                            <Button Content="📖 Открыть документацию"
+                                    Click="BtnOpenDocumentation_Click" Height="35" Margin="0,5"/>
+
+                            <Button x:Name="btnRemoveZapret" Content="🗑️ Удалить zapret"
+                                    Click="BtnRemoveZapret_Click" Height="35" Margin="0,5"
+                                    Background="#8B0000" Foreground="White"/>
+                        </StackPanel>
+
+                        <!-- Предупреждение -->
+                        <Border Background="#332222" CornerRadius="4" Padding="8" Margin="0,8,0,0">
+                            <TextBlock Text="⚠️ ВНИМАНИЕ: Zapret устанавливает системный драйвер WinDivert.
 Может конфликтовать с антивирусами, античитами и VPN.
-Используйте на свой страх и риск." 
-                                   Foreground="#FFA500" FontSize="9" TextWrapping="Wrap"/>
-                    </Border>
-                    
-                    <TextBlock Text="💡 После установки нажмите 'Открыть меню service.bat', выберите стратегию и установите в автозапуск"
-                               Foreground="{DynamicResource TextSecondary}" FontSize="9" 
-                               TextWrapping="Wrap" Margin="0,5,0,0"/>
-                </StackPanel>
-            </GroupBox>
+Используйте на свой страх и риск."
+                                       Foreground="#FFA500" FontSize="9" TextWrapping="Wrap"/>
+                        </Border>
+
+                        <TextBlock Text="💡 После установки нажмите 'Открыть меню service.bat', выберите стратегию и установите в автозапуск"
+                                   Foreground="{DynamicResource TextSecondary}" FontSize="9"
+                                   TextWrapping="Wrap" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Auth gate overlay — скрывается после входа в аккаунт -->
+                <Border x:Name="pnlZapretAuth" Background="#CC0D1117" CornerRadius="4" MinHeight="120">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20">
+                        <TextBlock Text="🔒 Только для авторизованных пользователей"
+                                   FontSize="14" FontWeight="Bold" Foreground="White"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Войдите в аккаунт для доступа к zapret"
+                                   Foreground="#AAAAAA" Margin="0,8,0,0"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
             
             <!-- ========== ДРУГИЕ СЕТЕВЫЕ ИНСТРУМЕНТЫ ========== -->
             <GroupBox Header="⚙️ Дополнительные настройки" Margin="0,0,0,15">

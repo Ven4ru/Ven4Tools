@@ -27,8 +27,17 @@ namespace Ven4Tools.Views.Tabs
 
             PopulateChangelog();
 
-            CatalogLoaderService.CatalogReady += OnCatalogReady;
-            Unloaded += (s, e) => CatalogLoaderService.CatalogReady -= OnCatalogReady;
+            Loaded += (_, _) =>
+            {
+                CatalogLoaderService.CatalogReady += OnCatalogReady;
+                // Обновляем changelog если каталог уже был загружен до открытия вкладки
+                if (CatalogLoaderService.LoadedCatalog != null)
+                {
+                    pnlChangelog.Children.Clear();
+                    PopulateChangelog();
+                }
+            };
+            Unloaded += (_, _) => CatalogLoaderService.CatalogReady -= OnCatalogReady;
         }
 
         private void OnCatalogReady(Models.MasterCatalog _)
@@ -179,12 +188,18 @@ namespace Ven4Tools.Views.Tabs
         {
             try
             {
-                var logPath = Path.Combine(
+                var logDir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Ven4Tools", "logs", $"install_{DateTime.Now:yyyy-MM-dd}.log");
-                
-                if (!File.Exists(logPath)) return "Лог не найден";
-                
+                    "Ven4Tools", "logs");
+
+                if (!Directory.Exists(logDir)) return "Лог не найден";
+
+                var logPath = Directory.GetFiles(logDir, "install_*.log")
+                    .OrderByDescending(f => f)
+                    .FirstOrDefault();
+
+                if (logPath == null) return "Лог не найден";
+
                 var allLines = File.ReadAllLines(logPath);
                 var lastLines = allLines.Skip(Math.Max(0, allLines.Length - lines)).Take(lines).ToArray();
                 return string.Join("\n", lastLines);

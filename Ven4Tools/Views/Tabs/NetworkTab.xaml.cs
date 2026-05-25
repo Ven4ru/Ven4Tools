@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using Ven4Tools.Models;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
@@ -10,14 +11,33 @@ namespace Ven4Tools.Views.Tabs
     {
         private ZapretService? _zapretService;
         private bool _isZapretActionInProgress = false;
-        
+        private bool _initialized = false;
+        private Action? _sessionChangedHandler;
+
         public event Action<string>? LogMessage;
-        
+
         public NetworkTab()
         {
             InitializeComponent();
             _zapretService = new ZapretService(AddLog);
-            CheckZapretStatus();
+
+            _sessionChangedHandler = () => Dispatcher.Invoke(UpdateAuthState);
+            Loaded += (_, _) =>
+            {
+                UserSession.Changed += _sessionChangedHandler;
+                if (!_initialized)
+                {
+                    CheckZapretStatus();
+                    _initialized = true;
+                }
+                UpdateAuthState();
+            };
+            Unloaded += (_, _) => UserSession.Changed -= _sessionChangedHandler;
+        }
+
+        private void UpdateAuthState()
+        {
+            pnlZapretAuth.Visibility = UserSession.IsLoggedIn ? Visibility.Collapsed : Visibility.Visible;
         }
         
         private void AddLog(string message)

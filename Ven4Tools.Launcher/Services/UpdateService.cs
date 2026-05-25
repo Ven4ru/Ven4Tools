@@ -4,7 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Ven4Tools.Launcher.Models;  // ← ДОБАВИТЬ ЭТУ СТРОКУ
+using Ven4Tools.Launcher.Models;
 
 namespace Ven4Tools.Launcher.Services
 {
@@ -27,10 +27,27 @@ namespace Ven4Tools.Launcher.Services
                 if (release == null) return null;
 
                 string remoteVersion = release.tag_name?.ToString()?.TrimStart('v') ?? "";
-                string downloadUrl = release.assets?[0]?.browser_download_url?.ToString() ?? "";
                 string releaseNotes = release.body?.ToString() ?? "";
 
-                var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.3.0";
+                // Ищем .exe asset — не берём первый попавшийся (может быть source code zip)
+                string downloadUrl = "";
+                if (release?.assets != null)
+                {
+                    foreach (var asset in release.assets)
+                    {
+                        string assetName = asset.name?.ToString() ?? "";
+                        if (assetName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                        {
+                            downloadUrl = asset.browser_download_url?.ToString() ?? "";
+                            break;
+                        }
+                    }
+                    if (string.IsNullOrEmpty(downloadUrl))
+                        downloadUrl = release.assets[0]?.browser_download_url?.ToString() ?? "";
+                }
+
+                var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                var currentVersion = ver != null ? $"{ver.Major}.{ver.Minor}.{ver.Build}" : "0.0.0";
                 bool hasUpdate = CompareVersions(remoteVersion, currentVersion) > 0;
 
                 return new UpdateInfo
@@ -67,15 +84,20 @@ namespace Ven4Tools.Launcher.Services
 
                 string scriptPath = Path.Combine(Path.GetTempPath(), "update_launcher.ps1");
                 string launcherPath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-                string script = @"
+
+                // Экранируем одинарные кавычки для PS-строк (одинарная → две одинарных)
+                string psTemp = tempFile.Replace("'", "''");
+                string psLauncher = launcherPath.Replace("'", "''");
+
+                string script = $@"
 Start-Sleep -Seconds 2
-try {
-    Copy-Item '" + tempFile + @"' '" + launcherPath + @"' -Force
-    Start-Process '" + launcherPath + @"'
-} catch {
+try {{
+    Copy-Item '{psTemp}' '{psLauncher}' -Force
+    Start-Process '{psLauncher}'
+}} catch {{
     Write-Output $_.Exception.Message
-}
-Remove-Item '" + tempFile + @"'
+}}
+Remove-Item '{psTemp}'
 ";
                 File.WriteAllText(scriptPath, script);
 
