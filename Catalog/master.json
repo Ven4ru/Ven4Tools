@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-25 09:25:55",
+  "lastUpdated": "2026-05-25 20:19:35",
   "changelog": [
     {
       "version": 2,
@@ -66,7 +66,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
-      "sha256": "8bc56b36fe3709c6d42f65773caf0eda51d61dc18459fb6a63cad8224930bcd2"
+      "sha256": "5f2b2ef386107255738655620d2d2f3939c62dc59dc1a69278bf0652bc9259e1"
     },
     {
       "id": "brave",
@@ -88,11 +88,11 @@
       "wingetId": "Yandex.Browser",
       "downloadUrl": "https://browser.yandex.ru/download/?os=win&bitness=64",
       "version": "25.3.1.968",
-      "size": "10.5 MB",
+      "size": "10.3 MB",
       "official": true,
       "iconUrl": "",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
-      "sha256": "b8938d425ebc89cb0f9c70d86f3778f84c08d6df5c5180775c56b060e3c1cdc9"
+      "sha256": "e48273ddb72235a0f2fee34cee37d86dd372112c0c4d052e7508b0c09ff96b61"
     },
     {
       "id": "libreoffice",
@@ -345,7 +345,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Платформа для тестирования API и работы с запросами.",
-      "sha256": "2504eca416239e0cc9a27d72a042f6585552c8ad273e5308d4bc7d2eba3d4f13"
+      "sha256": "aac121325a72ff0a776166fae7f0dab1ae0007eb1ece3776d40d17a72a5680d0"
     },
     {
       "id": "notepad-plus-plus",
@@ -651,7 +651,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов.",
-      "sha256": "3ed3b902a28c2dfae301ab383f63d89172833ebee837eb2e1d909f877c300cd2"
+      "sha256": "6eabbafc77bfdc64c20ae359ef3ff0f7c9237b990ffc9b064f1b08bfe33af64a"
     },
     {
       "id": "powertoys",
