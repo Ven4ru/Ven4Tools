@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-25 05:23:47",
+  "lastUpdated": "2026-05-25 07:17:21",
   "apps": [
     {
       "id": "firefox",
@@ -91,18 +91,6 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер для тех, кто любит настройки и кастомизацию."
-    },
-    {
-      "id": "tor-browser",
-      "name": "Tor Browser",
-      "category": "Браузеры",
-      "wingetId": "TorProject.TorBrowser",
-      "downloadUrl": "https://dist.torproject.org/torbrowser/14.0.7/torbrowser-install-win64-14.0.7.exe",
-      "version": "14.0.7",
-      "size": "~110 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Анонимный браузер с маршрутизацией через сеть Tor."
     },
     {
       "id": "waterfox",
