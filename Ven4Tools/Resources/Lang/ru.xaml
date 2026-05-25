@@ -69,6 +69,13 @@
     <s:String x:Key="prof_privacy_history">Сохранять историю установок</s:String>
     <s:String x:Key="prof_privacy_stats">Анонимная статистика использования</s:String>
     <s:String x:Key="prof_privacy_stats_hint">Помогает нам улучшать подборку приложений</s:String>
+    <s:String x:Key="prof_privacy_device_label">Данные на устройстве</s:String>
+    <s:String x:Key="prof_privacy_no_local_storage">Не сохранять сессию на этом устройстве</s:String>
+    <s:String x:Key="prof_privacy_no_local_storage_hint">При каждом запуске потребуется вход в аккаунт</s:String>
+    <s:String x:Key="prof_privacy_delete_local">🗑 Удалить данные с компьютера</s:String>
+    <s:String x:Key="prof_privacy_delete_title">Удаление локальных данных</s:String>
+    <s:String x:Key="prof_privacy_delete_confirm">Удалить локальные данные? Будут очищены: сессия, список приложений и кэш каталога. Данные вашего аккаунта на сервере останутся.</s:String>
+    <s:String x:Key="prof_privacy_delete_done">Данные удалены. Вы вышли из аккаунта.</s:String>
 
     <!-- Buttons -->
     <s:String x:Key="prof_save">Сохранить</s:String>

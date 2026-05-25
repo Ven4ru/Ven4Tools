@@ -27,6 +27,7 @@ namespace Ven4Tools.Models
         public bool SyncFavorites { get; set; } = true;
         public bool SaveInstallHistory { get; set; } = true;
         public bool AnonymousStats { get; set; } = false;
+        public bool NoLocalStorage { get; set; } = false;
 
         // First-run
         public bool HasSelectedCategory { get; set; } = false;
