@@ -270,11 +270,14 @@ Log($"✅ SHA256 verified: {app.DisplayName}");
             }
         }
 
-        public bool CheckDiskSpace(long requiredMB, out long availableMB)
+        public bool CheckDiskSpace(long requiredMB, out long availableMB, string? installDrive = null)
         {
             try
             {
-                var drive = new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory)!);
+                string drivePath = !string.IsNullOrEmpty(installDrive)
+                    ? installDrive
+                    : Path.GetPathRoot(Environment.SystemDirectory)!;
+                var drive = new DriveInfo(drivePath);
                 availableMB = drive.AvailableFreeSpace / 1024 / 1024;
                 return availableMB >= requiredMB;
             }
