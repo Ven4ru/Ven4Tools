@@ -14,6 +14,13 @@ namespace Ven4Tools
     {
         private bool _categorySelectionShown = false;
 
+        private CatalogTab?    _catalogTab;
+        private SystemTab?     _systemTab;
+        private OfficeTab?     _officeTab;
+        private ActivationTab? _activationTab;
+        private AboutTab?      _aboutTab;
+        private NetworkTab?    _networkTab;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -26,72 +33,91 @@ namespace Ven4Tools
 
             NavigateToCatalog(null, null);
 
-            // Sync theme toggle with saved profile
             btnThemeToggle.IsChecked = ProfileService.Current.Theme == "light";
 
             UserSession.Changed += UpdateUserUI;
+            Closing += (_, _) => UserSession.Changed -= UpdateUserUI;
             UpdateUserUI();
 
             Loaded += (s, e) => ShowCategorySelectionIfNeeded();
         }
-        private void InitializeButtons()
-{
-    btnNetworkTab = new Button();
-}
-        private void NavigateToNetwork(object? sender, RoutedEventArgs? e)
-{
-    SetActiveButton(btnNetworkTab);
-    MainFrame.Navigate(new NetworkTab());
-}
+
         private void NavigateToCatalog(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnCatalogTab);
-            var catalogTab = new CatalogTab();
-            catalogTab.LogMessage += AddLog;
-            MainFrame.Navigate(catalogTab);
+            if (_catalogTab == null)
+            {
+                _catalogTab = new CatalogTab();
+                _catalogTab.LogMessage += AddLog;
+            }
+            MainFrame.Navigate(_catalogTab);
         }
-        
+
+        private void NavigateToNetwork(object? sender, RoutedEventArgs? e)
+        {
+            SetActiveButton(btnNetworkTab);
+            if (_networkTab == null)
+            {
+                _networkTab = new NetworkTab();
+                _networkTab.LogMessage += AddLog;
+            }
+            MainFrame.Navigate(_networkTab);
+        }
+
         private void NavigateToSystem(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnSystemTab);
-            var systemTab = new SystemTab();
-            systemTab.LogMessage += AddLog;
-            MainFrame.Navigate(systemTab);
+            if (_systemTab == null)
+            {
+                _systemTab = new SystemTab();
+                _systemTab.LogMessage += AddLog;
+            }
+            MainFrame.Navigate(_systemTab);
         }
-        
+
         private void NavigateToOffice(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnOfficeTab);
-            var officeTab = new OfficeTab();
-            officeTab.LogMessage += AddLog;
-            MainFrame.Navigate(officeTab);
+            if (_officeTab == null)
+            {
+                _officeTab = new OfficeTab();
+                _officeTab.LogMessage += AddLog;
+            }
+            MainFrame.Navigate(_officeTab);
         }
-        
+
         private void NavigateToActivation(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnActivationTab);
-            var activationTab = new ActivationTab();
-            activationTab.LogMessage += AddLog;
-            MainFrame.Navigate(activationTab);
+            if (_activationTab == null)
+            {
+                _activationTab = new ActivationTab();
+                _activationTab.LogMessage += AddLog;
+            }
+            MainFrame.Navigate(_activationTab);
         }
-        
+
         private void NavigateToAbout(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnAboutTab);
-            var aboutTab = new AboutTab();
-            aboutTab.LogMessage += AddLog;
-            MainFrame.Navigate(aboutTab);
+            if (_aboutTab == null)
+            {
+                _aboutTab = new AboutTab();
+                _aboutTab.LogMessage += AddLog;
+            }
+            MainFrame.Navigate(_aboutTab);
         }
-        
-private void SetActiveButton(Button activeButton)
-{
-    var buttons = new[] { btnCatalogTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab };
-    foreach (var btn in buttons)
-    {
-        if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");
-    }
-    activeButton.Style = (Style)FindResource("ActiveNavButtonStyle");
-}
+
+        private void SetActiveButton(Button activeButton)
+        {
+            var buttons = new[] { btnCatalogTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab };
+            foreach (var btn in buttons)
+            {
+                if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");
+            }
+            activeButton.Style = (Style)FindResource("ActiveNavButtonStyle");
+        }
+
         private void ToggleTheme(object sender, RoutedEventArgs e)
         {
             bool isDark = btnThemeToggle.IsChecked == false;
@@ -100,14 +126,14 @@ private void SetActiveButton(Button activeButton)
             ProfileService.Save();
             txtStatusBar.Text = isDark ? "🌙 Тёмная тема" : "☀️ Светлая тема";
         }
-        
+
         private bool IsRunAsAdmin()
         {
             var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
             var principal = new System.Security.Principal.WindowsPrincipal(identity);
             return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
         }
-        
+
         private void RestartAsAdmin()
         {
             var exeName = Process.GetCurrentProcess().MainModule?.FileName;
@@ -123,7 +149,7 @@ private void SetActiveButton(Button activeButton)
             }
             Application.Current.Shutdown();
         }
-        
+
         public void AddLog(string message)
         {
             Dispatcher.Invoke(() =>
@@ -169,7 +195,6 @@ private void SetActiveButton(Button activeButton)
         {
             var win = new ProfileWindow { Owner = this };
             win.ShowDialog();
-            // Sync theme toggle in case profile changed theme
             btnThemeToggle.IsChecked = ProfileService.Current.Theme == "light";
         }
 

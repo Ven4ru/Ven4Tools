@@ -4,28 +4,45 @@ using System.Management;
 using System.Windows;
 using System.Windows.Controls;
 using System.Threading.Tasks;
+using Ven4Tools.Models;
 
 namespace Ven4Tools.Views.Tabs
 {
     public partial class ActivationTab : UserControl
     {
+        private Action? _sessionChangedHandler;
+
         public event Action<string>? LogMessage;
-        
+
         public ActivationTab()
         {
             InitializeComponent();
-            
+
             btnActivateWindows.Click += BtnActivateWindows_Click;
             btnActivateOffice.Click += BtnActivateOffice_Click;
             btnCheckStatus.Click += BtnCheckStatus_Click;
             btnInteractiveMAS.Click += BtnInteractiveMAS_Click;
-            
-            Loaded += ActivationTab_Loaded;
+
+            _sessionChangedHandler = () => Dispatcher.Invoke(UpdateAuthState);
+            Loaded += async (_, _) =>
+            {
+                UserSession.Changed += _sessionChangedHandler;
+                UpdateAuthState();
+                await CheckActivationStatusAsync();
+            };
+            Unloaded += (_, _) => UserSession.Changed -= _sessionChangedHandler;
         }
-        
-        private async void ActivationTab_Loaded(object sender, RoutedEventArgs e)
+
+        private void UpdateAuthState()
         {
-            await CheckActivationStatusAsync();
+            pnlActivationAuth.Visibility = UserSession.IsLoggedIn ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private static bool IsRunningAsAdmin()
+        {
+            using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+            return new System.Security.Principal.WindowsPrincipal(identity)
+                .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
         }
         
         private async Task CheckActivationStatusAsync()
@@ -136,6 +153,19 @@ namespace Ven4Tools.Views.Tabs
         // Интерактивный режим — открывает окно PowerShell
         private void BtnInteractiveMAS_Click(object sender, RoutedEventArgs e)
         {
+            var warn = MessageBox.Show(
+                "⚠️ ПРЕДУПРЕЖДЕНИЕ\n\n" +
+                "Будет открыт PowerShell с правами администратора.\n" +
+                "Запускается скрипт из интернета: get.activated.win\n\n" +
+                "Это открытый проект Microsoft Activation Scripts (MAS).\n" +
+                "Исходный код: github.com/massgravel/Microsoft-Activation-Scripts\n\n" +
+                "Убедитесь, что доверяете источнику. Продолжить?",
+                "Активация — внимание",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (warn != MessageBoxResult.Yes) return;
+
             try
             {
                 AddLog("━━━━━━━━━━━━━━━━━━━━━━");
@@ -177,6 +207,29 @@ namespace Ven4Tools.Views.Tabs
         
         private async Task RunSilentActivationAsync(string parameter, string product)
         {
+            var warn = MessageBox.Show(
+                $"⚠️ ПРЕДУПРЕЖДЕНИЕ\n\n" +
+                $"Активация {product} выполняется через скрипт из интернета: get.activated.win\n\n" +
+                "Это открытый проект Microsoft Activation Scripts (MAS).\n" +
+                "Исходный код: github.com/massgravel/Microsoft-Activation-Scripts\n\n" +
+                "Продолжить?",
+                $"Активация {product} — внимание",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (warn != MessageBoxResult.Yes) return;
+
+            if (!IsRunningAsAdmin())
+            {
+                AddLog("⚠️ Требуются права администратора.");
+                MessageBox.Show(
+                    "Для активации требуются права администратора.\n\nПерезапустите Ven4Tools от имени администратора.",
+                    "Недостаточно прав",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 AddLog("━━━━━━━━━━━━━━━━━━━━━━");

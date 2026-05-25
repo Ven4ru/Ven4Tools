@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -14,12 +14,17 @@ namespace Ven4Tools.Services
         private readonly HttpClient httpClient;
         private readonly Dictionary<string, CachedAvailability> cache = new();
         private readonly TimeSpan cacheDuration = TimeSpan.FromMinutes(5);
-        
+
         public AvailabilityChecker()
         {
             httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
-            httpClient.Timeout = TimeSpan.FromSeconds(15);
+            httpClient.Timeout = TimeSpan.FromSeconds(AppSettings.CheckTimeout);
+        }
+
+        public void UpdateTimeout(int seconds)
+        {
+            httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(5, seconds));
         }
 
         private class CachedAvailability
@@ -43,38 +48,38 @@ namespace Ven4Tools.Services
             public string? Source { get; set; }
         }
 
-public async Task<(AvailabilityStatus Status, long SizeMB)> CheckAppAvailabilityWithSize(AppInfo app)
-{
-    string cacheKey = app.Id ?? string.Empty;
-
-    if (cache.TryGetValue(cacheKey, out var cached) && DateTime.Now - cached.Timestamp < cacheDuration)
-        return (cached.Status, cached.SizeMB);
-
-    string wingetId = !string.IsNullOrEmpty(app.AlternativeId)
-        ? app.AlternativeId
-        : app.Id ?? string.Empty;
-
-    (AvailabilityStatus Status, long SizeMB) result = (AvailabilityStatus.Unavailable, 0);
-
-    if (!string.IsNullOrEmpty(wingetId) && !wingetId.StartsWith("User."))
-        result = await GetWingetPackageInfo(wingetId);
-
-    if (result.Status != AvailabilityStatus.Available && app.InstallerUrls != null && app.InstallerUrls.Count > 0)
-    {
-        foreach (var url in app.InstallerUrls)
+        public async Task<(AvailabilityStatus Status, long SizeMB)> CheckAppAvailabilityWithSize(AppInfo app)
         {
-            var urlResult = await GetUrlInfo(url);
-            if (urlResult.Status == AvailabilityStatus.Available)
-            {
-                result = urlResult;
-                break;
-            }
-        }
-    }
+            string cacheKey = app.Id ?? string.Empty;
 
-    CacheResult(cacheKey, new AppAvailabilityResult { Status = result.Status, SizeMB = result.SizeMB });
-    return result;
-}
+            if (cache.TryGetValue(cacheKey, out var cached) && DateTime.Now - cached.Timestamp < cacheDuration)
+                return (cached.Status, cached.SizeMB);
+
+            string wingetId = !string.IsNullOrEmpty(app.AlternativeId)
+                ? app.AlternativeId
+                : app.Id ?? string.Empty;
+
+            (AvailabilityStatus Status, long SizeMB) result = (AvailabilityStatus.Unavailable, 0);
+
+            if (!string.IsNullOrEmpty(wingetId) && !wingetId.StartsWith("User."))
+                result = await GetWingetPackageInfo(wingetId);
+
+            if (result.Status != AvailabilityStatus.Available && app.InstallerUrls != null && app.InstallerUrls.Count > 0)
+            {
+                foreach (var url in app.InstallerUrls)
+                {
+                    var urlResult = await GetUrlInfo(url);
+                    if (urlResult.Status == AvailabilityStatus.Available)
+                    {
+                        result = urlResult;
+                        break;
+                    }
+                }
+            }
+
+            CacheResult(cacheKey, new AppAvailabilityResult { Status = result.Status, SizeMB = result.SizeMB });
+            return result;
+        }
 
         private void CacheResult(string appId, AppAvailabilityResult result)
         {
@@ -86,63 +91,45 @@ public async Task<(AvailabilityStatus Status, long SizeMB)> CheckAppAvailability
             };
         }
 
-private async Task<(AvailabilityStatus Status, long SizeMB)> GetWingetPackageInfo(string appId)
-{
-    Debug.WriteLine("=== WINGET CHECK START === ID: '" + appId + "' ===");
-
-    try
-    {
-        string args = $"show --id \"{appId}\" --exact --source winget --accept-source-agreements";
-
-        var psi = new ProcessStartInfo
+        private async Task<(AvailabilityStatus Status, long SizeMB)> GetWingetPackageInfo(string appId)
         {
-            FileName = "winget.exe",
-            Arguments = args,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            StandardOutputEncoding = System.Text.Encoding.UTF8,
-            StandardErrorEncoding = System.Text.Encoding.UTF8
-        };
+            try
+            {
+                string args = $"show --id \"{appId}\" --exact --source winget --accept-source-agreements";
 
-        using var process = Process.Start(psi);
-        if (process == null)
-        {
-            Debug.WriteLine("!!! НЕ УДАЛОСЬ ЗАПУСТИТЬ WINGET !!!");
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "winget.exe",
+                    Arguments = args,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8,
+                    StandardErrorEncoding = System.Text.Encoding.UTF8
+                };
+
+                using var process = Process.Start(psi);
+                if (process == null)
+                    return (AvailabilityStatus.Unavailable, 0);
+
+                string output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                bool success = process.ExitCode == 0 &&
+                               (output.Contains("Version", StringComparison.OrdinalIgnoreCase) ||
+                                output.Contains("Found", StringComparison.OrdinalIgnoreCase));
+
+                if (success)
+                {
+                    long size = ParseWingetSize(output);
+                    return (AvailabilityStatus.Available, size > 0 ? size : 120);
+                }
+            }
+            catch { }
+
             return (AvailabilityStatus.Unavailable, 0);
         }
-
-        string output = await process.StandardOutput.ReadToEndAsync();
-        string error = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
-
-        Debug.WriteLine($"ExitCode = {process.ExitCode} | Output length = {output.Length}");
-
-        bool success = process.ExitCode == 0 &&
-                       (output.Contains("Version", StringComparison.OrdinalIgnoreCase) ||
-                        output.Contains("Found", StringComparison.OrdinalIgnoreCase));
-
-        if (success)
-        {
-            Debug.WriteLine("!!! WINGET УСПЕШНО НАШЁЛ ПАКЕТ !!! Python.Python.3.14 работает");
-            long size = ParseWingetSize(output);
-            return (AvailabilityStatus.Available, size > 0 ? size : 120);
-        }
-        else
-        {
-            Debug.WriteLine("!!! WINGET НЕ НАШЁЛ !!! Первые 800 символов:");
-            Debug.WriteLine(output.Substring(0, Math.Min(800, output.Length)));
-        }
-    }
-    catch (Exception ex)
-    {
-        Debug.WriteLine($"!!! ИСКЛЮЧЕНИЕ: {ex.Message}");
-    }
-
-    Debug.WriteLine("=== WINGET CHECK END (НЕУДАЧА) ===");
-    return (AvailabilityStatus.Unavailable, 0);
-}
 
         private long ParseWingetSize(string output)
         {
@@ -158,20 +145,20 @@ private async Task<(AvailabilityStatus Status, long SizeMB)> GetWingetPackageInf
                         {
                             double value = double.Parse(match.Groups[1].Value.Replace(',', '.'));
                             string unit = match.Groups[2].Value;
-                            
-                            switch (unit)
+
+                            return unit switch
                             {
-                                case "KB": return (long)(value / 1024);
-                                case "MB": return (long)value;
-                                case "GB": return (long)(value * 1024);
-                                default: return (long)value;
-                            }
+                                "KB" => (long)(value / 1024),
+                                "MB" => (long)value,
+                                "GB" => (long)(value * 1024),
+                                _ => (long)value
+                            };
                         }
                     }
                 }
             }
             catch { }
-            
+
             return 100;
         }
 
@@ -186,12 +173,10 @@ private async Task<(AvailabilityStatus Status, long SizeMB)> GetWingetPackageInf
                     {
                         long size = 0;
                         if (response.Content.Headers.ContentLength.HasValue)
-                        {
                             size = response.Content.Headers.ContentLength.Value / 1024 / 1024;
-                        }
                         return (AvailabilityStatus.Available, size > 0 ? size : 100);
                     }
-                    
+
                     if (response.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed)
                     {
                         using (var getRequest = new HttpRequestMessage(HttpMethod.Get, url))
@@ -203,9 +188,7 @@ private async Task<(AvailabilityStatus Status, long SizeMB)> GetWingetPackageInf
                                 {
                                     long size = 0;
                                     if (getResponse.Content.Headers.ContentLength.HasValue)
-                                    {
                                         size = getResponse.Content.Headers.ContentLength.Value / 1024 / 1024;
-                                    }
                                     return (AvailabilityStatus.Available, size > 0 ? size : 100);
                                 }
                             }
@@ -214,7 +197,7 @@ private async Task<(AvailabilityStatus Status, long SizeMB)> GetWingetPackageInf
                 }
             }
             catch { }
-            
+
             return (AvailabilityStatus.Unavailable, 0);
         }
 
