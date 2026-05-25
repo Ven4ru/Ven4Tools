@@ -1,0 +1,155 @@
+using System.Windows;
+using Ven4Tools.Services;
+
+namespace Ven4Tools.Views
+{
+    public partial class ProfileWindow : Window
+    {
+        private bool _langChanged = false;
+
+        public ProfileWindow()
+        {
+            InitializeComponent();
+            LoadFromProfile();
+        }
+
+        private void LoadFromProfile()
+        {
+            var p = ProfileService.Current;
+
+            // Catalog mode
+            rbBasic.IsChecked    = p.CatalogMode == "basic";
+            rbExtended.IsChecked = p.CatalogMode == "extended";
+            rbFull.IsChecked     = p.CatalogMode == "full" || string.IsNullOrEmpty(p.CatalogMode);
+
+            // Sort
+            cmbSort.SelectedIndex = p.DefaultSort switch
+            {
+                "category"   => 1,
+                "popularity" => 2,
+                _            => 0
+            };
+
+            chkHideInstalled.IsChecked = p.HideInstalled;
+            chkFreeOnly.IsChecked      = p.FreeOnly;
+
+            // UI
+            rbDark.IsChecked  = p.Theme != "light";
+            rbLight.IsChecked = p.Theme == "light";
+
+            cmbLang.SelectedIndex = p.Language switch
+            {
+                "ru" => 1,
+                "en" => 2,
+                _    => 0
+            };
+
+            chkCompact.IsChecked      = p.CompactMode;
+            chkDescriptions.IsChecked = p.ShowDescriptions;
+
+            // Install
+            chkSilent.IsChecked   = p.SilentInstall;
+            chkAutoDeps.IsChecked  = p.AutoDependencies;
+            txtInstallFolder.Text  = p.DefaultInstallFolder;
+
+            // Notifications
+            chkNotifUpdates.IsChecked = p.NotifyAppUpdates;
+            chkNotifNew.IsChecked     = p.NotifyNewApps;
+
+            // Privacy
+            chkSyncFavorites.IsChecked = p.SyncFavorites;
+            chkHistory.IsChecked       = p.SaveInstallHistory;
+            chkStats.IsChecked         = p.AnonymousStats;
+        }
+
+        private void RbTheme_Checked(object sender, RoutedEventArgs e)
+        {
+            bool dark = rbDark.IsChecked == true;
+            ThemeService.ApplyDark(dark);
+        }
+
+        private void BtnBrowseFolder_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = "Папка установки по умолчанию"
+            };
+            if (dlg.ShowDialog() == true)
+                txtInstallFolder.Text = dlg.FolderName;
+        }
+
+        private void BtnSave_Click(object sender, RoutedEventArgs e)
+        {
+            var p = ProfileService.Current;
+
+            p.CatalogMode = rbBasic.IsChecked == true ? "basic"
+                          : rbExtended.IsChecked == true ? "extended"
+                          : "full";
+
+            p.DefaultSort = cmbSort.SelectedIndex switch
+            {
+                1 => "category",
+                2 => "popularity",
+                _ => "alpha"
+            };
+
+            p.HideInstalled   = chkHideInstalled.IsChecked == true;
+            p.FreeOnly        = chkFreeOnly.IsChecked == true;
+            p.Theme           = rbLight.IsChecked == true ? "light" : "dark";
+            p.CompactMode     = chkCompact.IsChecked == true;
+            p.ShowDescriptions = chkDescriptions.IsChecked == true;
+            p.SilentInstall   = chkSilent.IsChecked == true;
+            p.AutoDependencies = chkAutoDeps.IsChecked == true;
+            p.DefaultInstallFolder = txtInstallFolder.Text.Trim();
+            p.NotifyAppUpdates = chkNotifUpdates.IsChecked == true;
+            p.NotifyNewApps    = chkNotifNew.IsChecked == true;
+            p.SyncFavorites    = chkSyncFavorites.IsChecked == true;
+            p.SaveInstallHistory = chkHistory.IsChecked == true;
+            p.AnonymousStats   = chkStats.IsChecked == true;
+
+            // Language
+            string newLang = cmbLang.SelectedIndex switch { 1 => "ru", 2 => "en", _ => "auto" };
+            if (newLang != p.Language)
+            {
+                p.Language = newLang;
+                _langChanged = true;
+                LocalizationService.Apply(newLang == "auto"
+                    ? (System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ru" ? "ru" : "en")
+                    : newLang);
+            }
+
+            ProfileService.Save();
+
+            if (_langChanged)
+                System.Windows.MessageBox.Show(
+                    LocalizationService.T("prof_lang_restart"),
+                    LocalizationService.T("prof_title"),
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+
+            DialogResult = true;
+        }
+
+        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            // Restore theme if it was changed live without saving
+            ThemeService.Apply(ProfileService.Current.Theme);
+            DialogResult = false;
+        }
+
+        private void BtnReset_Click(object sender, RoutedEventArgs e)
+        {
+            var result = System.Windows.MessageBox.Show(
+                "Сбросить все настройки профиля до значений по умолчанию?",
+                LocalizationService.T("prof_title"),
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                ProfileService.Reset();
+                ThemeService.Apply(ProfileService.Current.Theme);
+                LocalizationService.Init();
+                LoadFromProfile();
+            }
+        }
+    }
+}

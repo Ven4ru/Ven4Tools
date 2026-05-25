@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Threading;
+using Ven4Tools.Services;
 
 namespace Ven4Tools
 {
@@ -8,9 +9,15 @@ namespace Ven4Tools
     {
         public App()
         {
-            // Глобальный обработчик непойманных исключений
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Application.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
+        }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+            LocalizationService.Init();
+            ThemeService.Apply(ProfileService.Current.Theme);
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
