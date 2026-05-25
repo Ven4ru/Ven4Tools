@@ -45,23 +45,34 @@ namespace Ven4Tools.Services
 
 public async Task<(AvailabilityStatus Status, long SizeMB)> CheckAppAvailabilityWithSize(AppInfo app)
 {
-    string wingetId = !string.IsNullOrEmpty(app.AlternativeId) 
-        ? app.AlternativeId 
+    string cacheKey = app.Id ?? string.Empty;
+
+    if (cache.TryGetValue(cacheKey, out var cached) && DateTime.Now - cached.Timestamp < cacheDuration)
+        return (cached.Status, cached.SizeMB);
+
+    string wingetId = !string.IsNullOrEmpty(app.AlternativeId)
+        ? app.AlternativeId
         : app.Id ?? string.Empty;
 
-    Debug.WriteLine($"[Availability] Проверка {app.DisplayName ?? app.Id} → Winget ID: {wingetId}");
+    (AvailabilityStatus Status, long SizeMB) result = (AvailabilityStatus.Unavailable, 0);
 
-    // Если есть прямые ссылки — можно проверять их в первую очередь (по желанию)
-    if (app.InstallerUrls != null && app.InstallerUrls.Count > 0)
+    if (!string.IsNullOrEmpty(wingetId) && !wingetId.StartsWith("User."))
+        result = await GetWingetPackageInfo(wingetId);
+
+    if (result.Status != AvailabilityStatus.Available && app.InstallerUrls != null && app.InstallerUrls.Count > 0)
     {
-        // твой старый код проверки по URL (HEAD) — оставь, если он есть
+        foreach (var url in app.InstallerUrls)
+        {
+            var urlResult = await GetUrlInfo(url);
+            if (urlResult.Status == AvailabilityStatus.Available)
+            {
+                result = urlResult;
+                break;
+            }
+        }
     }
 
-    // Для приложений без ссылок или с AlternativeId — используем winget
-    var result = await GetWingetPackageInfo(wingetId);
-
-    Debug.WriteLine($"[Availability] Результат для {app.DisplayName ?? app.Id}: {(result.Status == AvailabilityStatus.Available ? "✅" : "❌")} (~{result.SizeMB} МБ)");
-
+    CacheResult(cacheKey, new AppAvailabilityResult { Status = result.Status, SizeMB = result.SizeMB });
     return result;
 }
 
@@ -206,6 +217,8 @@ private async Task<(AvailabilityStatus Status, long SizeMB)> GetWingetPackageInf
             
             return (AvailabilityStatus.Unavailable, 0);
         }
+
+        public void ClearCache() => cache.Clear();
 
         public void Dispose()
         {

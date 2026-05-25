@@ -53,43 +53,21 @@ public void AddCatalogApp(AppInfo app)
         }
     }
 }
-/// <summary>
-/// Применяет сохранённые альтернативы к приложениям из свежего каталога
-/// </summary>
-/// <summary>
-/// Применяет сохранённые пользователем альтернативы к приложениям из MasterCatalog
-/// </summary>
-/// <summary>
-/// Применяет сохранённые альтернативы к приложениям из каталога
-/// </summary>
 public void ApplyAlternativesToCatalog(MasterCatalog catalog)
 {
     if (catalog?.Apps == null || catalog.Apps.Count == 0)
         return;
 
-    int appliedCount = 0;
-
     foreach (var catalogApp in catalog.Apps)
     {
-        // Получаем локальную версию приложения с альтернативами
-        var localApp = GetAppById(catalogApp.Id);
-        if (localApp != null && !string.IsNullOrEmpty(localApp.AlternativeId))
+        if (alternatives.TryGetValue(catalogApp.Id, out var alt))
         {
-            // Сохраняем AlternativeId в локальной копии (AppInfo)
-            localApp.AlternativeId = localApp.AlternativeId;
-
-            // Если в альтернативе есть свои ссылки — тоже сохраняем
-            if (localApp.InstallerUrls != null && localApp.InstallerUrls.Count > 0)
-            {
-                localApp.InstallerUrls = new List<string>(localApp.InstallerUrls);
-            }
-
-            appliedCount++;
-            Debug.WriteLine($"[ApplyAlternatives] Для {catalogApp.Id} применена альтернатива: {localApp.AlternativeId}");
+            if (!string.IsNullOrEmpty(alt.WingetId))
+                catalogApp.WingetId = alt.WingetId;
+            if (!string.IsNullOrEmpty(alt.Url))
+                catalogApp.DownloadUrl = alt.Url;
         }
     }
-
-    Debug.WriteLine($"[ApplyAlternativesToCatalog] Применено альтернатив: {appliedCount}");
 }
         private bool DetectPortableMode()
         {
