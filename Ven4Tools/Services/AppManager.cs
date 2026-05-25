@@ -367,6 +367,15 @@ private void SaveAlternatives()
             }
         }
 
+        public void ClearUserApps()
+        {
+            lock (lockObj)
+            {
+                apps.RemoveAll(a => a.IsUserAdded);
+                SaveUserApps();
+            }
+        }
+
         public void RemoveUserApp(string appId)
         {
             lock (lockObj)

@@ -196,6 +196,19 @@
                         <TextBlock Text="{DynamicResource prof_privacy_stats_hint}"
                                    FontSize="11" Margin="20,0,0,0"
                                    Foreground="{DynamicResource TextSecondary}"/>
+
+                        <TextBlock Text="{DynamicResource prof_privacy_device_label}" Style="{StaticResource SectionHeader}"/>
+                        <CheckBox x:Name="chkNoLocalStorage" Margin="0,4">
+                            <TextBlock Text="{DynamicResource prof_privacy_no_local_storage}"/>
+                        </CheckBox>
+                        <TextBlock Text="{DynamicResource prof_privacy_no_local_storage_hint}"
+                                   FontSize="11" Margin="20,0,0,6"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                        <Button x:Name="btnDeleteLocalData" Width="220" Height="30"
+                                HorizontalAlignment="Left" Margin="0,4,0,0"
+                                Content="{DynamicResource prof_privacy_delete_local}"
+                                Background="#5C1A1A" Foreground="White" FontWeight="Normal"
+                                Click="BtnDeleteLocalData_Click"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
