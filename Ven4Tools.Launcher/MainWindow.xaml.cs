@@ -979,28 +979,8 @@ private bool IsRunAsAdmin()
         
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            var result = System.Windows.MessageBox.Show(
-                "Выберите действие при закрытии окна:\n\nДа - свернуть в трей\nНет - закрыть программу\nОтмена - оставить окно",
-                "Ven4Tools Launcher",
-                MessageBoxButton.YesNoCancel,
-                MessageBoxImage.Question);
-            
-            if (result == MessageBoxResult.Yes)
-            {
-                e.Cancel = true;
-                Hide();
-                AddLog("📌 Приложение свёрнуто в системный трей");
-            }
-            else if (result == MessageBoxResult.No)
-            {
-                _updateService?.Dispose();
-                _notifyIcon?.Dispose();
-                System.Windows.Application.Current.Shutdown();
-            }
-            else
-            {
-                e.Cancel = true;
-            }
+            e.Cancel = true;
+            Hide();
         }
         
         private void ExitApplication()
