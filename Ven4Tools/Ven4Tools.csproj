@@ -38,4 +38,8 @@
     <EmbeddedResource Include="Resources\embedded_catalog.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Resources\Mascots\*.png" />
+  </ItemGroup>
+
 </Project>

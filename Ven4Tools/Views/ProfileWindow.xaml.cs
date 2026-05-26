@@ -37,8 +37,9 @@ namespace Ven4Tools.Views
             chkFreeOnly.IsChecked      = p.FreeOnly;
 
             // UI
-            rbDark.IsChecked  = p.Theme != "light";
+            rbDark.IsChecked  = p.Theme == "dark" || (p.Theme != "light" && p.Theme != "web");
             rbLight.IsChecked = p.Theme == "light";
+            rbWeb.IsChecked   = p.Theme == "web";
 
             cmbLang.SelectedIndex = p.Language switch
             {
@@ -68,8 +69,8 @@ namespace Ven4Tools.Views
 
         private void RbTheme_Checked(object sender, RoutedEventArgs e)
         {
-            bool dark = rbDark.IsChecked == true;
-            ThemeService.ApplyDark(dark);
+            if (rbWeb?.IsChecked == true) ThemeService.ApplyWeb();
+            else ThemeService.ApplyDark(rbDark?.IsChecked == true);
         }
 
         private void BtnBrowseFolder_Click(object sender, RoutedEventArgs e)
@@ -99,7 +100,7 @@ namespace Ven4Tools.Views
 
             p.HideInstalled   = chkHideInstalled.IsChecked == true;
             p.FreeOnly        = chkFreeOnly.IsChecked == true;
-            p.Theme           = rbLight.IsChecked == true ? "light" : "dark";
+            p.Theme           = rbWeb.IsChecked == true ? "web" : (rbLight.IsChecked == true ? "light" : "dark");
             p.CompactMode     = chkCompact.IsChecked == true;
             p.ShowDescriptions = chkDescriptions.IsChecked == true;
             p.SilentInstall   = chkSilent.IsChecked == true;

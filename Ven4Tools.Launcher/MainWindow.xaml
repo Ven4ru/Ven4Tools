@@ -94,6 +94,12 @@
             
             <!-- Основная правая панель -->
             <StackPanel Grid.Column="0" Margin="10">
+                <Image Source="pack://application:,,,/Resources/launcher.png"
+                       Height="180"
+                       Stretch="Uniform"
+                       HorizontalAlignment="Center"
+                       Margin="0,8,0,4"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
                 <GroupBox Header="📁 Папка установки">
                     <TextBlock x:Name="txtInstallPath" Text="Не выбрана" 
                                Foreground="{DynamicResource TextSecondary}" 

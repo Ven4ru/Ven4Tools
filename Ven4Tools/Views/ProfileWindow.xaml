@@ -108,9 +108,13 @@
                                          Checked="RbTheme_Checked">
                                 <TextBlock Text="{DynamicResource prof_ui_theme_dark}"/>
                             </RadioButton>
-                            <RadioButton x:Name="rbLight" GroupName="Theme"
+                            <RadioButton x:Name="rbLight" GroupName="Theme" Margin="0,0,16,0"
                                          Checked="RbTheme_Checked">
                                 <TextBlock Text="{DynamicResource prof_ui_theme_light}"/>
+                            </RadioButton>
+                            <RadioButton x:Name="rbWeb" GroupName="Theme"
+                                         Checked="RbTheme_Checked">
+                                <TextBlock Text="🌐 Ven4Tools Web"/>
                             </RadioButton>
                         </StackPanel>
 
