@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-25 20:19:35",
+  "lastUpdated": "2026-05-26 17:55:10",
   "changelog": [
     {
       "version": 2,
@@ -11,7 +11,18 @@
     {
       "version": 1,
       "date": "2026-04-01",
-      "addedApps": ["firefox", "google-chrome", "telegram", "discord", "vlc", "7zip", "notepad-plus-plus", "vscode", "git", "steam"],
+      "addedApps": [
+        "firefox",
+        "google-chrome",
+        "telegram",
+        "discord",
+        "vlc",
+        "7zip",
+        "notepad-plus-plus",
+        "vscode",
+        "git",
+        "steam"
+      ],
       "message": "Первоначальный релиз каталога. 68 приложений в 9 категориях."
     }
   ],
@@ -118,18 +129,6 @@
       "iconUrl": "",
       "description": "Совместимый с MS Office редактор с облачной интеграцией.",
       "sha256": "88b52a453e3baab439d683c7f278192e0e20aca0aa154a5ed2bfb051c7da849e"
-    },
-    {
-      "id": "foxit-reader",
-      "name": "Foxit PDF Reader",
-      "category": "Офис",
-      "wingetId": "Foxit.FoxitReader",
-      "downloadUrl": "https://cdn01.foxitsoftware.com/pub/foxit/reader/desktop/win/2024.3/enu/FoxitPDFReader20243_enu_Setup.exe",
-      "version": "2024.3",
-      "size": "~180 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Быстрый и лёгкий PDF-ридер с возможностью редактирования."
     },
     {
       "id": "adobe-acrobat-reader",
