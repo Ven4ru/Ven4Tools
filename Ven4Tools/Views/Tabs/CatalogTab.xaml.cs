@@ -41,6 +41,8 @@ namespace Ven4Tools.Views.Tabs
         private bool _isCheckingAvailability = false;
         private bool _initialized = false;
         private bool _showFavoritesOnly = false;
+        private bool _showRuBlocked = true;
+        private readonly HashSet<string> _ruBlockedIds = new();
         private CancellationTokenSource? _searchDebounce;
         private Action? _profileChangedHandler;
 
@@ -105,6 +107,10 @@ namespace Ven4Tools.Views.Tabs
             btnClearSearch.Click += (_, _) => { txtSearch.Text = (string)txtSearch.Tag; };
             btnFavoritesOnly.Click += BtnFavoritesOnly_Click;
             btnFavoritesOnly.Foreground = new SolidColorBrush(Color.FromRgb(100, 100, 100));
+
+            _showRuBlocked = ProfileService.Current.ShowRuBlocked;
+            btnShowRuBlocked.Click += BtnShowRuBlocked_Click;
+            UpdateRuBlockedButton();
         }
         
         private void InitCategoryPanels()
@@ -294,6 +300,8 @@ namespace Ven4Tools.Views.Tabs
 
                 var availabilityTasks = new List<Task>();
 
+                _ruBlockedIds.Clear();
+
                 var appsToShow = ProfileService.Current.DefaultSort switch
                 {
                     "alpha"    => _catalog.Apps.OrderBy(a => a.Name).ToList(),
@@ -324,6 +332,19 @@ namespace Ven4Tools.Views.Tabs
                         var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
                         row.Children.Add(checkBox);
                         row.Children.Add(MakeStarButton(app.Id));
+                        if (app.RuBlocked)
+                        {
+                            _ruBlockedIds.Add(app.Id);
+                            row.Children.Add(new TextBlock
+                            {
+                                Text = "⚠ РФ",
+                                Foreground = new SolidColorBrush(Color.FromRgb(255, 165, 0)),
+                                FontSize = 10,
+                                VerticalAlignment = VerticalAlignment.Center,
+                                Margin = new Thickness(4, 0, 0, 0),
+                                ToolTip = "Загрузка может быть заблокирована в России"
+                            });
+                        }
                         if (!string.IsNullOrEmpty(app.WingetId))
                         {
                             var versionCombo = MakeVersionCombo(app.Id);
@@ -1114,8 +1135,44 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
+        private void ApplyRuBlockedVisibility()
+        {
+            foreach (var appId in _ruBlockedIds)
+            {
+                if (!appCheckBoxes.TryGetValue(appId, out var checkBox)) continue;
+                var row = VisualTreeHelper.GetParent(checkBox) as FrameworkElement ?? checkBox;
+                row.Visibility = _showRuBlocked ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private void UpdateRuBlockedButton()
+        {
+            btnShowRuBlocked.Foreground = _showRuBlocked
+                ? new SolidColorBrush(Color.FromRgb(255, 165, 0))
+                : new SolidColorBrush(Color.FromRgb(100, 100, 100));
+            btnShowRuBlocked.ToolTip = _showRuBlocked
+                ? "Скрыть недоступные в РФ"
+                : "Показывать недоступные в РФ";
+        }
+
+        private void BtnShowRuBlocked_Click(object sender, RoutedEventArgs e)
+        {
+            _showRuBlocked = !_showRuBlocked;
+            ProfileService.Current.ShowRuBlocked = _showRuBlocked;
+            ProfileService.Save();
+            UpdateRuBlockedButton();
+            string query = txtSearch.Text == (string)txtSearch.Tag ? "" : txtSearch.Text;
+            if (string.IsNullOrEmpty(query) && !_showFavoritesOnly)
+                ApplyRuBlockedVisibility();
+            else
+                FilterApps(query);
+        }
+
         private void ApplyProfileFilters()
         {
+            _showRuBlocked = ProfileService.Current.ShowRuBlocked;
+            UpdateRuBlockedButton();
+
             var mode = ProfileService.Current.CatalogMode;
             bool compact = ProfileService.Current.CompactMode;
 
@@ -1145,6 +1202,8 @@ namespace Ven4Tools.Views.Tabs
             // Re-apply hide installed if needed
             if (ProfileService.Current.HideInstalled)
                 ApplyHideInstalled();
+
+            ApplyRuBlockedVisibility();
         }
 
         private void OnAppSettingsChanged()
@@ -1229,8 +1288,9 @@ namespace Ven4Tools.Views.Tabs
 
                     bool matchSearch = !hasSearch || (label?.ToLower().Contains(lower) == true);
                     bool matchFav = !_showFavoritesOnly || (appId != null && _favoritesService.IsFavorite(appId));
+                    bool matchRu = _showRuBlocked || (appId == null || !_ruBlockedIds.Contains(appId));
 
-                    bool visible = matchSearch && matchFav;
+                    bool visible = matchSearch && matchFav && matchRu;
                     child.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
                     if (visible) { panelVisible++; totalVisible++; }
                 }
