@@ -32,7 +32,7 @@ namespace Ven4Tools.Services
 
         public async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallAppAsync(
             AppInfo app, string[] wingetSources, CancellationToken token,
-            IProgress<AppInstallProgress> progress, string installDrive)
+            IProgress<AppInstallProgress> progress, string installDrive, string? version = null)
         {
             var appProgress = new AppInstallProgress { AppId = app.Id, AppName = app.DisplayName };
 
@@ -56,7 +56,7 @@ namespace Ven4Tools.Services
                         appProgress.Percentage = 10;
                         progress.Report(appProgress);
 
-                        bool success = await RunWingetAsync(primaryId, source, token);
+                        bool success = await RunWingetAsync(primaryId, source, token, version);
                         if (success)
                         {
                             appProgress.Status = "✅ Установлено (Winget)";
@@ -222,14 +222,15 @@ Log($"✅ SHA256 verified: {app.DisplayName}");
             }
         }
 
-        private async Task<bool> RunWingetAsync(string appId, string source, CancellationToken token)
+        private async Task<bool> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null)
         {
             var profile = ProfileService.Current;
             string silent = profile.SilentInstall ? " --silent" : "";
             string location = !string.IsNullOrWhiteSpace(profile.DefaultInstallFolder)
                 ? $" --location \"{profile.DefaultInstallFolder}\""
                 : "";
-            string args = $"/c winget install --id {appId} -e --source {source} --accept-package-agreements --accept-source-agreements --disable-interactivity{silent}{location}";
+            string versionArg = !string.IsNullOrEmpty(version) ? $" --version \"{version}\"" : "";
+            string args = $"/c winget install --id {appId} -e --source {source}{versionArg} --accept-package-agreements --accept-source-agreements --disable-interactivity{silent}{location}";
 
             var psi = new ProcessStartInfo
             {
