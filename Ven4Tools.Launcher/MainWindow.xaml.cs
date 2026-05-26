@@ -113,21 +113,76 @@ namespace Ven4Tools.Launcher
             {
                 AddLog("🔍 Загрузка списка версий с GitHub...");
                 var gitHubService = new GitHubService();
-                _availableVersions = await gitHubService.GetAvailableClientVersions();
+
+                var (releases, error) = await gitHubService.GetAllReleasesWithError();
+
+                if (error != null)
+                {
+                    AddLog($"❌ {error}");
+                    return;
+                }
+
+                AddLog($"📦 Найдено релизов: {releases.Count}");
+
+                _availableVersions = new List<ClientVersionInfo>();
+                foreach (var release in releases)
+                {
+                    var version = release.tag_name?.TrimStart('v');
+                    if (string.IsNullOrEmpty(version)) continue;
+
+                    var clientAsset = release.assets?.FirstOrDefault(a =>
+                        a.name != null &&
+                        (a.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
+                         a.name.Contains("Ven4Tools", StringComparison.OrdinalIgnoreCase)) &&
+                        a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                        !a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase));
+
+                    if (clientAsset != null)
+                    {
+                        AddLog($"   ✅ {version} → {clientAsset.name}");
+                        _availableVersions.Add(new ClientVersionInfo
+                        {
+                            Version     = version,
+                            DownloadUrl = clientAsset.browser_download_url ?? "",
+                            ReleaseDate = release.published_at,
+                            ReleaseNotes = release.body,
+                            IsLatest    = releases.First() == release,
+                            FileSize    = clientAsset.size
+                        });
+                    }
+                    else
+                    {
+                        var assetNames = release.assets != null
+                            ? string.Join(", ", release.assets.Select(a => a.name))
+                            : "нет";
+                        AddLog($"   ⚠️ {version} — нет подходящего .zip (assets: {assetNames})");
+                    }
+                }
+
+                _availableVersions.Sort((a, b) =>
+                {
+                    var parts1 = a.Version.Split('.');
+                    var parts2 = b.Version.Split('.');
+                    for (int i = 0; i < Math.Max(parts1.Length, parts2.Length); i++)
+                    {
+                        int n1 = i < parts1.Length && int.TryParse(parts1[i], out var x) ? x : 0;
+                        int n2 = i < parts2.Length && int.TryParse(parts2[i], out var y) ? y : 0;
+                        if (n1 != n2) return n2.CompareTo(n1);
+                    }
+                    return 0;
+                });
 
                 if (_availableVersions.Any())
                 {
-                    cmbVersions.ItemsSource = _availableVersions;
+                    cmbVersions.ItemsSource  = _availableVersions;
                     cmbVersions.SelectedItem = _availableVersions.FirstOrDefault(v => v.IsLatest);
-                    cmbVersions.IsEnabled = true;
+                    cmbVersions.IsEnabled    = true;
                     AddLog($"✅ Загружено {_availableVersions.Count} версий");
-                    
-                    // Проверяем, есть ли уже клиент
                     CheckExistingClient();
                 }
                 else
                 {
-                    AddLog("⚠️ Не найдено версий клиента на GitHub");
+                    AddLog("⚠️ Нет релизов с подходящим .zip-активом (см. детали выше)");
                 }
             }
             catch (Exception ex)
