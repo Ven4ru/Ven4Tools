@@ -1,6 +1,6 @@
 ﻿{
   "version": 2,
-  "lastUpdated": "2026-05-27 01:10:29",
+  "lastUpdated": "2026-05-27 01:10:52",
   "changelog": [
     {
       "version": 2,
@@ -118,6 +118,21 @@
       "ruBlocked": false
     },
     {
+      "id": "libreoffice",
+      "name": "LibreOffice",
+      "category": "Офис",
+      "wingetId": "TheDocumentFoundation.LibreOffice",
+      "downloadUrl": "https://download.documentfoundation.org/libreoffice/stable/24.8.4/win/x86_64/LibreOffice_24.8.4_Win_x86-64.msi",
+      "version": "24.8.4",
+      "size": "~320 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Мощный бесплатный офисный пакет с открытым исходным кодом.",
+      "sha256": null,
+      "skipHash": false,
+      "ruBlocked": false
+    },
+    {
       "id": "onlyoffice",
       "name": "ONLYOFFICE",
       "category": "Офис",
@@ -208,6 +223,21 @@
       "ruBlocked": false
     },
     {
+      "id": "inkscape",
+      "name": "Inkscape",
+      "category": "Графика",
+      "wingetId": "Inkscape.Inkscape",
+      "downloadUrl": "https://media.inkscape.org/dl/resources/file/inkscape-1.4-x64.msi",
+      "version": "1.4",
+      "size": "~110 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Профессиональный векторный графический редактор.",
+      "sha256": null,
+      "skipHash": false,
+      "ruBlocked": false
+    },
+    {
       "id": "krita",
       "name": "Krita",
       "category": "Графика",
@@ -234,6 +264,21 @@
       "iconUrl": "",
       "description": "Полноценный 3D-пакет: моделирование, анимация, рендеринг.",
       "sha256": "2c9326290887ef004fe71998d1fbb7fa6bc6f725d884f0e985e05c226f7db53c",
+      "skipHash": false,
+      "ruBlocked": false
+    },
+    {
+      "id": "canva",
+      "name": "Canva Desktop",
+      "category": "Графика",
+      "wingetId": "Canva.Canva",
+      "downloadUrl": "https://desktop.canva.com/latest/CanvaSetup.exe",
+      "version": "1.98.0",
+      "size": "~250 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Дизайн для всех: презентации, соцсети, печатная продукция.",
+      "sha256": null,
       "skipHash": false,
       "ruBlocked": false
     },
@@ -474,6 +519,21 @@
       "iconUrl": "",
       "description": "Децентрализованный мессенджер на базе Matrix.",
       "sha256": "8a9028d6da10e91e29a9743f385df3c36589b8da24ebbe36efdfc84639d88ef7",
+      "skipHash": false,
+      "ruBlocked": false
+    },
+    {
+      "id": "mattermost",
+      "name": "Mattermost",
+      "category": "Мессенджеры",
+      "wingetId": "Mattermost.MattermostDesktop",
+      "downloadUrl": "https://releases.mattermost.com/desktop/5.10.0/mattermost-desktop-5.10.0-win-x64.exe",
+      "version": "5.10.0",
+      "size": "~90 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Альтернатива Slack с открытым исходным кодом.",
+      "sha256": null,
       "skipHash": false,
       "ruBlocked": false
     },
@@ -759,6 +819,21 @@
       "iconUrl": "",
       "description": "Лаунчер без DRM и агрегатор библиотек из других платформ.",
       "sha256": "826eef5ab19f127a77e79719a5af515d6a6c1ff6d4bf664dbf868a19e6d4287d",
+      "skipHash": false,
+      "ruBlocked": false
+    },
+    {
+      "id": "ubisoft-connect",
+      "name": "Ubisoft Connect",
+      "category": "Игровые сервисы",
+      "wingetId": "Ubisoft.Connect",
+      "downloadUrl": "https://static.u.ubi.com/ubisoft-connect/latest/UbisoftConnectInstaller.exe",
+      "version": "155.1.0.11247",
+      "size": "~85 MB",
+      "official": true,
+      "iconUrl": "",
+      "description": "Лаунчер для игр Ubisoft: Assassin's Creed, Far Cry, Rainbow Six.",
+      "sha256": null,
       "skipHash": false,
       "ruBlocked": false
     },
