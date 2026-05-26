@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
+using Ven4Tools.Models;
 
 namespace Ven4Tools.Views.Tabs
 {
@@ -16,15 +17,7 @@ namespace Ven4Tools.Views.Tabs
         private CancellationTokenSource? _cancellationTokenSource;
 
         public event Action<string>? LogMessage;
-
-        private readonly Dictionary<string, string> officeVersions = new()
-        {
-            { "Office 365 ProPlus",      "O365ProPlusRetail"      },
-            { "Office 2024 ProPlus",     "ProPlus2024Retail"      },
-            { "Office 2021 Professional","Professional2021Retail" },
-            { "Office 2019 Professional","Professional2019Retail" },
-            { "Office 2016 Professional","ProPlusRetail"          }
-        };
+        public event Action? GoToActivation;
 
         private readonly string[] officeLanguages = { "ru-ru", "en-us", "de-de", "fr-fr", "es-es", "it-it", "zh-cn", "ja-jp" };
 
@@ -50,6 +43,17 @@ namespace Ven4Tools.Views.Tabs
                 btnCancelOffice.IsEnabled = false;
                 AddLog("⏹️ Запрос отмены...");
             };
+            btnGoActivation.Click += (_, _) => GoToActivation?.Invoke();
+
+            UserSession.Changed += UpdateActivationPanel;
+            Unloaded += (_, _) => UserSession.Changed -= UpdateActivationPanel;
+            UpdateActivationPanel();
+        }
+
+        private void UpdateActivationPanel()
+        {
+            Dispatcher.Invoke(() =>
+                pnlActivationHint.Visibility = UserSession.IsLoggedIn ? Visibility.Visible : Visibility.Collapsed);
         }
 
         private static HttpClient CreateHttpClient()
@@ -72,13 +76,17 @@ namespace Ven4Tools.Views.Tabs
 
         private void FillComboBoxes()
         {
-            cmbOfficeVersion.ItemsSource = officeVersions;
-            cmbOfficeVersion.DisplayMemberPath = "Key";
-            cmbOfficeVersion.SelectedValuePath = "Value";
-            cmbOfficeVersion.SelectedIndex = 0;
-
             cmbOfficeLanguage.ItemsSource = officeLanguages;
             cmbOfficeLanguage.SelectedIndex = 0;
+        }
+
+        private (string DisplayName, string ProductId) GetSelectedVersion()
+        {
+            if (rdbO2024.IsChecked == true) return ("Office 2024 ProPlus",      "ProPlus2024Retail");
+            if (rdbO2021.IsChecked == true) return ("Office 2021 Professional",  "Professional2021Retail");
+            if (rdbO2019.IsChecked == true) return ("Office 2019 Professional",  "Professional2019Retail");
+            if (rdbO2016.IsChecked == true) return ("Office 2016 Professional",  "ProPlusRetail");
+            return ("Office 365 ProPlus", "O365ProPlusRetail");
         }
 
         private void SaveOriginalCountryCode()
@@ -125,13 +133,11 @@ namespace Ven4Tools.Views.Tabs
 
         private async void BtnInstallOffice_Click(object sender, RoutedEventArgs e)
         {
-            if (cmbOfficeVersion.SelectedItem == null || cmbOfficeLanguage.SelectedItem == null)
+            if (cmbOfficeLanguage.SelectedItem == null)
                 return;
 
-            var version = (KeyValuePair<string, string>)cmbOfficeVersion.SelectedItem;
-            string productId = version.Value;
-            string lang      = cmbOfficeLanguage.SelectedItem.ToString()!;
-            string displayName = version.Key;
+            var (displayName, productId) = GetSelectedVersion();
+            string lang = cmbOfficeLanguage.SelectedItem.ToString()!;
 
             btnInstallOffice.IsEnabled = false;
             btnCancelOffice.IsEnabled  = true;

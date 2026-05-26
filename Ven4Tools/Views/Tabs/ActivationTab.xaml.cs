@@ -1,8 +1,10 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Management;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Threading.Tasks;
 using Ven4Tools.Models;
 
@@ -56,14 +58,14 @@ namespace Ven4Tools.Views.Tabs
                 {
                     try
                     {
-                        using (var searcher = new ManagementObjectSearcher("SELECT LicenseStatus, ApplicationID FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL"))
+                        using (var searcher = new ManagementObjectSearcher("SELECT LicenseStatus, Name FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL"))
                         {
                             foreach (var obj in searcher.Get())
                             {
                                 int status = Convert.ToInt32(obj["LicenseStatus"]);
-                                string appId = obj["ApplicationID"]?.ToString() ?? "";
-                                
-                                if (appId.Contains("Windows"))
+                                string name = obj["Name"]?.ToString() ?? "";
+
+                                if (name.Contains("Windows", StringComparison.OrdinalIgnoreCase))
                                 {
                                     Dispatcher.Invoke(() =>
                                     {
@@ -73,76 +75,32 @@ namespace Ven4Tools.Views.Tabs
                                             0 => "❌ Не активирована",
                                             _ => "⚠️ Неизвестно"
                                         };
-                                        txtWindowsStatus.Foreground = status == 1 ? 
-                                            new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightGreen) : 
-                                            new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightCoral);
+                                        txtWindowsStatus.Foreground = status == 1 ?
+                                            new SolidColorBrush(Colors.LightGreen) :
+                                            new SolidColorBrush(Colors.LightCoral);
                                     });
-                                    break;
+                                    return;
                                 }
                             }
                         }
+                        Dispatcher.Invoke(() =>
+                        {
+                            txtWindowsStatus.Text = "⚠️ Не обнаружена";
+                            txtWindowsStatus.Foreground = new SolidColorBrush(Colors.Orange);
+                        });
                     }
                     catch (Exception ex)
                     {
                         Dispatcher.Invoke(() =>
                         {
                             txtWindowsStatus.Text = "⚠️ Ошибка";
-                            txtWindowsStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Orange);
+                            txtWindowsStatus.Foreground = new SolidColorBrush(Colors.Orange);
                             AddLog($"❌ Ошибка проверки Windows: {ex.Message}");
                         });
                     }
                 });
                 
-                await Task.Run(() =>
-                {
-                    try
-                    {
-                        using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Office\ClickToRun\Configuration"))
-                        {
-                            if (key != null)
-                            {
-                                var status = key.GetValue("ProductReleaseIds");
-                                if (status != null)
-                                {
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        txtOfficeStatus.Text = "✅ Установлен (статус активации проверьте в Office)";
-                                        txtOfficeStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightGreen);
-                                    });
-                                    return;
-                                }
-                            }
-                        }
-                        
-                        using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Office\16.0\Common\Licensing"))
-                        {
-                            if (key != null)
-                            {
-                                Dispatcher.Invoke(() =>
-                                {
-                                    txtOfficeStatus.Text = "✅ Office установлен";
-                                    txtOfficeStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightGreen);
-                                });
-                                return;
-                            }
-                        }
-                        
-                        Dispatcher.Invoke(() =>
-                        {
-                            txtOfficeStatus.Text = "❓ Office не обнаружен";
-                            txtOfficeStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightCoral);
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            txtOfficeStatus.Text = "⚠️ Ошибка";
-                            txtOfficeStatus.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Orange);
-                            AddLog($"❌ Ошибка проверки Office: {ex.Message}");
-                        });
-                    }
-                });
+                await Task.Run(() => CheckOfficeActivation());
             }
             catch (Exception ex)
             {
@@ -150,6 +108,121 @@ namespace Ven4Tools.Views.Tabs
             }
         }
         
+        private void CheckOfficeActivation()
+        {
+            try
+            {
+                // OSPP.VBS — официальный инструмент проверки лицензии Office (2010–2024, 365)
+                string[] osppPaths =
+                {
+                    @"C:\Program Files\Microsoft Office\Office16\OSPP.VBS",
+                    @"C:\Program Files (x86)\Microsoft Office\Office16\OSPP.VBS",
+                    @"C:\Program Files\Microsoft Office\Office15\OSPP.VBS",
+                    @"C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS",
+                    @"C:\Program Files\Microsoft Office\Office14\OSPP.VBS",
+                    @"C:\Program Files (x86)\Microsoft Office\Office14\OSPP.VBS",
+                };
+
+                string? osppPath = null;
+                foreach (var p in osppPaths)
+                    if (File.Exists(p)) { osppPath = p; break; }
+
+                if (osppPath != null)
+                {
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "cscript.exe",
+                        Arguments = $"//NoLogo \"{osppPath}\" /dstatus",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    string output;
+                    using (var proc = Process.Start(psi)!)
+                    {
+                        output = proc.StandardOutput.ReadToEnd();
+                        proc.WaitForExit();
+                    }
+
+                    bool hasProducts = output.Contains("SKU ID") || output.Contains("LICENSE NAME");
+                    if (!hasProducts)
+                    {
+                        SetOfficeStatusOnUI("❓ Office не обнаружен", null);
+                        return;
+                    }
+
+                    if (output.Contains("---LICENSED---"))
+                        SetOfficeStatusOnUI("✅ Активирован", true);
+                    else if (output.Contains("---UNLICENSED---") || output.Contains("NON_GENUINE"))
+                        SetOfficeStatusOnUI("❌ Не активирован", false);
+                    else if (output.Contains("OOB_GRACE") || output.Contains("NOTIFICATION"))
+                        SetOfficeStatusOnUI("⚠️ Пробный период", null);
+                    else
+                        SetOfficeStatusOnUI("⚠️ Статус неопределён", null);
+                    return;
+                }
+
+                // Запасной вариант: WMI SoftwareLicensingProduct
+                using var searcher = new ManagementObjectSearcher(
+                    "SELECT LicenseStatus, Name FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL");
+
+                foreach (var obj in searcher.Get())
+                {
+                    string name = obj["Name"]?.ToString() ?? "";
+                    if (name.Contains("Windows", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    if (name.Contains("Office", StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains("Microsoft 365", StringComparison.OrdinalIgnoreCase))
+                    {
+                        int status = Convert.ToInt32(obj["LicenseStatus"]);
+                        SetOfficeStatusOnUI(status == 1 ? "✅ Активирован" : "❌ Не активирован", status == 1);
+                        return;
+                    }
+                }
+
+                // Финальный фоллбэк: просто проверяем установлен ли Office
+                string[] regPaths =
+                {
+                    @"SOFTWARE\Microsoft\Office\ClickToRun\Configuration",
+                    @"SOFTWARE\Microsoft\Office\16.0\Common\Licensing",
+                    @"SOFTWARE\Microsoft\Office\15.0\Common\Licensing",
+                };
+                bool installed = false;
+                foreach (var regPath in regPaths)
+                {
+                    using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(regPath);
+                    if (key != null) { installed = true; break; }
+                }
+
+                SetOfficeStatusOnUI(installed ? "⚠️ Статус неизвестен" : "❓ Office не обнаружен", null);
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    txtOfficeStatus.Text = "⚠️ Ошибка";
+                    txtOfficeStatus.Foreground = new SolidColorBrush(Colors.Orange);
+                    AddLog($"❌ Ошибка проверки Office: {ex.Message}");
+                });
+            }
+        }
+
+        private void SetOfficeStatusOnUI(string text, bool? isActivated)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                txtOfficeStatus.Text = text;
+                txtOfficeStatus.Foreground = isActivated switch
+                {
+                    true  => new SolidColorBrush(Colors.LightGreen),
+                    false => new SolidColorBrush(Colors.LightCoral),
+                    null  => new SolidColorBrush(Colors.Orange)
+                };
+            });
+        }
+
         // Интерактивный режим — открывает окно PowerShell
         private void BtnInteractiveMAS_Click(object sender, RoutedEventArgs e)
         {
