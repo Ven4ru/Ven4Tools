@@ -14,18 +14,6 @@ namespace Ven4Tools.Views
         {
             InitializeComponent();
             txtEmail.Focus();
-
-            if (ProfileService.Current.Theme == "web")
-            {
-                try
-                {
-                    var uri = new Uri("pack://application:,,,/Resources/Mascots/login.png");
-                    imgLoginMascot.Source = new System.Windows.Media.Imaging.BitmapImage(uri);
-                    imgLoginMascot.Visibility = Visibility.Visible;
-                    txtLoginIcon.Visibility = Visibility.Collapsed;
-                }
-                catch { }
-            }
         }
 
         private void BtnModeLogin_Click(object sender, RoutedEventArgs e) => SetMode(false);
