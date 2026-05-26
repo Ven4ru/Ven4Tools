@@ -1,6 +1,6 @@
 ﻿{
   "version": 2,
-  "lastUpdated": "2026-05-27 01:10:55",
+  "lastUpdated": "2026-05-27 01:19:01",
   "changelog": [
     {
       "version": 2,
@@ -118,21 +118,6 @@
       "ruBlocked": false
     },
     {
-      "id": "libreoffice",
-      "name": "LibreOffice",
-      "category": "Офис",
-      "wingetId": "TheDocumentFoundation.LibreOffice",
-      "downloadUrl": "https://download.documentfoundation.org/libreoffice/stable/24.8.4/win/x86_64/LibreOffice_24.8.4_Win_x86-64.msi",
-      "version": "24.8.4",
-      "size": "~320 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Мощный бесплатный офисный пакет с открытым исходным кодом.",
-      "sha256": null,
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
       "id": "onlyoffice",
       "name": "ONLYOFFICE",
       "category": "Офис",
@@ -158,7 +143,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Стандарт для работы с PDF-документами от Adobe.",
-      "sha256": null,
+      "sha256": "",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -174,21 +159,6 @@
       "iconUrl": "",
       "description": "Минималистичный и быстрый просмотрщик PDF, EPUB, MOBI.",
       "sha256": "2be4a27b83830ea07c6671c3557673d509544e5f70fc6b2dc8cc4388b302c1f2",
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
-      "id": "openoffice",
-      "name": "Apache OpenOffice",
-      "category": "Офис",
-      "wingetId": "Apache.OpenOffice",
-      "downloadUrl": "https://downloads.apache.org/openoffice/4.1.15/binaries/ru/Apache_OpenOffice_4.1.15_Win_x64_install_ru.exe",
-      "version": "4.1.15",
-      "size": "~180 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Классический бесплатный офисный пакет.",
-      "sha256": null,
       "skipHash": false,
       "ruBlocked": false
     },
@@ -223,21 +193,6 @@
       "ruBlocked": false
     },
     {
-      "id": "inkscape",
-      "name": "Inkscape",
-      "category": "Графика",
-      "wingetId": "Inkscape.Inkscape",
-      "downloadUrl": "https://media.inkscape.org/dl/resources/file/inkscape-1.4-x64.msi",
-      "version": "1.4",
-      "size": "~110 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Профессиональный векторный графический редактор.",
-      "sha256": null,
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
       "id": "krita",
       "name": "Krita",
       "category": "Графика",
@@ -264,21 +219,6 @@
       "iconUrl": "",
       "description": "Полноценный 3D-пакет: моделирование, анимация, рендеринг.",
       "sha256": "2c9326290887ef004fe71998d1fbb7fa6bc6f725d884f0e985e05c226f7db53c",
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
-      "id": "canva",
-      "name": "Canva Desktop",
-      "category": "Графика",
-      "wingetId": "Canva.Canva",
-      "downloadUrl": "https://desktop.canva.com/latest/CanvaSetup.exe",
-      "version": "1.98.0",
-      "size": "~250 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Дизайн для всех: презентации, соцсети, печатная продукция.",
-      "sha256": null,
       "skipHash": false,
       "ruBlocked": false
     },
@@ -493,21 +433,6 @@
       "ruBlocked": false
     },
     {
-      "id": "signal",
-      "name": "Signal",
-      "category": "Мессенджеры",
-      "wingetId": "OpenWhisperSystems.Signal",
-      "downloadUrl": "https://updates.signal.org/desktop/signal-desktop-win-7.33.0.exe",
-      "version": "7.33.0",
-      "size": "~100 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Защищённый мессенджер с end-to-end шифрованием.",
-      "sha256": null,
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
       "id": "element",
       "name": "Element",
       "category": "Мессенджеры",
@@ -519,21 +444,6 @@
       "iconUrl": "",
       "description": "Децентрализованный мессенджер на базе Matrix.",
       "sha256": "8a9028d6da10e91e29a9743f385df3c36589b8da24ebbe36efdfc84639d88ef7",
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
-      "id": "mattermost",
-      "name": "Mattermost",
-      "category": "Мессенджеры",
-      "wingetId": "Mattermost.MattermostDesktop",
-      "downloadUrl": "https://releases.mattermost.com/desktop/5.10.0/mattermost-desktop-5.10.0-win-x64.exe",
-      "version": "5.10.0",
-      "size": "~90 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Альтернатива Slack с открытым исходным кодом.",
-      "sha256": null,
       "skipHash": false,
       "ruBlocked": false
     },
@@ -579,21 +489,6 @@
       "iconUrl": "",
       "description": "Запись видео и стриминг с профессиональными настройками.",
       "sha256": "edb3f77c3ee4eae769924d1673bb826dac8898907d06f6f40a4c99b6bc8cdc8b",
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
-      "id": "audacity",
-      "name": "Audacity",
-      "category": "Мультимедиа",
-      "wingetId": "Audacity.Audacity",
-      "downloadUrl": "https://github.com/audacity/audacity/releases/download/Audacity-3.7.1/audacity-win-3.7.1-x64.exe",
-      "version": "3.7.1",
-      "size": "~45 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Бесплатный редактор аудио с открытым исходным кодом.",
-      "sha256": null,
       "skipHash": false,
       "ruBlocked": false
     },
@@ -668,7 +563,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Мониторинг состояния жёстких дисков и SSD.",
-      "sha256": null,
+      "sha256": "",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -683,7 +578,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Тестирование производительности накопителей.",
-      "sha256": null,
+      "sha256": "",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -714,21 +609,6 @@
       "iconUrl": "",
       "description": "Скриншоты, запись экрана, загрузка файлов.",
       "sha256": "8f082b1939af2894fea681e6e807e577d15ea546fc0231f84720ac62867ca7f4",
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
-      "id": "windirstat",
-      "name": "WinDirStat",
-      "category": "Системные",
-      "wingetId": "WinDirStat.WinDirStat",
-      "downloadUrl": "https://windirstat.net/download/windirstat1_1_2_setup.exe",
-      "version": "1.1.2",
-      "size": "~1.2 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Анализ использования дискового пространства.",
-      "sha256": null,
       "skipHash": false,
       "ruBlocked": false
     },
@@ -819,21 +699,6 @@
       "iconUrl": "",
       "description": "Лаунчер без DRM и агрегатор библиотек из других платформ.",
       "sha256": "826eef5ab19f127a77e79719a5af515d6a6c1ff6d4bf664dbf868a19e6d4287d",
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
-      "id": "ubisoft-connect",
-      "name": "Ubisoft Connect",
-      "category": "Игровые сервисы",
-      "wingetId": "Ubisoft.Connect",
-      "downloadUrl": "https://static.u.ubi.com/ubisoft-connect/latest/UbisoftConnectInstaller.exe",
-      "version": "155.1.0.11247",
-      "size": "~85 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Лаунчер для игр Ubisoft: Assassin's Creed, Far Cry, Rainbow Six.",
-      "sha256": null,
       "skipHash": false,
       "ruBlocked": false
     },
@@ -958,21 +823,6 @@
       "ruBlocked": false
     },
     {
-      "id": "bleachbit",
-      "name": "BleachBit",
-      "category": "Другое",
-      "wingetId": "BleachBit.BleachBit",
-      "downloadUrl": "https://download.bleachbit.org/bleachbit-4.6.2-setup.exe",
-      "version": "4.6.2",
-      "size": "~25 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Очистка системы и освобождение места на диске.",
-      "sha256": null,
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
       "id": "cpu-z",
       "name": "CPU-Z",
       "category": "Другое",
@@ -998,7 +848,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Описание отсутствует",
-      "sha256": null,
+      "sha256": "",
       "skipHash": false,
       "ruBlocked": false
     },
