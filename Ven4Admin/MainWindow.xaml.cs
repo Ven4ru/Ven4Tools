@@ -243,7 +243,7 @@ namespace Ven4Admin
             bool   hasSsh  = !string.IsNullOrEmpty(sshHost) && !string.IsNullOrEmpty(sshUser);
 
             int done = 0;
-            var sem  = new SemaphoreSlim(4);
+            var sem  = new SemaphoreSlim(3);
 
             var tasks = toScan.Select(async item =>
             {
@@ -317,9 +317,15 @@ namespace Ven4Admin
             string url, string host, string user, string pass, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(url)) return "⬜";
+
+            // Per-check timeout: 20 s total (SSH connect + curl --max-time 10)
+            using var perCheckCts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, perCheckCts.Token);
+            var ct = linked.Token;
+
+            Process? p = null;
             try
             {
-                // Escape single quotes in URL for bash
                 string safeUrl = url.Replace("'", "'\\''");
                 var psi = new ProcessStartInfo("plink",
                     $"-pw \"{pass}\" -noagent {user}@{host} " +
@@ -331,32 +337,33 @@ namespace Ven4Admin
                     UseShellExecute        = false,
                     CreateNoWindow         = true,
                 };
-                using var p = Process.Start(psi);
+                p = Process.Start(psi);
                 if (p == null) return "⬜ plink не найден";
 
-                // Accept host key on first connect
                 p.StandardInput.WriteLine("y");
                 p.StandardInput.Flush();
 
-                using var reg = token.Register(() => { try { p.Kill(); } catch { } });
-                string stdout = await p.StandardOutput.ReadToEndAsync();
-                string stderr = await p.StandardError.ReadToEndAsync();
-                await p.WaitForExitAsync(token);
+                // Read both streams in parallel to prevent deadlock
+                using var reg = ct.Register(() => { try { p.Kill(); } catch { } });
+                var stdoutTask = p.StandardOutput.ReadToEndAsync(ct);
+                var stderrTask = p.StandardError.ReadToEndAsync(ct);
+                await Task.WhenAll(stdoutTask, stderrTask);
 
-                string combined = (stdout + stderr).Trim();
+                string combined = (stdoutTask.Result + stderrTask.Result).Trim();
                 if (combined.Contains("200") || combined.Contains("301") || combined.Contains("302") ||
                     combined.Contains("303") || combined.Contains("307") || combined.Contains("308"))
                     return "✅ доступно";
 
                 if (string.IsNullOrWhiteSpace(combined)) return "⬜ нет ответа";
-                // Show first meaningful line (not the host key prompt line)
                 var firstLine = combined.Split('\n')
                     .FirstOrDefault(l => !l.Contains("WARNING") && !l.Contains("key") && l.Trim().Length > 0)
                     ?? combined.Split('\n')[0];
                 return $"❌ {firstLine.Trim().Truncate(30)}";
             }
-            catch (TaskCanceledException)  { return "❌ таймаут"; }
-            catch (Exception ex)           { return $"⬜ {ex.Message.Truncate(25)}"; }
+            catch (OperationCanceledException) { return "❌ таймаут SSH"; }
+            catch (System.ComponentModel.Win32Exception) { return "⬜ plink не найден"; }
+            catch (Exception ex) { return $"⬜ {ex.Message.Truncate(25)}"; }
+            finally { try { p?.Kill(); } catch { } }
         }
 
         // ── Действия ─────────────────────────────────────────────────────────
