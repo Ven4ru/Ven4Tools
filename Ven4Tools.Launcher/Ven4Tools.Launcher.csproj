@@ -30,4 +30,9 @@
     <Resource Include="Resources\launcher.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Secrets.example.cs" />
+    <None Include="Secrets.example.cs" />
+  </ItemGroup>
+
 </Project>

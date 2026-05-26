@@ -27,6 +27,8 @@ namespace Ven4Tools.Launcher.Services
             httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
             httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+            if (!string.IsNullOrEmpty(Secrets.GitHubToken))
+                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {Secrets.GitHubToken}");
             httpClient.Timeout = TimeSpan.FromSeconds(15);
         }
 
