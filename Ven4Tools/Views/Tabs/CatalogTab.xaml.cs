@@ -31,6 +31,9 @@ namespace Ven4Tools.Views.Tabs
         private Dictionary<string, CheckBox> appCheckBoxes = new();
         private Dictionary<AppCategory, StackPanel> categoryPanels = new();
         private Dictionary<string, AvailabilityChecker.AvailabilityStatus> availabilityStatus = new();
+        private Dictionary<string, ComboBox> _versionCombos = new();
+        private Dictionary<string, List<string>> _appVersions = new();
+        private readonly VersionTrackingService _versionTracker = new();
         private MasterCatalog? _catalog;
         private CatalogLoaderService? _catalogLoader;
         private string selectedInstallDrive = "C:\\";
@@ -278,6 +281,8 @@ namespace Ven4Tools.Views.Tabs
                 }
                 appCheckBoxes.Clear();
                 availabilityStatus.Clear();
+                _versionCombos.Clear();
+                _appVersions.Clear();
 
                 if (_catalog == null)
                 {
@@ -319,6 +324,12 @@ namespace Ven4Tools.Views.Tabs
                         var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
                         row.Children.Add(checkBox);
                         row.Children.Add(MakeStarButton(app.Id));
+                        if (!string.IsNullOrEmpty(app.WingetId))
+                        {
+                            var versionCombo = MakeVersionCombo(app.Id);
+                            row.Children.Add(versionCombo);
+                            _versionCombos[app.Id] = versionCombo;
+                        }
 
                         panel.Children.Add(row);
                         appCheckBoxes[app.Id] = checkBox;
@@ -342,6 +353,7 @@ namespace Ven4Tools.Views.Tabs
                     int available = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
                     int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
                     AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
+                    _ = FetchVersionsPhase2Async();
                     return UpdateInstalledStatusAsync();
                 }).Unwrap();
             }
@@ -386,6 +398,13 @@ namespace Ven4Tools.Views.Tabs
             var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
             panel.Children.Add(checkBox);
             panel.Children.Add(MakeStarButton(app.Id));
+            if (!string.IsNullOrEmpty(app.AlternativeId))
+            {
+                var versionCombo = MakeVersionCombo(app.Id);
+                panel.Children.Add(versionCombo);
+                _versionCombos[app.Id] = versionCombo;
+                _ = Task.Run(() => FetchVersionsForAppAsync(app.Id, app.AlternativeId));
+            }
             panel.Children.Add(removeButton);
 
             PanelПользовательские.Children.Add(panel);
@@ -722,6 +741,16 @@ namespace Ven4Tools.Views.Tabs
             var appsToInstall = allApps.Where(a => selectedApps.Contains(a.Id)).ToList();
             var progressDict = new Dictionary<string, AppInstallProgress>();
 
+            // Capture version selections on UI thread before spawning tasks
+            var versionSelections = new Dictionary<string, string?>();
+            foreach (var app in appsToInstall)
+            {
+                if (_versionCombos.TryGetValue(app.Id, out var vc) && vc.SelectedItem is string sv && sv != "Последняя")
+                    versionSelections[app.Id] = sv;
+                else
+                    versionSelections[app.Id] = null;
+            }
+
             AddLog($"💾 Установка на диск: {selectedInstallDrive}");
 
             var progress = new Progress<AppInstallProgress>(p =>
@@ -754,18 +783,21 @@ namespace Ven4Tools.Views.Tabs
                 try
                 {
                     if (token.IsCancellationRequested) return;
-                    var result = await installService.InstallAppAsync(app, wingetSources, token, progress, selectedInstallDrive);
+                    versionSelections.TryGetValue(app.Id, out var selectedVersion);
+                    var result = await installService.InstallAppAsync(app, wingetSources, token, progress, selectedInstallDrive, selectedVersion);
                     await Dispatcher.InvokeAsync(() =>
                     {
                         if (result.Success)
                         {
                             completed++;
+                            if (selectedVersion != null && _appVersions.TryGetValue(app.Id, out var knownVer) && knownVer.Count > 0)
+                                _versionTracker.TrackInstall(app.Id, selectedVersion, knownVer[0]);
                             if (appCheckBoxes.TryGetValue(app.Id, out var cb) && cb.Content is TextBlock tb)
                             {
                                 tb.Foreground = new SolidColorBrush(Color.FromRgb(136, 136, 136));
                                 cb.Opacity = 0.7;
                                 cb.IsEnabled = false;
-                                cb.ToolTip = "✅ Установлено";
+                                cb.ToolTip = selectedVersion != null ? $"✅ Установлено ({selectedVersion})" : "✅ Установлено";
                             }
                         }
                         else failed++;
@@ -1024,6 +1056,7 @@ namespace Ven4Tools.Views.Tabs
             await installedAppsService.RefreshAsync();
 
             int installedCount = 0;
+            int outdatedCount = 0;
 
             await Dispatcher.InvokeAsync(() =>
             {
@@ -1037,10 +1070,24 @@ namespace Ven4Tools.Views.Tabs
                     if (installedAppsService.IsInstalled(wingetId) && kvp.Value.Content is TextBlock tb)
                     {
                         string version = installedAppsService.GetInstalledVersion(wingetId);
-                        tb.Foreground = new SolidColorBrush(Color.FromRgb(100, 149, 237));
-                        kvp.Value.ToolTip = string.IsNullOrEmpty(version)
-                            ? "✓ Уже установлено"
-                            : $"✓ Установлено ({version})";
+
+                        bool hasUpdate = false;
+                        if (!string.IsNullOrEmpty(version) && _appVersions.TryGetValue(kvp.Key, out var knownVersions) && knownVersions.Count > 0)
+                            hasUpdate = version != knownVersions[0];
+
+                        if (hasUpdate)
+                        {
+                            tb.Foreground = new SolidColorBrush(Color.FromRgb(255, 165, 0));
+                            kvp.Value.ToolTip = $"✓ Установлено ({version}) | 🆙 Доступна новая версия";
+                            outdatedCount++;
+                        }
+                        else
+                        {
+                            tb.Foreground = new SolidColorBrush(Color.FromRgb(100, 149, 237));
+                            kvp.Value.ToolTip = string.IsNullOrEmpty(version)
+                                ? "✓ Уже установлено"
+                                : $"✓ Установлено ({version})";
+                        }
                         installedCount++;
                     }
                 }
@@ -1048,8 +1095,9 @@ namespace Ven4Tools.Views.Tabs
 
             if (installedCount > 0)
                 AddLog($"📦 Уже установлено: {installedCount} из {appCheckBoxes.Count} приложений");
+            if (outdatedCount > 0)
+                AddLog($"🆙 Доступно обновлений: {outdatedCount}");
 
-            // Hide installed if profile setting is on
             if (ProfileService.Current.HideInstalled)
                 ApplyHideInstalled();
         }
@@ -1425,6 +1473,75 @@ namespace Ven4Tools.Views.Tabs
                 ? new SolidColorBrush(Color.FromRgb(255, 215, 0))
                 : new SolidColorBrush(Color.FromRgb(100, 100, 100));
             btn.ToolTip = fav ? "Убрать из избранного" : "Добавить в избранное";
+        }
+
+        // ── Version selection combo ───────────────────────────────────────────
+        private ComboBox MakeVersionCombo(string appId)
+        {
+            var combo = new ComboBox
+            {
+                Width = 95,
+                Height = 22,
+                Margin = new Thickness(4, 0, 0, 0),
+                FontSize = 10,
+                VerticalAlignment = VerticalAlignment.Center,
+                IsEnabled = false,
+                ToolTip = "Версии загружаются...",
+                Tag = appId
+            };
+            combo.Items.Add("Последняя");
+            combo.SelectedIndex = 0;
+            return combo;
+        }
+
+        private async Task FetchVersionsForAppAsync(string appId, string wingetId)
+        {
+            var versions = await WingetVersionsService.FetchVersionsAsync(wingetId);
+            if (versions.Count == 0) return;
+            _appVersions[appId] = versions;
+            await Dispatcher.InvokeAsync(() =>
+            {
+                if (_versionCombos.TryGetValue(appId, out var combo))
+                {
+                    combo.Items.Clear();
+                    combo.Items.Add("Последняя");
+                    foreach (var v in versions)
+                        combo.Items.Add(v);
+                    combo.SelectedIndex = 0;
+                    combo.IsEnabled = true;
+                    combo.ToolTip = $"Доступных версий: {versions.Count}";
+                }
+            });
+        }
+
+        private async Task FetchVersionsPhase2Async()
+        {
+            if (_catalog == null) return;
+            AddLog("🔍 Загрузка доступных версий (Фаза 2)...");
+
+            var sem = new SemaphoreSlim(3);
+            var tasks = new List<Task>();
+
+            foreach (var app in _catalog.Apps)
+            {
+                if (string.IsNullOrEmpty(app.WingetId)) continue;
+                if (!_versionCombos.ContainsKey(app.Id)) continue;
+                if (availabilityStatus.TryGetValue(app.Id, out var s) &&
+                    s == AvailabilityChecker.AvailabilityStatus.Unavailable) continue;
+
+                var localApp = app;
+                tasks.Add(Task.Run(async () =>
+                {
+                    await sem.WaitAsync();
+                    try { await FetchVersionsForAppAsync(localApp.Id, localApp.WingetId); }
+                    finally { sem.Release(); }
+                }));
+            }
+
+            await Task.WhenAll(tasks);
+            int loaded = _appVersions.Count;
+            AddLog($"✅ Версии загружены для {loaded} приложений");
+            _ = UpdateInstalledStatusAsync();
         }
 
         // ── Update check ──────────────────────────────────────────────────────

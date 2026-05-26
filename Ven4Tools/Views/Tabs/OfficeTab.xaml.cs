@@ -130,54 +130,53 @@ namespace Ven4Tools.Views.Tabs
 
             var version = (KeyValuePair<string, string>)cmbOfficeVersion.SelectedItem;
             string productId = version.Value;
-            string lang = cmbOfficeLanguage.SelectedItem.ToString()!;
+            string lang      = cmbOfficeLanguage.SelectedItem.ToString()!;
             string displayName = version.Key;
 
             btnInstallOffice.IsEnabled = false;
-            btnCancelOffice.IsEnabled = true;
-            _cancellationTokenSource = new CancellationTokenSource();
+            btnCancelOffice.IsEnabled  = true;
+            _cancellationTokenSource   = new CancellationTokenSource();
             var token = _cancellationTokenSource.Token;
 
+            SetProgress(true, "⏳ Подготовка...", 0);
             AddLog($"\n📦 Установка {displayName} ({lang})...");
+
+            string tempFile = Path.Combine(Path.GetTempPath(), $"OfficeSetup_{Guid.NewGuid():N}.exe");
+            bool regionChanged = false;
 
             try
             {
                 SaveOriginalCountryCode();
-                AddLog("🌎 Установка CountryCode = US для обхода блокировок...");
                 SetCountryCode("US");
-                await Task.Delay(500, token);
+                regionChanged = true;
+                AddLog("🌎 CountryCode = US (будет восстановлен после установки)");
 
+                // ── Фаза 1: скачивание ────────────────────────────────────────
+                SetPhase("📥 Скачивание установщика...");
                 string downloadUrl = string.Format(officeDirectLinks[productId], lang);
-                string tempFile = Path.Combine(Path.GetTempPath(), $"OfficeSetup_{Guid.NewGuid():N}.exe");
-
-                AddLog("📥 Скачивание...");
 
                 using (var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, token))
                 {
                     response.EnsureSuccessStatusCode();
+                    using var src  = await response.Content.ReadAsStreamAsync();
+                    using var dst  = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
+                    var buf        = new byte[65536];
+                    int read;
+                    long total     = 0;
+                    long? size     = response.Content.Headers.ContentLength;
+                    int lastPct    = -1;
 
-                    using var contentStream = await response.Content.ReadAsStreamAsync();
-                    using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
-
-                    var buffer = new byte[8192];
-                    int bytesRead;
-                    long totalRead = 0;
-                    long? totalSize = response.Content.Headers.ContentLength;
-                    int lastLoggedStep = -1;
-
-                    while ((bytesRead = await contentStream.ReadAsync(buffer, token)) > 0)
+                    while ((read = await src.ReadAsync(buf, token)) > 0)
                     {
-                        await fileStream.WriteAsync(buffer, 0, bytesRead, token);
-                        totalRead += bytesRead;
-
-                        if (totalSize.HasValue)
+                        await dst.WriteAsync(buf, 0, read, token);
+                        total += read;
+                        if (size.HasValue)
                         {
-                            int percent = (int)((double)totalRead / totalSize.Value * 100);
-                            int step = percent / 10;
-                            if (step > lastLoggedStep)
+                            int pct = (int)(total * 100.0 / size.Value);
+                            if (pct != lastPct)
                             {
-                                lastLoggedStep = step;
-                                AddLog($"📥 Скачивание: {percent}%");
+                                lastPct = pct;
+                                SetProgress(true, $"📥 Скачивание: {pct}%", pct, $"{total / 1048576:F1} / {size.Value / 1048576:F1} МБ");
                             }
                         }
                     }
@@ -185,44 +184,66 @@ namespace Ven4Tools.Views.Tabs
 
                 if (token.IsCancellationRequested)
                 {
-                    try { File.Delete(tempFile); } catch { }
                     AddLog("⏹️ Скачивание прервано");
                     return;
                 }
 
-                var fileInfo = new FileInfo(tempFile);
-                AddLog($"✅ Скачано: {fileInfo.Length / 1024 / 1024:F1} MB");
-                AddLog("🚀 Запуск установки...");
+                var fi = new FileInfo(tempFile);
+                AddLog($"✅ Скачано: {fi.Length / 1048576:F1} МБ");
 
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                // ── Фаза 2: запуск бутстраппера ──────────────────────────────
+                SetPhase("🚀 Запуск установщика...");
+                AddLog("🚀 Запуск установщика Office...");
+
+                var bootstrapper = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
-                    FileName = tempFile,
+                    FileName        = tempFile,
                     UseShellExecute = true,
-                    Verb = "runas"
+                    Verb            = "runas"
                 });
 
-                AddLog("✅ Установщик запущен!");
+                // Запомним PID-ы уже запущенных c2r-процессов, чтобы не перепутать
+                var existingPids = GetC2RProcessPids();
 
-                if (chkSaveInstaller.IsChecked != true)
+                // Ждём, пока бутстраппер передаст управление C2R
+                if (bootstrapper != null)
+                    await bootstrapper.WaitForExitAsync(token).ConfigureAwait(false);
+
+                // ── Фаза 3: мониторинг реальной установки ────────────────────
+                SetPhase("⚙️ Установка Office... не закрывайте приложение");
+                AddLog("⏳ Ожидаем запуск C2R-установщика...");
+
+                var installProc = await WaitForC2RProcess(existingPids, TimeSpan.FromMinutes(3), token);
+
+                if (installProc == null)
                 {
-                    _ = Task.Run(async () =>
-                    {
-                        await Task.Delay(5000);
-                        try { File.Delete(tempFile); } catch { }
-                    });
+                    AddLog("⚠️ Процесс установки не обнаружен — возможно Office уже установлен или установка прошла мгновенно");
+                }
+                else
+                {
+                    AddLog($"🔍 Мониторинг: {installProc.ProcessName} (PID {installProc.Id})");
+                    SetProgress(true, "⚙️ Установка Office...", 0, "Идёт установка, пожалуйста подождите...");
+                    progressOffice.IsIndeterminate = true;
+
+                    await MonitorInstallation(installProc, token);
+
+                    progressOffice.IsIndeterminate = false;
                 }
 
-                MessageBox.Show(
-                    $"Установщик {displayName} запущен!\n\n" +
-                    $"Файл сохранён: {tempFile}\n" +
-                    $"Размер: {fileInfo.Length / 1024 / 1024:F1} MB",
-                    "Установка запущена",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                // ── Готово ────────────────────────────────────────────────────
+                AddLog("✅ Установка завершена — восстанавливаем регион");
+                RestoreOriginalCountryCode();
+                regionChanged = false;
+
+                SetProgress(true, "✅ Офис установлен!", 100, "Регион восстановлен");
+                AddLog("✅ Регион восстановлен");
+
+                if (chkSaveInstaller.IsChecked != true)
+                    try { File.Delete(tempFile); } catch { }
             }
             catch (OperationCanceledException)
             {
-                AddLog("⏹️ Скачивание отменено");
+                AddLog("⏹️ Операция отменена");
             }
             catch (Exception ex)
             {
@@ -231,13 +252,84 @@ namespace Ven4Tools.Views.Tabs
             }
             finally
             {
-                RestoreOriginalCountryCode();
+                if (regionChanged)
+                {
+                    RestoreOriginalCountryCode();
+                    AddLog("🔁 Регион восстановлен (аварийный сброс)");
+                }
+                try { if (!chkSaveInstaller.IsChecked == true && File.Exists(tempFile)) File.Delete(tempFile); } catch { }
                 _cancellationTokenSource?.Dispose();
-                _cancellationTokenSource = null;
+                _cancellationTokenSource  = null;
                 btnInstallOffice.IsEnabled = true;
-                btnCancelOffice.IsEnabled = false;
+                btnCancelOffice.IsEnabled  = false;
+                await Task.Delay(3000);
+                SetProgress(false);
             }
         }
+
+        private static HashSet<int> GetC2RProcessPids()
+        {
+            var names = new[] { "officec2rclient", "OfficeClickToRun" };
+            var pids  = new HashSet<int>();
+            foreach (var name in names)
+                foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
+                    pids.Add(p.Id);
+            return pids;
+        }
+
+        private static async Task<System.Diagnostics.Process?> WaitForC2RProcess(
+            HashSet<int> existingPids, TimeSpan timeout, CancellationToken token)
+        {
+            var deadline = DateTime.UtcNow + timeout;
+            var names    = new[] { "officec2rclient", "OfficeClickToRun" };
+
+            while (DateTime.UtcNow < deadline && !token.IsCancellationRequested)
+            {
+                foreach (var name in names)
+                {
+                    foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
+                    {
+                        if (!existingPids.Contains(p.Id))
+                            return p;
+                    }
+                }
+                await Task.Delay(2000, token);
+            }
+            return null;
+        }
+
+        private async Task MonitorInstallation(System.Diagnostics.Process proc, CancellationToken token)
+        {
+            var timeout  = TimeSpan.FromMinutes(60);
+            var deadline = DateTime.UtcNow + timeout;
+            var elapsed  = System.Diagnostics.Stopwatch.StartNew();
+
+            while (!proc.HasExited && DateTime.UtcNow < deadline && !token.IsCancellationRequested)
+            {
+                await Task.Delay(5000, token);
+                SetDetail($"Установка идёт {elapsed.Elapsed:mm\\:ss}...");
+            }
+
+            if (!proc.HasExited)
+                AddLog("⚠️ Таймаут ожидания — продолжаем без подтверждения");
+        }
+
+        private void SetProgress(bool visible, string phase = "", double value = 0, string detail = "")
+        {
+            Dispatcher.Invoke(() =>
+            {
+                pnlProgress.Visibility    = visible ? Visibility.Visible : Visibility.Collapsed;
+                txtInstallPhase.Text      = phase;
+                progressOffice.Value      = value;
+                txtInstallDetail.Text     = detail;
+            });
+        }
+
+        private void SetPhase(string text) =>
+            Dispatcher.Invoke(() => txtInstallPhase.Text = text);
+
+        private void SetDetail(string text) =>
+            Dispatcher.Invoke(() => txtInstallDetail.Text = text);
 
         private void AddLog(string message)
         {

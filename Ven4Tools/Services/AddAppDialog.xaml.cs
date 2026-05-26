@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -7,79 +7,132 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Ven4Tools.Models;
-using Ven4Tools.Services;
 
 namespace Ven4Tools.Services
 {
     public partial class AddAppDialog : Window
     {
         public AppInfo? Result { get; private set; }
-        private ObservableCollection<WingetPackage> searchResults = new();
+        private readonly ObservableCollection<WingetPackage> _searchResults = new();
 
         public AddAppDialog()
         {
             InitializeComponent();
-            lstSearchResults.ItemsSource = searchResults;
+            lstSearchResults.ItemsSource = _searchResults;
+        }
+
+        private void RbMode_Checked(object sender, RoutedEventArgs e)
+        {
+            if (panelWinget == null) return;
+            bool isWinget = rbWinget.IsChecked == true;
+            panelWinget.Visibility = isWinget ? Visibility.Visible : Visibility.Collapsed;
+            panelUrl.Visibility    = isWinget ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void TxtSearchQuery_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) BtnSearchWinget_Click(sender, e);
         }
 
         private async void BtnSearchWinget_Click(object sender, RoutedEventArgs e)
         {
-            string query = txtName.Text.Trim();
+            string query = txtSearchQuery.Text.Trim();
             if (string.IsNullOrWhiteSpace(query))
             {
-                MessageBox.Show("Введите название программы для поиска.", "Информация", 
+                MessageBox.Show("Введите название для поиска.", "Информация",
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
+            btnSearchWinget.IsEnabled = false;
             pbSearchProgress.Visibility = Visibility.Visible;
             panelSearchResults.Visibility = Visibility.Collapsed;
-            searchResults.Clear();
+            _searchResults.Clear();
             txtNoResults.Visibility = Visibility.Collapsed;
 
             try
             {
                 var results = await Task.Run(() => SearchWingetPackages(query));
-                
                 foreach (var pkg in results)
-                {
-                    searchResults.Add(pkg);
-                }
+                    _searchResults.Add(pkg);
 
-                if (searchResults.Count > 0)
-                {
-                    panelSearchResults.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    txtNoResults.Visibility = Visibility.Visible;
-                    panelSearchResults.Visibility = Visibility.Visible;
-                }
+                panelSearchResults.Visibility = Visibility.Visible;
+                txtNoResults.Visibility = results.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при поиске в winget: {ex.Message}", "Ошибка", 
+                MessageBox.Show($"Ошибка поиска: {ex.Message}", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
                 pbSearchProgress.Visibility = Visibility.Collapsed;
+                btnSearchWinget.IsEnabled = true;
             }
         }
 
-        private List<WingetPackage> SearchWingetPackages(string query)
+        private void LstSearchResults_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var results = new List<WingetPackage>();
+            if (lstSearchResults.SelectedItem is not WingetPackage pkg) return;
+            txtWingetId.Text = pkg.Id;
+            if (string.IsNullOrWhiteSpace(txtName.Text))
+                txtName.Text = pkg.Name;
+            txtValidateResult.Text = $"✅ {pkg.Name}  |  Версия: {pkg.Version}";
+            txtValidateResult.Foreground = System.Windows.Media.Brushes.LightGreen;
+        }
+
+        private void TxtWingetId_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (btnValidateId == null) return;
+            btnValidateId.IsEnabled = !string.IsNullOrWhiteSpace(txtWingetId.Text);
+            if (lstSearchResults.SelectedItem == null)
+            {
+                txtValidateResult.Text = "";
+                txtValidateResult.Foreground = System.Windows.Media.Brushes.Gray;
+            }
+        }
+
+        private async void BtnValidateId_Click(object sender, RoutedEventArgs e)
+        {
+            string id = txtWingetId.Text.Trim();
+            if (string.IsNullOrEmpty(id)) return;
+
+            btnValidateId.IsEnabled = false;
+            txtValidateResult.Text = "⏳ Проверяем...";
+            txtValidateResult.Foreground = System.Windows.Media.Brushes.Gray;
 
             try
             {
-                string args = $"search --name \"{query}\" --source winget --accept-source-agreements";
-                
+                var (name, version) = await Task.Run(() => ValidateWingetId(id));
+                if (name != null)
+                {
+                    txtValidateResult.Text = $"✅ {name}  |  Версия: {version ?? "—"}";
+                    txtValidateResult.Foreground = System.Windows.Media.Brushes.LightGreen;
+                    if (string.IsNullOrWhiteSpace(txtName.Text))
+                        txtName.Text = name;
+                }
+                else
+                {
+                    txtValidateResult.Text = "⚠️ Не найдено в winget — можно добавить всё равно";
+                    txtValidateResult.Foreground = System.Windows.Media.Brushes.Tomato;
+                }
+            }
+            finally
+            {
+                btnValidateId.IsEnabled = true;
+            }
+        }
+
+        private (string? Name, string? Version) ValidateWingetId(string id)
+        {
+            try
+            {
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "winget.exe",
-                    Arguments = args,
+                    FileName = "winget",
+                    Arguments = $"show --id {id} -e --source winget --accept-source-agreements",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -87,116 +140,134 @@ namespace Ven4Tools.Services
                     StandardOutputEncoding = System.Text.Encoding.UTF8
                 };
 
-                using (var process = Process.Start(psi))
+                using var process = Process.Start(psi);
+                if (process == null) return (null, null);
+
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+                if (process.ExitCode != 0) return (null, null);
+
+                string? name = null, version = null;
+                foreach (var line in output.Split('\n'))
                 {
-                    if (process == null) return results;
-
-                    string output = process.StandardOutput.ReadToEnd();
-                    process.WaitForExit();
-
-                    var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                    bool headerPassed = false;
-                    foreach (var line in lines)
+                    var t = line.Trim();
+                    // "Found Mozilla Firefox [Mozilla.Firefox]" or "Найдено ..."
+                    if (name == null)
                     {
-                        if (!headerPassed && line.Contains("--"))
-                        {
-                            headerPassed = true;
-                            continue;
-                        }
-                        if (!headerPassed || line.StartsWith("Имя") || string.IsNullOrWhiteSpace(line))
-                            continue;
+                        var m = Regex.Match(t, @"(?:Found|Найдено)\s+(.+?)\s+\[");
+                        if (m.Success) { name = m.Groups[1].Value.Trim(); continue; }
+                    }
+                    if (version == null && (t.StartsWith("Version:") || t.StartsWith("Версия:")))
+                    {
+                        version = t.Split(':', 2).Last().Trim();
+                    }
+                }
+                return (name, version);
+            }
+            catch { return (null, null); }
+        }
 
-                        var parts = Regex.Split(line, @"\s{2,}");
-                        if (parts.Length >= 3)
+        private List<WingetPackage> SearchWingetPackages(string query)
+        {
+            var results = new List<WingetPackage>();
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "winget",
+                    Arguments = $"search --name \"{query}\" --source winget --accept-source-agreements",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+
+                using var process = Process.Start(psi);
+                if (process == null) return results;
+
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+
+                bool headerPassed = false;
+                foreach (var line in output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (!headerPassed)
+                    {
+                        if (line.Contains("--")) headerPassed = true;
+                        continue;
+                    }
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    var parts = Regex.Split(line, @"\s{2,}");
+                    if (parts.Length >= 2)
+                    {
+                        results.Add(new WingetPackage
                         {
-                            var pkg = new WingetPackage
-                            {
-                                Name = parts[0].Trim(),
-                                Id = parts[1].Trim(),
-                                Version = parts[2].Trim(),
-                                Source = parts.Length > 3 ? parts[3].Trim() : "winget"
-                            };
-                            results.Add(pkg);
-                        }
+                            Name    = parts[0].Trim(),
+                            Id      = parts[1].Trim(),
+                            Version = parts.Length > 2 ? parts[2].Trim() : "",
+                            Source  = parts.Length > 3 ? parts[3].Trim() : "winget"
+                        });
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Ошибка поиска: {ex.Message}");
-            }
-
+            catch (Exception ex) { Debug.WriteLine($"Ошибка поиска: {ex.Message}"); }
             return results;
         }
 
-private async void BtnOk_Click(object sender, RoutedEventArgs e)
-{
-    if (string.IsNullOrWhiteSpace(txtName.Text))
-    {
-        MessageBox.Show("Введите название программы", "Ошибка", 
-            MessageBoxButton.OK, MessageBoxImage.Warning);
-        return;
-    }
+        private async void BtnOk_Click(object sender, RoutedEventArgs e)
+        {
+            bool isWinget = rbWinget.IsChecked == true;
 
-    string wingetIdValue = txtWingetId.Text.Trim();
-    string? selectedWingetId = null;
-    
-    if (lstSearchResults.SelectedItem is WingetPackage selected)
-    {
-        wingetIdValue = selected.Id;
-        selectedWingetId = selected.Id;
-    }
+            if (string.IsNullOrWhiteSpace(txtName.Text))
+            {
+                MessageBox.Show("Введите название программы.", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (isWinget && string.IsNullOrWhiteSpace(txtWingetId.Text))
+            {
+                MessageBox.Show("Введите Winget ID или выберите результат из поиска.", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (!isWinget && string.IsNullOrWhiteSpace(txtUrl.Text))
+            {
+                MessageBox.Show("Введите ссылку для скачивания.", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
-    // Важно: если выбран winget пакет, используем его ID как основной
-    var app = new AppInfo
-    {
-        Id = !string.IsNullOrWhiteSpace(wingetIdValue) && wingetIdValue != "User." 
-            ? wingetIdValue 
-            : "User." + Guid.NewGuid().ToString("N"),
-        DisplayName = txtName.Text,
-        Category = AppCategory.Пользовательские,
-        IsUserAdded = true
-    };
+            var app = new AppInfo
+            {
+                Id          = "User." + Guid.NewGuid().ToString("N"),
+                DisplayName = txtName.Text.Trim(),
+                Category    = AppCategory.Пользовательские,
+                IsUserAdded = true
+            };
 
-    // Если выбран пакет, добавляем его как альтернативный источник
-    if (!string.IsNullOrEmpty(selectedWingetId))
-    {
-        app.AlternativeId = selectedWingetId;
-    }
+            string? wingetId = null;
+            if (isWinget)
+            {
+                wingetId = txtWingetId.Text.Trim();
+                app.AlternativeId = wingetId;
+            }
+            else
+            {
+                app.InstallerUrls.Add(txtUrl.Text.Trim());
+            }
 
-    if (!string.IsNullOrWhiteSpace(txtUrl.Text))
-    {
-        app.InstallerUrls.Add(txtUrl.Text);
-    }
+            Result = app;
 
-    Result = app;
-            
-            // Отправка статистики
             try
             {
-                var consentService = new ConsentService();
-                var allowStats = await consentService.IsStatsAllowedAsync();
-                
-                if (allowStats)
-                {
-                    var statsService = StatsService.Instance;
-                    await statsService.TrackUserAddAsync(
-                        app.Id,
-                        selectedWingetId,
-                        txtUrl.Text.Trim()
-                    );
-                    Debug.WriteLine($"Статистика отправлена для {app.DisplayName}");
-                }
-                else
-                {
-                    Debug.WriteLine("Статистика не отправляется (пользователь отказался)");
-                }
+                if (await new ConsentService().IsStatsAllowedAsync())
+                    await StatsService.Instance.TrackUserAddAsync(
+                        app.Id, wingetId, app.InstallerUrls.FirstOrDefault());
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Ошибка статистики: {ex.Message}");
-            }
-            
+            catch { }
+
             DialogResult = true;
             Close();
         }
