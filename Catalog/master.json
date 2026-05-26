@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-26 17:58:44",
+  "lastUpdated": "2026-05-26 18:14:12",
   "changelog": [
     {
       "version": 2,
@@ -869,6 +869,20 @@
       "official": true,
       "iconUrl": "",
       "description": "Описание отсутствует"
+    },
+    {
+      "name": "Foxit PDF Reader",
+      "id": "foxit-pdf-reader",
+      "wingetId": "Foxit.FoxitReader",
+      "category": "Офис",
+      "downloadUrl": "",
+      "version": "12.1.1",
+      "size": "",
+      "description": "Мощная программа для чтения PDF",
+      "official": true,
+      "iconUrl": "",
+      "sha256": null,
+      "skipHash": false
     }
   ]
 }
