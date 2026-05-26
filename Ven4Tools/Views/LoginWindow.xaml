@@ -17,7 +17,13 @@
 
         <!-- Заголовок -->
         <StackPanel Grid.Row="0" Margin="0,0,0,28" HorizontalAlignment="Center">
-            <TextBlock Text="👤" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+            <Image x:Name="imgLoginMascot"
+                   Visibility="Collapsed"
+                   Height="130"
+                   Stretch="Uniform"
+                   Margin="0,0,0,8"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+            <TextBlock x:Name="txtLoginIcon" Text="👤" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,8"/>
             <TextBlock x:Name="txtTitle" Text="Войти в аккаунт"
                        FontSize="20" FontWeight="Bold"
                        Foreground="{DynamicResource TextPrimary}"

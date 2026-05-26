@@ -13,6 +13,7 @@ namespace Ven4Tools
     public partial class MainWindow : Window
     {
         private bool _categorySelectionShown = false;
+        private string _currentTab = "catalog";
 
         private CatalogTab?    _catalogTab;
         private SystemTab?     _systemTab;
@@ -33,8 +34,6 @@ namespace Ven4Tools
 
             NavigateToCatalog(null, null);
 
-            btnThemeToggle.IsChecked = ProfileService.Current.Theme == "light";
-
             UserSession.Changed += UpdateUserUI;
             Closing += (_, _) => UserSession.Changed -= UpdateUserUI;
             UpdateUserUI();
@@ -45,67 +44,69 @@ namespace Ven4Tools
         private void NavigateToCatalog(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnCatalogTab);
-            if (_catalogTab == null)
-            {
-                _catalogTab = new CatalogTab();
-                _catalogTab.LogMessage += AddLog;
-            }
+            if (_catalogTab == null) { _catalogTab = new CatalogTab(); _catalogTab.LogMessage += AddLog; }
             MainFrame.Navigate(_catalogTab);
+            UpdateMascot("catalog");
         }
 
         private void NavigateToNetwork(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnNetworkTab);
-            if (_networkTab == null)
-            {
-                _networkTab = new NetworkTab();
-                _networkTab.LogMessage += AddLog;
-            }
+            if (_networkTab == null) { _networkTab = new NetworkTab(); _networkTab.LogMessage += AddLog; }
             MainFrame.Navigate(_networkTab);
+            UpdateMascot("network");
         }
 
         private void NavigateToSystem(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnSystemTab);
-            if (_systemTab == null)
-            {
-                _systemTab = new SystemTab();
-                _systemTab.LogMessage += AddLog;
-            }
+            if (_systemTab == null) { _systemTab = new SystemTab(); _systemTab.LogMessage += AddLog; }
             MainFrame.Navigate(_systemTab);
+            UpdateMascot("system");
         }
 
         private void NavigateToOffice(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnOfficeTab);
-            if (_officeTab == null)
-            {
-                _officeTab = new OfficeTab();
-                _officeTab.LogMessage += AddLog;
-            }
+            if (_officeTab == null) { _officeTab = new OfficeTab(); _officeTab.LogMessage += AddLog; }
             MainFrame.Navigate(_officeTab);
+            UpdateMascot("office");
         }
 
         private void NavigateToActivation(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnActivationTab);
-            if (_activationTab == null)
-            {
-                _activationTab = new ActivationTab();
-                _activationTab.LogMessage += AddLog;
-            }
+            if (_activationTab == null) { _activationTab = new ActivationTab(); _activationTab.LogMessage += AddLog; }
             MainFrame.Navigate(_activationTab);
+            UpdateMascot("activation");
         }
 
         private void NavigateToAbout(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnAboutTab);
-            if (_aboutTab == null)
-            {
-                _aboutTab = new AboutTab();
-                _aboutTab.LogMessage += AddLog;
-            }
+            if (_aboutTab == null) { _aboutTab = new AboutTab(); _aboutTab.LogMessage += AddLog; }
             MainFrame.Navigate(_aboutTab);
+            UpdateMascot("about");
+        }
+
+        private void UpdateMascot(string tabName)
+        {
+            _currentTab = tabName;
+            if (ProfileService.Current.Theme != "web")
+            {
+                imgMascot.Visibility = Visibility.Collapsed;
+                return;
+            }
+            try
+            {
+                var uri = new Uri($"pack://application:,,,/Resources/Mascots/{tabName}.png");
+                imgMascot.Source = new System.Windows.Media.Imaging.BitmapImage(uri);
+                imgMascot.Visibility = Visibility.Visible;
+            }
+            catch
+            {
+                imgMascot.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void SetActiveButton(Button activeButton)
@@ -116,15 +117,6 @@ namespace Ven4Tools
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");
             }
             activeButton.Style = (Style)FindResource("ActiveNavButtonStyle");
-        }
-
-        private void ToggleTheme(object sender, RoutedEventArgs e)
-        {
-            bool isDark = btnThemeToggle.IsChecked == false;
-            ThemeService.ApplyDark(isDark);
-            ProfileService.Current.Theme = isDark ? "dark" : "light";
-            ProfileService.Save();
-            txtStatusBar.Text = isDark ? "🌙 Тёмная тема" : "☀️ Светлая тема";
         }
 
         private bool IsRunAsAdmin()
@@ -195,7 +187,7 @@ namespace Ven4Tools
         {
             var win = new ProfileWindow { Owner = this };
             win.ShowDialog();
-            btnThemeToggle.IsChecked = ProfileService.Current.Theme == "light";
+            UpdateMascot(_currentTab);
         }
 
         private void ShowCategorySelectionIfNeeded()

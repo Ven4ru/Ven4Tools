@@ -26,4 +26,8 @@
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Resources\launcher.png" />
+  </ItemGroup>
+
 </Project>
