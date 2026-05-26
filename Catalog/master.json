@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-26 17:55:10",
+  "lastUpdated": "2026-05-26 17:58:44",
   "changelog": [
     {
       "version": 2,
@@ -34,11 +34,11 @@
       "wingetId": "Mozilla.Firefox",
       "downloadUrl": "https://download.mozilla.org/?product=firefox-latest&os=win64&lang=ru",
       "version": "136.0.1",
-      "size": "83.8 MB",
+      "size": "83.9 MB",
       "official": true,
       "iconUrl": "",
       "description": "Быстрый, безопасный и приватный браузер с открытым исходным кодом.",
-      "sha256": "d05af27ead45ecd6f05721a861978875159ed70e171422494fba0124b9a1b4d5"
+      "sha256": "9096c9f20987f2c61261a864fc6fed1e277713a33f683f226a422bf7134164ec"
     },
     {
       "id": "google-chrome",
@@ -77,7 +77,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
-      "sha256": "5f2b2ef386107255738655620d2d2f3939c62dc59dc1a69278bf0652bc9259e1"
+      "sha256": "f2744b5e4846bb2ef705a2ccf1ac83784a07499c97360184d4f68e67e95351e5"
     },
     {
       "id": "brave",
@@ -103,7 +103,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
-      "sha256": "e48273ddb72235a0f2fee34cee37d86dd372112c0c4d052e7508b0c09ff96b61"
+      "sha256": "4a921c737f3c6cc85e06d7c39ae6cd01c60f8831491f5ade91489c48e5a56838"
     },
     {
       "id": "libreoffice",
@@ -327,11 +327,11 @@
       "wingetId": "Docker.DockerDesktop",
       "downloadUrl": "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe",
       "version": "4.38.0",
-      "size": "625.2 MB",
+      "size": "630.2 MB",
       "official": true,
       "iconUrl": "",
       "description": "Контейнеризация приложений для разработки и тестирования.",
-      "sha256": "f78111fae49b7ea099ec7af54caeae0395157f17a6e8cd01ec97565ba8f4600a"
+      "sha256": "bd40f52336226d16264806610619659801a35456cfe4637b5cf2e9c01d95e810"
     },
     {
       "id": "postman",
@@ -340,11 +340,11 @@
       "wingetId": "Postman.Postman",
       "downloadUrl": "https://dl.pstmn.io/download/latest/win64",
       "version": "11.28.1",
-      "size": "154.4 MB",
+      "size": "154.5 MB",
       "official": true,
       "iconUrl": "",
       "description": "Платформа для тестирования API и работы с запросами.",
-      "sha256": "aac121325a72ff0a776166fae7f0dab1ae0007eb1ece3776d40d17a72a5680d0"
+      "sha256": "6a6de73d8a4f40395724fbbf26e493ae2f66011e5a6e92fde76a14d811eaa860"
     },
     {
       "id": "notepad-plus-plus",
@@ -370,7 +370,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Официальный клиент GitHub для работы с репозиториями.",
-      "sha256": "7b6d44f87b619fd78c016db6a783cad52f44a060912ad853f00353a9152853d9"
+      "sha256": "7c00cb4c812de6e10cb5a83336e93e40e29d5417d11b80ca2631b8a1dda59d7a"
     },
     {
       "id": "telegram",
@@ -650,7 +650,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов.",
-      "sha256": "6eabbafc77bfdc64c20ae359ef3ff0f7c9237b990ffc9b064f1b08bfe33af64a"
+      "sha256": "227316c70ee9af52aafb1e2c9ef1c148017ca9eaf470358ffcf7131e0d205766"
     },
     {
       "id": "powertoys",
