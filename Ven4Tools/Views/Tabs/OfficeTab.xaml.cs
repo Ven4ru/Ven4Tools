@@ -213,7 +213,7 @@ namespace Ven4Tools.Views.Tabs
 
                 // Ждём, пока бутстраппер передаст управление C2R
                 if (bootstrapper != null)
-                    await bootstrapper.WaitForExitAsync(token).ConfigureAwait(false);
+                    await bootstrapper.WaitForExitAsync(token);
 
                 // ── Фаза 3: мониторинг реальной установки ────────────────────
                 SetPhase("⚙️ Установка Office... не закрывайте приложение");
@@ -263,11 +263,14 @@ namespace Ven4Tools.Views.Tabs
                     RestoreOriginalCountryCode();
                     AddLog("🔁 Регион восстановлен (аварийный сброс)");
                 }
-                try { if (chkSaveInstaller.IsChecked != true && File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+                try { if (File.Exists(tempFile) && chkSaveInstaller.IsChecked != true) File.Delete(tempFile); } catch { }
                 _cancellationTokenSource?.Dispose();
-                _cancellationTokenSource  = null;
-                btnInstallOffice.IsEnabled = true;
-                btnCancelOffice.IsEnabled  = false;
+                _cancellationTokenSource = null;
+                Dispatcher.Invoke(() =>
+                {
+                    btnInstallOffice.IsEnabled = true;
+                    btnCancelOffice.IsEnabled  = false;
+                });
                 await Task.Delay(3000);
                 SetProgress(false);
             }
