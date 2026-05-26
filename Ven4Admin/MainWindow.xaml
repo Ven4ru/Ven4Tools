@@ -1,0 +1,201 @@
+<Window x:Class="Ven4Admin.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ven4Admin — Редактор каталога"
+        Width="1300" Height="760" MinWidth="950" MinHeight="520"
+        Background="#1A1A2E" Foreground="#E0E0E0"
+        WindowStartupLocation="CenterScreen">
+    <DockPanel Margin="8">
+
+        <!-- ── Toolbar ──────────────────────────────────────────────────────── -->
+        <Border DockPanel.Dock="Top" Background="#252540" CornerRadius="4"
+                BorderBrush="#3A3A5C" BorderThickness="1" Padding="10,7" Margin="0,0,0,6">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <Button x:Name="btnLoad"   Content="⬇ Загрузить с GitHub" Width="165"/>
+                    <Button x:Name="btnSave"   Content="💾 Сохранить"          Width="110" Margin="6,0,0,0" IsEnabled="False"/>
+                    <Button x:Name="btnPush"   Content="🚀 Push в git"         Width="110" Margin="6,0,0,0" IsEnabled="False"/>
+                    <Button x:Name="btnAddApp" Content="➕ Добавить"            Width="100" Margin="6,0,0,0" IsEnabled="False"/>
+                </StackPanel>
+                <TextBlock x:Name="txtFilePath" Text="Файл не загружен"
+                           Foreground="#666" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" FontSize="11"/>
+            </DockPanel>
+        </Border>
+
+        <!-- ── Statusbar ────────────────────────────────────────────────────── -->
+        <Border DockPanel.Dock="Bottom" Background="#16162A"
+                BorderBrush="#3A3A5C" BorderThickness="0,1,0,0" Padding="10,4" Margin="0,4,0,0">
+            <TextBlock x:Name="txtStatus" Text="Готово" FontSize="11" Foreground="#888"/>
+        </Border>
+
+        <!-- ── Main split ───────────────────────────────────────────────────── -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="215"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- DataGrid -->
+            <Border Grid.Column="0" Margin="0,0,6,0"
+                    Background="#1E1E38" BorderBrush="#3A3A5C" BorderThickness="1" CornerRadius="4">
+                <DataGrid x:Name="dgApps"
+                          AutoGenerateColumns="False" CanUserAddRows="False"
+                          IsReadOnly="True"
+                          SelectionMode="Extended" SelectionUnit="FullRow"
+                          Background="#1E1E38" Foreground="#E0E0E0"
+                          RowBackground="#1E1E38" AlternatingRowBackground="#222040"
+                          BorderThickness="0" GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="#2A2A4A"
+                          ColumnHeaderHeight="28" RowHeight="24" FontSize="12"
+                          ScrollViewer.CanContentScroll="True"
+                          EnableRowVirtualization="True">
+
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background"       Value="#14142A"/>
+                            <Setter Property="Foreground"       Value="#AAAACC"/>
+                            <Setter Property="Padding"          Value="6,0"/>
+                            <Setter Property="BorderBrush"      Value="#3A3A5C"/>
+                            <Setter Property="BorderThickness"  Value="0,0,1,1"/>
+                            <Setter Property="FontSize"         Value="11"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Padding"         Value="6,0"/>
+                            <Setter Property="Background"      Value="Transparent"/>
+                            <Setter Property="Foreground"      Value="#E0E0E0"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background"   Value="#35356A"/>
+                                    <Setter Property="BorderBrush"  Value="Transparent"/>
+                                    <Setter Property="Foreground"   Value="#FFFFFF"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.CellStyle>
+
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding RuBlocked}" Value="True">
+                                    <Setter Property="Background" Value="#291E0A"/>
+                                </DataTrigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#2A2A5E"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+
+                    <DataGrid.Columns>
+                        <!-- Select checkbox -->
+                        <DataGridTemplateColumn Header="" Width="30" CanUserResize="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Название"   Binding="{Binding Name}"        Width="155"/>
+                        <DataGridTextColumn Header="Категория"  Binding="{Binding Category}"    Width="95"/>
+                        <DataGridTextColumn Header="WinGet ID"  Binding="{Binding WingetId}"    Width="135"/>
+                        <DataGridTextColumn Header="Версия"     Binding="{Binding Version}"     Width="58"/>
+                        <DataGridTextColumn Header="Download URL" Binding="{Binding DownloadUrl}" Width="180"/>
+
+                        <!-- ruBlocked editable checkbox -->
+                        <DataGridTemplateColumn Header="🚫 РФ" Width="48" CanUserResize="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding RuBlocked, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Scan result columns -->
+                        <DataGridTextColumn Header="🌍 Лок" Binding="{Binding LocalStatus}"  Width="70" IsReadOnly="True">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#888"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding LocalStatus}" Value="✅">
+                                            <Setter Property="Foreground" Value="#4CAF50"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding LocalStatus}" Value="❌">
+                                            <Setter Property="Foreground" Value="#F44336"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="🚀 SSH" Binding="{Binding RemoteStatus}" Width="70" IsReadOnly="True">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#888"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RemoteStatus}" Value="✅ доступно">
+                                            <Setter Property="Foreground" Value="#4CAF50"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- ── Right panel ──────────────────────────────────────────────── -->
+            <StackPanel Grid.Column="1">
+
+                <!-- Stats -->
+                <Border Background="#252540" BorderBrush="#3A3A5C" BorderThickness="1"
+                        CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
+                    <TextBlock x:Name="txtStats" Foreground="#888" FontSize="11"
+                               TextWrapping="Wrap" LineHeight="18"/>
+                </Border>
+
+                <!-- Scanner -->
+                <GroupBox Header="🔍 Сканер">
+                    <StackPanel>
+                        <Button x:Name="btnScanAll"      Content="📡 Сканировать все"       Height="30" IsEnabled="False"/>
+                        <Button x:Name="btnScanSelected" Content="📡 Сканировать выбранные" Height="30" IsEnabled="False"/>
+                        <ProgressBar x:Name="pbScan" Height="6" Margin="0,5,0,2"/>
+                        <TextBlock x:Name="txtScanProgress" Foreground="#888" FontSize="10" Margin="0,0,0,6"/>
+                        <Button x:Name="btnAutoMark"       Content="⚡ Авто-пометить ruBlocked"    Height="30" IsEnabled="False"/>
+                        <Button x:Name="btnDeleteBlocked"  Content="🗑 Удалить недоступные в РФ" Height="30" IsEnabled="False"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Catalog actions -->
+                <GroupBox Header="✏️ Каталог">
+                    <StackPanel>
+                        <Button x:Name="btnEdit"   Content="✏️ Редактировать" Height="30" IsEnabled="False"/>
+                        <Button x:Name="btnDelete" Content="🗑 Удалить выбранные" Height="30" IsEnabled="False"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- SSH settings -->
+                <Expander Header="🔑 SSH-сервер (вне РФ)" Foreground="#E0E0E0">
+                    <Border Background="#16162A" Padding="8,6" BorderBrush="#3A3A5C" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Хост:" Foreground="#888" FontSize="10"/>
+                            <TextBox x:Name="txtSshHost" Height="24" Margin="0,2,0,6"/>
+                            <TextBlock Text="Пользователь:" Foreground="#888" FontSize="10"/>
+                            <TextBox x:Name="txtSshUser" Height="24" Margin="0,2,0,6"/>
+                            <TextBlock Text="Пароль:" Foreground="#888" FontSize="10"/>
+                            <PasswordBox x:Name="pbSshPass" Height="24" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Expander>
+
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</Window>
