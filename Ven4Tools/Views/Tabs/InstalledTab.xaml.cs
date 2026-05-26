@@ -350,10 +350,7 @@ namespace Ven4Tools.Views.Tabs
             // Попытка 2: найти строку UninstallString в реестре по DisplayName
             string? uninstallString = FindUninstallString(app.Name);
             if (uninstallString != null)
-            {
-                RunUninstallString(uninstallString);
-                return true;
-            }
+                return RunUninstallString(uninstallString);
 
             return false;
         }
@@ -383,19 +380,19 @@ namespace Ven4Tools.Views.Tabs
             return null;
         }
 
-        private static void RunUninstallString(string uninstallString)
+        private static bool RunUninstallString(string uninstallString)
         {
             // Тихий режим: msiexec /x ... /quiet, NSIS /S, Inno /SILENT
             string cmd = uninstallString.Trim();
+            Process? p;
             if (cmd.StartsWith("MsiExec", StringComparison.OrdinalIgnoreCase) ||
                 cmd.StartsWith("msiexec", StringComparison.OrdinalIgnoreCase))
             {
                 cmd = Regex.Replace(cmd, @"/I\{", "/X{", RegexOptions.IgnoreCase);
                 if (!cmd.Contains("/quiet", StringComparison.OrdinalIgnoreCase))
                     cmd += " /quiet /norestart";
-                var p = Process.Start(new ProcessStartInfo("cmd.exe", $"/c {cmd}")
+                p = Process.Start(new ProcessStartInfo("cmd.exe", $"/c {cmd}")
                     { UseShellExecute = true, Verb = "runas", CreateNoWindow = true });
-                p?.WaitForExit(120_000);
             }
             else
             {
@@ -413,10 +410,11 @@ namespace Ven4Tools.Views.Tabs
                 }
                 if (!args.Contains("/S") && !args.Contains("/SILENT") && !args.Contains("/silent"))
                     args = "/S " + args;
-                var p = Process.Start(new ProcessStartInfo(exe, args)
+                p = Process.Start(new ProcessStartInfo(exe, args)
                     { UseShellExecute = true, Verb = "runas" });
-                p?.WaitForExit(120_000);
             }
+            p?.WaitForExit(120_000);
+            return p?.ExitCode == 0;
         }
 
         private static string RunWinget(string args)

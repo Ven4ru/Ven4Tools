@@ -51,9 +51,9 @@ namespace Ven4Tools.Services
                 return new AuthResult
                 {
                     Success = true,
-                    UserId = data["user_id"]!.Value<int>(),
-                    Name = data["name"]!.ToString(),
-                    Email = data["email"]!.ToString(),
+                    UserId = data["user_id"]?.Value<int>() ?? 0,
+                    Name = data["name"]?.ToString() ?? "",
+                    Email = data["email"]?.ToString() ?? "",
                     IsAdmin = data["is_admin"]?.Value<bool>() ?? false
                 };
             }
