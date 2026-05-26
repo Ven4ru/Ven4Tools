@@ -55,3 +55,6 @@ publish/
 publish/
 
 Ven4Tools/Data/master.json
+
+# Admin tool lives in its own separate repo (C:\Users\Vench\Documents\GitHub\Ven4Admin)
+Ven4Admin/
