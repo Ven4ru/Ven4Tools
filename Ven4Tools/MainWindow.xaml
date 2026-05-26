@@ -96,6 +96,11 @@
                                 Tag="📦"
                                 Content="Каталог"
                                 Click="NavigateToCatalog"/>
+                        <Button x:Name="btnInstalledTab"
+                                Style="{StaticResource NavButtonStyle}"
+                                Tag="🖥️"
+                                Content="Установленные"
+                                Click="NavigateToInstalled"/>
                         <Button x:Name="btnSystemTab"
                                 Style="{StaticResource NavButtonStyle}"
                                 Tag="⚙️"

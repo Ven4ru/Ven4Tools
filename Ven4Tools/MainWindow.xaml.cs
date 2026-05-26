@@ -16,6 +16,7 @@ namespace Ven4Tools
         private string _currentTab = "catalog";
 
         private CatalogTab?    _catalogTab;
+        private InstalledTab?  _installedTab;
         private SystemTab?     _systemTab;
         private OfficeTab?     _officeTab;
         private ActivationTab? _activationTab;
@@ -57,6 +58,14 @@ namespace Ven4Tools
             UpdateMascot("network");
         }
 
+        private void NavigateToInstalled(object? sender, RoutedEventArgs? e)
+        {
+            SetActiveButton(btnInstalledTab);
+            if (_installedTab == null) { _installedTab = new InstalledTab(); _installedTab.LogMessage += AddLog; }
+            MainFrame.Navigate(_installedTab);
+            UpdateMascot("installed");
+        }
+
         private void NavigateToSystem(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnSystemTab);
@@ -68,7 +77,12 @@ namespace Ven4Tools
         private void NavigateToOffice(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnOfficeTab);
-            if (_officeTab == null) { _officeTab = new OfficeTab(); _officeTab.LogMessage += AddLog; }
+            if (_officeTab == null)
+            {
+                _officeTab = new OfficeTab();
+                _officeTab.LogMessage += AddLog;
+                _officeTab.GoToActivation += () => NavigateToActivation(null, null);
+            }
             MainFrame.Navigate(_officeTab);
             UpdateMascot("office");
         }
@@ -111,7 +125,7 @@ namespace Ven4Tools
 
         private void SetActiveButton(Button activeButton)
         {
-            var buttons = new[] { btnCatalogTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab };
+            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab };
             foreach (var btn in buttons)
             {
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");

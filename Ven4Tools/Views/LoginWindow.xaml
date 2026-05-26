@@ -2,134 +2,146 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Ven4Tools — Аккаунт"
-        Width="420" Height="640"
+        Width="860" Height="710"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource WindowBackground}">
 
-    <Grid Margin="40,32,40,32">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="400"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- Заголовок -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,28" HorizontalAlignment="Center">
-            <Image x:Name="imgLoginMascot"
-                   Visibility="Collapsed"
-                   Height="130"
-                   Stretch="Uniform"
-                   Margin="0,0,0,8"
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
-            <TextBlock x:Name="txtLoginIcon" Text="👤" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-            <TextBlock x:Name="txtTitle" Text="Войти в аккаунт"
-                       FontSize="20" FontWeight="Bold"
-                       Foreground="{DynamicResource TextPrimary}"
-                       HorizontalAlignment="Center"/>
-        </StackPanel>
+        <!-- Левая панель — баннер -->
+        <Border Grid.Column="0" ClipToBounds="True" Background="#0A1A0A">
+            <Image Source="pack://application:,,,/Resources/Mascots/login.png"
+                   Stretch="UniformToFill"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
+        </Border>
 
-        <!-- Переключатель режима -->
-        <Grid Grid.Row="1" Margin="0,0,0,24">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Button x:Name="btnModeLogin" Grid.Column="0" Content="Войти"
-                    Height="36" Margin="0,0,4,0"
-                    Background="{DynamicResource AccentColor}"
-                    Foreground="White"
-                    Click="BtnModeLogin_Click"/>
-            <Button x:Name="btnModeRegister" Grid.Column="1" Content="Регистрация"
-                    Height="36" Margin="4,0,0,0"
-                    Click="BtnModeRegister_Click"/>
-        </Grid>
+        <!-- Правая панель — форма -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <Grid Margin="40,32,40,32">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-        <!-- Форма -->
-        <StackPanel Grid.Row="2">
-            <!-- Поле «Имя» (только для регистрации) -->
-            <StackPanel x:Name="panelName" Visibility="Collapsed" Margin="0,0,0,12">
-                <TextBlock Text="Имя" FontSize="12" Margin="0,0,0,4"
-                           Foreground="{DynamicResource TextSecondary}"/>
-                <TextBox x:Name="txtName" Height="36" Padding="10,8"
-                         FontSize="13"/>
-            </StackPanel>
-
-            <!-- Email -->
-            <StackPanel Margin="0,0,0,12">
-                <TextBlock Text="Email" FontSize="12" Margin="0,0,0,4"
-                           Foreground="{DynamicResource TextSecondary}"/>
-                <TextBox x:Name="txtEmail" Height="36" Padding="10,8"
-                         FontSize="13"/>
-            </StackPanel>
-
-            <!-- Пароль -->
-            <StackPanel Margin="0,0,0,12">
-                <TextBlock Text="Пароль" FontSize="12" Margin="0,0,0,4"
-                           Foreground="{DynamicResource TextSecondary}"/>
-                <PasswordBox x:Name="txtPassword" Height="36" Padding="10,8"
-                             FontSize="13"
-                             Background="{DynamicResource CardBackground}"
-                             Foreground="{DynamicResource TextPrimary}"
-                             BorderBrush="{DynamicResource BorderBrush}"
-                             BorderThickness="1"
-                             CaretBrush="{DynamicResource TextPrimary}"/>
-            </StackPanel>
-
-            <!-- Подтверждение пароля (только для регистрации) -->
-            <StackPanel x:Name="panelConfirm" Visibility="Collapsed" Margin="0,0,0,12">
-                <TextBlock Text="Подтвердите пароль" FontSize="12" Margin="0,0,0,4"
-                           Foreground="{DynamicResource TextSecondary}"/>
-                <PasswordBox x:Name="txtConfirm" Height="36" Padding="10,8"
-                             FontSize="13"
-                             Background="{DynamicResource CardBackground}"
-                             Foreground="{DynamicResource TextPrimary}"
-                             BorderBrush="{DynamicResource BorderBrush}"
-                             BorderThickness="1"
-                             CaretBrush="{DynamicResource TextPrimary}"/>
-            </StackPanel>
-
-            <!-- Ошибка -->
-            <TextBlock x:Name="txtError" Text=""
-                       Foreground="#FF6B6B" FontSize="12"
-                       TextWrapping="Wrap" Margin="0,0,0,12"
-                       Visibility="Collapsed"/>
-
-            <!-- Кнопка submit -->
-            <Button x:Name="btnSubmit" Content="Войти"
-                    Height="40" Margin="0,4,0,0"
-                    Background="{DynamicResource AccentColor}"
-                    Foreground="White"
-                    FontSize="14"
-                    Click="BtnSubmit_Click"/>
-
-            <!-- Разделитель -->
-            <Grid Margin="0,20,0,14">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Separator Grid.Column="0" VerticalAlignment="Center"
-                           Background="{DynamicResource BorderBrush}"/>
-                <TextBlock Grid.Column="1" Text="или" Margin="10,0"
-                           FontSize="12" Foreground="{DynamicResource TextSecondary}"
-                           VerticalAlignment="Center"/>
-                <Separator Grid.Column="2" VerticalAlignment="Center"
-                           Background="{DynamicResource BorderBrush}"/>
-            </Grid>
-
-            <!-- Яндекс -->
-            <Button x:Name="btnYandex" Height="40"
-                    Background="#FFDB4D" Foreground="#1A1A1A"
-                    BorderThickness="0" FontSize="14"
-                    Click="BtnYandex_Click">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="🟡" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock Text="Войти через Яндекс" VerticalAlignment="Center"/>
+                <!-- Заголовок -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,28" HorizontalAlignment="Center">
+                    <TextBlock x:Name="txtLoginIcon" Text="👤" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBlock x:Name="txtTitle" Text="Войти в аккаунт"
+                               FontSize="20" FontWeight="Bold"
+                               Foreground="{DynamicResource TextPrimary}"
+                               HorizontalAlignment="Center"/>
                 </StackPanel>
-            </Button>
-        </StackPanel>
+
+                <!-- Переключатель режима -->
+                <Grid Grid.Row="1" Margin="0,0,0,24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="btnModeLogin" Grid.Column="0" Content="Войти"
+                            Height="36" Margin="0,0,4,0"
+                            Background="{DynamicResource AccentColor}"
+                            Foreground="White"
+                            Click="BtnModeLogin_Click"/>
+                    <Button x:Name="btnModeRegister" Grid.Column="1" Content="Регистрация"
+                            Height="36" Margin="4,0,0,0"
+                            Click="BtnModeRegister_Click"/>
+                </Grid>
+
+                <!-- Форма -->
+                <StackPanel Grid.Row="2">
+
+                    <!-- Имя (только регистрация) -->
+                    <StackPanel x:Name="panelName" Visibility="Collapsed" Margin="0,0,0,12">
+                        <TextBlock Text="Имя" FontSize="12" Margin="0,0,0,4"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                        <TextBox x:Name="txtName" Height="36" Padding="10,8" FontSize="13"/>
+                    </StackPanel>
+
+                    <!-- Email -->
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Email" FontSize="12" Margin="0,0,0,4"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                        <TextBox x:Name="txtEmail" Height="36" Padding="10,8" FontSize="13"/>
+                    </StackPanel>
+
+                    <!-- Пароль -->
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Пароль" FontSize="12" Margin="0,0,0,4"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                        <PasswordBox x:Name="txtPassword" Height="36" Padding="10,8"
+                                     FontSize="13"
+                                     Background="{DynamicResource CardBackground}"
+                                     Foreground="{DynamicResource TextPrimary}"
+                                     BorderBrush="{DynamicResource BorderBrush}"
+                                     BorderThickness="1"
+                                     CaretBrush="{DynamicResource TextPrimary}"/>
+                    </StackPanel>
+
+                    <!-- Подтверждение пароля (только регистрация) -->
+                    <StackPanel x:Name="panelConfirm" Visibility="Collapsed" Margin="0,0,0,12">
+                        <TextBlock Text="Подтвердите пароль" FontSize="12" Margin="0,0,0,4"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                        <PasswordBox x:Name="txtConfirm" Height="36" Padding="10,8"
+                                     FontSize="13"
+                                     Background="{DynamicResource CardBackground}"
+                                     Foreground="{DynamicResource TextPrimary}"
+                                     BorderBrush="{DynamicResource BorderBrush}"
+                                     BorderThickness="1"
+                                     CaretBrush="{DynamicResource TextPrimary}"/>
+                    </StackPanel>
+
+                    <!-- Ошибка -->
+                    <TextBlock x:Name="txtError" Text=""
+                               Foreground="#FF6B6B" FontSize="12"
+                               TextWrapping="Wrap" Margin="0,0,0,12"
+                               Visibility="Collapsed"/>
+
+                    <!-- Кнопка submit -->
+                    <Button x:Name="btnSubmit" Content="Войти"
+                            Height="40" Margin="0,4,0,0"
+                            Background="{DynamicResource AccentColor}"
+                            Foreground="White"
+                            FontSize="14"
+                            Click="BtnSubmit_Click"/>
+
+                    <!-- Разделитель -->
+                    <Grid Margin="0,20,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Separator Grid.Column="0" VerticalAlignment="Center"
+                                   Background="{DynamicResource BorderBrush}"/>
+                        <TextBlock Grid.Column="1" Text="или" Margin="10,0"
+                                   FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                                   VerticalAlignment="Center"/>
+                        <Separator Grid.Column="2" VerticalAlignment="Center"
+                                   Background="{DynamicResource BorderBrush}"/>
+                    </Grid>
+
+                    <!-- Яндекс -->
+                    <Button x:Name="btnYandex" Height="40"
+                            Background="#FFDB4D" Foreground="#1A1A1A"
+                            BorderThickness="0" FontSize="14"
+                            Click="BtnYandex_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🟡" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="Войти через Яндекс" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </Window>
