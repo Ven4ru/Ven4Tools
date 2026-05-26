@@ -5,6 +5,7 @@ namespace Ven4Tools.Models
         // Catalog
         public string CatalogMode { get; set; } = "full"; // "basic", "extended", "full"
         public bool HideInstalled { get; set; } = false;
+        public bool ShowRuBlocked { get; set; } = true;
         public string DefaultSort { get; set; } = "alpha"; // "alpha", "category", "popularity"
         public bool FreeOnly { get; set; } = false;
 

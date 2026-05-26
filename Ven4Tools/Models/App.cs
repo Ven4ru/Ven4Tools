@@ -38,6 +38,9 @@ namespace Ven4Tools.Models
         [JsonProperty("description")]
         public string Description { get; set; } = string.Empty;
 
+        [JsonProperty("ruBlocked")]
+        public bool RuBlocked { get; set; } = false;
+
         [JsonIgnore]
         public bool IsSelected { get; set; }
 
