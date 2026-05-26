@@ -278,10 +278,14 @@ await CopyDirectoryWithRetryAsync(rootFolder, _basePath);
                     }
                     return;
                 }
-                catch (IOException) when (attempt < maxRetries)
+                catch (IOException ex)
                 {
-                    Log($"⚠️ Копирование не удалось, попытка {attempt}/{maxRetries}...");
-                    await Task.Delay(500);
+                    if (attempt < maxRetries)
+                    {
+                        Log($"⚠️ Копирование не удалось, попытка {attempt}/{maxRetries}: {ex.Message}");
+                        await Task.Delay(500);
+                    }
+                    else throw;
                 }
             }
         }
