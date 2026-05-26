@@ -5,7 +5,25 @@ namespace Ven4Tools.Services
 {
     public static class ThemeService
     {
-        public static void Apply(string theme) => ApplyDark(theme != "light");
+        public static void Apply(string theme)
+        {
+            if (theme == "web") ApplyWeb();
+            else ApplyDark(theme != "light");
+        }
+
+        public static void ApplyWeb()
+        {
+            var r = Application.Current.Resources;
+            r["WindowBackground"]  = Brush(10,  22,  40);
+            r["SidebarBackground"] = Brush(13,  31,  53);
+            r["ContentBackground"] = Brush(8,   18,  32);
+            r["CardBackground"]    = Brush(16,  30,  52);
+            r["TextPrimary"]       = Brush(232, 240, 254);
+            r["TextSecondary"]     = Brush(138, 155, 181);
+            r["BorderBrush"]       = Brush(30,  50,  80);
+            r["HeaderForeground"]  = Brush(232, 240, 254);
+            r["AccentColor"]       = Brush(0,   230, 120);
+        }
 
         public static void ApplyDark(bool isDark)
         {
