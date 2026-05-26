@@ -55,23 +55,34 @@ namespace Ven4Tools.Launcher.Services
         /// <summary>
         /// Получение всех релизов
         /// </summary>
-        public async Task<List<GitHubRelease>> GetAllReleases()
+        public async Task<(List<GitHubRelease> Releases, string? Error)> GetAllReleasesWithError()
         {
             try
             {
                 string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases";
                 using var response = await httpClient.GetAsync(url);
 
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                    return (new(), $"GitHub rate limit (403) — подождите ~1 час или добавьте токен");
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    return (new(), $"Репозиторий не найден (404)");
                 if (!response.IsSuccessStatusCode)
-                    return new List<GitHubRelease>();
+                    return (new(), $"GitHub вернул {(int)response.StatusCode}");
 
                 string json = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<List<GitHubRelease>>(json) ?? new List<GitHubRelease>();
+                var list = JsonSerializer.Deserialize<List<GitHubRelease>>(json) ?? new();
+                return (list, null);
             }
-            catch
+            catch (Exception ex)
             {
-                return new List<GitHubRelease>();
+                return (new(), $"Сетевая ошибка: {ex.Message}");
             }
+        }
+
+        public async Task<List<GitHubRelease>> GetAllReleases()
+        {
+            var (releases, _) = await GetAllReleasesWithError();
+            return releases;
         }
 
         /// <summary>
