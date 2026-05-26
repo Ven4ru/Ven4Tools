@@ -8,7 +8,7 @@ using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
 {
-    public class CatalogLoaderService
+    public class CatalogLoaderService : IDisposable
     {
         public static MasterCatalog? LoadedCatalog { get; private set; }
         public static event Action<MasterCatalog>? CatalogReady;
@@ -87,5 +87,6 @@ namespace Ven4Tools.Services
                        })
                    ?? new MasterCatalog();
         }
+        public void Dispose() => _httpClient.Dispose();
     }
 }

@@ -26,7 +26,7 @@ namespace Ven4Tools.Services
             string expectedHash)
         {
             if (string.IsNullOrWhiteSpace(expectedHash))
-                return true; // Временно разрешаем отсутствие SHA
+                return true; // SHA256 отсутствует в каталоге — пропускаем проверку
 
             string computedHash = await ComputeSha256Async(filePath);
 

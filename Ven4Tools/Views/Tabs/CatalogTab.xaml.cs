@@ -376,7 +376,11 @@ namespace Ven4Tools.Views.Tabs
                     AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
                     _ = FetchVersionsPhase2Async();
                     return UpdateInstalledStatusAsync();
-                }).Unwrap();
+                }).Unwrap().ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                        AddLog($"⚠️ Ошибка фоновой задачи: {t.Exception?.InnerException?.Message}");
+                });
             }
             catch (Exception ex)
             {
