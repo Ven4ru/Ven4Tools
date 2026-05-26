@@ -1,8 +1,10 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools", "Ven4Tools/Ven4Tools.csproj", "{2E536D78-5E4F-6109-0A86-EC26092FC845}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools", "Ven4Tools\Ven4Tools.csproj", "{2E536D78-5E4F-6109-0A86-EC26092FC845}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Admin", "Ven4Admin\Ven4Admin.csproj", "{7941941D-92D5-4803-890F-32DD339FC76B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,6 +16,10 @@ Global
 		{2E536D78-5E4F-6109-0A86-EC26092FC845}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E536D78-5E4F-6109-0A86-EC26092FC845}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E536D78-5E4F-6109-0A86-EC26092FC845}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7941941D-92D5-4803-890F-32DD339FC76B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7941941D-92D5-4803-890F-32DD339FC76B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7941941D-92D5-4803-890F-32DD339FC76B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7941941D-92D5-4803-890F-32DD339FC76B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
