@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -54,7 +50,7 @@ namespace Ven4Tools.Services
 
             try
             {
-                var results = await Task.Run(() => SearchWingetPackages(query));
+                var results = await WingetService.SearchAsync(query);
                 foreach (var pkg in results)
                     _searchResults.Add(pkg);
 
@@ -105,7 +101,7 @@ namespace Ven4Tools.Services
 
             try
             {
-                var (name, version) = await Task.Run(() => ValidateWingetId(id));
+                var (name, version) = await WingetService.ValidateIdAsync(id);
                 if (name != null)
                 {
                     txtValidateResult.Text = $"✅ {name}  |  Версия: {version ?? "—"}";
@@ -123,97 +119,6 @@ namespace Ven4Tools.Services
             {
                 btnValidateId.IsEnabled = true;
             }
-        }
-
-        private (string? Name, string? Version) ValidateWingetId(string id)
-        {
-            try
-            {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "winget",
-                    Arguments = $"show --id {id} -e --source winget --accept-source-agreements",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
-
-                using var process = Process.Start(psi);
-                if (process == null) return (null, null);
-
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-                if (process.ExitCode != 0) return (null, null);
-
-                string? name = null, version = null;
-                foreach (var line in output.Split('\n'))
-                {
-                    var t = line.Trim();
-                    // "Found Mozilla Firefox [Mozilla.Firefox]" or "Найдено ..."
-                    if (name == null)
-                    {
-                        var m = Regex.Match(t, @"(?:Found|Найдено)\s+(.+?)\s+\[");
-                        if (m.Success) { name = m.Groups[1].Value.Trim(); continue; }
-                    }
-                    if (version == null && (t.StartsWith("Version:") || t.StartsWith("Версия:")))
-                    {
-                        version = t.Split(':', 2).Last().Trim();
-                    }
-                }
-                return (name, version);
-            }
-            catch { return (null, null); }
-        }
-
-        private List<WingetPackage> SearchWingetPackages(string query)
-        {
-            var results = new List<WingetPackage>();
-            try
-            {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "winget",
-                    Arguments = $"search --name \"{query}\" --source winget --accept-source-agreements",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
-
-                using var process = Process.Start(psi);
-                if (process == null) return results;
-
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-
-                bool headerPassed = false;
-                foreach (var line in output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    if (!headerPassed)
-                    {
-                        if (line.Contains("--")) headerPassed = true;
-                        continue;
-                    }
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-
-                    var parts = Regex.Split(line, @"\s{2,}");
-                    if (parts.Length >= 2)
-                    {
-                        results.Add(new WingetPackage
-                        {
-                            Name    = parts[0].Trim(),
-                            Id      = parts[1].Trim(),
-                            Version = parts.Length > 2 ? parts[2].Trim() : "",
-                            Source  = parts.Length > 3 ? parts[3].Trim() : "winget"
-                        });
-                    }
-                }
-            }
-            catch (Exception ex) { Debug.WriteLine($"Ошибка поиска: {ex.Message}"); }
-            return results;
         }
 
         private async void BtnOk_Click(object sender, RoutedEventArgs e)
@@ -264,7 +169,7 @@ namespace Ven4Tools.Services
             {
                 if (await new ConsentService().IsStatsAllowedAsync())
                     await StatsService.Instance.TrackUserAddAsync(
-                        app.Id, wingetId, app.InstallerUrls.FirstOrDefault());
+                        app.Id, wingetId, app.InstallerUrls.Count > 0 ? app.InstallerUrls[0] : null);
             }
             catch { }
 

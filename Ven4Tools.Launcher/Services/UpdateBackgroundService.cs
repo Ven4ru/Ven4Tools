@@ -35,7 +35,7 @@ namespace Ven4Tools.Launcher.Services
                 _cts = new CancellationTokenSource();
 
             if (_timer == null)
-                _timer = new Timer(async _ => await CheckAllAsync(), null,
+                _timer = new Timer(_ => { _ = CheckAllAsync(); }, null,
                     TimeSpan.FromSeconds(60), TimeSpan.FromHours(3));
             else
                 _timer.Change(TimeSpan.FromSeconds(60), TimeSpan.FromHours(3));
