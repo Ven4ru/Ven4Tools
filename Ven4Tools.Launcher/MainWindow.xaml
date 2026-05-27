@@ -26,26 +26,27 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                
-                <!-- Верхняя часть: кнопки -->
+
+                <!-- Верхняя часть: основные кнопки -->
                 <StackPanel Grid.Row="0" Margin="10">
-                    <Button x:Name="btnSelectFolder" Content="📁 Выбрать папку" 
+                    <Button x:Name="btnSelectFolder" Content="📁 Выбрать папку"
                             Height="40" Margin="0,5" Click="BtnSelectFolder_Click"/>
-                    <Button x:Name="btnCheckUpdates" Content="🔍 Проверить обновления" 
+                    <Button x:Name="btnFindClient" Content="🔍 Найти Ven4Tools на диске"
+                            Height="40" Margin="0,5" Click="BtnFindClient_Click"/>
+                    <Button x:Name="btnCheckUpdates" Content="🔄 Проверить обновления"
                             Height="40" Margin="0,5" Click="BtnCheckUpdates_Click"/>
-                    <Button x:Name="btnInstallUpdate" Content="📥 Установить обновление" 
-                            Height="40" Margin="0,5" IsEnabled="False" Click="BtnInstallUpdate_Click"/>
-                    <Button x:Name="btnLaunchApp" Content="📥 Загрузить Ven4Tools" 
+                    <Button x:Name="btnLaunchApp" Content="📥 Загрузить Ven4Tools"
                             Height="40" Margin="0,5" FontWeight="Bold"
                             Background="{DynamicResource AccentColor}"
                             Click="BtnLaunchApp_Click"/>
-                            <Button x:Name="btnCheckComponents" Content="🔧 Проверить компоненты" 
-        Height="40" Margin="0,5" Click="BtnCheckComponents_Click"/>
-                    <Button x:Name="btnExit" Content="❌ Выход" 
+                    <Button x:Name="btnChangelog" Content="📋 История изменений"
+                            Height="40" Margin="0,5" Click="BtnChangelog_Click"/>
+                    <Button x:Name="btnExit" Content="❌ Выход"
                             Height="40" Margin="0,5" Click="BtnExit_Click"/>
                 </StackPanel>
-                
+
                 <!-- Настройки -->
                 <Border Grid.Row="1" VerticalAlignment="Bottom" Margin="10,0,10,10"
                         Background="#1E1E1E" CornerRadius="8" Padding="10">
@@ -67,21 +68,31 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Нижняя часть: выбор версии (только выбор) -->
+                <!-- Выбор версии -->
                 <Border Grid.Row="2" Margin="10" Background="#1E1E1E" CornerRadius="8" Padding="10">
                     <StackPanel>
-                        <TextBlock Text="📦 Выбор версии" FontWeight="Bold" 
+                        <TextBlock Text="📦 Выбор версии" FontWeight="Bold"
                                    Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8"/>
-                        
-                        <ComboBox x:Name="cmbVersions" Height="30" Margin="0,0,0,5" 
-                                  DisplayMemberPath="Version" 
+                        <ComboBox x:Name="cmbVersions" Height="30" Margin="0,0,0,5"
+                                  DisplayMemberPath="Version"
                                   SelectionChanged="CmbVersions_SelectionChanged"/>
-                        
-                        <TextBlock x:Name="txtVersionInfo" Text="Выберите версию" 
-                                   Foreground="{DynamicResource TextSecondary}" 
+                        <TextBlock x:Name="txtVersionInfo" Text="Выберите версию"
+                                   Foreground="{DynamicResource TextSecondary}"
                                    FontSize="10" TextWrapping="Wrap" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
+
+                <!-- Действия (появляются только когда нужны) -->
+                <StackPanel Grid.Row="3" Margin="10,0,10,10">
+                    <Button x:Name="btnInstallUpdate" Content="📥 Обновить лаунчер"
+                            Height="40" Margin="0,5,0,0" Visibility="Collapsed"
+                            Background="#2E7D32" Foreground="White" FontWeight="SemiBold"
+                            Click="BtnInstallUpdate_Click"/>
+                    <Button x:Name="btnInstallMissing" Content="🔧 Установить компоненты"
+                            Height="40" Margin="0,5,0,0" Visibility="Collapsed"
+                            Background="#E65100" Foreground="White" FontWeight="SemiBold"
+                            Click="BtnInstallMissing_Click"/>
+                </StackPanel>
             </Grid>
         </Border>
         
@@ -110,9 +121,15 @@
                     <StackPanel>
                         <ProgressBar x:Name="progressDownload" Height="20" Minimum="0" Maximum="100" Value="0"
                                      Foreground="{DynamicResource AccentColor}" Background="{DynamicResource BorderBrush}"/>
-                        <TextBlock x:Name="txtDownloadStatus" Text="Готов" 
-                                   Foreground="{DynamicResource TextSecondary}" FontSize="11" 
-                                   HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                        <Grid Margin="0,5,0,0">
+                            <TextBlock x:Name="txtDownloadStatus" Text="Готов"
+                                       Foreground="{DynamicResource TextSecondary}" FontSize="11"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Button x:Name="btnCancelDownload" Content="⏹ Отмена"
+                                    HorizontalAlignment="Right" Height="22" Padding="8,2"
+                                    Visibility="Collapsed" Click="BtnCancelDownload_Click"
+                                    Background="#C62828" Foreground="White" FontSize="11"/>
+                        </Grid>
                     </StackPanel>
                 </GroupBox>
                 
@@ -143,19 +160,11 @@
                                 Background="Transparent" Foreground="{DynamicResource TextSecondary}"/>
                     </StackPanel>
                     
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10">
-                        <TextBlock x:Name="txtReleaseNotes" 
-                                   Foreground="{DynamicResource TextSecondary}" 
-                                   TextWrapping="Wrap" FontSize="11"/>
-                    </ScrollViewer>
+                    <FlowDocumentScrollViewer x:Name="fdvReleaseNotes" Grid.Row="1"
+                                              VerticalScrollBarVisibility="Auto" Margin="10"
+                                              Background="Transparent" IsToolBarVisible="False"/>
                 </Grid>
             </Border>
-            
-            <!-- Кнопка-раздвигатель -->
-            <Button x:Name="btnToggleDetails" Content="▶" Width="24" Height="48" 
-                    HorizontalAlignment="Left" VerticalAlignment="Center"
-                    Background="{DynamicResource AccentColor}" Foreground="White"
-                    Click="BtnToggleDetails_Click"/>
         </Grid>
     </Grid>
 </Window>

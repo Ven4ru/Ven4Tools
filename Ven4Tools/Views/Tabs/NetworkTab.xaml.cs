@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Ven4Tools.Models;
@@ -213,20 +214,45 @@ namespace Ven4Tools.Views.Tabs
             }
         }
         
-        private void BtnCheckDns_Click(object sender, RoutedEventArgs e)
+        private async void BtnCheckDns_Click(object sender, RoutedEventArgs e)
         {
+            AddLog("🔍 Проверка DNS (nslookup google.com)...");
             try
             {
-                Process.Start("cmd.exe", "/c nslookup google.com");
-                AddLog("🔍 Запущена проверка DNS");
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "nslookup",
+                    Arguments = "google.com",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+
+                using var process = Process.Start(psi);
+                if (process == null) { AddLog("❌ Не удалось запустить nslookup"); return; }
+
+                string output = await process.StandardOutput.ReadToEndAsync();
+                string error  = await process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                foreach (var line in (output + error).Split('\n'))
+                {
+                    string trimmed = line.Trim('\r', ' ');
+                    if (!string.IsNullOrWhiteSpace(trimmed))
+                        AddLog($"   {trimmed}");
+                }
+
+                AddLog(process.ExitCode == 0 ? "✅ DNS работает" : "⚠️ Возможны проблемы с DNS");
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка: {ex.Message}");
+                AddLog($"❌ Ошибка DNS-проверки: {ex.Message}");
             }
         }
-        
-        private void BtnResetNetwork_Click(object sender, RoutedEventArgs e)
+
+        private async void BtnResetNetwork_Click(object sender, RoutedEventArgs e)
         {
             var confirm = MessageBox.Show(
                 "Сброс сетевых настроек:\n\n" +
@@ -234,21 +260,36 @@ namespace Ven4Tools.Views.Tabs
                 "• netsh int ip reset\n" +
                 "• ipconfig /release\n" +
                 "• ipconfig /renew\n\n" +
-                "После выполнения потребуется перезагрузка.\n\n" +
+                "Потребуются права администратора и перезагрузка.\n\n" +
                 "Продолжить?",
                 "Сброс сети",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
-            
+
             if (confirm != MessageBoxResult.Yes) return;
-            
+
             try
             {
-                Process.Start("cmd.exe", "/c netsh winsock reset && netsh int ip reset && ipconfig /release && ipconfig /renew");
-                AddLog("🔄 Запущен сброс сетевых настроек");
-                
+                AddLog("🔄 Запуск сброса сетевых настроек с правами администратора...");
+
+                // Run elevated; /c runs all commands, pause lets user read before window closes
+                var psi = new ProcessStartInfo
+                {
+                    FileName  = "cmd.exe",
+                    Arguments = "/c netsh winsock reset & netsh int ip reset & " +
+                                "ipconfig /release & ipconfig /renew & " +
+                                "echo. & echo Готово. Нажмите любую клавишу... & pause > nul",
+                    UseShellExecute = true,
+                    Verb = "runas",
+                    WindowStyle = ProcessWindowStyle.Normal
+                };
+
+                using var process = Process.Start(psi);
+                if (process != null)
+                    await process.WaitForExitAsync();
+
+                AddLog("✅ Сброс сетевых настроек завершён");
                 MessageBox.Show(
-                    "Сетевые настройки сброшены.\n\n" +
                     "Для применения изменений перезагрузите компьютер.",
                     "Готово",
                     MessageBoxButton.OK,
@@ -256,7 +297,7 @@ namespace Ven4Tools.Views.Tabs
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка: {ex.Message}");
+                AddLog($"❌ Ошибка сброса сети: {ex.Message}");
             }
         }
     }

@@ -58,33 +58,19 @@ namespace Ven4Tools.Views.Tabs
                 AddLog(turbo.Value ? "⚡ Турбобуст: включён" : "⚡ Турбобуст: отключён");
         }
         
-        private string SettingsPath => Path.Combine(
+        private static string SettingsPath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Ven4Tools", "settings.json");
 
         private void LoadSettings()
         {
-            try
-            {
-                if (File.Exists(SettingsPath))
-                {
-                    var json = File.ReadAllText(SettingsPath);
-                    dynamic? settings = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
-                    if (settings != null)
-                    {
-                        chkNotifications.IsChecked = (bool?)settings.Notifications ?? true;
-                        chkUpdateNotifications.IsChecked = (bool?)settings.UpdateNotifications ?? true;
-
-                        double catalogTimeout = (double?)settings.CatalogTimeout ?? 10;
-                        double checkTimeout = (double?)settings.CheckTimeout ?? 15;
-                        sliderCatalogTimeout.Value = Math.Clamp(catalogTimeout, 3, 30);
-                        sliderCheckTimeout.Value = Math.Clamp(checkTimeout, 5, 60);
-                        txtCatalogTimeout.Text = $"{(int)sliderCatalogTimeout.Value} сек";
-                        txtCheckTimeout.Text = $"{(int)sliderCheckTimeout.Value} сек";
-                    }
-                }
-            }
-            catch { }
+            // AppSettings is already loaded from the same file at startup
+            chkNotifications.IsChecked = AppSettings.Notifications;
+            chkUpdateNotifications.IsChecked = AppSettings.UpdateNotifications;
+            sliderCatalogTimeout.Value = Math.Clamp(AppSettings.CatalogTimeout, 3, 30);
+            sliderCheckTimeout.Value = Math.Clamp(AppSettings.CheckTimeout, 5, 60);
+            txtCatalogTimeout.Text = $"{(int)sliderCatalogTimeout.Value} сек";
+            txtCheckTimeout.Text = $"{(int)sliderCheckTimeout.Value} сек";
         }
 
         private void SaveSettings()

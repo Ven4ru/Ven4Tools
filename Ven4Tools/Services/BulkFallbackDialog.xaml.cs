@@ -1,26 +1,17 @@
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.ComponentModel;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Runtime.CompilerServices;
-    using System.Text.RegularExpressions;
-    using System.Threading.Tasks;
-    using System.Windows;
-    using System.Windows.Input;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using System.Windows;
+using Ven4Tools.Helpers;
+using Ven4Tools.Models;
 
-    namespace Ven4Tools.Services
-    {
-        public class WingetPackage
-        {
-            public string Id { get; set; } = string.Empty;
-            public string Name { get; set; } = string.Empty;
-            public string Version { get; set; } = string.Empty;
-            public string Source { get; set; } = string.Empty;
-            public string DisplayName => $"{Name} ({Id}) — {Version}";
-        }
-
+namespace Ven4Tools.Services
+{
     public class FailedAppItem : INotifyPropertyChanged
     {
         public string AppId { get; set; } = string.Empty;
@@ -28,12 +19,12 @@
         public string OriginalId { get; set; } = string.Empty;
         public string OriginalUrl { get; set; } = string.Empty;
         public bool IsUserAdded { get; set; }
-        
+
         public bool HasOriginalId => !string.IsNullOrEmpty(OriginalId);
-        
+
         public string? SelectedWingetId { get; set; }
         public string? SelectedUrl { get; set; }
-        
+
         private bool _skip;
         public bool Skip
         {
@@ -80,8 +71,7 @@
                     {
                         Skip = false;
                         ReplaceWithUrl = false;
-                        // Автоматически запускаем поиск при выборе этой опции
-                        _ = AutoSearchWinget();
+                        _ = AutoSearchWingetAsync();
                     }
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(IsSearchMode));
@@ -161,10 +151,7 @@
             set
             {
                 _selectedPackage = value;
-                if (value != null)
-                {
-                    SelectedWingetId = value.Id;
-                }
+                if (value != null) SelectedWingetId = value.Id;
                 OnPropertyChanged();
             }
         }
@@ -176,10 +163,7 @@
             set
             {
                 _newUrl = value;
-                if (!string.IsNullOrWhiteSpace(value))
-                {
-                    SelectedUrl = value;
-                }
+                if (!string.IsNullOrWhiteSpace(value)) SelectedUrl = value;
                 OnPropertyChanged();
             }
         }
@@ -193,262 +177,155 @@
 
         public FailedAppItem() { }
 
-        private async Task AutoSearchWinget()
-{
-    if (string.IsNullOrWhiteSpace(DisplayName)) 
-    {
-        Debug.WriteLine($"AutoSearchWinget: DisplayName пустой");
-        return;
-    }
+        private async Task AutoSearchWingetAsync()
+        {
+            if (string.IsNullOrWhiteSpace(DisplayName)) return;
 
-    Debug.WriteLine($"AutoSearchWinget: Начинаем поиск для '{DisplayName}'");
-    
-    IsSearching = true;
-    SearchResults.Clear();
-    
-    try
-    {
-        var results = await Task.Run(() => SearchWingetPackages(DisplayName));
-        
-        Debug.WriteLine($"AutoSearchWinget: Найдено {results.Count} результатов");
-        
-        // Очищаем и добавляем результаты
-        SearchResults.Clear();
-        foreach (var pkg in results)
-        {
-            SearchResults.Add(pkg);
-            Debug.WriteLine($"  - {pkg.DisplayName}");
-        }
-        
-        // Принудительно обновляем UI
-        OnPropertyChanged(nameof(SearchResults));
-        OnPropertyChanged(nameof(HasResults));
-        OnPropertyChanged(nameof(HasNoResults));
-        
-        // Если найден ровно один результат, автоматически выбираем его
-        if (results.Count == 1)
-        {
-            SelectedPackage = results[0];
-            Debug.WriteLine($"AutoSearchWinget: Автоматически выбран {results[0].DisplayName}");
-        }
-    }
-    catch (Exception ex)
-    {
-        Debug.WriteLine($"Ошибка поиска: {ex.Message}");
-    }
-    finally
-    {
-        IsSearching = false;
-        Debug.WriteLine($"AutoSearchWinget: Поиск завершён");
-    }
-}
-
-        private List<WingetPackage> SearchWingetPackages(string query)
-        {
-            var results = new List<WingetPackage>();
+            IsSearching = true;
+            SearchResults.Clear();
 
             try
             {
-                string args = $"search --name \"{query}\" --source winget --accept-source-agreements";
-                
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "winget.exe",
-                    Arguments = args,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
+                var results = await WingetService.SearchAsync(DisplayName);
 
-                using (var process = Process.Start(psi))
-                {
-                    if (process == null) return results;
+                SearchResults.Clear();
+                foreach (var pkg in results)
+                    SearchResults.Add(pkg);
 
-                    string output = process.StandardOutput.ReadToEnd();
-                    process.WaitForExit();
+                OnPropertyChanged(nameof(SearchResults));
+                OnPropertyChanged(nameof(HasResults));
+                OnPropertyChanged(nameof(HasNoResults));
 
-                    var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                    bool headerPassed = false;
-                    foreach (var line in lines)
-                    {
-                        if (!headerPassed && line.Contains("--"))
-                        {
-                            headerPassed = true;
-                            continue;
-                        }
-                        if (!headerPassed || line.StartsWith("Имя") || string.IsNullOrWhiteSpace(line))
-                            continue;
-
-                        var parts = Regex.Split(line, @"\s{2,}");
-                        if (parts.Length >= 3)
-                        {
-                            var pkg = new WingetPackage
-                            {
-                                Name = parts[0].Trim(),
-                                Id = parts[1].Trim(),
-                                Version = parts[2].Trim(),
-                                Source = parts.Length > 3 ? parts[3].Trim() : "winget"
-                            };
-                            results.Add(pkg);
-                        }
-                    }
-                }
+                if (results.Count == 1)
+                    SelectedPackage = results[0];
             }
-            catch { }
-
-            return results;
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"AutoSearch error: {ex.Message}");
+            }
+            finally
+            {
+                IsSearching = false;
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
-        public class RelayCommand : ICommand
+    public partial class BulkFallbackDialog : Window
+    {
+        public ObservableCollection<FailedAppItem> FailedApps { get; } = new();
+        public bool Applied { get; private set; }
+        public bool RememberChoices { get; private set; }
+
+        public BulkFallbackDialog(List<(string AppId, string DisplayName, string OriginalId, string OriginalUrl, bool IsUserAdded)> failedApps)
         {
-            private readonly Action<object?> _execute;
-            private readonly Func<object?, bool>? _canExecute;
+            InitializeComponent();
 
-            public RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
+            foreach (var app in failedApps)
             {
-                _execute = execute;
-                _canExecute = canExecute;
+                FailedApps.Add(new FailedAppItem
+                {
+                    AppId = app.AppId,
+                    DisplayName = app.DisplayName,
+                    OriginalId = app.OriginalId,
+                    OriginalUrl = app.OriginalUrl,
+                    IsUserAdded = app.IsUserAdded,
+                    Skip = true
+                });
             }
 
-            public event EventHandler? CanExecuteChanged
-            {
-                add { CommandManager.RequerySuggested += value; }
-                remove { CommandManager.RequerySuggested -= value; }
-            }
-
-            public bool CanExecute(object? parameter) => _canExecute == null || _canExecute(parameter);
-
-            public void Execute(object? parameter) => _execute(parameter);
+            lstFailedApps.ItemsSource = FailedApps;
         }
 
-        public partial class BulkFallbackDialog : Window
+        private void BtnApplyReplace_Click(object sender, RoutedEventArgs e)
         {
-            public ObservableCollection<FailedAppItem> FailedApps { get; } = new();
-            public bool Applied { get; private set; }
-            public bool RememberChoices { get; private set; }
+            var selected = FailedApps.Where(x => x.SearchWinget || x.ReplaceWithUrl).ToList();
+            var toRemove = FailedApps.Where(x => x.Skip && x.RemoveFromCatalog).ToList();
 
-            public BulkFallbackDialog(List<(string AppId, string DisplayName, string OriginalId, string OriginalUrl, bool IsUserAdded)> failedApps)
+            if (!selected.Any() && !toRemove.Any())
             {
-                InitializeComponent();
-                
-                foreach (var app in failedApps)
-                {
-                    FailedApps.Add(new FailedAppItem
-                    {
-                        AppId = app.AppId,
-                        DisplayName = app.DisplayName,
-                        OriginalId = app.OriginalId,
-                        OriginalUrl = app.OriginalUrl,
-                        IsUserAdded = app.IsUserAdded,
-                        Skip = true
-                    });
-                }
-                
-                lstFailedApps.ItemsSource = FailedApps;
+                MessageBox.Show("Не выбрано ни одной программы для замены или удаления.",
+                    "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
             }
 
-            private void BtnApplyReplace_Click(object sender, RoutedEventArgs e)
+            foreach (var app in selected.Where(x => x.SearchWinget))
             {
-                var selected = FailedApps.Where(x => x.SearchWinget || x.ReplaceWithUrl).ToList();
-                var toRemove = FailedApps.Where(x => x.Skip && x.RemoveFromCatalog).ToList();
-                
-                if (!selected.Any() && !toRemove.Any())
+                if (app.SelectedPackage == null)
                 {
-                    MessageBox.Show("Не выбрано ни одной программы для замены или удаления.", 
-                        "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"Для программы '{app.DisplayName}' не выбран пакет из результатов поиска.",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
-
-                var wingetSelected = selected.Where(x => x.SearchWinget).ToList();
-                foreach (var app in wingetSelected)
-                {
-                    if (app.SelectedPackage == null)
-                    {
-                        MessageBox.Show($"Для программы '{app.DisplayName}' не выбран пакет из результатов поиска.", 
-                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
-                }
-
-                var urlSelected = selected.Where(x => x.ReplaceWithUrl).ToList();
-                foreach (var app in urlSelected)
-                {
-                    if (string.IsNullOrWhiteSpace(app.NewUrl))
-                    {
-                        MessageBox.Show($"Для программы '{app.DisplayName}' не указана ссылка.", 
-                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
-
-                    if (!app.NewUrl.StartsWith("http://") && !app.NewUrl.StartsWith("https://"))
-                    {
-                        MessageBox.Show($"Для программы '{app.DisplayName}' указана некорректная ссылка.", 
-                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
-                }
-
-                if (toRemove.Any())
-                {
-                    var names = string.Join(", ", toRemove.Select(x => x.DisplayName));
-                    var result = MessageBox.Show(
-                        $"Следующие программы будут удалены из каталога:\n{names}\n\nПродолжить?",
-                        "Подтверждение удаления",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Warning);
-                        
-                    if (result == MessageBoxResult.No)
-                        return;
-                }
-
-                RememberChoices = chkRememberChoices.IsChecked == true;
-                Applied = true;
-                DialogResult = true;
-                Close();
             }
 
-            private void BtnApplySkip_Click(object sender, RoutedEventArgs e)
+            foreach (var app in selected.Where(x => x.ReplaceWithUrl))
             {
-                foreach (var app in FailedApps)
+                if (string.IsNullOrWhiteSpace(app.NewUrl))
                 {
-                    if (!app.Skip)
-                    {
-                        app.Skip = true;
-                        app.SearchWinget = false;
-                        app.ReplaceWithUrl = false;
-                    }
+                    MessageBox.Show($"Для программы '{app.DisplayName}' не указана ссылка.",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
                 }
-                
-                RememberChoices = chkRememberChoices.IsChecked == true;
-                Applied = true;
-                DialogResult = true;
-                Close();
+                if (!app.NewUrl.StartsWith("http://") && !app.NewUrl.StartsWith("https://"))
+                {
+                    MessageBox.Show($"Для программы '{app.DisplayName}' указана некорректная ссылка.",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
             }
 
-            private void BtnSkipAll_Click(object sender, RoutedEventArgs e)
+            if (toRemove.Any())
             {
-                foreach (var app in FailedApps)
+                var names = string.Join(", ", toRemove.Select(x => x.DisplayName));
+                var result = MessageBox.Show(
+                    $"Следующие программы будут удалены из каталога:\n{names}\n\nПродолжить?",
+                    "Подтверждение удаления",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                if (result == MessageBoxResult.No) return;
+            }
+
+            RememberChoices = chkRememberChoices.IsChecked == true;
+            Applied = true;
+            DialogResult = true;
+            Close();
+        }
+
+        private void BtnApplySkip_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var app in FailedApps)
+            {
+                if (!app.Skip)
                 {
                     app.Skip = true;
                     app.SearchWinget = false;
                     app.ReplaceWithUrl = false;
-                    app.KeepInCatalog = true;
-                    app.RemoveFromCatalog = false;
                 }
-                
-                RememberChoices = chkRememberChoices.IsChecked == true;
-                Applied = true;
-                DialogResult = true;
-                Close();
             }
+            RememberChoices = chkRememberChoices.IsChecked == true;
+            Applied = true;
+            DialogResult = true;
+            Close();
+        }
+
+        private void BtnSkipAll_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var app in FailedApps)
+            {
+                app.Skip = true;
+                app.SearchWinget = false;
+                app.ReplaceWithUrl = false;
+                app.KeepInCatalog = true;
+                app.RemoveFromCatalog = false;
+            }
+            RememberChoices = chkRememberChoices.IsChecked == true;
+            Applied = true;
+            DialogResult = true;
+            Close();
         }
     }
+}

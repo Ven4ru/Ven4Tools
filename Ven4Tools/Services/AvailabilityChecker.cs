@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -12,7 +13,7 @@ namespace Ven4Tools.Services
     public class AvailabilityChecker : IDisposable
     {
         private readonly HttpClient httpClient;
-        private readonly Dictionary<string, CachedAvailability> cache = new();
+        private readonly ConcurrentDictionary<string, CachedAvailability> cache = new();
         private readonly TimeSpan cacheDuration = TimeSpan.FromMinutes(5);
 
         public AvailabilityChecker()
@@ -50,14 +51,15 @@ namespace Ven4Tools.Services
 
         public async Task<(AvailabilityStatus Status, long SizeMB)> CheckAppAvailabilityWithSize(AppInfo app)
         {
-            string cacheKey = app.Id ?? string.Empty;
-
-            if (cache.TryGetValue(cacheKey, out var cached) && DateTime.Now - cached.Timestamp < cacheDuration)
-                return (cached.Status, cached.SizeMB);
-
             string wingetId = !string.IsNullOrEmpty(app.AlternativeId)
                 ? app.AlternativeId
                 : app.Id ?? string.Empty;
+
+            // Cache by the resolved ID so AlternativeId changes invalidate correctly
+            string cacheKey = wingetId;
+
+            if (cache.TryGetValue(cacheKey, out var cached) && DateTime.Now - cached.Timestamp < cacheDuration)
+                return (cached.Status, cached.SizeMB);
 
             (AvailabilityStatus Status, long SizeMB) result = (AvailabilityStatus.Unavailable, 0);
 
@@ -83,12 +85,13 @@ namespace Ven4Tools.Services
 
         private void CacheResult(string appId, AppAvailabilityResult result)
         {
-            cache[appId] = new CachedAvailability
+            var entry = new CachedAvailability
             {
                 Status = result.Status,
                 SizeMB = result.SizeMB,
                 Timestamp = DateTime.Now
             };
+            cache.AddOrUpdate(appId, entry, (_, __) => entry);
         }
 
         private async Task<(AvailabilityStatus Status, long SizeMB)> GetWingetPackageInfo(string appId)

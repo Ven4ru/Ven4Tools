@@ -14,8 +14,8 @@ namespace Ven4Tools.Services
         private readonly ConsentService _consentService;
         private static readonly SemaphoreSlim _lock = new(1, 1);
 
-        private static StatsService? _instance;
-        public static StatsService Instance => _instance ??= new StatsService();
+        private static readonly Lazy<StatsService> _lazy = new(() => new StatsService());
+        public static StatsService Instance => _lazy.Value;
 
         private StatsService()
         {

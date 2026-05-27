@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -26,7 +27,11 @@ namespace Ven4Tools.Services
             string expectedHash)
         {
             if (string.IsNullOrWhiteSpace(expectedHash))
+            {
+                // Логируем отсутствие хеша — не блокируем установку, но предупреждаем
+                Debug.WriteLine($"[HashHelper] SHA256 не указан для файла, проверка пропущена");
                 return true; // SHA256 отсутствует в каталоге — пропускаем проверку
+            }
 
             string computedHash = await ComputeSha256Async(filePath);
 

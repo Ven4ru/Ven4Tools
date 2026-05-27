@@ -72,6 +72,7 @@ namespace Ven4Tools.Launcher.Services
             {
                 var updateInfo = await CheckForUpdatesAsync();
                 if (updateInfo == null || !updateInfo.HasUpdate) return false;
+                if (string.IsNullOrEmpty(updateInfo.DownloadUrl)) return false;
 
                 string tempFile = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Launcher_{updateInfo.LatestVersion}.exe");
 

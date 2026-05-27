@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
@@ -22,6 +23,8 @@ namespace Ven4Tools.Launcher
         private List<ClientVersionInfo> _availableVersions = new();
         private ClientVersionInfo? _selectedVersion;
         private bool _detailsPanelOpen = false;
+        private bool _hasIssues = false;
+        private CancellationTokenSource? _downloadCts;
         private UpdateBackgroundService? _updateService;
         private bool _backgroundUpdates = true;
         private bool _autostart = false;
@@ -44,26 +47,35 @@ namespace Ven4Tools.Launcher
             StartBackgroundService();
             SyncCheckboxes();
 
-            if (_startMinimized)
-                Loaded += (s, e) => Hide();
-            
             if (string.IsNullOrEmpty(_installPath))
             {
                 _installPath = AppDomain.CurrentDomain.BaseDirectory;
             }
-            
+
             // Создаём папку для клиента
             _clientPath = Path.Combine(_installPath, "Ven4Tools_Client");
             Directory.CreateDirectory(_clientPath);
             txtInstallPath.Text = _clientPath;
-            
-            Loaded += async (s, e) => await LoadVersionsAsync();
-            
-            // Настраиваем кнопку раздвижения
-            btnToggleDetails.Margin = new Thickness(0, 0, 0, 0);
-            btnToggleDetails.Padding = new Thickness(0);
+
+            Loaded += async (s, e) =>
+            {
+                if (_startMinimized) Hide();
+                await LoadVersionsAsync();
+                await CheckComponentsAutoAsync();
+            };
         }
         
+        private sealed class LauncherSettings
+        {
+            public bool MinimizeToTray { get; set; } = true;
+            public string? InstallPath { get; set; }
+            public bool BackgroundUpdates { get; set; } = true;
+            public bool Autostart { get; set; }
+            public bool StartMinimized { get; set; }
+            public string? LastNotifiedLauncherVersion { get; set; }
+            public string? LastNotifiedClientVersion { get; set; }
+        }
+
         private void LoadSettings()
         {
             try
@@ -71,14 +83,14 @@ namespace Ven4Tools.Launcher
                 if (File.Exists(_settingsPath))
                 {
                     var json = File.ReadAllText(_settingsPath);
-                    dynamic? settings = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+                    var settings = Newtonsoft.Json.JsonConvert.DeserializeObject<LauncherSettings>(json);
                     if (settings != null)
                     {
-                        _minimizeToTray = settings.MinimizeToTray ?? true;
+                        _minimizeToTray = settings.MinimizeToTray;
                         _installPath = settings.InstallPath ?? "";
-                        _backgroundUpdates = settings.BackgroundUpdates ?? true;
-                        _autostart = settings.Autostart ?? false;
-                        _startMinimized = settings.StartMinimized ?? false;
+                        _backgroundUpdates = settings.BackgroundUpdates;
+                        _autostart = settings.Autostart;
+                        _startMinimized = settings.StartMinimized;
                         _lastNotifiedLauncherVersion = settings.LastNotifiedLauncherVersion ?? "";
                         _lastNotifiedClientVersion = settings.LastNotifiedClientVersion ?? "";
                     }
@@ -112,7 +124,7 @@ namespace Ven4Tools.Launcher
             try
             {
                 AddLog("🔍 Загрузка списка версий с GitHub...");
-                var gitHubService = new GitHubService();
+                using var gitHubService = new GitHubService();
 
                 var (releases, error) = await gitHubService.GetAllReleasesWithError();
 
@@ -215,10 +227,17 @@ private void CmbVersions_SelectionChanged(object sender, System.Windows.Controls
     if (cmbVersions.SelectedItem is ClientVersionInfo version)
     {
         _selectedVersion = version;
-        
-        // Показываем release notes в раздвижной панели
-        ShowReleaseNotes(version.ReleaseNotes);
-        
+
+        // Заполняем информацию о версии
+        if (version.FileSize > 0)
+            txtVersionInfo.Text = $"{version.ReleaseDate:dd.MM.yyyy}  ·  {version.FileSize / 1024 / 1024} МБ";
+        else
+            txtVersionInfo.Text = version.ReleaseDate != default ? $"{version.ReleaseDate:dd.MM.yyyy}" : "Выберите версию";
+
+        // Показываем release notes только если панель открыта
+        if (_detailsPanelOpen)
+            ShowReleaseNotes(version.ReleaseNotes);
+
         // Обновляем текст кнопки в зависимости от наличия клиента
         string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
         if (File.Exists(clientExe))
@@ -238,42 +257,114 @@ private void CmbVersions_SelectionChanged(object sender, System.Windows.Controls
         
         private void ShowReleaseNotes(string? notes)
         {
-            if (string.IsNullOrEmpty(notes))
-            {
-                txtReleaseNotes.Text = "Нет описания для этой версии.";
-                return;
-            }
-            
-            txtReleaseNotes.Text = notes;
-            
-            // Автоматически открываем панель, если она закрыта
-            if (!_detailsPanelOpen)
-            {
-                BtnToggleDetails_Click(this, new RoutedEventArgs());
-            }
+            fdvReleaseNotes.Document = ParseMarkdown(notes);
         }
-        
-        private void BtnToggleDetails_Click(object sender, RoutedEventArgs e)
+
+        private void BtnChangelog_Click(object sender, RoutedEventArgs e)
         {
             _detailsPanelOpen = !_detailsPanelOpen;
-            
             if (_detailsPanelOpen)
             {
                 colDetails.Width = new GridLength(300);
-                btnToggleDetails.Content = "◀";
+                if (_selectedVersion != null)
+                    ShowReleaseNotes(_selectedVersion.ReleaseNotes);
             }
             else
             {
                 colDetails.Width = new GridLength(0);
-                btnToggleDetails.Content = "▶";
             }
         }
-        
+
         private void BtnCloseDetails_Click(object sender, RoutedEventArgs e)
         {
             _detailsPanelOpen = false;
             colDetails.Width = new GridLength(0);
-            btnToggleDetails.Content = "▶";
+        }
+
+        private System.Windows.Documents.FlowDocument ParseMarkdown(string? markdown)
+        {
+            var doc = new System.Windows.Documents.FlowDocument
+            {
+                Background = System.Windows.Media.Brushes.Transparent,
+                Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+                FontSize = 12,
+                PagePadding = new Thickness(4)
+            };
+
+            if (string.IsNullOrWhiteSpace(markdown))
+            {
+                doc.Blocks.Add(new System.Windows.Documents.Paragraph(
+                    new System.Windows.Documents.Run("Нет описания для этой версии.")
+                    { Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170)) }));
+                return doc;
+            }
+
+            var accentBrush   = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
+            var subBrush      = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 200, 255));
+            var textBrush     = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+            var mutedBrush    = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170));
+
+            System.Windows.Documents.List? currentList = null;
+
+            foreach (var rawLine in markdown.Split('\n'))
+            {
+                string line = rawLine.TrimEnd('\r');
+
+                if (line.StartsWith("## "))
+                {
+                    currentList = null;
+                    var para = new System.Windows.Documents.Paragraph
+                    {
+                        Margin = new Thickness(0, 8, 0, 2),
+                        BorderBrush = accentBrush,
+                        BorderThickness = new Thickness(0, 0, 0, 1),
+                        Padding = new Thickness(0, 0, 0, 2)
+                    };
+                    para.Inlines.Add(new System.Windows.Documents.Run(line.Substring(3))
+                        { FontWeight = FontWeights.Bold, FontSize = 14, Foreground = accentBrush });
+                    doc.Blocks.Add(para);
+                }
+                else if (line.StartsWith("### "))
+                {
+                    currentList = null;
+                    var para = new System.Windows.Documents.Paragraph { Margin = new Thickness(0, 6, 0, 2) };
+                    para.Inlines.Add(new System.Windows.Documents.Run(line.Substring(4))
+                        { FontWeight = FontWeights.SemiBold, FontSize = 12, Foreground = subBrush });
+                    doc.Blocks.Add(para);
+                }
+                else if (line.StartsWith("- ") || line.StartsWith("* "))
+                {
+                    if (currentList == null)
+                    {
+                        currentList = new System.Windows.Documents.List
+                        {
+                            MarkerStyle = System.Windows.TextMarkerStyle.Disc,
+                            Margin = new Thickness(16, 2, 0, 2),
+                            Padding = new Thickness(8, 0, 0, 0)
+                        };
+                        doc.Blocks.Add(currentList);
+                    }
+                    var item = new System.Windows.Documents.ListItem();
+                    var ip = new System.Windows.Documents.Paragraph { Margin = new Thickness(0) };
+                    ip.Inlines.Add(new System.Windows.Documents.Run(line.Substring(2).Trim()) { Foreground = textBrush });
+                    item.Blocks.Add(ip);
+                    currentList.ListItems.Add(item);
+                }
+                else if (string.IsNullOrWhiteSpace(line))
+                {
+                    currentList = null;
+                }
+                else
+                {
+                    currentList = null;
+                    var para = new System.Windows.Documents.Paragraph { Margin = new Thickness(0, 2, 0, 2) };
+                    para.Inlines.Add(new System.Windows.Documents.Run(line) { Foreground = mutedBrush });
+                    doc.Blocks.Add(para);
+                }
+            }
+
+            return doc;
         }
         
         private void BtnSelectFolder_Click(object sender, RoutedEventArgs e)
@@ -297,44 +388,41 @@ private void CmbVersions_SelectionChanged(object sender, System.Windows.Controls
             }
         }
         
-private async Task DownloadVersionAsync(ClientVersionInfo version)
+private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationToken token)
 {
     if (version == null) return;
-    
+
     AddLog($"📥 Скачивание клиента {version.Version}...");
-    
-    // Уникальное имя файла (с GUID)
+
     string tempZip = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Client_{version.Version}_{Guid.NewGuid()}.zip");
     string extractPath = Path.Combine(Path.GetTempPath(), $"extract_{Guid.NewGuid()}");
-    
+
     progressDownload.Value = 0;
     txtDownloadStatus.Text = "Скачивание: 0%";
-    
+    btnCancelDownload.Visibility = Visibility.Visible;
+    btnLaunchApp.IsEnabled = false;
+
     try
     {
-        // Скачивание с прогрессом
         using var client = new HttpClient();
-        client.Timeout = TimeSpan.FromSeconds(60);
+        client.Timeout = System.Threading.Timeout.InfiniteTimeSpan;
         client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
-        
-        using var response = await client.GetAsync(version.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+
+        using var response = await client.GetAsync(version.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, token);
         response.EnsureSuccessStatusCode();
-        
+
         var totalBytes = response.Content.Headers.ContentLength ?? -1L;
         var bytesRead = 0L;
         var buffer = new byte[81920];
-        
-        // Используем FileShare.None и сразу закрываем
+
         using (var fs = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
         {
-            using var stream = await response.Content.ReadAsStreamAsync();
-            
+            using var stream = await response.Content.ReadAsStreamAsync(token);
             int bytes;
-            while ((bytes = await stream.ReadAsync(buffer)) > 0)
+            while ((bytes = await stream.ReadAsync(buffer.AsMemory(), token)) > 0)
             {
-                await fs.WriteAsync(buffer, 0, bytes);
+                await fs.WriteAsync(buffer.AsMemory(0, bytes), token);
                 bytesRead += bytes;
-                
                 if (totalBytes > 0)
                 {
                     var percent = (int)((double)bytesRead / totalBytes * 100);
@@ -342,24 +430,20 @@ private async Task DownloadVersionAsync(ClientVersionInfo version)
                     txtDownloadStatus.Text = $"Скачивание: {percent}%";
                 }
             }
-            await fs.FlushAsync();
-        } // fs закрыт, файл освобождён
-        
+            await fs.FlushAsync(token);
+        }
+
+        token.ThrowIfCancellationRequested();
         txtDownloadStatus.Text = "Распаковка...";
-        
-        // Даём время на освобождение файла
-        await Task.Delay(1000);
-        
-        // Распаковка с повторными попытками
+        await Task.Delay(1000, token);
+
         bool extracted = false;
         for (int attempt = 1; attempt <= 5; attempt++)
         {
             try
             {
-                if (Directory.Exists(extractPath))
-                    Directory.Delete(extractPath, true);
+                if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true);
                 Directory.CreateDirectory(extractPath);
-                
                 System.IO.Compression.ZipFile.ExtractToDirectory(tempZip, extractPath, true);
                 extracted = true;
                 AddLog($"✅ Распаковано с попытки {attempt}");
@@ -368,93 +452,85 @@ private async Task DownloadVersionAsync(ClientVersionInfo version)
             catch (IOException ex) when (attempt < 5)
             {
                 AddLog($"⚠️ Попытка распаковки {attempt}/5: {ex.Message}");
-                await Task.Delay(2000);
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+                await Task.Delay(2000, token);
+                GC.Collect(); GC.WaitForPendingFinalizers();
             }
         }
-        
-        if (!extracted)
-        {
-            throw new IOException("Не удалось распаковать архив после 5 попыток");
-        }
-        
+        if (!extracted) throw new IOException("Не удалось распаковать архив после 5 попыток");
+
+        token.ThrowIfCancellationRequested();
         txtDownloadStatus.Text = "Копирование файлов...";
-        
-        // Очищаем папку клиента
+
         if (Directory.Exists(_clientPath))
         {
-            foreach (var file in Directory.GetFiles(_clientPath))
-                try { File.Delete(file); } catch { }
-            foreach (var dir in Directory.GetDirectories(_clientPath))
-                try { Directory.Delete(dir, true); } catch { }
+            foreach (var file in Directory.GetFiles(_clientPath)) try { File.Delete(file); } catch { }
+            foreach (var dir in Directory.GetDirectories(_clientPath)) try { Directory.Delete(dir, true); } catch { }
         }
-        
-        // Копируем файлы
+
         var allFiles = Directory.GetFiles(extractPath, "*", SearchOption.AllDirectories);
         int fileCount = 0;
-        
         foreach (var file in allFiles)
         {
+            token.ThrowIfCancellationRequested();
             string relativePath = file.Substring(extractPath.Length + 1);
             string targetFile = Path.Combine(_clientPath, relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
             File.Copy(file, targetFile, true);
-            
-            fileCount++;
-            if (fileCount % 20 == 0)
-            {
+            if (++fileCount % 20 == 0)
                 txtDownloadStatus.Text = $"Копирование: {fileCount}/{allFiles.Length} файлов";
-            }
         }
-        
+
         txtDownloadStatus.Text = "Очистка...";
-        
-        // Очистка с повторными попытками
         for (int attempt = 1; attempt <= 5; attempt++)
         {
             try
             {
                 if (File.Exists(tempZip)) File.Delete(tempZip);
                 if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true);
-                AddLog($"✅ Очистка завершена с попытки {attempt}");
                 break;
             }
             catch (IOException) when (attempt < 5)
             {
-                AddLog($"⚠️ Попытка очистки {attempt}/5...");
                 await Task.Delay(1000);
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+                GC.Collect(); GC.WaitForPendingFinalizers();
             }
         }
-        
+
         txtDownloadStatus.Text = "Готово";
         progressDownload.Value = 100;
-        
         AddLog($"✅ Клиент {version.Version} скачан и распакован");
         version.IsInstalled = true;
-        
-        // Меняем кнопку на "Запустить"
+
         btnLaunchApp.Content = "🚀 Запустить Ven4Tools";
         btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
-        
+
         System.Windows.MessageBox.Show(
             $"Клиент {version.Version} успешно установлен в:\n{_clientPath}",
-            "Установка завершена",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
+            "Установка завершена", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+    catch (OperationCanceledException)
+    {
+        txtDownloadStatus.Text = "Отменено";
+        progressDownload.Value = 0;
+        AddLog("⏹ Загрузка отменена");
+        try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { }
+        try { if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true); } catch { }
     }
     catch (Exception ex)
     {
         txtDownloadStatus.Text = "Ошибка";
         AddLog($"❌ Ошибка скачивания: {ex.Message}");
-        
-        // Пробуем очистить
         try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { }
         try { if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true); } catch { }
-        
         System.Windows.MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+    finally
+    {
+        btnCancelDownload.Visibility = Visibility.Collapsed;
+        btnCancelDownload.IsEnabled = true;
+        btnLaunchApp.IsEnabled = true;
+        _downloadCts?.Dispose();
+        _downloadCts = null;
     }
 }
         
@@ -484,10 +560,9 @@ private async void BtnLaunchApp_Click(object sender, RoutedEventArgs e)
         var psi = new ProcessStartInfo
         {
             FileName = clientExe,
-            UseShellExecute = true,
-            Verb = "runas"
+            UseShellExecute = true
         };
-        
+
         try
         {
             Process.Start(psi);
@@ -496,211 +571,146 @@ private async void BtnLaunchApp_Click(object sender, RoutedEventArgs e)
         catch (Exception ex)
         {
             AddLog($"❌ Ошибка запуска: {ex.Message}");
+            System.Windows.MessageBox.Show($"Не удалось запустить клиент: {ex.Message}", "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         return;
     }
     
     // Если нет клиента — скачиваем выбранную версию
     AddLog($"📥 Загрузка клиента {_selectedVersion.Version}...");
-    await DownloadVersionAsync(_selectedVersion);
+    _downloadCts = new CancellationTokenSource();
+    await DownloadVersionAsync(_selectedVersion, _downloadCts.Token);
 }
-private async void BtnCheckComponents_Click(object sender, RoutedEventArgs e)
+
+private void BtnCancelDownload_Click(object sender, RoutedEventArgs e)
+{
+    _downloadCts?.Cancel();
+    btnCancelDownload.IsEnabled = false;
+}
+private async Task CheckComponentsAutoAsync()
 {
     AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    AddLog("🔧 Проверка системных компонентов...");
-    
-    btnCheckComponents.IsEnabled = false;
-    
-    try
-    {
-        // 1. Проверка прав администратора
-        bool isAdmin = IsRunAsAdmin();
-        AddLog($"🔍 Права администратора: {(isAdmin ? "✅ есть" : "⚠️ нет")}");
-        
-        if (!isAdmin)
-        {
-            var restartResult = System.Windows.MessageBox.Show(
-                "Лаунчер запущен без прав администратора.\n\n" +
-                "Для корректной работы рекомендуется перезапустить с правами администратора.\n\n" +
-                "Перезапустить сейчас?",
-                "Требуются права администратора",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-            
-            if (restartResult == MessageBoxResult.Yes)
-            {
-                RestartAsAdmin();
-                return;
-            }
-        }
-        
-        // 2. Проверка winget
-        AddLog("🔍 Проверка winget...");
-        var wingetInfo = await CheckWingetWithVersionAsync();
-        
-        if (wingetInfo.IsInstalled)
-        {
-            AddLog($"   ✅ Winget установлен (версия: {wingetInfo.Version})");
-            
-            if (wingetInfo.IsOutdated)
-            {
-                AddLog($"   ⚠️ Версия winget устарела! Актуальная: {await new GitHubService().GetLatestWingetVersionAsync()}");
-                
-                var updateResult = System.Windows.MessageBox.Show(
-                    $"Ваша версия winget ({wingetInfo.Version}) устарела.\n\n" +
-                    "Рекомендуется обновить для лучшей совместимости.\n\n" +
-                    "Открыть страницу загрузки новой версии?",
-                    "Обновление winget",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-                
-                if (updateResult == MessageBoxResult.Yes)
-                {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "https://github.com/microsoft/winget-cli/releases",
-                        UseShellExecute = true
-                    });
-                    AddLog("🌐 Открыта страница загрузки winget");
-                }
-            }
-        }
-        else
-        {
-            AddLog("   ❌ Winget НЕ УСТАНОВЛЕН!");
-            
-            var installResult = System.Windows.MessageBox.Show(
-                "Winget (Windows Package Manager) не установлен!\n\n" +
-                "Winget необходим для установки большинства приложений.\n\n" +
-                "Установить winget сейчас?",
-                "Требуется winget",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-            
-            if (installResult == MessageBoxResult.Yes)
-            {
-                await InstallWingetAsync();
-                
-                // Повторная проверка
-                wingetInfo = await CheckWingetWithVersionAsync();
-                if (wingetInfo.IsInstalled)
-                {
-                    AddLog($"   ✅ Winget успешно установлен (версия: {wingetInfo.Version})");
-                }
-                else
-                {
-                    AddLog("   ⚠️ Winget всё ещё не найден. Возможно, требуется перезагрузка.");
-                }
-            }
-        }
-        
-        // 3. Проверка .NET Runtime
-        AddLog("🔍 Проверка .NET Runtime...");
-        bool dotNetInstalled = CheckDotNetInstalled();
-        if (dotNetInstalled)
-        {
-            AddLog("   ✅ .NET Runtime установлен");
-        }
-        else
-        {
-            AddLog("   ℹ️ .NET Runtime не обнаружен (клиент self-contained, не требуется)");
-        }
-        
-        // 4. Проверка обновлений лаунчера
-AddLog("🔍 Проверка обновлений лаунчера...");
-var gitHubService = new GitHubService();
-var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.3.1";
-var updateInfo = await gitHubService.CheckLauncherUpdate(currentVersion);
+    AddLog("🔧 Проверка компонентов...");
+    _hasIssues = false;
 
-if (updateInfo != null && updateInfo.HasUpdate)
-{
-    AddLog($"   📢 Найдено обновление лаунчера: {updateInfo.LatestVersion}");
-    AddLog($"   📝 {updateInfo.ReleaseNotes}");
-    
-    var updateResult = System.Windows.MessageBox.Show(
-        $"Доступно обновление лаунчера {updateInfo.LatestVersion}!\n\n" +
-        $"Текущая версия: {currentVersion}\n\n" +
-        "Обновить лаунчер сейчас?",
-        "Обновление лаунчера",
-        MessageBoxButton.YesNo,
-        MessageBoxImage.Question);
-    
-    if (updateResult == MessageBoxResult.Yes)
+    bool isAdmin = IsRunAsAdmin();
+    AddLog($"🔍 Права администратора: {(isAdmin ? "✅ есть" : "⚠️ нет")}");
+    if (!isAdmin) _hasIssues = true;
+
+    AddLog("🔍 Winget...");
+    var wingetInfo = await CheckWingetWithVersionAsync();
+    if (wingetInfo.IsInstalled)
     {
-        btnInstallUpdate.IsEnabled = true;
-        await InstallUpdateCoreAsync();
+        AddLog($"   ✅ Winget {wingetInfo.Version}");
+        if (wingetInfo.IsOutdated) { AddLog("   ⚠️ Доступна новая версия winget"); _hasIssues = true; }
     }
-}
-else
-{
-    AddLog("   ✅ Лаунчер актуален");
-}
-        
-        AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        AddLog("✅ Проверка компонентов завершена");
-        
-        // Итоговое сообщение
-        string resultMessage = "Проверка компонентов завершена.\n\n";
-        resultMessage += $"Права администратора: {(isAdmin ? "✅ есть" : "⚠️ нет")}\n";
-        
-        if (wingetInfo.IsInstalled)
-        {
-            resultMessage += $"Winget: ✅ установлен (версия {wingetInfo.Version})";
-            if (wingetInfo.IsOutdated) resultMessage += " (есть обновление!)";
-        }
-        else
-        {
-            resultMessage += "Winget: ❌ не установлен";
-        }
-        
-        if (updateInfo?.HasUpdate == true)
-        {
-            resultMessage += $"\n\n📢 Доступно обновление лаунчера {updateInfo.LatestVersion}!";
-        }
-        
-        System.Windows.MessageBox.Show(
-            resultMessage,
-            "Результат проверки",
-            MessageBoxButton.OK,
-            (wingetInfo.IsInstalled && isAdmin) ? MessageBoxImage.Information : MessageBoxImage.Warning);
-    }
-    catch (Exception ex)
+    else
     {
-        AddLog($"❌ Ошибка проверки: {ex.Message}");
-        System.Windows.MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        AddLog("   ❌ Winget не установлен!");
+        _hasIssues = true;
     }
-    finally
+
+    AddLog("🔍 Обновления лаунчера...");
+    var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.3.1";
+    using var gitHubServiceCheck = new GitHubService();
+    var updateInfo = await gitHubServiceCheck.CheckLauncherUpdate(currentVersion);
+    if (updateInfo?.HasUpdate == true)
     {
-        btnCheckComponents.IsEnabled = true;
+        AddLog($"   📢 Доступно обновление лаунчера {updateInfo.LatestVersion}");
+        Dispatcher.Invoke(() => btnInstallUpdate.Visibility = Visibility.Visible);
+        _hasIssues = true;
+    }
+    else
+    {
+        AddLog("   ✅ Лаунчер актуален");
+        Dispatcher.Invoke(() => btnInstallUpdate.Visibility = Visibility.Collapsed);
+    }
+
+    AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    if (_hasIssues)
+    {
+        AddLog("⚠️ Найдены проблемы. Нажмите «Установить компоненты».");
+        Dispatcher.Invoke(() => btnInstallMissing.Visibility = Visibility.Visible);
+    }
+    else
+    {
+        AddLog("✅ Все компоненты в порядке.");
+        Dispatcher.Invoke(() => btnInstallMissing.Visibility = Visibility.Collapsed);
     }
 }
 
-private async Task<bool> CheckWingetInstalledAsync()
+private async void BtnInstallMissing_Click(object sender, RoutedEventArgs e)
 {
-    try
+    btnInstallMissing.Visibility = Visibility.Collapsed;
+    await CheckComponentsInteractiveAsync();
+    // CheckComponentsAutoAsync inside will show/hide buttons based on fresh state
+}
+
+private async Task CheckComponentsInteractiveAsync()
+{
+    AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    AddLog("🔧 Устранение проблем...");
+
+    bool isAdmin = IsRunAsAdmin();
+    if (!isAdmin)
     {
-        var psi = new ProcessStartInfo
+        var restartResult = System.Windows.MessageBox.Show(
+            "Лаунчер запущен без прав администратора.\n\n" +
+            "Для корректной работы рекомендуется перезапустить с правами администратора.\n\n" +
+            "Перезапустить сейчас?",
+            "Требуются права администратора",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+        if (restartResult == MessageBoxResult.Yes) { RestartAsAdmin(); return; }
+    }
+
+    var wingetInfo = await CheckWingetWithVersionAsync();
+    if (!wingetInfo.IsInstalled)
+    {
+        var installResult = System.Windows.MessageBox.Show(
+            "Winget (Windows Package Manager) не установлен!\n\n" +
+            "Winget необходим для установки большинства приложений.\n\n" +
+            "Установить winget сейчас?",
+            "Требуется winget",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+        if (installResult == MessageBoxResult.Yes)
         {
-            FileName = "winget.exe",
-            Arguments = "--version",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        
-        using var process = Process.Start(psi);
-        if (process == null) return false;
-        
-        string output = await process.StandardOutput.ReadToEndAsync();
-        await process.WaitForExitAsync();
-        
-        return process.ExitCode == 0 && !string.IsNullOrWhiteSpace(output);
+            await InstallWingetAsync();
+            wingetInfo = await CheckWingetWithVersionAsync();
+            AddLog(wingetInfo.IsInstalled
+                ? $"   ✅ Winget {wingetInfo.Version}"
+                : "   ⚠️ Winget всё ещё не найден. Возможно, требуется перезагрузка.");
+        }
     }
-    catch
+    else if (wingetInfo.IsOutdated)
     {
-        return false;
+        var updateResult = System.Windows.MessageBox.Show(
+            $"Ваша версия winget ({wingetInfo.Version}) устарела.\n\n" +
+            "Открыть страницу загрузки новой версии?",
+            "Обновление winget",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+        if (updateResult == MessageBoxResult.Yes)
+        {
+            Process.Start(new ProcessStartInfo { FileName = "https://github.com/microsoft/winget-cli/releases", UseShellExecute = true });
+            AddLog("🌐 Открыта страница загрузки winget");
+        }
     }
+
+    if (btnInstallUpdate.Visibility == Visibility.Visible)
+    {
+        var updateResult = System.Windows.MessageBox.Show(
+            "Доступно обновление лаунчера. Установить сейчас?",
+            "Обновление лаунчера",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+        if (updateResult == MessageBoxResult.Yes)
+            await InstallUpdateCoreAsync();
+    }
+
+    // Re-run silent check to update _hasIssues
+    await CheckComponentsAutoAsync();
 }
 
 private async Task<(bool IsInstalled, string? Version, bool IsOutdated)> CheckWingetWithVersionAsync()
@@ -729,7 +739,7 @@ private async Task<(bool IsInstalled, string? Version, bool IsOutdated)> CheckWi
         string version = output.Trim().TrimStart('v');
         
         // Получаем последнюю стабильную версию с GitHub
-        var gitHubService = new GitHubService();
+        using var gitHubService = new GitHubService();
         string? latestVersion = await gitHubService.GetLatestWingetVersionAsync();
         
         bool isOutdated = false;
@@ -759,6 +769,8 @@ private void RestartAsAdmin()
         };
         try { Process.Start(psi); } catch { }
     }
+    _updateService?.Dispose();
+    _notifyIcon?.Dispose();
     System.Windows.Application.Current.Shutdown();  // ← полное имя
 }
 
@@ -808,26 +820,13 @@ private async Task InstallWingetAsync()
             
             if (rebootResult == MessageBoxResult.Yes)
             {
-                Process.Start("shutdown", "/r /t 10");
+                Process.Start(new ProcessStartInfo("shutdown", "/r /t 10") { UseShellExecute = true });
             }
         }
     }
     catch (Exception ex)
     {
         AddLog($"❌ Ошибка установки winget: {ex.Message}");
-    }
-}
-
-private bool CheckDotNetInstalled()
-{
-    try
-    {
-        using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App");
-        return key != null;
-    }
-    catch
-    {
-        return false;
     }
 }
 
@@ -986,7 +985,7 @@ private bool IsRunAsAdmin()
                         ToolTipIcon.Info);
 
                     if (type == "launcher")
-                        btnInstallUpdate.IsEnabled = true;
+                        btnInstallUpdate.Visibility = Visibility.Visible;
                 });
             }
             catch { } // Dispatcher может быть выключен при завершении приложения
@@ -1052,7 +1051,7 @@ private bool IsRunAsAdmin()
                 AddLog("🔍 Проверка обновлений лаунчера...");
                 btnCheckUpdates.IsEnabled = false;
                 
-                var gitHubService = new GitHubService();
+                using var gitHubService = new GitHubService();
                 var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.3.1";
                 var updateInfo = await gitHubService.CheckLauncherUpdate(currentVersion);
                 
@@ -1060,12 +1059,12 @@ private bool IsRunAsAdmin()
                 {
                     AddLog($"📢 Найдено обновление лаунчера: {updateInfo.LatestVersion}");
                     AddLog($"📝 {updateInfo.ReleaseNotes}");
-                    btnInstallUpdate.IsEnabled = true;
+                    btnInstallUpdate.Visibility = Visibility.Visible;
                 }
                 else
                 {
                     AddLog("✅ У вас последняя версия лаунчера");
-                    btnInstallUpdate.IsEnabled = false;
+                    btnInstallUpdate.Visibility = Visibility.Collapsed;
                 }
             }
             catch (Exception ex)
@@ -1093,7 +1092,7 @@ private bool IsRunAsAdmin()
             try
             {
                 AddLog("📥 Начинаем скачивание обновления лаунчера...");
-                btnInstallUpdate.IsEnabled = false;
+                btnInstallUpdate.Visibility = Visibility.Collapsed;
 
                 var updateService = new UpdateService();
                 var result = await updateService.DownloadAndInstallUpdateAsync();
@@ -1118,10 +1117,121 @@ private bool IsRunAsAdmin()
             finally
             {
                 if (IsLoaded)
-                    btnInstallUpdate.IsEnabled = true;
+                    btnInstallUpdate.Visibility = Visibility.Visible;
             }
         }
         
+        private async void BtnFindClient_Click(object sender, RoutedEventArgs e)
+        {
+            btnFindClient.IsEnabled = false;
+            AddLog("🔍 Поиск Ven4Tools.exe на диске...");
+
+            try
+            {
+                var found = await Task.Run(() =>
+                {
+                    var results = new List<string>();
+                    foreach (var root in GetClientSearchRoots())
+                    {
+                        if (!Directory.Exists(root)) continue;
+                        try
+                        {
+                            foreach (var file in Directory.EnumerateFiles(root, "Ven4Tools.exe", SearchOption.AllDirectories))
+                                results.Add(file);
+                        }
+                        catch { }
+                    }
+                    return results;
+                });
+
+                if (found.Count == 0)
+                {
+                    AddLog("❌ Ven4Tools.exe не найден в стандартных папках");
+                    System.Windows.MessageBox.Show(
+                        "Ven4Tools.exe не найден в:\n" +
+                        "• Program Files / Program Files (x86)\n" +
+                        "• Документы / Documents\n" +
+                        "• Загрузки / Downloads\n" +
+                        "• Рабочий стол\n\n" +
+                        "Воспользуйтесь кнопкой «Выбрать папку» для ручного указания пути.",
+                        "Не найдено", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                foreach (var f in found)
+                    AddLog($"   📄 {f}");
+
+                string chosen = found[0];
+                if (found.Count > 1)
+                {
+                    var list = string.Join("\n", found.Select((f, i) => $"{i + 1}. {f}"));
+                    System.Windows.MessageBox.Show(
+                        $"Найдено {found.Count} экземпляра(ов).\nБудет использован первый:\n\n{chosen}\n\nПолный список:\n{list}",
+                        "Найдено несколько", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    var result = System.Windows.MessageBox.Show(
+                        $"Найдено:\n{chosen}\n\nИспользовать эту папку?",
+                        "Ven4Tools найден", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (result != MessageBoxResult.Yes) return;
+                }
+
+                _clientPath = Path.GetDirectoryName(chosen)!;
+                _installPath = Path.GetDirectoryName(_clientPath) ?? _clientPath;
+                txtInstallPath.Text = _clientPath;
+                SaveSettings();
+                AddLog($"✅ Папка установки: {_clientPath}");
+                CheckExistingClient();
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка поиска: {ex.Message}");
+            }
+            finally
+            {
+                btnFindClient.IsEnabled = true;
+            }
+        }
+
+        private static IEnumerable<string> GetClientSearchRoots()
+        {
+            // Program Files (работает на любом языке системы)
+            yield return Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            yield return Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+
+            // Документы (SpecialFolder всегда возвращает правильный локализованный путь)
+            yield return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+            // Рабочий стол
+            yield return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+            // Загрузки — нет SpecialFolder, ищем через реестр (надёжнее всего, не зависит от языка)
+            string? downloads = null;
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    @"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders");
+                downloads = key?.GetValue("{374DE290-123F-4565-9164-39C4925E467B}")?.ToString();
+            }
+            catch { }
+
+            if (!string.IsNullOrEmpty(downloads) && Directory.Exists(downloads))
+            {
+                yield return downloads;
+            }
+            else
+            {
+                // Фоллбэк: оба варианта — английский и русский
+                string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                foreach (var name in new[] { "Downloads", "Загрузки" })
+                {
+                    var path = Path.Combine(userProfile, name);
+                    if (Directory.Exists(path)) yield return path;
+                }
+            }
+        }
+
         private void BtnExit_Click(object sender, RoutedEventArgs e)
         {
             ExitApplication();
