@@ -10,6 +10,53 @@
 
 ---
 
+## 📸 Скриншоты
+
+<table>
+  <tr>
+    <td align="center"><b>Лаунчер</b></td>
+    <td align="center"><b>Лаунчер — заметки о версии</b></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.0.0/sc_01_launcher.png"/></td>
+    <td><img src="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.0.0/sc_02_launcher_notes.png"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Каталог приложений</b></td>
+    <td align="center"><b>Установленные приложения</b></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.0.0/sc_03_catalog.png"/></td>
+    <td><img src="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.0.0/sc_04_installed.png"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Системные настройки</b></td>
+    <td align="center"><b>Установка Office</b></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.0.0/sc_05_system.png"/></td>
+    <td><img src="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.0.0/sc_06_office.png"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Активация Windows и Office</b></td>
+    <td align="center"><b>Сетевые инструменты</b></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.0.0/sc_07_activation.png"/></td>
+    <td><img src="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.0.0/sc_08_network.png"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>О программе</b></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.0.0/sc_09_about.png"/></td>
+    <td></td>
+  </tr>
+</table>
+
+---
+
 ## 📦 Каталог приложений
 
 - **70+ приложений** в 10 категориях: браузеры, коммуникации, разработка, мультимедиа, утилиты и другие
