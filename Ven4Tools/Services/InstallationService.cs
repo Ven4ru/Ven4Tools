@@ -163,7 +163,7 @@ Log($"✅ SHA256 verified: {app.DisplayName}");
                                 WindowStyle = ProcessWindowStyle.Hidden
                             };
 
-                            var process = Process.Start(psi);
+                            using var process = Process.Start(psi);
                             if (process != null)
                             {
                                 while (!process.HasExited)
@@ -230,11 +230,11 @@ Log($"✅ SHA256 verified: {app.DisplayName}");
                 ? $" --location \"{profile.DefaultInstallFolder}\""
                 : "";
             string versionArg = !string.IsNullOrEmpty(version) ? $" --version \"{version}\"" : "";
-            string args = $"/c winget install --id {appId} -e --source {source}{versionArg} --accept-package-agreements --accept-source-agreements --disable-interactivity{silent}{location}";
+            string args = $"install --id \"{appId}\" -e --source \"{source}\"{versionArg} --accept-package-agreements --accept-source-agreements --disable-interactivity{silent}{location}";
 
             var psi = new ProcessStartInfo
             {
-                FileName = "cmd.exe",
+                FileName = "winget.exe",
                 Arguments = args,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,

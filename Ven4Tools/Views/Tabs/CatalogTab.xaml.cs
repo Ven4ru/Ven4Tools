@@ -89,6 +89,8 @@ namespace Ven4Tools.Views.Tabs
                 ProfileService.Changed -= _profileChangedHandler;
                 UserSession.Changed -= OnUserSessionChanged;
                 AppSettings.Changed -= OnAppSettingsChanged;
+                (installService as IDisposable)?.Dispose();
+                (availabilityChecker as IDisposable)?.Dispose();
             };
             
             btnInstall.Click += InstallSelected_Click;
@@ -369,13 +371,13 @@ namespace Ven4Tools.Views.Tabs
 
                 ApplyProfileFilters();
 
-                _ = Task.WhenAll(availabilityTasks).ContinueWith(_ =>
+                _ = Task.WhenAll(availabilityTasks).ContinueWith(async _ =>
                 {
                     int available = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
                     int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
                     AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
-                    _ = FetchVersionsPhase2Async();
-                    return UpdateInstalledStatusAsync();
+                    await FetchVersionsPhase2Async();
+                    await UpdateInstalledStatusAsync();
                 }).Unwrap().ContinueWith(t =>
                 {
                     if (t.IsFaulted)
@@ -664,37 +666,46 @@ namespace Ven4Tools.Views.Tabs
 
             AddLog("🔄 Запущена свежая проверка доступности...");
 
+            // Reset UI indicators first
+            if (_catalog != null)
+                foreach (var app in _catalog.Apps)
+                    if (appCheckBoxes.TryGetValue(app.Id, out var cb) && cb.Content is TextBlock tb)
+                    { tb.Foreground = Brushes.Gray; cb.ToolTip = "⏳ Проверка..."; cb.IsEnabled = true; }
+
+            foreach (var app in appManager.GetAllApps().Where(a => a.IsUserAdded))
+                if (appCheckBoxes.TryGetValue(app.Id, out var cb) && cb.Content is TextBlock tb)
+                { tb.Foreground = Brushes.Gray; cb.ToolTip = "⏳ Проверка..."; cb.IsEnabled = true; }
+
+            // Throttle: max 5 concurrent winget show calls
+            var sem = new SemaphoreSlim(5);
             var tasks = new List<Task>();
 
             if (_catalog != null)
-            {
                 foreach (var app in _catalog.Apps)
                 {
-                    if (appCheckBoxes.TryGetValue(app.Id, out var checkBox) && checkBox.Content is TextBlock tb)
+                    var localApp = app;
+                    tasks.Add(Task.Run(async () =>
                     {
-                        tb.Foreground = Brushes.Gray;
-                        checkBox.ToolTip = "⏳ Проверка...";
-                        checkBox.IsEnabled = true;
-                    }
-                    tasks.Add(CheckAppAvailabilityFromCatalog(app));
+                        await sem.WaitAsync();
+                        try { await CheckAppAvailabilityFromCatalog(localApp); }
+                        finally { sem.Release(); }
+                    }));
                 }
-            }
 
-            var userApps = appManager.GetAllApps().Where(a => a.IsUserAdded).ToList();
-            foreach (var app in userApps)
+            foreach (var app in appManager.GetAllApps().Where(a => a.IsUserAdded))
             {
-                if (appCheckBoxes.TryGetValue(app.Id, out var checkBox) && checkBox.Content is TextBlock tb)
+                var localId = app.Id;
+                tasks.Add(Task.Run(async () =>
                 {
-                    tb.Foreground = Brushes.Gray;
-                    checkBox.ToolTip = "⏳ Проверка...";
-                    checkBox.IsEnabled = true;
-                }
-                tasks.Add(CheckSingleAppAvailability(app.Id));
+                    await sem.WaitAsync();
+                    try { await CheckSingleAppAvailability(localId); }
+                    finally { sem.Release(); }
+                }));
             }
 
             await Task.WhenAll(tasks);
 
-            int available = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
+            int available   = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
             int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
             AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
 
@@ -1000,6 +1011,13 @@ namespace Ven4Tools.Views.Tabs
                     };
                     appManager.AddCatalogApp(appInfo);
                 }
+                else if (!existing.IsUserAdded)
+                {
+                    if (!string.IsNullOrEmpty(catalogApp.DownloadUrl))
+                        existing.InstallerUrls = new List<string> { catalogApp.DownloadUrl };
+                    if (!string.IsNullOrEmpty(catalogApp.WingetId))
+                        existing.AlternativeId = catalogApp.WingetId;
+                }
             }
         }
         
@@ -1241,7 +1259,7 @@ namespace Ven4Tools.Views.Tabs
                 _ = Task.Delay(600, token).ContinueWith(async t =>
                 {
                     if (t.IsCanceled) return;
-                    var results = await SearchWingetAsync(query, token);
+                    var results = await WingetService.SearchAsync(query, token);
                     if (!token.IsCancellationRequested)
                         await Dispatcher.InvokeAsync(() => ShowWingetSuggestions(query, results));
                 });
@@ -1335,62 +1353,7 @@ namespace Ven4Tools.Views.Tabs
         }
 
         // ── Winget search suggestions ─────────────────────────────────────────
-        private async Task<List<(string Name, string Id)>> SearchWingetAsync(string query, CancellationToken token)
-        {
-            var results = new List<(string Name, string Id)>();
-            try
-            {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "winget",
-                    Arguments = $"search \"{query}\" --source winget --accept-source-agreements",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
-
-                using var process = Process.Start(psi);
-                if (process == null) return results;
-
-                using var reg = token.Register(() => { try { process.Kill(); } catch { } });
-                string output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync(token);
-
-                var lines = output.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-                int dataStart = -1;
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    if (lines[i].TrimStart().StartsWith("---"))
-                    {
-                        dataStart = i + 1;
-                        break;
-                    }
-                }
-
-                if (dataStart < 0) return results;
-
-                foreach (var line in lines.Skip(dataStart).Take(7))
-                {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-                    var parts = System.Text.RegularExpressions.Regex.Split(line.Trim(), @"\s{2,}");
-                    if (parts.Length >= 2)
-                    {
-                        string name = parts[0].Trim();
-                        string id = parts[1].Trim();
-                        if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(id) && id.Contains("."))
-                            results.Add((name, id));
-                    }
-                }
-            }
-            catch (OperationCanceledException) { }
-            catch { }
-
-            return results;
-        }
-
-        private void ShowWingetSuggestions(string query, List<(string Name, string Id)> packages)
+        private void ShowWingetSuggestions(string query, List<WingetPackage> packages)
         {
             pnlWingetResults.Children.Clear();
             txtWingetStatus.Visibility = Visibility.Collapsed;
@@ -1402,7 +1365,7 @@ namespace Ven4Tools.Views.Tabs
                 return;
             }
 
-            foreach (var (name, id) in packages)
+            foreach (var pkg in packages)
             {
                 var btn = new Button
                 {
@@ -1414,7 +1377,7 @@ namespace Ven4Tools.Views.Tabs
                     BorderThickness = new Thickness(0),
                     Cursor = Cursors.Hand,
                     FontSize = 12,
-                    ToolTip = id
+                    ToolTip = pkg.Id
                 };
 
                 var panel = new StackPanel { Orientation = Orientation.Horizontal };
@@ -1426,21 +1389,21 @@ namespace Ven4Tools.Views.Tabs
                 });
                 panel.Children.Add(new TextBlock
                 {
-                    Text = name,
+                    Text = pkg.Name,
                     Foreground = (Brush)FindResource("TextPrimary"),
                     VerticalAlignment = VerticalAlignment.Center
                 });
                 panel.Children.Add(new TextBlock
                 {
-                    Text = $"  ({id})",
+                    Text = $"  ({pkg.Id})",
                     Foreground = (Brush)FindResource("TextSecondary"),
                     FontSize = 10,
                     VerticalAlignment = VerticalAlignment.Center
                 });
                 btn.Content = panel;
 
-                var captureName = name;
-                var captureId = id;
+                var captureName = pkg.Name;
+                var captureId = pkg.Id;
                 btn.Click += (_, _) => AddWingetSuggestion(captureName, captureId);
                 pnlWingetResults.Children.Add(btn);
             }

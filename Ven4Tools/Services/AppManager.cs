@@ -58,14 +58,17 @@ public void ApplyAlternativesToCatalog(MasterCatalog catalog)
     if (catalog?.Apps == null || catalog.Apps.Count == 0)
         return;
 
-    foreach (var catalogApp in catalog.Apps)
+    lock (lockObj)
     {
-        if (alternatives.TryGetValue(catalogApp.Id, out var alt))
+        foreach (var catalogApp in catalog.Apps)
         {
-            if (!string.IsNullOrEmpty(alt.WingetId))
-                catalogApp.WingetId = alt.WingetId;
-            if (!string.IsNullOrEmpty(alt.Url))
-                catalogApp.DownloadUrl = alt.Url;
+            if (alternatives.TryGetValue(catalogApp.Id, out var alt))
+            {
+                if (!string.IsNullOrEmpty(alt.WingetId))
+                    catalogApp.WingetId = alt.WingetId;
+                if (!string.IsNullOrEmpty(alt.Url))
+                    catalogApp.DownloadUrl = alt.Url;
+            }
         }
     }
 }
@@ -112,7 +115,8 @@ public void ApplyAlternativesToCatalog(MasterCatalog catalog)
                 if (File.Exists(hiddenAppsPath))
                 {
                     var json = File.ReadAllText(hiddenAppsPath);
-                    hiddenApps = JsonSerializer.Deserialize<HashSet<string>>(json) ?? new HashSet<string>();
+                    var loaded = JsonSerializer.Deserialize<HashSet<string>>(json) ?? new HashSet<string>();
+                    lock (lockObj) { hiddenApps = loaded; }
                 }
             }
             catch { }
@@ -125,20 +129,21 @@ public void ApplyAlternativesToCatalog(MasterCatalog catalog)
                 string? directory = Path.GetDirectoryName(hiddenAppsPath);
                 if (directory != null)
                     Directory.CreateDirectory(directory);
-                    
-                File.WriteAllText(hiddenAppsPath, 
-                    JsonSerializer.Serialize(hiddenApps, new JsonSerializerOptions { WriteIndented = true }));
+
+                string json;
+                lock (lockObj) { json = JsonSerializer.Serialize(hiddenApps, new JsonSerializerOptions { WriteIndented = true }); }
+                File.WriteAllText(hiddenAppsPath, json);
             }
             catch { }
         }
 
         public void HideStandardApp(string appId)
         {
-            hiddenApps.Add(appId);
+            lock (lockObj) { hiddenApps.Add(appId); }
             SaveHiddenApps();
         }
 
-        public bool IsAppHidden(string appId) => hiddenApps.Contains(appId);
+        public bool IsAppHidden(string appId) { lock (lockObj) { return hiddenApps.Contains(appId); } }
 
 public void LoadAlternativeSources()
 {
@@ -147,26 +152,31 @@ public void LoadAlternativeSources()
         if (File.Exists(alternativesPath))
         {
             var json = File.ReadAllText(alternativesPath);
-            alternatives = JsonSerializer.Deserialize<Dictionary<string, AlternativeSource>>(json) 
+            var loaded = JsonSerializer.Deserialize<Dictionary<string, AlternativeSource>>(json)
                 ?? new Dictionary<string, AlternativeSource>();
-            
-            // Применяем альтернативные источники к приложениям
-            foreach (var kvp in alternatives)
+
+            lock (lockObj)
             {
-                var app = apps.FirstOrDefault(a => a.Id == kvp.Key);
-                if (app != null)
+                alternatives = loaded;
+
+                // Применяем альтернативные источники к приложениям
+                foreach (var kvp in alternatives)
                 {
-                    if (!string.IsNullOrEmpty(kvp.Value.WingetId))
+                    var app = apps.FirstOrDefault(a => a.Id == kvp.Key);
+                    if (app != null)
                     {
-                        app.AlternativeId = kvp.Value.WingetId;
-                    }
-                    
-                    if (!string.IsNullOrEmpty(kvp.Value.Url) && !app.InstallerUrls.Contains(kvp.Value.Url))
-                    {
-                        if (kvp.Value.UrlPriority)
-                            app.InstallerUrls.Insert(0, kvp.Value.Url);
-                        else
-                            app.InstallerUrls.Add(kvp.Value.Url);
+                        if (!string.IsNullOrEmpty(kvp.Value.WingetId))
+                        {
+                            app.AlternativeId = kvp.Value.WingetId;
+                        }
+
+                        if (!string.IsNullOrEmpty(kvp.Value.Url) && !app.InstallerUrls.Contains(kvp.Value.Url))
+                        {
+                            if (kvp.Value.UrlPriority)
+                                app.InstallerUrls.Insert(0, kvp.Value.Url);
+                            else
+                                app.InstallerUrls.Add(kvp.Value.Url);
+                        }
                     }
                 }
             }
@@ -179,33 +189,36 @@ public void LoadAlternativeSources()
         {
             try
             {
-                if (!alternatives.ContainsKey(appId))
-                    alternatives[appId] = new AlternativeSource();
-
-                if (!string.IsNullOrEmpty(wingetId))
+                lock (lockObj)
                 {
-                    alternatives[appId].WingetId = wingetId;
-                    alternatives[appId].Priority = priority;
-                    alternatives[appId].LastUpdated = DateTime.Now;
+                    if (!alternatives.ContainsKey(appId))
+                        alternatives[appId] = new AlternativeSource();
 
-                    var app = apps.FirstOrDefault(a => a.Id == appId);
-                    if (app != null)
-                        app.AlternativeId = wingetId;
-                }
-
-                if (!string.IsNullOrEmpty(url))
-                {
-                    alternatives[appId].Url = url;
-                    alternatives[appId].UrlPriority = priority;
-                    alternatives[appId].LastUpdated = DateTime.Now;
-
-                    var app = apps.FirstOrDefault(a => a.Id == appId);
-                    if (app != null && !app.InstallerUrls.Contains(url))
+                    if (!string.IsNullOrEmpty(wingetId))
                     {
-                        if (priority)
-                            app.InstallerUrls.Insert(0, url);
-                        else
-                            app.InstallerUrls.Add(url);
+                        alternatives[appId].WingetId = wingetId;
+                        alternatives[appId].Priority = priority;
+                        alternatives[appId].LastUpdated = DateTime.Now;
+
+                        var app = apps.FirstOrDefault(a => a.Id == appId);
+                        if (app != null)
+                            app.AlternativeId = wingetId;
+                    }
+
+                    if (!string.IsNullOrEmpty(url))
+                    {
+                        alternatives[appId].Url = url;
+                        alternatives[appId].UrlPriority = priority;
+                        alternatives[appId].LastUpdated = DateTime.Now;
+
+                        var app = apps.FirstOrDefault(a => a.Id == appId);
+                        if (app != null && !app.InstallerUrls.Contains(url))
+                        {
+                            if (priority)
+                                app.InstallerUrls.Insert(0, url);
+                            else
+                                app.InstallerUrls.Add(url);
+                        }
                     }
                 }
 
@@ -218,11 +231,16 @@ public void LoadAlternativeSources()
         {
             try
             {
-                if (alternatives.ContainsKey(appId))
+                bool changed = false;
+                lock (lockObj)
                 {
-                    alternatives[appId].SuccessCount++;
-                    SaveAlternatives();
+                    if (alternatives.ContainsKey(appId))
+                    {
+                        alternatives[appId].SuccessCount++;
+                        changed = true;
+                    }
                 }
+                if (changed) SaveAlternatives();
             }
             catch { }
         }
@@ -231,21 +249,26 @@ public void LoadAlternativeSources()
         {
             try
             {
-                if (alternatives.Remove(appId))
+                bool removed = false;
+                lock (lockObj)
                 {
-                    var app = apps.FirstOrDefault(a => a.Id == appId);
-                    if (app != null)
+                    if (alternatives.Remove(appId))
                     {
-                        app.AlternativeId = null;
+                        var app = apps.FirstOrDefault(a => a.Id == appId);
+                        if (app != null)
+                            app.AlternativeId = null;
+                        removed = true;
                     }
-                    
-                    SaveAlternatives();
                 }
+                if (removed) SaveAlternatives();
             }
             catch { }
         }
 
-        public Dictionary<string, AlternativeSource> GetAllAlternatives() => alternatives;
+        public Dictionary<string, AlternativeSource> GetAllAlternatives()
+        {
+            lock (lockObj) { return new Dictionary<string, AlternativeSource>(alternatives); }
+        }
 
 private void SaveAlternatives()
 {
@@ -254,8 +277,9 @@ private void SaveAlternatives()
         string? directory = Path.GetDirectoryName(alternativesPath);
         if (directory != null)
             Directory.CreateDirectory(directory);
-            
-        var json = JsonSerializer.Serialize(alternatives, new JsonSerializerOptions { WriteIndented = true });
+
+        string json;
+        lock (lockObj) { json = JsonSerializer.Serialize(alternatives, new JsonSerializerOptions { WriteIndented = true }); }
         File.WriteAllText(alternativesPath, json);
     }
     catch { }
@@ -264,10 +288,14 @@ private void SaveAlternatives()
         public List<AppInfo> GetAllApps()
         {
             List<AppInfo> snapshot;
+            HashSet<string> hiddenSnapshot;
             lock (lockObj)
+            {
                 snapshot = apps.ToList();
+                hiddenSnapshot = new HashSet<string>(hiddenApps);
+            }
             return snapshot
-                .Where(a => !hiddenApps.Contains(a.Id))
+                .Where(a => !hiddenSnapshot.Contains(a.Id))
                 .OrderBy(a => a.Category)
                 .ThenBy(a => a.DisplayName)
                 .ToList();

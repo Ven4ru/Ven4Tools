@@ -30,6 +30,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 UserSession.Changed += _sessionChangedHandler;
                 UpdateAuthState();
+                ApplyAdminState();
                 await CheckActivationStatusAsync();
             };
             Unloaded += (_, _) => UserSession.Changed -= _sessionChangedHandler;
@@ -38,6 +39,19 @@ namespace Ven4Tools.Views.Tabs
         private void UpdateAuthState()
         {
             pnlActivationAuth.Visibility = UserSession.IsLoggedIn ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void ApplyAdminState()
+        {
+            if (!IsRunningAsAdmin())
+            {
+                btnActivateWindows.IsEnabled = false;
+                btnActivateOffice.IsEnabled  = false;
+                btnActivateWindows.ToolTip = "Требуются права администратора. Перезапустите приложение от имени администратора.";
+                btnActivateOffice.ToolTip  = "Требуются права администратора. Перезапустите приложение от имени администратора.";
+                AddLog("⚠️ Тихая активация недоступна — нет прав администратора.");
+                AddLog("   Используйте интерактивный режим MAS или перезапустите от имени администратора.");
+            }
         }
 
         private static bool IsRunningAsAdmin()
@@ -309,7 +323,7 @@ namespace Ven4Tools.Views.Tabs
                 AddLog($"🔑 Активация {product} с параметром {parameter}...");
                 AddLog("━━━━━━━━━━━━━━━━━━━━━━");
                 
-                string command = $"& ([ScriptBlock]::Create((curl.exe -s https://get.activated.win | Out-String))) {parameter}";
+                string command = $"& ([ScriptBlock]::Create((iwr -UseB https://get.activated.win | Select-Object -ExpandProperty Content))) {parameter}";
                 
                 var psi = new ProcessStartInfo
                 {

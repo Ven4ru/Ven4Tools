@@ -413,8 +413,10 @@ namespace Ven4Tools.Views.Tabs
                 p = Process.Start(new ProcessStartInfo(exe, args)
                     { UseShellExecute = true, Verb = "runas" });
             }
-            p?.WaitForExit(120_000);
-            return p?.ExitCode == 0;
+            bool exited = p?.WaitForExit(120_000) ?? false;
+            if (!exited) { try { p?.Kill(); } catch { } }
+            bool success = exited && (p?.ExitCode == 0);
+            return success;
         }
 
         private static string RunWinget(string args)

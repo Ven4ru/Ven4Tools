@@ -17,8 +17,11 @@ namespace Ven4Tools.Services
     
     public class ZapretService
     {
-        private static readonly HttpClient _httpClient = new HttpClient();
-        
+        private static readonly HttpClient _httpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(40)
+        };
+
         private readonly string _basePath;
         private readonly string _servicePath;
         private readonly Action<string> _log;
@@ -38,7 +41,6 @@ namespace Ven4Tools.Services
             {
                 _httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
                 _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-                _httpClient.Timeout = TimeSpan.FromSeconds(40);
             }
         }
         
@@ -267,13 +269,13 @@ await CopyDirectoryWithRetryAsync(rootFolder, _basePath);
                 {
                     foreach (var dir in Directory.GetDirectories(source, "*", SearchOption.AllDirectories))
                     {
-                        string targetDir = dir.Replace(source, destination);
+                        string targetDir = Path.Combine(destination, Path.GetRelativePath(source, dir));
                         Directory.CreateDirectory(targetDir);
                     }
 
                     foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
                     {
-                        string targetFile = file.Replace(source, destination);
+                        string targetFile = Path.Combine(destination, Path.GetRelativePath(source, file));
                         File.Copy(file, targetFile, true);
                     }
                     return;
