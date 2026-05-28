@@ -1,6 +1,6 @@
-﻿{
+{
   "version": 2,
-  "lastUpdated": "2026-05-27 01:19:01",
+  "lastUpdated": "2026-05-28 20:17:46",
   "changelog": [
     {
       "version": 2,
@@ -834,21 +834,6 @@
       "iconUrl": "",
       "description": "Детальная информация о процессоре, памяти и материнской плате.",
       "sha256": "d7a83bfc6b9e868b6c3d011c48a9c3a80af57d2bc0bb658cf1f76fa57b84a716",
-      "skipHash": false,
-      "ruBlocked": false
-    },
-    {
-      "id": "c7eb3257-c77e-451e-8b3a-74041c1e7326",
-      "name": "MSI Afterburner",
-      "category": "Системные",
-      "wingetId": "Guru3D.Afterburner",
-      "downloadUrl": "",
-      "version": "4.6.6",
-      "size": "~100 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Описание отсутствует",
-      "sha256": "",
       "skipHash": false,
       "ruBlocked": false
     },
