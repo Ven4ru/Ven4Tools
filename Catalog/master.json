@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-28 20:20:47",
+  "lastUpdated": "2026-05-28 20:21:18",
   "changelog": [
     {
       "version": 2,
@@ -137,7 +137,7 @@
       "name": "Adobe Acrobat Reader",
       "category": "Офис",
       "wingetId": "Adobe.Acrobat.Reader.64-bit",
-      "downloadUrl": "https://ardownload2.adobe.com/pub/adobe/reader/win/AcrobatDC/2500120147/AcroRdrDCx642500120147_MUI.exe",
+      "downloadUrl": "«»",
       "version": "25.001.20147",
       "size": "~210 MB",
       "official": true,
