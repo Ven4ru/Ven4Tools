@@ -23,7 +23,7 @@ namespace Ven4Tools.Services
         {
             Timeout = TimeSpan.FromSeconds(15)
         };
-        private const string BaseUrl = "https://ven4tools.ru/api/db.php";
+        private const string BaseUrl = "https://www.ven4tools.ru/api/db.php";
 
         public Task<AuthResult> LoginAsync(string email, string password) =>
             PostAsync("login", new { email, password });
