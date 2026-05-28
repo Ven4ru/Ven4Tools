@@ -11,7 +11,7 @@ namespace Ven4Tools.Services
 {
     public class UserAppsService
     {
-        private const string ApiBase = "https://ven4tools.ru/api/db.php";
+        private const string ApiBase = "https://www.ven4tools.ru/api/db.php";
         private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
 
         public async Task<List<AppInfo>> FetchAsync(int userId)
