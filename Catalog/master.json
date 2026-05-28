@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "lastUpdated": "2026-05-28 20:17:46",
+  "lastUpdated": "2026-05-28 20:20:47",
   "changelog": [
     {
       "version": 2,
@@ -83,7 +83,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
-      "sha256": "f4b035ce537468e9571b980700f315d6bb2780baec53087c2c5e55a88aa3fa30",
+      "sha256": "848cba98a6f9b655e931689432c219efcc794a7362172a90245a1ca09e28dc1e",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -98,7 +98,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер с фокусом на приватность и встроенным блокировщиком рекламы.",
-      "sha256": "4f3931e9ba1e1c53a34a56d85e67f195175c53a536423764d30cceda1d7e016a",
+      "sha256": "97757075aee6bfe96bc27b87fed398ed810b4044fa9b50e57ecaccfdc9b533dd",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -113,7 +113,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
-      "sha256": "fdd5b7dd8013a3ade03a793c974fbd3af8bb789a125997da9cb89d0308e5a105",
+      "sha256": "c350050937c5443d65501a93a4bc1d17980cdaacb0f80b0aeb4be73a744f837c",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -229,11 +229,11 @@
       "wingetId": "Microsoft.VisualStudioCode",
       "downloadUrl": "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64",
       "version": "1.97.2",
-      "size": "159.6 MB",
+      "size": "169.0 MB",
       "official": true,
       "iconUrl": "",
       "description": "Легкий, но мощный редактор кода от Microsoft.",
-      "sha256": "6a8e538085d5fcc5e1b5befb97f55a129d353c37246231cd61cfb0707ad19d09",
+      "sha256": "f391138c48ef740735112c0a9914df2644f9a5ddede7a347c41e0756254949a7",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -323,7 +323,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Платформа для тестирования API и работы с запросами.",
-      "sha256": "6a6de73d8a4f40395724fbbf26e493ae2f66011e5a6e92fde76a14d811eaa860",
+      "sha256": "14acc0589b3f925441f9ed4a782454854dc8da9d8b095603e564d715350b3df0",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -439,11 +439,11 @@
       "wingetId": "Element.Element",
       "downloadUrl": "https://packages.element.io/desktop/install/win32/x64/Element%20Setup.exe",
       "version": "1.11.85",
-      "size": "180.7 MB",
+      "size": "181.6 MB",
       "official": true,
       "iconUrl": "",
       "description": "Децентрализованный мессенджер на базе Matrix.",
-      "sha256": "8a9028d6da10e91e29a9743f385df3c36589b8da24ebbe36efdfc84639d88ef7",
+      "sha256": "198002b7235f75cdb630eebf0fcf8c371e3e8238e7a2a4e8dc3d2c7bc1b9942c",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -623,7 +623,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов.",
-      "sha256": "cc469327dee65ca2b65fbf846105f5f1364d404f76d8c0869fc292ea1202d243",
+      "sha256": "117749b8d0ccdf2aa50e71cf118e3078dfc70dbe8437abfdf6551dc20331c023",
       "skipHash": false,
       "ruBlocked": false
     },
