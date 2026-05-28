@@ -687,14 +687,17 @@ private async Task CheckComponentsInteractiveAsync()
     {
         var updateResult = System.Windows.MessageBox.Show(
             $"Ваша версия winget ({wingetInfo.Version}) устарела.\n\n" +
-            "Открыть страницу загрузки новой версии?",
+            "Обновить winget сейчас?",
             "Обновление winget",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
         if (updateResult == MessageBoxResult.Yes)
         {
-            Process.Start(new ProcessStartInfo { FileName = "https://github.com/microsoft/winget-cli/releases", UseShellExecute = true });
-            AddLog("🌐 Открыта страница загрузки winget");
+            await InstallWingetAsync();
+            wingetInfo = await CheckWingetWithVersionAsync();
+            AddLog(wingetInfo.IsInstalled
+                ? $"   ✅ Winget {wingetInfo.Version}"
+                : "   ⚠️ Winget всё ещё не обновлён. Возможно, требуется перезагрузка.");
         }
     }
 
@@ -776,58 +779,159 @@ private void RestartAsAdmin()
 
 private async Task InstallWingetAsync()
 {
-    AddLog("📦 Установка winget...");
-    
+    AddLog("📦 Получение информации о winget с GitHub...");
+
+    string tempMsix = Path.Combine(Path.GetTempPath(), "winget_setup.msixbundle");
+    string tempVcLibs = Path.Combine(Path.GetTempPath(), "VCLibs.appx");
+    string tempUiXaml = Path.Combine(Path.GetTempPath(), "UIXaml.appx");
+
+    Dispatcher.Invoke(() =>
+    {
+        progressDownload.Value = 0;
+        txtDownloadStatus.Text = "Подготовка...";
+        btnCancelDownload.Visibility = Visibility.Collapsed;
+        btnLaunchApp.IsEnabled = false;
+    });
+
     try
     {
-        // Открываем страницу последнего релиза
-        string releaseUrl = "https://github.com/microsoft/winget-cli/releases/latest";
-        
-        Process.Start(new ProcessStartInfo
+        using var http = new HttpClient();
+        http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
+        http.Timeout = TimeSpan.FromMinutes(10);
+
+        // Получаем URL последнего релиза winget
+        var json = await http.GetStringAsync("https://api.github.com/repos/microsoft/winget-cli/releases/latest");
+        var release = Newtonsoft.Json.Linq.JObject.Parse(json);
+
+        string? msixUrl = release["assets"]?
+            .FirstOrDefault(a => a["name"]?.ToString().EndsWith(".msixbundle") == true &&
+                                  a["name"]?.ToString().Contains("DesktopAppInstaller") == true)?
+            ["browser_download_url"]?.ToString();
+
+        if (msixUrl == null)
         {
-            FileName = releaseUrl,
-            UseShellExecute = true
-        });
-        
-        AddLog("🌐 Открыта страница загрузки winget");
-        
-        System.Windows.MessageBox.Show(
-            "Открыта страница последнего релиза winget на GitHub.\n\n" +
-            "Скачайте и установите:\n" +
-            "• DesktopAppInstaller_x64.msixbundle (для Windows 10/11)\n\n" +
-            "После установки нажмите OK для продолжения.",
-            "Установка winget",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
-        
-        // Проверяем, установился ли winget
-        var wingetInfo = await CheckWingetWithVersionAsync();
-        if (wingetInfo.IsInstalled)
+            AddLog("❌ Не удалось найти файл установки winget в последнем релизе");
+            return;
+        }
+
+        // Скачиваем зависимости параллельно с основным файлом
+        AddLog("⬇️ Скачивание зависимостей...");
+        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Скачивание зависимостей...");
+
+        var vcLibsTask = DownloadFileAsync(http,
+            "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx",
+            tempVcLibs);
+        var uiXamlTask = DownloadFileAsync(http,
+            "https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx",
+            tempUiXaml);
+
+        await Task.WhenAll(vcLibsTask, uiXamlTask);
+
+        // Скачиваем основной пакет winget с прогрессом
+        AddLog($"⬇️ Скачивание winget ({msixUrl.Split('/').Last()})...");
+
+        using var resp = await http.GetAsync(msixUrl, HttpCompletionOption.ResponseHeadersRead);
+        resp.EnsureSuccessStatusCode();
+
+        var total = resp.Content.Headers.ContentLength ?? -1L;
+        var read = 0L;
+        var buf = new byte[81920];
+
+        using (var fs = new FileStream(tempMsix, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
+        using (var stream = await resp.Content.ReadAsStreamAsync())
         {
-            AddLog($"✅ Winget успешно установлен (версия: {wingetInfo.Version})");
+            int bytes;
+            while ((bytes = await stream.ReadAsync(buf.AsMemory())) > 0)
+            {
+                await fs.WriteAsync(buf.AsMemory(0, bytes));
+                read += bytes;
+                if (total > 0)
+                {
+                    var pct = (int)((double)read / total * 100);
+                    Dispatcher.Invoke(() =>
+                    {
+                        progressDownload.Value = pct;
+                        txtDownloadStatus.Text = $"Winget: {pct}%";
+                    });
+                }
+            }
+        }
+
+        AddLog("📦 Установка winget...");
+        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Установка...");
+
+        // Устанавливаем через PowerShell: сначала зависимости, потом сам winget
+        var script = $@"
+            $ErrorActionPreference = 'Stop'
+            try {{ Add-AppxPackage -Path '{tempVcLibs}' }} catch {{}}
+            try {{ Add-AppxPackage -Path '{tempUiXaml}' }} catch {{}}
+            Add-AppxPackage -Path '{tempMsix}' -ForceApplicationShutdown
+        ".Trim().Replace(Environment.NewLine, "; ");
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{script}\"",
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+
+        using var proc = Process.Start(psi);
+        if (proc != null)
+        {
+            string stderr = await proc.StandardError.ReadToEndAsync();
+            await proc.WaitForExitAsync();
+
+            if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
+                AddLog($"⚠️ PowerShell: {stderr.Trim()}");
+        }
+
+        var result = await CheckWingetWithVersionAsync();
+        if (result.IsInstalled)
+        {
+            AddLog($"✅ Winget {result.Version} успешно установлен");
+            Dispatcher.Invoke(() => txtDownloadStatus.Text = "Winget установлен");
         }
         else
         {
-            AddLog("⚠️ Winget всё ещё не найден. Возможно, требуется перезагрузка.");
-            
-            var rebootResult = System.Windows.MessageBox.Show(
-                "Winget не обнаружен после установки.\n\n" +
-                "Возможно, требуется перезагрузка компьютера.\n\n" +
-                "Перезагрузить сейчас?",
-                "Требуется перезагрузка",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-            
-            if (rebootResult == MessageBoxResult.Yes)
-            {
+            AddLog("⚠️ Winget не найден после установки. Возможно, требуется перезагрузка.");
+            Dispatcher.Invoke(() => txtDownloadStatus.Text = "Требуется перезагрузка");
+
+            var reboot = System.Windows.MessageBox.Show(
+                "Winget не обнаружен после установки.\n\nПерезагрузить компьютер сейчас?",
+                "Требуется перезагрузка", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (reboot == MessageBoxResult.Yes)
                 Process.Start(new ProcessStartInfo("shutdown", "/r /t 10") { UseShellExecute = true });
-            }
         }
     }
     catch (Exception ex)
     {
         AddLog($"❌ Ошибка установки winget: {ex.Message}");
+        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Ошибка");
     }
+    finally
+    {
+        try { if (File.Exists(tempMsix)) File.Delete(tempMsix); } catch { }
+        try { if (File.Exists(tempVcLibs)) File.Delete(tempVcLibs); } catch { }
+        try { if (File.Exists(tempUiXaml)) File.Delete(tempUiXaml); } catch { }
+        Dispatcher.Invoke(() =>
+        {
+            progressDownload.Value = 0;
+            btnLaunchApp.IsEnabled = true;
+        });
+    }
+}
+
+private static async Task DownloadFileAsync(HttpClient http, string url, string dest)
+{
+    try
+    {
+        var data = await http.GetByteArrayAsync(url);
+        await File.WriteAllBytesAsync(dest, data);
+    }
+    catch { }
 }
 
 private bool IsRunAsAdmin()
