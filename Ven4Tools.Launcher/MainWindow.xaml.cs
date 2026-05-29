@@ -29,6 +29,7 @@ namespace Ven4Tools.Launcher
         private bool _backgroundUpdates = true;
         private bool _autostart = false;
         private bool _startMinimized = false;
+        private bool _showPreRelease = false;
         private string _lastNotifiedLauncherVersion = "";
         private string _lastNotifiedClientVersion = "";
         private ToolStripMenuItem? _trayItemAutostart;
@@ -60,6 +61,7 @@ namespace Ven4Tools.Launcher
             Loaded += async (s, e) =>
             {
                 if (_startMinimized) Hide();
+                CheckForPendingFeedback();
                 await LoadVersionsAsync();
                 await CheckComponentsAutoAsync();
             };
@@ -72,6 +74,7 @@ namespace Ven4Tools.Launcher
             public bool BackgroundUpdates { get; set; } = true;
             public bool Autostart { get; set; }
             public bool StartMinimized { get; set; }
+            public bool ShowPreRelease { get; set; } = false;
             public string? LastNotifiedLauncherVersion { get; set; }
             public string? LastNotifiedClientVersion { get; set; }
         }
@@ -91,6 +94,7 @@ namespace Ven4Tools.Launcher
                         _backgroundUpdates = settings.BackgroundUpdates;
                         _autostart = settings.Autostart;
                         _startMinimized = settings.StartMinimized;
+                        _showPreRelease = settings.ShowPreRelease;
                         _lastNotifiedLauncherVersion = settings.LastNotifiedLauncherVersion ?? "";
                         _lastNotifiedClientVersion = settings.LastNotifiedClientVersion ?? "";
                     }
@@ -110,6 +114,7 @@ namespace Ven4Tools.Launcher
                     BackgroundUpdates = _backgroundUpdates,
                     Autostart = _autostart,
                     StartMinimized = _startMinimized,
+                    ShowPreRelease = _showPreRelease,
                     LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
                     LastNotifiedClientVersion = _lastNotifiedClientVersion
                 };
@@ -137,8 +142,11 @@ namespace Ven4Tools.Launcher
                 AddLog($"📦 Найдено релизов: {releases.Count}");
 
                 _availableVersions = new List<ClientVersionInfo>();
+                var firstStable = releases.FirstOrDefault(r => !r.prerelease);
                 foreach (var release in releases)
                 {
+                    if (release.prerelease && !_showPreRelease) continue;
+
                     var version = release.tag_name?.TrimStart('v');
                     if (string.IsNullOrEmpty(version)) continue;
 
@@ -149,17 +157,25 @@ namespace Ven4Tools.Launcher
                         a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
                         !a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase));
 
+                    var launcherAsset = release.assets?.FirstOrDefault(a =>
+                        a.name != null &&
+                        a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase) &&
+                        a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
+
                     if (clientAsset != null)
                     {
-                        AddLog($"   ✅ {version} → {clientAsset.name}");
+                        string badge = release.prerelease ? " [PRE]" : "";
+                        AddLog($"   ✅ {version}{badge} → {clientAsset.name}");
                         _availableVersions.Add(new ClientVersionInfo
                         {
-                            Version     = version,
-                            DownloadUrl = clientAsset.browser_download_url ?? "",
-                            ReleaseDate = release.published_at,
-                            ReleaseNotes = release.body,
-                            IsLatest    = releases.First() == release,
-                            FileSize    = clientAsset.size
+                            Version              = version,
+                            DownloadUrl          = clientAsset.browser_download_url ?? "",
+                            ReleaseDate          = release.published_at,
+                            ReleaseNotes         = release.body,
+                            IsLatest             = release == firstStable,
+                            IsPreRelease         = release.prerelease,
+                            FileSize             = clientAsset.size,
+                            LauncherDownloadUrl  = launcherAsset?.browser_download_url ?? ""
                         });
                     }
                     else
@@ -500,9 +516,19 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
         progressDownload.Value = 100;
         AddLog($"✅ Клиент {version.Version} скачан и распакован");
         version.IsInstalled = true;
+        WriteChannelFile(version);
 
         btnLaunchApp.Content = "🚀 Запустить Ven4Tools";
         btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
+
+        // Обновляем лаунчер если в релизе есть его ассет
+        if (!string.IsNullOrEmpty(version.LauncherDownloadUrl))
+        {
+            string action = version.IsPreRelease ? "pre-release" : "стабильная";
+            AddLog($"🔄 Обновление лаунчера до {action} версии {version.Version}...");
+            await UpdateLauncherAsync(version.LauncherDownloadUrl, version.Version);
+            return; // лаунчер перезапустится сам
+        }
 
         System.Windows.MessageBox.Show(
             $"Клиент {version.Version} успешно установлен в:\n{_clientPath}",
@@ -1030,8 +1056,9 @@ private bool IsRunAsAdmin()
         private void SyncCheckboxes()
         {
             chkBackgroundUpdates.IsChecked = _backgroundUpdates;
-            chkStartMinimized.IsChecked = _startMinimized;
-            chkAutostart.IsChecked = _autostart;
+            chkStartMinimized.IsChecked    = _startMinimized;
+            chkAutostart.IsChecked         = _autostart;
+            chkShowPreRelease.IsChecked    = _showPreRelease;
         }
 
         private void ChkBackgroundUpdates_Click(object sender, RoutedEventArgs e)
@@ -1057,6 +1084,98 @@ private bool IsRunAsAdmin()
             if (_trayItemAutostart != null) _trayItemAutostart.Checked = _autostart;
             SetAutostart(_autostart);
             SaveSettings();
+        }
+
+        private async void ChkShowPreRelease_Click(object sender, RoutedEventArgs e)
+        {
+            _showPreRelease = chkShowPreRelease.IsChecked == true;
+            SaveSettings();
+            AddLog(_showPreRelease
+                ? "🧪 Pre-release версии включены — перезагружаю список..."
+                : "📦 Pre-release версии скрыты — перезагружаю список...");
+            await LoadVersionsAsync();
+        }
+
+        // ── Channel / Pre-release ─────────────────────────────────────────────
+
+        private static void WriteChannelFile(ClientVersionInfo version)
+        {
+            try
+            {
+                string path = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Ven4Tools", "channel.json");
+                var payload = new
+                {
+                    channel     = version.IsPreRelease ? "prerelease" : "stable",
+                    version     = version.Version,
+                    installedAt = DateTime.UtcNow.ToString("O")
+                };
+                File.WriteAllText(path,
+                    Newtonsoft.Json.JsonConvert.SerializeObject(payload,
+                        Newtonsoft.Json.Formatting.Indented));
+            }
+            catch { }
+        }
+
+        private async Task UpdateLauncherAsync(string url, string version)
+        {
+            try
+            {
+                string tempExe = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Launcher_{version}.exe");
+                using var http = new HttpClient();
+                http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
+                var data = await http.GetByteArrayAsync(url);
+                await File.WriteAllBytesAsync(tempExe, data);
+
+                string launcherPath = System.Diagnostics.Process.GetCurrentProcess()
+                    .MainModule?.FileName ?? "";
+                string psTmp  = tempExe.Replace("'", "''");
+                string psLaun = launcherPath.Replace("'", "''");
+
+                string script = $@"
+Start-Sleep -Seconds 2
+try {{ Copy-Item '{psTmp}' '{psLaun}' -Force; Start-Process '{psLaun}' }} catch {{}}
+Remove-Item '{psTmp}' -ErrorAction SilentlyContinue";
+
+                string scriptPath = Path.Combine(Path.GetTempPath(), "ven4_launcher_update.ps1");
+                await File.WriteAllTextAsync(scriptPath, script);
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName  = "powershell.exe",
+                    Arguments = $"-WindowStyle Hidden -ExecutionPolicy Bypass -File \"{scriptPath}\"",
+                    UseShellExecute = true
+                });
+
+                AddLog($"✅ Лаунчер обновляется → перезапуск через 2 сек...");
+                await Task.Delay(500);
+                ExitApplication();
+            }
+            catch (Exception ex)
+            {
+                AddLog($"⚠ Не удалось обновить лаунчер: {ex.Message}");
+            }
+        }
+
+        private void CheckForPendingFeedback()
+        {
+            try
+            {
+                string fbPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Ven4Tools", "pending_feedback.json");
+                if (!File.Exists(fbPath)) return;
+
+                var fb = Newtonsoft.Json.JsonConvert.DeserializeObject<PendingFeedback>(
+                    File.ReadAllText(fbPath));
+                if (fb == null || fb.Reported) return;
+
+                AddLog($"💬 Получен отзыв о {fb.Version} (сессия {fb.SessionId})");
+                var win = new FeedbackReportWindow(fb) { Owner = this };
+                win.ShowDialog();
+            }
+            catch { }
         }
 
         private void OnUpdateAvailable(string type, UpdateInfo info)

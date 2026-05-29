@@ -209,6 +209,41 @@ public async Task<string?> GetLatestWingetVersionAsync()
             return 0;
         }
 
+        public async Task<(bool Success, string? IssueUrl, string? Error)> CreateIssueAsync(
+            string title, string body, string[]? labels = null)
+        {
+            try
+            {
+                string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/issues";
+                var payload = new
+                {
+                    title,
+                    body,
+                    labels = labels ?? new[] { "bug" }
+                };
+                var content = new System.Net.Http.StringContent(
+                    System.Text.Json.JsonSerializer.Serialize(payload),
+                    System.Text.Encoding.UTF8,
+                    "application/json");
+
+                using var response = await httpClient.PostAsync(url, content);
+                string json = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                    return (false, null, $"GitHub API {(int)response.StatusCode}: {json}");
+
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                string? issueUrl = doc.RootElement
+                    .TryGetProperty("html_url", out var u) ? u.GetString() : null;
+
+                return (true, issueUrl, null);
+            }
+            catch (Exception ex)
+            {
+                return (false, null, ex.Message);
+            }
+        }
+
         public void Dispose()
         {
             httpClient?.Dispose();
