@@ -1,19 +1,29 @@
 # Ven4Tools — Roadmap 3.x
 
 > Актуально на: май 2026  
-> Текущая версия: **3.0.1**  
+> Текущая версия: **3.0.1** → в разработке: **3.1.0**  
 > Целевая версия: **3.5.0**
 
 ---
 
-## 3.1.0 — Инфраструктура и стабильность
-*Фокус: фундамент для всех последующих фич*
+## 3.1.0 — Управление установленным и уведомления
+*Фокус: полноценный менеджер установленного + push-уведомления через лаунчер*
 
-- **ConnectivityMonitor** — мониторинг интернет-соединения каждые 30 сек; online-only вкладки (Office, Activation, Network) скрываются при отсутствии сети
-- **AvailabilityChecker** — проверка доступности приложений через winget и прямые URL с 5-минутным кэшем
-- **Трей** — минимизация в системный трей (`MinimizeToTray`)
-- **Quick pins** — закреплённые приложения в боковой панели (`PinnedAppIds`)
-- **Фильтр заблокированных** — кнопка «Заблокированы в РФ» в каталоге
+- **InstalledTab** — список всех приложений через `winget list`; колонки: название, версия, доступная, источник (✔ winget / ✔ Store / ❓ Unknown)
+- **Обновление** — кнопка «Обновить» на каждой строке + массовое «Обновить выбранные» через чекбоксы (`winget upgrade --id --silent`)
+- **Удаление** — умный деинсталлятор: winget uninstall → реестр (`UninstallString`) → тихий режим (MSI/NSIS/Inno)
+- **Точка восстановления** — WMI `SystemRestore.CreateRestorePoint` перед массовыми операциями
+- **HistoryTab + InstallHistoryService** — история установок: поиск, фильтры (успех/ошибка), переустановка одним кликом, хранение до 100 записей
+- **Push-уведомления** — ven4admin отправляет сообщение в `Catalog/notifications.json` → git push; все лаунчеры забирают при фоновой проверке и показывают balloon tip из трея
+- **Групповое удаление** — чекбоксы + «Удалить выбранные» с подтверждением и точкой восстановления; симметрично массовому обновлению
+- **Экспорт / Импорт .winget** — «Экспорт» сохраняет список через `winget export`, «Импорт» восстанавливает через `winget import`; формат совместим с Windows Package Manager
+- **Фоновая проверка обновлений приложений** — `UpdateBackgroundService` запускает `winget upgrade` раз в 3 часа; счётчик «⬆ N обновлений» появляется в тексте иконки трея и контекстном меню
+- **Crash Reporting + Watchdog** — четыре сценария покрыты:
+  - Необработанное исключение → `crash_last.json` со стеком, `SessionId`, `MachineName`
+  - Клиент убит извне (Task Manager) → `ProcessKilled` отчёт по коду выхода
+  - Клиент завис → `HeartbeatService` (каждые 3 сек) + `WatchdogService` (таймаут 20 сек) → `ProcessFrozen` отчёт
+  - Ошибки установки → `InstallFailureService` пишет `failed_installs.json`; `InstallReportWindow` батчит все ошибки в один issue-таблицей
+  - Все типы: `CrashReportWindow` / `InstallReportWindow` → «Создать Issue на GitHub» (автозаполнение через API, лейблы `bug`/`crash`/`install-failure`)
 
 ---
 
@@ -58,19 +68,19 @@
 
 ---
 
-## Статус компонентов dev-ветки
+## Статус компонентов
 
 | Компонент | Готовность | Версия |
 |---|---|---|
-| ConnectivityMonitor | ✅ Готово | 3.1.0 |
-| AvailabilityChecker | ✅ Готово | 3.1.0 |
-| Трей + Quick pins | ✅ Готово | 3.1.0 |
+| InstalledTab (обновление + удаление) | ✅ Готово | 3.1.0 |
+| Точка восстановления (WMI) | ✅ Готово | 3.1.0 |
+| HistoryTab + InstallHistoryService | ✅ Готово | 3.1.0 |
+| Push-уведомления (admin → launcher) | ✅ Готово | 3.1.0 |
 | Chocolatey / Scoop | ✅ Готово | 3.2.0 |
 | SourceOrderService | ✅ Готово | 3.2.0 |
 | OfflineService | ✅ Готово | 3.2.0 |
 | LocalInstallerDialog | ✅ Готово | 3.2.0 |
-| HistoryTab | ✅ Готово | 3.3.0 |
-| InstallHistoryService | ✅ Готово | 3.3.0 |
+| ConnectivityMonitor | ✅ Готово | 3.2.0 |
 | MiniWindow (Ctrl+M) | ✅ Готово | 3.3.0 |
 | GamificationService | ✅ Готово | 3.4.0 |
 | ProfileTab | ✅ Готово | 3.4.0 |
