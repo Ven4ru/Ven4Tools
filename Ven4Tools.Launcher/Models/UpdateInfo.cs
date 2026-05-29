@@ -22,6 +22,7 @@ namespace Ven4Tools.Launcher.Models
         public string? name { get; set; }
         public string? body { get; set; }
         public DateTime published_at { get; set; }
+        public bool prerelease { get; set; }
         public List<GitHubAsset>? assets { get; set; }
     }
 
@@ -41,5 +42,7 @@ namespace Ven4Tools.Launcher.Models
         public bool IsLatest { get; set; }
         public bool IsInstalled { get; set; }
         public long FileSize { get; set; }
+        public bool IsPreRelease { get; set; }
+        public string LauncherDownloadUrl { get; set; } = string.Empty;
     }
 }
