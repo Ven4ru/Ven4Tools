@@ -5,6 +5,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>disable</ImplicitUsings>
     
     <!-- Self-contained (но НЕ Single File) -->
@@ -16,8 +17,8 @@
     <!-- Application settings -->
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>Ven4Tools</AssemblyName>
-    <Version>3.0.1</Version>
-    <AssemblyVersion>3.0.1</AssemblyVersion>
+    <Version>3.1.0</Version>
+    <AssemblyVersion>3.1.0</AssemblyVersion>
     
     <!-- Явная точка входа -->
     <StartupObject>Ven4Tools.App</StartupObject>

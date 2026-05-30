@@ -52,7 +52,8 @@
                         BorderThickness="1" CornerRadius="3"
                         Margin="0,0,0,6" Visibility="Collapsed">
                     <StackPanel Margin="8,6">
-                        <TextBlock Text="🔍 Не нашли в каталоге? Результаты из winget:"
+                        <TextBlock x:Name="txtSuggestionsHeader"
+                                   Text="🔍 Не нашли в каталоге? Поиск по источникам:"
                                    Foreground="{DynamicResource AccentColor}"
                                    FontSize="11" FontWeight="SemiBold" Margin="0,0,0,4"/>
                         <StackPanel x:Name="pnlWingetResults"/>
@@ -109,11 +110,14 @@
                     <Button x:Name="btnInstall" Content="🚀 Установить" Height="35" Margin="3"/>
                     <Button x:Name="btnCancelInstall" Content="⏹️ Отмена" Height="35" Margin="3" IsEnabled="False"/>
                     <Button x:Name="btnCheckUpdates" Content="🔔 Обновления" Height="35" Margin="3"/>
-                    <Button x:Name="btnAddApp" Content="➕ Добавить своё" Height="35" Margin="3"/>
-                    <Button x:Name="btnClearAllUserApps" Content="🗑️ Очистить всё" Height="35" Margin="3"/>
+                    <Button x:Name="btnClearAllUserApps" Content="🗑️ Очистить добавленные" Height="35" Margin="3"/>
                     <Button x:Name="btnRefreshCatalog" Content="🔄 Обновить каталог" Height="35" Margin="3"/>
                     <Button x:Name="btnRefreshAvailability" Content="🔍 Проверить доступность" Height="35" Margin="3" Click="RefreshAvailability_Click"/>
-                    <Button x:Name="btnSuggestAlternatives" Content="🔄 Предложить альтернативы для недоступных" Height="35" Margin="3"/>
+                    <Separator Margin="3,4"/>
+                    <Button x:Name="btnExportList" Content="📤 Экспорт списка" Height="32" Margin="3"
+                            ToolTip="Сохранить выбранные приложения в JSON" Click="BtnExportList_Click"/>
+                    <Button x:Name="btnImportList" Content="📥 Импорт списка" Height="32" Margin="3"
+                            ToolTip="Загрузить список приложений из JSON" Click="BtnImportList_Click"/>
                 </StackPanel>
             </GroupBox>
 

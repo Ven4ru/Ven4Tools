@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Threading.Tasks;
 using Ven4Tools.Models;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
 {
@@ -370,8 +371,9 @@ namespace Ven4Tools.Views.Tabs
                     {
                         AddLog($"✅ Активация {product} выполнена успешно!");
                         AddLog("━━━━━━━━━━━━━━━━━━━━━━");
-                        
-                        MessageBox.Show($"Активация {product} выполнена успешно!", "Успех", 
+                        if (UserSession.IsLoggedIn)
+                            await GamificationService.Instance.TrackActivationAsync();
+                        MessageBox.Show($"Активация {product} выполнена успешно!", "Успех",
                             MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     else

@@ -311,8 +311,8 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 SaveRegion();
+                regionChanged = true; // до SetRegionUS — чтобы finally откатил даже при исключении внутри
                 SetRegionUS();
-                regionChanged = true;
                 AddLog("🌎 Регион переключён на US (GeoID: 244, CountryCode: US)");
 
                 SetPhase("🚀 Запуск установщика...");

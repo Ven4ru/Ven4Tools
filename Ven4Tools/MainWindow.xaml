@@ -4,7 +4,8 @@
         xmlns:views="clr-namespace:Ven4Tools.Views.Tabs"
         xmlns:local="clr-namespace:Ven4Tools.Views.Tabs"
         Title="Ven4Tools" Height="950" Width="1300" MinHeight="750" MinWidth="1100"
-        WindowStartupLocation="CenterScreen" Background="{DynamicResource WindowBackground}">
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource WindowBackground}"
+        Closing="Window_Closing_Extended">
     
     <Window.Resources>
     <!-- Стиль для кнопок навигации -->
@@ -121,6 +122,26 @@
                                 Tag="🌐"
                                 Content="Сеть"
                                 Click="NavigateToNetwork"/>
+                        <Button x:Name="btnProfileTab"
+                                Style="{StaticResource NavButtonStyle}"
+                                Tag="🏆"
+                                Content="Достижения"
+                                Click="NavigateToProfile"/>
+                        <Button x:Name="btnDebloaterTab"
+                                Style="{StaticResource NavButtonStyle}"
+                                Tag="🧹"
+                                Content="Debloater"
+                                Click="NavigateToDebloater"/>
+                        <Button x:Name="btnDriversTab"
+                                Style="{StaticResource NavButtonStyle}"
+                                Tag="🖱️"
+                                Content="Драйверы"
+                                Click="NavigateToDrivers"/>
+                        <Button x:Name="btnHistoryTab"
+                                Style="{StaticResource NavButtonStyle}"
+                                Tag="📋"
+                                Content="История"
+                                Click="NavigateToHistory"/>
                         <Button x:Name="btnAboutTab"
                                 Style="{StaticResource NavButtonStyle}"
                                 Tag="ℹ️"
@@ -157,9 +178,19 @@
                                     <TextBlock x:Name="txtUserName" Text="" FontSize="13"
                                                FontWeight="Bold" TextTrimming="CharacterEllipsis"
                                                Foreground="{DynamicResource TextPrimary}"/>
-                                    <TextBlock x:Name="txtUserEmail" Text="" FontSize="10"
-                                               TextTrimming="CharacterEllipsis"
-                                               Foreground="{DynamicResource TextSecondary}"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="txtUserEmail" Text="" FontSize="10"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextSecondary}"/>
+                                        <Border x:Name="pnlPointsBadge" CornerRadius="6" Padding="4,1"
+                                                Margin="5,0,0,0" VerticalAlignment="Center"
+                                                Background="{DynamicResource AccentColor}"
+                                                Visibility="Collapsed">
+                                            <TextBlock x:Name="txtSidebarPoints" Text="0"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="White"/>
+                                        </Border>
+                                    </StackPanel>
                                 </StackPanel>
                                 <Button Grid.Column="2" x:Name="btnLogout" Content="Выйти"
                                         Height="26" Padding="6,2" FontSize="11" FontWeight="Normal"
@@ -178,11 +209,22 @@
                             Visibility="Visible"
                             Click="BtnLogin_Click"/>
 
-                    <Separator Background="{DynamicResource BorderBrush}" Margin="0,0,0,15"/>
+                    <Button x:Name="btnMiniMode" Content="⚡ Мини-режим"
+                            Height="32" Margin="0,0,0,8" FontSize="11"
+                            Click="BtnMiniMode_Click"/>
 
-                    <TextBlock x:Name="txtStatusBar" 
-                               Text="✅ Готово" 
-                               Foreground="{DynamicResource TextSecondary}" 
+                    <Separator Background="{DynamicResource BorderBrush}" Margin="0,0,0,10"/>
+
+                    <!-- Minimize to tray option -->
+                    <CheckBox x:Name="chkMinimizeToTray"
+                              Content="Сворачивать в трей"
+                              Foreground="{DynamicResource TextSecondary}"
+                              FontSize="11" Margin="0,0,0,8"
+                              Click="ChkMinimizeToTray_Click"/>
+
+                    <TextBlock x:Name="txtStatusBar"
+                               Text="✅ Готово"
+                               Foreground="{DynamicResource TextSecondary}"
                                FontSize="11"
                                TextAlignment="Center"/>
                 </StackPanel>
@@ -190,8 +232,51 @@
         </Border>
         
         <!-- Правая область контента -->
-        <Border Grid.Column="1" Background="{DynamicResource ContentBackground}">
-            <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden"/>
+        <Border Grid.Column="1" Background="{DynamicResource ContentBackground}"
+                AllowDrop="True"
+                DragEnter="MainArea_DragEnter"
+                DragOver="MainArea_DragOver"
+                DragLeave="MainArea_DragLeave"
+                Drop="MainArea_Drop">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Quick pins strip -->
+                <Border x:Name="pnlPins" Grid.Row="0"
+                        Background="{DynamicResource SidebarBackground}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="10,6"
+                        Visibility="Collapsed">
+                    <DockPanel>
+                        <TextBlock Text="📌" FontSize="13" VerticalAlignment="Center"
+                                   Margin="0,0,8,0"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   DockPanel.Dock="Left"/>
+                        <WrapPanel x:Name="wrapPins" VerticalAlignment="Center"/>
+                    </DockPanel>
+                </Border>
+
+                <!-- Drag overlay -->
+                <Border x:Name="pnlDropOverlay" Grid.Row="0" Grid.RowSpan="2"
+                        Visibility="Collapsed" Panel.ZIndex="99"
+                        Background="#AA1E1E2E"
+                        BorderBrush="{DynamicResource AccentColor}"
+                        BorderThickness="4" CornerRadius="8" Margin="8">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Отпустите для добавления установщика"
+                                   FontSize="18" FontWeight="Bold"
+                                   Foreground="White" HorizontalAlignment="Center"
+                                   Margin="0,12,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Frame x:Name="MainFrame" Grid.Row="1" NavigationUIVisibility="Hidden"/>
+            </Grid>
         </Border>
     </Grid>
 </Window>

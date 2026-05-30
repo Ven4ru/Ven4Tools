@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
+using Ven4Tools.Models;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
 {
@@ -77,6 +79,12 @@ namespace Ven4Tools.Views.Tabs
         {
             InitializeComponent();
             Loaded += (_, _) => _ = LoadAppsAsync();
+        }
+
+        public void ShowUpdatesFilter()
+        {
+            rdbUpdates.IsChecked = true;
+            ApplyFilter();
         }
 
         // ── Загрузка ────────────────────────────────────────────────────────────
@@ -283,6 +291,24 @@ namespace Ven4Tools.Views.Tabs
                 ?.Where(a => a.IsSelected && a.HasUpdate).ToList();
             if (visible == null || visible.Count == 0) return;
 
+            if (visible.Count >= 2)
+            {
+                var rpAnswer = MessageBox.Show(
+                    $"Будет обновлено {visible.Count} приложений.\n\nСоздать точку восстановления Windows перед обновлением?",
+                    "Точка восстановления",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question);
+
+                if (rpAnswer == MessageBoxResult.Cancel) return;
+
+                if (rpAnswer == MessageBoxResult.Yes)
+                {
+                    Log("🛡️ Создаю точку восстановления...");
+                    bool rpOk = await CreateRestorePointAsync();
+                    Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
+                }
+            }
+
             btnUpdateSelected.IsEnabled = false;
             foreach (var app in visible)
                 await UpdateAppAsync(app);
@@ -304,6 +330,8 @@ namespace Ven4Tools.Views.Tabs
                     app.Available = "";
                     Dispatcher.Invoke(() => { ApplyFilter(); UpdateStats(); });
                     Log($"✅ {app.Name} обновлён");
+                    if (UserSession.IsLoggedIn)
+                        await GamificationService.Instance.TrackUpdateAsync();
                 }
                 else
                 {
@@ -432,6 +460,8 @@ namespace Ven4Tools.Views.Tabs
                 StandardOutputEncoding = System.Text.Encoding.UTF8
             };
             using var p = Process.Start(psi) ?? throw new InvalidOperationException("winget не найден");
+            // Читаем stderr параллельно — иначе дедлок если буфер stderr переполнится
+            var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
             string output = p.StandardOutput.ReadToEnd();
             p.WaitForExit(120_000);
             return output;
@@ -450,5 +480,28 @@ namespace Ven4Tools.Views.Tabs
         }
 
         private void Log(string msg) => LogMessage?.Invoke(msg);
+
+        private static async Task<bool> CreateRestorePointAsync()
+        {
+            try
+            {
+                var psi = new ProcessStartInfo("powershell.exe",
+                    "-NoProfile -ExecutionPolicy Bypass -Command \"Checkpoint-Computer -Description 'Ven4Tools — перед обновлением' -RestorePointType MODIFY_SETTINGS\"")
+                {
+                    UseShellExecute        = false,
+                    CreateNoWindow         = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true
+                };
+                using var p = Process.Start(psi);
+                if (p == null) return false;
+                await Task.WhenAll(
+                    p.StandardOutput.ReadToEndAsync(),
+                    p.StandardError.ReadToEndAsync());
+                await p.WaitForExitAsync();
+                return p.ExitCode == 0;
+            }
+            catch { return false; }
+        }
     }
 }

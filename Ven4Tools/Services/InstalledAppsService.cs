@@ -28,8 +28,10 @@ namespace Ven4Tools.Services
                 using var process = Process.Start(psi);
                 if (process == null) return;
 
+                var stderrTask = process.StandardError.ReadToEndAsync();
                 _rawOutput = await process.StandardOutput.ReadToEndAsync();
                 await process.WaitForExitAsync();
+                await stderrTask;
             }
             catch
             {

@@ -41,6 +41,15 @@ namespace Ven4Tools.Models
         [JsonProperty("ruBlocked")]
         public bool RuBlocked { get; set; } = false;
 
+        [JsonProperty("chocoId")]
+        public string ChocoId { get; set; } = string.Empty;
+
+        [JsonProperty("scoopId")]
+        public string ScoopId { get; set; } = string.Empty;
+
+        [JsonProperty("popularity")]
+        public int Popularity { get; set; } = 0;
+
         [JsonIgnore]
         public bool IsSelected { get; set; }
 

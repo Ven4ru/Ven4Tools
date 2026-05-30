@@ -51,6 +51,14 @@ namespace Ven4Tools.Services
 
         public async Task<(AvailabilityStatus Status, long SizeMB)> CheckAppAvailabilityWithSize(AppInfo app)
         {
+            // Offline: skip network, report from local cache only
+            if (OfflineService.IsOffline)
+            {
+                if (OfflineService.HasCachedInstaller(app.Id))
+                    return (AvailabilityStatus.Available, OfflineService.GetCachedInstallerSizeMB(app.Id));
+                return (AvailabilityStatus.Unknown, 0);
+            }
+
             string wingetId = !string.IsNullOrEmpty(app.AlternativeId)
                 ? app.AlternativeId
                 : app.Id ?? string.Empty;
@@ -116,8 +124,10 @@ namespace Ven4Tools.Services
                 if (process == null)
                     return (AvailabilityStatus.Unavailable, 0);
 
+                var stderrTask = process.StandardError.ReadToEndAsync();
                 string output = await process.StandardOutput.ReadToEndAsync();
                 await process.WaitForExitAsync();
+                await stderrTask;
 
                 bool success = process.ExitCode == 0 &&
                                (output.Contains("Version", StringComparison.OrdinalIgnoreCase) ||

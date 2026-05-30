@@ -29,7 +29,6 @@ namespace Ven4Tools.Launcher
         private bool _backgroundUpdates = true;
         private bool _autostart = false;
         private bool _startMinimized = false;
-        private bool _showPreRelease = false;
         private string _lastNotifiedLauncherVersion = "";
         private string _lastNotifiedClientVersion = "";
         private ToolStripMenuItem? _trayItemAutostart;
@@ -61,7 +60,6 @@ namespace Ven4Tools.Launcher
             Loaded += async (s, e) =>
             {
                 if (_startMinimized) Hide();
-                CheckForPendingFeedback();
                 await LoadVersionsAsync();
                 await CheckComponentsAutoAsync();
             };
@@ -74,7 +72,6 @@ namespace Ven4Tools.Launcher
             public bool BackgroundUpdates { get; set; } = true;
             public bool Autostart { get; set; }
             public bool StartMinimized { get; set; }
-            public bool ShowPreRelease { get; set; } = false;
             public string? LastNotifiedLauncherVersion { get; set; }
             public string? LastNotifiedClientVersion { get; set; }
         }
@@ -94,7 +91,6 @@ namespace Ven4Tools.Launcher
                         _backgroundUpdates = settings.BackgroundUpdates;
                         _autostart = settings.Autostart;
                         _startMinimized = settings.StartMinimized;
-                        _showPreRelease = settings.ShowPreRelease;
                         _lastNotifiedLauncherVersion = settings.LastNotifiedLauncherVersion ?? "";
                         _lastNotifiedClientVersion = settings.LastNotifiedClientVersion ?? "";
                     }
@@ -114,7 +110,6 @@ namespace Ven4Tools.Launcher
                     BackgroundUpdates = _backgroundUpdates,
                     Autostart = _autostart,
                     StartMinimized = _startMinimized,
-                    ShowPreRelease = _showPreRelease,
                     LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
                     LastNotifiedClientVersion = _lastNotifiedClientVersion
                 };
@@ -145,8 +140,6 @@ namespace Ven4Tools.Launcher
                 var firstStable = releases.FirstOrDefault(r => !r.prerelease);
                 foreach (var release in releases)
                 {
-                    if (release.prerelease && !_showPreRelease) continue;
-
                     var version = release.tag_name?.TrimStart('v');
                     if (string.IsNullOrEmpty(version)) continue;
 
@@ -157,25 +150,18 @@ namespace Ven4Tools.Launcher
                         a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
                         !a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase));
 
-                    var launcherAsset = release.assets?.FirstOrDefault(a =>
-                        a.name != null &&
-                        a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase) &&
-                        a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
-
                     if (clientAsset != null)
                     {
-                        string badge = release.prerelease ? " [PRE]" : "";
-                        AddLog($"   ✅ {version}{badge} → {clientAsset.name}");
+                        AddLog($"   ✅ {version}{(release.prerelease ? " [PRE]" : "")} → {clientAsset.name}");
                         _availableVersions.Add(new ClientVersionInfo
                         {
-                            Version              = version,
-                            DownloadUrl          = clientAsset.browser_download_url ?? "",
-                            ReleaseDate          = release.published_at,
-                            ReleaseNotes         = release.body,
-                            IsLatest             = release == firstStable,
-                            IsPreRelease         = release.prerelease,
-                            FileSize             = clientAsset.size,
-                            LauncherDownloadUrl  = launcherAsset?.browser_download_url ?? ""
+                            Version      = version,
+                            DownloadUrl  = clientAsset.browser_download_url ?? "",
+                            ReleaseDate  = release.published_at,
+                            ReleaseNotes = release.body,
+                            IsPreRelease = release.prerelease,
+                            IsLatest     = release == firstStable,
+                            FileSize     = clientAsset.size
                         });
                     }
                     else
@@ -193,10 +179,16 @@ namespace Ven4Tools.Launcher
                     var parts2 = b.Version.Split('.');
                     for (int i = 0; i < Math.Max(parts1.Length, parts2.Length); i++)
                     {
-                        int n1 = i < parts1.Length && int.TryParse(parts1[i], out var x) ? x : 0;
-                        int n2 = i < parts2.Length && int.TryParse(parts2[i], out var y) ? y : 0;
+                        string s1 = i < parts1.Length ? parts1[i].Split('-')[0] : "0";
+                        string s2 = i < parts2.Length ? parts2[i].Split('-')[0] : "0";
+                        int n1 = int.TryParse(s1, out var x) ? x : 0;
+                        int n2 = int.TryParse(s2, out var y) ? y : 0;
                         if (n1 != n2) return n2.CompareTo(n1);
                     }
+                    // При равных числах стабильная выше pre-release
+                    bool aIsPre = a.Version.Contains('-');
+                    bool bIsPre = b.Version.Contains('-');
+                    if (aIsPre != bIsPre) return aIsPre ? 1 : -1;
                     return 0;
                 });
 
@@ -516,19 +508,9 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
         progressDownload.Value = 100;
         AddLog($"✅ Клиент {version.Version} скачан и распакован");
         version.IsInstalled = true;
-        WriteChannelFile(version);
 
         btnLaunchApp.Content = "🚀 Запустить Ven4Tools";
         btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
-
-        // Обновляем лаунчер если в релизе есть его ассет
-        if (!string.IsNullOrEmpty(version.LauncherDownloadUrl))
-        {
-            string action = version.IsPreRelease ? "pre-release" : "стабильная";
-            AddLog($"🔄 Обновление лаунчера до {action} версии {version.Version}...");
-            await UpdateLauncherAsync(version.LauncherDownloadUrl, version.Version);
-            return; // лаунчер перезапустится сам
-        }
 
         System.Windows.MessageBox.Show(
             $"Клиент {version.Version} успешно установлен в:\n{_clientPath}",
@@ -636,6 +618,41 @@ private async Task CheckComponentsAutoAsync()
         _hasIssues = true;
     }
 
+    AddLog("🔍 WebView2 Runtime...");
+    if (IsWebView2Installed())
+        AddLog("   ✅ WebView2 Runtime установлен");
+    else
+    {
+        AddLog("   ❌ WebView2 Runtime не установлен (нужен для Яндекс-авторизации)");
+        _hasIssues = true;
+    }
+
+    AddLog("🔍 Visual C++ Redistributable 2015-2022 x64...");
+    if (IsVcRedistInstalled())
+        AddLog("   ✅ Visual C++ Redistributable установлен");
+    else
+    {
+        AddLog("   ❌ Visual C++ Redistributable 2015-2022 x64 не установлен");
+        _hasIssues = true;
+    }
+
+    AddLog("🔍 Версия Windows...");
+    if (CheckWindowsVersionOk())
+        AddLog($"   ✅ Windows {Environment.OSVersion.Version.Major} Build {Environment.OSVersion.Version.Build}");
+    else
+    {
+        AddLog($"   ⚠️ Windows Build {Environment.OSVersion.Version.Build} ниже минимального (17763)");
+        _hasIssues = true;
+    }
+
+    AddLog("🔍 Свободное место на диске...");
+    var (diskOk, freeGB) = CheckDiskSpaceOnDrive(
+        _clientPath.Length > 0 ? _clientPath : AppDomain.CurrentDomain.BaseDirectory);
+    if (diskOk)
+        AddLog(freeGB >= 0 ? $"   ✅ Свободно ≈{freeGB} ГБ" : "   ✅ Место на диске достаточно");
+    else
+        AddLog($"   ⚠️ Мало свободного места: ≈{freeGB} ГБ (рекомендуется минимум 2 ГБ)");
+
     AddLog("🔍 Обновления лаунчера...");
     var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.3.1";
     using var gitHubServiceCheck = new GitHubService();
@@ -727,6 +744,50 @@ private async Task CheckComponentsInteractiveAsync()
         }
     }
 
+    if (!IsWebView2Installed())
+    {
+        var r = System.Windows.MessageBox.Show(
+            "WebView2 Runtime не установлен!\n\n" +
+            "Необходим для Яндекс-авторизации в Ven4Tools.\n\n" +
+            "Установить WebView2 Runtime сейчас?",
+            "Требуется WebView2 Runtime",
+            MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (r == MessageBoxResult.Yes)
+        {
+            await InstallWebView2Async();
+            AddLog(IsWebView2Installed()
+                ? "   ✅ WebView2 установлен"
+                : "   ⚠️ WebView2 не обнаружен после установки. Возможно, требуется перезагрузка.");
+        }
+    }
+
+    if (!IsVcRedistInstalled())
+    {
+        var r = System.Windows.MessageBox.Show(
+            "Visual C++ Redistributable 2015-2022 x64 не установлен!\n\n" +
+            "Установить сейчас?",
+            "Требуется Visual C++ Redistributable",
+            MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (r == MessageBoxResult.Yes)
+        {
+            await InstallVcRedistAsync();
+            AddLog(IsVcRedistInstalled()
+                ? "   ✅ Visual C++ Redistributable установлен"
+                : "   ⚠️ VC++ не обнаружен после установки. Возможно, требуется перезагрузка.");
+        }
+    }
+
+    if (!CheckWindowsVersionOk())
+    {
+        System.Windows.MessageBox.Show(
+            $"Ваша версия Windows (Build {Environment.OSVersion.Version.Build}) " +
+            "ниже минимально поддерживаемой (Windows 10 Build 17763).\n\n" +
+            "Некоторые функции могут работать некорректно.\n" +
+            "Рекомендуется обновить Windows через Windows Update.",
+            "Устаревшая версия Windows",
+            MessageBoxButton.OK, MessageBoxImage.Warning);
+    }
+
     if (btnInstallUpdate.Visibility == Visibility.Visible)
     {
         var updateResult = System.Windows.MessageBox.Show(
@@ -759,12 +820,14 @@ private async Task<(bool IsInstalled, string? Version, bool IsOutdated)> CheckWi
         using var process = Process.Start(psi);
         if (process == null) return (false, null, false);
         
+        var stderrTask = process.StandardError.ReadToEndAsync();
         string output = await process.StandardOutput.ReadToEndAsync();
         await process.WaitForExitAsync();
-        
+        await stderrTask;
+
         if (process.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
             return (false, null, false);
-        
+
         string version = output.Trim().TrimStart('v');
         
         // Получаем последнюю стабильную версию с GitHub
@@ -907,8 +970,10 @@ private async Task InstallWingetAsync()
         using var proc = Process.Start(psi);
         if (proc != null)
         {
+            var stdoutTask = proc.StandardOutput.ReadToEndAsync();
             string stderr = await proc.StandardError.ReadToEndAsync();
             await proc.WaitForExitAsync();
+            await stdoutTask;
 
             if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
                 AddLog($"⚠️ PowerShell: {stderr.Trim()}");
@@ -1056,9 +1121,8 @@ private bool IsRunAsAdmin()
         private void SyncCheckboxes()
         {
             chkBackgroundUpdates.IsChecked = _backgroundUpdates;
-            chkStartMinimized.IsChecked    = _startMinimized;
-            chkAutostart.IsChecked         = _autostart;
-            chkShowPreRelease.IsChecked    = _showPreRelease;
+            chkStartMinimized.IsChecked = _startMinimized;
+            chkAutostart.IsChecked = _autostart;
         }
 
         private void ChkBackgroundUpdates_Click(object sender, RoutedEventArgs e)
@@ -1084,98 +1148,6 @@ private bool IsRunAsAdmin()
             if (_trayItemAutostart != null) _trayItemAutostart.Checked = _autostart;
             SetAutostart(_autostart);
             SaveSettings();
-        }
-
-        private async void ChkShowPreRelease_Click(object sender, RoutedEventArgs e)
-        {
-            _showPreRelease = chkShowPreRelease.IsChecked == true;
-            SaveSettings();
-            AddLog(_showPreRelease
-                ? "🧪 Pre-release версии включены — перезагружаю список..."
-                : "📦 Pre-release версии скрыты — перезагружаю список...");
-            await LoadVersionsAsync();
-        }
-
-        // ── Channel / Pre-release ─────────────────────────────────────────────
-
-        private static void WriteChannelFile(ClientVersionInfo version)
-        {
-            try
-            {
-                string path = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Ven4Tools", "channel.json");
-                var payload = new
-                {
-                    channel     = version.IsPreRelease ? "prerelease" : "stable",
-                    version     = version.Version,
-                    installedAt = DateTime.UtcNow.ToString("O")
-                };
-                File.WriteAllText(path,
-                    Newtonsoft.Json.JsonConvert.SerializeObject(payload,
-                        Newtonsoft.Json.Formatting.Indented));
-            }
-            catch { }
-        }
-
-        private async Task UpdateLauncherAsync(string url, string version)
-        {
-            try
-            {
-                string tempExe = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Launcher_{version}.exe");
-                using var http = new HttpClient();
-                http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
-                var data = await http.GetByteArrayAsync(url);
-                await File.WriteAllBytesAsync(tempExe, data);
-
-                string launcherPath = System.Diagnostics.Process.GetCurrentProcess()
-                    .MainModule?.FileName ?? "";
-                string psTmp  = tempExe.Replace("'", "''");
-                string psLaun = launcherPath.Replace("'", "''");
-
-                string script = $@"
-Start-Sleep -Seconds 2
-try {{ Copy-Item '{psTmp}' '{psLaun}' -Force; Start-Process '{psLaun}' }} catch {{}}
-Remove-Item '{psTmp}' -ErrorAction SilentlyContinue";
-
-                string scriptPath = Path.Combine(Path.GetTempPath(), "ven4_launcher_update.ps1");
-                await File.WriteAllTextAsync(scriptPath, script);
-
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName  = "powershell.exe",
-                    Arguments = $"-WindowStyle Hidden -ExecutionPolicy Bypass -File \"{scriptPath}\"",
-                    UseShellExecute = true
-                });
-
-                AddLog($"✅ Лаунчер обновляется → перезапуск через 2 сек...");
-                await Task.Delay(500);
-                ExitApplication();
-            }
-            catch (Exception ex)
-            {
-                AddLog($"⚠ Не удалось обновить лаунчер: {ex.Message}");
-            }
-        }
-
-        private void CheckForPendingFeedback()
-        {
-            try
-            {
-                string fbPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Ven4Tools", "pending_feedback.json");
-                if (!File.Exists(fbPath)) return;
-
-                var fb = Newtonsoft.Json.JsonConvert.DeserializeObject<PendingFeedback>(
-                    File.ReadAllText(fbPath));
-                if (fb == null || fb.Reported) return;
-
-                AddLog($"💬 Получен отзыв о {fb.Version} (сессия {fb.SessionId})");
-                var win = new FeedbackReportWindow(fb) { Owner = this };
-                win.ShowDialog();
-            }
-            catch { }
         }
 
         private void OnUpdateAvailable(string type, UpdateInfo info)
@@ -1467,6 +1439,277 @@ Remove-Item '{psTmp}' -ErrorAction SilentlyContinue";
                 txtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
                 txtLog.ScrollToEnd();
             });
+        }
+
+        // ── Delete client ──────────────────────────────────────────────────────────
+
+        private async void BtnDeleteClient_Click(object sender, RoutedEventArgs e)
+        {
+            string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
+            bool clientExists = Directory.Exists(_clientPath) && File.Exists(clientExe);
+
+            var answer = System.Windows.MessageBox.Show(
+                "Будет удалено:\n" +
+                $"• Папка клиента: {_clientPath}\n" +
+                "• Ярлыки на рабочем столе\n" +
+                "• Ярлыки в меню Пуск\n" +
+                "• Запись автозапуска в реестре\n" +
+                "• Папка %LocalAppData%\\Ven4Tools\n\n" +
+                "Продолжить?",
+                "Удаление клиента Ven4Tools",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (answer != MessageBoxResult.Yes) return;
+
+            btnDeleteClient.IsEnabled = false;
+            AddLog("🗑️ Удаление клиента...");
+
+            await Task.Run(() =>
+            {
+                // 1. Client folder
+                if (Directory.Exists(_clientPath))
+                {
+                    try
+                    {
+                        Directory.Delete(_clientPath, true);
+                        AddLog("   ✅ Папка клиента удалена");
+                    }
+                    catch (Exception ex) { AddLog($"   ⚠️ Папка клиента: {ex.Message}"); }
+                }
+                else
+                {
+                    AddLog("   ℹ️ Папка клиента не найдена");
+                }
+
+                // 2. Desktop shortcuts (user + public)
+                string[] desktops = {
+                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                    Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory)
+                };
+                foreach (var desktop in desktops)
+                {
+                    if (string.IsNullOrEmpty(desktop)) continue;
+                    foreach (var name in new[] { "Ven4Tools.lnk", "Ven4Tools Launcher.lnk", "Ven4Tools Client.lnk" })
+                    {
+                        string path = Path.Combine(desktop, name);
+                        if (File.Exists(path)) { try { File.Delete(path); } catch { } }
+                    }
+                }
+                AddLog("   ✅ Ярлыки рабочего стола проверены");
+
+                // 3. Start menu shortcuts
+                string[] startMenuRoots = {
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs")
+                };
+                foreach (var root in startMenuRoots)
+                {
+                    if (string.IsNullOrEmpty(root)) continue;
+                    string ven4Dir = Path.Combine(root, "Ven4Tools");
+                    if (Directory.Exists(ven4Dir))
+                    {
+                        try { Directory.Delete(ven4Dir, true); } catch { }
+                    }
+                    // Also check individual lnk files in Programs root
+                    foreach (var name in new[] { "Ven4Tools.lnk", "Ven4Tools Launcher.lnk" })
+                    {
+                        string path = Path.Combine(root, name);
+                        if (File.Exists(path)) { try { File.Delete(path); } catch { } }
+                    }
+                }
+                AddLog("   ✅ Ярлыки меню Пуск проверены");
+
+                // 4. Autorun registry (both HKCU Run keys)
+                try
+                {
+                    using var runKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                        @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", writable: true);
+                    runKey?.DeleteValue("Ven4Tools", throwOnMissingValue: false);
+                    runKey?.DeleteValue("Ven4Tools.Launcher", throwOnMissingValue: false);
+                    runKey?.DeleteValue("Ven4Tools Client", throwOnMissingValue: false);
+                    AddLog("   ✅ Записи автозапуска удалены");
+                }
+                catch (Exception ex) { AddLog($"   ⚠️ Реестр: {ex.Message}"); }
+
+                // 5. %LocalAppData%\Ven4Tools
+                string appData = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
+                if (Directory.Exists(appData))
+                {
+                    try
+                    {
+                        Directory.Delete(appData, true);
+                        AddLog("   ✅ %LocalAppData%\\Ven4Tools удалена");
+                    }
+                    catch (Exception ex) { AddLog($"   ⚠️ AppData: {ex.Message}"); }
+                }
+            });
+
+            Dispatcher.Invoke(() =>
+            {
+                btnLaunchApp.Content = "📥 Загрузить Ven4Tools";
+                btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(255, 140, 0));
+                btnDeleteClient.IsEnabled = true;
+            });
+
+            AddLog("✅ Удаление завершено");
+        }
+
+        // ── Component check helpers ────────────────────────────────────────────────
+
+        private static bool IsWebView2Installed()
+        {
+            string[] machinePaths = {
+                @"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}",
+                @"SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+            };
+            foreach (var p in machinePaths)
+            {
+                using var k = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(p);
+                if (k?.GetValue("pv") is string v && !string.IsNullOrEmpty(v) && v != "0.0.0.0")
+                    return true;
+            }
+            using var uk = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}");
+            if (uk?.GetValue("pv") is string uv && !string.IsNullOrEmpty(uv) && uv != "0.0.0.0")
+                return true;
+            return false;
+        }
+
+        private static bool IsVcRedistInstalled()
+        {
+            string[] keyPaths = {
+                @"SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\X64",
+                @"SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\X64"
+            };
+            foreach (var p in keyPaths)
+            {
+                using var k = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(p);
+                if (k?.GetValue("Installed") is int v && v == 1)
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool CheckWindowsVersionOk()
+        {
+            var v = Environment.OSVersion.Version;
+            if (v.Major < 10) return false;
+            if (v.Major == 10 && v.Build < 17763) return false;
+            return true;
+        }
+
+        private static (bool Ok, long FreeGB) CheckDiskSpaceOnDrive(string path)
+        {
+            try
+            {
+                string root = Path.GetPathRoot(path) ?? "C:\\";
+                var drive = new DriveInfo(root);
+                long freeGB = drive.AvailableFreeSpace / (1024L * 1024 * 1024);
+                return (freeGB >= 2, freeGB);
+            }
+            catch { return (true, -1); }
+        }
+
+        // ── Component install helpers ──────────────────────────────────────────────
+
+        private async Task InstallWebView2Async()
+        {
+            string tempFile = Path.Combine(Path.GetTempPath(), "MicrosoftEdgeWebview2Setup.exe");
+            AddLog("⬇️ Скачивание WebView2 Runtime...");
+            Dispatcher.Invoke(() => { progressDownload.Value = 0; txtDownloadStatus.Text = "WebView2: скачивание..."; btnLaunchApp.IsEnabled = false; });
+            try
+            {
+                using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+                http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
+                var data = await http.GetByteArrayAsync("https://go.microsoft.com/fwlink/p/?LinkId=2124703");
+                await File.WriteAllBytesAsync(tempFile, data);
+
+                AddLog("📦 Установка WebView2 Runtime...");
+                Dispatcher.Invoke(() => txtDownloadStatus.Text = "WebView2: установка...");
+                var psi = new ProcessStartInfo
+                {
+                    FileName = tempFile,
+                    Arguments = "/silent /install",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                using var proc = Process.Start(psi);
+                if (proc != null) await proc.WaitForExitAsync();
+                Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = "WebView2: готово"; });
+                AddLog("✅ WebView2 Runtime установлен");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка установки WebView2: {ex.Message}");
+                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Ошибка");
+            }
+            finally
+            {
+                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+                Dispatcher.Invoke(() => { progressDownload.Value = 0; btnLaunchApp.IsEnabled = true; });
+            }
+        }
+
+        private async Task InstallVcRedistAsync()
+        {
+            string tempFile = Path.Combine(Path.GetTempPath(), "vc_redist.x64.exe");
+            AddLog("⬇️ Скачивание Visual C++ Redistributable 2015-2022 x64...");
+            Dispatcher.Invoke(() => { progressDownload.Value = 0; txtDownloadStatus.Text = "VC++: скачивание..."; btnLaunchApp.IsEnabled = false; });
+            try
+            {
+                using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+                http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
+
+                using var resp = await http.GetAsync("https://aka.ms/vs/17/release/vc_redist.x64.exe",
+                    HttpCompletionOption.ResponseHeadersRead);
+                resp.EnsureSuccessStatusCode();
+
+                var total = resp.Content.Headers.ContentLength ?? -1L;
+                var read = 0L;
+                var buf = new byte[81920];
+                using (var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
+                using (var stream = await resp.Content.ReadAsStreamAsync())
+                {
+                    int bytes;
+                    while ((bytes = await stream.ReadAsync(buf.AsMemory())) > 0)
+                    {
+                        await fs.WriteAsync(buf.AsMemory(0, bytes));
+                        read += bytes;
+                        if (total > 0)
+                        {
+                            var pct = (int)((double)read / total * 100);
+                            Dispatcher.Invoke(() => { progressDownload.Value = pct; txtDownloadStatus.Text = $"VC++: {pct}%"; });
+                        }
+                    }
+                }
+
+                AddLog("📦 Установка Visual C++ Redistributable...");
+                Dispatcher.Invoke(() => txtDownloadStatus.Text = "VC++: установка...");
+                var psi = new ProcessStartInfo
+                {
+                    FileName = tempFile,
+                    Arguments = "/install /quiet /norestart",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                using var proc = Process.Start(psi);
+                if (proc != null) await proc.WaitForExitAsync();
+                Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = "VC++: готово"; });
+                AddLog("✅ Visual C++ Redistributable установлен");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка установки VC++: {ex.Message}");
+                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Ошибка");
+            }
+            finally
+            {
+                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+                Dispatcher.Invoke(() => { progressDownload.Value = 0; btnLaunchApp.IsEnabled = true; });
+            }
         }
     }
 }
