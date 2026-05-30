@@ -95,12 +95,12 @@ namespace Ven4Tools.Launcher.Services
             var versions = new List<ClientVersionInfo>();
             var releases = await GetAllReleases();
 
+            var firstStable = releases.FirstOrDefault(r => !r.prerelease);
             foreach (var release in releases)
             {
                 var version = release.tag_name?.TrimStart('v');
                 if (string.IsNullOrEmpty(version)) continue;
 
-                // Ищем asset клиента (может быть назван по-разному)
                 var clientAsset = release.assets?.FirstOrDefault(a =>
                     a.name != null &&
                     (a.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
@@ -112,12 +112,13 @@ namespace Ven4Tools.Launcher.Services
                 {
                     versions.Add(new ClientVersionInfo
                     {
-                        Version = version,
-                        DownloadUrl = clientAsset.browser_download_url ?? "",
-                        ReleaseDate = release.published_at,
+                        Version      = version,
+                        DownloadUrl  = clientAsset.browser_download_url ?? "",
+                        ReleaseDate  = release.published_at,
                         ReleaseNotes = release.body,
-                        IsLatest = releases.First() == release,
-                        FileSize = clientAsset.size
+                        IsPreRelease = release.prerelease,
+                        IsLatest     = release == firstStable,
+                        FileSize     = clientAsset.size
                     });
                 }
             }
@@ -146,7 +147,7 @@ public async Task<UpdateInfo?> CheckLauncherUpdate(string currentVersion)
         var launcherAsset = latest.assets?.FirstOrDefault(a =>
             a.name != null &&
             a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase) &&
-            a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+            a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
 
         return new UpdateInfo
         {
@@ -202,46 +203,18 @@ public async Task<string?> GetLatestWingetVersionAsync()
             var parts2 = v2.Split('.');
             for (int i = 0; i < Math.Max(parts1.Length, parts2.Length); i++)
             {
-                int num1 = i < parts1.Length && int.TryParse(parts1[i], out var x) ? x : 0;
-                int num2 = i < parts2.Length && int.TryParse(parts2[i], out var y) ? y : 0;
+                // Отрезаем суффикс вроде "-pre", "-rc1" перед парсингом числа
+                string s1 = i < parts1.Length ? parts1[i].Split('-')[0] : "0";
+                string s2 = i < parts2.Length ? parts2[i].Split('-')[0] : "0";
+                int num1 = int.TryParse(s1, out var x) ? x : 0;
+                int num2 = int.TryParse(s2, out var y) ? y : 0;
                 if (num1 != num2) return num1.CompareTo(num2);
             }
+            // При равных числах стабильная версия выше pre-release ("3.1.0" > "3.1.0-pre")
+            bool v1IsPre = v1.Contains('-');
+            bool v2IsPre = v2.Contains('-');
+            if (v1IsPre != v2IsPre) return v1IsPre ? -1 : 1;
             return 0;
-        }
-
-        public async Task<(bool Success, string? IssueUrl, string? Error)> CreateIssueAsync(
-            string title, string body, string[]? labels = null)
-        {
-            try
-            {
-                string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/issues";
-                var payload = new
-                {
-                    title,
-                    body,
-                    labels = labels ?? new[] { "bug" }
-                };
-                var content = new System.Net.Http.StringContent(
-                    System.Text.Json.JsonSerializer.Serialize(payload),
-                    System.Text.Encoding.UTF8,
-                    "application/json");
-
-                using var response = await httpClient.PostAsync(url, content);
-                string json = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                    return (false, null, $"GitHub API {(int)response.StatusCode}: {json}");
-
-                using var doc = System.Text.Json.JsonDocument.Parse(json);
-                string? issueUrl = doc.RootElement
-                    .TryGetProperty("html_url", out var u) ? u.GetString() : null;
-
-                return (true, issueUrl, null);
-            }
-            catch (Exception ex)
-            {
-                return (false, null, ex.Message);
-            }
         }
 
         public void Dispose()

@@ -32,5 +32,24 @@ namespace Ven4Tools.Models
         
         // Новое поле для локального установщика
         public string? LocalInstallerPath { get; set; }
+
+        public string ChocoId { get; set; } = string.Empty;
+        public string ScoopId { get; set; } = string.Empty;
+
+        public string CategoryString => Category switch
+        {
+            AppCategory.Браузеры        => "Браузеры",
+            AppCategory.Офис            => "Офис",
+            AppCategory.Графика         => "Графика",
+            AppCategory.Разработка      => "Разработка",
+            AppCategory.Мессенджеры     => "Мессенджеры",
+            AppCategory.Мультимедиа     => "Мультимедиа",
+            AppCategory.Системные       => "Системные",
+            AppCategory.ИгровыеСервисы  => "Игровые сервисы",
+            AppCategory.Драйверпаки     => "Драйверпаки",
+            AppCategory.Другое          => "Другое",
+            AppCategory.Пользовательские => "Пользовательские",
+            _                           => ""
+        };
     }
 }

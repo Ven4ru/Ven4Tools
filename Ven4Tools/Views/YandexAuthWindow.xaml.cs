@@ -31,7 +31,7 @@ namespace Ven4Tools.Views
                 // который пробрасывает данные через WebView2 API.
                 await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
                     (function() {
-                        if (location.hostname.endsWith('ven4tools.ru') && location.pathname === '/api/yandex-callback.php') {
+                        if (location.href.indexOf('yandex-callback.php') !== -1) {
                             window.opener = {
                                 postMessage: function(data) {
                                     if (window.chrome && window.chrome.webview) {

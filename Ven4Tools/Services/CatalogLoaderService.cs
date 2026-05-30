@@ -38,6 +38,23 @@ namespace Ven4Tools.Services
 
         public async Task<MasterCatalog> LoadCatalogAsync()
         {
+            // Offline mode — skip remote, use local cache or embedded
+            if (ProfileService.Current.OfflineMode)
+            {
+                if (File.Exists(_localCatalogPath))
+                {
+                    var cat = Deserialize(await File.ReadAllTextAsync(_localCatalogPath));
+                    cat.Source = "cache";
+                    LoadedCatalog = cat;
+                    CatalogReady?.Invoke(cat);
+                    return cat;
+                }
+                var empty = new MasterCatalog { Source = "embedded" };
+                LoadedCatalog = empty;
+                CatalogReady?.Invoke(empty);
+                return empty;
+            }
+
             try
             {
                 Directory.CreateDirectory(

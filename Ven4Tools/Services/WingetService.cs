@@ -37,8 +37,10 @@ namespace Ven4Tools.Services
 
                 using var reg = token.Register(() => { try { process.Kill(); } catch { } });
 
+                var stderrTask = process.StandardError.ReadToEndAsync();
                 string output = await process.StandardOutput.ReadToEndAsync();
                 await process.WaitForExitAsync(token);
+                await stderrTask;
 
                 bool headerPassed = false;
                 foreach (var line in output.Split(
@@ -97,8 +99,10 @@ namespace Ven4Tools.Services
                 using var process = Process.Start(psi);
                 if (process == null) return (null, null);
 
+                var stderrTask = process.StandardError.ReadToEndAsync();
                 string output = await process.StandardOutput.ReadToEndAsync();
                 await process.WaitForExitAsync();
+                await stderrTask;
                 if (process.ExitCode != 0) return (null, null);
 
                 string? name = null, version = null;

@@ -101,10 +101,15 @@ namespace Ven4Tools.Launcher.Services
             var p2 = v2.Split('.');
             for (int i = 0; i < Math.Max(p1.Length, p2.Length); i++)
             {
-                int n1 = i < p1.Length && int.TryParse(p1[i], out var x) ? x : 0;
-                int n2 = i < p2.Length && int.TryParse(p2[i], out var y) ? y : 0;
+                string s1 = i < p1.Length ? p1[i].Split('-')[0] : "0";
+                string s2 = i < p2.Length ? p2[i].Split('-')[0] : "0";
+                int n1 = int.TryParse(s1, out var x) ? x : 0;
+                int n2 = int.TryParse(s2, out var y) ? y : 0;
                 if (n1 != n2) return n1.CompareTo(n2);
             }
+            bool v1Pre = v1.Contains('-');
+            bool v2Pre = v2.Contains('-');
+            if (v1Pre != v2Pre) return v1Pre ? -1 : 1;
             return 0;
         }
 

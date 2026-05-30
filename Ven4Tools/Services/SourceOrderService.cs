@@ -1,0 +1,81 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Newtonsoft.Json;
+using Ven4Tools.Models;
+
+namespace Ven4Tools.Services
+{
+    public static class SourceOrderService
+    {
+        private static readonly string _path = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "source_order.json");
+
+        public static SourceOrderSettings Current { get; private set; } = new();
+
+        // Fires after Save() — CatalogTab subscribes to re-check availability
+        public static event Action? Changed;
+
+        static SourceOrderService() => Load();
+
+        public static void Load()
+        {
+            try
+            {
+                if (File.Exists(_path))
+                {
+                    var loaded = JsonConvert.DeserializeObject<SourceOrderSettings>(
+                        File.ReadAllText(_path));
+                    if (loaded != null)
+                    {
+                        // Ensure all sources are present in GlobalOrder (forward compat)
+                        foreach (var s in SourceOrderSettings.AllSources)
+                            if (!loaded.GlobalOrder.Contains(s))
+                                loaded.GlobalOrder.Add(s);
+                        Current = loaded;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        public static void Save()
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
+                File.WriteAllText(_path, JsonConvert.SerializeObject(Current, Formatting.Indented));
+                Changed?.Invoke();
+            }
+            catch { }
+        }
+
+        // Returns effective source order for a category.
+        // When per_category mode: category primary goes first, rest from GlobalOrder.
+        // Falls back to GlobalOrder when no override set.
+        public static List<string> GetOrderForCategory(string? categoryName = null)
+        {
+            if (Current.Mode == "per_category"
+                && !string.IsNullOrEmpty(categoryName)
+                && Current.CategoryPrimary.TryGetValue(categoryName, out var primary)
+                && !string.IsNullOrEmpty(primary))
+            {
+                var order = new List<string> { primary };
+                foreach (var s in Current.GlobalOrder)
+                    if (s != primary) order.Add(s);
+                return order;
+            }
+            return new List<string>(Current.GlobalOrder);
+        }
+
+        public static void SetCategoryPrimary(string category, string sourceId)
+        {
+            Current.CategoryPrimary[category] = sourceId;
+        }
+
+        public static string GetCategoryPrimary(string category) =>
+            Current.CategoryPrimary.TryGetValue(category, out var v) ? v : "";
+    }
+}

@@ -47,6 +47,7 @@ namespace Ven4Tools.Views.Tabs
         private Action? _profileChangedHandler;
 
         public event Action<string>? LogMessage;
+        public event Action? SwitchToUpdatesRequested;
         
         // Categories visible per mode
         private static readonly HashSet<AppCategory> BasicCategories = new()
@@ -76,19 +77,22 @@ namespace Ven4Tools.Views.Tabs
             Loaded += async (s, e) =>
             {
                 ProfileService.Changed += _profileChangedHandler;
-                UserSession.Changed += OnUserSessionChanged;
-                AppSettings.Changed += OnAppSettingsChanged;
+                UserSession.Changed    += OnUserSessionChanged;
+                AppSettings.Changed    += OnAppSettingsChanged;
+                SourceOrderService.Changed += OnSourceOrderChanged;
                 if (!_initialized)
                 {
                     _initialized = true;
                     await LoadCatalogAndRefreshAsync();
                 }
+                ApplyCategorySourceHeaders();
             };
             Unloaded += (_, _) =>
             {
                 ProfileService.Changed -= _profileChangedHandler;
-                UserSession.Changed -= OnUserSessionChanged;
-                AppSettings.Changed -= OnAppSettingsChanged;
+                UserSession.Changed    -= OnUserSessionChanged;
+                AppSettings.Changed    -= OnAppSettingsChanged;
+                SourceOrderService.Changed -= OnSourceOrderChanged;
                 (installService as IDisposable)?.Dispose();
                 (availabilityChecker as IDisposable)?.Dispose();
             };
@@ -96,11 +100,9 @@ namespace Ven4Tools.Views.Tabs
             btnInstall.Click += InstallSelected_Click;
             btnCancelInstall.Click += CancelInstall_Click;
             btnCheckUpdates.Click += BtnCheckUpdates_Click;
-            btnAddApp.Click += BtnAddApp_Click;
             btnClearAllUserApps.Click += BtnClearAllUserApps_Click;
             btnRefreshCatalog.Click += BtnRefreshCatalog_Click;
             btnRefreshAvailability.Click += RefreshAvailability_Click;
-            btnSuggestAlternatives.Click += BtnSuggestAlternatives_Click;
             cmbAvailableDisks.SelectionChanged += CmbAvailableDisks_SelectionChanged;
             txtSearch.TextChanged += TxtSearch_TextChanged;
             txtSearch.GotFocus += (_, _) => { if (txtSearch.Text == (string)txtSearch.Tag) txtSearch.Text = ""; };
@@ -306,9 +308,10 @@ namespace Ven4Tools.Views.Tabs
 
                 var appsToShow = ProfileService.Current.DefaultSort switch
                 {
-                    "alpha"    => _catalog.Apps.OrderBy(a => a.Name).ToList(),
-                    "category" => _catalog.Apps.OrderBy(a => a.Category).ThenBy(a => a.Name).ToList(),
-                    _          => _catalog.Apps  // "popularity" = редакционный порядок из каталога
+                    "alpha"      => _catalog.Apps.OrderBy(a => a.Name).ToList(),
+                    "category"   => _catalog.Apps.OrderBy(a => a.Category).ThenBy(a => a.Name).ToList(),
+                    "popularity" => _catalog.Apps.OrderByDescending(a => a.Popularity).ThenBy(a => a.Name).ToList(),
+                    _            => _catalog.Apps
                 };
 
                 foreach (var app in appsToShow)
@@ -493,7 +496,9 @@ namespace Ven4Tools.Views.Tabs
                         AlternativeId = catalogApp.WingetId,
                         SilentArgs = "/S",
                         RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
-                        IsUserAdded = false
+                        IsUserAdded = false,
+                        ChocoId = catalogApp.ChocoId,
+                        ScoopId = catalogApp.ScoopId
                     };
                 }
 
@@ -631,7 +636,10 @@ namespace Ven4Tools.Views.Tabs
                                 {
                                     tb.Foreground = Brushes.Gray;
                                     checkBox.ToolTip = $"⏳ Повторная проверка... ({attempt}/3)";
-                                    _ = Task.Delay(2000).ContinueWith(_ => CheckSingleAppAvailability(appId, attempt + 1)).Unwrap();
+                                    var token = cancellationTokenSource?.Token ?? CancellationToken.None;
+                                    _ = Task.Delay(2000, token).ContinueWith(
+                                        t => { if (!t.IsCanceled) return CheckSingleAppAvailability(appId, attempt + 1); return Task.CompletedTask; },
+                                        TaskScheduler.Default).Unwrap();
                                 }
                                 else
                                 {
@@ -763,6 +771,25 @@ namespace Ven4Tools.Views.Tabs
             {
                 MessageBox.Show("Выберите хотя бы одну программу!", "Ven4Tools", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
+            }
+
+            // Restore point — ask only for bulk installs (≥ 2 apps)
+            if (selectedApps.Count >= 2)
+            {
+                var rpAnswer = MessageBox.Show(
+                    $"Будет установлено {selectedApps.Count} приложений.\n\nСоздать точку восстановления Windows перед установкой?",
+                    "Точка восстановления",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question);
+
+                if (rpAnswer == MessageBoxResult.Cancel) return;
+
+                if (rpAnswer == MessageBoxResult.Yes)
+                {
+                    AddLog("🛡️ Создаю точку восстановления...");
+                    bool rpOk = await CreateRestorePointAsync();
+                    AddLog(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
+                }
             }
 
             lstAppProgress.Items.Clear();
@@ -1007,7 +1034,9 @@ namespace Ven4Tools.Views.Tabs
                         InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl) ? new List<string> { catalogApp.DownloadUrl } : new List<string>(),
                         AlternativeId = catalogApp.WingetId,
                         RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
-                        IsUserAdded = false
+                        IsUserAdded = false,
+                        ChocoId = catalogApp.ChocoId,
+                        ScoopId = catalogApp.ScoopId
                     };
                     appManager.AddCatalogApp(appInfo);
                 }
@@ -1251,7 +1280,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 pnlWingetSuggestions.Visibility = Visibility.Visible;
                 pnlWingetResults.Children.Clear();
-                txtWingetStatus.Text = "⏳ Поиск в winget...";
+                txtWingetStatus.Text = "⏳ Поиск по источникам...";
                 txtWingetStatus.Visibility = Visibility.Visible;
 
                 _searchDebounce = new CancellationTokenSource();
@@ -1259,9 +1288,13 @@ namespace Ven4Tools.Views.Tabs
                 _ = Task.Delay(600, token).ContinueWith(async t =>
                 {
                     if (t.IsCanceled) return;
-                    var results = await WingetService.SearchAsync(query, token);
+                    var wingetTask = WingetService.SearchAsync(query, token);
+                    var chocoTask  = PackageManagerService.SearchChocoAsync(query, token);
+                    var scoopTask  = PackageManagerService.SearchScoopAsync(query, token);
+                    await Task.WhenAll(wingetTask, chocoTask, scoopTask);
                     if (!token.IsCancellationRequested)
-                        await Dispatcher.InvokeAsync(() => ShowWingetSuggestions(query, results));
+                        await Dispatcher.InvokeAsync(() =>
+                            ShowAllSuggestions(query, wingetTask.Result, chocoTask.Result, scoopTask.Result));
                 });
             }
             else
@@ -1352,7 +1385,117 @@ namespace Ven4Tools.Views.Tabs
             return null;
         }
 
-        // ── Winget search suggestions ─────────────────────────────────────────
+        // ── Multi-source search suggestions ──────────────────────────────────────
+
+        private void ShowAllSuggestions(
+            string query,
+            List<WingetPackage> winget,
+            List<(string Id, string Name, string Version)> choco,
+            List<(string Id, string Name)> scoop)
+        {
+            pnlWingetResults.Children.Clear();
+            txtWingetStatus.Visibility = Visibility.Collapsed;
+
+            bool any = winget.Count > 0 || choco.Count > 0 || scoop.Count > 0;
+            if (!any)
+            {
+                txtWingetStatus.Text = $"😕 Ничего не найдено по запросу «{query}» ни в одном источнике";
+                txtWingetStatus.Visibility = Visibility.Visible;
+                return;
+            }
+
+            if (winget.Count > 0)
+            {
+                AddSectionHeader("📦 Winget");
+                foreach (var pkg in winget)
+                {
+                    var captureId = pkg.Id; var captureName = pkg.Name;
+                    AddSuggestionRow(pkg.Name, $"winget:{pkg.Id}", pkg.Id,
+                        () => AddWingetSuggestion(captureName, captureId));
+                }
+            }
+
+            if (choco.Count > 0)
+            {
+                AddSectionHeader("🍫 Chocolatey");
+                foreach (var (id, name, ver) in choco)
+                {
+                    var captureId = id;
+                    AddSuggestionRow(name.Length > 0 ? name : id, $"v{ver}", id,
+                        () => AddChocoSuggestion(captureId));
+                }
+            }
+
+            if (scoop.Count > 0)
+            {
+                AddSectionHeader("🪣 Scoop");
+                foreach (var (id, name) in scoop)
+                {
+                    var captureId = id;
+                    AddSuggestionRow(id, "", id,
+                        () => AddScoopSuggestion(captureId));
+                }
+            }
+        }
+
+        private void AddSectionHeader(string title)
+        {
+            var border = new Border
+            {
+                Margin          = new Thickness(0, 6, 0, 2),
+                BorderBrush     = (Brush)FindResource("BorderBrush"),
+                BorderThickness = new Thickness(0, 0, 0, 1),
+                Padding         = new Thickness(0, 0, 0, 2)
+            };
+            border.Child = new TextBlock
+            {
+                Text       = title,
+                FontSize   = 10,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = (Brush)FindResource("TextSecondary")
+            };
+            pnlWingetResults.Children.Add(border);
+        }
+
+        private void AddSuggestionRow(string name, string hint, string tooltip, Action onClick)
+        {
+            var btn = new Button
+            {
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 1, 0, 1), Height = 26,
+                Padding = new Thickness(6, 0, 6, 0),
+                Background = Brushes.Transparent, BorderThickness = new Thickness(0),
+                Cursor = Cursors.Hand, FontSize = 12, ToolTip = tooltip
+            };
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
+            row.Children.Add(new TextBlock { Text = "➕  ", Foreground = (Brush)FindResource("AccentColor"), VerticalAlignment = VerticalAlignment.Center });
+            row.Children.Add(new TextBlock { Text = name, Foreground = (Brush)FindResource("TextPrimary"), VerticalAlignment = VerticalAlignment.Center });
+            if (!string.IsNullOrEmpty(hint))
+                row.Children.Add(new TextBlock { Text = $"  {hint}", Foreground = (Brush)FindResource("TextSecondary"), FontSize = 10, VerticalAlignment = VerticalAlignment.Center });
+            btn.Content = row;
+            btn.Click += (_, _) => onClick();
+            pnlWingetResults.Children.Add(btn);
+        }
+
+        private void AddChocoSuggestion(string id)
+        {
+            if (appManager.GetAppById(id) != null) { AddLog($"ℹ️ {id} уже есть в списке"); return; }
+            var app = new AppInfo { Id = id, DisplayName = id, Category = AppCategory.Другое, ChocoId = id, InstallerUrls = new List<string>(), IsUserAdded = true };
+            appManager.AddUserApp(app);
+            AddUserAppToUI(app);
+            AddLog($"➕ Добавлено из Chocolatey: {id}");
+        }
+
+        private void AddScoopSuggestion(string id)
+        {
+            if (appManager.GetAppById(id) != null) { AddLog($"ℹ️ {id} уже есть в списке"); return; }
+            var app = new AppInfo { Id = id, DisplayName = id, Category = AppCategory.Другое, ScoopId = id, InstallerUrls = new List<string>(), IsUserAdded = true };
+            appManager.AddUserApp(app);
+            AddUserAppToUI(app);
+            AddLog($"➕ Добавлено из Scoop: {id}");
+        }
+
+        // ── Winget search suggestions (legacy) ────────────────────────────────────
         private void ShowWingetSuggestions(string query, List<WingetPackage> packages)
         {
             pnlWingetResults.Children.Clear();
@@ -1420,41 +1563,48 @@ namespace Ven4Tools.Views.Tabs
 
         private async void AddWingetSuggestion(string name, string id)
         {
-            if (!UserSession.IsLoggedIn)
+            try
             {
-                var prompt = MessageBox.Show(
-                    $"Добавить «{name}» в локальный список?\n\nДля синхронизации между устройствами войдите в аккаунт.",
-                    "Добавить приложение", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (prompt != MessageBoxResult.Yes) return;
+                if (!UserSession.IsLoggedIn)
+                {
+                    var prompt = MessageBox.Show(
+                        $"Добавить «{name}» в локальный список?\n\nДля синхронизации между устройствами войдите в аккаунт.",
+                        "Добавить приложение", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (prompt != MessageBoxResult.Yes) return;
+                }
+
+                if (appManager.GetAppById(id) != null)
+                {
+                    AddLog($"ℹ️ {name} уже есть в списке");
+                    return;
+                }
+
+                var newApp = new AppInfo
+                {
+                    Id = id,
+                    DisplayName = name,
+                    Category = AppCategory.Другое,
+                    AlternativeId = id,
+                    InstallerUrls = new List<string>(),
+                    SilentArgs = "",
+                    IsUserAdded = true
+                };
+
+                appManager.AddUserApp(newApp);
+                AddUserAppToUI(newApp);
+
+                if (UserSession.IsLoggedIn)
+                    await _userAppsService.SaveAsync(UserSession.UserId, newApp);
+
+                AddLog($"➕ Добавлено из winget: {name} ({id})");
+
+                txtSearch.Text = (string)txtSearch.Tag;
+                HideWingetSuggestions();
             }
-
-            if (appManager.GetAppById(id) != null)
+            catch (Exception ex)
             {
-                AddLog($"ℹ️ {name} уже есть в списке");
-                return;
+                AddLog($"❌ Ошибка добавления приложения: {ex.Message}");
             }
-
-            var newApp = new AppInfo
-            {
-                Id = id,
-                DisplayName = name,
-                Category = AppCategory.Другое,
-                AlternativeId = id,
-                InstallerUrls = new List<string>(),
-                SilentArgs = "",
-                IsUserAdded = true
-            };
-
-            appManager.AddUserApp(newApp);
-            AddUserAppToUI(newApp);
-
-            if (UserSession.IsLoggedIn)
-                await _userAppsService.SaveAsync(UserSession.UserId, newApp);
-
-            AddLog($"➕ Добавлено из winget: {name} ({id})");
-
-            txtSearch.Text = (string)txtSearch.Tag;
-            HideWingetSuggestions();
         }
 
         // ── Loading indicator ─────────────────────────────────────────────────
@@ -1572,65 +1722,10 @@ namespace Ven4Tools.Views.Tabs
         }
 
         // ── Update check ──────────────────────────────────────────────────────
-        private async void BtnCheckUpdates_Click(object sender, RoutedEventArgs e)
+        private void BtnCheckUpdates_Click(object sender, RoutedEventArgs e)
         {
-            btnCheckUpdates.IsEnabled = false;
-            AddLog("🔔 Проверка обновлений через winget...");
-            try
-            {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "winget",
-                    Arguments = "upgrade --include-unknown --source winget",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
-
-                using var process = Process.Start(psi);
-                if (process == null) { AddLog("❌ Не удалось запустить winget"); return; }
-
-                string output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
-
-                var lines = output.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-                int dataStart = -1;
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    if (lines[i].TrimStart().StartsWith("---")) { dataStart = i + 1; break; }
-                }
-
-                var upgradable = dataStart >= 0
-                    ? lines.Skip(dataStart)
-                           .Where(l => !string.IsNullOrWhiteSpace(l) && l.Contains("  "))
-                           .Select(l => l.Trim())
-                           .Where(l => l.Length > 0)
-                           .ToList()
-                    : new List<string>();
-
-                if (upgradable.Count > 0)
-                {
-                    AddLog($"🔔 Доступно обновлений: {upgradable.Count}");
-                    foreach (var line in upgradable.Take(10))
-                        AddLog($"  • {line}");
-                    if (upgradable.Count > 10)
-                        AddLog($"  ... и ещё {upgradable.Count - 10}");
-                }
-                else
-                {
-                    AddLog("✅ Все установленные приложения актуальны");
-                }
-            }
-            catch (Exception ex)
-            {
-                AddLog($"⚠️ Ошибка проверки обновлений: {ex.Message}");
-            }
-            finally
-            {
-                btnCheckUpdates.IsEnabled = true;
-            }
+            AddLog("🔔 Переход к управлению обновлениями...");
+            SwitchToUpdatesRequested?.Invoke();
         }
 
         public void AddLog(string message)
@@ -1641,6 +1736,229 @@ namespace Ven4Tools.Views.Tabs
                 txtInstallLog.ScrollToEnd();
             });
             LogMessage?.Invoke(message);
+        }
+
+        // ── Local installer (drag & drop) ────────────────────────────────────────
+
+        public void AddLocalInstallerApp(AppInfo app)
+        {
+            appManager.AddUserApp(app);
+            AddUserAppToUI(app);
+            AddLog($"📦 Локальный установщик добавлен: {app.DisplayName}");
+        }
+
+        // ── Per-category source headers ───────────────────────────────────────────
+
+        private static readonly Dictionary<AppCategory, string> CategoryNames = new()
+        {
+            [AppCategory.Браузеры]         = "Браузеры",
+            [AppCategory.Офис]             = "Офис",
+            [AppCategory.Графика]          = "Графика",
+            [AppCategory.Разработка]       = "Разработка",
+            [AppCategory.Мессенджеры]      = "Мессенджеры",
+            [AppCategory.Мультимедиа]      = "Мультимедиа",
+            [AppCategory.Системные]        = "Системные",
+            [AppCategory.ИгровыеСервисы]   = "Игровые сервисы",
+            [AppCategory.Драйверпаки]      = "Драйверпаки",
+            [AppCategory.Другое]           = "Другое",
+            [AppCategory.Пользовательские] = "Пользовательские",
+        };
+
+        private void ApplyCategorySourceHeaders()
+        {
+            bool perCategory = SourceOrderService.Current.Mode == "per_category";
+
+            foreach (var (category, panel) in categoryPanels)
+            {
+                if (panel.Parent is not Expander expander) continue;
+                if (!CategoryNames.TryGetValue(category, out var catName)) continue;
+
+                if (!perCategory)
+                {
+                    // Restore plain string header (original icon + name)
+                    expander.Header = GetOriginalExpanderHeader(category);
+                    continue;
+                }
+
+                // Build compound header: [Icon + Name] .......... [Source ComboBox]
+                var grid = new Grid();
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var label = new TextBlock
+                {
+                    Text = GetOriginalExpanderHeader(category),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Foreground = (System.Windows.Media.Brush)Application.Current.Resources["TextPrimary"],
+                    FontWeight = FontWeights.SemiBold,
+                    FontSize   = 13
+                };
+                Grid.SetColumn(label, 0);
+
+                var combo = new ComboBox
+                {
+                    Width   = 160,
+                    Height  = 24,
+                    FontSize = 11,
+                    Margin  = new Thickness(8, 0, 4, 0),
+                    Tag     = catName
+                };
+
+                combo.Items.Add(new ComboBoxItem { Content = "🔀 Глобальный", Tag = "" });
+                foreach (var srcId in SourceOrderSettings.AllSources)
+                    combo.Items.Add(new ComboBoxItem { Content = SourceOrderSettings.Labels[srcId], Tag = srcId });
+
+                string current = SourceOrderService.GetCategoryPrimary(catName);
+                combo.SelectedIndex = string.IsNullOrEmpty(current)
+                    ? 0
+                    : SourceOrderSettings.AllSources.IndexOf(current) + 1;
+
+                combo.SelectionChanged += (s, _) =>
+                {
+                    if (combo.SelectedItem is ComboBoxItem item)
+                    {
+                        string src = item.Tag?.ToString() ?? "";
+                        SourceOrderService.SetCategoryPrimary(catName, src);
+                    }
+                };
+
+                Grid.SetColumn(combo, 1);
+                grid.Children.Add(label);
+                grid.Children.Add(combo);
+                expander.Header = grid;
+            }
+        }
+
+        private static string GetOriginalExpanderHeader(AppCategory cat) => cat switch
+        {
+            AppCategory.Браузеры         => "🌐 Браузеры",
+            AppCategory.Офис             => "📁 Офис",
+            AppCategory.Графика          => "🎨 Графика",
+            AppCategory.Разработка       => "💻 Разработка",
+            AppCategory.Мессенджеры      => "💬 Мессенджеры",
+            AppCategory.Мультимедиа      => "🎵 Мультимедиа",
+            AppCategory.Системные        => "⚙️ Системные",
+            AppCategory.ИгровыеСервисы   => "🎮 Игровые сервисы",
+            AppCategory.Драйверпаки      => "🖨️ Драйверпаки",
+            AppCategory.Другое           => "📎 Другое",
+            AppCategory.Пользовательские => "👤 Пользовательские",
+            _                            => cat.ToString()
+        };
+
+        private void OnSourceOrderChanged()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                ApplyCategorySourceHeaders();
+                RefreshAvailability_Click(this, new RoutedEventArgs());
+            });
+        }
+
+        // ── Export / Import app list ──────────────────────────────────────────────
+
+        private void BtnExportList_Click(object sender, RoutedEventArgs e)
+        {
+            var selected = GetSelectedApps();
+            if (selected.Count == 0)
+            {
+                MessageBox.Show("Нет выбранных приложений для экспорта.", "Экспорт",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title      = "Экспорт списка приложений",
+                Filter     = "JSON файлы (*.json)|*.json",
+                FileName   = $"ven4tools_list_{DateTime.Now:yyyyMMdd_HHmm}.json",
+                DefaultExt = ".json"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            try
+            {
+                var payload = new
+                {
+                    exported_at = DateTime.Now.ToString("o"),
+                    app_ids     = selected.OrderBy(id => id).ToList()
+                };
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(payload, Newtonsoft.Json.Formatting.Indented);
+                File.WriteAllText(dlg.FileName, json, System.Text.Encoding.UTF8);
+                AddLog($"📤 Экспорт: {selected.Count} приложений → {Path.GetFileName(dlg.FileName)}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при сохранении:\n{ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnImportList_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title  = "Импорт списка приложений",
+                Filter = "JSON файлы (*.json)|*.json"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            try
+            {
+                string json = File.ReadAllText(dlg.FileName, System.Text.Encoding.UTF8);
+                var doc = Newtonsoft.Json.Linq.JObject.Parse(json);
+                var ids = doc["app_ids"]?.ToObject<List<string>>()
+                       ?? doc["apps"]?.ToObject<List<string>>()
+                       ?? new List<string>();
+
+                int matched = 0, skipped = 0;
+                foreach (var id in ids)
+                {
+                    if (appCheckBoxes.TryGetValue(id, out var cb))
+                    {
+                        cb.IsChecked = true;
+                        matched++;
+                    }
+                    else
+                    {
+                        skipped++;
+                    }
+                }
+
+                AddLog($"📥 Импорт: отмечено {matched}, не найдено в каталоге: {skipped}");
+                if (skipped > 0)
+                    MessageBox.Show($"Отмечено: {matched}\nНе найдено в текущем каталоге: {skipped}",
+                        "Импорт завершён", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка чтения файла:\n{ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // ── Restore point ─────────────────────────────────────────────────────────
+
+        private static async Task<bool> CreateRestorePointAsync()
+        {
+            try
+            {
+                var psi = new ProcessStartInfo("powershell.exe",
+                    "-NoProfile -ExecutionPolicy Bypass -Command \"Checkpoint-Computer -Description 'Ven4Tools — перед установкой' -RestorePointType MODIFY_SETTINGS\"")
+                {
+                    UseShellExecute        = false,
+                    CreateNoWindow         = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true
+                };
+                using var p = Process.Start(psi);
+                if (p == null) return false;
+                await Task.WhenAll(
+                    p.StandardOutput.ReadToEndAsync(),
+                    p.StandardError.ReadToEndAsync());
+                await p.WaitForExitAsync();
+                return p.ExitCode == 0;
+            }
+            catch { return false; }
         }
     }
 }

@@ -11,7 +11,6 @@
         <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="TextSecondary" Color="#CCCCCC"/>
         <SolidColorBrush x:Key="BorderBrush" Color="#3D3D3D"/>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
     
     <Grid>
@@ -44,6 +43,10 @@
                             Click="BtnLaunchApp_Click"/>
                     <Button x:Name="btnChangelog" Content="📋 История изменений"
                             Height="40" Margin="0,5" Click="BtnChangelog_Click"/>
+                    <Button x:Name="btnDeleteClient" Content="🗑️ Удалить клиент"
+                            Height="40" Margin="0,5"
+                            Background="#B71C1C" Foreground="White"
+                            Click="BtnDeleteClient_Click"/>
                     <Button x:Name="btnExit" Content="❌ Выход"
                             Height="40" Margin="0,5" Click="BtnExit_Click"/>
                 </StackPanel>
@@ -66,10 +69,6 @@
                                   Content="Запускать при старте Windows"
                                   Foreground="#CCCCCC" Margin="0,3"
                                   Click="ChkAutostart_Click"/>
-                        <CheckBox x:Name="chkShowPreRelease"
-                                  Content="🧪 Показывать pre-release версии"
-                                  Foreground="#FF9800" Margin="0,3"
-                                  Click="ChkShowPreRelease_Click"/>
                     </StackPanel>
                 </Border>
 
@@ -79,21 +78,8 @@
                         <TextBlock Text="📦 Выбор версии" FontWeight="Bold"
                                    Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8"/>
                         <ComboBox x:Name="cmbVersions" Height="30" Margin="0,0,0,5"
-                                  SelectionChanged="CmbVersions_SelectionChanged">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Version}" VerticalAlignment="Center"/>
-                                        <Border Visibility="{Binding IsPreRelease, Converter={StaticResource BoolToVis}}"
-                                                Background="#FF9800" CornerRadius="3"
-                                                Padding="4,1" Margin="6,0,0,0">
-                                            <TextBlock Text="PRE" FontSize="9" FontWeight="Bold"
-                                                       Foreground="White" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                                  DisplayMemberPath="Version"
+                                  SelectionChanged="CmbVersions_SelectionChanged"/>
                         <TextBlock x:Name="txtVersionInfo" Text="Выберите версию"
                                    Foreground="{DynamicResource TextSecondary}"
                                    FontSize="10" TextWrapping="Wrap" Margin="0,5,0,0"/>

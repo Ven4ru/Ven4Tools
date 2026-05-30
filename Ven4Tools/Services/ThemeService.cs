@@ -5,10 +5,37 @@ namespace Ven4Tools.Services
 {
     public static class ThemeService
     {
+        public static readonly (string Name, string Hex)[] Palettes =
+        {
+            ("Синий",      "#0078D4"),
+            ("Зелёный",    "#00C853"),
+            ("Фиолетовый", "#7C4DFF"),
+            ("Красный",    "#F44336"),
+            ("Оранжевый",  "#FF6D00"),
+            ("Бирюзовый",  "#00BCD4"),
+            ("Розовый",    "#E91E8C"),
+            ("Янтарный",   "#FFB300"),
+        };
+
         public static void Apply(string theme)
         {
             if (theme == "web") ApplyWeb();
             else ApplyDark(theme != "light");
+
+            // Override accent if user picked custom palette
+            var hex = ProfileService.Current.AccentColorHex;
+            if (!string.IsNullOrEmpty(hex))
+                ApplyAccent(hex);
+        }
+
+        public static void ApplyAccent(string hex)
+        {
+            try
+            {
+                var color = (Color)ColorConverter.ConvertFromString(hex);
+                Application.Current.Resources["AccentColor"] = new SolidColorBrush(color);
+            }
+            catch { }
         }
 
         public static void ApplyWeb()
