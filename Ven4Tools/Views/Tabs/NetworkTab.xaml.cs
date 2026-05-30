@@ -233,9 +233,12 @@ namespace Ven4Tools.Views.Tabs
                 using var process = Process.Start(psi);
                 if (process == null) { AddLog("❌ Не удалось запустить nslookup"); return; }
 
-                string output = await process.StandardOutput.ReadToEndAsync();
-                string error  = await process.StandardError.ReadToEndAsync();
+                var outputTask = process.StandardOutput.ReadToEndAsync();
+                var errorTask  = process.StandardError.ReadToEndAsync();
+                await Task.WhenAll(outputTask, errorTask);
                 await process.WaitForExitAsync();
+                string output = outputTask.Result;
+                string error  = errorTask.Result;
 
                 foreach (var line in (output + error).Split('\n'))
                 {
