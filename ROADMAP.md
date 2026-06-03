@@ -2,7 +2,8 @@
 
 > Актуально на: июнь 2026  
 > Текущая версия: **3.1.0** (Latest, stable)  
-> В разработке (в полку): **4.0.0 — VenRemote**  
+> В разработке: **3.2.0**  
+> В полку: **4.0.0 — VenRemote**  
 > Целевая версия: **5.0.0**
 
 ---
@@ -171,11 +172,12 @@
 | Точка восстановления (WMI) | ✅ Готово | 3.1.0 |
 | HistoryTab + InstallHistoryService | ✅ Готово | 3.1.0 |
 | Push-уведомления (admin → launcher) | ✅ Готово | 3.1.0 |
-| Chocolatey / Scoop | ✅ Готово | 3.2.0 |
-| SourceOrderService | ✅ Готово | 3.2.0 |
-| OfflineService | ✅ Готово | 3.2.0 |
-| LocalInstallerDialog | ✅ Готово | 3.2.0 |
-| ConnectivityMonitor | ✅ Готово | 3.2.0 |
+| Chocolatey / Scoop | ✅ В 3.2.0 | 3.2.0 |
+| SourceOrderService | ✅ В 3.2.0 | 3.2.0 |
+| OfflineService | ✅ В 3.2.0 | 3.2.0 |
+| LocalInstallerDialog + install execution | ✅ В 3.2.0 | 3.2.0 |
+| Логирование установок | ✅ В 3.2.0 | 3.2.0 |
+| ConnectivityMonitor | ✅ В 3.2.0 | 3.2.0 |
 | MiniWindow (Ctrl+M) | ✅ Готово | 3.3.0 |
 | GamificationService | ✅ Готово | 3.4.0 |
 | ProfileTab | ✅ Готово | 3.4.0 |
