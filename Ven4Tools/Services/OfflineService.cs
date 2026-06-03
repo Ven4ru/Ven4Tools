@@ -183,7 +183,11 @@ namespace Ven4Tools.Services
 
                 while (!p.HasExited)
                 {
-                    token.ThrowIfCancellationRequested();
+                    if (token.IsCancellationRequested)
+                    {
+                        try { p.Kill(entireProcessTree: true); } catch { }
+                        token.ThrowIfCancellationRequested();
+                    }
                     await Task.Delay(150, token);
                 }
 
@@ -195,7 +199,10 @@ namespace Ven4Tools.Services
             catch (Exception ex) { progress?.Report(($"❌ {app.Name}: {ex.Message}", 0)); return false; }
         }
 
+        private static readonly HashSet<char> _invalidChars =
+            new(Path.GetInvalidFileNameChars());
+
         private static string SanitizeId(string id) =>
-            string.Concat(id.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+            string.Concat(id.Select(c => _invalidChars.Contains(c) ? '_' : c));
     }
 }
