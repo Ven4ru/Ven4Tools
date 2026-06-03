@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Management;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -264,7 +265,9 @@ namespace Ven4Tools.Views.Tabs
         private void UpdateUpdateSelectedButton()
         {
             var visible = lstApps.ItemsSource as IEnumerable<InstalledApp>;
-            btnUpdateSelected.IsEnabled = visible?.Any(a => a.IsSelected && a.HasUpdate) == true;
+            var selected = visible?.Where(a => a.IsSelected).ToList();
+            btnUpdateSelected.IsEnabled    = selected?.Any(a => a.HasUpdate) == true;
+            btnUninstallSelected.IsEnabled = selected?.Count > 0;
         }
 
         private async void BtnUpdate_Click(object sender, RoutedEventArgs e)
@@ -304,7 +307,7 @@ namespace Ven4Tools.Views.Tabs
                 if (rpAnswer == MessageBoxResult.Yes)
                 {
                     Log("🛡️ Создаю точку восстановления...");
-                    bool rpOk = await CreateRestorePointAsync();
+                    bool rpOk = await TryCreateRestorePointAsync("Ven4Tools — перед массовым обновлением");
                     Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
                 }
             }
@@ -481,27 +484,103 @@ namespace Ven4Tools.Views.Tabs
 
         private void Log(string msg) => LogMessage?.Invoke(msg);
 
-        private static async Task<bool> CreateRestorePointAsync()
+        private static async Task<bool> TryCreateRestorePointAsync(string description)
         {
             try
             {
-                var psi = new ProcessStartInfo("powershell.exe",
-                    "-NoProfile -ExecutionPolicy Bypass -Command \"Checkpoint-Computer -Description 'Ven4Tools — перед обновлением' -RestorePointType MODIFY_SETTINGS\"")
+                await Task.Run(() =>
                 {
-                    UseShellExecute        = false,
-                    CreateNoWindow         = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError  = true
-                };
-                using var p = Process.Start(psi);
-                if (p == null) return false;
-                await Task.WhenAll(
-                    p.StandardOutput.ReadToEndAsync(),
-                    p.StandardError.ReadToEndAsync());
-                await p.WaitForExitAsync();
-                return p.ExitCode == 0;
+                    using var mc = new ManagementClass(@"\\localhost\root\default", "SystemRestore", new ObjectGetOptions());
+                    var inParams = mc.GetMethodParameters("CreateRestorePoint");
+                    inParams["Description"]      = description;
+                    inParams["RestorePointType"] = 12;
+                    inParams["EventType"]        = 100;
+                    mc.InvokeMethod("CreateRestorePoint", inParams, null);
+                });
+                return true;
             }
             catch { return false; }
         }
+
+        // ── Групповое удаление ────────────────────────────────────────────────
+
+        private async void BtnUninstallSelected_Click(object sender, RoutedEventArgs e)
+        {
+            var selected = (lstApps.ItemsSource as IEnumerable<InstalledApp>)
+                ?.Where(a => a.IsSelected && a.CanAct).ToList();
+            if (selected == null || selected.Count == 0) return;
+
+            string list = string.Join("\n", selected.Take(10).Select(a => $"  • {a.Name}"));
+            if (selected.Count > 10) list += $"\n  ... и ещё {selected.Count - 10}";
+
+            var res = MessageBox.Show(
+                $"Удалить {selected.Count} приложений?\n\n{list}",
+                "Подтверждение удаления", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (res != MessageBoxResult.Yes) return;
+
+            btnUninstallSelected.IsEnabled = false;
+
+            Log("🔒 Создание точки восстановления системы...");
+            bool rpOk = await TryCreateRestorePointAsync("Ven4Tools — перед групповым удалением");
+            Log(rpOk ? "✅ Точка восстановления создана" : "⚠ Точка восстановления не создана — продолжаем");
+
+            foreach (var app in selected)
+                await UninstallAppAsync(app);
+
+            btnUninstallSelected.IsEnabled = selected.Any(a => a.CanAct);
+        }
+
+        // ── Экспорт / Импорт ─────────────────────────────────────────────────
+
+        private async void BtnExport_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title    = "Экспорт списка приложений",
+                Filter   = "Winget package list (*.winget)|*.winget|JSON (*.json)|*.json",
+                FileName = $"Ven4Tools-export-{DateTime.Now:yyyy-MM-dd}"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            btnExport.IsEnabled = false;
+            Log($"📤 Экспорт в {System.IO.Path.GetFileName(dlg.FileName)}...");
+            try
+            {
+                string output = await Task.Run(() =>
+                    RunWinget($"export -o \"{dlg.FileName}\" --accept-source-agreements"));
+                bool ok = System.IO.File.Exists(dlg.FileName);
+                Log(ok ? $"✅ Экспортировано → {dlg.FileName}"
+                       : $"⚠ winget: {output.Trim().Split('\n').LastOrDefault()}");
+            }
+            catch (Exception ex) { Log($"❌ Ошибка экспорта: {ex.Message}"); }
+            finally { btnExport.IsEnabled = true; }
+        }
+
+        private async void BtnImport_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title  = "Импорт списка приложений",
+                Filter = "Winget package list (*.winget)|*.winget|JSON (*.json)|*.json"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            btnImport.IsEnabled = false;
+            Log($"📥 Импорт из {System.IO.Path.GetFileName(dlg.FileName)}...");
+            Log("⏳ Это может занять несколько минут...");
+            try
+            {
+                string output = await Task.Run(() =>
+                    RunWinget($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements"));
+                bool ok = output.Contains("успешно") || output.Contains("successfully") || output.Contains("All packages");
+                Log(ok ? "✅ Импорт завершён"
+                       : $"⚠ {output.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l))}");
+                if (ok) await LoadAppsAsync();
+            }
+            catch (Exception ex) { Log($"❌ Ошибка импорта: {ex.Message}"); }
+            finally { btnImport.IsEnabled = true; }
+        }
+
+        // ── Вспомогательные ───────────────────────────────────────────────────
     }
 }

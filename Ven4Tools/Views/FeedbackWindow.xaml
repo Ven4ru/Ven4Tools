@@ -1,0 +1,95 @@
+<Window x:Class="Ven4Tools.Views.FeedbackWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ven4Tools — Оставить отзыв" Height="420" Width="520"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        Background="{DynamicResource WindowBackground}">
+
+    <Grid Margin="28,24,28,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="🧪" FontSize="22" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="txtTitle"
+                               FontSize="16" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="Ваш отзыв помогает улучшить продукт"
+                               FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                               Margin="0,3,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Stars -->
+        <StackPanel Grid.Row="2">
+            <TextBlock Text="Оцените эту версию:" FontSize="12"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+            <StackPanel x:Name="pnlStars" Orientation="Horizontal">
+                <Button x:Name="star1" Content="★" Tag="1" FontSize="28" Width="44"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        Foreground="#444" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
+                <Button x:Name="star2" Content="★" Tag="2" FontSize="28" Width="44"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        Foreground="#444" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
+                <Button x:Name="star3" Content="★" Tag="3" FontSize="28" Width="44"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        Foreground="#444" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
+                <Button x:Name="star4" Content="★" Tag="4" FontSize="28" Width="44"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        Foreground="#444" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
+                <Button x:Name="star5" Content="★" Tag="5" FontSize="28" Width="44"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        Foreground="#444" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Comment label -->
+        <TextBlock Grid.Row="4" FontSize="12"
+                   Foreground="{DynamicResource TextSecondary}"
+                   Text="Что понравилось? Что стоит улучшить? (необязательно)"/>
+
+        <!-- Comment input -->
+        <TextBox Grid.Row="6"
+                 x:Name="txtFeedback"
+                 TextWrapping="Wrap" AcceptsReturn="True"
+                 VerticalScrollBarVisibility="Auto"
+                 Padding="10,8" FontSize="13"
+                 Background="{DynamicResource CardBackground}"
+                 Foreground="{DynamicResource TextPrimary}"
+                 BorderBrush="{DynamicResource BorderBrush}"
+                 BorderThickness="1"/>
+
+        <!-- Buttons -->
+        <Grid Grid.Row="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Пропустить" Height="36"
+                    Background="Transparent"
+                    Foreground="{DynamicResource TextSecondary}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                    Click="BtnSkip_Click"/>
+            <Button Grid.Column="2" x:Name="btnSend"
+                    Content="📨 Отправить отзыв" Height="36" Padding="20,0"
+                    Background="{DynamicResource AccentColor}"
+                    Foreground="White" FontWeight="SemiBold" BorderThickness="0"
+                    IsEnabled="False"
+                    Click="BtnSend_Click"/>
+        </Grid>
+    </Grid>
+</Window>

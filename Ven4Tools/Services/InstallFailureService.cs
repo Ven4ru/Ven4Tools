@@ -1,0 +1,87 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using Newtonsoft.Json;
+
+namespace Ven4Tools.Services
+{
+    public static class InstallFailureService
+    {
+        public static readonly string FailuresPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "failed_installs.json");
+
+        private static readonly string _version =
+            Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "unknown";
+
+        public static void Append(string appName, string appId, string method, string error)
+        {
+            try
+            {
+                var list = ReadAll();
+                list.Add(new InstallFailure
+                {
+                    SessionId   = CrashReportService.SessionId,
+                    MachineName = Environment.MachineName,
+                    AppName     = appName,
+                    AppId       = appId,
+                    Method      = method,
+                    Error       = error,
+                    Version     = _version,
+                    OsVersion   = Environment.OSVersion.ToString(),
+                    Timestamp   = DateTime.UtcNow.ToString("O"),
+                    Reported    = false
+                });
+                Save(list);
+            }
+            catch { }
+        }
+
+        public static List<InstallFailure> GetUnreported()
+        {
+            try { return ReadAll().FindAll(f => !f.Reported); }
+            catch { return new(); }
+        }
+
+        public static void MarkAllReported()
+        {
+            try
+            {
+                var list = ReadAll();
+                list.ForEach(f => f.Reported = true);
+                Save(list);
+            }
+            catch { }
+        }
+
+        private static List<InstallFailure> ReadAll()
+        {
+            if (!File.Exists(FailuresPath)) return new();
+            try { return JsonConvert.DeserializeObject<List<InstallFailure>>(
+                File.ReadAllText(FailuresPath)) ?? new(); }
+            catch { return new(); }
+        }
+
+        private static void Save(List<InstallFailure> list)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(FailuresPath)!);
+            File.WriteAllText(FailuresPath,
+                JsonConvert.SerializeObject(list, Formatting.Indented));
+        }
+    }
+
+    public class InstallFailure
+    {
+        public string SessionId   { get; set; } = "";
+        public string MachineName { get; set; } = "";
+        public string AppName     { get; set; } = "";
+        public string AppId       { get; set; } = "";
+        public string Method      { get; set; } = "";
+        public string Error       { get; set; } = "";
+        public string Version     { get; set; } = "";
+        public string OsVersion   { get; set; } = "";
+        public string Timestamp   { get; set; } = "";
+        public bool   Reported    { get; set; }
+    }
+}

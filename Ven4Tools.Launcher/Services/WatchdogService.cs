@@ -1,0 +1,133 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Threading;
+using Newtonsoft.Json;
+using Ven4Tools.Launcher;
+
+namespace Ven4Tools.Launcher.Services
+{
+    public sealed class WatchdogService : IDisposable
+    {
+        private static readonly string HeartbeatPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "heartbeat.json");
+
+        private static readonly string CrashPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "crash_last.json");
+
+        private const int CheckIntervalSec  = 10;
+        private const int FreezeTimeoutSec  = 20;
+
+        private readonly Process _process;
+        private readonly Timer   _timer;
+        private bool _disposed;
+
+        // Клиент завис — лаунчер предлагает завершить
+        public event Action<CrashReport>? ClientFrozen;
+
+        // Клиент убит извне (TaskMgr, kill) без крэш-файла
+        public event Action<CrashReport>? ClientKilledWithoutCrash;
+
+        public WatchdogService(Process process)
+        {
+            _process = process;
+            _timer   = new Timer(OnTick, null,
+                TimeSpan.FromSeconds(CheckIntervalSec),
+                TimeSpan.FromSeconds(CheckIntervalSec));
+        }
+
+        private void OnTick(object? _)
+        {
+            if (_disposed) return;
+            try
+            {
+                // Процесс уже завершился — Exited событие разберётся
+                if (_process.HasExited) return;
+
+                var beat = ReadHeartbeat();
+                if (beat == null) return;
+
+                double age = (DateTime.UtcNow - beat.Value.timestamp).TotalSeconds;
+                if (age < FreezeTimeoutSec) return;
+
+                // Клиент завис
+                Stop();
+
+                var report = new CrashReport
+                {
+                    SessionId     = ExtractSessionId(),
+                    MachineName   = Environment.MachineName,
+                    Version       = beat.Value.version,
+                    Timestamp     = DateTime.UtcNow.ToString("O"),
+                    OsVersion     = Environment.OSVersion.ToString(),
+                    ExceptionType = "ProcessFrozen",
+                    Message       = $"Клиент не отвечал {(int)age} сек (PID {beat.Value.pid})",
+                    StackTrace    = $"Последний heartbeat: {beat.Value.timestamp:HH:mm:ss} UTC",
+                    Reported      = false
+                };
+
+                ClientFrozen?.Invoke(report);
+            }
+            catch { }
+        }
+
+        // Вызывается из OnClientProcessExited если crash_last.json не найден
+        public void ReportKill(int exitCode)
+        {
+            if (_disposed) return;
+            var report = new CrashReport
+            {
+                SessionId     = ExtractSessionId(),
+                MachineName   = Environment.MachineName,
+                Version       = ReadHeartbeat()?.version ?? "unknown",
+                Timestamp     = DateTime.UtcNow.ToString("O"),
+                OsVersion     = Environment.OSVersion.ToString(),
+                ExceptionType = "ProcessKilled",
+                Message       = $"Клиент завершён принудительно (код выхода: {exitCode})",
+                StackTrace    = "Процесс был убит извне — стек недоступен.",
+                Reported      = false
+            };
+            ClientKilledWithoutCrash?.Invoke(report);
+        }
+
+        private static (DateTime timestamp, int pid, string version)? ReadHeartbeat()
+        {
+            try
+            {
+                if (!File.Exists(HeartbeatPath)) return null;
+                var obj = JsonConvert.DeserializeObject<dynamic>(
+                    File.ReadAllText(HeartbeatPath));
+                if (obj == null) return null;
+                DateTime ts      = DateTime.Parse((string)obj.Timestamp,
+                    null, System.Globalization.DateTimeStyles.RoundtripKind);
+                int pid          = (int)obj.Pid;
+                string version   = (string)obj.Version;
+                return (ts, pid, version);
+            }
+            catch { return null; }
+        }
+
+        private static string ExtractSessionId()
+        {
+            try
+            {
+                if (!File.Exists(CrashPath)) return "UNKNOWN";
+                var r = JsonConvert.DeserializeObject<CrashReport>(
+                    File.ReadAllText(CrashPath));
+                return r?.SessionId ?? "UNKNOWN";
+            }
+            catch { return "UNKNOWN"; }
+        }
+
+        public void Stop() =>
+            _timer.Change(Timeout.Infinite, Timeout.Infinite);
+
+        public void Dispose()
+        {
+            _disposed = true;
+            _timer.Dispose();
+        }
+    }
+}

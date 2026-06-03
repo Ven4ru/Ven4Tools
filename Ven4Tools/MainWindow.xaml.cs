@@ -24,6 +24,7 @@ namespace Ven4Tools
     {
         private bool _categorySelectionShown = false;
         private string _currentTab = "catalog";
+        private bool _feedbackShown = false;
 
         private CatalogTab?    _catalogTab;
         private InstalledTab?  _installedTab;
@@ -53,6 +54,17 @@ namespace Ven4Tools
 
             UserSession.Changed += UpdateUserUI;
             Closing += (_, _) => UserSession.Changed -= UpdateUserUI;
+            Closing += (_, args) =>
+            {
+                if (ChannelService.IsPreRelease && !_feedbackShown)
+                {
+                    args.Cancel = true;
+                    _feedbackShown = true;
+                    var fw = new Views.FeedbackWindow { Owner = this };
+                    fw.Closed += (_, _) => Close();
+                    fw.Show();
+                }
+            };
             UpdateUserUI();
 
             Loaded += (s, e) => ShowCategorySelectionIfNeeded();

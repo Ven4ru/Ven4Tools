@@ -118,23 +118,45 @@
                         </TextBox.Style>
                     </TextBox>
 
-                    <Button x:Name="btnRefresh" Grid.Column="2"
-                            Content="🔄 Проверить обновления"
-                            Height="34" Padding="14,0"
-                            Background="{DynamicResource CardBackground}"
-                            Foreground="{DynamicResource TextPrimary}"
-                            FontSize="12"
-                            Click="BtnRefresh_Click"/>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button x:Name="btnRefresh"
+                                Content="🔄 Проверить обновления"
+                                Height="34" Padding="14,0"
+                                Background="{DynamicResource CardBackground}"
+                                Foreground="{DynamicResource TextPrimary}"
+                                FontSize="12"
+                                Click="BtnRefresh_Click"/>
+                        <Button x:Name="btnExport" Content="📤 Экспорт"
+                                Margin="4,0,0,0" Height="34" Padding="10,0"
+                                Background="{DynamicResource CardBackground}"
+                                Foreground="{DynamicResource TextPrimary}"
+                                FontSize="12"
+                                Click="BtnExport_Click"/>
+                        <Button x:Name="btnImport" Content="📥 Импорт"
+                                Margin="4,0,0,0" Height="34" Padding="10,0"
+                                Background="{DynamicResource CardBackground}"
+                                Foreground="{DynamicResource TextPrimary}"
+                                FontSize="12"
+                                Click="BtnImport_Click"/>
+                    </StackPanel>
 
-                    <Button x:Name="btnUpdateSelected" Grid.Column="4"
-                            Content="⬆ Обновить выбранные"
-                            Height="34" Padding="14,0"
-                            Background="{DynamicResource AccentColor}"
-                            Foreground="White"
-                            FontWeight="Bold"
-                            FontSize="12"
-                            IsEnabled="False"
-                            Click="BtnUpdateSelected_Click"/>
+                    <StackPanel Grid.Column="4" Orientation="Horizontal">
+                        <Button x:Name="btnUpdateSelected"
+                                Content="⬆ Обновить выбранные"
+                                Height="34" Padding="14,0"
+                                Background="{DynamicResource AccentColor}"
+                                Foreground="White"
+                                FontWeight="Bold"
+                                FontSize="12"
+                                IsEnabled="False"
+                                Click="BtnUpdateSelected_Click"/>
+                        <Button x:Name="btnUninstallSelected" Content="🗑 Удалить выбранные"
+                                IsEnabled="False" Margin="4,0,0,0"
+                                Height="34" Padding="10,0"
+                                Background="#C42B2B" Foreground="White"
+                                FontWeight="Bold" FontSize="12"
+                                Click="BtnUninstallSelected_Click"/>
+                    </StackPanel>
                 </Grid>
             </Grid>
         </Border>
