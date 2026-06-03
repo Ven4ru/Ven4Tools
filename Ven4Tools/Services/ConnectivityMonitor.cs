@@ -37,7 +37,7 @@ namespace Ven4Tools.Services
             try
             {
                 // Заголовки передаём через HttpRequestMessage — не трогаем DefaultRequestHeaders (не thread-safe)
-                var req = new HttpRequestMessage(HttpMethod.Head, "https://1.1.1.1");
+                var req = new HttpRequestMessage(HttpMethod.Head, "https://one.one.one.one");
                 req.Headers.Add("User-Agent", "ven4-ping");
                 using var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
                 return true;
