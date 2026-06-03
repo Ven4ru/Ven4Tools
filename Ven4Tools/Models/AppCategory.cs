@@ -30,7 +30,6 @@ namespace Ven4Tools.Models
         public string? AlternativeId { get; set; }
         public bool IsInstalled { get; set; } = false;
         
-        // Новое поле для локального установщика
         public string? LocalInstallerPath { get; set; }
 
         public string ChocoId { get; set; } = string.Empty;

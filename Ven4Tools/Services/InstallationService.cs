@@ -64,29 +64,37 @@ namespace Ven4Tools.Services
                         WindowStyle     = ProcessWindowStyle.Hidden
                     };
                     using var localProc = Process.Start(psiLocal);
-                    if (localProc != null)
+                    if (localProc == null)
                     {
-                        while (!localProc.HasExited)
-                        {
-                            if (token.IsCancellationRequested) { try { localProc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
-                            await Task.Delay(100, token);
-                        }
-                        if (localProc.ExitCode == 0)
-                        {
-                            appProgress.Status = "✅ Установлено (локальный файл)";
-                            appProgress.Percentage = 100;
-                            progress.Report(appProgress);
-                            Log($"✅ {app.DisplayName} — локальный установщик");
-                            if (UserSession.IsLoggedIn)
-                                await GamificationService.Instance.TrackInstallAsync(app.Id, app.DisplayName, "local");
-                            await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "local", app.CategoryString);
-                            return (true, "Установлено из локального файла", appProgress);
-                        }
+                        appProgress.Status = "❌ Не удалось запустить установщик";
+                        progress.Report(appProgress);
+                        Log($"❌ {app.DisplayName}: Process.Start вернул null");
+                        InstallFailureService.Append(app.DisplayName, app.Id, "local", "Process.Start вернул null");
+                        return (false, "Не удалось запустить установщик", appProgress);
                     }
+
+                    while (!localProc.HasExited)
+                    {
+                        if (token.IsCancellationRequested) { try { localProc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
+                        await Task.Delay(100, token);
+                    }
+
+                    if (localProc.ExitCode == 0)
+                    {
+                        appProgress.Status = "✅ Установлено (локальный файл)";
+                        appProgress.Percentage = 100;
+                        progress.Report(appProgress);
+                        Log($"✅ {app.DisplayName} — локальный установщик");
+                        if (UserSession.IsLoggedIn)
+                            await GamificationService.Instance.TrackInstallAsync(app.Id, app.DisplayName, "local");
+                        await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "local", app.CategoryString);
+                        return (true, "Установлено из локального файла", appProgress);
+                    }
+
                     appProgress.Status = "❌ Ошибка локального установщика";
                     progress.Report(appProgress);
-                    Log($"❌ {app.DisplayName}: локальный установщик вернул ненулевой код");
-                    InstallFailureService.Append(app.DisplayName, app.Id, "local", "Ненулевой код выхода");
+                    Log($"❌ {app.DisplayName}: локальный установщик завершился с кодом {localProc.ExitCode}");
+                    InstallFailureService.Append(app.DisplayName, app.Id, "local", $"Код выхода {localProc.ExitCode}");
                     return (false, "Ошибка локального установщика", appProgress);
                 }
 
