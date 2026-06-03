@@ -44,6 +44,52 @@ namespace Ven4Tools.Services
 
                 token.ThrowIfCancellationRequested();
 
+                // ── Local installer (drag-drop) ────────────────────────────────
+                if (!string.IsNullOrEmpty(app.LocalInstallerPath) && File.Exists(app.LocalInstallerPath))
+                {
+                    appProgress.Status = "📂 Локальный установщик...";
+                    appProgress.Percentage = 30;
+                    progress.Report(appProgress);
+                    Log($"📂 {app.DisplayName}: локальный файл {app.LocalInstallerPath}");
+
+                    bool isMsi = app.LocalInstallerPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
+                    var psiLocal = new ProcessStartInfo
+                    {
+                        FileName        = isMsi ? "msiexec" : app.LocalInstallerPath,
+                        Arguments       = isMsi
+                                          ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart"
+                                          : (string.IsNullOrWhiteSpace(app.SilentArgs) ? "/S" : app.SilentArgs),
+                        UseShellExecute = true,
+                        Verb            = "runas",
+                        WindowStyle     = ProcessWindowStyle.Hidden
+                    };
+                    using var localProc = Process.Start(psiLocal);
+                    if (localProc != null)
+                    {
+                        while (!localProc.HasExited)
+                        {
+                            if (token.IsCancellationRequested) { try { localProc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
+                            await Task.Delay(100, token);
+                        }
+                        if (localProc.ExitCode == 0)
+                        {
+                            appProgress.Status = "✅ Установлено (локальный файл)";
+                            appProgress.Percentage = 100;
+                            progress.Report(appProgress);
+                            Log($"✅ {app.DisplayName} — локальный установщик");
+                            if (UserSession.IsLoggedIn)
+                                await GamificationService.Instance.TrackInstallAsync(app.Id, app.DisplayName, "local");
+                            await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "local", app.CategoryString);
+                            return (true, "Установлено из локального файла", appProgress);
+                        }
+                    }
+                    appProgress.Status = "❌ Ошибка локального установщика";
+                    progress.Report(appProgress);
+                    Log($"❌ {app.DisplayName}: локальный установщик вернул ненулевой код");
+                    InstallFailureService.Append(app.DisplayName, app.Id, "local", "Ненулевой код выхода");
+                    return (false, "Ошибка локального установщика", appProgress);
+                }
+
                 // Offline cache — try local installer first
                 string? cachedPath = OfflineService.GetCachedInstallerPath(app.Id);
                 if (cachedPath != null)
