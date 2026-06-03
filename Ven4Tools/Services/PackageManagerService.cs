@@ -229,13 +229,17 @@ namespace Ven4Tools.Services
                     $"search {query} --limit-output --page-size 8")
                 {
                     RedirectStandardOutput = true,
+                    RedirectStandardError  = true,
                     UseShellExecute = false, CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                    StandardOutputEncoding = System.Text.Encoding.UTF8,
+                    StandardErrorEncoding  = System.Text.Encoding.UTF8
                 };
                 using var p = Process.Start(psi);
                 if (p == null) return results;
+                var errTask = p.StandardError.ReadToEndAsync();
                 string output = await p.StandardOutput.ReadToEndAsync();
                 await p.WaitForExitAsync(token);
+                await errTask;
                 foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
                 {
                     var parts = line.Trim().Split('|');
@@ -258,13 +262,17 @@ namespace Ven4Tools.Services
                 var psi = new ProcessStartInfo(scoopExe, $"search {query}")
                 {
                     RedirectStandardOutput = true,
+                    RedirectStandardError  = true,
                     UseShellExecute = false, CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                    StandardOutputEncoding = System.Text.Encoding.UTF8,
+                    StandardErrorEncoding  = System.Text.Encoding.UTF8
                 };
                 using var p = Process.Start(psi);
                 if (p == null) return results;
+                var errTask = p.StandardError.ReadToEndAsync();
                 string output = await p.StandardOutput.ReadToEndAsync();
                 await p.WaitForExitAsync(token);
+                await errTask;
 
                 bool inResults = false;
                 foreach (var rawLine in output.Split('\n'))
