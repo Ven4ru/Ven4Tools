@@ -15,12 +15,15 @@ namespace Ven4Tools.Launcher.Services
         private readonly string _launcherVersion;
         private readonly Func<string> _getClientPath;
         private readonly GitHubService _github = new GitHubService();
+        private string _lastNotificationId = "";
 
         public string LastNotifiedLauncherVersion { get; set; } = "";
         public string LastNotifiedClientVersion { get; set; } = "";
 
         // type: "launcher" or "client"
         public event Action<string, UpdateInfo>? UpdateAvailable;
+        public event Action<int>? WingetUpgradeCountChanged;
+        public event Action<Notification>? NotificationAvailable;
 
         public UpdateBackgroundService(string launcherVersion, Func<string> getClientPath)
         {
@@ -55,6 +58,24 @@ namespace Ven4Tools.Launcher.Services
             try { await CheckLauncherAsync(); } catch { }
             if (_cts.IsCancellationRequested) return;
             try { await CheckClientAsync(); } catch { }
+            if (_cts.IsCancellationRequested) return;
+            try
+            {
+                int count = await CountWingetUpgradesAsync();
+                WingetUpgradeCountChanged?.Invoke(count);
+            }
+            catch { }
+            if (_cts.IsCancellationRequested) return;
+            try
+            {
+                var notif = await NotificationService.GetLatestAsync();
+                if (notif != null && notif.Id != _lastNotificationId && !string.IsNullOrEmpty(notif.Message))
+                {
+                    _lastNotificationId = notif.Id;
+                    NotificationAvailable?.Invoke(notif);
+                }
+            }
+            catch { }
         }
 
         private async Task CheckLauncherAsync()
@@ -93,6 +114,34 @@ namespace Ven4Tools.Launcher.Services
                 DownloadUrl = latest.DownloadUrl,
                 ReleaseNotes = latest.ReleaseNotes
             });
+        }
+
+        private async Task<int> CountWingetUpgradesAsync()
+        {
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo("winget",
+                    "upgrade --include-unknown --accept-source-agreements --disable-interactivity")
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true,
+                    UseShellExecute        = false,
+                    CreateNoWindow         = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+                using var p = System.Diagnostics.Process.Start(psi);
+                if (p == null) return 0;
+                var errTask = p.StandardError.ReadToEndAsync();
+                string output = await p.StandardOutput.ReadToEndAsync();
+                await p.WaitForExitAsync();
+                await errTask;
+                // Count lines after the header separator "---"
+                var lines = output.Split('\n');
+                int headerIdx = Array.FindIndex(lines, l => l.TrimStart().StartsWith("---"));
+                if (headerIdx < 0) return 0;
+                return lines.Skip(headerIdx + 1).Count(l => !string.IsNullOrWhiteSpace(l) && !l.TrimStart().StartsWith("---"));
+            }
+            catch { return 0; }
         }
 
         private static int CompareVersions(string v1, string v2)

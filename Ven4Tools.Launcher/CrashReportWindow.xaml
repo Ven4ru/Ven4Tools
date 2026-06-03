@@ -1,0 +1,140 @@
+<Window x:Class="Ven4Tools.Launcher.CrashReportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ven4Tools — Отчёт об ошибке" Height="620" Width="740"
+        MinHeight="500" MinWidth="560"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        Background="#0d1117">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#161b22" Padding="24,18"
+                BorderBrush="#30363d" BorderThickness="0,0,0,1">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="💥" FontSize="28" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Ven4Tools завершился с ошибкой"
+                                   FontSize="17" FontWeight="SemiBold" Foreground="#e6edf3"/>
+                        <TextBlock x:Name="txtSubtitle" FontSize="12" Foreground="#8b949e" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Body -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,20,24,8">
+
+                <!-- Meta info -->
+                <Border Background="#161b22" BorderBrush="#30363d" BorderThickness="1"
+                        CornerRadius="8" Padding="16,12" Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                <TextBlock Text="Версия:" Foreground="#8b949e" Width="100" FontSize="12"/>
+                                <TextBlock x:Name="txtVersion" Foreground="#e6edf3" FontSize="12"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                <TextBlock Text="Время:" Foreground="#8b949e" Width="100" FontSize="12"/>
+                                <TextBlock x:Name="txtTime" Foreground="#e6edf3" FontSize="12"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                <TextBlock Text="ОС:" Foreground="#8b949e" Width="100" FontSize="12"/>
+                                <TextBlock x:Name="txtOs" Foreground="#e6edf3" FontSize="12" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                <TextBlock Text="Сессия:" Foreground="#8b949e" Width="100" FontSize="12"/>
+                                <TextBlock x:Name="txtSession" Foreground="#58a6ff" FontSize="12"
+                                           FontFamily="Consolas" FontWeight="SemiBold"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                <TextBlock Text="Машина:" Foreground="#8b949e" Width="100" FontSize="12"/>
+                                <TextBlock x:Name="txtMachine" Foreground="#e6edf3" FontSize="12"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Exception -->
+                <TextBlock Text="Исключение" Foreground="#8b949e" FontSize="11"
+                           FontWeight="SemiBold" Margin="0,0,0,6"/>
+                <Border Background="#161b22" BorderBrush="#f85149" BorderThickness="1,1,1,1"
+                        CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock x:Name="txtExType" FontFamily="Consolas" FontSize="12"
+                                   Foreground="#f85149" FontWeight="Bold" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="txtExMsg" FontSize="12" Foreground="#e6edf3"
+                                   TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Stack trace -->
+                <Expander Header="▶ Stack trace" Foreground="#8b949e" Margin="0,0,0,16">
+                    <Border Background="#0d1117" BorderBrush="#30363d" BorderThickness="1"
+                            CornerRadius="6" Padding="12,8" Margin="0,6,0,0">
+                        <TextBox x:Name="txtStack" IsReadOnly="True"
+                                 Background="Transparent" Foreground="#8b949e"
+                                 FontFamily="Consolas" FontSize="11"
+                                 BorderThickness="0" TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto" MaxHeight="200"/>
+                    </Border>
+                </Expander>
+
+                <!-- User comment -->
+                <TextBlock Text="Что делали в момент ошибки? (необязательно)"
+                           Foreground="#8b949e" FontSize="11" FontWeight="SemiBold"
+                           Margin="0,0,0,6"/>
+                <TextBox x:Name="txtUserComment"
+                         Height="80" Padding="12,8" FontSize="13"
+                         Background="#161b22" Foreground="#e6edf3"
+                         BorderBrush="#30363d" BorderThickness="1"
+                         AcceptsReturn="True" TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"/>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="#161b22" Padding="24,14"
+                BorderBrush="#30363d" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="txtStatus" Grid.Column="0"
+                           Foreground="#8b949e" FontSize="12"
+                           VerticalAlignment="Center"/>
+
+                <Button x:Name="btnSkip" Grid.Column="1"
+                        Content="Пропустить" Height="36" Padding="20,0"
+                        Background="Transparent" Foreground="#8b949e"
+                        BorderBrush="#30363d" BorderThickness="1"
+                        Click="BtnSkip_Click"/>
+
+                <Button x:Name="btnCreate" Grid.Column="3"
+                        Content="🐛 Создать Issue на GitHub"
+                        Height="36" Padding="20,0"
+                        Background="#1f6feb" Foreground="White"
+                        FontWeight="SemiBold" BorderThickness="0"
+                        Click="BtnCreate_Click"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

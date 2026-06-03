@@ -7,6 +7,8 @@ namespace Ven4Tools
 {
     public partial class App : Application
     {
+        private static HeartbeatService? _heartbeat;
+
         public App()
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -18,29 +20,24 @@ namespace Ven4Tools
             base.OnStartup(e);
             LocalizationService.Init();
             ThemeService.Apply(ProfileService.Current.Theme);
+            _heartbeat = new HeartbeatService();
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _heartbeat?.Dispose();
+            base.OnExit(e);
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Exception ex = (Exception)e.ExceptionObject;
-            string errorMessage = $"Критическая ошибка: {ex.Message}\n\nСтек:\n{ex.StackTrace}";
-            
-            // Пытаемся показать сообщение
+            Exception ex = e.ExceptionObject as Exception ?? new Exception(e.ExceptionObject?.ToString() ?? "Unknown");
+
+            try { CrashReportService.Write(ex); } catch { }
+
             try
             {
-                MessageBox.Show(errorMessage, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch { }
-            
-            // Записываем в файл
-            try
-            {
-                string logPath = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Ven4Tools", "crash.log");
-                
-                System.IO.File.WriteAllText(logPath, 
-                    $"{DateTime.Now} - {ex.Message}\n{ex.StackTrace}");
+                Shutdown(-1);
             }
             catch { }
         }
@@ -48,8 +45,9 @@ namespace Ven4Tools
         private void Current_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             e.Handled = true;
-            CurrentDomain_UnhandledException(sender, 
-                new UnhandledExceptionEventArgs(e.Exception, false));
+            Exception ex = e.Exception;
+
+            try { CrashReportService.Write(ex); } catch { }
         }
     }
 }

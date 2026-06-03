@@ -225,6 +225,7 @@ namespace Ven4Tools.Services
                                         try { File.Delete(tempFile); } catch { }
                                         appProgress.Status = "❌ Ошибка SHA256";
                                         progress.Report(appProgress);
+                                        InstallFailureService.Append(app.DisplayName, app.Id, "direct", "SHA256 mismatch");
                                         return (false, "SHA256 mismatch", appProgress);
                                     }
                                     Log($"✅ SHA256 OK: {app.DisplayName}");
@@ -282,6 +283,7 @@ namespace Ven4Tools.Services
                 appProgress.Status = "❌ Ошибка";
                 progress.Report(appProgress);
                 Log($"❌ {app.DisplayName} — все источники исчерпаны");
+                InstallFailureService.Append(app.DisplayName, app.Id, "all-sources", "Все источники исчерпаны");
                 return (false, "Не удалось установить", appProgress);
             }
             catch (OperationCanceledException)

@@ -33,7 +33,8 @@ namespace Ven4Tools.Launcher
         private string _lastNotifiedClientVersion = "";
         private ToolStripMenuItem? _trayItemAutostart;
         private ToolStripMenuItem? _trayItemBgUpdates;
-        
+        private WatchdogService? _watchdog;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -62,6 +63,19 @@ namespace Ven4Tools.Launcher
                 if (_startMinimized) Hide();
                 await LoadVersionsAsync();
                 await CheckComponentsAutoAsync();
+
+                var crash = ReadCrashReport();
+                if (crash != null && !crash.Reported)
+                {
+                    var win = new CrashReportWindow(crash) { Owner = this };
+                    win.ShowDialog();
+                }
+                var failures = ReadInstallFailures();
+                if (failures.Count > 0)
+                {
+                    var win = new InstallReportWindow(failures) { Owner = this };
+                    win.ShowDialog();
+                }
             };
         }
         
@@ -573,8 +587,25 @@ private async void BtnLaunchApp_Click(object sender, RoutedEventArgs e)
 
         try
         {
-            Process.Start(psi);
+            var clientProcess = Process.Start(psi);
             AddLog($"✅ Клиент запущен");
+
+            if (clientProcess != null)
+            {
+                _watchdog?.Dispose();
+                _watchdog = new WatchdogService(clientProcess);
+                _watchdog.ClientFrozen += report => Dispatcher.Invoke(() =>
+                {
+                    var win = new CrashReportWindow(report) { Owner = this };
+                    win.ShowDialog();
+                });
+                clientProcess.EnableRaisingEvents = true;
+                clientProcess.Exited += (_, _) =>
+                {
+                    _watchdog?.Dispose();
+                    _watchdog = null;
+                };
+            }
         }
         catch (Exception ex)
         {
@@ -1114,6 +1145,30 @@ private bool IsRunAsAdmin()
 
             _updateService.UpdateAvailable += OnUpdateAvailable;
 
+            _updateService.WingetUpgradeCountChanged += count =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    if (_notifyIcon != null && count > 0)
+                        _notifyIcon.Text = $"Ven4Tools [{count} обновл.]";
+                    else if (_notifyIcon != null)
+                        _notifyIcon.Text = "Ven4Tools Launcher";
+                });
+            };
+
+            _updateService.NotificationAvailable += notif =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    _notifyIcon?.ShowBalloonTip(
+                        8000,
+                        "Ven4Tools",
+                        notif.Message,
+                        ToolTipIcon.Info);
+                    AddLog($"📢 Уведомление: {notif.Message}");
+                });
+            };
+
             if (_backgroundUpdates)
                 _updateService.Start();
         }
@@ -1651,6 +1706,35 @@ private bool IsRunAsAdmin()
                 try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
                 Dispatcher.Invoke(() => { progressDownload.Value = 0; btnLaunchApp.IsEnabled = true; });
             }
+        }
+
+        private static CrashReport? ReadCrashReport()
+        {
+            try
+            {
+                string path = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Ven4Tools", "crash_last.json");
+                if (!System.IO.File.Exists(path)) return null;
+                return Newtonsoft.Json.JsonConvert.DeserializeObject<CrashReport>(
+                    System.IO.File.ReadAllText(path));
+            }
+            catch { return null; }
+        }
+
+        private static List<InstallFailure> ReadInstallFailures()
+        {
+            try
+            {
+                string path = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Ven4Tools", "failed_installs.json");
+                if (!System.IO.File.Exists(path)) return new();
+                var list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<InstallFailure>>(
+                    System.IO.File.ReadAllText(path)) ?? new();
+                return list.FindAll(f => !f.Reported);
+            }
+            catch { return new(); }
         }
 
         private async Task InstallVcRedistAsync()
