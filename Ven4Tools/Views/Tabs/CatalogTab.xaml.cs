@@ -79,20 +79,17 @@ namespace Ven4Tools.Views.Tabs
                 ProfileService.Changed += _profileChangedHandler;
                 UserSession.Changed    += OnUserSessionChanged;
                 AppSettings.Changed    += OnAppSettingsChanged;
-                SourceOrderService.Changed += OnSourceOrderChanged;
                 if (!_initialized)
                 {
                     _initialized = true;
                     await LoadCatalogAndRefreshAsync();
                 }
-                ApplyCategorySourceHeaders();
             };
             Unloaded += (_, _) =>
             {
                 ProfileService.Changed -= _profileChangedHandler;
                 UserSession.Changed    -= OnUserSessionChanged;
                 AppSettings.Changed    -= OnAppSettingsChanged;
-                SourceOrderService.Changed -= OnSourceOrderChanged;
                 (installService as IDisposable)?.Dispose();
                 (availabilityChecker as IDisposable)?.Dispose();
             };
@@ -1280,7 +1277,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 pnlWingetSuggestions.Visibility = Visibility.Visible;
                 pnlWingetResults.Children.Clear();
-                txtWingetStatus.Text = "⏳ Поиск по источникам...";
+                txtWingetStatus.Text = "⏳ Поиск в Winget...";
                 txtWingetStatus.Visibility = Visibility.Visible;
 
                 _searchDebounce = new CancellationTokenSource();
@@ -1288,13 +1285,9 @@ namespace Ven4Tools.Views.Tabs
                 _ = Task.Delay(600, token).ContinueWith(async t =>
                 {
                     if (t.IsCanceled) return;
-                    var wingetTask = WingetService.SearchAsync(query, token);
-                    var chocoTask  = PackageManagerService.SearchChocoAsync(query, token);
-                    var scoopTask  = PackageManagerService.SearchScoopAsync(query, token);
-                    await Task.WhenAll(wingetTask, chocoTask, scoopTask);
+                    var packages = await WingetService.SearchAsync(query, token);
                     if (!token.IsCancellationRequested)
-                        await Dispatcher.InvokeAsync(() =>
-                            ShowAllSuggestions(query, wingetTask.Result, chocoTask.Result, scoopTask.Result));
+                        await Dispatcher.InvokeAsync(() => ShowWingetSuggestions(query, packages));
                 });
             }
             else
@@ -1385,117 +1378,7 @@ namespace Ven4Tools.Views.Tabs
             return null;
         }
 
-        // ── Multi-source search suggestions ──────────────────────────────────────
-
-        private void ShowAllSuggestions(
-            string query,
-            List<WingetPackage> winget,
-            List<(string Id, string Name, string Version)> choco,
-            List<(string Id, string Name)> scoop)
-        {
-            pnlWingetResults.Children.Clear();
-            txtWingetStatus.Visibility = Visibility.Collapsed;
-
-            bool any = winget.Count > 0 || choco.Count > 0 || scoop.Count > 0;
-            if (!any)
-            {
-                txtWingetStatus.Text = $"😕 Ничего не найдено по запросу «{query}» ни в одном источнике";
-                txtWingetStatus.Visibility = Visibility.Visible;
-                return;
-            }
-
-            if (winget.Count > 0)
-            {
-                AddSectionHeader("📦 Winget");
-                foreach (var pkg in winget)
-                {
-                    var captureId = pkg.Id; var captureName = pkg.Name;
-                    AddSuggestionRow(pkg.Name, $"winget:{pkg.Id}", pkg.Id,
-                        () => AddWingetSuggestion(captureName, captureId));
-                }
-            }
-
-            if (choco.Count > 0)
-            {
-                AddSectionHeader("🍫 Chocolatey");
-                foreach (var (id, name, ver) in choco)
-                {
-                    var captureId = id;
-                    AddSuggestionRow(name.Length > 0 ? name : id, $"v{ver}", id,
-                        () => AddChocoSuggestion(captureId));
-                }
-            }
-
-            if (scoop.Count > 0)
-            {
-                AddSectionHeader("🪣 Scoop");
-                foreach (var (id, name) in scoop)
-                {
-                    var captureId = id;
-                    AddSuggestionRow(id, "", id,
-                        () => AddScoopSuggestion(captureId));
-                }
-            }
-        }
-
-        private void AddSectionHeader(string title)
-        {
-            var border = new Border
-            {
-                Margin          = new Thickness(0, 6, 0, 2),
-                BorderBrush     = (Brush)FindResource("BorderBrush"),
-                BorderThickness = new Thickness(0, 0, 0, 1),
-                Padding         = new Thickness(0, 0, 0, 2)
-            };
-            border.Child = new TextBlock
-            {
-                Text       = title,
-                FontSize   = 10,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = (Brush)FindResource("TextSecondary")
-            };
-            pnlWingetResults.Children.Add(border);
-        }
-
-        private void AddSuggestionRow(string name, string hint, string tooltip, Action onClick)
-        {
-            var btn = new Button
-            {
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 1, 0, 1), Height = 26,
-                Padding = new Thickness(6, 0, 6, 0),
-                Background = Brushes.Transparent, BorderThickness = new Thickness(0),
-                Cursor = Cursors.Hand, FontSize = 12, ToolTip = tooltip
-            };
-            var row = new StackPanel { Orientation = Orientation.Horizontal };
-            row.Children.Add(new TextBlock { Text = "➕  ", Foreground = (Brush)FindResource("AccentColor"), VerticalAlignment = VerticalAlignment.Center });
-            row.Children.Add(new TextBlock { Text = name, Foreground = (Brush)FindResource("TextPrimary"), VerticalAlignment = VerticalAlignment.Center });
-            if (!string.IsNullOrEmpty(hint))
-                row.Children.Add(new TextBlock { Text = $"  {hint}", Foreground = (Brush)FindResource("TextSecondary"), FontSize = 10, VerticalAlignment = VerticalAlignment.Center });
-            btn.Content = row;
-            btn.Click += (_, _) => onClick();
-            pnlWingetResults.Children.Add(btn);
-        }
-
-        private void AddChocoSuggestion(string id)
-        {
-            if (appManager.GetAppById(id) != null) { AddLog($"ℹ️ {id} уже есть в списке"); return; }
-            var app = new AppInfo { Id = id, DisplayName = id, Category = AppCategory.Другое, ChocoId = id, InstallerUrls = new List<string>(), IsUserAdded = true };
-            appManager.AddUserApp(app);
-            AddUserAppToUI(app);
-            AddLog($"➕ Добавлено из Chocolatey: {id}");
-        }
-
-        private void AddScoopSuggestion(string id)
-        {
-            if (appManager.GetAppById(id) != null) { AddLog($"ℹ️ {id} уже есть в списке"); return; }
-            var app = new AppInfo { Id = id, DisplayName = id, Category = AppCategory.Другое, ScoopId = id, InstallerUrls = new List<string>(), IsUserAdded = true };
-            appManager.AddUserApp(app);
-            AddUserAppToUI(app);
-            AddLog($"➕ Добавлено из Scoop: {id}");
-        }
-
-        // ── Winget search suggestions (legacy) ────────────────────────────────────
+        // ── Winget search suggestions ─────────────────────────────────────────────
         private void ShowWingetSuggestions(string query, List<WingetPackage> packages)
         {
             pnlWingetResults.Children.Clear();
@@ -1745,113 +1628,6 @@ namespace Ven4Tools.Views.Tabs
             appManager.AddUserApp(app);
             AddUserAppToUI(app);
             AddLog($"📦 Локальный установщик добавлен: {app.DisplayName}");
-        }
-
-        // ── Per-category source headers ───────────────────────────────────────────
-
-        private static readonly Dictionary<AppCategory, string> CategoryNames = new()
-        {
-            [AppCategory.Браузеры]         = "Браузеры",
-            [AppCategory.Офис]             = "Офис",
-            [AppCategory.Графика]          = "Графика",
-            [AppCategory.Разработка]       = "Разработка",
-            [AppCategory.Мессенджеры]      = "Мессенджеры",
-            [AppCategory.Мультимедиа]      = "Мультимедиа",
-            [AppCategory.Системные]        = "Системные",
-            [AppCategory.ИгровыеСервисы]   = "Игровые сервисы",
-            [AppCategory.Драйверпаки]      = "Драйверпаки",
-            [AppCategory.Другое]           = "Другое",
-            [AppCategory.Пользовательские] = "Пользовательские",
-        };
-
-        private void ApplyCategorySourceHeaders()
-        {
-            bool perCategory = SourceOrderService.Current.Mode == "per_category";
-
-            foreach (var (category, panel) in categoryPanels)
-            {
-                if (panel.Parent is not Expander expander) continue;
-                if (!CategoryNames.TryGetValue(category, out var catName)) continue;
-
-                if (!perCategory)
-                {
-                    // Restore plain string header (original icon + name)
-                    expander.Header = GetOriginalExpanderHeader(category);
-                    continue;
-                }
-
-                // Build compound header: [Icon + Name] .......... [Source ComboBox]
-                var grid = new Grid();
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-                var label = new TextBlock
-                {
-                    Text = GetOriginalExpanderHeader(category),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Foreground = (System.Windows.Media.Brush)Application.Current.Resources["TextPrimary"],
-                    FontWeight = FontWeights.SemiBold,
-                    FontSize   = 13
-                };
-                Grid.SetColumn(label, 0);
-
-                var combo = new ComboBox
-                {
-                    Width   = 160,
-                    Height  = 24,
-                    FontSize = 11,
-                    Margin  = new Thickness(8, 0, 4, 0),
-                    Tag     = catName
-                };
-
-                combo.Items.Add(new ComboBoxItem { Content = "🔀 Глобальный", Tag = "" });
-                foreach (var srcId in SourceOrderSettings.AllSources)
-                    combo.Items.Add(new ComboBoxItem { Content = SourceOrderSettings.Labels[srcId], Tag = srcId });
-
-                string current = SourceOrderService.GetCategoryPrimary(catName);
-                combo.SelectedIndex = string.IsNullOrEmpty(current)
-                    ? 0
-                    : SourceOrderSettings.AllSources.IndexOf(current) + 1;
-
-                combo.SelectionChanged += (s, _) =>
-                {
-                    if (combo.SelectedItem is ComboBoxItem item)
-                    {
-                        string src = item.Tag?.ToString() ?? "";
-                        SourceOrderService.SetCategoryPrimary(catName, src);
-                    }
-                };
-
-                Grid.SetColumn(combo, 1);
-                grid.Children.Add(label);
-                grid.Children.Add(combo);
-                expander.Header = grid;
-            }
-        }
-
-        private static string GetOriginalExpanderHeader(AppCategory cat) => cat switch
-        {
-            AppCategory.Браузеры         => "🌐 Браузеры",
-            AppCategory.Офис             => "📁 Офис",
-            AppCategory.Графика          => "🎨 Графика",
-            AppCategory.Разработка       => "💻 Разработка",
-            AppCategory.Мессенджеры      => "💬 Мессенджеры",
-            AppCategory.Мультимедиа      => "🎵 Мультимедиа",
-            AppCategory.Системные        => "⚙️ Системные",
-            AppCategory.ИгровыеСервисы   => "🎮 Игровые сервисы",
-            AppCategory.Драйверпаки      => "🖨️ Драйверпаки",
-            AppCategory.Другое           => "📎 Другое",
-            AppCategory.Пользовательские => "👤 Пользовательские",
-            _                            => cat.ToString()
-        };
-
-        private void OnSourceOrderChanged()
-        {
-            Dispatcher.Invoke(() =>
-            {
-                ApplyCategorySourceHeaders();
-                RefreshAvailability_Click(this, new RoutedEventArgs());
-            });
         }
 
         // ── Export / Import app list ──────────────────────────────────────────────

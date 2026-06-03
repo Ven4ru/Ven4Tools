@@ -25,8 +25,6 @@ namespace Ven4Tools
         private AboutTab?      _aboutTab;
         private NetworkTab?    _networkTab;
         private HistoryTab?    _historyTab;
-        private DebloaterTab?  _debloaterTab;
-        private DriversTab?    _driversTab;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
 
         public MainWindow()
@@ -63,12 +61,7 @@ namespace Ven4Tools
                 chkMinimizeToTray.IsChecked = ProfileService.Current.MinimizeToTray;
                 RefreshPinsStrip();
             };
-            Loaded += (s, e) =>
-            {
-                ConnectivityMonitor.Start();
-                ConnectivityMonitor.StatusChanged += online => Dispatcher.Invoke(() => UpdateTabVisibility());
-                UpdateTabVisibility();
-            };
+            Loaded += (s, e) => UpdateTabVisibility();
         }
 
         private void NavigateToCatalog(object? sender, RoutedEventArgs? e)
@@ -144,55 +137,10 @@ namespace Ven4Tools
 
         public void UpdateTabVisibility()
         {
-            bool online    = ConnectivityMonitor.IsOnline && !ProfileService.Current.OfflineMode;
-            bool loggedIn  = UserSession.IsLoggedIn;
-
-            // Online-only tabs
-            btnOfficeTab.Visibility     = online ? Visibility.Visible : Visibility.Collapsed;
-            btnActivationTab.Visibility = online ? Visibility.Visible : Visibility.Collapsed;
-            btnNetworkTab.Visibility    = online ? Visibility.Visible : Visibility.Collapsed;
-
-            // Auth-gated tabs
+            bool loggedIn = UserSession.IsLoggedIn;
             btnHistoryTab.Visibility = loggedIn ? Visibility.Visible : Visibility.Collapsed;
-
-            if (!online)
-            {
-                string reason = !ConnectivityMonitor.IsOnline
-                    ? "🔌 Нет интернета — часть вкладок скрыта"
-                    : "🔌 Офлайн режим — часть вкладок скрыта";
-                txtStatusBar.Text = reason;
-
-                if (_currentTab is "office" or "activation" or "network")
-                    NavigateToCatalog(null, null);
-            }
-            else
-            {
-                txtStatusBar.Text = "✅ Готово";
-            }
-
-            // If auth-gated tab is active but user logged out — go to catalog
-            if (!loggedIn && _currentTab is "history")
+            if (!loggedIn && _currentTab == "history")
                 NavigateToCatalog(null, null);
-        }
-
-        // ── Debloater tab ─────────────────────────────────────────────────────────
-
-        private void NavigateToDebloater(object? sender, RoutedEventArgs? e)
-        {
-            SetActiveButton(btnDebloaterTab);
-            if (_debloaterTab == null) { _debloaterTab = new DebloaterTab(); _debloaterTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_debloaterTab);
-            UpdateMascot("debloater");
-        }
-
-        // ── Drivers tab ───────────────────────────────────────────────────────────
-
-        private void NavigateToDrivers(object? sender, RoutedEventArgs? e)
-        {
-            SetActiveButton(btnDriversTab);
-            if (_driversTab == null) { _driversTab = new DriversTab(); _driversTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_driversTab);
-            UpdateMascot("drivers");
         }
 
         // ── History tab ───────────────────────────────────────────────────────────
@@ -242,7 +190,6 @@ namespace Ven4Tools
         private void ForceExit()
         {
             _trayIcon?.Dispose();
-            ConnectivityMonitor.Stop();
             Application.Current.Shutdown();
         }
 
@@ -265,7 +212,6 @@ namespace Ven4Tools
             else
             {
                 _trayIcon?.Dispose();
-                ConnectivityMonitor.Stop();
             }
         }
 
@@ -373,64 +319,6 @@ namespace Ven4Tools
         public static bool IsPinned(string id) =>
             ProfileService.Current.PinnedAppIds.Contains(id);
 
-        // ── Drag & drop ───────────────────────────────────────────────────────────
-
-        private void MainArea_DragEnter(object sender, DragEventArgs e)
-        {
-            if (IsExeOrMsi(e))
-            {
-                e.Effects = DragDropEffects.Copy;
-                pnlDropOverlay.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                e.Effects = DragDropEffects.None;
-            }
-            e.Handled = true;
-        }
-
-        private void MainArea_DragOver(object sender, DragEventArgs e)
-        {
-            e.Effects = IsExeOrMsi(e) ? DragDropEffects.Copy : DragDropEffects.None;
-            e.Handled = true;
-        }
-
-        private void MainArea_DragLeave(object sender, DragEventArgs e)
-        {
-            pnlDropOverlay.Visibility = Visibility.Collapsed;
-        }
-
-        private void MainArea_Drop(object sender, DragEventArgs e)
-        {
-            pnlDropOverlay.Visibility = Visibility.Collapsed;
-            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
-
-            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            foreach (var file in files)
-            {
-                if (!file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                    && !file.EndsWith(".msi", StringComparison.OrdinalIgnoreCase)) continue;
-
-                var dlg = new Views.LocalInstallerDialog(file) { Owner = this };
-                if (dlg.ShowDialog() == true && dlg.Result != null)
-                {
-                    AddLog($"📦 Добавлен локальный установщик: {dlg.Result.DisplayName}");
-                    // Pass to CatalogTab's user apps mechanism
-                    if (_catalogTab != null)
-                        _catalogTab.AddLocalInstallerApp(dlg.Result);
-                }
-            }
-        }
-
-        private static bool IsExeOrMsi(DragEventArgs e)
-        {
-            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return false;
-            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            return files.Any(f =>
-                f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
-                f.EndsWith(".msi", StringComparison.OrdinalIgnoreCase));
-        }
-
         private void UpdateMascot(string tabName)
         {
             _currentTab = tabName;
@@ -453,7 +341,7 @@ namespace Ven4Tools
 
         private void SetActiveButton(Button activeButton)
         {
-            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnDriversTab };
+            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab };
             foreach (var btn in buttons)
             {
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");

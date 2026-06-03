@@ -122,16 +122,6 @@
                                 Tag="🌐"
                                 Content="Сеть"
                                 Click="NavigateToNetwork"/>
-                        <Button x:Name="btnDebloaterTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="🧹"
-                                Content="Debloater"
-                                Click="NavigateToDebloater"/>
-                        <Button x:Name="btnDriversTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="🖱️"
-                                Content="Драйверы"
-                                Click="NavigateToDrivers"/>
                         <Button x:Name="btnHistoryTab"
                                 Style="{StaticResource NavButtonStyle}"
                                 Tag="📋"
@@ -213,12 +203,7 @@
         </Border>
         
         <!-- Правая область контента -->
-        <Border Grid.Column="1" Background="{DynamicResource ContentBackground}"
-                AllowDrop="True"
-                DragEnter="MainArea_DragEnter"
-                DragOver="MainArea_DragOver"
-                DragLeave="MainArea_DragLeave"
-                Drop="MainArea_Drop">
+        <Border Grid.Column="1" Background="{DynamicResource ContentBackground}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -239,21 +224,6 @@
                                    DockPanel.Dock="Left"/>
                         <WrapPanel x:Name="wrapPins" VerticalAlignment="Center"/>
                     </DockPanel>
-                </Border>
-
-                <!-- Drag overlay -->
-                <Border x:Name="pnlDropOverlay" Grid.Row="0" Grid.RowSpan="2"
-                        Visibility="Collapsed" Panel.ZIndex="99"
-                        Background="#AA1E1E2E"
-                        BorderBrush="{DynamicResource AccentColor}"
-                        BorderThickness="4" CornerRadius="8" Margin="8">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Отпустите для добавления установщика"
-                                   FontSize="18" FontWeight="Bold"
-                                   Foreground="White" HorizontalAlignment="Center"
-                                   Margin="0,12,0,0"/>
-                    </StackPanel>
                 </Border>
 
                 <Frame x:Name="MainFrame" Grid.Row="1" NavigationUIVisibility="Hidden"/>

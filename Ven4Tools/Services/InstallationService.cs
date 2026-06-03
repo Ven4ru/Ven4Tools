@@ -41,284 +41,121 @@ namespace Ven4Tools.Services
                 Log($"Начало установки: {app.DisplayName}");
                 appProgress.Status = "Начинаем...";
                 progress.Report(appProgress);
-
                 token.ThrowIfCancellationRequested();
 
-                // ── Local installer (drag-drop) ────────────────────────────────
-                if (!string.IsNullOrEmpty(app.LocalInstallerPath) && File.Exists(app.LocalInstallerPath))
+                // ── Winget ────────────────────────────────────────────────────────────
+                string primaryId = !string.IsNullOrEmpty(app.AlternativeId) ? app.AlternativeId : app.Id;
+                if (!string.IsNullOrEmpty(primaryId) && !primaryId.StartsWith("User."))
                 {
-                    appProgress.Status = "📂 Локальный установщик...";
-                    appProgress.Percentage = 30;
-                    progress.Report(appProgress);
-                    Log($"📂 {app.DisplayName}: локальный файл {app.LocalInstallerPath}");
-
-                    bool isMsi = app.LocalInstallerPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
-                    var psiLocal = new ProcessStartInfo
+                    foreach (var wsrc in wingetSources)
                     {
-                        FileName        = isMsi ? "msiexec" : app.LocalInstallerPath,
-                        Arguments       = isMsi
-                                          ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart"
-                                          : (string.IsNullOrWhiteSpace(app.SilentArgs) ? "/S" : app.SilentArgs),
-                        UseShellExecute = true,
-                        Verb            = "runas",
-                        WindowStyle     = ProcessWindowStyle.Hidden
-                    };
-                    using var localProc = Process.Start(psiLocal);
-                    if (localProc == null)
-                    {
-                        appProgress.Status = "❌ Не удалось запустить установщик";
+                        token.ThrowIfCancellationRequested();
+                        appProgress.Status = $"📦 Winget ({wsrc})...";
+                        appProgress.Percentage = 10;
                         progress.Report(appProgress);
-                        Log($"❌ {app.DisplayName}: Process.Start вернул null");
-                        InstallFailureService.Append(app.DisplayName, app.Id, "local", "Process.Start вернул null");
-                        return (false, "Не удалось запустить установщик", appProgress);
-                    }
 
-                    while (!localProc.HasExited)
-                    {
-                        if (token.IsCancellationRequested) { try { localProc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
-                        await Task.Delay(100, token);
-                    }
-
-                    if (localProc.ExitCode == 0)
-                    {
-                        appProgress.Status = "✅ Установлено (локальный файл)";
-                        appProgress.Percentage = 100;
-                        progress.Report(appProgress);
-                        Log($"✅ {app.DisplayName} — локальный установщик");
-                        await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "local", app.CategoryString);
-                        return (true, "Установлено из локального файла", appProgress);
-                    }
-
-                    appProgress.Status = "❌ Ошибка локального установщика";
-                    progress.Report(appProgress);
-                    Log($"❌ {app.DisplayName}: локальный установщик завершился с кодом {localProc.ExitCode}");
-                    InstallFailureService.Append(app.DisplayName, app.Id, "local", $"Код выхода {localProc.ExitCode}");
-                    return (false, "Ошибка локального установщика", appProgress);
-                }
-
-                // Offline cache — try local installer first
-                string? cachedPath = OfflineService.GetCachedInstallerPath(app.Id);
-                if (cachedPath != null)
-                {
-                    appProgress.Status = "🔌 Из кэша...";
-                    appProgress.Percentage = 50;
-                    progress.Report(appProgress);
-
-                    var psiCache = new ProcessStartInfo
-                    {
-                        FileName       = cachedPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase) ? "msiexec" : cachedPath,
-                        Arguments      = cachedPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase)
-                                         ? $"/i \"{cachedPath}\" /quiet /norestart"
-                                         : "/S /silent /quiet",
-                        UseShellExecute = true, Verb = "runas",
-                        WindowStyle     = ProcessWindowStyle.Hidden
-                    };
-                    using var cacheProc = Process.Start(psiCache);
-                    if (cacheProc != null)
-                    {
-                        while (!cacheProc.HasExited)
+                        if (await RunWingetAsync(primaryId, wsrc, token, version))
                         {
-                            if (token.IsCancellationRequested) { try { cacheProc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
-                            await Task.Delay(100, token);
-                        }
-                        if (cacheProc.ExitCode == 0)
-                        {
-                            appProgress.Status = "✅ Установлено (кэш)";
+                            appProgress.Status = "✅ Установлено (Winget)";
                             appProgress.Percentage = 100;
                             progress.Report(appProgress);
-                            Log($"✅ {app.DisplayName} установлено из офлайн-кэша");
-                            return (true, "Установлено из офлайн-кэша", appProgress);
+                            Log($"✅ {app.DisplayName} — Winget ({wsrc}): {primaryId}");
+                            await StatsService.Instance.TrackOverrideAsync(app.Id, primaryId, null, true);
+                            await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "winget", app.CategoryString);
+                            return (true, "Установлено через Winget", appProgress);
                         }
                     }
                 }
 
-                // In strict offline mode with no cache — abort
-                if (OfflineService.IsOffline)
-                {
-                    appProgress.Status = "❌ Нет в кэше (офлайн режим)";
-                    progress.Report(appProgress);
-                    Log($"⚠️ {app.DisplayName}: офлайн режим, установщик не кэширован");
-                    return (false, "Офлайн режим — нет кэша", appProgress);
-                }
-
-                // ── Source-ordered install loop ────────────────────────────────
-                string primaryId = !string.IsNullOrEmpty(app.AlternativeId) ? app.AlternativeId : app.Id;
-                var sourceOrder  = SourceOrderService.GetOrderForCategory(app.CategoryString);
-                Log($"🔀 Порядок источников для «{app.DisplayName}»: {string.Join(" → ", sourceOrder)}");
-
-                foreach (var srcId in sourceOrder)
+                // ── Direct download ───────────────────────────────────────────────────
+                foreach (var url in app.InstallerUrls)
                 {
                     token.ThrowIfCancellationRequested();
+                    appProgress.Status = "📥 Скачивание...";
+                    appProgress.Percentage = 20;
+                    progress.Report(appProgress);
 
-                    switch (srcId)
+                    string tempFile = Path.Combine(Path.GetTempPath(), $"{app.Id}_{Guid.NewGuid()}.exe");
+                    try
                     {
-                        // ── Winget ──────────────────────────────────────────────
-                        case SourceOrderSettings.Winget:
+                        using (var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token))
                         {
-                            if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) break;
-                            foreach (var wsrc in wingetSources)
+                            response.EnsureSuccessStatusCode();
+                            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                            using var contentStream = await response.Content.ReadAsStreamAsync();
+                            using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
+                            var buf = new byte[8192];
+                            long totalRead = 0;
+                            int bytesRead;
+                            while ((bytesRead = await contentStream.ReadAsync(buf, token)) > 0)
                             {
                                 token.ThrowIfCancellationRequested();
-                                appProgress.Status = $"📦 Winget ({wsrc})...";
-                                appProgress.Percentage = 10;
-                                progress.Report(appProgress);
-
-                                if (await RunWingetAsync(primaryId, wsrc, token, version))
+                                await fileStream.WriteAsync(buf, 0, bytesRead, token);
+                                totalRead += bytesRead;
+                                if (totalBytes > 0)
                                 {
-                                    appProgress.Status = "✅ Установлено (Winget)";
-                                    appProgress.Percentage = 100;
+                                    appProgress.Percentage = 20 + (int)((double)totalRead / totalBytes * 30);
                                     progress.Report(appProgress);
-                                    Log($"✅ {app.DisplayName} — Winget ({wsrc}): {primaryId}");
-                                    await StatsService.Instance.TrackOverrideAsync(app.Id, primaryId, null, true);
-                                    await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "winget", app.CategoryString);
-                                    return (true, "Установлено через Winget", appProgress);
                                 }
                             }
-                            break;
                         }
 
-                        // ── Chocolatey ──────────────────────────────────────────
-                        case SourceOrderSettings.Choco:
-                        {
-                            if (string.IsNullOrWhiteSpace(app.ChocoId)) break;
-                            appProgress.Status = "🍫 Chocolatey...";
-                            appProgress.Percentage = 15;
-                            progress.Report(appProgress);
+                        appProgress.Status = "🔐 Проверка SHA256...";
+                        appProgress.Percentage = 55;
+                        progress.Report(appProgress);
 
-                            bool chocoOk = PackageManagerService.IsChocoInstalled()
-                                || await PackageManagerService.InstallChocoAsync(msg => Log(msg));
-                            if (chocoOk && await PackageManagerService.RunChocoInstallAsync(app.ChocoId, token, msg => Log(msg)))
+                        if (!await HashHelper.VerifyHashAsync(tempFile, app.Sha256 ?? ""))
+                        {
+                            Log($"❌ SHA256 mismatch: {app.DisplayName}");
+                            try { File.Delete(tempFile); } catch { }
+                            appProgress.Status = "❌ Ошибка SHA256";
+                            progress.Report(appProgress);
+                            InstallFailureService.Append(app.DisplayName, app.Id, "direct", "SHA256 mismatch");
+                            return (false, "SHA256 mismatch", appProgress);
+                        }
+                        Log($"✅ SHA256 OK: {app.DisplayName}");
+
+                        token.ThrowIfCancellationRequested();
+                        appProgress.Status = "⚙️ Установка...";
+                        appProgress.Percentage = 60;
+                        progress.Report(appProgress);
+
+                        string silentArgs = app.SilentArgs;
+                        if (string.IsNullOrWhiteSpace(silentArgs) && ProfileService.Current.SilentInstall)
+                            silentArgs = "/S";
+
+                        var psi = new ProcessStartInfo
+                        {
+                            FileName = tempFile, Arguments = silentArgs,
+                            UseShellExecute = true, Verb = "runas",
+                            WindowStyle = ProcessWindowStyle.Hidden
+                        };
+                        using var proc = Process.Start(psi);
+                        if (proc != null)
+                        {
+                            while (!proc.HasExited)
                             {
-                                appProgress.Status = "✅ Установлено (Chocolatey)";
+                                if (token.IsCancellationRequested) { try { proc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
+                                await Task.Delay(100, token);
+                            }
+                            try { File.Delete(tempFile); } catch { }
+                            if (proc.ExitCode == 0)
+                            {
+                                appProgress.Status = "✅ Установлено (прямая ссылка)";
                                 appProgress.Percentage = 100;
                                 progress.Report(appProgress);
-                                Log($"✅ {app.DisplayName} — Chocolatey: {app.ChocoId}");
-                                await StatsService.Instance.TrackOverrideAsync(app.Id, app.ChocoId, null, true);
-                                await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "choco", app.CategoryString);
-                                return (true, "Установлено через Chocolatey", appProgress);
+                                Log($"✅ {app.DisplayName} — прямая ссылка: {url}");
+                                await StatsService.Instance.TrackOverrideAsync(app.Id, null, url, true);
+                                await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "direct", app.CategoryString);
+                                return (true, "Установлено", appProgress);
                             }
-                            break;
                         }
-
-                        // ── Scoop ───────────────────────────────────────────────
-                        case SourceOrderSettings.Scoop:
-                        {
-                            if (string.IsNullOrWhiteSpace(app.ScoopId)) break;
-                            appProgress.Status = "🪣 Scoop...";
-                            appProgress.Percentage = 18;
-                            progress.Report(appProgress);
-
-                            bool scoopOk = PackageManagerService.IsScoopInstalled()
-                                || await PackageManagerService.InstallScoopAsync(msg => Log(msg));
-                            if (scoopOk && await PackageManagerService.RunScoopInstallAsync(app.ScoopId, token, msg => Log(msg)))
-                            {
-                                appProgress.Status = "✅ Установлено (Scoop)";
-                                appProgress.Percentage = 100;
-                                progress.Report(appProgress);
-                                Log($"✅ {app.DisplayName} — Scoop: {app.ScoopId}");
-                                await StatsService.Instance.TrackOverrideAsync(app.Id, app.ScoopId, null, true);
-                                await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "scoop", app.CategoryString);
-                                return (true, "Установлено через Scoop", appProgress);
-                            }
-                            break;
-                        }
-
-                        // ── Direct download ─────────────────────────────────────
-                        case SourceOrderSettings.Direct:
-                        {
-                            if (!app.InstallerUrls.Any()) break;
-                            foreach (var url in app.InstallerUrls)
-                            {
-                                token.ThrowIfCancellationRequested();
-                                appProgress.Status = "📥 Скачивание...";
-                                appProgress.Percentage = 20;
-                                progress.Report(appProgress);
-
-                                string tempFile = Path.Combine(Path.GetTempPath(), $"{app.Id}_{Guid.NewGuid()}.exe");
-                                try
-                                {
-                                    using (var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token))
-                                    {
-                                        response.EnsureSuccessStatusCode();
-                                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                                        using var contentStream = await response.Content.ReadAsStreamAsync();
-                                        using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
-                                        var buf = new byte[8192];
-                                        long totalRead = 0;
-                                        int bytesRead;
-                                        while ((bytesRead = await contentStream.ReadAsync(buf, token)) > 0)
-                                        {
-                                            token.ThrowIfCancellationRequested();
-                                            await fileStream.WriteAsync(buf, 0, bytesRead, token);
-                                            totalRead += bytesRead;
-                                            if (totalBytes > 0)
-                                            {
-                                                appProgress.Percentage = 20 + (int)((double)totalRead / totalBytes * 30);
-                                                progress.Report(appProgress);
-                                            }
-                                        }
-                                    }
-
-                                    appProgress.Status = "🔐 Проверка SHA256...";
-                                    appProgress.Percentage = 55;
-                                    progress.Report(appProgress);
-
-                                    if (!await HashHelper.VerifyHashAsync(tempFile, app.Sha256 ?? ""))
-                                    {
-                                        Log($"❌ SHA256 mismatch: {app.DisplayName}");
-                                        try { File.Delete(tempFile); } catch { }
-                                        appProgress.Status = "❌ Ошибка SHA256";
-                                        progress.Report(appProgress);
-                                        InstallFailureService.Append(app.DisplayName, app.Id, "direct", "SHA256 mismatch");
-                                        return (false, "SHA256 mismatch", appProgress);
-                                    }
-                                    Log($"✅ SHA256 OK: {app.DisplayName}");
-
-                                    token.ThrowIfCancellationRequested();
-                                    appProgress.Status = "⚙️ Установка...";
-                                    appProgress.Percentage = 60;
-                                    progress.Report(appProgress);
-
-                                    string silentArgs = app.SilentArgs;
-                                    if (string.IsNullOrWhiteSpace(silentArgs) && ProfileService.Current.SilentInstall)
-                                        silentArgs = "/S";
-
-                                    var psi = new ProcessStartInfo
-                                    {
-                                        FileName = tempFile, Arguments = silentArgs,
-                                        UseShellExecute = true, Verb = "runas",
-                                        WindowStyle = ProcessWindowStyle.Hidden
-                                    };
-                                    using var proc = Process.Start(psi);
-                                    if (proc != null)
-                                    {
-                                        while (!proc.HasExited)
-                                        {
-                                            if (token.IsCancellationRequested) { try { proc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
-                                            await Task.Delay(100, token);
-                                        }
-                                        try { File.Delete(tempFile); } catch { }
-                                        if (proc.ExitCode == 0)
-                                        {
-                                            appProgress.Status = "✅ Установлено (прямая ссылка)";
-                                            appProgress.Percentage = 100;
-                                            progress.Report(appProgress);
-                                            Log($"✅ {app.DisplayName} — прямая ссылка: {url}");
-                                            await StatsService.Instance.TrackOverrideAsync(app.Id, null, url, true);
-                                            await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "direct", app.CategoryString);
-                                            return (true, "Установлено", appProgress);
-                                        }
-                                    }
-                                }
-                                catch (OperationCanceledException) { throw; }
-                                catch (Exception ex)
-                                {
-                                    Log($"❌ Прямая ссылка {url}: {ex.Message}");
-                                    try { File.Delete(tempFile); } catch { }
-                                }
-                            }
-                            break;
-                        }
+                    }
+                    catch (OperationCanceledException) { throw; }
+                    catch (Exception ex)
+                    {
+                        Log($"❌ Прямая ссылка {url}: {ex.Message}");
+                        try { File.Delete(tempFile); } catch { }
                     }
                 }
 
@@ -340,6 +177,7 @@ namespace Ven4Tools.Services
                 appProgress.Status = "❌ Ошибка";
                 progress.Report(appProgress);
                 Log($"❌ {app.DisplayName}: {ex.Message}");
+                InstallFailureService.Append(app.DisplayName, app.Id, "exception", ex.Message);
                 return (false, ex.Message, appProgress);
             }
         }
