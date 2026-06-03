@@ -37,6 +37,8 @@
 - **OfflineService** — кэширование установщиков (`.exe`, `.msi`) локально; установка без интернета
 - **LocalInstallerDialog** — добавление своих установщиков из файловой системы
 - **Логирование установок** — `install_YYYY-MM-DD.log` для каждой сессии
+- **DebloaterTab** — удаление встроенных приложений Windows (AppX пакеты)
+- **DriversTab** — просмотр и удаление установленных драйверов
 
 ---
 
@@ -178,6 +180,8 @@
 | LocalInstallerDialog + install execution | ✅ В 3.2.0 | 3.2.0 |
 | Логирование установок | ✅ В 3.2.0 | 3.2.0 |
 | ConnectivityMonitor | ✅ В 3.2.0 | 3.2.0 |
+| DebloaterTab | ✅ В 3.2.0 | 3.2.0 |
+| DriversTab | ✅ В 3.2.0 | 3.2.0 |
 | MiniWindow (Ctrl+M) | ✅ Готово | 3.3.0 |
 | GamificationService | ✅ Готово | 3.4.0 |
 | ProfileTab | ✅ Готово | 3.4.0 |
