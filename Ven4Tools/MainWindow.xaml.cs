@@ -85,7 +85,7 @@ namespace Ven4Tools
                     NavigateToInstalled(null, null);
                 };
             }
-            MainFrame.Navigate(_catalogTab);
+            MainFrame.Content = (_catalogTab);
             UpdateMascot("catalog");
         }
 
@@ -93,7 +93,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnNetworkTab);
             if (_networkTab == null) { _networkTab = new NetworkTab(); _networkTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_networkTab);
+            MainFrame.Content = (_networkTab);
             UpdateMascot("network");
         }
 
@@ -101,7 +101,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnInstalledTab);
             if (_installedTab == null) { _installedTab = new InstalledTab(); _installedTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_installedTab);
+            MainFrame.Content = (_installedTab);
             UpdateMascot("installed");
         }
 
@@ -109,7 +109,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnSystemTab);
             if (_systemTab == null) { _systemTab = new SystemTab(); _systemTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_systemTab);
+            MainFrame.Content = (_systemTab);
             UpdateMascot("system");
         }
 
@@ -122,7 +122,7 @@ namespace Ven4Tools
                 _officeTab.LogMessage += AddLog;
                 _officeTab.GoToActivation += () => NavigateToActivation(null, null);
             }
-            MainFrame.Navigate(_officeTab);
+            MainFrame.Content = (_officeTab);
             UpdateMascot("office");
         }
 
@@ -130,7 +130,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnActivationTab);
             if (_activationTab == null) { _activationTab = new ActivationTab(); _activationTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_activationTab);
+            MainFrame.Content = (_activationTab);
             UpdateMascot("activation");
         }
 
@@ -138,7 +138,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnAboutTab);
             if (_aboutTab == null) { _aboutTab = new AboutTab(); _aboutTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_aboutTab);
+            MainFrame.Content = (_aboutTab);
             UpdateMascot("about");
         }
 
@@ -181,7 +181,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnDebloaterTab);
             if (_debloaterTab == null) { _debloaterTab = new DebloaterTab(); _debloaterTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_debloaterTab);
+            MainFrame.Content = (_debloaterTab);
             UpdateMascot("debloater");
         }
 
@@ -191,7 +191,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnDriversTab);
             if (_driversTab == null) { _driversTab = new DriversTab(); _driversTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_driversTab);
+            MainFrame.Content = (_driversTab);
             UpdateMascot("drivers");
         }
 
@@ -201,7 +201,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnHistoryTab);
             if (_historyTab == null) { _historyTab = new HistoryTab(); _historyTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_historyTab);
+            MainFrame.Content = (_historyTab);
             _ = _historyTab.RefreshAsync();
             UpdateMascot("history");
         }
