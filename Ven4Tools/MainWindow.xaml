@@ -125,7 +125,7 @@
                         <Button x:Name="btnDebloaterTab"
                                 Style="{StaticResource NavButtonStyle}"
                                 Tag="🧹"
-                                Content="Debloater"
+                                Content="Очистка"
                                 Click="NavigateToDebloater"/>
                         <Button x:Name="btnDriversTab"
                                 Style="{StaticResource NavButtonStyle}"
