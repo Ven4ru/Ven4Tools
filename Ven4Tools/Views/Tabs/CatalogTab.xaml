@@ -104,56 +104,83 @@
         </GroupBox>
 
         <!-- Правая панель: управление -->
-        <StackPanel Grid.Column="1">
-            <GroupBox Header="🚀 Действия">
-                <StackPanel>
-                    <Button x:Name="btnInstall" Content="🚀 Установить" Height="35" Margin="3"/>
-                    <Button x:Name="btnCancelInstall" Content="⏹️ Отмена" Height="35" Margin="3" IsEnabled="False"/>
-                    <Button x:Name="btnCheckUpdates" Content="🔔 Обновления" Height="35" Margin="3"/>
-                    <Button x:Name="btnClearAllUserApps" Content="🗑️ Очистить добавленные" Height="35" Margin="3"/>
-                    <Button x:Name="btnRefreshCatalog" Content="🔄 Обновить каталог" Height="35" Margin="3"/>
-                    <Button x:Name="btnRefreshAvailability" Content="🔍 Проверить доступность" Height="35" Margin="3" Click="RefreshAvailability_Click"/>
-                    <Separator Margin="3,4"/>
-                    <Button x:Name="btnExportList" Content="📤 Экспорт списка" Height="32" Margin="3"
-                            ToolTip="Сохранить выбранные приложения в JSON" Click="BtnExportList_Click"/>
-                    <Button x:Name="btnImportList" Content="📥 Импорт списка" Height="32" Margin="3"
-                            ToolTip="Загрузить список приложений из JSON" Click="BtnImportList_Click"/>
-                </StackPanel>
-            </GroupBox>
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <GroupBox Header="🚀 Действия">
+                    <StackPanel>
+                        <Button x:Name="btnInstall" Content="🚀 Установить" Height="35" Margin="3"/>
+                        <Button x:Name="btnCancelInstall" Content="⏹️ Отмена" Height="35" Margin="3" IsEnabled="False"/>
+                        <Button x:Name="btnCheckUpdates" Content="🔔 Обновления" Height="35" Margin="3"/>
+                        <Button x:Name="btnClearAllUserApps" Content="🗑️ Очистить добавленные" Height="35" Margin="3"/>
+                        <Button x:Name="btnRefreshCatalog" Content="🔄 Обновить каталог" Height="35" Margin="3"/>
+                        <Button x:Name="btnRefreshAvailability" Content="🔍 Проверить доступность" Height="35" Margin="3" Click="RefreshAvailability_Click"/>
+                        <Separator Margin="3,4"/>
+                        <Button x:Name="btnExportList" Content="📤 Экспорт списка" Height="32" Margin="3"
+                                ToolTip="Сохранить выбранные приложения в JSON" Click="BtnExportList_Click"/>
+                        <Button x:Name="btnImportList" Content="📥 Импорт списка" Height="32" Margin="3"
+                                ToolTip="Загрузить список приложений из JSON" Click="BtnImportList_Click"/>
+                    </StackPanel>
+                </GroupBox>
 
-            <GroupBox Header="💾 Диск установки" Margin="0,10,0,0">
-                <StackPanel>
-                    <ComboBox x:Name="cmbAvailableDisks" Height="28"/>
-                    <TextBlock x:Name="txtSpaceStatus" FontSize="10" Margin="0,5,0,0"/>
-                    <ProgressBar x:Name="installProgressBar" Height="8" Margin="0,5,0,0" Minimum="0" Maximum="100" Value="0"/>
-                    <TextBlock x:Name="txtOverallStatus" Text="Готов" FontSize="10" HorizontalAlignment="Center" Margin="0,5,0,0"/>
-                </StackPanel>
-            </GroupBox>
+                <GroupBox Header="💾 Диск установки" Margin="0,10,0,0">
+                    <StackPanel>
+                        <ComboBox x:Name="cmbAvailableDisks" Height="28"/>
+                        <TextBlock x:Name="txtSpaceStatus" FontSize="10" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                        <ProgressBar x:Name="installProgressBar" Height="8" Margin="0,5,0,0" Minimum="0" Maximum="100" Value="0"/>
+                        <TextBlock x:Name="txtOverallStatus" Text="Готов" FontSize="10" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </GroupBox>
 
-            <GroupBox Header="📋 Лог установки" Margin="0,10,0,0" Height="200">
-                <TextBox x:Name="txtInstallLog"
-                         Background="{DynamicResource CardBackground}"
-                         Foreground="{DynamicResource TextPrimary}"
-                         FontFamily="Consolas" FontSize="10"
-                         IsReadOnly="True" TextWrapping="Wrap"
-                         VerticalScrollBarVisibility="Auto"/>
-            </GroupBox>
+                <GroupBox Header="📋 Лог установки" Margin="0,10,0,0" Height="200">
+                    <TextBox x:Name="txtInstallLog"
+                             Background="{DynamicResource CardBackground}"
+                             Foreground="{DynamicResource TextPrimary}"
+                             FontFamily="Consolas" FontSize="10"
+                             IsReadOnly="True" TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"/>
+                </GroupBox>
 
-            <GroupBox Header="📊 Прогресс установки" Margin="0,10,0,0" Height="150">
-                <ListBox x:Name="lstAppProgress" Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding AppName}" Width="200" Foreground="{DynamicResource TextPrimary}"/>
-                                <TextBlock Text="{Binding Status}" Width="200" Foreground="{DynamicResource TextSecondary}"/>
-                                <ProgressBar Width="100" Height="15" Value="{Binding Percentage}" Margin="5,0"
-                                             Background="{DynamicResource BorderBrush}"
-                                             Foreground="{DynamicResource AccentColor}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </GroupBox>
-        </StackPanel>
+                <GroupBox Header="📊 Прогресс установки" Margin="0,10,0,0" Height="160">
+                    <ListBox x:Name="lstAppProgress"
+                             Background="{DynamicResource CardBackground}"
+                             Foreground="{DynamicResource TextPrimary}"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Padding" Value="4,3"/>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="{Binding AppName}"
+                                               FontSize="11" Foreground="{DynamicResource TextPrimary}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Status}" Grid.Column="1"
+                                               FontSize="10" Foreground="{DynamicResource TextSecondary}"
+                                               Margin="6,0,0,0"/>
+                                    <ProgressBar Grid.Row="1" Grid.ColumnSpan="2"
+                                                 Height="4" Margin="0,3,0,0"
+                                                 Value="{Binding Percentage}"
+                                                 Background="{DynamicResource BorderBrush}"
+                                                 Foreground="{DynamicResource AccentColor}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>
