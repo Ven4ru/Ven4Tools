@@ -61,3 +61,14 @@ Ven4Admin/
 
 # Secrets — never commit real tokens
 **/Secrets.cs
+
+# Local publish artifacts
+_publish*/
+_publish_*/
+
+# Local backups (symlink to OneDrive, not for git)
+_backups/
+_backup_*/
+
+# Screenshots
+_screenshots/
