@@ -85,8 +85,6 @@ namespace Ven4Tools.Services
                         appProgress.Percentage = 100;
                         progress.Report(appProgress);
                         Log($"✅ {app.DisplayName} — локальный установщик");
-                        if (UserSession.IsLoggedIn)
-                            await GamificationService.Instance.TrackInstallAsync(app.Id, app.DisplayName, "local");
                         await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "local", app.CategoryString);
                         return (true, "Установлено из локального файла", appProgress);
                     }
@@ -129,8 +127,6 @@ namespace Ven4Tools.Services
                             appProgress.Percentage = 100;
                             progress.Report(appProgress);
                             Log($"✅ {app.DisplayName} установлено из офлайн-кэша");
-                            if (UserSession.IsLoggedIn)
-                                await GamificationService.Instance.TrackInstallAsync(app.Id, app.DisplayName, "cache");
                             return (true, "Установлено из офлайн-кэша", appProgress);
                         }
                     }
@@ -174,8 +170,6 @@ namespace Ven4Tools.Services
                                     progress.Report(appProgress);
                                     Log($"✅ {app.DisplayName} — Winget ({wsrc}): {primaryId}");
                                     await StatsService.Instance.TrackOverrideAsync(app.Id, primaryId, null, true);
-                                    if (UserSession.IsLoggedIn)
-                                        await GamificationService.Instance.TrackInstallAsync(app.Id, app.DisplayName, "winget");
                                     await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "winget", app.CategoryString);
                                     return (true, "Установлено через Winget", appProgress);
                                 }
@@ -200,8 +194,6 @@ namespace Ven4Tools.Services
                                 progress.Report(appProgress);
                                 Log($"✅ {app.DisplayName} — Chocolatey: {app.ChocoId}");
                                 await StatsService.Instance.TrackOverrideAsync(app.Id, app.ChocoId, null, true);
-                                if (UserSession.IsLoggedIn)
-                                    await GamificationService.Instance.TrackInstallAsync(app.Id, app.DisplayName, "choco");
                                 await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "choco", app.CategoryString);
                                 return (true, "Установлено через Chocolatey", appProgress);
                             }
@@ -225,8 +217,6 @@ namespace Ven4Tools.Services
                                 progress.Report(appProgress);
                                 Log($"✅ {app.DisplayName} — Scoop: {app.ScoopId}");
                                 await StatsService.Instance.TrackOverrideAsync(app.Id, app.ScoopId, null, true);
-                                if (UserSession.IsLoggedIn)
-                                    await GamificationService.Instance.TrackInstallAsync(app.Id, app.DisplayName, "scoop");
                                 await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "scoop", app.CategoryString);
                                 return (true, "Установлено через Scoop", appProgress);
                             }
@@ -315,8 +305,6 @@ namespace Ven4Tools.Services
                                             progress.Report(appProgress);
                                             Log($"✅ {app.DisplayName} — прямая ссылка: {url}");
                                             await StatsService.Instance.TrackOverrideAsync(app.Id, null, url, true);
-                                            if (UserSession.IsLoggedIn)
-                                                await GamificationService.Instance.TrackInstallAsync(app.Id, app.DisplayName, "direct");
                                             await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "direct", app.CategoryString);
                                             return (true, "Установлено", appProgress);
                                         }
