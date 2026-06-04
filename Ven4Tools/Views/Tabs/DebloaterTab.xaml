@@ -13,7 +13,7 @@
         <!-- Header -->
         <Grid Grid.Row="0" Margin="0,0,0,16">
             <StackPanel>
-                <TextBlock Text="🧹 Debloater — очистка Windows"
+                <TextBlock Text="🧹 Очистка Windows"
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource TextPrimary}"/>
                 <TextBlock TextWrapping="Wrap" Margin="0,4,0,0"
@@ -75,7 +75,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}"
+                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"

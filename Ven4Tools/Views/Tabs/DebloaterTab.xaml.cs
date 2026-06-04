@@ -73,6 +73,8 @@ namespace Ven4Tools.Views.Tabs
 
         private void ApplyFilter()
         {
+            if (lstDebloat == null) return;
+
             string cat = "all";
             if (rbApps.IsChecked == true)     cat = "app";
             if (rbPrivacy.IsChecked == true)  cat = "privacy";
