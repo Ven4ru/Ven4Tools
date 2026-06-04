@@ -1495,64 +1495,7 @@ namespace Ven4Tools.Views.Tabs
             AddLog($"➕ Добавлено из Scoop: {id}");
         }
 
-        // ── Winget search suggestions (legacy) ────────────────────────────────────
-        private void ShowWingetSuggestions(string query, List<WingetPackage> packages)
-        {
-            pnlWingetResults.Children.Clear();
-            txtWingetStatus.Visibility = Visibility.Collapsed;
-
-            if (packages.Count == 0)
-            {
-                txtWingetStatus.Text = $"😕 Ничего не найдено в winget по запросу «{query}»";
-                txtWingetStatus.Visibility = Visibility.Visible;
-                return;
-            }
-
-            foreach (var pkg in packages)
-            {
-                var btn = new Button
-                {
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    Margin = new Thickness(0, 1, 0, 1),
-                    Height = 26,
-                    Padding = new Thickness(6, 0, 6, 0),
-                    Background = Brushes.Transparent,
-                    BorderThickness = new Thickness(0),
-                    Cursor = Cursors.Hand,
-                    FontSize = 12,
-                    ToolTip = pkg.Id
-                };
-
-                var panel = new StackPanel { Orientation = Orientation.Horizontal };
-                panel.Children.Add(new TextBlock
-                {
-                    Text = "➕  ",
-                    Foreground = (Brush)FindResource("AccentColor"),
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-                panel.Children.Add(new TextBlock
-                {
-                    Text = pkg.Name,
-                    Foreground = (Brush)FindResource("TextPrimary"),
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-                panel.Children.Add(new TextBlock
-                {
-                    Text = $"  ({pkg.Id})",
-                    Foreground = (Brush)FindResource("TextSecondary"),
-                    FontSize = 10,
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-                btn.Content = panel;
-
-                var captureName = pkg.Name;
-                var captureId = pkg.Id;
-                btn.Click += (_, _) => AddWingetSuggestion(captureName, captureId);
-                pnlWingetResults.Children.Add(btn);
-            }
-        }
-
-        private void HideWingetSuggestions()
+private void HideWingetSuggestions()
         {
             Dispatcher.Invoke(() =>
             {

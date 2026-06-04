@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
@@ -142,7 +143,7 @@ namespace Ven4Tools.Services
         {
             stats.LastUpdate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             var json = JsonConvert.SerializeObject(stats, Formatting.Indented);
-            await File.WriteAllTextAsync(_statsPath, json);
+            await FileHelper.WriteAllTextAtomicAsync(_statsPath, json);
         }
     }
 }

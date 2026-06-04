@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 
 namespace Ven4Tools.Services
 {
@@ -32,8 +33,7 @@ namespace Ven4Tools.Services
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-                File.WriteAllText(FilePath, JsonConvert.SerializeObject(new List<string>(_favorites)));
+                FileHelper.WriteAllTextAtomic(FilePath, JsonConvert.SerializeObject(new List<string>(_favorites)));
             }
             catch { }
         }
