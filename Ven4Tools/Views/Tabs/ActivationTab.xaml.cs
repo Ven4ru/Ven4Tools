@@ -371,8 +371,6 @@ namespace Ven4Tools.Views.Tabs
                     {
                         AddLog($"✅ Активация {product} выполнена успешно!");
                         AddLog("━━━━━━━━━━━━━━━━━━━━━━");
-                        if (UserSession.IsLoggedIn)
-                            await GamificationService.Instance.TrackActivationAsync();
                         MessageBox.Show($"Активация {product} выполнена успешно!", "Успех",
                             MessageBoxButton.OK, MessageBoxImage.Information);
                     }

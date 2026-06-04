@@ -333,8 +333,6 @@ namespace Ven4Tools.Views.Tabs
                     app.Available = "";
                     Dispatcher.Invoke(() => { ApplyFilter(); UpdateStats(); });
                     Log($"✅ {app.Name} обновлён");
-                    if (UserSession.IsLoggedIn)
-                        await GamificationService.Instance.TrackUpdateAsync();
                 }
                 else
                 {
