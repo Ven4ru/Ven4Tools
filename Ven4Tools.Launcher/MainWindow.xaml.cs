@@ -523,6 +523,19 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
         AddLog($"✅ Клиент {version.Version} скачан и распакован");
         version.IsInstalled = true;
 
+        try
+        {
+            string channelPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Ven4Tools", "channel.json");
+            File.WriteAllText(channelPath, Newtonsoft.Json.JsonConvert.SerializeObject(new
+            {
+                channel = version.IsPreRelease ? "prerelease" : "stable",
+                version = version.Version
+            }));
+        }
+        catch { }
+
         btnLaunchApp.Content = "🚀 Запустить Ven4Tools";
         btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
 
