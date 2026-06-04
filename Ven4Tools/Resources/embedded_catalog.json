@@ -1,7 +1,14 @@
 {
-  "version": 4,
-  "lastUpdated": "2026-06-04 18:00:00",
+  "version": 5,
+  "lastUpdated": "2026-06-04 18:30:00",
   "changelog": [
+    {
+      "version": 5,
+      "date": "2026-06-04",
+      "addedApps": ["nvcleanstall"],
+      "removedApps": ["geforce-experience", "amd-software"],
+      "message": "Удалены GeForce Experience и AMD Software: нет в winget и нет URL. Замена: NVCleanstall (TechPowerUp) — чистые NVIDIA-драйверы через winget. Итого 71 приложение."
+    },
     {
       "version": 4,
       "date": "2026-06-04",
@@ -969,31 +976,16 @@
       "ruBlocked": false
     },
     {
-      "id": "geforce-experience",
-      "name": "NVIDIA GeForce Experience",
+      "id": "nvcleanstall",
+      "name": "NVCleanstall",
       "category": "Драйверпаки",
-      "wingetId": "Nvidia.GeForceExperience",
+      "wingetId": "TechPowerUp.NVCleanstall",
       "downloadUrl": "",
-      "version": "3.28.0.423",
-      "size": "~320 MB",
+      "version": "1.19.0",
+      "size": "~5 MB",
       "official": true,
       "iconUrl": "",
-      "description": "Драйверы NVIDIA, оптимизация игр и запись с помощью ShadowPlay.",
-      "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
-    },
-    {
-      "id": "amd-software",
-      "name": "AMD Software: Adrenalin",
-      "category": "Драйверпаки",
-      "wingetId": "AMD.Software",
-      "downloadUrl": "",
-      "version": "24.12.1",
-      "size": "~450 MB",
-      "official": true,
-      "iconUrl": "",
-      "description": "Драйверы и утилиты AMD для видеокарт Radeon.",
+      "description": "Установка чистых драйверов NVIDIA без телеметрии, GeForce Experience и лишних компонентов.",
       "sha256": "",
       "skipHash": true,
       "ruBlocked": false
