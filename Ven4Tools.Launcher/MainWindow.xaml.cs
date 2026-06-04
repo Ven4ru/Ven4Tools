@@ -602,8 +602,19 @@ private async void BtnLaunchApp_Click(object sender, RoutedEventArgs e)
                 clientProcess.EnableRaisingEvents = true;
                 clientProcess.Exited += (_, _) =>
                 {
-                    _watchdog?.Dispose();
+                    var wd = _watchdog;
                     _watchdog = null;
+
+                    var crashPath = System.IO.Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "Ven4Tools", "crash_last.json");
+                    bool hasFreshCrash = System.IO.File.Exists(crashPath) &&
+                        (DateTime.UtcNow - System.IO.File.GetLastWriteTimeUtc(crashPath)).TotalSeconds < 15;
+
+                    if (!hasFreshCrash && wd != null)
+                        wd.ReportKill(clientProcess.ExitCode);
+
+                    wd?.Dispose();
                 };
             }
         }
