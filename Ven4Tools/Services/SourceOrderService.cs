@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
@@ -45,8 +46,7 @@ namespace Ven4Tools.Services
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-                File.WriteAllText(_path, JsonConvert.SerializeObject(Current, Formatting.Indented));
+                FileHelper.WriteAllTextAtomic(_path, JsonConvert.SerializeObject(Current, Formatting.Indented));
                 Changed?.Invoke();
             }
             catch { }

@@ -416,11 +416,5 @@ private void SaveAlternatives()
             catch { }
         }
 
-public long GetTotalRequiredSpace(List<string> selectedIds)
-{
-    // Теперь размер будет браться из динамической проверки
-    // Этот метод можно оставить как запасной вариант
-    return 0;
-}
     }
 }
