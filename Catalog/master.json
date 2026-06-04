@@ -904,7 +904,7 @@
       "id": "itch",
       "name": "itch.io",
       "category": "Игровые сервисы",
-      "wingetId": "itch.io.itch",
+      "wingetId": "ItchIo.Itch",
       "downloadUrl": "",
       "version": "",
       "size": "~40 MB",
