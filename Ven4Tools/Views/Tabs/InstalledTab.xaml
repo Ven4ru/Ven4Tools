@@ -67,7 +67,7 @@
         </Grid.RowDefinitions>
 
         <!-- Заголовок + тулбар -->
-        <Border Grid.Row="0" Padding="20,20,20,12"
+        <Border Grid.Row="0" Padding="16,16,16,12"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.RowDefinitions>
@@ -79,12 +79,10 @@
                 <TextBlock Text="Установленные приложения" FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource TextPrimary}"/>
 
-                <!-- Строка поиска + кнопки -->
+                <!-- Поиск + утилиты (без кнопок действий — они в фильтр-строке) -->
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="10"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" MinWidth="120"/>
                         <ColumnDefinition Width="10"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
@@ -139,36 +137,18 @@
                                 FontSize="12"
                                 Click="BtnImport_Click"/>
                     </StackPanel>
-
-                    <StackPanel Grid.Column="4" Orientation="Horizontal">
-                        <Button x:Name="btnUpdateSelected"
-                                Content="⬆ Обновить выбранные"
-                                Height="34" Padding="14,0"
-                                Background="{DynamicResource AccentColor}"
-                                Foreground="White"
-                                FontWeight="Bold"
-                                FontSize="12"
-                                IsEnabled="False"
-                                Click="BtnUpdateSelected_Click"/>
-                        <Button x:Name="btnUninstallSelected" Content="🗑 Удалить выбранные"
-                                IsEnabled="False" Margin="4,0,0,0"
-                                Height="34" Padding="10,0"
-                                Background="#C42B2B" Foreground="White"
-                                FontWeight="Bold" FontSize="12"
-                                Click="BtnUninstallSelected_Click"/>
-                    </StackPanel>
                 </Grid>
             </Grid>
         </Border>
 
-        <!-- Фильтры + статистика -->
-        <Border Grid.Row="1" Padding="20,10"
+        <!-- Фильтры + статистика + кнопки действий -->
+        <Border Grid.Row="1" Padding="16,8"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
                 Background="{DynamicResource SidebarBackground}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*" MinWidth="0"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
@@ -177,31 +157,53 @@
                                  Content="Все" IsChecked="True" Margin="0,0,6,0"
                                  Checked="FilterChanged"/>
                     <RadioButton x:Name="rdbUpdates" Style="{StaticResource FilterTabStyle}"
-                                 Content="⚡ Нужно обновить" Margin="0,0,6,0"
+                                 Content="⚡ Обновить" Margin="0,0,6,0"
                                  Checked="FilterChanged"/>
                     <RadioButton x:Name="rdbUnknown" Style="{StaticResource FilterTabStyle}"
-                                 Content="❓ Неизвестный источник"
+                                 Content="❓ Неизвестные"
                                  Checked="FilterChanged"/>
                 </StackPanel>
 
-                <TextBlock x:Name="txtStats" Grid.Column="2"
+                <!-- Статистика — занимает оставшееся место, обрезается при нехватке -->
+                <TextBlock x:Name="txtStats" Grid.Column="1"
                            Foreground="{DynamicResource TextSecondary}"
-                           FontSize="12" VerticalAlignment="Center"/>
+                           FontSize="12" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           Margin="12,0"/>
+
+                <!-- Кнопки действий -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="btnUpdateSelected"
+                            Content="⬆ Обновить"
+                            Height="30" Padding="12,0"
+                            Background="{DynamicResource AccentColor}"
+                            Foreground="White"
+                            FontWeight="Bold"
+                            FontSize="12"
+                            IsEnabled="False"
+                            Click="BtnUpdateSelected_Click"/>
+                    <Button x:Name="btnUninstallSelected" Content="🗑 Удалить"
+                            IsEnabled="False" Margin="4,0,0,0"
+                            Height="30" Padding="10,0"
+                            Background="#C42B2B" Foreground="White"
+                            FontWeight="Bold" FontSize="12"
+                            Click="BtnUninstallSelected_Click"/>
+                </StackPanel>
             </Grid>
         </Border>
 
         <!-- Заголовок таблицы с чекбоксом "Выбрать все" -->
-        <Border Grid.Row="2" Padding="20,6,20,6"
+        <Border Grid.Row="2" Padding="16,6,16,6"
                 Background="{DynamicResource CardBackground}"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="28"/>
+                    <ColumnDefinition Width="26"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="95"/>
+                    <ColumnDefinition Width="95"/>
                     <ColumnDefinition Width="110"/>
-                    <ColumnDefinition Width="110"/>
-                    <ColumnDefinition Width="130"/>
-                    <ColumnDefinition Width="190"/>
+                    <ColumnDefinition Width="165"/>
                 </Grid.ColumnDefinitions>
                 <CheckBox x:Name="chkSelectAll" Grid.Column="0" VerticalAlignment="Center"
                           Click="ChkSelectAll_Click"/>
@@ -239,11 +241,12 @@
 
             <!-- List -->
             <ScrollViewer x:Name="listScroll" Visibility="Collapsed"
-                          VerticalScrollBarVisibility="Auto">
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl x:Name="lstApps" Margin="0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Padding="20,0"
+                            <Border Padding="16,0"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="0,0,0,1"
                                     Background="Transparent">
@@ -258,12 +261,12 @@
                                 </Border.Style>
                                 <Grid Height="38">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="28"/>
+                                        <ColumnDefinition Width="26"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="95"/>
+                                        <ColumnDefinition Width="95"/>
                                         <ColumnDefinition Width="110"/>
-                                        <ColumnDefinition Width="110"/>
-                                        <ColumnDefinition Width="130"/>
-                                        <ColumnDefinition Width="190"/>
+                                        <ColumnDefinition Width="165"/>
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Чекбокс -->

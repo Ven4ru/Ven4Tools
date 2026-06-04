@@ -3,7 +3,6 @@ using System.Linq;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
@@ -12,14 +11,6 @@ using Ven4Tools.Views.Tabs;
 
 namespace Ven4Tools
 {
-    internal sealed class RelayCommand : ICommand
-    {
-        private readonly Action<object?> _execute;
-        public RelayCommand(Action<object?> execute) => _execute = execute;
-        public event EventHandler? CanExecuteChanged;
-        public bool CanExecute(object? p) => true;
-        public void Execute(object? p) => _execute(p);
-    }
     public partial class MainWindow : Window
     {
         private bool _categorySelectionShown = false;
@@ -33,11 +24,9 @@ namespace Ven4Tools
         private ActivationTab? _activationTab;
         private AboutTab?      _aboutTab;
         private NetworkTab?    _networkTab;
-        private ProfileTab?    _profileTab;
         private HistoryTab?    _historyTab;
         private DebloaterTab?  _debloaterTab;
         private DriversTab?    _driversTab;
-        private Views.MiniWindow? _miniWindow;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
 
         public MainWindow()
@@ -73,9 +62,6 @@ namespace Ven4Tools
                 InitTrayIcon();
                 chkMinimizeToTray.IsChecked = ProfileService.Current.MinimizeToTray;
                 RefreshPinsStrip();
-                InputBindings.Add(new KeyBinding(
-                    new RelayCommand(_ => BtnMiniMode_Click(null, null)),
-                    new KeyGesture(Key.M, ModifierKeys.Control)));
             };
             Loaded += (s, e) =>
             {
@@ -83,20 +69,6 @@ namespace Ven4Tools
                 ConnectivityMonitor.StatusChanged += online => Dispatcher.Invoke(() => UpdateTabVisibility());
                 UpdateTabVisibility();
             };
-            Loaded += async (s, e) =>
-            {
-                if (UserSession.IsLoggedIn)
-                {
-                    await GamificationService.Instance.TrackDailyVisitAsync();
-                    await RefreshPointsBadgeAsync();
-                }
-            };
-            GamificationService.Instance.PointsChanged += (pts, _) => Dispatcher.Invoke(() =>
-            {
-                if (!UserSession.IsLoggedIn) return;
-                txtSidebarPoints.Text   = $"⭐ {pts}";
-                pnlPointsBadge.Visibility = Visibility.Visible;
-            });
         }
 
         private void NavigateToCatalog(object? sender, RoutedEventArgs? e)
@@ -113,7 +85,7 @@ namespace Ven4Tools
                     NavigateToInstalled(null, null);
                 };
             }
-            MainFrame.Navigate(_catalogTab);
+            MainFrame.Content = (_catalogTab);
             UpdateMascot("catalog");
         }
 
@@ -121,7 +93,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnNetworkTab);
             if (_networkTab == null) { _networkTab = new NetworkTab(); _networkTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_networkTab);
+            MainFrame.Content = (_networkTab);
             UpdateMascot("network");
         }
 
@@ -129,7 +101,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnInstalledTab);
             if (_installedTab == null) { _installedTab = new InstalledTab(); _installedTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_installedTab);
+            MainFrame.Content = (_installedTab);
             UpdateMascot("installed");
         }
 
@@ -137,7 +109,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnSystemTab);
             if (_systemTab == null) { _systemTab = new SystemTab(); _systemTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_systemTab);
+            MainFrame.Content = (_systemTab);
             UpdateMascot("system");
         }
 
@@ -150,7 +122,7 @@ namespace Ven4Tools
                 _officeTab.LogMessage += AddLog;
                 _officeTab.GoToActivation += () => NavigateToActivation(null, null);
             }
-            MainFrame.Navigate(_officeTab);
+            MainFrame.Content = (_officeTab);
             UpdateMascot("office");
         }
 
@@ -158,24 +130,15 @@ namespace Ven4Tools
         {
             SetActiveButton(btnActivationTab);
             if (_activationTab == null) { _activationTab = new ActivationTab(); _activationTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_activationTab);
+            MainFrame.Content = (_activationTab);
             UpdateMascot("activation");
-        }
-
-        private void NavigateToProfile(object? sender, RoutedEventArgs? e)
-        {
-            SetActiveButton(btnProfileTab);
-            if (_profileTab == null) _profileTab = new ProfileTab();
-            MainFrame.Navigate(_profileTab);
-            _ = _profileTab.RefreshAsync();
-            UpdateMascot("profile");
         }
 
         private void NavigateToAbout(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnAboutTab);
             if (_aboutTab == null) { _aboutTab = new AboutTab(); _aboutTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_aboutTab);
+            MainFrame.Content = (_aboutTab);
             UpdateMascot("about");
         }
 
@@ -190,7 +153,6 @@ namespace Ven4Tools
             btnNetworkTab.Visibility    = online ? Visibility.Visible : Visibility.Collapsed;
 
             // Auth-gated tabs
-            btnProfileTab.Visibility = loggedIn ? Visibility.Visible : Visibility.Collapsed;
             btnHistoryTab.Visibility = loggedIn ? Visibility.Visible : Visibility.Collapsed;
 
             if (!online)
@@ -209,7 +171,7 @@ namespace Ven4Tools
             }
 
             // If auth-gated tab is active but user logged out — go to catalog
-            if (!loggedIn && _currentTab is "profile" or "history")
+            if (!loggedIn && _currentTab is "history")
                 NavigateToCatalog(null, null);
         }
 
@@ -219,7 +181,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnDebloaterTab);
             if (_debloaterTab == null) { _debloaterTab = new DebloaterTab(); _debloaterTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_debloaterTab);
+            MainFrame.Content = (_debloaterTab);
             UpdateMascot("debloater");
         }
 
@@ -229,7 +191,7 @@ namespace Ven4Tools
         {
             SetActiveButton(btnDriversTab);
             if (_driversTab == null) { _driversTab = new DriversTab(); _driversTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_driversTab);
+            MainFrame.Content = (_driversTab);
             UpdateMascot("drivers");
         }
 
@@ -239,26 +201,9 @@ namespace Ven4Tools
         {
             SetActiveButton(btnHistoryTab);
             if (_historyTab == null) { _historyTab = new HistoryTab(); _historyTab.LogMessage += AddLog; }
-            MainFrame.Navigate(_historyTab);
+            MainFrame.Content = (_historyTab);
             _ = _historyTab.RefreshAsync();
             UpdateMascot("history");
-        }
-
-        // ── Mini mode ─────────────────────────────────────────────────────────────
-
-        private void BtnMiniMode_Click(object? sender, RoutedEventArgs? e)
-        {
-            if (_miniWindow != null && _miniWindow.IsVisible)
-            {
-                _miniWindow.Activate();
-                return;
-            }
-            _miniWindow = new Views.MiniWindow();
-            _miniWindow.OpenFullRequested += () =>
-            {
-                Show(); WindowState = WindowState.Normal; Activate();
-            };
-            _miniWindow.Show();
         }
 
         // ── Tray icon ─────────────────────────────────────────────────────────────
@@ -278,8 +223,6 @@ namespace Ven4Tools
 
                 var menu = new System.Windows.Forms.ContextMenuStrip();
                 menu.Items.Add("Открыть", null, (_, _) => Dispatcher.Invoke(ShowFromTray));
-                menu.Items.Add("⚡ Мини-режим", null,
-                    (_, _) => Dispatcher.Invoke(() => BtnMiniMode_Click(null, null)));
                 menu.Items.Add("-");
                 menu.Items.Add("Выход", null, (_, _) => Dispatcher.Invoke(ForceExit));
 
@@ -488,16 +431,6 @@ namespace Ven4Tools
                 f.EndsWith(".msi", StringComparison.OrdinalIgnoreCase));
         }
 
-        private async System.Threading.Tasks.Task RefreshPointsBadgeAsync()
-        {
-            var data = await GamificationService.Instance.GetDataAsync();
-            Dispatcher.Invoke(() =>
-            {
-                txtSidebarPoints.Text    = $"⭐ {data.TotalPoints}";
-                pnlPointsBadge.Visibility = data.TotalPoints > 0 ? Visibility.Visible : Visibility.Collapsed;
-            });
-        }
-
         private void UpdateMascot(string tabName)
         {
             _currentTab = tabName;
@@ -520,7 +453,7 @@ namespace Ven4Tools
 
         private void SetActiveButton(Button activeButton)
         {
-            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnProfileTab, btnHistoryTab, btnDebloaterTab, btnDriversTab };
+            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnDriversTab };
             foreach (var btn in buttons)
             {
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");
@@ -567,13 +500,11 @@ namespace Ven4Tools
                     btnLogin.Visibility = Visibility.Collapsed;
                     txtStatusBar.Text = $"👋 Привет, {UserSession.Name}!";
                     ShowCategorySelectionIfNeeded();
-                    _ = RefreshPointsBadgeAsync();
                 }
                 else
                 {
                     pnlUserLoggedIn.Visibility = Visibility.Collapsed;
                     btnLogin.Visibility = Visibility.Visible;
-                    pnlPointsBadge.Visibility = Visibility.Collapsed;
                 }
                 UpdateTabVisibility();
             });
