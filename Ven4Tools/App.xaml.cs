@@ -20,6 +20,12 @@ namespace Ven4Tools
             base.OnStartup(e);
             LocalizationService.Init();
             ThemeService.Apply(ProfileService.Current.Theme);
+
+            var asm = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            var currentVer = asm != null ? $"{asm.Major}.{asm.Minor}.{asm.Build}" : "";
+            if (!string.IsNullOrEmpty(currentVer) && ChannelService.InstalledVersion != currentVer)
+                ChannelService.WriteChannel("stable", currentVer);
+
             _heartbeat = new HeartbeatService();
         }
 

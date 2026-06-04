@@ -39,5 +39,15 @@ namespace Ven4Tools.Services
                 catch { return ""; }
             }
         }
+
+        public static void WriteChannel(string channel, string version)
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(ChannelPath)!);
+                File.WriteAllText(ChannelPath, JsonConvert.SerializeObject(new { channel, version }));
+            }
+            catch { }
+        }
     }
 }
