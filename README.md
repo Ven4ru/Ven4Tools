@@ -1,6 +1,6 @@
 # Ven4Tools — Умный установщик программ для Windows
 
-[![GitHub release](https://img.shields.io/github/v/release/Ven4ru/Ven4Tools)](https://github.com/Ven4ru/Ven4Tools/releases/latest)
+[![GitHub release](https://img.shields.io/github/v/release/Ven4ru/Ven4Tools?include_prereleases)](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Ven4ru/Ven4Tools/total)](https://github.com/Ven4ru/Ven4Tools/releases)
 [![License](https://img.shields.io/github/license/Ven4ru/Ven4Tools)](LICENSE)
 
