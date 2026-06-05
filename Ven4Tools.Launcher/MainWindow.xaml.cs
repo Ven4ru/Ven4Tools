@@ -982,36 +982,42 @@ private async Task InstallWingetAsync()
         // Устанавливаем через PowerShell: сначала зависимости, потом сам winget.
         // Используем -File вместо -Command, чтобы пути не интерполировались в аргументах.
         string tempScript = Path.Combine(Path.GetTempPath(), $"winget_install_{Guid.NewGuid():N}.ps1");
-        // Single-quoted PS strings prevent $-variable expansion for paths that may contain $ (e.g. C:\Users\Bob$Smith\...)
-        File.WriteAllText(tempScript,
-            $"$ErrorActionPreference = 'Stop'\r\n" +
-            $"try {{ Add-AppxPackage -Path '{tempVcLibs.Replace("'", "''")}' }} catch {{}}\r\n" +
-            $"try {{ Add-AppxPackage -Path '{tempUiXaml.Replace("'", "''")}' }} catch {{}}\r\n" +
-            $"Add-AppxPackage -Path '{tempMsix.Replace("'", "''")}' -ForceApplicationShutdown\r\n",
-            System.Text.Encoding.UTF8);
-
-        var psi = new ProcessStartInfo
+        try
         {
-            FileName = "powershell.exe",
-            Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{tempScript}\"",
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true
-        };
+            // Single-quoted PS strings prevent $-variable expansion for paths containing $ (e.g. C:\Users\Bob$Smith\...)
+            File.WriteAllText(tempScript,
+                $"$ErrorActionPreference = 'Stop'\r\n" +
+                $"try {{ Add-AppxPackage -Path '{tempVcLibs.Replace("'", "''")}' }} catch {{}}\r\n" +
+                $"try {{ Add-AppxPackage -Path '{tempUiXaml.Replace("'", "''")}' }} catch {{}}\r\n" +
+                $"Add-AppxPackage -Path '{tempMsix.Replace("'", "''")}' -ForceApplicationShutdown\r\n",
+                System.Text.Encoding.UTF8);
 
-        using var proc = Process.Start(psi);
-        if (proc != null)
-        {
-            var stdoutTask = proc.StandardOutput.ReadToEndAsync();
-            string stderr = await proc.StandardError.ReadToEndAsync();
-            await proc.WaitForExitAsync();
-            await stdoutTask;
+            var psi = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{tempScript}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
 
-            if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
-                AddLog($"⚠️ PowerShell: {stderr.Trim()}");
+            using var proc = Process.Start(psi);
+            if (proc != null)
+            {
+                var stdoutTask = proc.StandardOutput.ReadToEndAsync();
+                string stderr = await proc.StandardError.ReadToEndAsync();
+                await proc.WaitForExitAsync();
+                await stdoutTask;
+
+                if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
+                    AddLog($"⚠️ PowerShell: {stderr.Trim()}");
+            }
         }
-        try { File.Delete(tempScript); } catch { }
+        finally
+        {
+            try { File.Delete(tempScript); } catch { }
+        }
 
         var result = await CheckWingetWithVersionAsync();
         if (result.IsInstalled)

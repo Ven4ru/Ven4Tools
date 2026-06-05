@@ -198,7 +198,8 @@ namespace Ven4Tools.Services
                             progress.Report(appProgress);
 
                             bool chocoOk = PackageManagerService.IsChocoInstalled()
-                                || (confirmPmInstall != null
+                                || (!token.IsCancellationRequested
+                                    && confirmPmInstall != null
                                     && await confirmPmInstall("Chocolatey")
                                     && await PackageManagerService.InstallChocoAsync(msg => Log(msg)));
                             if (chocoOk && await PackageManagerService.RunChocoInstallAsync(app.ChocoId, token, msg => Log(msg)))
@@ -223,7 +224,8 @@ namespace Ven4Tools.Services
                             progress.Report(appProgress);
 
                             bool scoopOk = PackageManagerService.IsScoopInstalled()
-                                || (confirmPmInstall != null
+                                || (!token.IsCancellationRequested
+                                    && confirmPmInstall != null
                                     && await confirmPmInstall("Scoop")
                                     && await PackageManagerService.InstallScoopAsync(msg => Log(msg)));
                             if (scoopOk && await PackageManagerService.RunScoopInstallAsync(app.ScoopId, token, msg => Log(msg)))
