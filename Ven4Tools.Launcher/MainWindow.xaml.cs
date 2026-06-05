@@ -187,24 +187,7 @@ namespace Ven4Tools.Launcher
                     }
                 }
 
-                _availableVersions.Sort((a, b) =>
-                {
-                    var parts1 = a.Version.Split('.');
-                    var parts2 = b.Version.Split('.');
-                    for (int i = 0; i < Math.Max(parts1.Length, parts2.Length); i++)
-                    {
-                        string s1 = i < parts1.Length ? parts1[i].Split('-')[0] : "0";
-                        string s2 = i < parts2.Length ? parts2[i].Split('-')[0] : "0";
-                        int n1 = int.TryParse(s1, out var x) ? x : 0;
-                        int n2 = int.TryParse(s2, out var y) ? y : 0;
-                        if (n1 != n2) return n2.CompareTo(n1);
-                    }
-                    // При равных числах стабильная выше pre-release
-                    bool aIsPre = a.Version.Contains('-');
-                    bool bIsPre = b.Version.Contains('-');
-                    if (aIsPre != bIsPre) return aIsPre ? 1 : -1;
-                    return 0;
-                });
+                _availableVersions.Sort((a, b) => VersionComparer.Compare(b.Version, a.Version));
 
                 if (_availableVersions.Any())
                 {

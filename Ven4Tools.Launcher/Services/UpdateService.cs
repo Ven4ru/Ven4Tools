@@ -48,7 +48,7 @@ namespace Ven4Tools.Launcher.Services
 
                 var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                 var currentVersion = ver != null ? $"{ver.Major}.{ver.Minor}.{ver.Build}" : "0.0.0";
-                bool hasUpdate = CompareVersions(remoteVersion, currentVersion) > 0;
+                bool hasUpdate = VersionComparer.IsNewer(remoteVersion, currentVersion);
 
                 return new UpdateInfo
                 {
@@ -119,17 +119,5 @@ Remove-Item '{psTemp}'
             }
         }
 
-        private static int CompareVersions(string v1, string v2)
-        {
-            var parts1 = v1.Split('.');
-            var parts2 = v2.Split('.');
-            for (int i = 0; i < Math.Max(parts1.Length, parts2.Length); i++)
-            {
-                int num1 = i < parts1.Length && int.TryParse(parts1[i], out var x) ? x : 0;
-                int num2 = i < parts2.Length && int.TryParse(parts2[i], out var y) ? y : 0;
-                if (num1 != num2) return num1.CompareTo(num2);
-            }
-            return 0;
-        }
     }
 }
