@@ -52,6 +52,8 @@ public partial class App : Application
     {
         e.Handled = true;
         WriteLauncherCrash(e.Exception);
+        // Shutdown after logging — continuing with corrupted UI state is unsafe
+        Application.Current?.Shutdown(1);
     }
 
     private static void WriteLauncherCrash(Exception ex)
