@@ -99,8 +99,16 @@ namespace Ven4Tools.Views.Tabs
             var progress = new Progress<AppInstallProgress>(p =>
                 LogMessage?.Invoke($"  {p.Status}"));
 
+            async Task<bool> confirmPm(string pmName) =>
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    System.Windows.MessageBox.Show(
+                        $"Для переустановки требуется {pmName}, который не установлен.\n\nРазрешить установку {pmName}?",
+                        $"Установка {pmName}",
+                        System.Windows.MessageBoxButton.YesNo,
+                        System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes);
+
             var result = await installer.InstallAppAsync(
-                appInfo, new[] { "winget", "msstore" }, cts.Token, progress, "C:\\");
+                appInfo, new[] { "winget", "msstore" }, cts.Token, progress, "C:\\", null, confirmPm);
 
             LogMessage?.Invoke(result.Success
                 ? $"✅ {entry.AppName} переустановлен"

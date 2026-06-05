@@ -582,6 +582,11 @@ private async void BtnLaunchApp_Click(object sender, RoutedEventArgs e)
                     var win = new CrashReportWindow(report) { Owner = this };
                     win.ShowDialog();
                 });
+                _watchdog.ClientKilledWithoutCrash += report => Dispatcher.Invoke(() =>
+                {
+                    var win = new CrashReportWindow(report) { Owner = this };
+                    win.ShowDialog();
+                });
                 clientProcess.EnableRaisingEvents = true;
                 clientProcess.Exited += (_, _) =>
                 {
