@@ -123,7 +123,7 @@ namespace Ven4Tools.Launcher.Services
                 }
             }
 
-            versions.Sort((a, b) => CompareVersions(b.Version, a.Version));
+            versions.Sort((a, b) => VersionComparer.Compare(b.Version, a.Version));
             return versions;
         }
 
@@ -141,7 +141,7 @@ public async Task<UpdateInfo?> CheckLauncherUpdate(string currentVersion)
         if (latest?.tag_name == null) return null;
 
         string latestVersion = latest.tag_name.TrimStart('v');
-        bool hasUpdate = CompareVersions(latestVersion, currentVersion) > 0;
+        bool hasUpdate = VersionComparer.IsNewer(latestVersion, currentVersion);
 
         // Ищем asset лаунчера
         var launcherAsset = latest.assets?.FirstOrDefault(a =>
@@ -195,27 +195,6 @@ public async Task<string?> GetLatestWingetVersionAsync()
     }
 }
         /// <summary>
-        /// Сравнение версий
-        /// </summary>
-        private static int CompareVersions(string v1, string v2)
-        {
-            var parts1 = v1.Split('.');
-            var parts2 = v2.Split('.');
-            for (int i = 0; i < Math.Max(parts1.Length, parts2.Length); i++)
-            {
-                // Отрезаем суффикс вроде "-pre", "-rc1" перед парсингом числа
-                string s1 = i < parts1.Length ? parts1[i].Split('-')[0] : "0";
-                string s2 = i < parts2.Length ? parts2[i].Split('-')[0] : "0";
-                int num1 = int.TryParse(s1, out var x) ? x : 0;
-                int num2 = int.TryParse(s2, out var y) ? y : 0;
-                if (num1 != num2) return num1.CompareTo(num2);
-            }
-            // При равных числах стабильная версия выше pre-release ("3.1.0" > "3.1.0-pre")
-            bool v1IsPre = v1.Contains('-');
-            bool v2IsPre = v2.Contains('-');
-            if (v1IsPre != v2IsPre) return v1IsPre ? -1 : 1;
-            return 0;
-        }
 
         public async Task<(bool Success, string? IssueUrl, string? Error)> CreateIssueAsync(
             string title, string body, string[]? labels = null)

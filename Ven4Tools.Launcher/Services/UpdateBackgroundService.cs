@@ -101,7 +101,7 @@ namespace Ven4Tools.Launcher.Services
             var latest = versions.FirstOrDefault(v => v.IsLatest);
             if (latest == null) return;
 
-            if (CompareVersions(latest.Version, installedVersion) <= 0) return;
+            if (!VersionComparer.IsNewer(latest.Version, installedVersion)) return;
             if (latest.Version == LastNotifiedClientVersion) return;
             if (_cts.IsCancellationRequested) return;
 
@@ -144,23 +144,6 @@ namespace Ven4Tools.Launcher.Services
             catch { return 0; }
         }
 
-        private static int CompareVersions(string v1, string v2)
-        {
-            var p1 = v1.Split('.');
-            var p2 = v2.Split('.');
-            for (int i = 0; i < Math.Max(p1.Length, p2.Length); i++)
-            {
-                string s1 = i < p1.Length ? p1[i].Split('-')[0] : "0";
-                string s2 = i < p2.Length ? p2[i].Split('-')[0] : "0";
-                int n1 = int.TryParse(s1, out var x) ? x : 0;
-                int n2 = int.TryParse(s2, out var y) ? y : 0;
-                if (n1 != n2) return n1.CompareTo(n2);
-            }
-            bool v1Pre = v1.Contains('-');
-            bool v2Pre = v2.Contains('-');
-            if (v1Pre != v2Pre) return v1Pre ? -1 : 1;
-            return 0;
-        }
 
         public void Dispose()
         {
