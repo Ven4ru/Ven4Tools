@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 using System.Diagnostics;
 
@@ -126,13 +127,9 @@ public void ApplyAlternativesToCatalog(MasterCatalog catalog)
         {
             try
             {
-                string? directory = Path.GetDirectoryName(hiddenAppsPath);
-                if (directory != null)
-                    Directory.CreateDirectory(directory);
-
                 string json;
                 lock (lockObj) { json = JsonSerializer.Serialize(hiddenApps, new JsonSerializerOptions { WriteIndented = true }); }
-                File.WriteAllText(hiddenAppsPath, json);
+                FileHelper.WriteAllTextAtomic(hiddenAppsPath, json);
             }
             catch { }
         }
@@ -274,13 +271,9 @@ private void SaveAlternatives()
 {
     try
     {
-        string? directory = Path.GetDirectoryName(alternativesPath);
-        if (directory != null)
-            Directory.CreateDirectory(directory);
-
         string json;
         lock (lockObj) { json = JsonSerializer.Serialize(alternatives, new JsonSerializerOptions { WriteIndented = true }); }
-        File.WriteAllText(alternativesPath, json);
+        FileHelper.WriteAllTextAtomic(alternativesPath, json);
     }
     catch { }
 }
@@ -317,12 +310,7 @@ private void SaveAlternatives()
                 };
                 
                 string selectionPath = configPath + ".selection";
-                string? directory = Path.GetDirectoryName(selectionPath);
-                if (directory != null)
-                {
-                    Directory.CreateDirectory(directory);
-                }
-                File.WriteAllText(selectionPath, JsonSerializer.Serialize(settings));
+                FileHelper.WriteAllTextAtomic(selectionPath, JsonSerializer.Serialize(settings));
             }
             catch { }
         }
@@ -406,12 +394,7 @@ private void SaveAlternatives()
             try
             {
                 var userApps = apps.Where(a => a.IsUserAdded).ToList();
-                string? directory = Path.GetDirectoryName(configPath);
-                if (directory != null)
-                {
-                    Directory.CreateDirectory(directory);
-                }
-                File.WriteAllText(configPath, JsonSerializer.Serialize(userApps, new JsonSerializerOptions { WriteIndented = true }));
+                FileHelper.WriteAllTextAtomic(configPath, JsonSerializer.Serialize(userApps, new JsonSerializerOptions { WriteIndented = true }));
             }
             catch { }
         }

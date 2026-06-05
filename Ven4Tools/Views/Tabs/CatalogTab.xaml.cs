@@ -841,7 +841,7 @@ namespace Ven4Tools.Views.Tabs
             int completed = 0, failed = 0;
 
             var pmConsentCache = new Dictionary<string, bool>();
-            var pmConsentLock = new System.Threading.SemaphoreSlim(1, 1);
+            using var pmConsentLock = new System.Threading.SemaphoreSlim(1, 1);
             async Task<bool> ConfirmPmInstall(string pmName)
             {
                 await pmConsentLock.WaitAsync();
