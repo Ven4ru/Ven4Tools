@@ -20,6 +20,7 @@ namespace Ven4Tools.Services
         public static void Apply(string theme)
         {
             if (theme == "web") ApplyWeb();
+            else if (theme == "teal") ApplyTeal();
             else ApplyDark(theme != "light");
 
             // Override accent if user picked custom palette
@@ -36,6 +37,20 @@ namespace Ven4Tools.Services
                 Application.Current.Resources["AccentColor"] = new SolidColorBrush(color);
             }
             catch { }
+        }
+
+        public static void ApplyTeal()
+        {
+            var r = Application.Current.Resources;
+            r["WindowBackground"]  = Brush(10,  20,  32);
+            r["SidebarBackground"] = Brush(10,  28,  45);
+            r["ContentBackground"] = Brush(14,  36,  56);
+            r["CardBackground"]    = Brush(18,  46,  70);
+            r["TextPrimary"]       = Brush(220, 242, 242);
+            r["TextSecondary"]     = Brush(85,  148, 170);
+            r["BorderBrush"]       = Brush(26,  62,  88);
+            r["HeaderForeground"]  = Brush(220, 242, 242);
+            r["AccentColor"]       = Brush(0,   195, 170);
         }
 
         public static void ApplyWeb()
