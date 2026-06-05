@@ -101,6 +101,17 @@ namespace Ven4Tools.Services
                 string? cachedPath = OfflineService.GetCachedInstallerPath(app.Id);
                 if (cachedPath != null)
                 {
+                    if (!string.IsNullOrWhiteSpace(app.Sha256) &&
+                        !await HashHelper.VerifyHashAsync(cachedPath, app.Sha256))
+                    {
+                        Log($"❌ SHA256 mismatch в кэше: {app.DisplayName}, удаляю");
+                        try { File.Delete(cachedPath); } catch { }
+                        cachedPath = null;
+                    }
+                }
+
+                if (cachedPath != null)
+                {
                     appProgress.Status = "🔌 Из кэша...";
                     appProgress.Percentage = 50;
                     progress.Report(appProgress);
