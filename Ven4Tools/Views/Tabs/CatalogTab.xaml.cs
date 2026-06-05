@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -45,6 +46,7 @@ namespace Ven4Tools.Views.Tabs
         private readonly HashSet<string> _ruBlockedIds = new();
         private CancellationTokenSource? _searchDebounce;
         private Action? _profileChangedHandler;
+        private readonly ObservableCollection<LogEntry> _logEntries = new();
 
         public event Action<string>? LogMessage;
         public event Action? SwitchToUpdatesRequested;
@@ -63,6 +65,7 @@ namespace Ven4Tools.Views.Tabs
         public CatalogTab()
         {
             InitializeComponent();
+            lstInstallLog.ItemsSource = _logEntries;
 
             _catalogLoader = new CatalogLoaderService();
             appManager = new AppManager();
@@ -1705,11 +1708,34 @@ private void HideWingetSuggestions()
         {
             Dispatcher.Invoke(() =>
             {
-                txtInstallLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
-                txtInstallLog.ScrollToEnd();
+                var entry = LogEntry.Parse(message);
+                _logEntries.Add(entry);
+                lstInstallLog.ScrollIntoView(entry);
             });
             LogMessage?.Invoke(message);
         }
+
+        private void LogList_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                CopyLog_Click(sender, e);
+                e.Handled = true;
+            }
+        }
+
+        private void CopyLog_Click(object sender, RoutedEventArgs e)
+        {
+            var items = lstInstallLog.SelectedItems.Count > 0
+                ? lstInstallLog.SelectedItems.Cast<LogEntry>()
+                : _logEntries.AsEnumerable();
+            var text = string.Join(Environment.NewLine,
+                items.Select(entry => $"[{entry.Time}] {entry.Icon} {entry.Message}"));
+            if (!string.IsNullOrEmpty(text))
+                Clipboard.SetText(text);
+        }
+
+        private void ClearLog_Click(object sender, RoutedEventArgs e) => _logEntries.Clear();
 
         // ── Local installer (drag & drop) ────────────────────────────────────────
 
@@ -1932,6 +1958,71 @@ private void HideWingetSuggestions()
                 return p.ExitCode == 0;
             }
             catch { return false; }
+        }
+    }
+
+    public sealed class LogEntry
+    {
+        private static readonly SolidColorBrush BrushGreen   = Frozen(0x4C, 0xAF, 0x50);
+        private static readonly SolidColorBrush BrushRed     = Frozen(0xF4, 0x43, 0x36);
+        private static readonly SolidColorBrush BrushOrange  = Frozen(0xFF, 0x98, 0x00);
+        private static readonly SolidColorBrush BrushTeal    = Frozen(0x00, 0xC3, 0xAA);
+        private static readonly SolidColorBrush BrushMuted   = Frozen(0x6B, 0x8C, 0xAE);
+        private static readonly SolidColorBrush BrushPurple  = Frozen(0x9C, 0x27, 0xB0);
+
+        public string Time        { get; }
+        public string Icon        { get; }
+        public string Message     { get; }
+        public SolidColorBrush IconBrush   { get; }
+        public SolidColorBrush AccentBrush { get; }
+
+        private LogEntry(string time, string icon, string message,
+                         SolidColorBrush iconBrush, SolidColorBrush accentBrush)
+        {
+            Time = time; Icon = icon; Message = message;
+            IconBrush = iconBrush; AccentBrush = accentBrush;
+        }
+
+        public static LogEntry Parse(string raw)
+        {
+            string time = DateTime.Now.ToString("HH:mm:ss");
+            string text = raw.TrimStart();
+
+            (string icon, string msg, SolidColorBrush iconBrush, SolidColorBrush accent) =
+                text switch
+                {
+                    _ when text.StartsWith("✅") => ("✅", text[2..].TrimStart(), BrushGreen,  BrushGreen),
+                    _ when text.StartsWith("❌") => ("❌", text[2..].TrimStart(), BrushRed,    BrushRed),
+                    _ when text.StartsWith("⚠️") => ("⚠️", text[3..].TrimStart(), BrushOrange, BrushOrange),
+                    _ when text.StartsWith("➕") => ("➕", text[2..].TrimStart(), BrushOrange, BrushOrange),
+                    _ when text.StartsWith("🗑️") => ("🗑️", text[3..].TrimStart(), BrushOrange, BrushOrange),
+                    _ when text.StartsWith("📦") => ("📦", text[2..].TrimStart(), BrushTeal,   BrushTeal),
+                    _ when text.StartsWith("📡") => ("📡", text[2..].TrimStart(), BrushTeal,   BrushTeal),
+                    _ when text.StartsWith("💾") => ("💾", text[2..].TrimStart(), BrushTeal,   BrushTeal),
+                    _ when text.StartsWith("📅") => ("📅", text[2..].TrimStart(), BrushTeal,   BrushTeal),
+                    _ when text.StartsWith("📋") => ("📋", text[2..].TrimStart(), BrushTeal,   BrushTeal),
+                    _ when text.StartsWith("📥") => ("📥", text[2..].TrimStart(), BrushTeal,   BrushTeal),
+                    _ when text.StartsWith("📤") => ("📤", text[2..].TrimStart(), BrushTeal,   BrushTeal),
+                    _ when text.StartsWith("🔍") => ("🔍", text[2..].TrimStart(), BrushTeal,   BrushTeal),
+                    _ when text.StartsWith("ℹ️") => ("ℹ️", text[3..].TrimStart(), BrushTeal,   BrushTeal),
+                    _ when text.StartsWith("☁️") => ("☁️", text[3..].TrimStart(), BrushTeal,   BrushTeal),
+                    _ when text.StartsWith("🔄") => ("🔄", text[2..].TrimStart(), BrushMuted,  BrushMuted),
+                    _ when text.StartsWith("⏳") => ("⏳", text[2..].TrimStart(), BrushMuted,  BrushMuted),
+                    _ when text.StartsWith("🔔") => ("🔔", text[2..].TrimStart(), BrushMuted,  BrushMuted),
+                    _ when text.StartsWith("🆙") => ("🆙", text[2..].TrimStart(), BrushGreen,  BrushGreen),
+                    _ when text.StartsWith("🛡️") => ("🛡️", text[3..].TrimStart(), BrushPurple, BrushPurple),
+                    _ when text.StartsWith("🔑") => ("🔑", text[2..].TrimStart(), BrushPurple, BrushPurple),
+                    _                             => ("·",  text,                  BrushMuted,  BrushMuted),
+                };
+
+            return new LogEntry(time, icon, msg, iconBrush, accent);
+        }
+
+        private static SolidColorBrush Frozen(byte r, byte g, byte b)
+        {
+            var br = new SolidColorBrush(Color.FromRgb(r, g, b));
+            br.Freeze();
+            return br;
         }
     }
 }
