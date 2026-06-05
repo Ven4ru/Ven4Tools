@@ -127,11 +127,6 @@
                                 Tag="🧹"
                                 Content="Очистка"
                                 Click="NavigateToDebloater"/>
-                        <Button x:Name="btnDriversTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="🖱️"
-                                Content="Драйверы"
-                                Click="NavigateToDrivers"/>
                         <Button x:Name="btnHistoryTab"
                                 Style="{StaticResource NavButtonStyle}"
                                 Tag="📋"
