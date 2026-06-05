@@ -97,13 +97,16 @@ namespace Ven4Tools.Launcher.Services
             try
             {
                 if (!File.Exists(HeartbeatPath)) return null;
-                var obj = JsonConvert.DeserializeObject<dynamic>(
+                var obj = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(
                     File.ReadAllText(HeartbeatPath));
                 if (obj == null) return null;
-                DateTime ts      = DateTime.Parse((string)obj.Timestamp,
-                    null, System.Globalization.DateTimeStyles.RoundtripKind);
-                int pid          = (int)obj.Pid;
-                string version   = (string)obj.Version;
+
+                // Newtonsoft по умолчанию парсит ISO-строки в DateTime, поэтому
+                // берём значение как DateTime напрямую и приводим к UTC.
+                // (Раньше каст (string)obj.Timestamp ломал round-trip формат и watchdog молча не срабатывал.)
+                DateTime ts      = obj.Value<DateTime>("Timestamp").ToUniversalTime();
+                int pid          = obj.Value<int>("Pid");
+                string version   = obj.Value<string>("Version") ?? "unknown";
                 return (ts, pid, version);
             }
             catch { return null; }
