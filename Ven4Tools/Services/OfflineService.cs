@@ -143,7 +143,7 @@ namespace Ven4Tools.Services
                     bool hashOk = await HashHelper.VerifyHashAsync(dest, app.Sha256);
                     if (!hashOk)
                     {
-                        progress?.Report(($"❌ {app.Name}: SHA256 не совпадает", 0));
+                        progress?.Report(($"❌ {app.Name}: SHA256 не совпадает — файл повреждён", 100));
                         try { File.Delete(dest); } catch { }
                         return false;
                     }
