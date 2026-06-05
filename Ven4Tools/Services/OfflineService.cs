@@ -137,6 +137,18 @@ namespace Ven4Tools.Services
                     }
                 }
 
+                if (!string.IsNullOrWhiteSpace(app.Sha256))
+                {
+                    progress?.Report(($"🔍 Проверка SHA256...", 95));
+                    bool hashOk = await HashHelper.VerifyHashAsync(dest, app.Sha256);
+                    if (!hashOk)
+                    {
+                        progress?.Report(($"❌ {app.Name}: SHA256 не совпадает", 0));
+                        try { File.Delete(dest); } catch { }
+                        return false;
+                    }
+                }
+
                 progress?.Report(($"✅ {app.Name}", 100));
                 return true;
             }
