@@ -688,37 +688,46 @@ namespace Ven4Tools.Views.Tabs
             var sem = new SemaphoreSlim(5);
             var tasks = new List<Task>();
 
-            if (_catalog != null)
-                foreach (var app in _catalog.Apps)
+            try
+            {
+                if (_catalog != null)
+                    foreach (var app in _catalog.Apps)
+                    {
+                        var localApp = app;
+                        tasks.Add(Task.Run(async () =>
+                        {
+                            await sem.WaitAsync();
+                            try { await CheckAppAvailabilityFromCatalog(localApp); }
+                            finally { sem.Release(); }
+                        }));
+                    }
+
+                foreach (var app in appManager.GetAllApps().Where(a => a.IsUserAdded))
                 {
-                    var localApp = app;
+                    var localId = app.Id;
                     tasks.Add(Task.Run(async () =>
                     {
                         await sem.WaitAsync();
-                        try { await CheckAppAvailabilityFromCatalog(localApp); }
+                        try { await CheckSingleAppAvailability(localId); }
                         finally { sem.Release(); }
                     }));
                 }
 
-            foreach (var app in appManager.GetAllApps().Where(a => a.IsUserAdded))
-            {
-                var localId = app.Id;
-                tasks.Add(Task.Run(async () =>
-                {
-                    await sem.WaitAsync();
-                    try { await CheckSingleAppAvailability(localId); }
-                    finally { sem.Release(); }
-                }));
+                await Task.WhenAll(tasks);
+
+                int available   = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
+                int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
+                AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
             }
-
-            await Task.WhenAll(tasks);
-
-            int available   = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
-            int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
-            AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
-
-            btnRefreshAvailability.IsEnabled = true;
-            _isCheckingAvailability = false;
+            catch (Exception ex)
+            {
+                AddLog($"⚠️ Ошибка проверки доступности: {ex.Message}");
+            }
+            finally
+            {
+                btnRefreshAvailability.IsEnabled = true;
+                _isCheckingAvailability = false;
+            }
         }
         
         private async void BtnSuggestAlternatives_Click(object sender, RoutedEventArgs e)

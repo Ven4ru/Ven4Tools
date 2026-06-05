@@ -296,7 +296,10 @@ private void SaveAlternatives()
 
         public AppInfo? GetAppById(string appId)
         {
-            return apps.FirstOrDefault(a => a.Id == appId);
+            lock (lockObj)
+            {
+                return apps.FirstOrDefault(a => a.Id == appId);
+            }
         }
 
         public void SaveSelectedApps(List<string> selectedIds)
