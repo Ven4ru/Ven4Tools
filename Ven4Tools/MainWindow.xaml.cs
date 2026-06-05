@@ -27,7 +27,6 @@ namespace Ven4Tools
         private NetworkTab?    _networkTab;
         private HistoryTab?    _historyTab;
         private DebloaterTab?  _debloaterTab;
-        private DriversTab?    _driversTab;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
 
         public MainWindow()
@@ -184,16 +183,6 @@ namespace Ven4Tools
             if (_debloaterTab == null) { _debloaterTab = new DebloaterTab(); _debloaterTab.LogMessage += AddLog; }
             MainFrame.Content = (_debloaterTab);
             UpdateMascot("debloater");
-        }
-
-        // ── Drivers tab ───────────────────────────────────────────────────────────
-
-        private void NavigateToDrivers(object? sender, RoutedEventArgs? e)
-        {
-            SetActiveButton(btnDriversTab);
-            if (_driversTab == null) { _driversTab = new DriversTab(); _driversTab.LogMessage += AddLog; }
-            MainFrame.Content = (_driversTab);
-            UpdateMascot("drivers");
         }
 
         // ── History tab ───────────────────────────────────────────────────────────
@@ -462,7 +451,7 @@ namespace Ven4Tools
 
         private void SetActiveButton(Button activeButton)
         {
-            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnDriversTab };
+            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab };
             foreach (var btn in buttons)
             {
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");
