@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -344,7 +345,15 @@ namespace Ven4Tools
             };
             var cts = new System.Threading.CancellationTokenSource();
             var prog = new Progress<Services.AppInstallProgress>(p => AddLog($"  {p.Status}"));
-            var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, "C:\\");
+            async Task<bool> confirmPm(string pmName) =>
+                await Dispatcher.InvokeAsync(() =>
+                    System.Windows.MessageBox.Show(
+                        $"Для установки требуется {pmName}, который не установлен.\n\nРазрешить установку {pmName}?",
+                        $"Установка {pmName}",
+                        System.Windows.MessageBoxButton.YesNo,
+                        System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes);
+
+            var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, "C:\\", null, confirmPm);
             AddLog(r.Success ? $"✅ {catalogApp.Name}" : $"❌ {r.Message}");
         }
 
