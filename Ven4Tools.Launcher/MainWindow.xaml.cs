@@ -991,18 +991,20 @@ private async Task InstallWingetAsync()
         AddLog("📦 Установка winget...");
         Dispatcher.Invoke(() => txtDownloadStatus.Text = "Установка...");
 
-        // Устанавливаем через PowerShell: сначала зависимости, потом сам winget
-        var script = $@"
-            $ErrorActionPreference = 'Stop'
-            try {{ Add-AppxPackage -Path '{tempVcLibs}' }} catch {{}}
-            try {{ Add-AppxPackage -Path '{tempUiXaml}' }} catch {{}}
-            Add-AppxPackage -Path '{tempMsix}' -ForceApplicationShutdown
-        ".Trim().Replace(Environment.NewLine, "; ");
+        // Устанавливаем через PowerShell: сначала зависимости, потом сам winget.
+        // Используем -File вместо -Command, чтобы пути не интерполировались в аргументах.
+        string tempScript = Path.Combine(Path.GetTempPath(), $"winget_install_{Guid.NewGuid():N}.ps1");
+        File.WriteAllText(tempScript,
+            $"$ErrorActionPreference = 'Stop'\r\n" +
+            $"try {{ Add-AppxPackage -Path \"{tempVcLibs}\" }} catch {{}}\r\n" +
+            $"try {{ Add-AppxPackage -Path \"{tempUiXaml}\" }} catch {{}}\r\n" +
+            $"Add-AppxPackage -Path \"{tempMsix}\" -ForceApplicationShutdown\r\n",
+            System.Text.Encoding.UTF8);
 
         var psi = new ProcessStartInfo
         {
             FileName = "powershell.exe",
-            Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{script}\"",
+            Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{tempScript}\"",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -1020,6 +1022,7 @@ private async Task InstallWingetAsync()
             if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
                 AddLog($"⚠️ PowerShell: {stderr.Trim()}");
         }
+        try { File.Delete(tempScript); } catch { }
 
         var result = await CheckWingetWithVersionAsync();
         if (result.IsInstalled)

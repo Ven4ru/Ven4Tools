@@ -32,7 +32,8 @@ namespace Ven4Tools.Services
 
         public async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallAppAsync(
             AppInfo app, string[] wingetSources, CancellationToken token,
-            IProgress<AppInstallProgress> progress, string installDrive, string? version = null)
+            IProgress<AppInstallProgress> progress, string installDrive, string? version = null,
+            Func<string, Task<bool>>? confirmPmInstall = null)
         {
             var appProgress = new AppInstallProgress { AppId = app.Id, AppName = app.DisplayName };
 
@@ -186,7 +187,9 @@ namespace Ven4Tools.Services
                             progress.Report(appProgress);
 
                             bool chocoOk = PackageManagerService.IsChocoInstalled()
-                                || await PackageManagerService.InstallChocoAsync(msg => Log(msg));
+                                || (confirmPmInstall != null
+                                    && await confirmPmInstall("Chocolatey")
+                                    && await PackageManagerService.InstallChocoAsync(msg => Log(msg)));
                             if (chocoOk && await PackageManagerService.RunChocoInstallAsync(app.ChocoId, token, msg => Log(msg)))
                             {
                                 appProgress.Status = "✅ Установлено (Chocolatey)";
@@ -209,7 +212,9 @@ namespace Ven4Tools.Services
                             progress.Report(appProgress);
 
                             bool scoopOk = PackageManagerService.IsScoopInstalled()
-                                || await PackageManagerService.InstallScoopAsync(msg => Log(msg));
+                                || (confirmPmInstall != null
+                                    && await confirmPmInstall("Scoop")
+                                    && await PackageManagerService.InstallScoopAsync(msg => Log(msg)));
                             if (scoopOk && await PackageManagerService.RunScoopInstallAsync(app.ScoopId, token, msg => Log(msg)))
                             {
                                 appProgress.Status = "✅ Установлено (Scoop)";
