@@ -3,128 +3,145 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Ven4Tools Launcher" Height="650" Width="1000"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize"
-        Background="#2D2D2D" Foreground="White"
+        Background="{DynamicResource WindowBackground}"
         Closing="Window_Closing">
-    
-    <Window.Resources>
-        <SolidColorBrush x:Key="AccentColor" Color="#0078D4"/>
-        <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="TextSecondary" Color="#CCCCCC"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#3D3D3D"/>
-    </Window.Resources>
-    
+
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="260"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        
+
         <!-- ========== ЛЕВАЯ ПАНЕЛЬ ========== -->
-        <Border Grid.Column="0" Background="#252526">
+        <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}">
             <Grid>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Верхняя часть: основные кнопки -->
-                <StackPanel Grid.Row="0" Margin="10">
+                <!-- Заголовок -->
+                <Border Grid.Row="0" Height="72"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Border Width="4" HorizontalAlignment="Left"
+                                Background="{DynamicResource AccentColor}" CornerRadius="0,2,2,0"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,16,0">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Ven4Tools" FontSize="17" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimary}"/>
+                                <TextBlock Text="Launcher" FontSize="10"
+                                           Foreground="{DynamicResource AccentColor}" Opacity="0.85"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Основные кнопки -->
+                <StackPanel Grid.Row="1" Margin="10,10,10,0">
                     <Button x:Name="btnSelectFolder" Content="📁 Выбрать папку"
-                            Height="40" Margin="0,5" Click="BtnSelectFolder_Click"/>
+                            Height="40" Margin="0,3" Click="BtnSelectFolder_Click"/>
                     <Button x:Name="btnFindClient" Content="🔍 Найти Ven4Tools на диске"
-                            Height="40" Margin="0,5" Click="BtnFindClient_Click"/>
+                            Height="40" Margin="0,3" Click="BtnFindClient_Click"/>
                     <Button x:Name="btnCheckUpdates" Content="🔄 Проверить обновления"
-                            Height="40" Margin="0,5" Click="BtnCheckUpdates_Click"/>
+                            Height="40" Margin="0,3" Click="BtnCheckUpdates_Click"/>
                     <Button x:Name="btnLaunchApp" Content="📥 Загрузить Ven4Tools"
-                            Height="40" Margin="0,5" FontWeight="Bold"
-                            Background="{DynamicResource AccentColor}"
+                            Height="40" Margin="0,3" FontWeight="Bold"
+                            Background="{DynamicResource AccentColor}" Foreground="#0A1420"
                             Click="BtnLaunchApp_Click"/>
                     <Button x:Name="btnChangelog" Content="📋 История изменений"
-                            Height="40" Margin="0,5" Click="BtnChangelog_Click"/>
+                            Height="40" Margin="0,3" Click="BtnChangelog_Click"/>
                     <Button x:Name="btnDeleteClient" Content="🗑️ Удалить клиент"
-                            Height="40" Margin="0,5"
+                            Height="40" Margin="0,3"
                             Background="#B71C1C" Foreground="White"
                             Click="BtnDeleteClient_Click"/>
                     <Button x:Name="btnExit" Content="❌ Выход"
-                            Height="40" Margin="0,5" Click="BtnExit_Click"/>
+                            Height="40" Margin="0,3" Click="BtnExit_Click"/>
                 </StackPanel>
 
                 <!-- Настройки -->
-                <Border Grid.Row="1" VerticalAlignment="Bottom" Margin="10,0,10,10"
-                        Background="#1E1E1E" CornerRadius="8" Padding="10">
+                <Border Grid.Row="2" VerticalAlignment="Bottom" Margin="10,0,10,0"
+                        Background="{DynamicResource CardBackground}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="12,10">
                     <StackPanel>
-                        <TextBlock Text="⚙️ Настройки" FontWeight="Bold"
-                                   Foreground="White" Margin="0,0,0,8"/>
+                        <TextBlock Text="⚙️ Настройки" FontWeight="Bold" Margin="0,0,0,8"/>
                         <CheckBox x:Name="chkBackgroundUpdates"
                                   Content="Проверять обновления в фоне"
-                                  Foreground="#CCCCCC" Margin="0,3"
+                                  Foreground="{DynamicResource TextSecondary}" Margin="0,3"
                                   Click="ChkBackgroundUpdates_Click"/>
                         <CheckBox x:Name="chkStartMinimized"
                                   Content="Запускать свёрнутым в трей"
-                                  Foreground="#CCCCCC" Margin="0,3"
+                                  Foreground="{DynamicResource TextSecondary}" Margin="0,3"
                                   Click="ChkStartMinimized_Click"/>
                         <CheckBox x:Name="chkAutostart"
                                   Content="Запускать при старте Windows"
-                                  Foreground="#CCCCCC" Margin="0,3"
+                                  Foreground="{DynamicResource TextSecondary}" Margin="0,3"
                                   Click="ChkAutostart_Click"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Выбор версии -->
-                <Border Grid.Row="2" Margin="10" Background="#1E1E1E" CornerRadius="8" Padding="10">
+                <Border Grid.Row="3" Margin="10,8,10,0"
+                        Background="{DynamicResource CardBackground}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="12,10">
                     <StackPanel>
-                        <TextBlock Text="📦 Выбор версии" FontWeight="Bold"
-                                   Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8"/>
+                        <TextBlock Text="📦 Выбор версии" FontWeight="Bold" Margin="0,0,0,8"/>
                         <ComboBox x:Name="cmbVersions" Height="30" Margin="0,0,0,5"
-                                  DisplayMemberPath="Version"
-                                  SelectionChanged="CmbVersions_SelectionChanged"/>
+                                  SelectionChanged="CmbVersions_SelectionChanged">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Version}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <TextBlock x:Name="txtVersionInfo" Text="Выберите версию"
                                    Foreground="{DynamicResource TextSecondary}"
                                    FontSize="10" TextWrapping="Wrap" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Действия (появляются только когда нужны) -->
-                <StackPanel Grid.Row="3" Margin="10,0,10,10">
+                <!-- Действия -->
+                <StackPanel Grid.Row="4" Margin="10,6,10,10">
                     <Button x:Name="btnInstallUpdate" Content="📥 Обновить лаунчер"
-                            Height="40" Margin="0,5,0,0" Visibility="Collapsed"
+                            Height="40" Margin="0,3,0,0" Visibility="Collapsed"
                             Background="#2E7D32" Foreground="White" FontWeight="SemiBold"
                             Click="BtnInstallUpdate_Click"/>
                     <Button x:Name="btnInstallMissing" Content="🔧 Установить компоненты"
-                            Height="40" Margin="0,5,0,0" Visibility="Collapsed"
+                            Height="40" Margin="0,3,0,0" Visibility="Collapsed"
                             Background="#E65100" Foreground="White" FontWeight="SemiBold"
                             Click="BtnInstallMissing_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
-        
-        <!-- ========== ПРАВАЯ ПАНЕЛЬ (раздвижная) ========== -->
-        <Grid Grid.Column="1">
+
+        <!-- ========== ПРАВАЯ ПАНЕЛЬ ========== -->
+        <Grid Grid.Column="1" Background="{DynamicResource ContentBackground}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="colMain" Width="*"/>
                 <ColumnDefinition x:Name="colDetails" Width="0"/>
             </Grid.ColumnDefinitions>
-            
+
             <!-- Основная правая панель -->
             <StackPanel Grid.Column="0" Margin="10">
                 <Image Source="pack://application:,,,/Resources/launcher.png"
-                       Height="180"
-                       Stretch="Uniform"
-                       HorizontalAlignment="Center"
-                       Margin="0,8,0,4"
+                       Height="180" Stretch="Uniform"
+                       HorizontalAlignment="Center" Margin="0,8,0,4"
                        RenderOptions.BitmapScalingMode="HighQuality"/>
+
                 <GroupBox Header="📁 Папка установки">
-                    <TextBlock x:Name="txtInstallPath" Text="Не выбрана" 
-                               Foreground="{DynamicResource TextSecondary}" 
+                    <TextBlock x:Name="txtInstallPath" Text="Не выбрана"
+                               Foreground="{DynamicResource TextSecondary}"
                                TextWrapping="Wrap" Margin="5"/>
                 </GroupBox>
-                
+
                 <GroupBox Header="📊 Прогресс" Margin="0,10,0,0">
                     <StackPanel>
-                        <ProgressBar x:Name="progressDownload" Height="20" Minimum="0" Maximum="100" Value="0"
-                                     Foreground="{DynamicResource AccentColor}" Background="{DynamicResource BorderBrush}"/>
+                        <ProgressBar x:Name="progressDownload" Height="20" Minimum="0" Maximum="100" Value="0"/>
                         <Grid Margin="0,5,0,0">
                             <TextBlock x:Name="txtDownloadStatus" Text="Готов"
                                        Foreground="{DynamicResource TextSecondary}" FontSize="11"
@@ -136,34 +153,35 @@
                         </Grid>
                     </StackPanel>
                 </GroupBox>
-                
+
                 <GroupBox Header="📋 Лог операций" Margin="0,10,0,0" Height="200">
                     <TextBox x:Name="txtLog"
-                             Background="#1E1E1E" Foreground="#00FF00"
-                             FontFamily="Consolas" FontSize="10"
                              IsReadOnly="True" TextWrapping="Wrap"
+                             FontFamily="Consolas" FontSize="10"
+                             Foreground="{DynamicResource AccentColor}"
                              VerticalScrollBarVisibility="Auto"
                              Margin="0,5,0,0"/>
                 </GroupBox>
             </StackPanel>
-            
+
             <!-- Раздвижная панель "Что нового" -->
-            <Border Grid.Column="1" Background="#1E1E1E" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0">
+            <Border Grid.Column="1"
+                    Background="{DynamicResource CardBackground}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
+
                     <StackPanel Orientation="Horizontal" Margin="10" HorizontalAlignment="Stretch">
-                        <TextBlock Text="📝 Что нового" FontWeight="Bold" 
-                                   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
-                        <Button x:Name="btnCloseDetails" Content="✕" Width="30" Height="30" 
+                        <TextBlock Text="📝 Что нового" FontWeight="Bold" VerticalAlignment="Center"/>
+                        <Button x:Name="btnCloseDetails" Content="✕" Width="30" Height="30"
                                 HorizontalAlignment="Right" Margin="10,0,0,0"
                                 Click="BtnCloseDetails_Click"
                                 Background="Transparent" Foreground="{DynamicResource TextSecondary}"/>
                     </StackPanel>
-                    
+
                     <FlowDocumentScrollViewer x:Name="fdvReleaseNotes" Grid.Row="1"
                                               VerticalScrollBarVisibility="Auto" Margin="10"
                                               Background="Transparent" IsToolBarVisible="False"/>

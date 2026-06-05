@@ -45,7 +45,7 @@
                             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#505050"/>
+                            <Setter Property="Background" Value="#0A3555"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -81,12 +81,20 @@
                 
                 <!-- Логотип и название -->
                 <Border Grid.Row="0" Height="80" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
-                        <Image Source="/icon.ico" Width="32" Height="32" Margin="0,0,12,0"/>
-                        <TextBlock Text="Ven4Tools" FontSize="20" FontWeight="Bold" 
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
+                    <Grid>
+                        <!-- Акцентная полоса слева -->
+                        <Border Width="4" HorizontalAlignment="Left" Background="{DynamicResource AccentColor}" CornerRadius="0,2,2,0"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,16,0">
+                            <Image Source="/icon.ico" Width="32" Height="32" Margin="0,0,12,0"/>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Ven4Tools" FontSize="18" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimary}"/>
+                                <TextBlock Text="Setup Assistant" FontSize="10"
+                                           Foreground="{DynamicResource AccentColor}"
+                                           Opacity="0.85"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
                 </Border>
                 
                 <!-- Кнопки навигации + маскот -->
@@ -239,7 +247,7 @@
                 <!-- Drag overlay -->
                 <Border x:Name="pnlDropOverlay" Grid.Row="0" Grid.RowSpan="2"
                         Visibility="Collapsed" Panel.ZIndex="99"
-                        Background="#AA1E1E2E"
+                        Background="#AA0B1D2E"
                         BorderBrush="{DynamicResource AccentColor}"
                         BorderThickness="4" CornerRadius="8" Margin="8">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">

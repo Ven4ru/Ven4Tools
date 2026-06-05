@@ -37,7 +37,7 @@ namespace Ven4Tools.Views
             chkFreeOnly.IsChecked      = p.FreeOnly;
 
             // UI
-            rbDark.IsChecked  = p.Theme == "dark" || (p.Theme != "light" && p.Theme != "web");
+            rbDark.IsChecked  = p.Theme == "dark" || p.Theme == "teal" || (p.Theme != "light" && p.Theme != "web");
             rbLight.IsChecked = p.Theme == "light";
             rbWeb.IsChecked   = p.Theme == "web";
 
@@ -69,8 +69,9 @@ namespace Ven4Tools.Views
 
         private void RbTheme_Checked(object sender, RoutedEventArgs e)
         {
-            if (rbWeb?.IsChecked == true) ThemeService.ApplyWeb();
-            else ThemeService.ApplyDark(rbDark?.IsChecked == true);
+            if (rbWeb?.IsChecked == true)        ThemeService.ApplyWeb();
+            else if (rbLight?.IsChecked == true) ThemeService.ApplyDark(false);
+            else                                 ThemeService.ApplyTeal();
         }
 
         private void BtnBrowseFolder_Click(object sender, RoutedEventArgs e)
@@ -100,7 +101,7 @@ namespace Ven4Tools.Views
 
             p.HideInstalled   = chkHideInstalled.IsChecked == true;
             p.FreeOnly        = chkFreeOnly.IsChecked == true;
-            p.Theme           = rbWeb.IsChecked == true ? "web" : (rbLight.IsChecked == true ? "light" : "dark");
+            p.Theme           = rbWeb.IsChecked == true ? "web" : (rbLight.IsChecked == true ? "light" : "teal");
             p.CompactMode     = chkCompact.IsChecked == true;
             p.ShowDescriptions = chkDescriptions.IsChecked == true;
             p.SilentInstall   = chkSilent.IsChecked == true;
