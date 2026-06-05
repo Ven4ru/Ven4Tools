@@ -50,6 +50,9 @@ namespace Ven4Tools.Models
         [JsonProperty("popularity")]
         public int Popularity { get; set; } = 0;
 
+        [JsonProperty("sha256")]
+        public string? Sha256 { get; set; }
+
         [JsonIgnore]
         public bool IsSelected { get; set; }
 
