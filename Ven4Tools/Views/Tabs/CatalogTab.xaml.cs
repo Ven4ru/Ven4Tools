@@ -840,6 +840,27 @@ namespace Ven4Tools.Views.Tabs
             txtOverallStatus.Text = $"⏳ Установка 0/{appsToInstall.Count}...";
             int completed = 0, failed = 0;
 
+            var pmConsentCache = new Dictionary<string, bool>();
+            var pmConsentLock = new System.Threading.SemaphoreSlim(1, 1);
+            async Task<bool> ConfirmPmInstall(string pmName)
+            {
+                await pmConsentLock.WaitAsync();
+                try
+                {
+                    if (pmConsentCache.TryGetValue(pmName, out bool cached)) return cached;
+                    bool consented = await Dispatcher.InvokeAsync(() =>
+                        MessageBox.Show(
+                            $"Для установки приложения требуется {pmName}, который сейчас не установлен.\n\n" +
+                            $"Разрешить автоматическую установку {pmName}?",
+                            $"Установка {pmName}",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Question) == MessageBoxResult.Yes);
+                    pmConsentCache[pmName] = consented;
+                    return consented;
+                }
+                finally { pmConsentLock.Release(); }
+            }
+
             var tasks = appsToInstall.Select(app => Task.Run(async () =>
             {
                 await installSemaphore.WaitAsync();
@@ -847,7 +868,7 @@ namespace Ven4Tools.Views.Tabs
                 {
                     if (token.IsCancellationRequested) return;
                     versionSelections.TryGetValue(app.Id, out var selectedVersion);
-                    var result = await installService.InstallAppAsync(app, wingetSources, token, progress, selectedInstallDrive, selectedVersion);
+                    var result = await installService.InstallAppAsync(app, wingetSources, token, progress, selectedInstallDrive, selectedVersion, ConfirmPmInstall);
                     await Dispatcher.InvokeAsync(() =>
                     {
                         if (result.Success)
