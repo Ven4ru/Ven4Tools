@@ -982,11 +982,12 @@ private async Task InstallWingetAsync()
         // Устанавливаем через PowerShell: сначала зависимости, потом сам winget.
         // Используем -File вместо -Command, чтобы пути не интерполировались в аргументах.
         string tempScript = Path.Combine(Path.GetTempPath(), $"winget_install_{Guid.NewGuid():N}.ps1");
+        // Single-quoted PS strings prevent $-variable expansion for paths that may contain $ (e.g. C:\Users\Bob$Smith\...)
         File.WriteAllText(tempScript,
             $"$ErrorActionPreference = 'Stop'\r\n" +
-            $"try {{ Add-AppxPackage -Path \"{tempVcLibs}\" }} catch {{}}\r\n" +
-            $"try {{ Add-AppxPackage -Path \"{tempUiXaml}\" }} catch {{}}\r\n" +
-            $"Add-AppxPackage -Path \"{tempMsix}\" -ForceApplicationShutdown\r\n",
+            $"try {{ Add-AppxPackage -Path '{tempVcLibs.Replace("'", "''")}' }} catch {{}}\r\n" +
+            $"try {{ Add-AppxPackage -Path '{tempUiXaml.Replace("'", "''")}' }} catch {{}}\r\n" +
+            $"Add-AppxPackage -Path '{tempMsix.Replace("'", "''")}' -ForceApplicationShutdown\r\n",
             System.Text.Encoding.UTF8);
 
         var psi = new ProcessStartInfo

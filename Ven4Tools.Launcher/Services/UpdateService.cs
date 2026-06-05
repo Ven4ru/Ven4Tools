@@ -106,8 +106,8 @@ Remove-Item '{psTemp}'
                 {
                     FileName = "powershell.exe",
                     Arguments = $"-WindowStyle Hidden -ExecutionPolicy Bypass -File \"{scriptPath}\"",
-                    UseShellExecute = true,
-                    CreateNoWindow = true
+                    UseShellExecute = true
+                    // CreateNoWindow is ignored when UseShellExecute=true; -WindowStyle Hidden hides the PS window instead
                 });
 
                 return true;
