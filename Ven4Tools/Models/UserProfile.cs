@@ -10,7 +10,7 @@ namespace Ven4Tools.Models
         public bool FreeOnly { get; set; } = false;
 
         // UI
-        public string Theme { get; set; } = "dark";
+        public string Theme { get; set; } = "teal";
         public string Language { get; set; } = "auto"; // "auto", "ru", "en"
         public bool CompactMode { get; set; } = false;
         public bool ShowDescriptions { get; set; } = true;
