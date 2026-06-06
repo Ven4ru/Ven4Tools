@@ -1059,9 +1059,8 @@ namespace Ven4Tools.Views.Tabs
                     var dateMatch = System.Text.RegularExpressions.Regex.Match(json, @"""lastUpdated"":\s*""([^""]+)""");
                     if (dateMatch.Success) AddLog($"📅 Версия на GitHub: {dateMatch.Groups[1].Value}");
                 }
-                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var catalogCachePath = Path.Combine(localAppData, "Ven4Tools", "catalog_cache.json");
-                if (File.Exists(catalogCachePath)) File.Delete(catalogCachePath);
+                var catalogCachePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "master.json");
+                try { if (File.Exists(catalogCachePath)) File.Delete(catalogCachePath); } catch { }
                 if (_catalogLoader == null) { AddLog("❌ Ошибка: загрузчик каталога не инициализирован"); return; }
                 var loadedCatalog = await _catalogLoader.LoadCatalogAsync();
                 if (loadedCatalog == null) { AddLog("❌ Ошибка: не удалось загрузить каталог"); return; }
