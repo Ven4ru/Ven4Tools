@@ -94,6 +94,14 @@ namespace Ven4Tools.Services
             }
         }
 
+        public static async Task PreloadAsync()
+        {
+            if (LoadedCatalog != null) return;
+
+            using var loader = new CatalogLoaderService();
+            await loader.LoadCatalogAsync();
+        }
+
         private MasterCatalog Deserialize(string json)
         {
             return JsonSerializer.Deserialize<MasterCatalog>(

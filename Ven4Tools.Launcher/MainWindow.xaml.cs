@@ -439,6 +439,14 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
         }
 
         token.ThrowIfCancellationRequested();
+
+        // Проверка целостности: если сервер сообщил размер, а получили меньше —
+        // соединение оборвалось, архив битый. Лучше сразу ошибка, чем распаковка
+        // повреждённого zip с непредсказуемым результатом.
+        if (totalBytes > 0 && bytesRead != totalBytes)
+            throw new IOException(
+                $"Загрузка неполная: получено {bytesRead} из {totalBytes} байт. Проверьте соединение и повторите.");
+
         txtDownloadStatus.Text = "Распаковка...";
         await Task.Delay(1000, token);
 
@@ -464,6 +472,20 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
         if (!extracted) throw new IOException("Не удалось распаковать архив после 5 попыток");
 
         token.ThrowIfCancellationRequested();
+
+        // Нельзя перезаписывать файлы запущенного клиента — File.Delete/Copy
+        // упадут на залоченном Ven4Tools.exe и оставят папку в битом состоянии.
+        // Просим закрыть клиент и прерываем замену (скачанный архив уже на диске).
+        if (IsClientRunning())
+        {
+            txtDownloadStatus.Text = "Клиент запущен";
+            AddLog("⚠️ Ven4Tools запущен — закройте клиент перед обновлением");
+            System.Windows.MessageBox.Show(
+                "Ven4Tools сейчас запущен.\n\nЗакройте приложение и повторите установку обновления.",
+                "Клиент запущен", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         txtDownloadStatus.Text = "Копирование файлов...";
 
         if (Directory.Exists(_clientPath))
@@ -1070,6 +1092,29 @@ private bool IsRunAsAdmin()
     var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
     var principal = new System.Security.Principal.WindowsPrincipal(identity);
     return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+}
+
+// Запущен ли клиент Ven4Tools из текущей папки установки (чтобы не перезаписывать залоченный exe).
+private bool IsClientRunning()
+{
+    try
+    {
+        string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
+        foreach (var proc in Process.GetProcessesByName("Ven4Tools"))
+        {
+            try
+            {
+                string? exePath = proc.MainModule?.FileName;
+                if (!string.IsNullOrEmpty(exePath) &&
+                    string.Equals(exePath, clientExe, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            catch { /* доступ к MainModule может быть запрещён — игнорируем */ }
+            finally { proc.Dispose(); }
+        }
+    }
+    catch { }
+    return false;
 }
         private void CreateTrayIcon()
         {
