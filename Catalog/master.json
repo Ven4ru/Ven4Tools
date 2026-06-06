@@ -1,30 +1,58 @@
-﻿{
+{
   "version": 5,
-  "lastUpdated": "2026-06-04 18:30:00",
+  "lastUpdated": "2026-06-06 21:08:40",
   "changelog": [
     {
       "version": 5,
       "date": "2026-06-04",
-      "addedApps": ["nvcleanstall"],
-      "removedApps": ["geforce-experience", "amd-software"],
+      "addedApps": [
+        "nvcleanstall"
+      ],
+      "removedApps": [
+        "geforce-experience",
+        "amd-software"
+      ],
       "message": "Удалены GeForce Experience и AMD Software: нет в winget и нет URL. Замена: NVCleanstall (TechPowerUp) — чистые NVIDIA-драйверы через winget. Итого 71 приложение."
     },
     {
       "version": 4,
       "date": "2026-06-04",
-      "addedApps": ["yandex-music", "itch", "playnite"],
-      "removedApps": ["spotify", "epic-games", "battlenet", "ubisoft-connect", "ea-app", "rockstar-launcher"],
+      "addedApps": [
+        "yandex-music",
+        "itch",
+        "playnite"
+      ],
+      "removedApps": [
+        "spotify",
+        "epic-games",
+        "battlenet",
+        "ubisoft-connect",
+        "ea-app",
+        "rockstar-launcher"
+      ],
       "message": "Удалены 6 сервисов, недоступных в России. Добавлены замены: Яндекс.Музыка, itch.io, Playnite. Итого 72 приложения."
     },
     {
       "version": 3,
       "date": "2026-06-04",
       "addedApps": [
-        "librewolf", "libreoffice", "obsidian", "notion",
-        "inkscape", "paint-net", "lunacy", "xnview",
-        "audacity", "foobar2000", "mpc-be",
-        "whatsapp", "rufus", "putty",
-        "ddu", "geforce-experience", "amd-software"
+        "librewolf",
+        "libreoffice",
+        "obsidian",
+        "notion",
+        "inkscape",
+        "paint-net",
+        "lunacy",
+        "xnview",
+        "audacity",
+        "foobar2000",
+        "mpc-be",
+        "whatsapp",
+        "rufus",
+        "putty",
+        "ddu",
+        "geforce-experience",
+        "amd-software"
       ],
       "message": "Добавлено 20 приложений. Каталог расширен до 75 позиций. Lunacy вместо Figma, ruBlocked для недоступных в РФ сервисов."
     },
@@ -38,8 +66,16 @@
       "version": 1,
       "date": "2026-04-01",
       "addedApps": [
-        "firefox", "google-chrome", "telegram", "discord",
-        "vlc", "7zip", "notepad-plus-plus", "vscode", "git", "steam"
+        "firefox",
+        "google-chrome",
+        "telegram",
+        "discord",
+        "vlc",
+        "7zip",
+        "notepad-plus-plus",
+        "vscode",
+        "git",
+        "steam"
       ],
       "message": "Первоначальный релиз каталога. 68 приложений в 9 категориях."
     }
@@ -52,11 +88,11 @@
       "wingetId": "Mozilla.Firefox",
       "downloadUrl": "https://download.mozilla.org/?product=firefox-latest&os=win64&lang=ru",
       "version": "136.0.1",
-      "size": "83.9 MB",
+      "size": "84.0 MB",
       "official": true,
       "iconUrl": "",
       "description": "Быстрый, безопасный и приватный браузер с открытым исходным кодом.",
-      "sha256": "9096c9f20987f2c61261a864fc6fed1e277713a33f683f226a422bf7134164ec",
+      "sha256": "94bb387d2c07c29f2da48b47a6c5ed4446d89303a90f49817f6d23cf995148be",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -71,7 +107,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Самый популярный браузер с интеграцией сервисов Google.",
-      "sha256": "1ecb9f407b765d1e7a806112b6b104f2bc63540c34f65cc72359c770a6b1998c",
+      "sha256": "203980641389366aaf5c8da29c2de1a6535980888ef6479bff8fb6a89bc39ddd",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -86,7 +122,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Современный браузер от Microsoft на базе Chromium.",
-      "sha256": "2c766367f154fe02abe4fa985e49ae8fb4eca24f5c67e3e06a5c0b5e3e179d8f",
+      "sha256": "3ad90c212004436e020479c593e168f36309d746ab7c6fde9fbf2b6a46faa796",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -101,7 +137,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
-      "sha256": "848cba98a6f9b655e931689432c219efcc794a7362172a90245a1ca09e28dc1e",
+      "sha256": "437793cecf650ff2aa59fe83a7d35fb983a8f366e175ff87081f732a4c6b700d",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -116,7 +152,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер с фокусом на приватность и встроенным блокировщиком рекламы.",
-      "sha256": "97757075aee6bfe96bc27b87fed398ed810b4044fa9b50e57ecaccfdc9b533dd",
+      "sha256": "6e7887eb04aa28b9b9fcc5b4a6ae9c0e7a96460bd7005c929a4b0fe31d1c496d",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -131,7 +167,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
-      "sha256": "c350050937c5443d65501a93a4bc1d17980cdaacb0f80b0aeb4be73a744f837c",
+      "sha256": "79bae4ffdbb04fea1a2b42f9927bc578c603a797dc49dc3b830436496d2ed1c0",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -382,11 +418,11 @@
       "wingetId": "Microsoft.VisualStudioCode",
       "downloadUrl": "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64",
       "version": "1.97.2",
-      "size": "169.0 MB",
+      "size": "174.9 MB",
       "official": true,
       "iconUrl": "",
       "description": "Легкий, но мощный редактор кода от Microsoft.",
-      "sha256": "f391138c48ef740735112c0a9914df2644f9a5ddede7a347c41e0756254949a7",
+      "sha256": "7d08422f0d793280236460b05016831c6285ee2ec0257797dfa99981180b4bc7",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -457,11 +493,11 @@
       "wingetId": "Docker.DockerDesktop",
       "downloadUrl": "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe",
       "version": "4.38.0",
-      "size": "630.2 MB",
+      "size": "639.9 MB",
       "official": true,
       "iconUrl": "",
       "description": "Контейнеризация приложений для разработки и тестирования.",
-      "sha256": "bd40f52336226d16264806610619659801a35456cfe4637b5cf2e9c01d95e810",
+      "sha256": "42978fa07e50e3beb6923448e970d03aadd9abf5ea52230cf8a28ff81d2815e0",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -472,11 +508,11 @@
       "wingetId": "Postman.Postman",
       "downloadUrl": "https://dl.pstmn.io/download/latest/win64",
       "version": "11.28.1",
-      "size": "154.5 MB",
+      "size": "154.4 MB",
       "official": true,
       "iconUrl": "",
       "description": "Платформа для тестирования API и работы с запросами.",
-      "sha256": "14acc0589b3f925441f9ed4a782454854dc8da9d8b095603e564d715350b3df0",
+      "sha256": "be873b49868ba2e47401a46e3526788fbc662c74a13f0460120ba1464cf34308",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -506,7 +542,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Официальный клиент GitHub для работы с репозиториями.",
-      "sha256": "7c00cb4c812de6e10cb5a83336e93e40e29d5417d11b80ca2631b8a1dda59d7a",
+      "sha256": "338e6fe3430ddb7db3e370f11b98e2d6a25998d5d7bdc7d714b77cfb5b13afc0",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -851,7 +887,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов.",
-      "sha256": "117749b8d0ccdf2aa50e71cf118e3078dfc70dbe8437abfdf6551dc20331c023",
+      "sha256": "93a308ad7e067a22b3bbf75762d38694aea82b786c05bd13b51e5c7f04d8d7e3",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -1042,11 +1078,11 @@
       "wingetId": "Rclone.Rclone",
       "downloadUrl": "https://downloads.rclone.org/rclone-current-windows-amd64.zip",
       "version": "1.69.1",
-      "size": "27.9 MB",
+      "size": "28.0 MB",
       "official": true,
       "iconUrl": "",
       "description": "Консольный клиент для облачных хранилищ.",
-      "sha256": "71f376f47428bd467bf92e8bfe7fb36f4c108a4fc4edd3df30fc74dd409c7eef",
+      "sha256": "ecb0ed9006e0d1a693757007716a11dab6c2cde6dac3f2fd87da962eaa73d11d",
       "skipHash": false,
       "ruBlocked": false
     },
@@ -1061,7 +1097,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Автоматическая настройка цветовой температуры экрана.",
-      "sha256": "b53390dba0e0c227341f3c688be3aef91455c4f926e6527af6ce1e4acf74a7b3",
+      "sha256": "f035d1c4cd78468d76407afbb90ce4b73b2d04b7647c0d6143969a1823cff1ae",
       "skipHash": false,
       "ruBlocked": false
     },
