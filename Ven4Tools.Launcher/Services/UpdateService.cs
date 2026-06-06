@@ -77,11 +77,29 @@ namespace Ven4Tools.Launcher.Services
                 string tempFile = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Launcher_{updateInfo.LatestVersion}.exe");
 
                 using var client = new HttpClient();
-                using var response = await client.GetAsync(updateInfo.DownloadUrl);
+                client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
+                using var response = await client.GetAsync(updateInfo.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
                 response.EnsureSuccessStatusCode();
 
-                using var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write);
-                await response.Content.CopyToAsync(fs);
+                var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                var bytesRead = 0L;
+                var buffer = new byte[81920];
+
+                using (var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
+                {
+                    using var stream = await response.Content.ReadAsStreamAsync();
+                    int read;
+                    while ((read = await stream.ReadAsync(buffer.AsMemory())) > 0)
+                    {
+                        await fs.WriteAsync(buffer.AsMemory(0, read));
+                        bytesRead += read;
+                    }
+                    await fs.FlushAsync();
+                }
+
+                if (totalBytes > 0 && bytesRead != totalBytes)
+                    throw new IOException(
+                        $"Загрузка неполная: получено {bytesRead} из {totalBytes} байт. Проверьте соединение.");
 
                 string scriptPath = Path.Combine(Path.GetTempPath(), "update_launcher.ps1");
                 string launcherPath = Process.GetCurrentProcess().MainModule?.FileName ?? "";

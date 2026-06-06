@@ -1095,6 +1095,8 @@ private bool IsRunAsAdmin()
 }
 
 // Запущен ли клиент Ven4Tools из текущей папки установки (чтобы не перезаписывать залоченный exe).
+// Если MainModule недоступен (клиент с elevation, лаунчер без) — считаем запущенным: безопаснее
+// показать предупреждение лишний раз, чем оставить папку клиента в битом состоянии.
 private bool IsClientRunning()
 {
     try
@@ -1105,11 +1107,24 @@ private bool IsClientRunning()
             try
             {
                 string? exePath = proc.MainModule?.FileName;
-                if (!string.IsNullOrEmpty(exePath) &&
-                    string.Equals(exePath, clientExe, StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrEmpty(exePath))
+                {
+                    // Путь недоступен — не можем исключить совпадение, считаем запущенным
+                    proc.Dispose();
                     return true;
+                }
+                if (string.Equals(exePath, clientExe, StringComparison.OrdinalIgnoreCase))
+                {
+                    proc.Dispose();
+                    return true;
+                }
             }
-            catch { /* доступ к MainModule может быть запрещён — игнорируем */ }
+            catch
+            {
+                // MainModule бросил (нет прав, elevation mismatch) — трактуем как запущен
+                proc.Dispose();
+                return true;
+            }
             finally { proc.Dispose(); }
         }
     }
@@ -1343,6 +1358,7 @@ private bool IsClientRunning()
         
         private void ExitApplication()
         {
+            _watchdog?.Dispose();
             _updateService?.Dispose();
             _notifyIcon?.Dispose();
             System.Windows.Application.Current.Shutdown();

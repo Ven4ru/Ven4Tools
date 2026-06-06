@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net.Http;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Ven4Tools.Models;
@@ -36,14 +37,14 @@ namespace Ven4Tools.Services
             _httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(3, seconds));
         }
 
-        public async Task<MasterCatalog> LoadCatalogAsync()
+        public async Task<MasterCatalog> LoadCatalogAsync(CancellationToken ct = default)
         {
             // Offline mode — skip remote, use local cache or embedded
             if (ProfileService.Current.OfflineMode)
             {
                 if (File.Exists(_localCatalogPath))
                 {
-                    var cat = Deserialize(await File.ReadAllTextAsync(_localCatalogPath));
+                    var cat = Deserialize(await File.ReadAllTextAsync(_localCatalogPath, ct));
                     cat.Source = "cache";
                     LoadedCatalog = cat;
                     CatalogReady?.Invoke(cat);
@@ -57,28 +58,35 @@ namespace Ven4Tools.Services
 
             try
             {
-                Directory.CreateDirectory(
-                    Path.GetDirectoryName(_localCatalogPath)!);
-
                 string remoteJson =
-                    await _httpClient.GetStringAsync(RemoteCatalogUrl);
+                    await _httpClient.GetStringAsync(RemoteCatalogUrl, ct);
 
-                await File.WriteAllTextAsync(
-                    _localCatalogPath,
-                    remoteJson);
-
+                // Присваиваем результат до записи на диск: ошибка кэширования
+                // (например, Program Files без прав на запись) не должна обнулять каталог.
                 var catalog = Deserialize(remoteJson);
                 catalog.Source = "online";
                 LoadedCatalog = catalog;
                 CatalogReady?.Invoke(catalog);
+
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(_localCatalogPath)!);
+                    await File.WriteAllTextAsync(_localCatalogPath, remoteJson, ct);
+                }
+                catch { /* кэш — best-effort; каталог уже загружен */ }
+
                 return catalog;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch
             {
                 if (File.Exists(_localCatalogPath))
                 {
                     string localJson =
-                        await File.ReadAllTextAsync(_localCatalogPath);
+                        await File.ReadAllTextAsync(_localCatalogPath, ct);
 
                     var catalog = Deserialize(localJson);
                     catalog.Source = "cache";
@@ -94,12 +102,12 @@ namespace Ven4Tools.Services
             }
         }
 
-        public static async Task PreloadAsync()
+        public static async Task PreloadAsync(CancellationToken ct = default)
         {
             if (LoadedCatalog != null) return;
 
             using var loader = new CatalogLoaderService();
-            await loader.LoadCatalogAsync();
+            await loader.LoadCatalogAsync(ct);
         }
 
         private MasterCatalog Deserialize(string json)

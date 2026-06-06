@@ -76,7 +76,7 @@ namespace Ven4Tools
 
             try
             {
-                Shutdown(-1);
+                Dispatcher.Invoke(() => Shutdown(-1));
             }
             catch { }
         }
