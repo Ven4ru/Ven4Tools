@@ -211,6 +211,31 @@ namespace Ven4Tools.Views.Tabs
             {
                 if (_catalogLoader == null) return;
 
+                // Fast-path: splash already preloaded the catalog
+                if (CatalogLoaderService.LoadedCatalog != null)
+                {
+                    _catalog = CatalogLoaderService.LoadedCatalog;
+                    SyncCatalogToAppManager();
+                    appManager.LoadAlternativeSources();
+
+                    string preloadedSource = _catalog.Source switch
+                    {
+                        "online" => "🌐 Каталог загружен из интернета",
+                        "cache" => "💾 Каталог из кэша (интернет недоступен)",
+                        "embedded" => "📀 Встроенный каталог (минимальный набор)",
+                        _ => "❓ Неизвестный источник"
+                    };
+                    AddLog(preloadedSource);
+                    AddLog($"📦 Каталог предзагружен: {_catalog.Apps.Count} приложений");
+
+                    LoadApps();
+
+                    if (UserSession.IsLoggedIn)
+                        await SyncUserAppsFromServerAsync();
+
+                    return;
+                }
+
                 var loadedCatalog = await _catalogLoader.LoadCatalogAsync();
                 
                 if (loadedCatalog == null)
@@ -1651,9 +1676,12 @@ private void HideWingetSuggestions()
         {
             var versions = await WingetVersionsService.FetchVersionsAsync(wingetId);
             if (versions.Count == 0) return;
-            _appVersions[appId] = versions;
             await Dispatcher.InvokeAsync(() =>
             {
+                // Запись в _appVersions выполняется на UI-потоке: Phase2 запускает
+                // несколько FetchVersionsForAppAsync параллельно, а Dictionary не
+                // потокобезопасен — одновременная запись могла повредить структуру.
+                _appVersions[appId] = versions;
                 if (_versionCombos.TryGetValue(appId, out var combo))
                 {
                     combo.Items.Clear();
