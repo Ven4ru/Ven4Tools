@@ -1,7 +1,7 @@
 <Application x:Class="Ven4Tools.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             StartupUri="MainWindow.xaml">
+             Startup="App_Startup">
     <Application.Resources>
         <!-- Цвета для тёмной темы — Teal/Mascot palette -->
         <SolidColorBrush x:Key="WindowBackground" Color="#0F2237"/>

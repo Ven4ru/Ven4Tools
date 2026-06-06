@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Threading;
 using Ven4Tools.Services;
+using Ven4Tools.Views;
 
 namespace Ven4Tools
 {
@@ -15,12 +16,50 @@ namespace Ven4Tools
             Application.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
         }
 
-        protected override void OnStartup(StartupEventArgs e)
+        private async void App_Startup(object sender, StartupEventArgs e)
         {
-            base.OnStartup(e);
-            LocalizationService.Init();
-            ThemeService.Apply(ProfileService.Current.Theme);
-            _heartbeat = new HeartbeatService();
+            // Верхнеуровневый async void — любое необработанное исключение здесь
+            // убивает процесс молча. Оборачиваем всё в try/catch и гарантируем,
+            // что splash всегда закрывается, а при фатальной ошибке приложение
+            // не зависает с висящим splash без главного окна.
+            SplashWindow? splash = null;
+            try
+            {
+                // Эти вызовы не должны валить старт — каждый best-effort.
+                try { LocalizationService.Init(); } catch { }
+                try { ThemeService.Apply(ProfileService.Current.Theme); } catch { }
+                try { _heartbeat = new HeartbeatService(); } catch { }
+
+                try
+                {
+                    splash = new SplashWindow();
+                    splash.Show();
+                    await splash.RunPreloadAsync();
+                }
+                catch { /* splash/preload — необязательная фаза, продолжаем старт */ }
+
+                var main = new MainWindow();
+                main.Show();
+            }
+            catch (Exception ex)
+            {
+                try { CrashReportService.Write(ex); } catch { }
+                try
+                {
+                    MessageBox.Show(
+                        "Не удалось запустить Ven4Tools.\n\n" + ex.Message,
+                        "Ошибка запуска",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+                catch { }
+                Shutdown(-1);
+            }
+            finally
+            {
+                // splash закрываем в любом случае — даже если MainWindow упал до Show().
+                try { splash?.Close(); } catch { }
+            }
         }
 
         protected override void OnExit(ExitEventArgs e)
