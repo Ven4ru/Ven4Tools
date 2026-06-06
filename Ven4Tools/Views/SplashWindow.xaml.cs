@@ -44,9 +44,9 @@ namespace Ven4Tools.Views
                     await Task.Delay(900, ct);
                 }
 
-                // 2. Каталог
+                // 2. Каталог (передаём ct — «Пропустить» прерывает HTTP-запрос)
                 SetStatus("Загрузка каталога...");
-                try { await CatalogLoaderService.PreloadAsync(); } catch { }
+                try { await CatalogLoaderService.PreloadAsync(ct); } catch (OperationCanceledException) { throw; } catch { }
                 ct.ThrowIfCancellationRequested();
 
                 // 3. Права администратора
@@ -84,6 +84,7 @@ namespace Ven4Tools.Views
             }
             catch (OperationCanceledException) { /* пользователь нажал «Пропустить» */ }
             catch { /* предзагрузка — best-effort: любая ошибка не должна валить старт */ }
+            finally { _skipCts.Dispose(); }
         }
 
         private void SetStatus(string text) =>
@@ -141,9 +142,16 @@ namespace Ven4Tools.Views
             using var p = System.Diagnostics.Process.Start(psi);
             if (p != null)
             {
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct,
-                    new CancellationTokenSource(3000).Token);
-                await p.WaitForExitAsync(cts.Token).ConfigureAwait(false);
+                using var timeoutCts = new CancellationTokenSource(3000);
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+                try
+                {
+                    await p.WaitForExitAsync(linkedCts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    try { p.Kill(); } catch { }
+                }
             }
         }
     }
