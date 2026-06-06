@@ -1,5 +1,4 @@
 using System;
-using System.Net.Http;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,19 +33,17 @@ namespace Ven4Tools.Views
             var ct = _skipCts.Token;
             try
             {
-                // 1. Сеть
-                SetStatus("Проверка сети...");
-                bool online = await CheckNetworkAsync(ct);
+                // 1. Каталог — по результату определяем доступность сети
+                SetStatus("Загрузка каталога...");
+                try { await CatalogLoaderService.PreloadAsync(ct); } catch (OperationCanceledException) { throw; } catch { }
                 ct.ThrowIfCancellationRequested();
-                if (!online)
+
+                var source = CatalogLoaderService.LoadedCatalog?.Source;
+                if (source == "cache" || source == "embedded")
                 {
                     SetStatus("⚠ Сеть недоступна — каталог из кэша");
                     await Task.Delay(900, ct);
                 }
-
-                // 2. Каталог (передаём ct — «Пропустить» прерывает HTTP-запрос)
-                SetStatus("Загрузка каталога...");
-                try { await CatalogLoaderService.PreloadAsync(ct); } catch (OperationCanceledException) { throw; } catch { }
                 ct.ThrowIfCancellationRequested();
 
                 // 3. Права администратора
@@ -100,19 +97,6 @@ namespace Ven4Tools.Views
                 bmp.EndInit();
                 imgMascot.Source = bmp;
             });
-
-        private static async Task<bool> CheckNetworkAsync(CancellationToken ct)
-        {
-            try
-            {
-                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
-                using var response = await client.GetAsync(
-                    "https://raw.githubusercontent.com",
-                    HttpCompletionOption.ResponseHeadersRead, ct);
-                return true;
-            }
-            catch { return false; }
-        }
 
         private static bool IsRunningAsAdmin()
         {
