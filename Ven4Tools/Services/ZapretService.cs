@@ -261,6 +261,65 @@ await CopyDirectoryWithRetryAsync(rootFolder, _basePath);
     }
 }
         
+        /// <summary>
+        /// Останавливает и удаляет службы zapret и драйвер WinDivert через sc.exe.
+        /// Возвращает true, если elevated-процесс штатно завершился.
+        /// </summary>
+        private async Task<bool> StopAndDeleteServicesAsync()
+        {
+            // Возможные имена служб у разных версий Flowseal zapret
+            string[] services = { "zapret", "winws", "WinDivert", "windivert", "WinDivert14" };
+
+            var sb = new System.Text.StringBuilder("/c ");
+            foreach (var svc in services)
+                sb.Append($"sc stop {svc} & sc delete {svc} & ");
+            sb.Append("exit /b 0");
+
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName        = "cmd.exe",
+                    Arguments       = sb.ToString(),
+                    UseShellExecute = true,      // требуется для Verb = runas
+                    Verb            = "runas",   // elevation для управления драйвером
+                    WindowStyle     = ProcessWindowStyle.Hidden,
+                    CreateNoWindow  = true
+                };
+
+                using var process = Process.Start(psi);
+                if (process == null)
+                {
+                    Log("⚠️ Не удалось запустить sc.exe для удаления служб");
+                    return false;
+                }
+
+                Log("🛑 Останавливаю и удаляю службы zapret/WinDivert...");
+                var exit    = process.WaitForExitAsync();
+                var timeout = Task.Delay(30000);
+                if (await Task.WhenAny(exit, timeout) == timeout)
+                {
+                    Log("⚠️ Таймаут удаления служб, продолжаем...");
+                    try { process.Kill(); } catch { }
+                    return false;
+                }
+
+                Log("✅ Команды удаления служб выполнены");
+                return true;
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                // Пользователь отклонил запрос UAC
+                Log("⚠️ Удаление служб отменено (нет прав администратора)");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log($"⚠️ Ошибка удаления служб: {ex.Message}");
+                return false;
+            }
+        }
+
         private async Task CopyDirectoryWithRetryAsync(string source, string destination, int maxRetries = 3)
         {
             for (int attempt = 1; attempt <= maxRetries; attempt++)
@@ -325,32 +384,16 @@ public async Task<bool> RemoveAsync()
     try
     {
         Log("🗑️ Удаление zapret...");
-        
-        // Удаляем службы — требуется elevation для работы с драйвером WinDivert
-        var psi = new ProcessStartInfo
-        {
-            FileName = _servicePath,
-            Arguments = "2",
-            UseShellExecute = true,
-            Verb = "runas",
-            WorkingDirectory = _basePath,
-            WindowStyle = ProcessWindowStyle.Minimized
-        };
 
-        using var process = Process.Start(psi);
-        if (process != null)
-        {
-            var timeout = Task.Delay(30000);
-            var exit = process.WaitForExitAsync();
+        // Останавливаем и удаляем службы напрямую через sc.exe.
+        // service.bat — интерактивное меню и не принимает номер пункта аргументом
+        // в актуальных версиях Flowseal, поэтому управляем службами сами.
+        // Все команды выполняем одним elevated-процессом cmd (один запрос UAC).
+        bool serviceRemoved = await StopAndDeleteServicesAsync();
+        if (!serviceRemoved)
+            Log("⚠️ Не удалось подтвердить удаление служб zapret/WinDivert — возможно, они остались. " +
+                "Рекомендуется перезагрузка.");
 
-            var completed = await Task.WhenAny(exit, timeout);
-            if (completed == timeout)
-            {
-                Log("⚠️ Таймаут удаления служб, продолжаем...");
-                try { process.Kill(); } catch { }
-            }
-        }
-        
         await Task.Delay(2000);
         
         // Удаляем папку с повторными попытками

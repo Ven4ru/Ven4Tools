@@ -22,15 +22,27 @@ namespace Ven4Tools.Services
                 .ToLowerInvariant();
         }
 
+        /// <summary>
+        /// Проверяет, указан ли ожидаемый SHA256-хеш в каталоге.
+        /// </summary>
+        public static bool HasExpectedHash(string? expectedHash)
+            => !string.IsNullOrWhiteSpace(expectedHash);
+
+        /// <summary>
+        /// Проверяет SHA256 файла. При пустом/отсутствующем ожидаемом хеше
+        /// возвращает false — отсутствие хеша НЕ считается успешной проверкой.
+        /// Вызывающий код должен отдельно обрабатывать случай отсутствия хеша
+        /// через <see cref="HasExpectedHash"/>.
+        /// </summary>
         public static async Task<bool> VerifyHashAsync(
             string filePath,
             string expectedHash)
         {
             if (string.IsNullOrWhiteSpace(expectedHash))
             {
-                // Логируем отсутствие хеша — не блокируем установку, но предупреждаем
-                Debug.WriteLine($"[HashHelper] SHA256 не указан для файла, проверка пропущена");
-                return true; // SHA256 отсутствует в каталоге — пропускаем проверку
+                // SHA256 отсутствует — это НЕ успешная проверка
+                Debug.WriteLine($"[HashHelper] SHA256 не указан для файла — проверка не пройдена");
+                return false;
             }
 
             string computedHash = await ComputeSha256Async(filePath);
