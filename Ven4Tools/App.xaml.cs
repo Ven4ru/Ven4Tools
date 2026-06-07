@@ -83,10 +83,26 @@ namespace Ven4Tools
 
         private void Current_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            e.Handled = true;
             Exception ex = e.Exception;
 
             try { CrashReportService.Write(ex); } catch { }
+
+            // Не глушим исключение молча: показываем сообщение и завершаем приложение,
+            // чтобы не остаться в неопределённом состоянии после фатальной UI-ошибки.
+            try
+            {
+                MessageBox.Show(
+                    "Произошла непредвиденная ошибка, приложение будет закрыто.\n\n" + ex.Message,
+                    "Ven4Tools — ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            catch { }
+
+            // Помечаем обработанным, чтобы вместо системного «crash»-диалога
+            // выполнить контролируемое завершение.
+            e.Handled = true;
+            try { Shutdown(-1); } catch { }
         }
     }
 }
