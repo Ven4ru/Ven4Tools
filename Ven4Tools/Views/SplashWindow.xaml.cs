@@ -71,10 +71,15 @@ namespace Ven4Tools.Views
 
                 // 5. winget
                 SetStatus("Проверка winget...");
-                await Task.Run(async () =>
+                bool wingetOk = await Task.Run(async () =>
                 {
-                    try { await CheckWingetAsync(ct); } catch { }
+                    try { return await CheckWingetAsync(ct); } catch { return false; }
                 }, ct);
+                if (!wingetOk)
+                {
+                    SetStatus("⚠ winget не найден — установка приложений может не работать");
+                    await Task.Delay(1200, ct);
+                }
                 ct.ThrowIfCancellationRequested();
 
                 // Готово
@@ -119,26 +124,52 @@ namespace Ven4Tools.Views
             catch { return null; }
         }
 
-        private static async Task CheckWingetAsync(CancellationToken ct)
+        /// <summary>
+        /// Проверяет наличие winget. Возвращает true, если winget доступен
+        /// (вышел с кодом 0 и вернул строку версии).
+        /// </summary>
+        private static async Task<bool> CheckWingetAsync(CancellationToken ct)
         {
             var psi = new System.Diagnostics.ProcessStartInfo("winget", "--version")
             {
                 CreateNoWindow = true,
                 UseShellExecute = false,
-                RedirectStandardOutput = true
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
-            using var p = System.Diagnostics.Process.Start(psi);
-            if (p != null)
+
+            System.Diagnostics.Process? p;
+            try
+            {
+                p = System.Diagnostics.Process.Start(psi);
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                return false; // winget не установлен
+            }
+            catch (System.IO.FileNotFoundException)
+            {
+                return false;
+            }
+
+            if (p == null) return false;
+
+            using (p)
             {
                 using var timeoutCts = new CancellationTokenSource(3000);
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+                var outputTask = p.StandardOutput.ReadToEndAsync();
                 try
                 {
                     await p.WaitForExitAsync(linkedCts.Token).ConfigureAwait(false);
+                    string output = await outputTask.ConfigureAwait(false);
+                    return p.ExitCode == 0 && !string.IsNullOrWhiteSpace(output);
                 }
                 catch (OperationCanceledException)
                 {
                     try { p.Kill(); } catch { }
+                    // Таймаут проверки трактуем как «недоступен», но без блокировки старта
+                    return false;
                 }
             }
         }
