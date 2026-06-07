@@ -54,12 +54,13 @@ namespace Ven4Tools.Services
                     Log($"📂 {app.DisplayName}: локальный файл {app.LocalInstallerPath}");
 
                     bool isMsi = app.LocalInstallerPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
+                    string locArgLocal = BuildInstallerLocationArg(isMsi, installDrive, app.DisplayName);
                     var psiLocal = new ProcessStartInfo
                     {
                         FileName        = isMsi ? "msiexec" : app.LocalInstallerPath,
                         Arguments       = isMsi
-                                          ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart"
-                                          : (string.IsNullOrWhiteSpace(app.SilentArgs) ? "/S" : app.SilentArgs),
+                                          ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart{locArgLocal}"
+                                          : (string.IsNullOrWhiteSpace(app.SilentArgs) ? "/S" : app.SilentArgs) + locArgLocal,
                         UseShellExecute = true,
                         Verb            = "runas",
                         WindowStyle     = ProcessWindowStyle.Hidden
@@ -80,14 +81,18 @@ namespace Ven4Tools.Services
                         await Task.Delay(100, token);
                     }
 
-                    if (localProc.ExitCode == 0)
+                    // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
+                    if (localProc.ExitCode == 0 || localProc.ExitCode == 3010)
                     {
-                        appProgress.Status = "✅ Установлено (локальный файл)";
+                        bool reboot = localProc.ExitCode == 3010;
+                        appProgress.Status = reboot ? "⚠ Установлено. Требуется перезагрузка." : "✅ Установлено (локальный файл)";
                         appProgress.Percentage = 100;
                         progress.Report(appProgress);
-                        Log($"✅ {app.DisplayName} — локальный установщик");
+                        Log(reboot
+                            ? $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — локальный установщик"
+                            : $"✅ {app.DisplayName} — локальный установщик");
                         await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "local", app.CategoryString);
-                        return (true, "Установлено из локального файла", appProgress);
+                        return (true, reboot ? "Установлено (требуется перезагрузка)" : "Установлено из локального файла", appProgress);
                     }
 
                     appProgress.Status = "❌ Ошибка локального установщика";
@@ -116,12 +121,14 @@ namespace Ven4Tools.Services
                     appProgress.Percentage = 50;
                     progress.Report(appProgress);
 
+                    bool cacheIsMsi = cachedPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
+                    string locArgCache = BuildInstallerLocationArg(cacheIsMsi, installDrive, app.DisplayName);
                     var psiCache = new ProcessStartInfo
                     {
-                        FileName       = cachedPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase) ? "msiexec" : cachedPath,
-                        Arguments      = cachedPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase)
-                                         ? $"/i \"{cachedPath}\" /quiet /norestart"
-                                         : "/S /silent /quiet",
+                        FileName       = cacheIsMsi ? "msiexec" : cachedPath,
+                        Arguments      = cacheIsMsi
+                                         ? $"/i \"{cachedPath}\" /quiet /norestart{locArgCache}"
+                                         : "/S /silent /quiet" + locArgCache,
                         UseShellExecute = true, Verb = "runas",
                         WindowStyle     = ProcessWindowStyle.Hidden
                     };
@@ -133,13 +140,17 @@ namespace Ven4Tools.Services
                             if (token.IsCancellationRequested) { try { cacheProc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
                             await Task.Delay(100, token);
                         }
-                        if (cacheProc.ExitCode == 0)
+                        // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
+                        if (cacheProc.ExitCode == 0 || cacheProc.ExitCode == 3010)
                         {
-                            appProgress.Status = "✅ Установлено (кэш)";
+                            bool reboot = cacheProc.ExitCode == 3010;
+                            appProgress.Status = reboot ? "⚠ Установлено. Требуется перезагрузка." : "✅ Установлено (кэш)";
                             appProgress.Percentage = 100;
                             progress.Report(appProgress);
-                            Log($"✅ {app.DisplayName} установлено из офлайн-кэша");
-                            return (true, "Установлено из офлайн-кэша", appProgress);
+                            Log(reboot
+                                ? $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} (офлайн-кэш)"
+                                : $"✅ {app.DisplayName} установлено из офлайн-кэша");
+                            return (true, reboot ? "Установлено из кэша (требуется перезагрузка)" : "Установлено из офлайн-кэша", appProgress);
                         }
                     }
                 }
@@ -175,7 +186,7 @@ namespace Ven4Tools.Services
                                 appProgress.Percentage = 10;
                                 progress.Report(appProgress);
 
-                                if (await RunWingetAsync(primaryId, wsrc, token, version))
+                                if (await RunWingetAsync(primaryId, wsrc, token, version, installDrive))
                                 {
                                     appProgress.Status = "✅ Установлено (Winget)";
                                     appProgress.Percentage = 100;
@@ -281,16 +292,25 @@ namespace Ven4Tools.Services
                                     appProgress.Percentage = 55;
                                     progress.Report(appProgress);
 
-                                    if (!await HashHelper.VerifyHashAsync(tempFile, app.Sha256 ?? ""))
+                                    if (HashHelper.HasExpectedHash(app.Sha256))
                                     {
-                                        Log($"❌ SHA256 mismatch: {app.DisplayName}");
-                                        try { File.Delete(tempFile); } catch { }
-                                        appProgress.Status = "❌ Ошибка SHA256";
-                                        progress.Report(appProgress);
-                                        InstallFailureService.Append(app.DisplayName, app.Id, "direct", "SHA256 mismatch");
-                                        return (false, "SHA256 mismatch", appProgress);
+                                        if (!await HashHelper.VerifyHashAsync(tempFile, app.Sha256!))
+                                        {
+                                            Log($"❌ SHA256 mismatch: {app.DisplayName}");
+                                            try { File.Delete(tempFile); } catch { }
+                                            appProgress.Status = "❌ Ошибка SHA256";
+                                            progress.Report(appProgress);
+                                            InstallFailureService.Append(app.DisplayName, app.Id, "direct", "SHA256 mismatch");
+                                            return (false, "SHA256 mismatch", appProgress);
+                                        }
+                                        Log($"✅ SHA256 OK: {app.DisplayName}");
                                     }
-                                    Log($"✅ SHA256 OK: {app.DisplayName}");
+                                    else
+                                    {
+                                        // Хеш в каталоге не указан — продолжаем установку,
+                                        // но фиксируем, что проверка не выполнялась.
+                                        Log($"⚠ SHA256 не указан, проверка пропущена: {app.DisplayName}");
+                                    }
 
                                     token.ThrowIfCancellationRequested();
                                     appProgress.Status = "⚙️ Установка...";
@@ -300,6 +320,8 @@ namespace Ven4Tools.Services
                                     string silentArgs = app.SilentArgs;
                                     if (string.IsNullOrWhiteSpace(silentArgs) && ProfileService.Current.SilentInstall)
                                         silentArgs = "/S";
+                                    // Best-effort путь установки для прямого EXE (NSIS /D=…)
+                                    silentArgs += BuildInstallerLocationArg(false, installDrive, app.DisplayName);
 
                                     var psi = new ProcessStartInfo
                                     {
@@ -316,15 +338,19 @@ namespace Ven4Tools.Services
                                             await Task.Delay(100, token);
                                         }
                                         try { File.Delete(tempFile); } catch { }
-                                        if (proc.ExitCode == 0)
+                                        // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
+                                        if (proc.ExitCode == 0 || proc.ExitCode == 3010)
                                         {
-                                            appProgress.Status = "✅ Установлено (прямая ссылка)";
+                                            bool reboot = proc.ExitCode == 3010;
+                                            appProgress.Status = reboot ? "⚠ Установлено. Требуется перезагрузка." : "✅ Установлено (прямая ссылка)";
                                             appProgress.Percentage = 100;
                                             progress.Report(appProgress);
-                                            Log($"✅ {app.DisplayName} — прямая ссылка: {url}");
+                                            Log(reboot
+                                                ? $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — прямая ссылка: {url}"
+                                                : $"✅ {app.DisplayName} — прямая ссылка: {url}");
                                             await StatsService.Instance.TrackOverrideAsync(app.Id, null, url, true);
                                             await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "direct", app.CategoryString);
-                                            return (true, "Установлено", appProgress);
+                                            return (true, reboot ? "Установлено (требуется перезагрузка)" : "Установлено", appProgress);
                                         }
                                     }
                                 }
@@ -362,13 +388,69 @@ namespace Ven4Tools.Services
             }
         }
 
-        private async Task<bool> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null)
+        // ── Помощники для выбора диска установки ───────────────────────────────
+
+        private static string GetSystemDriveRoot()
+            => Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\";
+
+        /// <summary>
+        /// true, если пользователь выбрал диск, отличный от системного.
+        /// Только в этом случае имеет смысл переопределять путь установки —
+        /// для системного диска поведение по умолчанию и так корректно.
+        /// </summary>
+        private static bool IsNonSystemDrive(string? installDrive)
+        {
+            if (string.IsNullOrWhiteSpace(installDrive)) return false;
+            string sys = GetSystemDriveRoot().TrimEnd('\\', '/').ToUpperInvariant();
+            string sel = installDrive.TrimEnd('\\', '/').ToUpperInvariant();
+            return sel.Length >= 2 && sel != sys;
+        }
+
+        /// <summary>Базовая папка «{диск}:\Program Files».</summary>
+        private static string ProgramFilesOn(string installDrive)
+        {
+            string root = installDrive.TrimEnd('\\', '/');
+            return $"{root}\\Program Files";
+        }
+
+        /// <summary>Целевая папка установки для конкретного приложения (best-effort).</summary>
+        private static string TargetFolderFor(string installDrive, string appName)
+        {
+            string safe = string.Concat((appName ?? "App")
+                .Split(Path.GetInvalidFileNameChars()));
+            if (string.IsNullOrWhiteSpace(safe)) safe = "App";
+            return Path.Combine(ProgramFilesOn(installDrive), safe);
+        }
+
+        /// <summary>
+        /// Best-effort аргумент пути установки для прямых установщиков.
+        /// Применяется только при выборе несистемного диска, чтобы не ломать
+        /// штатные тихие установки на системный диск.
+        /// </summary>
+        private static string BuildInstallerLocationArg(bool isMsi, string? installDrive, string appName)
+        {
+            if (!IsNonSystemDrive(installDrive)) return "";
+            string target = TargetFolderFor(installDrive!, appName);
+            // MSI: неизвестные свойства просто игнорируются — безопасно.
+            // EXE (NSIS): /D=path должен идти последним и без кавычек.
+            return isMsi ? $" INSTALLDIR=\"{target}\"" : $" /D={target}";
+        }
+
+        private async Task<bool> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null)
         {
             var profile = ProfileService.Current;
             string silent = profile.SilentInstall ? " --silent" : "";
-            string location = !string.IsNullOrWhiteSpace(profile.DefaultInstallFolder)
-                ? $" --location \"{profile.DefaultInstallFolder}\""
-                : "";
+
+            // Применяем выбранный диск установки. Для несистемного диска —
+            // «{диск}:\Program Files»; иначе используем DefaultInstallFolder из профиля.
+            string location;
+            if (IsNonSystemDrive(installDrive))
+                location = $" --location \"{ProgramFilesOn(installDrive!)}\"";
+            else if (!string.IsNullOrWhiteSpace(profile.DefaultInstallFolder))
+                location = $" --location \"{profile.DefaultInstallFolder}\"";
+            else
+                location = "";
+
             string versionArg = !string.IsNullOrEmpty(version) ? $" --version \"{version}\"" : "";
             string args = $"install --id \"{appId}\" -e --source \"{source}\"{versionArg} --accept-package-agreements --accept-source-agreements --disable-interactivity{silent}{location}";
 
@@ -402,7 +484,23 @@ namespace Ven4Tools.Services
                     }
                 };
 
-                process.Start();
+                try
+                {
+                    process.Start();
+                }
+                catch (System.ComponentModel.Win32Exception)
+                {
+                    // winget не установлен в системе — не валим весь цикл источников,
+                    // просто сообщаем о неудаче, чтобы перейти к следующему источнику.
+                    Log($"❌ winget не найден — источник Winget пропущен ({appId})");
+                    return false;
+                }
+                catch (FileNotFoundException)
+                {
+                    Log($"❌ winget не найден — источник Winget пропущен ({appId})");
+                    return false;
+                }
+
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 
@@ -416,7 +514,10 @@ namespace Ven4Tools.Services
                     await Task.Delay(100, token);
                 }
 
-                return process.ExitCode == 0;
+                // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — установка прошла успешно
+                if (process.ExitCode == 3010)
+                    Log($"⚠ Установлено. Требуется перезагрузка. ({appId})");
+                return process.ExitCode == 0 || process.ExitCode == 3010;
             }
         }
 

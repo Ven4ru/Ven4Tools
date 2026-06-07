@@ -121,7 +121,7 @@ namespace Ven4Tools.Launcher.Services
             try
             {
                 var psi = new System.Diagnostics.ProcessStartInfo("winget",
-                    "upgrade --include-unknown --accept-source-agreements --disable-interactivity")
+                    "upgrade --include-unknown --accept-source-agreements --disable-interactivity --locale en-US")
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true,
@@ -135,11 +135,27 @@ namespace Ven4Tools.Launcher.Services
                 string output = await p.StandardOutput.ReadToEndAsync();
                 await p.WaitForExitAsync();
                 await errTask;
-                // Count lines after the header separator "---"
-                var lines = output.Split('\n');
-                int headerIdx = Array.FindIndex(lines, l => l.TrimStart().StartsWith("---"));
-                if (headerIdx < 0) return 0;
-                return lines.Skip(headerIdx + 1).Count(l => !string.IsNullOrWhiteSpace(l) && !l.TrimStart().StartsWith("---"));
+                // Считаем только строки таблицы между разделителем «---» и футером.
+                // Футер winget («N upgrades available.») отделён пустой строкой —
+                // на ней останавливаемся, чтобы не считать его за приложение.
+                var lines = output.Replace("\r", "").Split('\n');
+                int sepIdx = Array.FindIndex(lines, l =>
+                {
+                    string t = l.Trim();
+                    return t.Length >= 5 && t.Contains('-') && t.All(c => c == '-' || c == ' ');
+                });
+                if (sepIdx < 0) return 0;
+
+                int count = 0;
+                for (int i = sepIdx + 1; i < lines.Length; i++)
+                {
+                    string line = lines[i];
+                    if (string.IsNullOrWhiteSpace(line)) break; // начался футер
+                    string t = line.Trim();
+                    if (t.All(c => c == '-' || c == ' ')) continue; // ещё один разделитель
+                    count++;
+                }
+                return count;
             }
             catch { return 0; }
         }

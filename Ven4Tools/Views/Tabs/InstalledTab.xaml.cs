@@ -114,59 +114,71 @@ namespace Ven4Tools.Views.Tabs
             return ParseWingetList(output);
         }
 
+        // Убрать ANSI escape-коды и управляющие символы из вывода winget
+        private static readonly System.Text.RegularExpressions.Regex _ansiRegex =
+            new(@"\x1B(?:\[[0-9;]*[mGKHFABCDsuJh]|\][^\x07]*\x07|[()][0-9A-Za-z])",
+                System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        private static string StripAnsi(string s)
+            => _ansiRegex.Replace(s, "");
+
         private static List<InstalledApp> ParseWingetList(string raw)
         {
             var result = new List<InstalledApp>();
             if (string.IsNullOrWhiteSpace(raw)) return result;
 
-            var lines = raw.Split('\n');
+            // Убрать ANSI, нормализовать переводы строк
+            var lines = StripAnsi(raw).Replace("\r", "").Split('\n');
 
-            // Найти строку заголовка (содержит "Name" и "Id")
-            int headerIdx = -1;
-            for (int i = 0; i < lines.Length; i++)
-            {
-                string l = lines[i];
-                if (l.Contains("Name") && l.Contains("Id") && l.Contains("Version"))
-                {
-                    headerIdx = i;
-                    break;
-                }
-            }
+            // Ищем строку-заголовок по ключевым словам (работает на любом языке системы,
+            // т.к. winget всегда выводит заголовок таблицы на английском)
+            int headerIdx = Array.FindIndex(lines,
+                l => l.Contains("Name") && l.Contains("Id") && l.Contains("Version"));
             if (headerIdx < 0) return result;
 
-            // Winget склеивает прогресс-бар с заголовком в одну строку — отрезаем префикс
             string header = lines[headerIdx];
-            int nameStart = header.IndexOf("Name", StringComparison.Ordinal);
-            if (nameStart > 0) header = header.Substring(nameStart);
 
-            // Позиции колонок — индексы слов в строке заголовка
-            int colName      = header.IndexOf("Name",      StringComparison.Ordinal);
-            int colId        = header.IndexOf("Id",        StringComparison.Ordinal);
-            int colVersion   = header.IndexOf("Version",   StringComparison.Ordinal);
-            int colAvailable = header.IndexOf("Available", StringComparison.Ordinal);
-            int colSource    = header.IndexOf("Source",    StringComparison.Ordinal);
+            // Убрать мусор до начала "Name" (ANSI-артефакты, отступы)
+            int namePos = header.IndexOf("Name", StringComparison.Ordinal);
+            if (namePos < 0) return result;
+            int offset = namePos;
 
-            if (colName < 0 || colId < 0 || colVersion < 0) return result;
+            // Позиции колонок относительно начала "Name"
+            int colName      = 0;
+            int colId        = header.IndexOf("Id",        namePos, StringComparison.Ordinal) - offset;
+            int colVersion   = header.IndexOf("Version",   namePos, StringComparison.Ordinal) - offset;
+            int colAvailable = header.IndexOf("Available", namePos, StringComparison.Ordinal) - offset;
+            int colSource    = header.IndexOf("Source",    namePos, StringComparison.Ordinal) - offset;
+            if (colId <= 0 || colVersion <= 0) return result;
+            if (colAvailable < 0) colAvailable = -1;
+            if (colSource    < 0) colSource    = -1;
 
-            // Пропустить строку-разделитель и парсить данные
-            int dataStart = headerIdx + 1;
-            if (dataStart < lines.Length && lines[dataStart].TrimStart().StartsWith("-"))
-                dataStart++;
-
-            for (int i = dataStart; i < lines.Length; i++)
+            bool started = false;
+            for (int i = headerIdx + 1; i < lines.Length; i++)
             {
-                string line = lines[i].TrimEnd('\r');
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                if (line.TrimStart().StartsWith("-")) continue;
+                string rawLine = lines[i];
+                if (string.IsNullOrWhiteSpace(rawLine))
+                {
+                    if (started) break; // пустая строка = начало футера
+                    continue;
+                }
 
-                string name      = Extract(line, colName,      colId);
-                string id        = Extract(line, colId,        colVersion);
-                string version   = Extract(line, colVersion,   colAvailable >= 0 ? colAvailable : line.Length);
+                // Пропускаем строку-разделитель из дефисов
+                string t = rawLine.Trim();
+                if (t.Length >= 5 && t.All(c => c == '-' || c == ' ')) continue;
+
+                // Выровнять строку по offset заголовка
+                string line = rawLine.Length > offset ? rawLine.Substring(offset) : rawLine;
+
+                string name      = Extract(line, colName,    colId);
+                string id        = Extract(line, colId,      colVersion);
+                string version   = Extract(line, colVersion, colAvailable >= 0 ? colAvailable : line.Length);
                 string available = colAvailable >= 0 ? Extract(line, colAvailable, colSource >= 0 ? colSource : line.Length) : "";
                 string source    = colSource    >= 0 ? Extract(line, colSource,    line.Length) : "";
 
                 if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(id)) continue;
 
+                started = true;
                 result.Add(new InstalledApp
                 {
                     Name      = name.Trim(),
@@ -326,9 +338,14 @@ namespace Ven4Tools.Views.Tabs
             Log($"⬆ Обновление {app.Name}...");
             try
             {
-                string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements";
+                // --locale en-US делает вывод английским; русские варианты — на случай
+                // если локаль не применилась (старый winget).
+                string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements --locale en-US";
                 string output = await Task.Run(() => RunWinget(args));
-                if (output.Contains("Successfully installed") || output.Contains("No applicable update"))
+                if (output.Contains("Successfully installed") || output.Contains("No applicable update") ||
+                    output.Contains("No installed package found matching") ||
+                    output.Contains("Успешно установлено") || output.Contains("Обновления не найдены") ||
+                    output.Contains("Не найдено применимых обновлений") || output.Contains("Нет применимых обновлений"))
                 {
                     app.Available = "";
                     Dispatcher.Invoke(() => { ApplyFilter(); UpdateStats(); });
@@ -444,7 +461,8 @@ namespace Ven4Tools.Views.Tabs
             }
             bool exited = p?.WaitForExit(120_000) ?? false;
             if (!exited) { try { p?.Kill(); } catch { } }
-            bool success = exited && (p?.ExitCode == 0);
+            // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — удаление прошло успешно
+            bool success = exited && (p?.ExitCode == 0 || p?.ExitCode == 3010);
             return success;
         }
 
