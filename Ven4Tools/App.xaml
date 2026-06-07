@@ -6,7 +6,7 @@
         <!-- Цвета для тёмной темы — Teal/Mascot palette -->
         <SolidColorBrush x:Key="WindowBackground" Color="#0F2237"/>
         <SolidColorBrush x:Key="SidebarBackground" Color="#102E4A"/>
-        <SolidColorBrush x:Key="ContentBackground" Color="#8B0000"/>
+        <SolidColorBrush x:Key="ContentBackground" Color="#0D1B2A"/>
         <SolidColorBrush x:Key="CardBackground" Color="#1F4D72"/>
         <SolidColorBrush x:Key="AccentColor" Color="#00E5C8"/>
         <SolidColorBrush x:Key="TextPrimary" Color="#E0F6F6"/>

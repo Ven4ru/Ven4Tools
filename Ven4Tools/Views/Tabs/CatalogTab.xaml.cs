@@ -19,6 +19,15 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class CatalogTab : UserControl
     {
+        private static readonly HttpClient _httpClient = CreateHttpClient();
+
+        private static HttpClient CreateHttpClient()
+        {
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+            return client;
+        }
+
         private readonly string[] wingetSources = { "winget", "msstore" };
         private readonly SemaphoreSlim installSemaphore = new SemaphoreSlim(2);
         private bool isCancelled = false;
@@ -41,6 +50,7 @@ namespace Ven4Tools.Views.Tabs
         private string systemDrive = "C:\\";
         private bool _isCheckingAvailability = false;
         private bool _initialized = false;
+        private bool _eventsSubscribed = false;
         private bool _showFavoritesOnly = false;
         private bool _showRuBlocked = true;
         private readonly HashSet<string> _ruBlockedIds = new();
@@ -79,10 +89,16 @@ namespace Ven4Tools.Views.Tabs
 
             Loaded += async (s, e) =>
             {
-                ProfileService.Changed += _profileChangedHandler;
-                UserSession.Changed    += OnUserSessionChanged;
-                AppSettings.Changed    += OnAppSettingsChanged;
-                SourceOrderService.Changed += OnSourceOrderChanged;
+                // Loaded может срабатывать многократно (переключение вкладок) —
+                // подписываемся только один раз, иначе обработчики дублируются.
+                if (!_eventsSubscribed)
+                {
+                    ProfileService.Changed += _profileChangedHandler;
+                    UserSession.Changed    += OnUserSessionChanged;
+                    AppSettings.Changed    += OnAppSettingsChanged;
+                    SourceOrderService.Changed += OnSourceOrderChanged;
+                    _eventsSubscribed = true;
+                }
                 if (!_initialized)
                 {
                     _initialized = true;
@@ -92,10 +108,14 @@ namespace Ven4Tools.Views.Tabs
             };
             Unloaded += (_, _) =>
             {
-                ProfileService.Changed -= _profileChangedHandler;
-                UserSession.Changed    -= OnUserSessionChanged;
-                AppSettings.Changed    -= OnAppSettingsChanged;
-                SourceOrderService.Changed -= OnSourceOrderChanged;
+                if (_eventsSubscribed)
+                {
+                    ProfileService.Changed -= _profileChangedHandler;
+                    UserSession.Changed    -= OnUserSessionChanged;
+                    AppSettings.Changed    -= OnAppSettingsChanged;
+                    SourceOrderService.Changed -= OnSourceOrderChanged;
+                    _eventsSubscribed = false;
+                }
                 (installService as IDisposable)?.Dispose();
                 (availabilityChecker as IDisposable)?.Dispose();
             };
@@ -404,9 +424,14 @@ namespace Ven4Tools.Views.Tabs
 
                 _ = Task.WhenAll(availabilityTasks).ContinueWith(async _ =>
                 {
-                    int available = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
-                    int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
-                    AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
+                    // availabilityStatus заполняется/читается на UI-потоке — агрегируем там,
+                    // иначе чтение словаря с пулового потока гонится с записью из Dispatcher.
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        int available = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Available);
+                        int unavailable = availabilityStatus.Values.Count(s => s == AvailabilityChecker.AvailabilityStatus.Unavailable);
+                        AddLog($"✅ Проверка завершена: {available} доступно, {unavailable} недоступно");
+                    });
                     await FetchVersionsPhase2Async();
                     await UpdateInstalledStatusAsync();
                 }).Unwrap().ContinueWith(t =>
@@ -1047,10 +1072,8 @@ namespace Ven4Tools.Views.Tabs
             {
                 var url = "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/master.json";
                 AddLog($"📡 URL: {url}");
-                using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromSeconds(AppSettings.CatalogTimeout);
-                client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
-                var response = await client.GetAsync(url);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(AppSettings.CatalogTimeout));
+                var response = await _httpClient.GetAsync(url, cts.Token);
                 AddLog($"📡 HTTP статус: {response.StatusCode}");
                 if (response.IsSuccessStatusCode)
                 {

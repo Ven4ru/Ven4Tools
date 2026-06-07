@@ -12,14 +12,20 @@ namespace Ven4Tools.Launcher.Services
     {
         private const string GitHubApiUrl = "https://api.github.com/repos/Ven4ru/Ven4Tools/releases/latest";
 
+        private static readonly HttpClient _httpClient = CreateClient();
+
+        private static HttpClient CreateClient()
+        {
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
+            return client;
+        }
+
         public async Task<UpdateInfo?> CheckForUpdatesAsync()
         {
             try
             {
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
-
-                var response = await client.GetAsync(GitHubApiUrl);
+                var response = await _httpClient.GetAsync(GitHubApiUrl);
                 if (!response.IsSuccessStatusCode) return null;
 
                 var json = await response.Content.ReadAsStringAsync();
@@ -42,9 +48,12 @@ namespace Ven4Tools.Launcher.Services
                             break;
                         }
                     }
-                    if (string.IsNullOrEmpty(downloadUrl))
-                        downloadUrl = release.assets[0]?.browser_download_url?.ToString() ?? "";
                 }
+
+                // Без .exe-ассета обновлять нечем — не берём произвольный ассет (например, source code zip)
+                if (string.IsNullOrEmpty(downloadUrl))
+                    throw new InvalidOperationException(
+                        $"В релизе {remoteVersion} не найден .exe-ассет лаунчера для обновления.");
 
                 var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                 var currentVersion = ver != null ? $"{ver.Major}.{ver.Minor}.{ver.Build}" : "0.0.0";
@@ -76,9 +85,7 @@ namespace Ven4Tools.Launcher.Services
 
                 string tempFile = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Launcher_{updateInfo.LatestVersion}.exe");
 
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
-                using var response = await client.GetAsync(updateInfo.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                using var response = await _httpClient.GetAsync(updateInfo.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
                 response.EnsureSuccessStatusCode();
 
                 var totalBytes = response.Content.Headers.ContentLength ?? -1L;
@@ -101,7 +108,7 @@ namespace Ven4Tools.Launcher.Services
                     throw new IOException(
                         $"Загрузка неполная: получено {bytesRead} из {totalBytes} байт. Проверьте соединение.");
 
-                string scriptPath = Path.Combine(Path.GetTempPath(), "update_launcher.ps1");
+                string scriptPath = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_update_launcher.ps1");
                 string launcherPath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
 
                 // Экранируем одинарные кавычки для PS-строк (одинарная → две одинарных)

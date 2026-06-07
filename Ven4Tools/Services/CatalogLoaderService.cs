@@ -14,6 +14,8 @@ namespace Ven4Tools.Services
         public static MasterCatalog? LoadedCatalog { get; private set; }
         public static event Action<MasterCatalog>? CatalogReady;
 
+        private static readonly SemaphoreSlim _preloadLock = new(1, 1);
+
         private readonly HttpClient _httpClient;
 
         private const string RemoteCatalogUrl =
@@ -106,8 +108,20 @@ namespace Ven4Tools.Services
         {
             if (LoadedCatalog != null) return;
 
-            using var loader = new CatalogLoaderService();
-            await loader.LoadCatalogAsync(ct);
+            // Только один preload одновременно — иначе параллельные вызовы
+            // (splash + фоновые тригеры) дублируют сетевые запросы и гонку за LoadedCatalog.
+            await _preloadLock.WaitAsync(ct);
+            try
+            {
+                if (LoadedCatalog != null) return;
+
+                using var loader = new CatalogLoaderService();
+                await loader.LoadCatalogAsync(ct);
+            }
+            finally
+            {
+                _preloadLock.Release();
+            }
         }
 
         private MasterCatalog Deserialize(string json)
