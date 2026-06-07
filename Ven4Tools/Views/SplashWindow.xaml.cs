@@ -16,6 +16,7 @@ namespace Ven4Tools.Views
             new Uri("pack://application:,,,/Resources/Mascots/ready.png");
 
         private readonly CancellationTokenSource _skipCts = new();
+        private bool _disposed;
 
         public SplashWindow()
         {
@@ -25,6 +26,9 @@ namespace Ven4Tools.Views
         private void BtnSkip_Click(object sender, RoutedEventArgs e)
         {
             btnSkip.IsEnabled = false;
+            // Кнопку могли нажать после того, как RunPreloadAsync уже завершился
+            // и освободил CTS — иначе Cancel бросит ObjectDisposedException.
+            if (_disposed || _skipCts.IsCancellationRequested) return;
             _skipCts.Cancel();
         }
 
@@ -81,7 +85,7 @@ namespace Ven4Tools.Views
             }
             catch (OperationCanceledException) { /* пользователь нажал «Пропустить» */ }
             catch { /* предзагрузка — best-effort: любая ошибка не должна валить старт */ }
-            finally { _skipCts.Dispose(); }
+            finally { _disposed = true; _skipCts.Dispose(); }
         }
 
         private void SetStatus(string text) =>

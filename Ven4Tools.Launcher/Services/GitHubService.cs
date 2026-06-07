@@ -130,72 +130,72 @@ namespace Ven4Tools.Launcher.Services
         /// <summary>
         /// Проверка, есть ли обновление лаунчера
         /// </summary>
-/// <summary>
-/// Проверка, есть ли обновление лаунчера
-/// </summary>
-public async Task<UpdateInfo?> CheckLauncherUpdate(string currentVersion)
-{
-    try
-    {
-        var latest = await GetLatestRelease();
-        if (latest?.tag_name == null) return null;
-
-        string latestVersion = latest.tag_name.TrimStart('v');
-        bool hasUpdate = VersionComparer.IsNewer(latestVersion, currentVersion);
-
-        // Ищем asset лаунчера
-        var launcherAsset = latest.assets?.FirstOrDefault(a =>
-            a.name != null &&
-            a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase) &&
-            a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
-
-        return new UpdateInfo
+        public async Task<UpdateInfo?> CheckLauncherUpdate(string currentVersion)
         {
-            HasUpdate = hasUpdate,
-            CurrentVersion = currentVersion,
-            LatestVersion = latestVersion,
-            DownloadUrl = launcherAsset?.browser_download_url,
-            ReleaseNotes = latest.body,
-            FileSize = launcherAsset?.size ?? 0
-        };
-    }
-    catch
-    {
-        return null;
-    }
-}
-/// <summary>
-/// Получение последней стабильной версии winget с GitHub
-/// </summary>
-public async Task<string?> GetLatestWingetVersionAsync()
-{
-    try
-    {
-        string url = "https://api.github.com/repos/microsoft/winget-cli/releases/latest";
-        using var response = await httpClient.GetAsync(url);
-        
-        if (!response.IsSuccessStatusCode)
-            return null;
-        
-        string json = await response.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-        
-        if (root.TryGetProperty("tag_name", out var tagProp))
-        {
-            string tag = tagProp.GetString() ?? "";
-            return tag.TrimStart('v');
+            try
+            {
+                var latest = await GetLatestRelease();
+                if (latest?.tag_name == null) return null;
+
+                string latestVersion = latest.tag_name.TrimStart('v');
+                bool hasUpdate = VersionComparer.IsNewer(latestVersion, currentVersion);
+
+                // Ищем asset лаунчера
+                var launcherAsset = latest.assets?.FirstOrDefault(a =>
+                    a.name != null &&
+                    a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase) &&
+                    a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
+
+                return new UpdateInfo
+                {
+                    HasUpdate = hasUpdate,
+                    CurrentVersion = currentVersion,
+                    LatestVersion = latestVersion,
+                    DownloadUrl = launcherAsset?.browser_download_url,
+                    ReleaseNotes = latest.body,
+                    FileSize = launcherAsset?.size ?? 0
+                };
+            }
+            catch
+            {
+                return null;
+            }
         }
-        
-        return null;
-    }
-    catch
-    {
-        return null;
-    }
-}
-        /// <summary>
 
+        /// <summary>
+        /// Получение последней стабильной версии winget с GitHub
+        /// </summary>
+        public async Task<string?> GetLatestWingetVersionAsync()
+        {
+            try
+            {
+                string url = "https://api.github.com/repos/microsoft/winget-cli/releases/latest";
+                using var response = await httpClient.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                string json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("tag_name", out var tagProp))
+                {
+                    string tag = tagProp.GetString() ?? "";
+                    return tag.TrimStart('v');
+                }
+
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Создание issue в репозитории (отчёт об ошибке)
+        /// </summary>
         public async Task<(bool Success, string? IssueUrl, string? Error)> CreateIssueAsync(
             string title, string body, string[]? labels = null)
         {
