@@ -15,6 +15,18 @@ namespace Ven4Tools.Launcher
 {
     public partial class MainWindow : Window
     {
+        // Один переиспользуемый клиент: создание нового HttpClient на каждый запрос
+        // исчерпывает сокеты. Таймаут — бесконечный, отдельные операции ограничиваем
+        // через CancellationToken на месте вызова.
+        private static readonly HttpClient _httpClient = CreateHttpClient();
+
+        private static HttpClient CreateHttpClient()
+        {
+            var client = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
+            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
+            return client;
+        }
+
         private NotifyIcon? _notifyIcon;
         private bool _minimizeToTray = true;
         private string _settingsPath;
@@ -401,6 +413,8 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
 
     string tempZip = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Client_{version.Version}_{Guid.NewGuid()}.zip");
     string extractPath = Path.Combine(Path.GetTempPath(), $"extract_{Guid.NewGuid()}");
+    string? clientBackup = null;
+    bool copyCompleted = false;
 
     progressDownload.Value = 0;
     txtDownloadStatus.Text = "Скачивание: 0%";
@@ -409,11 +423,7 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
 
     try
     {
-        using var client = new HttpClient();
-        client.Timeout = System.Threading.Timeout.InfiniteTimeSpan;
-        client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
-
-        using var response = await client.GetAsync(version.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, token);
+        using var response = await _httpClient.GetAsync(version.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, token);
         response.EnsureSuccessStatusCode();
 
         var totalBytes = response.Content.Headers.ContentLength ?? -1L;
@@ -490,6 +500,11 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
 
         if (Directory.Exists(_clientPath))
         {
+            // Бэкап текущего клиента: если копирование новых файлов оборвётся,
+            // восстановим рабочую версию вместо того, чтобы оставить битую папку.
+            clientBackup = Path.Combine(Path.GetTempPath(), $"ven4_client_backup_{Guid.NewGuid():N}");
+            CopyDirectory(_clientPath, clientBackup);
+
             foreach (var file in Directory.GetFiles(_clientPath)) try { File.Delete(file); } catch { }
             foreach (var dir in Directory.GetDirectories(_clientPath)) try { Directory.Delete(dir, true); } catch { }
         }
@@ -506,6 +521,7 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
             if (++fileCount % 20 == 0)
                 txtDownloadStatus.Text = $"Копирование: {fileCount}/{allFiles.Length} файлов";
         }
+        copyCompleted = true;
 
         txtDownloadStatus.Text = "Очистка...";
         for (int attempt = 1; attempt <= 5; attempt++)
@@ -540,6 +556,7 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
         txtDownloadStatus.Text = "Отменено";
         progressDownload.Value = 0;
         AddLog("⏹ Загрузка отменена");
+        if (!copyCompleted) RestoreClientBackup(clientBackup);
         try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { }
         try { if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true); } catch { }
     }
@@ -547,17 +564,51 @@ private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationT
     {
         txtDownloadStatus.Text = "Ошибка";
         AddLog($"❌ Ошибка скачивания: {ex.Message}");
+        if (!copyCompleted) RestoreClientBackup(clientBackup);
         try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { }
         try { if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true); } catch { }
         System.Windows.MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
     }
     finally
     {
+        try { if (clientBackup != null && Directory.Exists(clientBackup)) Directory.Delete(clientBackup, true); } catch { }
         btnCancelDownload.Visibility = Visibility.Collapsed;
         btnCancelDownload.IsEnabled = true;
         btnLaunchApp.IsEnabled = true;
         _downloadCts?.Dispose();
         _downloadCts = null;
+    }
+}
+
+private static void CopyDirectory(string sourceDir, string destDir)
+{
+    Directory.CreateDirectory(destDir);
+    foreach (var file in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+    {
+        string relativePath = file.Substring(sourceDir.Length + 1);
+        string target = Path.Combine(destDir, relativePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+        File.Copy(file, target, true);
+    }
+}
+
+private void RestoreClientBackup(string? clientBackup)
+{
+    if (clientBackup == null || !Directory.Exists(clientBackup)) return;
+    try
+    {
+        AddLog("↩️ Восстановление предыдущей версии клиента...");
+        if (Directory.Exists(_clientPath))
+        {
+            foreach (var file in Directory.GetFiles(_clientPath)) try { File.Delete(file); } catch { }
+            foreach (var dir in Directory.GetDirectories(_clientPath)) try { Directory.Delete(dir, true); } catch { }
+        }
+        CopyDirectory(clientBackup, _clientPath);
+        AddLog("✅ Предыдущая версия клиента восстановлена");
+    }
+    catch (Exception rex)
+    {
+        AddLog($"⚠️ Не удалось восстановить предыдущую версию: {rex.Message}");
     }
 }
         
@@ -706,7 +757,7 @@ private async Task CheckComponentsAutoAsync()
         AddLog($"   ⚠️ Мало свободного места: ≈{freeGB} ГБ (рекомендуется минимум 2 ГБ)");
 
     AddLog("🔍 Обновления лаунчера...");
-    var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.3.1";
+    var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "3.3.2";
     using var gitHubServiceCheck = new GitHubService();
     var updateInfo = await gitHubServiceCheck.CheckLauncherUpdate(currentVersion);
     if (updateInfo?.HasUpdate == true)
@@ -922,9 +973,10 @@ private async Task InstallWingetAsync()
 {
     AddLog("📦 Получение информации о winget с GitHub...");
 
-    string tempMsix = Path.Combine(Path.GetTempPath(), "winget_setup.msixbundle");
-    string tempVcLibs = Path.Combine(Path.GetTempPath(), "VCLibs.appx");
-    string tempUiXaml = Path.Combine(Path.GetTempPath(), "UIXaml.appx");
+    string uniq = Guid.NewGuid().ToString("N");
+    string tempMsix = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_winget_setup.msixbundle");
+    string tempVcLibs = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_VCLibs.appx");
+    string tempUiXaml = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_UIXaml.appx");
 
     Dispatcher.Invoke(() =>
     {
@@ -936,12 +988,11 @@ private async Task InstallWingetAsync()
 
     try
     {
-        using var http = new HttpClient();
-        http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
-        http.Timeout = TimeSpan.FromMinutes(10);
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
+        var ct = timeoutCts.Token;
 
         // Получаем URL последнего релиза winget
-        var json = await http.GetStringAsync("https://api.github.com/repos/microsoft/winget-cli/releases/latest");
+        var json = await _httpClient.GetStringAsync("https://api.github.com/repos/microsoft/winget-cli/releases/latest", ct);
         var release = Newtonsoft.Json.Linq.JObject.Parse(json);
 
         string? msixUrl = release["assets"]?
@@ -959,19 +1010,19 @@ private async Task InstallWingetAsync()
         AddLog("⬇️ Скачивание зависимостей...");
         Dispatcher.Invoke(() => txtDownloadStatus.Text = "Скачивание зависимостей...");
 
-        var vcLibsTask = DownloadFileAsync(http,
+        var vcLibsTask = DownloadFileAsync(_httpClient,
             "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx",
-            tempVcLibs);
-        var uiXamlTask = DownloadFileAsync(http,
+            tempVcLibs, ct);
+        var uiXamlTask = DownloadFileAsync(_httpClient,
             "https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx",
-            tempUiXaml);
+            tempUiXaml, ct);
 
         await Task.WhenAll(vcLibsTask, uiXamlTask);
 
         // Скачиваем основной пакет winget с прогрессом
         AddLog($"⬇️ Скачивание winget ({msixUrl.Split('/').Last()})...");
 
-        using var resp = await http.GetAsync(msixUrl, HttpCompletionOption.ResponseHeadersRead);
+        using var resp = await _httpClient.GetAsync(msixUrl, HttpCompletionOption.ResponseHeadersRead, ct);
         resp.EnsureSuccessStatusCode();
 
         var total = resp.Content.Headers.ContentLength ?? -1L;
@@ -1077,12 +1128,12 @@ private async Task InstallWingetAsync()
     }
 }
 
-private static async Task DownloadFileAsync(HttpClient http, string url, string dest)
+private static async Task DownloadFileAsync(HttpClient http, string url, string dest, CancellationToken ct = default)
 {
     try
     {
-        var data = await http.GetByteArrayAsync(url);
-        await File.WriteAllBytesAsync(dest, data);
+        var data = await http.GetByteArrayAsync(url, ct);
+        await File.WriteAllBytesAsync(dest, data, ct);
     }
     catch { }
 }
@@ -1204,7 +1255,7 @@ private bool IsClientRunning()
             var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
             var launcherVersion = ver != null
                 ? $"{ver.Major}.{ver.Minor}.{ver.Build}"
-                : "2.3.2";
+                : "3.3.2";
 
             _updateService = new UpdateBackgroundService(launcherVersion, () => _clientPath)
             {
@@ -1372,7 +1423,7 @@ private bool IsClientRunning()
                 btnCheckUpdates.IsEnabled = false;
                 
                 using var gitHubService = new GitHubService();
-                var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.3.1";
+                var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "3.3.2";
                 var updateInfo = await gitHubService.CheckLauncherUpdate(currentVersion);
                 
                 if (updateInfo != null && updateInfo.HasUpdate)
@@ -1742,14 +1793,13 @@ private bool IsClientRunning()
 
         private async Task InstallWebView2Async()
         {
-            string tempFile = Path.Combine(Path.GetTempPath(), "MicrosoftEdgeWebview2Setup.exe");
+            string tempFile = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_MicrosoftEdgeWebview2Setup.exe");
             AddLog("⬇️ Скачивание WebView2 Runtime...");
             Dispatcher.Invoke(() => { progressDownload.Value = 0; txtDownloadStatus.Text = "WebView2: скачивание..."; btnLaunchApp.IsEnabled = false; });
             try
             {
-                using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-                http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
-                var data = await http.GetByteArrayAsync("https://go.microsoft.com/fwlink/p/?LinkId=2124703");
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+                var data = await _httpClient.GetByteArrayAsync("https://go.microsoft.com/fwlink/p/?LinkId=2124703", timeoutCts.Token);
                 await File.WriteAllBytesAsync(tempFile, data);
 
                 AddLog("📦 Установка WebView2 Runtime...");
@@ -1809,16 +1859,15 @@ private bool IsClientRunning()
 
         private async Task InstallVcRedistAsync()
         {
-            string tempFile = Path.Combine(Path.GetTempPath(), "vc_redist.x64.exe");
+            string tempFile = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_vc_redist.x64.exe");
             AddLog("⬇️ Скачивание Visual C++ Redistributable 2015-2022 x64...");
             Dispatcher.Invoke(() => { progressDownload.Value = 0; txtDownloadStatus.Text = "VC++: скачивание..."; btnLaunchApp.IsEnabled = false; });
             try
             {
-                using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-                http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 
-                using var resp = await http.GetAsync("https://aka.ms/vs/17/release/vc_redist.x64.exe",
-                    HttpCompletionOption.ResponseHeadersRead);
+                using var resp = await _httpClient.GetAsync("https://aka.ms/vs/17/release/vc_redist.x64.exe",
+                    HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
                 resp.EnsureSuccessStatusCode();
 
                 var total = resp.Content.Headers.ContentLength ?? -1L;
