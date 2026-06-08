@@ -376,22 +376,20 @@ namespace Ven4Tools.Views.Tabs
             Log($"⬆ Обновление {app.Name}...");
             try
             {
-                // --locale en-US делает вывод английским; русские варианты — на случай
-                // если локаль не применилась (старый winget).
+                // --locale en-US делает вывод английским. RunStreamingAsync: живой прогресс
+                // в лог + 45-минутный таймаут (RunAsync с 120с убивал winget на больших пакетах).
                 string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements --locale en-US";
-                string output = await WingetRunner.RunAsync(args);
-                if (output.Contains("Successfully installed") || output.Contains("No applicable update") ||
-                    output.Contains("No installed package found matching") ||
-                    output.Contains("Успешно установлено") || output.Contains("Обновления не найдены") ||
-                    output.Contains("Не найдено применимых обновлений") || output.Contains("Нет применимых обновлений"))
+                int code = await WingetRunner.RunStreamingAsync(args, line => Log($"  {line}"),
+                    TimeSpan.FromMinutes(15));
+                if (code == 0 || code == 3010)
                 {
                     app.Available = "";
                     Dispatcher.Invoke(() => { ApplyFilter(); UpdateStats(); });
                     Log($"✅ {app.Name} обновлён");
                 }
-                else
+                else if (code != -1)
                 {
-                    Log($"⚠ {app.Name}: {output.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l)) ?? "нет вывода"}");
+                    Log($"⚠ {app.Name}: winget завершился с кодом {code}");
                 }
             }
             catch (Exception ex) { Log($"❌ {app.Name}: {ex.Message}"); }
