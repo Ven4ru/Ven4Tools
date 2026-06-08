@@ -88,7 +88,7 @@ namespace Ven4Tools.Views
 
                 if (result.Success)
                 {
-                    UserSession.Login(result.UserId, result.Name, result.Email, result.IsAdmin);
+                    UserSession.Login(result.UserId, result.Name, result.Email, result.IsAdmin, result.Token);
                     DialogResult = true;
                     Close();
                 }
