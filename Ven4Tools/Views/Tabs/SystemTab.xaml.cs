@@ -23,8 +23,6 @@ namespace Ven4Tools.Views.Tabs
         private const string TurboSetting  = "be337238-0d82-4146-a960-4f3749d470c7";
         
 
-        public event Action<string>? LogMessage;
-
         private bool _initialized = false;
         private CancellationTokenSource? _cacheCts;
         private List<CacheAppItem> _cacheAppItems = new();
@@ -736,10 +734,7 @@ namespace Ven4Tools.Views.Tabs
 
         // ─────────────────────────────────────────────────────────────────────────
 
-        private void AddLog(string message)
-        {
-            LogMessage?.Invoke(message);
-        }
+        private static void AddLog(string message) => AppLogger.Write(message);
     }
 }
 

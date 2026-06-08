@@ -15,8 +15,6 @@ namespace Ven4Tools.Views.Tabs
         private bool _initialized = false;
         private Action? _sessionChangedHandler;
 
-        public event Action<string>? LogMessage;
-
         public NetworkTab()
         {
             InitializeComponent();
@@ -41,17 +39,7 @@ namespace Ven4Tools.Views.Tabs
             pnlZapretAuth.Visibility = UserSession.IsLoggedIn ? Visibility.Collapsed : Visibility.Visible;
         }
         
-        private void AddLog(string message)
-        {
-            // Пишем в UI лог
-            Dispatcher.Invoke(() =>
-            {
-                txtInstallLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
-                txtInstallLog.ScrollToEnd();
-            });
-            // Отправляем в главный лог (статус-бар)
-            LogMessage?.Invoke(message);
-        }
+        private static void AddLog(string message) => AppLogger.Write(message);
         
         private void CheckZapretStatus()
         {
