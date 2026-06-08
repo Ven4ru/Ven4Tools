@@ -263,7 +263,9 @@ namespace Ven4Tools.Services
                                 appProgress.Percentage = 20;
                                 progress.Report(appProgress);
 
-                                string tempFile = Path.Combine(Path.GetTempPath(), $"{app.Id}_{Guid.NewGuid()}.exe");
+                                string urlExt = Path.GetExtension(new Uri(url).LocalPath).ToLowerInvariant();
+                                if (string.IsNullOrEmpty(urlExt) || (urlExt != ".exe" && urlExt != ".msi")) urlExt = ".exe";
+                                string tempFile = Path.Combine(Path.GetTempPath(), $"{app.Id}_{Guid.NewGuid()}{urlExt}");
                                 try
                                 {
                                     using (var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token))
@@ -317,15 +319,27 @@ namespace Ven4Tools.Services
                                     appProgress.Percentage = 60;
                                     progress.Report(appProgress);
 
-                                    string silentArgs = app.SilentArgs;
-                                    if (string.IsNullOrWhiteSpace(silentArgs) && ProfileService.Current.SilentInstall)
-                                        silentArgs = "/S";
-                                    // Best-effort путь установки для прямого EXE (NSIS /D=…)
-                                    silentArgs += BuildInstallerLocationArg(false, installDrive, app.DisplayName);
+                                    bool tempIsMsi = tempFile.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
+                                    string silentArgs;
+                                    if (tempIsMsi)
+                                    {
+                                        // MSI запускаем через msiexec в тихом режиме
+                                        silentArgs = $"/i \"{tempFile}\" /quiet /norestart"
+                                                     + BuildInstallerLocationArg(true, installDrive, app.DisplayName);
+                                    }
+                                    else
+                                    {
+                                        silentArgs = app.SilentArgs;
+                                        if (string.IsNullOrWhiteSpace(silentArgs) && ProfileService.Current.SilentInstall)
+                                            silentArgs = "/S";
+                                        // Best-effort путь установки для прямого EXE
+                                        silentArgs += BuildInstallerLocationArg(false, installDrive, app.DisplayName);
+                                    }
 
                                     var psi = new ProcessStartInfo
                                     {
-                                        FileName = tempFile, Arguments = silentArgs,
+                                        FileName = tempIsMsi ? "msiexec" : tempFile,
+                                        Arguments = silentArgs,
                                         UseShellExecute = true, Verb = "runas",
                                         WindowStyle = ProcessWindowStyle.Hidden
                                     };
@@ -430,10 +444,9 @@ namespace Ven4Tools.Services
         private static string BuildInstallerLocationArg(bool isMsi, string? installDrive, string appName)
         {
             if (!IsNonSystemDrive(installDrive)) return "";
+            if (!isMsi) return ""; // формат EXE-установщика неизвестен — не вмешиваемся
             string target = TargetFolderFor(installDrive!, appName);
-            // MSI: неизвестные свойства просто игнорируются — безопасно.
-            // EXE (NSIS): /D=path должен идти последним и без кавычек.
-            return isMsi ? $" INSTALLDIR=\"{target}\"" : $" /D={target}";
+            return $" INSTALLDIR=\"{target}\"";
         }
 
         private async Task<bool> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null)
@@ -445,10 +458,21 @@ namespace Ven4Tools.Services
             // «{диск}:\Program Files»; иначе используем DefaultInstallFolder из профиля.
             string location;
             if (IsNonSystemDrive(installDrive))
-                location = $" --location \"{ProgramFilesOn(installDrive!)}\"";
+            {
+                string driveUpper = installDrive!.TrimEnd('\\', '/').ToUpperInvariant();
+                bool folderOnSameDrive = !string.IsNullOrWhiteSpace(profile.DefaultInstallFolder) &&
+                    profile.DefaultInstallFolder.TrimEnd('\\', '/').ToUpperInvariant().StartsWith(driveUpper);
+                location = folderOnSameDrive
+                    ? $" --location \"{profile.DefaultInstallFolder}\""
+                    : $" --location \"{ProgramFilesOn(installDrive!)}\"";
+            }
             else if (!string.IsNullOrWhiteSpace(profile.DefaultInstallFolder))
                 location = $" --location \"{profile.DefaultInstallFolder}\"";
             else
+                location = "";
+
+            // msstore/MSIX игнорируют --location или завершаются с ошибкой
+            if (source.Equals("msstore", StringComparison.OrdinalIgnoreCase))
                 location = "";
 
             string versionArg = !string.IsNullOrEmpty(version) ? $" --version \"{version}\"" : "";
