@@ -17,8 +17,8 @@
     <!-- Application settings -->
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>Ven4Tools</AssemblyName>
-    <Version>3.3.7</Version>
-    <AssemblyVersion>3.3.6</AssemblyVersion>
+    <Version>3.4.0</Version>
+    <AssemblyVersion>3.4.0</AssemblyVersion>
     
     <!-- Явная точка входа -->
     <StartupObject>Ven4Tools.App</StartupObject>

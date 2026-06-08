@@ -15,6 +15,7 @@ namespace Ven4Tools.Services
         public string Name { get; set; } = "";
         public string Email { get; set; } = "";
         public bool IsAdmin { get; set; }
+        public string Token { get; set; } = "";
     }
 
     public class AuthService
@@ -54,7 +55,8 @@ namespace Ven4Tools.Services
                     UserId = data["user_id"]?.Value<int>() ?? 0,
                     Name = data["name"]?.ToString() ?? "",
                     Email = data["email"]?.ToString() ?? "",
-                    IsAdmin = data["is_admin"]?.Value<bool>() ?? false
+                    IsAdmin = data["is_admin"]?.Value<bool>() ?? false,
+                    Token = data["token"]?.ToString() ?? ""
                 };
             }
             catch (TaskCanceledException)
