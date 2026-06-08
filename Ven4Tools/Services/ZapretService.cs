@@ -336,14 +336,18 @@ await CopyDirectoryWithRetryAsync(rootFolder, _basePath);
             {
                 var psi = new ProcessStartInfo("sc.exe", $"query {name}")
                 {
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
+                    UseShellExecute        = false,
+                    CreateNoWindow         = true,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true
+                    RedirectStandardError  = true
                 };
                 using var p = Process.Start(psi);
                 if (p == null) return false;
+                var outTask = p.StandardOutput.ReadToEndAsync();
+                var errTask = Task.Run(() => p.StandardError.ReadToEnd());
                 await p.WaitForExitAsync();
+                await outTask;
+                await errTask;
                 return p.ExitCode == 0; // 0 = служба существует, 1060 = не существует
             }
             catch { return false; }
