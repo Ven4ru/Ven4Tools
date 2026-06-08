@@ -9,7 +9,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>Ven4Tools.Launcher</AssemblyName>
-    <Version>3.3.6</Version>
+    <Version>3.3.7</Version>
     <AssemblyVersion>3.3.6</AssemblyVersion>
     <FileVersion>3.3.6</FileVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
