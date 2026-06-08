@@ -79,6 +79,7 @@ namespace Ven4Tools.Views.Tabs
 
             InitCategoryPanels();
             LoadAvailableDisks();
+            InitPresets();
 
             _profileChangedHandler = () => Dispatcher.Invoke(ApplyProfileFilters);
 

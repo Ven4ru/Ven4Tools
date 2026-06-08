@@ -30,9 +30,12 @@ namespace Ven4Tools.Views.Tabs
             btnInstall.Content = count > 0
                 ? $"🚀 Установить выбранные ({count})"
                 : "🚀 Установить выбранные";
-            // Во время установки доступностью кнопки управляет процесс установки
+            // Во время установки доступностью кнопок управляет процесс установки
             if (!_isInstalling)
-                btnInstall.IsEnabled = count > 0;
+            {
+                btnInstall.IsEnabled    = count > 0;
+                btnSavePreset.IsEnabled = count > 0;
+            }
         }
 
         private async void InstallSelected_Click(object sender, RoutedEventArgs e)

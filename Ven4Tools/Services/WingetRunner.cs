@@ -66,25 +66,27 @@ namespace Ven4Tools.Services
 
             string? raw;
             string last = "";
-            while ((raw = await p.StandardOutput.ReadLineAsync()) != null)
+            try
             {
-                string clean = StripAnsi(raw).Trim();
-                if (string.IsNullOrWhiteSpace(clean)) continue;
-                // Пропускаем строки прогресс-бара (только псевдографика/проценты/размеры)
-                if (clean.All(c => c is '-' or '─' or '█' or '▒' or '░' or '\\' or '|'
-                                     or '/' or '%' or ' ' or '.' or 'K' or 'M' or 'B' or 'G'
-                                     || (c >= '0' && c <= '9')))
-                    continue;
-                if (clean == last) continue;
-                last = clean;
-                onLine(clean);
+                while ((raw = await p.StandardOutput.ReadLineAsync(cts.Token)) != null)
+                {
+                    string clean = StripAnsi(raw).Trim();
+                    if (string.IsNullOrWhiteSpace(clean)) continue;
+                    // Пропускаем строки прогресс-бара (только псевдографика/проценты/размеры)
+                    if (clean.All(c => c is '-' or '─' or '█' or '▒' or '░' or '\\' or '|'
+                                         or '/' or '%' or ' ' or '.' or 'K' or 'M' or 'B' or 'G'
+                                         || (c >= '0' && c <= '9')))
+                        continue;
+                    if (clean == last) continue;
+                    last = clean;
+                    onLine(clean);
+                }
+                await p.WaitForExitAsync(cts.Token);
             }
-
-            try { await p.WaitForExitAsync(cts.Token); }
             catch (OperationCanceledException)
             {
-                try { p.Kill(); } catch { }
-                onLine("⚠ winget завис — принудительное завершение после 45 минут");
+                try { p.Kill(true); } catch { }
+                onLine("⚠ winget завис — принудительное завершение");
                 return -1;
             }
             string stderrOutput = await stderrTask;

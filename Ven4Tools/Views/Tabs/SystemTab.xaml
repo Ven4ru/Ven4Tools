@@ -328,6 +328,20 @@
                 </StackPanel>
             </GroupBox>
 
+            <!-- Поведение приложения -->
+            <GroupBox Header="🖥️ Поведение приложения" Margin="0,0,0,15">
+                <StackPanel Margin="10">
+                    <CheckBox x:Name="chkMinimizeToTray"
+                              Content="Сворачивать в трей при закрытии"
+                              Foreground="{DynamicResource TextPrimary}"
+                              Margin="0,0,0,4"
+                              Click="ChkMinimizeToTray_Click"/>
+                    <TextBlock Text="Окно скрывается в трей вместо закрытия. Двойной клик по иконке для открытия."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11"/>
+                </StackPanel>
+            </GroupBox>
+
             <!-- Turbo Boost -->
             <GroupBox Header="⚡ Turbo Boost (Intel)" Margin="0,0,0,15">
                 <StackPanel>
