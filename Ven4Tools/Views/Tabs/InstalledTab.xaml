@@ -124,6 +124,16 @@
                                 Foreground="{DynamicResource TextPrimary}"
                                 FontSize="12"
                                 Click="BtnRefresh_Click"/>
+                        <!-- Обновить все приложения через winget -->
+                        <Button x:Name="btnUpgradeAll"
+                                Content="⬆ Обновить всё"
+                                Margin="4,0,0,0" Height="34" Padding="14,0"
+                                Background="{DynamicResource AccentColor}"
+                                Foreground="White"
+                                FontWeight="Bold"
+                                FontSize="12"
+                                ToolTip="Обновить все приложения (winget upgrade --all)"
+                                Click="BtnUpgradeAll_Click"/>
                         <Button x:Name="btnExport" Content="📤 Экспорт"
                                 Margin="4,0,0,0" Height="34" Padding="10,0"
                                 Background="{DynamicResource CardBackground}"
@@ -156,12 +166,27 @@
                     <RadioButton x:Name="rdbAll" Style="{StaticResource FilterTabStyle}"
                                  Content="Все" IsChecked="True" Margin="0,0,6,0"
                                  Checked="FilterChanged"/>
-                    <RadioButton x:Name="rdbUpdates" Style="{StaticResource FilterTabStyle}"
-                                 Content="⚡ Обновить" Margin="0,0,6,0"
-                                 Checked="FilterChanged"/>
                     <RadioButton x:Name="rdbUnknown" Style="{StaticResource FilterTabStyle}"
                                  Content="❓ Неизвестные"
                                  Checked="FilterChanged"/>
+
+                    <!-- Разделитель -->
+                    <Border Width="1" Margin="10,4" Background="{DynamicResource BorderBrush}"/>
+
+                    <!-- Фильтр: только с обновлениями -->
+                    <CheckBox x:Name="chkOnlyUpdates" Content="Только с обновлениями"
+                              VerticalAlignment="Center" Margin="0,0,8,0"
+                              Foreground="{DynamicResource TextSecondary}" FontSize="12"
+                              Checked="FilterChanged" Unchecked="FilterChanged"/>
+
+                    <!-- Сортировка -->
+                    <ComboBox x:Name="cmbSort" Width="190" Height="28" VerticalAlignment="Center"
+                              FontSize="12"
+                              SelectionChanged="CmbSort_SelectionChanged">
+                        <ComboBoxItem Content="Сортировка: по имени" IsSelected="True"/>
+                        <ComboBoxItem Content="Сортировка: по версии"/>
+                        <ComboBoxItem Content="Сортировка: сначала с обновлениями"/>
+                    </ComboBox>
                 </StackPanel>
 
                 <!-- Статистика — занимает оставшееся место, обрезается при нехватке -->
