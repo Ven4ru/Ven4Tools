@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Management;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -84,7 +83,7 @@ namespace Ven4Tools.Views.Tabs
 
         public void ShowUpdatesFilter()
         {
-            rdbUpdates.IsChecked = true;
+            chkOnlyUpdates.IsChecked = true;
             ApplyFilter();
         }
 
@@ -97,7 +96,7 @@ namespace Ven4Tools.Views.Tabs
 
             try
             {
-                _allApps = await Task.Run(() => RunWingetList());
+                _allApps = await RunWingetListAsync();
                 ApplyFilter();
                 ShowState(_allApps.Count == 0 ? "empty" : "list");
                 UpdateStats();
@@ -108,9 +107,9 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private static List<InstalledApp> RunWingetList()
+        private static async Task<List<InstalledApp>> RunWingetListAsync()
         {
-            var output = RunWinget("list --accept-source-agreements");
+            var output = await RunWingetAsync("list --accept-source-agreements");
             return ParseWingetList(output);
         }
 
@@ -208,15 +207,25 @@ namespace Ven4Tools.Views.Tabs
 
             IEnumerable<InstalledApp> filtered = _allApps;
 
-            if (rdbUpdates.IsChecked == true)
-                filtered = filtered.Where(a => a.HasUpdate);
-            else if (rdbUnknown.IsChecked == true)
+            if (rdbUnknown.IsChecked == true)
                 filtered = filtered.Where(a => a.IsUnknownSource);
+
+            if (chkOnlyUpdates?.IsChecked == true)
+                filtered = filtered.Where(a => a.HasUpdate);
 
             if (!string.IsNullOrEmpty(search))
                 filtered = filtered.Where(a =>
                     a.Name.ToLowerInvariant().Contains(search) ||
                     a.WingetId.ToLowerInvariant().Contains(search));
+
+            // Сортировка отображаемого списка
+            filtered = (cmbSort?.SelectedIndex ?? 0) switch
+            {
+                1 => filtered.OrderBy(a => a.Version, StringComparer.OrdinalIgnoreCase),          // по версии
+                2 => filtered.OrderByDescending(a => a.HasUpdate)                                 // сначала с обновлениями
+                             .ThenBy(a => a.Name, StringComparer.OrdinalIgnoreCase),
+                _ => filtered.OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase)              // по имени
+            };
 
             lstApps.ItemsSource = filtered.ToList();
             UpdateStats();
@@ -237,11 +246,89 @@ namespace Ven4Tools.Views.Tabs
 
         private void FilterChanged(object sender, RoutedEventArgs e) => ApplyFilter();
 
+        private void CmbSort_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyFilter();
+
         private async void BtnRefresh_Click(object sender, RoutedEventArgs e)
         {
             btnRefresh.IsEnabled = false;
             await LoadAppsAsync();
             btnRefresh.IsEnabled = true;
+        }
+
+        // ── Обновить всё (winget upgrade --all) ─────────────────────────────────
+
+        private async void BtnUpgradeAll_Click(object sender, RoutedEventArgs e)
+        {
+            var res = MessageBox.Show(
+                "Обновить все приложения через winget?\n\nЭто может занять продолжительное время.",
+                "Обновить всё", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (res != MessageBoxResult.Yes) return;
+
+            btnUpgradeAll.IsEnabled = false;
+            btnRefresh.IsEnabled = false;
+            Log("⬆ Запуск обновления всех приложений (winget upgrade --all)...");
+            try
+            {
+                int code = await RunWingetStreamingAsync(
+                    "upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements",
+                    msg => Log(msg));
+                if (code == 0)
+                    Log("✅ Обновление всех приложений завершено");
+                else if (code == 3010)
+                    Log("✅ Обновление завершено. Для применения некоторых обновлений требуется перезагрузка.");
+                else
+                    Log($"⚠ winget завершился с кодом {code}");
+            }
+            catch (Exception ex)
+            {
+                Log($"❌ Ошибка обновления: {ex.Message}");
+            }
+            finally
+            {
+                btnUpgradeAll.IsEnabled = true;
+                btnRefresh.IsEnabled = true;
+                // Обновляем список установленных приложений после завершения
+                await LoadAppsAsync();
+            }
+        }
+
+        // Запуск winget с построчным выводом прогресса в лог
+        private async Task<int> RunWingetStreamingAsync(string args, Action<string> onLine)
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName               = "winget",
+                Arguments              = args,
+                UseShellExecute        = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError  = true,
+                CreateNoWindow         = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8
+            };
+            using var p = Process.Start(psi) ?? throw new InvalidOperationException("winget не найден");
+            // Читаем stderr параллельно, чтобы не было дедлока при переполнении буфера
+            var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
+
+            string? raw;
+            string last = "";
+            while ((raw = await p.StandardOutput.ReadLineAsync()) != null)
+            {
+                string clean = StripAnsi(raw).Trim();
+                if (string.IsNullOrWhiteSpace(clean)) continue;
+                // Пропускаем строки прогресс-бара (только псевдографика/проценты/размеры)
+                if (clean.All(c => c is '-' or '─' or '█' or '▒' or '░' or '\\' or '|'
+                                     or '/' or '%' or ' ' or '.' or 'K' or 'M' or 'B' or 'G'))
+                    continue;
+                if (clean == last) continue; // не дублируем одинаковые строки
+                last = clean;
+                onLine(clean);
+            }
+
+            await p.WaitForExitAsync();
+            string stderrOutput = await stderrTask;
+            if (p.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderrOutput))
+                onLine($"[stderr] {stderrOutput.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l)) ?? ""}");
+            return p.ExitCode;
         }
 
         private void ChkSelectAll_Click(object sender, RoutedEventArgs e)
@@ -319,7 +406,7 @@ namespace Ven4Tools.Views.Tabs
                 if (rpAnswer == MessageBoxResult.Yes)
                 {
                     Log("🛡️ Создаю точку восстановления...");
-                    bool rpOk = await TryCreateRestorePointAsync("Ven4Tools — перед массовым обновлением");
+                    bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед массовым обновлением");
                     Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
                 }
             }
@@ -341,7 +428,7 @@ namespace Ven4Tools.Views.Tabs
                 // --locale en-US делает вывод английским; русские варианты — на случай
                 // если локаль не применилась (старый winget).
                 string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements --locale en-US";
-                string output = await Task.Run(() => RunWinget(args));
+                string output = await RunWingetAsync(args);
                 if (output.Contains("Successfully installed") || output.Contains("No applicable update") ||
                     output.Contains("No installed package found matching") ||
                     output.Contains("Успешно установлено") || output.Contains("Обновления не найдены") ||
@@ -366,7 +453,7 @@ namespace Ven4Tools.Views.Tabs
             Log($"🗑 Удаление {app.Name}...");
             try
             {
-                bool ok = await Task.Run(() => TryUninstall(app));
+                bool ok = await TryUninstallAsync(app);
                 if (ok)
                 {
                     _allApps.Remove(app);
@@ -382,13 +469,13 @@ namespace Ven4Tools.Views.Tabs
             finally { app.IsProcessing = false; }
         }
 
-        private static bool TryUninstall(InstalledApp app)
+        private static async Task<bool> TryUninstallAsync(InstalledApp app)
         {
             // Попытка 1: winget uninstall по ID (работает для пакетов с непустым Source)
             if (!string.IsNullOrWhiteSpace(app.WingetId) && !app.WingetId.Contains('…'))
             {
                 string args = $"uninstall --id \"{app.WingetId}\" --silent --accept-source-agreements";
-                string output = RunWinget(args);
+                string output = await RunWingetAsync(args);
                 if (output.Contains("Successfully uninstalled") || output.Contains("Успешно удалено"))
                     return true;
             }
@@ -466,7 +553,7 @@ namespace Ven4Tools.Views.Tabs
             return success;
         }
 
-        private static string RunWinget(string args)
+        private static async Task<string> RunWingetAsync(string args)
         {
             var psi = new ProcessStartInfo
             {
@@ -479,10 +566,19 @@ namespace Ven4Tools.Views.Tabs
                 StandardOutputEncoding = System.Text.Encoding.UTF8
             };
             using var p = Process.Start(psi) ?? throw new InvalidOperationException("winget не найден");
-            // Читаем stderr параллельно — иначе дедлок если буфер stderr переполнится
+            using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(120));
+            var outputTask = p.StandardOutput.ReadToEndAsync();
             var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
-            string output = p.StandardOutput.ReadToEnd();
-            p.WaitForExit(120_000);
+            try
+            {
+                await p.WaitForExitAsync(cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                try { p.Kill(); } catch { }
+            }
+            string output = await outputTask;
+            await stderrTask;
             return output;
         }
 
@@ -500,24 +596,6 @@ namespace Ven4Tools.Views.Tabs
 
         private void Log(string msg) => LogMessage?.Invoke(msg);
 
-        private static async Task<bool> TryCreateRestorePointAsync(string description)
-        {
-            try
-            {
-                await Task.Run(() =>
-                {
-                    using var mc = new ManagementClass(@"\\localhost\root\default", "SystemRestore", new ObjectGetOptions());
-                    var inParams = mc.GetMethodParameters("CreateRestorePoint");
-                    inParams["Description"]      = description;
-                    inParams["RestorePointType"] = 12;
-                    inParams["EventType"]        = 100;
-                    mc.InvokeMethod("CreateRestorePoint", inParams, null);
-                });
-                return true;
-            }
-            catch { return false; }
-        }
-
         // ── Групповое удаление ────────────────────────────────────────────────
 
         private async void BtnUninstallSelected_Click(object sender, RoutedEventArgs e)
@@ -534,11 +612,23 @@ namespace Ven4Tools.Views.Tabs
                 "Подтверждение удаления", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (res != MessageBoxResult.Yes) return;
 
-            btnUninstallSelected.IsEnabled = false;
+            if (selected.Count >= 2)
+            {
+                var rpAnswer = MessageBox.Show(
+                    $"Будет удалено {selected.Count} приложений.\n\nСоздать точку восстановления Windows перед удалением?",
+                    "Точка восстановления",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question);
+                if (rpAnswer == MessageBoxResult.Cancel) return;
+                if (rpAnswer == MessageBoxResult.Yes)
+                {
+                    Log("🛡️ Создаю точку восстановления...");
+                    bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед групповым удалением");
+                    Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
+                }
+            }
 
-            Log("🔒 Создание точки восстановления системы...");
-            bool rpOk = await TryCreateRestorePointAsync("Ven4Tools — перед групповым удалением");
-            Log(rpOk ? "✅ Точка восстановления создана" : "⚠ Точка восстановления не создана — продолжаем");
+            btnUninstallSelected.IsEnabled = false;
 
             foreach (var app in selected)
                 await UninstallAppAsync(app);
@@ -562,8 +652,7 @@ namespace Ven4Tools.Views.Tabs
             Log($"📤 Экспорт в {System.IO.Path.GetFileName(dlg.FileName)}...");
             try
             {
-                string output = await Task.Run(() =>
-                    RunWinget($"export -o \"{dlg.FileName}\" --accept-source-agreements"));
+                string output = await RunWingetAsync($"export -o \"{dlg.FileName}\" --accept-source-agreements");
                 bool ok = System.IO.File.Exists(dlg.FileName);
                 Log(ok ? $"✅ Экспортировано → {dlg.FileName}"
                        : $"⚠ winget: {output.Trim().Split('\n').LastOrDefault()}");
@@ -586,8 +675,7 @@ namespace Ven4Tools.Views.Tabs
             Log("⏳ Это может занять несколько минут...");
             try
             {
-                string output = await Task.Run(() =>
-                    RunWinget($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements"));
+                string output = await RunWingetAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements");
                 bool ok = output.Contains("успешно") || output.Contains("successfully") || output.Contains("All packages");
                 Log(ok ? "✅ Импорт завершён"
                        : $"⚠ {output.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l))}");
