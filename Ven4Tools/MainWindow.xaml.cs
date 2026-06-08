@@ -47,7 +47,6 @@ namespace Ven4Tools
             NavigateToCatalog(null, null);
 
             UserSession.Changed += UpdateUserUI;
-            Closing += (_, _) => UserSession.Changed -= UpdateUserUI;
             Closing += (_, args) =>
             {
                 if (ChannelService.IsPreRelease && !_feedbackShown)
@@ -65,7 +64,6 @@ namespace Ven4Tools
             Loaded += (s, e) =>
             {
                 InitTrayIcon();
-                chkMinimizeToTray.IsChecked = ProfileService.Current.MinimizeToTray;
                 RefreshPinsStrip();
             };
             Loaded += (s, e) =>
@@ -170,14 +168,10 @@ namespace Ven4Tools
                 string reason = !ConnectivityMonitor.IsOnline
                     ? "🔌 Нет интернета — часть вкладок скрыта"
                     : "🔌 Офлайн режим — часть вкладок скрыта";
-                txtStatusBar.Text = reason;
+                AppLogger.Write(reason);
 
                 if (_currentTab is "office" or "activation" or "network")
                     NavigateToCatalog(null, null);
-            }
-            else
-            {
-                txtStatusBar.Text = "✅ Готово";
             }
 
             // If auth-gated tab is active but user logged out — go to catalog
@@ -248,12 +242,6 @@ namespace Ven4Tools
             Application.Current.Shutdown();
         }
 
-        private void ChkMinimizeToTray_Click(object sender, RoutedEventArgs e)
-        {
-            ProfileService.Current.MinimizeToTray = chkMinimizeToTray.IsChecked == true;
-            ProfileService.Save();
-        }
-
         private void Window_Closing_Extended(object sender, System.ComponentModel.CancelEventArgs e)
         {
             // Предупреждение при закрытии во время активной установки.
@@ -284,6 +272,7 @@ namespace Ven4Tools
             }
             else
             {
+                UserSession.Changed -= UpdateUserUI;
                 _trayIcon?.Dispose();
                 ConnectivityMonitor.Stop();
             }
@@ -514,8 +503,8 @@ namespace Ven4Tools
             {
                 var entry = LogEntry.Parse(message);
                 _logEntries.Add(entry);
+                while (_logEntries.Count > 500) _logEntries.RemoveAt(0);
                 lstGlobalLog.ScrollIntoView(entry);
-                txtStatusBar.Text = message.Length > 50 ? message.Substring(0, 47) + "..." : message;
             });
         }
 
@@ -538,32 +527,37 @@ namespace Ven4Tools
             {
                 if (UserSession.IsLoggedIn)
                 {
-                    txtUserName.Text = UserSession.Name;
-                    txtUserEmail.Text = UserSession.Email;
-                    pnlUserLoggedIn.Visibility = Visibility.Visible;
-                    btnLogin.Visibility = Visibility.Collapsed;
-                    txtStatusBar.Text = $"👋 Привет, {UserSession.Name}!";
+                    btnUserNav.Content = UserSession.Name;
+                    AppLogger.Write($"👋 Привет, {UserSession.Name}!");
                     ShowCategorySelectionIfNeeded();
                 }
                 else
                 {
-                    pnlUserLoggedIn.Visibility = Visibility.Collapsed;
-                    btnLogin.Visibility = Visibility.Visible;
+                    btnUserNav.Content = "Войти в аккаунт";
                 }
                 UpdateTabVisibility();
             });
         }
 
-        private void BtnLogin_Click(object sender, RoutedEventArgs e)
+        private void BtnUserNav_Click(object sender, RoutedEventArgs e)
         {
-            var win = new LoginWindow { Owner = this };
-            win.ShowDialog();
+            if (UserSession.IsLoggedIn)
+            {
+                var win = new ProfileWindow { Owner = this };
+                win.ShowDialog();
+                UpdateMascot(_currentTab);
+            }
+            else
+            {
+                var win = new LoginWindow { Owner = this };
+                win.ShowDialog();
+            }
         }
 
         private void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
             UserSession.Logout();
-            txtStatusBar.Text = "✅ Вы вышли из аккаунта";
+            AppLogger.Write("✅ Вы вышли из аккаунта");
         }
 
         private void BtnProfile_Click(object sender, RoutedEventArgs e)

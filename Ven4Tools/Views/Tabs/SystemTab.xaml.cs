@@ -44,6 +44,7 @@ namespace Ven4Tools.Views.Tabs
             Loaded += SystemTab_Loaded;
 
             chkAutoStart.Click += ToggleAutoStart;
+            chkMinimizeToTray.IsChecked = ProfileService.Current.MinimizeToTray;
             chkNotifications.Click += (_, _) => SaveSettings();
             chkUpdateNotifications.Click += (_, _) => SaveSettings();
             sliderCatalogTimeout.ValueChanged += (_, e) => { txtCatalogTimeout.Text = $"{(int)e.NewValue} сек"; SaveSettings(); };
@@ -166,6 +167,12 @@ namespace Ven4Tools.Views.Tabs
             }
         }
         
+        private void ChkMinimizeToTray_Click(object sender, RoutedEventArgs e)
+        {
+            ProfileService.Current.MinimizeToTray = chkMinimizeToTray.IsChecked == true;
+            ProfileService.Save();
+        }
+
         private void ToggleAutoStart(object sender, RoutedEventArgs e)
         {
             try
