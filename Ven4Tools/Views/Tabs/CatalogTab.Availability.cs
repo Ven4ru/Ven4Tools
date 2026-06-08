@@ -335,47 +335,6 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private async void BtnSuggestAlternatives_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var unavailable = new List<(string AppId, string DisplayName, string OriginalId, string OriginalUrl, bool IsUserAdded)>();
-                foreach (var kvp in availabilityStatus)
-                {
-                    if (kvp.Value == AvailabilityChecker.AvailabilityStatus.Unavailable)
-                    {
-                        var app = appManager.GetAppById(kvp.Key);
-                        if (app != null)
-                            unavailable.Add((kvp.Key, app.DisplayName, app.Id, app.InstallerUrls.FirstOrDefault() ?? "", app.IsUserAdded));
-                    }
-                }
-
-                if (unavailable.Count == 0)
-                {
-                    MessageBox.Show("Нет недоступных приложений.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                AddLog($"Найдено {unavailable.Count} недоступных приложений");
-                var dialog = new BulkFallbackDialog(unavailable) { Owner = Window.GetWindow(this) };
-
-                if (dialog.ShowDialog() == true && dialog.Applied)
-                {
-                    foreach (var item in dialog.FailedApps.Where(x => x.SearchWinget && x.SelectedPackage != null))
-                        appManager.SaveAlternativeSource(item.AppId, item.SelectedPackage!.Id, null);
-                    foreach (var item in dialog.FailedApps.Where(x => x.ReplaceWithUrl && !string.IsNullOrWhiteSpace(x.NewUrl)))
-                        appManager.SaveAlternativeSource(item.AppId, null, item.NewUrl);
-
-                    AddLog("Повторная проверка доступности...");
-                    if (_catalog != null)
-                        foreach (var app in _catalog.Apps)
-                            await CheckAppAvailabilityFromCatalog(app);
-                    AddLog("Готово");
-                }
-            }
-            catch (Exception ex) { AddLog($"Ошибка: {ex.Message}"); }
-        }
-
         private async void UpdateSpaceStatus()
         {
             try

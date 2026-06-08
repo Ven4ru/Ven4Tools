@@ -109,12 +109,12 @@
             <StackPanel>
                 <GroupBox Header="🚀 Действия">
                     <StackPanel>
-                        <Button x:Name="btnInstall" Content="🚀 Установить" Height="35" Margin="3"/>
+                        <Button x:Name="btnInstall" Content="🚀 Установить выбранные" Height="35" Margin="3" IsEnabled="False"/>
                         <Button x:Name="btnCancelInstall" Content="⏹️ Отмена" Height="35" Margin="3" IsEnabled="False"/>
                         <Button x:Name="btnCheckUpdates" Content="🔔 Обновления" Height="35" Margin="3"/>
                         <Button x:Name="btnClearAllUserApps" Content="🗑️ Очистить добавленные" Height="35" Margin="3"/>
                         <Button x:Name="btnRefreshCatalog" Content="🔄 Обновить каталог" Height="35" Margin="3"/>
-                        <Button x:Name="btnRefreshAvailability" Content="🔍 Проверить доступность" Height="35" Margin="3" Click="RefreshAvailability_Click"/>
+                        <Button x:Name="btnRefreshAvailability" Content="🔍 Проверить доступность" Height="35" Margin="3"/>
                         <Separator Margin="3,4"/>
                         <Button x:Name="btnExportList" Content="📤 Экспорт списка" Height="32" Margin="3"
                                 ToolTip="Сохранить выбранные приложения в JSON" Click="BtnExportList_Click"/>
