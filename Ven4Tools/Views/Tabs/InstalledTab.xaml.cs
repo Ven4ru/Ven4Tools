@@ -109,18 +109,9 @@ namespace Ven4Tools.Views.Tabs
 
         private static async Task<List<InstalledApp>> RunWingetListAsync()
         {
-            var output = await RunWingetAsync("list --accept-source-agreements");
+            var output = await WingetRunner.RunAsync("list --accept-source-agreements");
             return ParseWingetList(output);
         }
-
-        // Убрать ANSI escape-коды и управляющие символы из вывода winget.
-        // [0-9;?]* — параметры CSI включая private-mode prefix '?'; lh — cursor hide/show.
-        private static readonly System.Text.RegularExpressions.Regex _ansiRegex =
-            new(@"\x1B(?:\[[0-9;?]*[mGKHFABCDsuJhlLM]|\][^\x07]*\x07|[()][0-9A-Za-z])",
-                System.Text.RegularExpressions.RegexOptions.Compiled);
-
-        private static string StripAnsi(string s)
-            => _ansiRegex.Replace(s, "");
 
         private static List<InstalledApp> ParseWingetList(string raw)
         {
@@ -128,7 +119,7 @@ namespace Ven4Tools.Views.Tabs
             if (string.IsNullOrWhiteSpace(raw)) return result;
 
             // Убрать ANSI, нормализовать переводы строк
-            var lines = StripAnsi(raw).Replace("\r", "").Split('\n');
+            var lines = WingetRunner.StripAnsi(raw).Replace("\r", "").Split('\n');
 
             // Ищем строку-заголовок по ключевым словам (работает на любом языке системы,
             // т.к. winget всегда выводит заголовок таблицы на английском)
@@ -270,7 +261,7 @@ namespace Ven4Tools.Views.Tabs
             Log("⬆ Запуск обновления всех приложений (winget upgrade --all)...");
             try
             {
-                int code = await RunWingetStreamingAsync(
+                int code = await WingetRunner.RunStreamingAsync(
                     "upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements",
                     msg => Log(msg));
                 if (code == 0)
@@ -291,53 +282,6 @@ namespace Ven4Tools.Views.Tabs
                 // Обновляем список установленных приложений после завершения
                 await LoadAppsAsync();
             }
-        }
-
-        // Запуск winget с построчным выводом прогресса в лог (таймаут 45 мин на upgrade --all)
-        private async Task<int> RunWingetStreamingAsync(string args, Action<string> onLine)
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName               = "winget",
-                Arguments              = args,
-                UseShellExecute        = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError  = true,
-                CreateNoWindow         = true,
-                StandardOutputEncoding = System.Text.Encoding.UTF8
-            };
-            using var p = Process.Start(psi) ?? throw new InvalidOperationException("winget не найден");
-            using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromMinutes(45));
-            // Читаем stderr параллельно, чтобы не было дедлока при переполнении буфера
-            var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
-
-            string? raw;
-            string last = "";
-            while ((raw = await p.StandardOutput.ReadLineAsync()) != null)
-            {
-                string clean = StripAnsi(raw).Trim();
-                if (string.IsNullOrWhiteSpace(clean)) continue;
-                // Пропускаем строки прогресс-бара (только псевдографика/проценты/размеры)
-                if (clean.All(c => c is '-' or '─' or '█' or '▒' or '░' or '\\' or '|'
-                                     or '/' or '%' or ' ' or '.' or 'K' or 'M' or 'B' or 'G'
-                                     || (c >= '0' && c <= '9')))
-                    continue;
-                if (clean == last) continue; // не дублируем одинаковые строки
-                last = clean;
-                onLine(clean);
-            }
-
-            try { await p.WaitForExitAsync(cts.Token); }
-            catch (OperationCanceledException)
-            {
-                try { p.Kill(); } catch { }
-                onLine("⚠ winget завис — принудительное завершение после 45 минут");
-                return -1;
-            }
-            string stderrOutput = await stderrTask;
-            if (p.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderrOutput))
-                onLine($"[stderr] {stderrOutput.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l)) ?? ""}");
-            return p.ExitCode;
         }
 
         private void ChkSelectAll_Click(object sender, RoutedEventArgs e)
@@ -437,7 +381,7 @@ namespace Ven4Tools.Views.Tabs
                 // --locale en-US делает вывод английским; русские варианты — на случай
                 // если локаль не применилась (старый winget).
                 string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements --locale en-US";
-                string output = await RunWingetAsync(args);
+                string output = await WingetRunner.RunAsync(args);
                 if (output.Contains("Successfully installed") || output.Contains("No applicable update") ||
                     output.Contains("No installed package found matching") ||
                     output.Contains("Успешно установлено") || output.Contains("Обновления не найдены") ||
@@ -484,7 +428,7 @@ namespace Ven4Tools.Views.Tabs
             if (!string.IsNullOrWhiteSpace(app.WingetId) && !app.WingetId.Contains('…'))
             {
                 string args = $"uninstall --id \"{app.WingetId}\" --silent --accept-source-agreements";
-                string output = await RunWingetAsync(args);
+                string output = await WingetRunner.RunAsync(args);
                 if (output.Contains("Successfully uninstalled") || output.Contains("Успешно удалено"))
                     return true;
             }
@@ -562,35 +506,6 @@ namespace Ven4Tools.Views.Tabs
             return success;
         }
 
-        private static async Task<string> RunWingetAsync(string args)
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName               = "winget",
-                Arguments              = args,
-                UseShellExecute        = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError  = true,
-                CreateNoWindow         = true,
-                StandardOutputEncoding = System.Text.Encoding.UTF8
-            };
-            using var p = Process.Start(psi) ?? throw new InvalidOperationException("winget не найден");
-            using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(120));
-            var outputTask = p.StandardOutput.ReadToEndAsync();
-            var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
-            try
-            {
-                await p.WaitForExitAsync(cts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                try { p.Kill(); } catch { }
-            }
-            string output = await outputTask;
-            await stderrTask;
-            return output;
-        }
-
         // ── Вспомогательные ───────────────────────────────────────────────────
 
         private void ShowState(string state)
@@ -661,7 +576,7 @@ namespace Ven4Tools.Views.Tabs
             Log($"📤 Экспорт в {System.IO.Path.GetFileName(dlg.FileName)}...");
             try
             {
-                string output = await RunWingetAsync($"export -o \"{dlg.FileName}\" --accept-source-agreements");
+                string output = await WingetRunner.RunAsync($"export -o \"{dlg.FileName}\" --accept-source-agreements");
                 bool ok = System.IO.File.Exists(dlg.FileName);
                 Log(ok ? $"✅ Экспортировано → {dlg.FileName}"
                        : $"⚠ winget: {output.Trim().Split('\n').LastOrDefault()}");
@@ -684,7 +599,7 @@ namespace Ven4Tools.Views.Tabs
             Log("⏳ Это может занять несколько минут...");
             try
             {
-                string output = await RunWingetAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements");
+                string output = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements");
                 bool ok = output.Contains("успешно") || output.Contains("successfully") || output.Contains("All packages");
                 Log(ok ? "✅ Импорт завершён"
                        : $"⚠ {output.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l))}");
