@@ -103,16 +103,6 @@
                 </StackPanel>
             </GroupBox>
             
-            <!-- Лог активации -->
-            <GroupBox Header="📋 Лог активации" Margin="0,0,0,15" Height="200">
-                <TextBox x:Name="txtActivationLog" 
-                         Background="{DynamicResource CardBackground}" 
-                         Foreground="{DynamicResource TextPrimary}"
-                         FontFamily="Consolas" FontSize="10"
-                         IsReadOnly="True" TextWrapping="Wrap"
-                         VerticalScrollBarVisibility="Auto"/>
-            </GroupBox>
-            
             <!-- Информация -->
             <GroupBox Header="ℹ️ О MAS" Margin="0,0,0,15">
                 <StackPanel Margin="10">

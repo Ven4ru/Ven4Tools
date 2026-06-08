@@ -15,8 +15,6 @@ namespace Ven4Tools.Views.Tabs
     {
         private Action? _sessionChangedHandler;
 
-        public event Action<string>? LogMessage;
-
         public ActivationTab()
         {
             InitializeComponent();
@@ -403,14 +401,6 @@ namespace Ven4Tools.Views.Tabs
             AddLog("🔄 Статус активации обновлён");
         }
         
-        private void AddLog(string message)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                txtActivationLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
-                txtActivationLog.ScrollToEnd();
-            });
-            LogMessage?.Invoke(message);
-        }
+        private static void AddLog(string message) => AppLogger.Write(message);
     }
 }
