@@ -159,10 +159,12 @@ namespace Ven4Tools.Views
                 using var timeoutCts = new CancellationTokenSource(3000);
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
                 var outputTask = p.StandardOutput.ReadToEndAsync();
+                var stderrTask = Task.Run(() => p.StandardError.ReadToEnd()); // дренаж stderr
                 try
                 {
                     await p.WaitForExitAsync(linkedCts.Token).ConfigureAwait(false);
                     string output = await outputTask.ConfigureAwait(false);
+                    await stderrTask.ConfigureAwait(false);
                     return p.ExitCode == 0 && !string.IsNullOrWhiteSpace(output);
                 }
                 catch (OperationCanceledException)

@@ -244,6 +244,24 @@ namespace Ven4Tools
 
         private void Window_Closing_Extended(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            // Предупреждение при закрытии во время активной установки.
+            // При сворачивании в трей окно не закрывается — установка продолжается, предупреждение не нужно.
+            if (!ProfileService.Current.MinimizeToTray && _catalogTab?.IsInstalling == true)
+            {
+                var res = MessageBox.Show(
+                    "Идёт установка приложений.\n\nЗакрыть программу и прервать установку?",
+                    "Установка в процессе",
+                    MessageBoxButton.OKCancel,
+                    MessageBoxImage.Warning);
+
+                // OK — закрыть, Отмена — продолжить работу
+                if (res != MessageBoxResult.OK)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
             if (ProfileService.Current.MinimizeToTray)
             {
                 e.Cancel = true;

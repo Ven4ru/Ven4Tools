@@ -116,6 +116,13 @@ namespace Ven4Tools.Launcher.Services
             });
         }
 
+        // Убрать ANSI escape-коды из вывода winget перед парсингом
+        private static readonly System.Text.RegularExpressions.Regex _ansiRegex =
+            new(@"\x1B(?:\[[0-9;]*[mGKHFABCDsuJh]|\][^\x07]*\x07|[()][0-9A-Za-z])",
+                System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        private static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
+
         private async Task<int> CountWingetUpgradesAsync()
         {
             try
@@ -138,6 +145,7 @@ namespace Ven4Tools.Launcher.Services
                 // Считаем только строки таблицы между разделителем «---» и футером.
                 // Футер winget («N upgrades available.») отделён пустой строкой —
                 // на ней останавливаемся, чтобы не считать его за приложение.
+                output = StripAnsi(output);
                 var lines = output.Replace("\r", "").Split('\n');
                 int sepIdx = Array.FindIndex(lines, l =>
                 {
@@ -153,6 +161,9 @@ namespace Ven4Tools.Launcher.Services
                     if (string.IsNullOrWhiteSpace(line)) break; // начался футер
                     string t = line.Trim();
                     if (t.All(c => c == '-' || c == ' ')) continue; // ещё один разделитель
+                    // Строки-суммарники футера winget («N package(s) have...») не являются пакетами
+                    if (System.Text.RegularExpressions.Regex.IsMatch(t, @"^\d+.*package",
+                            System.Text.RegularExpressions.RegexOptions.IgnoreCase)) break;
                     count++;
                 }
                 return count;
