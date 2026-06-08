@@ -226,6 +226,8 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="5"/>
+                    <RowDefinition Height="150" MinHeight="60"/>
                 </Grid.RowDefinitions>
 
                 <!-- Quick pins strip -->
@@ -262,6 +264,99 @@
                 <ContentControl x:Name="MainFrame" Grid.Row="1"
                                 HorizontalContentAlignment="Stretch"
                                 VerticalContentAlignment="Stretch"/>
+
+                <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch"
+                              Background="{DynamicResource BorderBrush}" Cursor="SizeNS"
+                              ResizeDirection="Rows"/>
+
+                <!-- Глобальный лог активности -->
+                <Border Grid.Row="3" Background="{DynamicResource SidebarBackground}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Padding="10,5"
+                                Background="{DynamicResource CardBackground}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <DockPanel>
+                                <Button x:Name="btnClearGlobalLog" Content="Очистить"
+                                        DockPanel.Dock="Right"
+                                        Height="20" Padding="8,0" FontSize="10"
+                                        Background="Transparent"
+                                        Foreground="{DynamicResource TextSecondary}"
+                                        BorderThickness="1"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        Click="BtnClearGlobalLog_Click"/>
+                                <TextBlock Text="📋 Лог активности"
+                                           FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </Border>
+                        <ListBox x:Name="lstGlobalLog" Grid.Row="1"
+                                 Background="{DynamicResource SidebarBackground}"
+                                 BorderThickness="0"
+                                 SelectionMode="Extended"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 VirtualizingPanel.IsVirtualizing="True"
+                                 VirtualizingPanel.ScrollUnit="Pixel"
+                                 HorizontalContentAlignment="Stretch">
+                            <ListBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="📋  Копировать" Click="CopyGlobalLog_Click"/>
+                                    <MenuItem Header="🗑️  Очистить лог" Click="BtnClearGlobalLog_Click"/>
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="Bd" Background="Transparent">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="#1A3A5A"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderThickness="2,0,0,0" BorderBrush="{Binding AccentBrush}"
+                                            Padding="8,3,6,3" Margin="0,1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Time}"
+                                                       FontFamily="Consolas" FontSize="10"
+                                                       Foreground="#3A8AAA" VerticalAlignment="Center"
+                                                       Margin="0,0,8,0"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Icon}"
+                                                       FontSize="13" Foreground="{Binding IconBrush}"
+                                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding Message}"
+                                                       FontSize="11" Foreground="{DynamicResource TextPrimary}"
+                                                       VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
             </Grid>
         </Border>
     </Grid>

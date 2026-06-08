@@ -7,13 +7,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
 {
     public partial class DebloaterTab : UserControl
     {
-        public event Action<string>? LogMessage;
-
         private readonly List<DebloatItem> _allItems = BuildItems();
         private CancellationTokenSource? _cts;
 
@@ -132,7 +131,7 @@ namespace Ven4Tools.Views.Tabs
                 progressDebloat.Value = (double)done / selected.Count * 100;
 
                 bool ok = await ApplyItemAsync(item);
-                LogMessage?.Invoke($"{(ok ? "✅" : "❌")} {item.Name}");
+                AppLogger.Write($"{(ok ? "✅" : "❌")} {item.Name}");
                 done++;
             }
 

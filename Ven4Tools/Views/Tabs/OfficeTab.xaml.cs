@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
 using Ven4Tools.Models;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
 {
@@ -23,7 +24,6 @@ namespace Ven4Tools.Views.Tabs
         private string? _originalGeoName;    // e.g. "RU" from Control Panel\International\Geo\Name
         private string? _originalGeoNation;  // e.g. "203" from Control Panel\International\Geo\Nation
 
-        public event Action<string>? LogMessage;
         public event Action? GoToActivation;
 
         private readonly string[] officeLanguages = { "ru-ru", "en-us", "de-de", "fr-fr", "es-es", "it-it", "zh-cn", "ja-jp" };
@@ -499,7 +499,6 @@ namespace Ven4Tools.Views.Tabs
         private void SetDetail(string text) =>
             Dispatcher.Invoke(() => txtInstallDetail.Text = text);
 
-        private void AddLog(string message) =>
-            LogMessage?.Invoke(message);
+        private static void AddLog(string message) => AppLogger.Write(message);
     }
 }

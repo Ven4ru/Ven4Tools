@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Threading;
 using System.Windows;
@@ -56,9 +55,6 @@ namespace Ven4Tools.Views.Tabs
         private readonly System.Collections.Generic.HashSet<string> _ruBlockedIds = new();
         private CancellationTokenSource? _searchDebounce;
         private Action? _profileChangedHandler;
-        private readonly ObservableCollection<LogEntry> _logEntries = new();
-
-        public event Action<string>? LogMessage;
         public event Action? SwitchToUpdatesRequested;
 
         // Categories visible per mode
@@ -75,7 +71,6 @@ namespace Ven4Tools.Views.Tabs
         public CatalogTab()
         {
             InitializeComponent();
-            lstInstallLog.ItemsSource = _logEntries;
 
             _catalogLoader   = new CatalogLoaderService();
             appManager       = new AppManager();

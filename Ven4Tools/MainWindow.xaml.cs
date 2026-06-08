@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -18,6 +19,8 @@ namespace Ven4Tools
         private string _currentTab = "catalog";
         private bool _feedbackShown = false;
 
+        private readonly ObservableCollection<LogEntry> _logEntries = new();
+
         private CatalogTab?    _catalogTab;
         private InstalledTab?  _installedTab;
         private SystemTab?     _systemTab;
@@ -32,6 +35,8 @@ namespace Ven4Tools
         public MainWindow()
         {
             InitializeComponent();
+            lstGlobalLog.ItemsSource = _logEntries;
+            AppLogger.MessageReceived += AddLog;
 
             if (!IsRunAsAdmin())
             {
@@ -74,13 +79,13 @@ namespace Ven4Tools
         private void NavigateToCatalog(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnCatalogTab);
+            if (sender != null) AppLogger.Write("📂 Открыта вкладка: Каталог");
             if (_catalogTab == null)
             {
                 _catalogTab = new CatalogTab();
-                _catalogTab.LogMessage += AddLog;
                 _catalogTab.SwitchToUpdatesRequested += () =>
                 {
-                    if (_installedTab == null) { _installedTab = new InstalledTab(); _installedTab.LogMessage += AddLog; }
+                    if (_installedTab == null) _installedTab = new InstalledTab();
                     _installedTab.ShowUpdatesFilter();
                     NavigateToInstalled(null, null);
                 };
@@ -92,7 +97,8 @@ namespace Ven4Tools
         private void NavigateToNetwork(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnNetworkTab);
-            if (_networkTab == null) { _networkTab = new NetworkTab(); _networkTab.LogMessage += AddLog; }
+            AppLogger.Write("📂 Открыта вкладка: Сеть");
+            if (_networkTab == null) _networkTab = new NetworkTab();
             MainFrame.Content = (_networkTab);
             UpdateMascot("network");
         }
@@ -100,7 +106,8 @@ namespace Ven4Tools
         private void NavigateToInstalled(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnInstalledTab);
-            if (_installedTab == null) { _installedTab = new InstalledTab(); _installedTab.LogMessage += AddLog; }
+            if (sender != null) AppLogger.Write("📂 Открыта вкладка: Установленные");
+            if (_installedTab == null) _installedTab = new InstalledTab();
             MainFrame.Content = (_installedTab);
             UpdateMascot("installed");
         }
@@ -108,7 +115,8 @@ namespace Ven4Tools
         private void NavigateToSystem(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnSystemTab);
-            if (_systemTab == null) { _systemTab = new SystemTab(); _systemTab.LogMessage += AddLog; }
+            AppLogger.Write("📂 Открыта вкладка: Система");
+            if (_systemTab == null) _systemTab = new SystemTab();
             MainFrame.Content = (_systemTab);
             UpdateMascot("system");
         }
@@ -116,10 +124,10 @@ namespace Ven4Tools
         private void NavigateToOffice(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnOfficeTab);
+            AppLogger.Write("📂 Открыта вкладка: Office");
             if (_officeTab == null)
             {
                 _officeTab = new OfficeTab();
-                _officeTab.LogMessage += AddLog;
                 _officeTab.GoToActivation += () => NavigateToActivation(null, null);
             }
             MainFrame.Content = (_officeTab);
@@ -129,7 +137,8 @@ namespace Ven4Tools
         private void NavigateToActivation(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnActivationTab);
-            if (_activationTab == null) { _activationTab = new ActivationTab(); _activationTab.LogMessage += AddLog; }
+            if (sender != null) AppLogger.Write("📂 Открыта вкладка: Активация");
+            if (_activationTab == null) _activationTab = new ActivationTab();
             MainFrame.Content = (_activationTab);
             UpdateMascot("activation");
         }
@@ -137,7 +146,8 @@ namespace Ven4Tools
         private void NavigateToAbout(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnAboutTab);
-            if (_aboutTab == null) { _aboutTab = new AboutTab(); _aboutTab.LogMessage += AddLog; }
+            AppLogger.Write("📂 Открыта вкладка: О программе");
+            if (_aboutTab == null) _aboutTab = new AboutTab();
             MainFrame.Content = (_aboutTab);
             UpdateMascot("about");
         }
@@ -180,7 +190,8 @@ namespace Ven4Tools
         private void NavigateToDebloater(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnDebloaterTab);
-            if (_debloaterTab == null) { _debloaterTab = new DebloaterTab(); _debloaterTab.LogMessage += AddLog; }
+            AppLogger.Write("📂 Открыта вкладка: Очистка");
+            if (_debloaterTab == null) _debloaterTab = new DebloaterTab();
             MainFrame.Content = (_debloaterTab);
             UpdateMascot("debloater");
         }
@@ -190,7 +201,8 @@ namespace Ven4Tools
         private void NavigateToHistory(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnHistoryTab);
-            if (_historyTab == null) { _historyTab = new HistoryTab(); _historyTab.LogMessage += AddLog; }
+            AppLogger.Write("📂 Открыта вкладка: История");
+            if (_historyTab == null) _historyTab = new HistoryTab();
             MainFrame.Content = (_historyTab);
             _ = _historyTab.RefreshAsync();
             UpdateMascot("history");
@@ -338,9 +350,9 @@ namespace Ven4Tools
             if ((sender as Button)?.Tag is not string id) return;
             var catalog = Services.CatalogLoaderService.LoadedCatalog;
             var catalogApp = catalog?.Apps.FirstOrDefault(a => a.Id == id);
-            if (catalogApp == null) { AddLog($"❌ Приложение {id} не найдено в каталоге"); return; }
+            if (catalogApp == null) { AppLogger.Write($"❌ Приложение {id} не найдено в каталоге"); return; }
 
-            AddLog($"📌 Установка из пина: {catalogApp.Name}...");
+            AppLogger.Write($"📌 Установка из пина: {catalogApp.Name}...");
             using var installer = new Services.InstallationService();
             var appInfo = new Models.AppInfo
             {
@@ -351,7 +363,7 @@ namespace Ven4Tools
                 ChocoId = catalogApp.ChocoId, ScoopId = catalogApp.ScoopId
             };
             var cts = new System.Threading.CancellationTokenSource();
-            var prog = new Progress<Services.AppInstallProgress>(p => AddLog($"  {p.Status}"));
+            var prog = new Progress<Services.AppInstallProgress>(p => AppLogger.Write($"  {p.Status}"));
             async Task<bool> confirmPm(string pmName) =>
                 await Dispatcher.InvokeAsync(() =>
                     System.Windows.MessageBox.Show(
@@ -361,7 +373,7 @@ namespace Ven4Tools
                         System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes);
 
             var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, "C:\\", null, confirmPm);
-            AddLog(r.Success ? $"✅ {catalogApp.Name}" : $"❌ {r.Message}");
+            AppLogger.Write(r.Success ? $"✅ {catalogApp.Name}" : $"❌ {r.Message}");
         }
 
         private void PinUnpinBtn_Click(object sender, RoutedEventArgs e)
@@ -430,7 +442,7 @@ namespace Ven4Tools
                 var dlg = new Views.LocalInstallerDialog(file) { Owner = this };
                 if (dlg.ShowDialog() == true && dlg.Result != null)
                 {
-                    AddLog($"📦 Добавлен локальный установщик: {dlg.Result.DisplayName}");
+                    AppLogger.Write($"📦 Добавлен локальный установщик: {dlg.Result.DisplayName}");
                     // Pass to CatalogTab's user apps mechanism
                     if (_catalogTab != null)
                         _catalogTab.AddLocalInstallerApp(dlg.Result);
@@ -500,8 +512,24 @@ namespace Ven4Tools
         {
             Dispatcher.Invoke(() =>
             {
+                var entry = LogEntry.Parse(message);
+                _logEntries.Add(entry);
+                lstGlobalLog.ScrollIntoView(entry);
                 txtStatusBar.Text = message.Length > 50 ? message.Substring(0, 47) + "..." : message;
             });
+        }
+
+        private void BtnClearGlobalLog_Click(object sender, RoutedEventArgs e) => _logEntries.Clear();
+
+        private void CopyGlobalLog_Click(object sender, RoutedEventArgs e)
+        {
+            var items = lstGlobalLog.SelectedItems.Count > 0
+                ? lstGlobalLog.SelectedItems.Cast<LogEntry>()
+                : _logEntries.AsEnumerable();
+            var text = string.Join(Environment.NewLine,
+                items.Select(entry => $"[{entry.Time}] {entry.Icon} {entry.Message}"));
+            if (!string.IsNullOrEmpty(text))
+                Clipboard.SetText(text);
         }
 
         private void UpdateUserUI()

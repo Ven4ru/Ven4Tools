@@ -12,8 +12,6 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class HistoryTab : UserControl
     {
-        public event Action<string>? LogMessage;
-
         private List<HistoryEntry> _allEntries = new();
 
         public HistoryTab()
@@ -92,12 +90,12 @@ namespace Ven4Tools.Views.Tabs
                 ScoopId = catalogApp.ScoopId
             };
 
-            LogMessage?.Invoke($"🔄 Переустановка: {entry.AppName}...");
+            AppLogger.Write($"🔄 Переустановка: {entry.AppName}...");
 
             using var installer = new InstallationService();
             var cts = new CancellationTokenSource();
             var progress = new Progress<AppInstallProgress>(p =>
-                LogMessage?.Invoke($"  {p.Status}"));
+                AppLogger.Write($"  {p.Status}"));
 
             async Task<bool> confirmPm(string pmName) =>
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -110,7 +108,7 @@ namespace Ven4Tools.Views.Tabs
             var result = await installer.InstallAppAsync(
                 appInfo, new[] { "winget", "msstore" }, cts.Token, progress, "C:\\", null, confirmPm);
 
-            LogMessage?.Invoke(result.Success
+            AppLogger.Write(result.Success
                 ? $"✅ {entry.AppName} переустановлен"
                 : $"❌ {entry.AppName}: {result.Message}");
         }
