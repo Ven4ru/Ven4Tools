@@ -210,50 +210,6 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private async void BtnAddApp_Click(object sender, RoutedEventArgs e)
-        {
-            var consentService = new ConsentService();
-            var shouldAsk = await consentService.ShouldAskForConsentAsync();
-            bool allowStats = true;
-
-            if (shouldAsk)
-            {
-                var dialog = new Views.ConsentDialog();
-                if (dialog.ShowDialog() == true)
-                {
-                    allowStats = dialog.AllowStats;
-                    await consentService.SaveConsentAsync(allowStats);
-                }
-                else return;
-            }
-            else allowStats = await consentService.IsStatsAllowedAsync();
-
-            var addDialog = new Services.AddAppDialog();
-            if (addDialog.ShowDialog() == true && addDialog.Result != null)
-            {
-                var newApp = addDialog.Result;
-                appManager.AddUserApp(newApp);
-                AddUserAppToUI(newApp);
-                if (UserSession.IsLoggedIn)
-                    _ = _userAppsService.SaveAsync(UserSession.UserId, newApp);
-
-                if (allowStats)
-                {
-                    string? wingetId = null;
-                    if (_catalog != null)
-                    {
-                        var catalogApp = _catalog.Apps.FirstOrDefault(a => a.Name == newApp.DisplayName);
-                        if (catalogApp != null && !string.IsNullOrEmpty(catalogApp.WingetId))
-                            wingetId = catalogApp.WingetId;
-                    }
-                    if (string.IsNullOrEmpty(wingetId) && !string.IsNullOrEmpty(newApp.AlternativeId))
-                        wingetId = newApp.AlternativeId;
-                    await StatsService.Instance.TrackUserAddAsync(newApp.Id, wingetId, newApp.InstallerUrls.FirstOrDefault());
-                }
-                AddLog($"➕ Добавлено пользовательское приложение: {newApp.DisplayName}");
-            }
-        }
-
         private void BtnCheckUpdates_Click(object sender, RoutedEventArgs e)
         {
             AddLog("🔔 Переход к управлению обновлениями...");
