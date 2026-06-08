@@ -12,8 +12,6 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class AboutTab : UserControl
     {
-        public event Action<string>? LogMessage;
-
         public AboutTab()
         {
             InitializeComponent();
@@ -210,9 +208,6 @@ namespace Ven4Tools.Views.Tabs
             }
         }
         
-        private void AddLog(string message)
-        {
-            LogMessage?.Invoke(message);
-        }
+        private static void AddLog(string message) => AppLogger.Write(message);
     }
 }

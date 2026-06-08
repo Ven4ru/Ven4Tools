@@ -73,8 +73,6 @@ namespace Ven4Tools.Views.Tabs
     {
         private List<InstalledApp> _allApps = new();
 
-        public event Action<string>? LogMessage;
-
         public InstalledTab()
         {
             InitializeComponent();
@@ -518,7 +516,7 @@ namespace Ven4Tools.Views.Tabs
             });
         }
 
-        private void Log(string msg) => LogMessage?.Invoke(msg);
+        private static void Log(string msg) => AppLogger.Write(msg);
 
         // ── Групповое удаление ────────────────────────────────────────────────
 
