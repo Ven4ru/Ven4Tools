@@ -116,9 +116,10 @@ namespace Ven4Tools.Launcher.Services
             });
         }
 
-        // Убрать ANSI escape-коды из вывода winget перед парсингом
+        // Убрать ANSI escape-коды из вывода winget перед парсингом.
+        // [0-9;?]* — параметры CSI включая private-mode prefix '?'; lh — cursor hide/show.
         private static readonly System.Text.RegularExpressions.Regex _ansiRegex =
-            new(@"\x1B(?:\[[0-9;]*[mGKHFABCDsuJh]|\][^\x07]*\x07|[()][0-9A-Za-z])",
+            new(@"\x1B(?:\[[0-9;?]*[mGKHFABCDsuJhlLM]|\][^\x07]*\x07|[()][0-9A-Za-z])",
                 System.Text.RegularExpressions.RegexOptions.Compiled);
 
         private static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
@@ -161,8 +162,8 @@ namespace Ven4Tools.Launcher.Services
                     if (string.IsNullOrWhiteSpace(line)) break; // начался футер
                     string t = line.Trim();
                     if (t.All(c => c == '-' || c == ' ')) continue; // ещё один разделитель
-                    // Строки-суммарники футера winget («N package(s) have...») не являются пакетами
-                    if (System.Text.RegularExpressions.Regex.IsMatch(t, @"^\d+.*package",
+                    // Строки-суммарники футера winget («N upgrades available.» / «N package(s)...»)
+                    if (System.Text.RegularExpressions.Regex.IsMatch(t, @"^\d+\b.*(package|upgrade)",
                             System.Text.RegularExpressions.RegexOptions.IgnoreCase)) break;
                     count++;
                 }
