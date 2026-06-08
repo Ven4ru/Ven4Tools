@@ -113,9 +113,10 @@ namespace Ven4Tools.Views.Tabs
             return ParseWingetList(output);
         }
 
-        // Убрать ANSI escape-коды и управляющие символы из вывода winget
+        // Убрать ANSI escape-коды и управляющие символы из вывода winget.
+        // [0-9;?]* — параметры CSI включая private-mode prefix '?'; lh — cursor hide/show.
         private static readonly System.Text.RegularExpressions.Regex _ansiRegex =
-            new(@"\x1B(?:\[[0-9;]*[mGKHFABCDsuJh]|\][^\x07]*\x07|[()][0-9A-Za-z])",
+            new(@"\x1B(?:\[[0-9;?]*[mGKHFABCDsuJhlLM]|\][^\x07]*\x07|[()][0-9A-Za-z])",
                 System.Text.RegularExpressions.RegexOptions.Compiled);
 
         private static string StripAnsi(string s)
@@ -292,7 +293,7 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        // Запуск winget с построчным выводом прогресса в лог
+        // Запуск winget с построчным выводом прогресса в лог (таймаут 45 мин на upgrade --all)
         private async Task<int> RunWingetStreamingAsync(string args, Action<string> onLine)
         {
             var psi = new ProcessStartInfo
@@ -306,6 +307,7 @@ namespace Ven4Tools.Views.Tabs
                 StandardOutputEncoding = System.Text.Encoding.UTF8
             };
             using var p = Process.Start(psi) ?? throw new InvalidOperationException("winget не найден");
+            using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromMinutes(45));
             // Читаем stderr параллельно, чтобы не было дедлока при переполнении буфера
             var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
 
@@ -317,14 +319,21 @@ namespace Ven4Tools.Views.Tabs
                 if (string.IsNullOrWhiteSpace(clean)) continue;
                 // Пропускаем строки прогресс-бара (только псевдографика/проценты/размеры)
                 if (clean.All(c => c is '-' or '─' or '█' or '▒' or '░' or '\\' or '|'
-                                     or '/' or '%' or ' ' or '.' or 'K' or 'M' or 'B' or 'G'))
+                                     or '/' or '%' or ' ' or '.' or 'K' or 'M' or 'B' or 'G'
+                                     || (c >= '0' && c <= '9')))
                     continue;
                 if (clean == last) continue; // не дублируем одинаковые строки
                 last = clean;
                 onLine(clean);
             }
 
-            await p.WaitForExitAsync();
+            try { await p.WaitForExitAsync(cts.Token); }
+            catch (OperationCanceledException)
+            {
+                try { p.Kill(); } catch { }
+                onLine("⚠ winget завис — принудительное завершение после 45 минут");
+                return -1;
+            }
             string stderrOutput = await stderrTask;
             if (p.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderrOutput))
                 onLine($"[stderr] {stderrOutput.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l)) ?? ""}");
