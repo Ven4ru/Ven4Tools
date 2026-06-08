@@ -273,7 +273,8 @@ await CopyDirectoryWithRetryAsync(rootFolder, _basePath);
             var sb = new System.Text.StringBuilder("/c ");
             foreach (var svc in services)
                 sb.Append($"sc stop {svc} & sc delete {svc} & ");
-            sb.Append("exit /b 0");
+            // Завершающая безобидная команда, чтобы не оставлять висящий «&»
+            sb.Append("ver");
 
             try
             {
@@ -305,7 +306,11 @@ await CopyDirectoryWithRetryAsync(rootFolder, _basePath);
                 }
 
                 Log("✅ Команды удаления служб выполнены");
-                return true;
+
+                // Проверяем реальный факт удаления: служба точно удалена,
+                // только если sc query больше её не находит.
+                bool zapretGone = !await ServiceExistsAsync("zapret") && !await ServiceExistsAsync("winws");
+                return zapretGone;
             }
             catch (System.ComponentModel.Win32Exception)
             {
@@ -318,6 +323,30 @@ await CopyDirectoryWithRetryAsync(rootFolder, _basePath);
                 Log($"⚠️ Ошибка удаления служб: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Проверяет существование службы через sc query.
+        /// Возвращает true, если служба существует (ExitCode 0),
+        /// false — если не существует (1060) или произошла ошибка.
+        /// </summary>
+        private static async Task<bool> ServiceExistsAsync(string name)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo("sc.exe", $"query {name}")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                using var p = Process.Start(psi);
+                if (p == null) return false;
+                await p.WaitForExitAsync();
+                return p.ExitCode == 0; // 0 = служба существует, 1060 = не существует
+            }
+            catch { return false; }
         }
 
         private async Task CopyDirectoryWithRetryAsync(string source, string destination, int maxRetries = 3)
