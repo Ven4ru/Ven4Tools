@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -133,37 +131,6 @@ namespace Ven4Tools.Views.Tabs
 
         // ── Log ───────────────────────────────────────────────────────────────
 
-        public void AddLog(string message)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                var entry = LogEntry.Parse(message);
-                _logEntries.Add(entry);
-                lstInstallLog.ScrollIntoView(entry);
-            });
-            LogMessage?.Invoke(message);
-        }
-
-        private void LogList_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control)
-            {
-                CopyLog_Click(sender, e);
-                e.Handled = true;
-            }
-        }
-
-        private void CopyLog_Click(object sender, RoutedEventArgs e)
-        {
-            var items = lstInstallLog.SelectedItems.Count > 0
-                ? lstInstallLog.SelectedItems.Cast<LogEntry>()
-                : _logEntries.AsEnumerable();
-            var text = string.Join(Environment.NewLine,
-                items.Select(entry => $"[{entry.Time}] {entry.Icon} {entry.Message}"));
-            if (!string.IsNullOrEmpty(text))
-                Clipboard.SetText(text);
-        }
-
-        private void ClearLog_Click(object sender, RoutedEventArgs e) => _logEntries.Clear();
+        public void AddLog(string message) => AppLogger.Write(message);
     }
 }
