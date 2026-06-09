@@ -10,6 +10,10 @@
   <img src="https://img.shields.io/github/last-commit/Ven4ru/Ven4Tools" />
   <img src="https://badgen.net/badge/platform/Windows%2010%2B/0078D6">
   <img src="https://badgen.net/badge/Language/TypeScript/3178C6">
+  <img src="https://badgen.net/badge/platform/Windows%2010+/0078D6">
+<img src="https://badgen.net/badge/Electron/33.x/47848F">
+<img src="https://badgen.net/badge/Node.js/22.x/339933">
+  <img src="https://badgen.net/badge/PRs/welcome/green">
 </p>
 
 **Ven4Tools** — бесплатная программа с открытым исходным кодом для автоматической установки популярного софта на Windows. Работает сразу после установки системы — не требует установленного .NET или других компонентов.
