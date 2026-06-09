@@ -18,8 +18,17 @@ namespace Ven4Tools.Views.Tabs
         {
             lstPresets.ItemsSource = _presets;
             _ = RefreshPresetsAsync();
-            UserSession.Changed += () => _ = Dispatcher.InvokeAsync(async () => await RefreshPresetsAsync());
+            // Подписка на UserSession.Changed вынесена в общий блок Loaded/Unloaded
+            // (CatalogTab.xaml.cs), чтобы не было утечки через анонимную лямбду.
         }
+
+        // Обновление списка пресетов при входе/выходе пользователя
+        private void OnUserSessionChangedPresets() =>
+            _ = Dispatcher.InvokeAsync(async () =>
+            {
+                try { await RefreshPresetsAsync(); }
+                catch (Exception ex) { AppLogger.Write(ex.Message); }
+            });
 
         private async Task RefreshPresetsAsync()
         {

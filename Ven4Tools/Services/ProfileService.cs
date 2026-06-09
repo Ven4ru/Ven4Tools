@@ -25,7 +25,7 @@ namespace Ven4Tools.Services
                 var profile = JsonConvert.DeserializeObject<UserProfile>(File.ReadAllText(_path));
                 if (profile != null) Current = profile;
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[ProfileService] {ex.Message}"); }
         }
 
         public static void Save()
@@ -35,7 +35,7 @@ namespace Ven4Tools.Services
                 FileHelper.WriteAllTextAtomic(_path, JsonConvert.SerializeObject(Current, Formatting.Indented));
                 Changed?.Invoke();
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[ProfileService] {ex.Message}"); }
         }
 
         public static void Reset(bool keepCategorySelection = true)

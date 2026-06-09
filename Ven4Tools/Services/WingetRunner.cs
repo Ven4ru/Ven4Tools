@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -15,6 +15,22 @@ namespace Ven4Tools.Services
                 RegexOptions.Compiled);
 
         public static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
+
+        // Некоторые версии winget на русской Windows двойно кодируют сообщения из WinHTTP:
+        // байты UTF-8 кириллицы трактуются как Latin-1 и снова кодируются в UTF-8, давая "ÐÑÐµÐ²Ð¼Ñ…"
+        // Признак: символы Ð/Ñ (U+00D0/D1) рядом с C1-управляющими (U+0080–U+009F).
+        private static string TryFixMojibake(string s)
+        {
+            if (!s.Any(c => (int)c == 0xD0 || (int)c == 0xD1)) return s;
+            if (!s.Any(c => (int)c >= 0x80 && (int)c <= 0x9F)) return s;
+            try
+            {
+                byte[] bytes   = System.Text.Encoding.Latin1.GetBytes(s);
+                string decoded = System.Text.Encoding.UTF8.GetString(bytes);
+                return decoded.Any(c => (int)c >= 0x0400 && (int)c <= 0x04FF) ? decoded : s;
+            }
+            catch { return s; }
+        }
 
         // Запуск winget, захват stdout целиком. Таймаут по умолчанию — 120 с.
         public static async Task<string> RunAsync(string args, TimeSpan? timeout = null)
@@ -70,7 +86,7 @@ namespace Ven4Tools.Services
             {
                 while ((raw = await p.StandardOutput.ReadLineAsync(cts.Token)) != null)
                 {
-                    string clean = StripAnsi(raw).Trim();
+                    string clean = TryFixMojibake(StripAnsi(raw).Trim());
                     if (string.IsNullOrWhiteSpace(clean)) continue;
                     // Пропускаем строки прогресс-бара (только псевдографика/проценты/размеры)
                     if (clean.All(c => c is '-' or '─' or '█' or '▒' or '░' or '\\' or '|'

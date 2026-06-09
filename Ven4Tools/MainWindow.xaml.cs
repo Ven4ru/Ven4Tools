@@ -49,6 +49,11 @@ namespace Ven4Tools
             UserSession.Changed += UpdateUserUI;
             Closing += (_, args) =>
             {
+                // При сворачивании в трей окно не закрывается (Window_Closing_Extended
+                // отменяет закрытие и прячет окно) — окно отзыва показывать нельзя,
+                // иначе fw.Closed -> Close() завершит приложение в обход трея.
+                if (ProfileService.Current.MinimizeToTray) return;
+
                 if (ChannelService.IsPreRelease && !_feedbackShown)
                 {
                     args.Cancel = true;
@@ -69,9 +74,22 @@ namespace Ven4Tools
             Loaded += (s, e) =>
             {
                 ConnectivityMonitor.Start();
-                ConnectivityMonitor.StatusChanged += online => Dispatcher.Invoke(() => UpdateTabVisibility());
+                // Именованный обработчик — отписываемся в OnClosed, чтобы не было утечки
+                ConnectivityMonitor.StatusChanged += OnConnectivityChanged;
                 UpdateTabVisibility();
             };
+        }
+
+        private void OnConnectivityChanged(bool online) =>
+            Dispatcher.Invoke(() => UpdateTabVisibility());
+
+        protected override void OnClosed(EventArgs e)
+        {
+            // Снимаем подписки на статические события, иначе окно не освобождается GC
+            AppLogger.MessageReceived -= AddLog;
+            UserSession.Changed -= UpdateUserUI;
+            ConnectivityMonitor.StatusChanged -= OnConnectivityChanged;
+            base.OnClosed(e);
         }
 
         private void NavigateToCatalog(object? sender, RoutedEventArgs? e)
@@ -488,13 +506,17 @@ namespace Ven4Tools
         private void RestartAsAdmin()
         {
             var exeName = Process.GetCurrentProcess().MainModule?.FileName;
-            if (exeName == null) return;
-            try
+            if (exeName != null)
             {
-                Process.Start(new ProcessStartInfo { FileName = exeName, UseShellExecute = true, Verb = "runas" });
-                Application.Current.Shutdown();
+                try
+                {
+                    Process.Start(new ProcessStartInfo { FileName = exeName, UseShellExecute = true, Verb = "runas" });
+                }
+                catch { /* пользователь отклонил UAC */ }
             }
-            catch { } // пользователь отклонил UAC — оставляем приложение работать
+            // Конструктор окна вышел до инициализации вкладок, а окно уже показано —
+            // без Shutdown на экране осталось бы пустое нерабочее окно.
+            Application.Current.Shutdown();
         }
 
         public void AddLog(string message)

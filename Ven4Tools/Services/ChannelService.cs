@@ -21,7 +21,7 @@ namespace Ven4Tools.Services
                         File.ReadAllText(ChannelPath));
                     return obj?.channel?.ToString() == "prerelease";
                 }
-                catch { return false; }
+                catch (Exception ex) { AppLogger.Write($"[ChannelService] {ex.Message}"); return false; }
             }
         }
 
@@ -36,7 +36,7 @@ namespace Ven4Tools.Services
                         File.ReadAllText(ChannelPath));
                     return obj?.version?.ToString() ?? "";
                 }
-                catch { return ""; }
+                catch (Exception ex) { AppLogger.Write($"[ChannelService] {ex.Message}"); return ""; }
             }
         }
     }

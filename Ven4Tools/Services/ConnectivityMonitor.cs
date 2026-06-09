@@ -10,6 +10,8 @@ namespace Ven4Tools.Services
         private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
         private static Timer? _timer;
         private static bool _lastState = true;
+        // Защита от параллельного выполнения проверок (таймер + ручные вызовы)
+        private static int _checking = 0;
 
         public static bool IsOnline { get; private set; } = true;
 
@@ -25,11 +27,20 @@ namespace Ven4Tools.Services
 
         public static async Task CheckAsync()
         {
-            bool online = await PingAsync();
-            if (online == _lastState) return;
-            _lastState = online;
-            IsOnline   = online;
-            StatusChanged?.Invoke(online);
+            // Пропускаем, если проверка уже идёт — иначе гонка за _lastState/IsOnline
+            if (Interlocked.CompareExchange(ref _checking, 1, 0) != 0) return;
+            try
+            {
+                bool online = await PingAsync();
+                if (online == _lastState) return;
+                _lastState = online;
+                IsOnline   = online;
+                StatusChanged?.Invoke(online);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _checking, 0);
+            }
         }
 
         private static async Task<bool> PingAsync()
