@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -119,25 +120,32 @@ namespace Ven4Tools.Views.Tabs
             // Убрать ANSI, нормализовать переводы строк
             var lines = WingetRunner.StripAnsi(raw).Replace("\r", "").Split('\n');
 
-            // Ищем строку-заголовок по ключевым словам (работает на любом языке системы,
-            // т.к. winget всегда выводит заголовок таблицы на английском)
-            int headerIdx = Array.FindIndex(lines,
-                l => l.Contains("Name") && l.Contains("Id") && l.Contains("Version"));
+            // Ищем строку-заголовок: поддерживаем английский и русский вывод winget
+            int headerIdx = Array.FindIndex(lines, l =>
+                (l.Contains("Name") && l.Contains("Id") && l.Contains("Version")) ||
+                (l.Contains("Имя")  && l.Contains("ИД") && l.Contains("Версия")));
             if (headerIdx < 0) return result;
 
             string header = lines[headerIdx];
+            bool isRu = !header.Contains("Name");
 
-            // Убрать мусор до начала "Name" (ANSI-артефакты, отступы)
-            int namePos = header.IndexOf("Name", StringComparison.Ordinal);
+            string nameCol      = isRu ? "Имя"      : "Name";
+            string idCol        = isRu ? "ИД"        : "Id";
+            string versionCol   = isRu ? "Версия"    : "Version";
+            string availableCol = isRu ? "Доступна"  : "Available";
+            string sourceCol    = isRu ? "Источник"  : "Source";
+
+            // Убрать мусор до начала заголовка "Name"/"Имя" (ANSI-артефакты, отступы)
+            int namePos = header.IndexOf(nameCol, StringComparison.Ordinal);
             if (namePos < 0) return result;
             int offset = namePos;
 
-            // Позиции колонок относительно начала "Name"
+            // Позиции колонок относительно начала первой колонки
             int colName      = 0;
-            int colId        = header.IndexOf("Id",        namePos, StringComparison.Ordinal) - offset;
-            int colVersion   = header.IndexOf("Version",   namePos, StringComparison.Ordinal) - offset;
-            int colAvailable = header.IndexOf("Available", namePos, StringComparison.Ordinal) - offset;
-            int colSource    = header.IndexOf("Source",    namePos, StringComparison.Ordinal) - offset;
+            int colId        = header.IndexOf(idCol,        namePos, StringComparison.Ordinal) - offset;
+            int colVersion   = header.IndexOf(versionCol,   namePos, StringComparison.Ordinal) - offset;
+            int colAvailable = header.IndexOf(availableCol, namePos, StringComparison.Ordinal) - offset;
+            int colSource    = header.IndexOf(sourceCol,    namePos, StringComparison.Ordinal) - offset;
             if (colId <= 0 || colVersion <= 0) return result;
             if (colAvailable < 0) colAvailable = -1;
             if (colSource    < 0) colSource    = -1;
@@ -240,9 +248,13 @@ namespace Ven4Tools.Views.Tabs
 
         private async void BtnRefresh_Click(object sender, RoutedEventArgs e)
         {
-            btnRefresh.IsEnabled = false;
-            await LoadAppsAsync();
-            btnRefresh.IsEnabled = true;
+            try
+            {
+                btnRefresh.IsEnabled = false;
+                await LoadAppsAsync();
+            }
+            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
+            finally { btnRefresh.IsEnabled = true; }
         }
 
         // ── Обновить всё (winget upgrade --all) ─────────────────────────────────
@@ -264,8 +276,10 @@ namespace Ven4Tools.Views.Tabs
                     msg => Log(msg));
                 if (code == 0)
                     Log("✅ Обновление всех приложений завершено");
-                else if (code == 3010)
+                else if (code == 3010 || code == unchecked((int)0x8A15002C))
                     Log("✅ Обновление завершено. Для применения некоторых обновлений требуется перезагрузка.");
+                else if (code == unchecked((int)0x8A15002B) || code == unchecked((int)0x8A150014))
+                    Log("⚠ Некоторые обновления недоступны — версии в источнике не подходят для данной системы.");
                 else
                     Log($"⚠ winget завершился с кодом {code}");
             }
@@ -322,50 +336,62 @@ namespace Ven4Tools.Views.Tabs
 
         private async void BtnUpdate_Click(object sender, RoutedEventArgs e)
         {
-            if (((Button)sender).Tag is not InstalledApp app) return;
-            await UpdateAppAsync(app);
+            try
+            {
+                if (((Button)sender).Tag is not InstalledApp app) return;
+                await UpdateAppAsync(app);
+            }
+            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
         }
 
         private async void BtnUninstall_Click(object sender, RoutedEventArgs e)
         {
-            if (((Button)sender).Tag is not InstalledApp app) return;
+            try
+            {
+                if (((Button)sender).Tag is not InstalledApp app) return;
 
-            var res = MessageBox.Show(
-                $"Удалить «{app.Name}»?",
-                "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (res != MessageBoxResult.Yes) return;
+                var res = MessageBox.Show(
+                    $"Удалить «{app.Name}»?",
+                    "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (res != MessageBoxResult.Yes) return;
 
-            await UninstallAppAsync(app);
+                await UninstallAppAsync(app);
+            }
+            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
         }
 
         private async void BtnUpdateSelected_Click(object sender, RoutedEventArgs e)
         {
-            var visible = (lstApps.ItemsSource as IEnumerable<InstalledApp>)
-                ?.Where(a => a.IsSelected && a.HasUpdate).ToList();
-            if (visible == null || visible.Count == 0) return;
-
-            if (visible.Count >= 2)
+            try
             {
-                var rpAnswer = MessageBox.Show(
-                    $"Будет обновлено {visible.Count} приложений.\n\nСоздать точку восстановления Windows перед обновлением?",
-                    "Точка восстановления",
-                    MessageBoxButton.YesNoCancel,
-                    MessageBoxImage.Question);
+                var visible = (lstApps.ItemsSource as IEnumerable<InstalledApp>)
+                    ?.Where(a => a.IsSelected && a.HasUpdate).ToList();
+                if (visible == null || visible.Count == 0) return;
 
-                if (rpAnswer == MessageBoxResult.Cancel) return;
-
-                if (rpAnswer == MessageBoxResult.Yes)
+                if (visible.Count >= 2)
                 {
-                    Log("🛡️ Создаю точку восстановления...");
-                    bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед массовым обновлением");
-                    Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
-                }
-            }
+                    var rpAnswer = MessageBox.Show(
+                        $"Будет обновлено {visible.Count} приложений.\n\nСоздать точку восстановления Windows перед обновлением?",
+                        "Точка восстановления",
+                        MessageBoxButton.YesNoCancel,
+                        MessageBoxImage.Question);
 
-            btnUpdateSelected.IsEnabled = false;
-            foreach (var app in visible)
-                await UpdateAppAsync(app);
-            btnUpdateSelected.IsEnabled = true;
+                    if (rpAnswer == MessageBoxResult.Cancel) return;
+
+                    if (rpAnswer == MessageBoxResult.Yes)
+                    {
+                        Log("🛡️ Создаю точку восстановления...");
+                        bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед массовым обновлением");
+                        Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
+                    }
+                }
+
+                btnUpdateSelected.IsEnabled = false;
+                foreach (var app in visible)
+                    await UpdateAppAsync(app);
+            }
+            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
+            finally { btnUpdateSelected.IsEnabled = true; }
         }
 
         // ── Операции winget ────────────────────────────────────────────────────
@@ -381,11 +407,30 @@ namespace Ven4Tools.Views.Tabs
                 string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements --locale en-US";
                 int code = await WingetRunner.RunStreamingAsync(args, line => Log($"  {line}"),
                     TimeSpan.FromMinutes(15));
-                if (code == 0 || code == 3010)
+                if (code == 0)
                 {
                     app.Available = "";
                     Dispatcher.Invoke(() => { ApplyFilter(); UpdateStats(); });
                     Log($"✅ {app.Name} обновлён");
+                }
+                else if (code == 3010 || code == unchecked((int)0x8A15002C))
+                {
+                    // 3010 = Windows installer reboot required; 0x8A15002C = winget reboot required to finish
+                    app.Available = "";
+                    Dispatcher.Invoke(() => { ApplyFilter(); UpdateStats(); });
+                    Log($"✅ {app.Name} обновлён (требуется перезагрузка для завершения)");
+                }
+                else if (code == unchecked((int)0x8A15002B) || code == unchecked((int)0x8A150014))
+                {
+                    // 0x8A15002B / 0x8A150014 = No applicable upgrade found:
+                    // доступная версия в источнике не подходит для данной системы (архитектура, требования и т.п.)
+                    Log($"⚠ {app.Name}: обновление недоступно — версия {app.Available} не применима к данной системе");
+                }
+                else if (code == unchecked((int)0x80072EE2) || code == unchecked((int)0x80072EFE))
+                {
+                    // 0x80072EE2 = WININET_E_TIMEOUT / 0x80072EFE = WININET_E_CONNECTION_ABORTED —
+                    // источник (msstore и др.) недоступен по сети, обновление не применено
+                    Log($"⚠ {app.Name}: ошибка сети — источник недоступен, попробуйте позже");
                 }
                 else if (code != -1)
                 {
@@ -429,10 +474,11 @@ namespace Ven4Tools.Views.Tabs
                     return true;
             }
 
-            // Попытка 2: найти строку UninstallString в реестре по DisplayName
-            string? uninstallString = FindUninstallString(app.Name);
+            // Попытка 2: найти строку UninstallString в реестре по DisplayName.
+            // Скан реестра — в Task.Run, чтобы не блокировать UI-поток.
+            string? uninstallString = await Task.Run(() => FindUninstallString(app.Name));
             if (uninstallString != null)
-                return RunUninstallString(uninstallString);
+                return await RunUninstallStringAsync(uninstallString);
 
             return false;
         }
@@ -462,7 +508,7 @@ namespace Ven4Tools.Views.Tabs
             return null;
         }
 
-        private static bool RunUninstallString(string uninstallString)
+        private static async Task<bool> RunUninstallStringAsync(string uninstallString)
         {
             // Тихий режим: msiexec /x ... /quiet, NSIS /S, Inno /SILENT
             string cmd = uninstallString.Trim();
@@ -495,11 +541,20 @@ namespace Ven4Tools.Views.Tabs
                 p = Process.Start(new ProcessStartInfo(exe, args)
                     { UseShellExecute = true, Verb = "runas" });
             }
-            bool exited = p?.WaitForExit(120_000) ?? false;
-            if (!exited) { try { p?.Kill(); } catch { } }
+            if (p == null) return false;
+            // Асинхронное ожидание с таймаутом 120 секунд — UI-поток не блокируется
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+                await p.WaitForExitAsync(cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                try { p.Kill(); } catch { }
+                return false;
+            }
             // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — удаление прошло успешно
-            bool success = exited && (p?.ExitCode == 0 || p?.ExitCode == 3010);
-            return success;
+            return p.ExitCode == 0 || p.ExitCode == 3010;
         }
 
         // ── Вспомогательные ───────────────────────────────────────────────────
@@ -520,40 +575,44 @@ namespace Ven4Tools.Views.Tabs
 
         private async void BtnUninstallSelected_Click(object sender, RoutedEventArgs e)
         {
-            var selected = (lstApps.ItemsSource as IEnumerable<InstalledApp>)
-                ?.Where(a => a.IsSelected && a.CanAct).ToList();
-            if (selected == null || selected.Count == 0) return;
-
-            string list = string.Join("\n", selected.Take(10).Select(a => $"  • {a.Name}"));
-            if (selected.Count > 10) list += $"\n  ... и ещё {selected.Count - 10}";
-
-            var res = MessageBox.Show(
-                $"Удалить {selected.Count} приложений?\n\n{list}",
-                "Подтверждение удаления", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (res != MessageBoxResult.Yes) return;
-
-            if (selected.Count >= 2)
+            try
             {
-                var rpAnswer = MessageBox.Show(
-                    $"Будет удалено {selected.Count} приложений.\n\nСоздать точку восстановления Windows перед удалением?",
-                    "Точка восстановления",
-                    MessageBoxButton.YesNoCancel,
-                    MessageBoxImage.Question);
-                if (rpAnswer == MessageBoxResult.Cancel) return;
-                if (rpAnswer == MessageBoxResult.Yes)
+                var selected = (lstApps.ItemsSource as IEnumerable<InstalledApp>)
+                    ?.Where(a => a.IsSelected && a.CanAct).ToList();
+                if (selected == null || selected.Count == 0) return;
+
+                string list = string.Join("\n", selected.Take(10).Select(a => $"  • {a.Name}"));
+                if (selected.Count > 10) list += $"\n  ... и ещё {selected.Count - 10}";
+
+                var res = MessageBox.Show(
+                    $"Удалить {selected.Count} приложений?\n\n{list}",
+                    "Подтверждение удаления", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes) return;
+
+                if (selected.Count >= 2)
                 {
-                    Log("🛡️ Создаю точку восстановления...");
-                    bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед групповым удалением");
-                    Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
+                    var rpAnswer = MessageBox.Show(
+                        $"Будет удалено {selected.Count} приложений.\n\nСоздать точку восстановления Windows перед удалением?",
+                        "Точка восстановления",
+                        MessageBoxButton.YesNoCancel,
+                        MessageBoxImage.Question);
+                    if (rpAnswer == MessageBoxResult.Cancel) return;
+                    if (rpAnswer == MessageBoxResult.Yes)
+                    {
+                        Log("🛡️ Создаю точку восстановления...");
+                        bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед групповым удалением");
+                        Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
+                    }
                 }
+
+                btnUninstallSelected.IsEnabled = false;
+
+                foreach (var app in selected)
+                    await UninstallAppAsync(app);
+
+                btnUninstallSelected.IsEnabled = selected.Any(a => a.CanAct);
             }
-
-            btnUninstallSelected.IsEnabled = false;
-
-            foreach (var app in selected)
-                await UninstallAppAsync(app);
-
-            btnUninstallSelected.IsEnabled = selected.Any(a => a.CanAct);
+            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); btnUninstallSelected.IsEnabled = true; }
         }
 
         // ── Экспорт / Импорт ─────────────────────────────────────────────────

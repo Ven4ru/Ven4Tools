@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -11,20 +12,32 @@ namespace Ven4Tools.Services
 {
     public class UserAppsService
     {
-        private const string ApiBase = "https://www.ven4tools.ru/api/db.php";
+        private const string ApiBase = ApiConfig.DbApi;
         private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+
+        // Формируем запрос с токеном авторизации — сервер обязан проверять,
+        // что user_id принадлежит владельцу токена (защита от IDOR).
+        private static HttpRequestMessage Req(HttpMethod method, string url)
+        {
+            var req = new HttpRequestMessage(method, url);
+            if (!string.IsNullOrEmpty(UserSession.Token))
+                req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", UserSession.Token);
+            return req;
+        }
 
         public async Task<List<AppInfo>> FetchAsync(int userId)
         {
             try
             {
-                var json = await _http.GetStringAsync($"{ApiBase}?action=get_user_apps&user_id={userId}");
+                using var req = Req(HttpMethod.Get, $"{ApiBase}?action=get_user_apps&user_id={userId}");
+                using var resp = await _http.SendAsync(req);
+                var json = await resp.Content.ReadAsStringAsync();
                 var doc = JsonDocument.Parse(json);
                 if (!doc.RootElement.TryGetProperty("apps", out var arr)) return new();
 
                 return arr.EnumerateArray().Select(ParseApp).ToList();
             }
-            catch { return new(); }
+            catch (Exception ex) { AppLogger.Write($"[UserAppsService] {ex.Message}"); return new(); }
         }
 
         public async Task SaveAsync(int userId, AppInfo app)
@@ -42,10 +55,11 @@ namespace Ven4Tools.Services
                     silent_args = app.SilentArgs,
                     required_space_mb = app.RequiredSpaceMB
                 };
-                var body = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-                await _http.PostAsync($"{ApiBase}?action=save_user_app", body);
+                using var req = Req(HttpMethod.Post, $"{ApiBase}?action=save_user_app");
+                req.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                await _http.SendAsync(req);
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[UserAppsService] {ex.Message}"); }
         }
 
         public async Task DeleteAsync(int userId, string appId)
@@ -53,10 +67,11 @@ namespace Ven4Tools.Services
             try
             {
                 var payload = new { user_id = userId, app_id = appId };
-                var body = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-                await _http.PostAsync($"{ApiBase}?action=delete_user_app", body);
+                using var req = Req(HttpMethod.Post, $"{ApiBase}?action=delete_user_app");
+                req.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                await _http.SendAsync(req);
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[UserAppsService] {ex.Message}"); }
         }
 
         private AppInfo ParseApp(JsonElement item)

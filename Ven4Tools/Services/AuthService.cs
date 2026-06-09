@@ -24,7 +24,7 @@ namespace Ven4Tools.Services
         {
             Timeout = TimeSpan.FromSeconds(15)
         };
-        private const string BaseUrl = "https://www.ven4tools.ru/api/db.php";
+        private const string BaseUrl = ApiConfig.DbApi;
 
         public Task<AuthResult> LoginAsync(string email, string password) =>
             PostAsync("login", new { email, password });
@@ -32,8 +32,9 @@ namespace Ven4Tools.Services
         public Task<AuthResult> RegisterAsync(string name, string email, string password) =>
             PostAsync("register", new { name, email, password });
 
-        public Task<AuthResult> YandexLoginAsync(string yandexId, string name, string email) =>
-            PostAsync("yandex_login", new { yandex_id = yandexId, name, email });
+        // Вход через Яндекс выполняется полностью на сервере (yandex-callback.php):
+        // сервер обменивает OAuth-код на токен и сам создаёт сессию. Клиент получает
+        // готовый токен и не передаёт личность вручную (см. YandexAuthWindow).
 
         private async Task<AuthResult> PostAsync(string action, object payload)
         {

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Ven4Tools.Models;
 
@@ -15,17 +16,21 @@ namespace Ven4Tools.Services
         private readonly HttpClient httpClient;
         private readonly ConcurrentDictionary<string, CachedAvailability> cache = new();
         private readonly TimeSpan cacheDuration = TimeSpan.FromMinutes(5);
+        // Таймаут хранится отдельно и применяется per-request через CancellationTokenSource:
+        // менять HttpClient.Timeout после первого запроса нельзя (InvalidOperationException)
+        private volatile int _timeoutSeconds;
 
         public AvailabilityChecker()
         {
             httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
-            httpClient.Timeout = TimeSpan.FromSeconds(AppSettings.CheckTimeout);
+            httpClient.Timeout = Timeout.InfiniteTimeSpan;
+            _timeoutSeconds = Math.Max(5, AppSettings.CheckTimeout);
         }
 
         public void UpdateTimeout(int seconds)
         {
-            httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(5, seconds));
+            _timeoutSeconds = Math.Max(5, seconds);
         }
 
         private class CachedAvailability
@@ -179,8 +184,9 @@ namespace Ven4Tools.Services
         {
             try
             {
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
                 using (var request = new HttpRequestMessage(HttpMethod.Head, url))
-                using (var response = await httpClient.SendAsync(request))
+                using (var response = await httpClient.SendAsync(request, timeoutCts.Token))
                 {
                     if (response.IsSuccessStatusCode)
                     {
@@ -192,10 +198,11 @@ namespace Ven4Tools.Services
 
                     if (response.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed)
                     {
+                        using var getCts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
                         using (var getRequest = new HttpRequestMessage(HttpMethod.Get, url))
                         {
                             getRequest.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 0);
-                            using (var getResponse = await httpClient.SendAsync(getRequest))
+                            using (var getResponse = await httpClient.SendAsync(getRequest, getCts.Token))
                             {
                                 if (getResponse.IsSuccessStatusCode || getResponse.StatusCode == System.Net.HttpStatusCode.PartialContent)
                                 {

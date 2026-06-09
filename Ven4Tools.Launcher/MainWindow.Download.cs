@@ -286,8 +286,11 @@ namespace Ven4Tools.Launcher
                             bool hasFreshCrash = System.IO.File.Exists(crashPath) &&
                                 (DateTime.UtcNow - System.IO.File.GetLastWriteTimeUtc(crashPath)).TotalSeconds < 15;
 
-                            if (!hasFreshCrash && wd != null)
-                                wd.ReportKill(clientProcess.ExitCode);
+                            // Код 0 — штатное закрытие клиента пользователем, это не «убийство» процесса
+                            int exitCode = 0;
+                            try { exitCode = clientProcess.ExitCode; } catch { }
+                            if (!hasFreshCrash && wd != null && exitCode != 0)
+                                wd.ReportKill(exitCode);
 
                             wd?.Dispose();
                         };

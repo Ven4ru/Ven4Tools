@@ -36,7 +36,7 @@ namespace Ven4Tools.Services
                 Directory.CreateDirectory(Path.GetDirectoryName(CrashFilePath)!);
                 File.WriteAllText(CrashFilePath, JsonConvert.SerializeObject(report, Formatting.Indented));
             }
-            catch { }
+            catch (Exception logEx) { AppLogger.Write($"[CrashReportService] {logEx.Message}"); }
         }
 
         public static CrashReport? Read()
@@ -47,7 +47,7 @@ namespace Ven4Tools.Services
                 var json = File.ReadAllText(CrashFilePath);
                 return JsonConvert.DeserializeObject<CrashReport>(json);
             }
-            catch { return null; }
+            catch (Exception ex) { AppLogger.Write($"[CrashReportService] {ex.Message}"); return null; }
         }
 
         public static void MarkReported()
@@ -59,7 +59,7 @@ namespace Ven4Tools.Services
                 report.Reported = true;
                 File.WriteAllText(CrashFilePath, JsonConvert.SerializeObject(report, Formatting.Indented));
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[CrashReportService] {ex.Message}"); }
         }
     }
 

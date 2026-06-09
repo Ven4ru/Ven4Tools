@@ -21,7 +21,10 @@ namespace Ven4Tools.Services
         {
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
+            // Без глобального таймаута: HttpClient.Timeout ограничивает всё тело ответа,
+            // и загрузки больших установщиков (100+ МБ) обрывались через 30 секунд.
+            // Таймаут на получение заголовков задаётся per-request через CancellationTokenSource.
+            _httpClient.Timeout = Timeout.InfiniteTimeSpan;
 
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var logsFolder = Path.Combine(appData, "Ven4Tools", "logs");
@@ -77,7 +80,7 @@ namespace Ven4Tools.Services
 
                     while (!localProc.HasExited)
                     {
-                        if (token.IsCancellationRequested) { try { localProc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
+                        if (token.IsCancellationRequested) { try { localProc.Kill(entireProcessTree: true); } catch { } token.ThrowIfCancellationRequested(); }
                         await Task.Delay(100, token);
                     }
 
@@ -137,7 +140,7 @@ namespace Ven4Tools.Services
                     {
                         while (!cacheProc.HasExited)
                         {
-                            if (token.IsCancellationRequested) { try { cacheProc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
+                            if (token.IsCancellationRequested) { try { cacheProc.Kill(entireProcessTree: true); } catch { } token.ThrowIfCancellationRequested(); }
                             await Task.Delay(100, token);
                         }
                         // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
@@ -268,14 +271,18 @@ namespace Ven4Tools.Services
                                 string tempFile = Path.Combine(Path.GetTempPath(), $"{app.Id}_{Guid.NewGuid()}{urlExt}");
                                 try
                                 {
-                                    using (var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token))
+                                    // Таймаут 30 секунд только на установление соединения и заголовки;
+                                    // скачивание тела ограничено лишь токеном отмены пользователя.
+                                    using var headersCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                                    headersCts.CancelAfter(TimeSpan.FromSeconds(30));
+                                    long totalRead = 0;
+                                    using (var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, headersCts.Token))
                                     {
                                         response.EnsureSuccessStatusCode();
                                         var totalBytes = response.Content.Headers.ContentLength ?? -1L;
                                         using var contentStream = await response.Content.ReadAsStreamAsync();
                                         using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
                                         var buf = new byte[8192];
-                                        long totalRead = 0;
                                         int bytesRead;
                                         while ((bytesRead = await contentStream.ReadAsync(buf, token)) > 0)
                                         {
@@ -289,6 +296,9 @@ namespace Ven4Tools.Services
                                             }
                                         }
                                     }
+
+                                    double downloadedMb = Math.Round(totalRead / 1_048_576.0, 1);
+                                    AppLogger.Write($"📥 Загружен установщик — {downloadedMb} МБ: {Path.GetFileName(tempFile)}");
 
                                     appProgress.Status = "🔐 Проверка SHA256...";
                                     appProgress.Percentage = 55;
@@ -346,9 +356,10 @@ namespace Ven4Tools.Services
                                     using var proc = Process.Start(psi);
                                     if (proc != null)
                                     {
+                                        AppLogger.Write($"▶ Запущен процесс установки PID {proc.Id}: {Path.GetFileName(psi.FileName)}");
                                         while (!proc.HasExited)
                                         {
-                                            if (token.IsCancellationRequested) { try { proc.Kill(); } catch { } token.ThrowIfCancellationRequested(); }
+                                            if (token.IsCancellationRequested) { try { proc.Kill(entireProcessTree: true); } catch { } token.ThrowIfCancellationRequested(); }
                                             await Task.Delay(100, token);
                                         }
                                         try { File.Delete(tempFile); } catch { }
@@ -368,7 +379,8 @@ namespace Ven4Tools.Services
                                         }
                                     }
                                 }
-                                catch (OperationCanceledException) { throw; }
+                                // Отмена пользователем — пробрасываем; таймаут заголовков — пробуем следующий источник
+                                catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
                                 catch (Exception ex)
                                 {
                                     Log($"❌ Прямая ссылка {url}: {ex.Message}");
@@ -527,12 +539,14 @@ namespace Ven4Tools.Services
 
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
+                AppLogger.Write($"▶ Запущен процесс установки PID {process.Id}: winget install {appId}");
 
                 while (!process.HasExited)
                 {
                     if (token.IsCancellationRequested)
                     {
-                        try { process.Kill(); } catch { }
+                        // Kill(true) — убиваем winget и все дочерние процессы (msiexec, setup.exe и др.)
+                        try { process.Kill(entireProcessTree: true); } catch { }
                         token.ThrowIfCancellationRequested();
                     }
                     await Task.Delay(100, token);
