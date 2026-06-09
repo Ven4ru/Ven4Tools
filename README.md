@@ -3,7 +3,6 @@
 [![GitHub release](https://img.shields.io/github/v/release/Ven4ru/Ven4Tools)](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Ven4ru/Ven4Tools/total)](https://github.com/Ven4ru/Ven4Tools/releases)
 [![License](https://img.shields.io/github/license/Ven4ru/Ven4Tools)](LICENSE)
-![Просмотры](https://profile-counter.glitch.me/ven4ru/count.svg)
 ![GitHub issues](https://img.shields.io/github/issues/Ven4ru/Ven4Tools)
 ![Lines of code](https://img.shields.io/tokei/lines/github/Ven4ru/Ven4Tools)
 
