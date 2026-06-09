@@ -1,14 +1,20 @@
 # Ven4Tools — Умный установщик программ для Windows
 
 <p align="center">
-  <a href="https://github.com/Ven4ru/Ven4Tools/releases/latest"><img src="https://img.shields.io/github/v/release/Ven4ru/Ven4Tools?style=flat-square" alt="GitHub release" /></a>
-  <a href="https://github.com/Ven4ru/Ven4Tools/releases"><img src="https://img.shields.io/github/downloads/Ven4ru/Ven4Tools/total?style=flat-square" alt="Downloads" /></a>
-  <img src="https://badgen.net/github/stars/Ven4ru/Ven4Tools?color=cyan" alt="Stars" />
-  <a href="https://hits.seeyoufarm.com"><img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FVen4ru%2FVen4Tools&count_bg=%234c1def&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=views&edge_flat=true" alt="Views"/></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Ven4ru/Ven4Tools?style=flat-square" alt="License" /></a>
-  <img src="https://img.shields.io/github/issues/Ven4ru/Ven4Tools?style=flat-square" alt="Issues" />
-  <img src="https://img.shields.io/github/repo-size/Ven4ru/Ven4Tools?style=flat-square" alt="Repo Size" />
-  <img src="https://img.shields.io/github/last-commit/Ven4ru/Ven4Tools?style=flat-square" alt="Last Commit" />
+  <a href="https://github.com/Ven4ru/Ven4Tools/releases/latest">
+    <img src="https://badgen.net/github/release/Ven4ru/Ven4Tools" alt="Release" />
+  </a>
+  <a href="https://github.com/Ven4ru/Ven4Tools/releases">
+    <img src="https://badgen.net/github/assets-dl/Ven4ru/Ven4Tools" alt="Downloads" />
+  </a>
+  <img src="https://badgen.net/github/stars/Ven4ru/Ven4Tools" alt="Stars" />
+  <a href="https://hits.seeyoufarm.com">
+    <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FVen4ru%2FVen4Tools&count_bg=%234c1def&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=views&edge_flat=true" alt="Views" />
+  </a>
+  <img src="https://badgen.net/github/license/Ven4ru/Ven4Tools" alt="License" />
+  <img src="https://badgen.net/github/issues/Ven4ru/Ven4Tools" alt="Issues" />
+  <img src="https://badgen.net/github/repo-size/Ven4ru/Ven4Tools" alt="Repo Size" />
+  <img src="https://badgen.net/github/last-commit/Ven4ru/Ven4Tools" alt="Last Commit" />
 </p>
 
 **Ven4Tools** — бесплатная программа с открытым исходным кодом для автоматической установки популярного софта на Windows. Работает сразу после установки системы — не требует установленного .NET или других компонентов.
