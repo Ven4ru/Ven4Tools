@@ -91,6 +91,7 @@ namespace Ven4Tools.Views.Tabs
                 {
                     ProfileService.Changed     += _profileChangedHandler;
                     UserSession.Changed        += OnUserSessionChanged;
+                    UserSession.Changed        += OnUserSessionChangedPresets;
                     AppSettings.Changed        += OnAppSettingsChanged;
                     SourceOrderService.Changed += OnSourceOrderChanged;
                     _eventsSubscribed = true;
@@ -108,12 +109,13 @@ namespace Ven4Tools.Views.Tabs
                 {
                     ProfileService.Changed     -= _profileChangedHandler;
                     UserSession.Changed        -= OnUserSessionChanged;
+                    UserSession.Changed        -= OnUserSessionChangedPresets;
                     AppSettings.Changed        -= OnAppSettingsChanged;
                     SourceOrderService.Changed -= OnSourceOrderChanged;
                     _eventsSubscribed = false;
                 }
-                (installService as IDisposable)?.Dispose();
-                (availabilityChecker as IDisposable)?.Dispose();
+                // Сервисы НЕ освобождаем: вкладка кэшируется в MainWindow и переиспользуется,
+                // а поля readonly — после Dispose все запросы падали бы с ObjectDisposedException.
             };
 
             btnInstall.Click              += InstallSelected_Click;

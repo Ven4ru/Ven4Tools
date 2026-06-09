@@ -18,7 +18,12 @@ namespace Ven4Tools.Views.Tabs
         {
             InitializeComponent();
             Loaded += async (_, _) => await RefreshAsync();
-            InstallHistoryService.Instance.Changed += () => Dispatcher.Invoke(async () => await RefreshAsync());
+            InstallHistoryService.Instance.Changed += () =>
+                _ = Dispatcher.InvokeAsync(async () =>
+                {
+                    try { await RefreshAsync(); }
+                    catch (Exception ex) { AppLogger.Write(ex.Message); }
+                });
 
             txtHistorySearch.GotFocus  += (_, _) => { if (txtHistorySearch.Text == (string)txtHistorySearch.Tag) txtHistorySearch.Text = ""; };
             txtHistorySearch.LostFocus += (_, _) => { if (string.IsNullOrWhiteSpace(txtHistorySearch.Text)) txtHistorySearch.Text = (string)txtHistorySearch.Tag; };

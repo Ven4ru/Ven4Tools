@@ -16,24 +16,45 @@ namespace Ven4Tools.Views.Tabs
         {
             _ = Dispatcher.InvokeAsync(async () =>
             {
-                var userApps = appManager.GetAllApps().Where(a => a.IsUserAdded).ToList();
-                foreach (var app in userApps)
-                {
-                    appCheckBoxes.Remove(app.Id);
-                    availabilityStatus.Remove(app.Id);
-                }
-                PanelПользовательские.Children.Clear();
-                appManager.ClearUserApps();
-
                 if (UserSession.IsLoggedIn)
+                {
+                    // Сначала запрашиваем сервер и только при успешном непустом ответе
+                    // заменяем локальный список — иначе вход при недоступном сервере
+                    // безвозвратно стирал локальные пользовательские приложения.
                     await SyncUserAppsFromServerAsync();
+                }
+                else
+                {
+                    // Выход из аккаунта — убираем приложения аккаунта из интерфейса
+                    ClearUserAppsUI();
+                }
             });
+        }
+
+        private void ClearUserAppsUI()
+        {
+            var userApps = appManager.GetAllApps().Where(a => a.IsUserAdded).ToList();
+            foreach (var app in userApps)
+            {
+                appCheckBoxes.Remove(app.Id);
+                availabilityStatus.Remove(app.Id);
+            }
+            PanelПользовательские.Children.Clear();
+            appManager.ClearUserApps();
         }
 
         private async Task SyncUserAppsFromServerAsync()
         {
             if (!UserSession.IsLoggedIn) return;
             var serverApps = await _userAppsService.FetchAsync(UserSession.UserId);
+
+            // Пустой список = сервер недоступен или приложений нет —
+            // в обоих случаях локальный список не трогаем
+            if (serverApps == null || serverApps.Count == 0)
+                return;
+
+            await Dispatcher.InvokeAsync(ClearUserAppsUI);
+
             int added = 0;
             foreach (var app in serverApps)
             {

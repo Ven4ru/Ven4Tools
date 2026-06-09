@@ -27,16 +27,21 @@ namespace Ven4Tools.Services
                 "Data",
                 "master.json");
 
+        // Таймаут хранится отдельно и применяется per-request через CancellationTokenSource:
+        // менять HttpClient.Timeout после первого запроса нельзя (InvalidOperationException)
+        private volatile int _timeoutSeconds;
+
         public CatalogLoaderService()
         {
             _httpClient = new HttpClient();
-            _httpClient.Timeout = TimeSpan.FromSeconds(AppSettings.CatalogTimeout);
+            _httpClient.Timeout = Timeout.InfiniteTimeSpan;
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+            _timeoutSeconds = Math.Max(3, AppSettings.CatalogTimeout);
         }
 
         public void UpdateTimeout(int seconds)
         {
-            _httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(3, seconds));
+            _timeoutSeconds = Math.Max(3, seconds);
         }
 
         public async Task<MasterCatalog> LoadCatalogAsync(CancellationToken ct = default)
@@ -60,8 +65,12 @@ namespace Ven4Tools.Services
 
             try
             {
+                // Таймаут per-request: связываем с внешним токеном отмены
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(_timeoutSeconds));
+
                 string remoteJson =
-                    await _httpClient.GetStringAsync(RemoteCatalogUrl, ct);
+                    await _httpClient.GetStringAsync(RemoteCatalogUrl, timeoutCts.Token);
 
                 // Присваиваем результат до записи на диск: ошибка кэширования
                 // (например, Program Files без прав на запись) не должна обнулять каталог.
@@ -79,7 +88,8 @@ namespace Ven4Tools.Services
 
                 return catalog;
             }
-            catch (OperationCanceledException)
+            // Пробрасываем только внешнюю отмену; таймаут сети — падаем в фолбэк на кэш
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 throw;
             }
