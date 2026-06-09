@@ -10,8 +10,7 @@ namespace Ven4Tools.Views
     public partial class YandexAuthWindow : Window
     {
         private const string ClientId = "90c3e4719791495cac5594768e41b248";
-        private const string RedirectUri = "https://ven4tools.ru/api/yandex-callback.php";
-        private readonly AuthService _auth = new AuthService();
+        private const string RedirectUri = ApiConfig.BaseUrl + "/api/yandex-callback.php";
 
         public YandexAuthWindow()
         {
@@ -26,21 +25,19 @@ namespace Ven4Tools.Views
                 await webView.EnsureCoreWebView2Async();
 
                 // Перехватываем window.opener.postMessage на странице callback.
-                // Callback.php вызывает window.opener.postMessage({user_id, name, email}, ...) —
-                // в WebView2 opener == null, поэтому инжектируем поддельный opener,
-                // который пробрасывает данные через WebView2 API.
+                // yandex-callback.php выполняет обмен кода на токен НА СЕРВЕРЕ (используя
+                // client_secret, которого нет в клиенте) и возвращает готовую сессию
+                // вызовом window.opener.postMessage({token, user_id, name, email, is_admin}).
+                // В WebView2 opener == null, поэтому инжектируем поддельный opener,
+                // который пробрасывает весь объект ответа через WebView2 API.
                 await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
                     (function() {
                         if (location.href.indexOf('yandex-callback.php') !== -1) {
                             window.opener = {
                                 postMessage: function(data) {
-                                    if (!data || !data.user_id) return;
+                                    if (!data) return;
                                     if (window.chrome && window.chrome.webview) {
-                                        window.chrome.webview.postMessage(JSON.stringify({
-                                            yandex_id: String(data.user_id),
-                                            name: String(data.name || ''),
-                                            email: String(data.email || '')
-                                        }));
+                                        window.chrome.webview.postMessage(JSON.stringify(data));
                                     }
                                 }
                             };
@@ -64,39 +61,53 @@ namespace Ven4Tools.Views
             }
         }
 
-        private async void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
+        private void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
         {
             try
             {
                 var json = e.TryGetWebMessageAsString();
                 var data = JObject.Parse(json);
 
-                var yandexId = data["yandex_id"]?.ToString() ?? "";
-                var name     = data["name"]?.ToString() ?? "";
-                var email    = data["email"]?.ToString() ?? "";
-
-                if (string.IsNullOrWhiteSpace(yandexId))
+                // Если сервер вернул ошибку — показываем её
+                var error = data["error"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(error))
                 {
-                    txtStatus.Text = "Ошибка: не получены данные от Яндекса. Попробуйте снова.";
+                    txtStatus.Text = $"Ошибка: {error}";
+                    return;
+                }
+
+                // Доверяем только серверной сессии: token + user_id выдаёт сервер
+                // после обмена OAuth-кода. Клиент больше НЕ передаёт личность сам —
+                // это исключает подмену личности (отправку чужого yandex_id/email).
+                var token = data["token"]?.ToString() ?? "";
+
+                int userId = 0;
+                var uidTok = data["user_id"];
+                if (uidTok != null) int.TryParse(uidTok.ToString(), out userId);
+
+                var name  = data["name"]?.ToString() ?? "";
+                var email = data["email"]?.ToString() ?? "";
+
+                bool isAdmin = false;
+                var adminTok = data["is_admin"];
+                if (adminTok != null)
+                {
+                    var s = adminTok.ToString();
+                    isAdmin = s == "1" || s.Equals("true", StringComparison.OrdinalIgnoreCase);
+                }
+
+                if (string.IsNullOrWhiteSpace(token) || userId <= 0)
+                {
+                    txtStatus.Text = "Ошибка: сервер не вернул сессию. Попробуйте снова.";
                     return;
                 }
 
                 txtStatus.Text = "Авторизация...";
                 webView.IsEnabled = false;
 
-                var result = await _auth.YandexLoginAsync(yandexId, name, email);
-
-                if (result.Success)
-                {
-                    UserSession.Login(result.UserId, result.Name, result.Email, result.IsAdmin, result.Token);
-                    DialogResult = true;
-                    Close();
-                }
-                else
-                {
-                    txtStatus.Text = $"Ошибка: {result.Error}";
-                    webView.IsEnabled = true;
-                }
+                UserSession.Login(userId, name, email, isAdmin, token);
+                DialogResult = true;
+                Close();
             }
             catch (Exception ex)
             {

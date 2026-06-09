@@ -193,35 +193,52 @@ namespace Ven4Tools.Launcher.Services
             }
         }
 
+        // Серверный прокси для отправки отчётов об ошибках.
+        // GitHub-токен для создания issue хранится на сервере (config.php), а не в exe,
+        // поэтому его нельзя извлечь реверс-инжинирингом распространяемого лаунчера.
+        private const string CrashProxyUrl = "https://ven4tools.ru/api/db.php?action=report_crash";
+
         /// <summary>
-        /// Создание issue в репозитории (отчёт об ошибке)
+        /// Отправка отчёта об ошибке через серверный прокси ven4tools.ru.
+        /// Сервер сам создаёт issue в репозитории, используя свой токен.
         /// </summary>
         public async Task<(bool Success, string? IssueUrl, string? Error)> CreateIssueAsync(
             string title, string body, string[]? labels = null)
         {
             try
             {
-                string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/issues";
                 var payload = new
                 {
                     title,
                     body,
                     labels = labels ?? new[] { "bug" }
                 };
+
+                // Отдельный HttpClient без заголовка Authorization — токен GitHub
+                // на сервер передавать не нужно (и нельзя).
+                using var proxyClient = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+                proxyClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
+
                 var content = new System.Net.Http.StringContent(
                     System.Text.Json.JsonSerializer.Serialize(payload),
                     System.Text.Encoding.UTF8,
                     "application/json");
 
-                using var response = await httpClient.PostAsync(url, content);
+                using var response = await proxyClient.PostAsync(CrashProxyUrl, content);
                 string json = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
-                    return (false, null, $"GitHub API {(int)response.StatusCode}: {json}");
+                    return (false, null, $"Сервер вернул {(int)response.StatusCode}: {json}");
 
                 using var doc = System.Text.Json.JsonDocument.Parse(json);
-                string? issueUrl = doc.RootElement
-                    .TryGetProperty("html_url", out var u) ? u.GetString() : null;
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("error", out var errProp))
+                    return (false, null, errProp.GetString());
+
+                string? issueUrl =
+                    root.TryGetProperty("issue_url", out var iu) ? iu.GetString() :
+                    root.TryGetProperty("html_url", out var hu) ? hu.GetString() : null;
 
                 return (true, issueUrl, null);
             }

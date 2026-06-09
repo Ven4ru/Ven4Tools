@@ -13,7 +13,7 @@ namespace Ven4Tools.Services
 {
     internal static class PresetService
     {
-        private const string ApiBase = "https://ven4tools.ru/api/db.php";
+        private const string ApiBase = ApiConfig.DbApi;
         private static readonly string LocalPath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                          "Ven4Tools", "presets.json");
