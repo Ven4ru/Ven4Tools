@@ -1,14 +1,14 @@
 # Ven4Tools — Умный установщик программ для Windows
 
 <p align="center">
-  <a href="https://github.com/Ven4ru/Ven4Tools/releases/latest"><img src="https://img.shields.io/github/v/release/Ven4ru/Ven4Tools" alt="GitHub release" /></a>
-  <a href="https://github.com/Ven4ru/Ven4Tools/releases"><img src="https://img.shields.io/github/downloads/Ven4ru/Ven4Tools/total" alt="Downloads" /></a>
-  <img src="https://img.shields.io/github/stars/Ven4ru/Ven4Tools?style=flat" alt="Stars" />
-  <img src="https://hugo-profile-counter.glitch.me/Ven4ru-Ven4Tools/count.svg" alt="Views" />
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Ven4ru/Ven4Tools" alt="License" /></a>
-  <img src="https://img.shields.io/github/issues/Ven4ru/Ven4Tools" alt="Issues" />
-  <img src="https://img.shields.io/tokei/lines/github/Ven4ru/Ven4Tools" alt="Lines of code" />
-  <img src="https://img.shields.io/github/last-commit/Ven4ru/Ven4Tools" alt="Last Commit" />
+  <a href="https://github.com/Ven4ru/Ven4Tools/releases/latest"><img src="https://img.shields.io/github/v/release/Ven4ru/Ven4Tools?style=flat-square" alt="GitHub release" /></a>
+  <a href="https://github.com/Ven4ru/Ven4Tools/releases"><img src="https://img.shields.io/github/downloads/Ven4ru/Ven4Tools/total?style=flat-square" alt="Downloads" /></a>
+  <img src="https://badgen.net/github/stars/Ven4ru/Ven4Tools?color=cyan" alt="Stars" />
+  <img src="https://profile-counter.glitch.me/Ven4ru-Ven4Tools/count.svg" alt="Views" />
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Ven4ru/Ven4Tools?style=flat-square" alt="License" /></a>
+  <img src="https://img.shields.io/github/issues/Ven4ru/Ven4Tools?style=flat-square" alt="Issues" />
+  <img src="https://img.shields.io/github/repo-size/Ven4ru/Ven4Tools?style=flat-square" alt="Repo Size" />
+  <img src="https://img.shields.io/github/last-commit/Ven4ru/Ven4Tools?style=flat-square" alt="Last Commit" />
 </p>
 
 **Ven4Tools** — бесплатная программа с открытым исходным кодом для автоматической установки популярного софта на Windows. Работает сразу после установки системы — не требует установленного .NET или других компонентов.
