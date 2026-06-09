@@ -24,6 +24,7 @@ namespace Ven4Tools.Views.Tabs
         
 
         private bool _initialized = false;
+        private bool _connSubscribed = false;
         private CancellationTokenSource? _cacheCts;
         private List<CacheAppItem> _cacheAppItems = new();
 
@@ -61,26 +62,46 @@ namespace Ven4Tools.Views.Tabs
             chkOfflineMode.Click      += ChkOfflineMode_Click;
             txtOfflineCachePath.LostFocus += (_, _) => SaveOfflineSettings();
 
-            ConnectivityMonitor.StatusChanged += online => Dispatcher.Invoke(UpdateConnectivityStatus);
+            // Подписка на ConnectivityMonitor — в Loaded: вкладка кэшируется и переиспользуется,
+            // поэтому после Unloaded нужно подписываться заново при каждом показе
+            Unloaded += SystemTab_Unloaded;
 
             LoadSettings();
             LoadOfflineSettings();
         }
 
+        private void OnConnectivityChanged(bool online) => Dispatcher.Invoke(UpdateConnectivityStatus);
 
-        private void SystemTab_Loaded(object sender, RoutedEventArgs e)
+        private void SystemTab_Unloaded(object sender, RoutedEventArgs e)
         {
+            if (_connSubscribed)
+            {
+                ConnectivityMonitor.StatusChanged -= OnConnectivityChanged;
+                _connSubscribed = false;
+            }
+        }
+
+
+        private async void SystemTab_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Переподписка при каждом показе вкладки (после Unloaded подписка снимается)
+            if (!_connSubscribed)
+            {
+                ConnectivityMonitor.StatusChanged += OnConnectivityChanged;
+                _connSubscribed = true;
+            }
+            UpdateConnectivityStatus();
+
             if (_initialized) return;
             _initialized = true;
 
             LoadSystemInfo();
             LoadAutoStartStatus();
             LoadSourceOrderUI();
-            UpdateConnectivityStatus();
             UpdateCacheStats();
             LoadCacheAppsList();
 
-            bool? turbo = GetTurboBoostState();
+            bool? turbo = await GetTurboBoostStateAsync();
             if (turbo.HasValue)
                 AddLog(turbo.Value ? "⚡ Турбобуст: включён" : "⚡ Турбобуст: отключён");
         }
@@ -345,11 +366,11 @@ namespace Ven4Tools.Views.Tabs
             }
         }
         
-        private void BtnDisableTurboBoost_Click(object sender, RoutedEventArgs e)
+        private async void BtnDisableTurboBoost_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                ApplyTurboBoost(false);
+                await ApplyTurboBoostAsync(false);
                 AddLog("⚡ Турбобуст отключён");
                 MessageBox.Show("✅ Турбобуст отключён.\nИзменение применено немедленно — перезагрузка не требуется.",
                     "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -361,11 +382,11 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private void BtnEnableTurboBoost_Click(object sender, RoutedEventArgs e)
+        private async void BtnEnableTurboBoost_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                ApplyTurboBoost(true);
+                await ApplyTurboBoostAsync(true);
                 AddLog("⚡ Турбобуст включён");
                 MessageBox.Show("✅ Турбобуст включён.\nИзменение применено немедленно — перезагрузка не требуется.",
                     "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -377,22 +398,22 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private void ApplyTurboBoost(bool enable)
+        private async Task ApplyTurboBoostAsync(bool enable)
         {
             int value = enable ? 1 : 0;
 
             // Применяем для AC (от сети) и DC (от батареи)
-            RunPowerCfg($"-setacvalueindex SCHEME_CURRENT {TurboSubgroup} {TurboSetting} {value}");
-            RunPowerCfg($"-setdcvalueindex SCHEME_CURRENT {TurboSubgroup} {TurboSetting} {value}");
+            await RunPowerCfgAsync($"-setacvalueindex SCHEME_CURRENT {TurboSubgroup} {TurboSetting} {value}");
+            await RunPowerCfgAsync($"-setdcvalueindex SCHEME_CURRENT {TurboSubgroup} {TurboSetting} {value}");
 
             // Активируем схему чтобы применить изменения
-            RunPowerCfg("-setactive SCHEME_CURRENT");
+            await RunPowerCfgAsync("-setactive SCHEME_CURRENT");
 
             // Делаем настройку видимой в панели управления
             SetTurboBoostAttributes(2);
         }
 
-        private bool? GetTurboBoostState()
+        private async Task<bool?> GetTurboBoostStateAsync()
         {
             try
             {
@@ -406,19 +427,24 @@ namespace Ven4Tools.Views.Tabs
                     StandardOutputEncoding = System.Text.Encoding.UTF8
                 };
                 using var process = Process.Start(psi);
-                string output = process?.StandardOutput.ReadToEnd() ?? "";
-                process?.WaitForExit();
+                if (process == null) return null;
+                // Асинхронное чтение — не блокируем UI-поток
+                string output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
 
-                var match = System.Text.RegularExpressions.Regex.Match(
-                    output, @"Current AC Power Setting Index:\s*0x(\w+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                if (match.Success)
-                    return Convert.ToInt32(match.Groups[1].Value, 16) != 0;
+                // Языконезависимый разбор: powercfg локализует подписи строк
+                // («Current AC Power Setting Index» на русской Windows выводится по-русски),
+                // но значения «0x...» встречаются только в двух финальных строках —
+                // текущий индекс AC (от сети) и DC (от батареи). Берём первый — AC.
+                var matches = System.Text.RegularExpressions.Regex.Matches(output, @"0x([0-9A-Fa-f]+)");
+                if (matches.Count > 0)
+                    return Convert.ToInt32(matches[0].Groups[1].Value, 16) != 0;
             }
             catch { }
             return null;
         }
 
-        private void RunPowerCfg(string args)
+        private async Task RunPowerCfgAsync(string args)
         {
             var psi = new ProcessStartInfo
             {
@@ -430,10 +456,11 @@ namespace Ven4Tools.Views.Tabs
                 RedirectStandardError = true
             };
             using var process = Process.Start(psi) ?? throw new Exception("Не удалось запустить powercfg");
-            // Читаем stderr параллельно — иначе WaitForExit зависнет если буфер stderr переполнится
-            var stderrTask = Task.Run(() => process.StandardError.ReadToEnd());
-            process.WaitForExit();
-            string err = stderrTask.GetAwaiter().GetResult();
+            // Читаем stderr асинхронно — иначе WaitForExit зависнет если буфер stderr переполнится.
+            // WaitForExitAsync не блокирует UI-поток.
+            var stderrTask = process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync();
+            string err = await stderrTask;
             if (process.ExitCode != 0)
                 throw new Exception($"powercfg завершился с ошибкой {process.ExitCode}: {err}");
         }
@@ -668,69 +695,82 @@ namespace Ven4Tools.Views.Tabs
             txtCacheLog.Visibility             = Visibility.Visible;
             txtCacheLog.Clear();
 
-            SaveOfflineSettings();
-            OfflineService.EnsureCacheDir();
-
-            using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
-            http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
-
-            int done = 0, total = selected.Count, errors = 0;
-
-            foreach (var item in selected)
+            // Вся подготовка — внутри try: исключение в async void-обработчике
+            // (например, недопустимый путь кэша в EnsureCacheDir) уронило бы всё приложение
+            try
             {
-                if (token.IsCancellationRequested) break;
+                SaveOfflineSettings();
+                OfflineService.EnsureCacheDir();
 
-                // Build a minimal App for the service
-                var app = new Ven4Tools.Models.App
+                using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
+                http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+
+                int done = 0, total = selected.Count, errors = 0;
+
+                foreach (var item in selected)
                 {
-                    Id          = item.Id,
-                    Name        = item.DisplayName.Split('[')[0].Trim().TrimEnd(' ', '✅').Trim(),
-                    DownloadUrl = item.DownloadUrl,
-                    WingetId    = item.WingetId
-                };
+                    if (token.IsCancellationRequested) break;
 
-                var progress = new Progress<(string status, int pct)>(v =>
-                {
-                    if (v.pct >= 0) progressCache.Value = v.pct;
-                    if (!v.status.StartsWith("  ")) // skip verbose winget lines
-                        txtCacheLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {v.status}\n");
-                    txtCacheLog.ScrollToEnd();
-                });
+                    // Минимальный объект App для сервиса
+                    var app = new Ven4Tools.Models.App
+                    {
+                        Id          = item.Id,
+                        Name        = item.DisplayName.Split('[')[0].Trim().TrimEnd(' ', '✅').Trim(),
+                        DownloadUrl = item.DownloadUrl,
+                        WingetId    = item.WingetId
+                    };
 
-                try
-                {
-                    bool ok = item.HasDirectUrl
-                        ? await OfflineService.CacheInstallerDirectAsync(app, http, progress, token)
-                        : await OfflineService.CacheInstallerWingetAsync(app, progress, token);
+                    var progress = new Progress<(string status, int pct)>(v =>
+                    {
+                        if (v.pct >= 0) progressCache.Value = v.pct;
+                        if (!v.status.StartsWith("  ")) // пропускаем подробные строки winget
+                            txtCacheLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {v.status}\n");
+                        txtCacheLog.ScrollToEnd();
+                    });
 
-                    if (!ok) errors++;
+                    try
+                    {
+                        bool ok = item.HasDirectUrl
+                            ? await OfflineService.CacheInstallerDirectAsync(app, http, progress, token)
+                            : await OfflineService.CacheInstallerWingetAsync(app, progress, token);
+
+                        if (!ok) errors++;
+                    }
+                    catch (OperationCanceledException) { break; }
+                    catch (Exception ex)
+                    {
+                        txtCacheLog.AppendText($"❌ {app.Name}: {ex.Message}\n");
+                        errors++;
+                    }
+
+                    done++;
+                    progressCache.Value = (double)done / total * 100;
                 }
-                catch (OperationCanceledException) { break; }
-                catch (Exception ex)
-                {
-                    txtCacheLog.AppendText($"❌ {app.Name}: {ex.Message}\n");
-                    errors++;
-                }
 
-                done++;
-                progressCache.Value = (double)done / total * 100;
+                string summary = token.IsCancellationRequested
+                    ? $"⏹ Остановлено. Скачано: {done}/{total}"
+                    : $"✅ Готово: {done}/{total}{(errors > 0 ? $", ошибок: {errors}" : "")}";
+                txtCacheLog.AppendText($"\n{summary}\n");
+                txtCacheLog.ScrollToEnd();
+                AddLog(summary);
             }
+            catch (Exception ex)
+            {
+                txtCacheLog.AppendText($"❌ Ошибка: {ex.Message}\n");
+                AddLog($"❌ Ошибка кэширования: {ex.Message}");
+            }
+            finally
+            {
+                btnDownloadToCache.IsEnabled      = true;
+                btnCancelCacheDownload.Visibility = Visibility.Collapsed;
+                btnCancelCacheDownload.IsEnabled  = true;
+                progressCache.Value = 0;
+                UpdateCacheStats();
+                LoadCacheAppsList();
 
-            string summary = token.IsCancellationRequested
-                ? $"⏹ Остановлено. Скачано: {done}/{total}"
-                : $"✅ Готово: {done}/{total}{(errors > 0 ? $", ошибок: {errors}" : "")}";
-            txtCacheLog.AppendText($"\n{summary}\n");
-            txtCacheLog.ScrollToEnd();
-            AddLog(summary);
-
-            btnDownloadToCache.IsEnabled      = true;
-            btnCancelCacheDownload.Visibility = Visibility.Collapsed;
-            progressCache.Value = 0;
-            UpdateCacheStats();
-            LoadCacheAppsList();
-
-            _cacheCts.Dispose();
-            _cacheCts = null;
+                _cacheCts.Dispose();
+                _cacheCts = null;
+            }
         }
 
         private void BtnCancelCacheDownload_Click(object sender, RoutedEventArgs e)

@@ -28,6 +28,20 @@ namespace Ven4Tools.Services
         {
             try
             {
+                // Пишем heartbeat только из UI-потока: если интерфейс завис,
+                // запись прекращается и watchdog лаунчера обнаруживает зависание.
+                // Таймер на пуле потоков продолжал бы писать и маскировал бы фриз.
+                var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                if (dispatcher == null) return;
+                _ = dispatcher.InvokeAsync(WriteHeartbeatFile);
+            }
+            catch { }
+        }
+
+        private void WriteHeartbeatFile()
+        {
+            try
+            {
                 var payload = new
                 {
                     Pid       = _pid,

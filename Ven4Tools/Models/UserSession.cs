@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace Ven4Tools.Models
@@ -53,10 +55,12 @@ namespace Ven4Tools.Models
                     return;
                 }
                 Directory.CreateDirectory(Path.GetDirectoryName(_sessionPath)!);
-                var data = new { UserId, Name, Email, IsAdmin, Token };
+                // Токен шифруем через DPAPI (привязка к текущему пользователю Windows),
+                // чтобы он не лежал в session.json открытым текстом.
+                var data = new { UserId, Name, Email, IsAdmin, Token = Protect(Token) };
                 File.WriteAllText(_sessionPath, JsonConvert.SerializeObject(data));
             }
-            catch { }
+            catch (Exception ex) { Services.AppLogger.Write($"[UserSession] {ex.Message}"); }
         }
 
         private static void Load()
@@ -73,10 +77,45 @@ namespace Ven4Tools.Models
                     Name = data.Name;
                     Email = data.Email;
                     IsAdmin = data.IsAdmin;
-                    Token = data.Token ?? "";
+                    Token = Unprotect(data.Token ?? "");
                 }
             }
-            catch { }
+            catch (Exception ex) { Services.AppLogger.Write($"[UserSession] {ex.Message}"); }
+        }
+
+        // ── Шифрование токена (DPAPI, CurrentUser) ──────────────────────────────────
+
+        private static string Protect(string plain)
+        {
+            if (string.IsNullOrEmpty(plain)) return "";
+            try
+            {
+                var bytes = ProtectedData.Protect(
+                    Encoding.UTF8.GetBytes(plain), null, DataProtectionScope.CurrentUser);
+                return Convert.ToBase64String(bytes);
+            }
+            catch (Exception ex)
+            {
+                Services.AppLogger.Write($"[UserSession] {ex.Message}");
+                return plain; // в крайнем случае не теряем токен
+            }
+        }
+
+        private static string Unprotect(string stored)
+        {
+            if (string.IsNullOrEmpty(stored)) return "";
+            try
+            {
+                var bytes = ProtectedData.Unprotect(
+                    Convert.FromBase64String(stored), null, DataProtectionScope.CurrentUser);
+                return Encoding.UTF8.GetString(bytes);
+            }
+            catch
+            {
+                // Обратная совместимость: старые сессии хранили токен открытым текстом.
+                // Если расшифровка не удалась — считаем значение plaintext.
+                return stored;
+            }
         }
     }
 }
