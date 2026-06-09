@@ -2,9 +2,12 @@
 
 [![GitHub release](https://img.shields.io/github/v/release/Ven4ru/Ven4Tools)](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Ven4ru/Ven4Tools/total)](https://github.com/Ven4ru/Ven4Tools/releases)
+![GitHub Repo stars](https://img.shields.io/github/stars/Ven4ru/Ven4Tools?style=flat)
+![GitHub views](https://hugo-profile-counter.glitch.me/Ven4ru-Ven4Tools/count.svg)
 [![License](https://img.shields.io/github/license/Ven4ru/Ven4Tools)](LICENSE)
 ![GitHub issues](https://img.shields.io/github/issues/Ven4ru/Ven4Tools)
 ![Lines of code](https://img.shields.io/tokei/lines/github/Ven4ru/Ven4Tools)
+![GitHub last commit](https://img.shields.io/github/last-commit/Ven4ru/Ven4Tools)
 
 **Ven4Tools** — бесплатная программа с открытым исходным кодом для автоматической установки популярного софта на Windows. Работает сразу после установки системы — не требует установленного .NET или других компонентов.
 
