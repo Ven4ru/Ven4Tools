@@ -4,7 +4,7 @@
   <a href="https://github.com/Ven4ru/Ven4Tools/releases/latest"><img src="https://img.shields.io/github/v/release/Ven4ru/Ven4Tools?style=flat-square" alt="GitHub release" /></a>
   <a href="https://github.com/Ven4ru/Ven4Tools/releases"><img src="https://img.shields.io/github/downloads/Ven4ru/Ven4Tools/total?style=flat-square" alt="Downloads" /></a>
   <img src="https://badgen.net/github/stars/Ven4ru/Ven4Tools?color=cyan" alt="Stars" />
-  <img src="https://profile-counter.glitch.me/Ven4ru-Ven4Tools/count.svg" alt="Views" />
+  <a href="https://hits.seeyoufarm.com"><img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FVen4ru%2FVen4Tools&count_bg=%234c1def&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=views&edge_flat=true" alt="Views"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Ven4ru/Ven4Tools?style=flat-square" alt="License" /></a>
   <img src="https://img.shields.io/github/issues/Ven4ru/Ven4Tools?style=flat-square" alt="Issues" />
   <img src="https://img.shields.io/github/repo-size/Ven4ru/Ven4Tools?style=flat-square" alt="Repo Size" />
