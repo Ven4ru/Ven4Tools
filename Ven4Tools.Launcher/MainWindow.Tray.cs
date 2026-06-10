@@ -84,7 +84,7 @@ namespace Ven4Tools.Launcher
             var ver = Assembly.GetExecutingAssembly().GetName().Version;
             var launcherVersion = ver != null
                 ? $"{ver.Major}.{ver.Minor}.{ver.Build}"
-                : "3.3.2";
+                : "0.0.0";
 
             _updateService = new UpdateBackgroundService(launcherVersion, () => _clientPath)
             {
@@ -167,8 +167,16 @@ namespace Ven4Tools.Launcher
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            e.Cancel = true;
-            Hide();
+            // Крестик прячет окно в трей только если включена соответствующая настройка
+            if (_minimizeToTray)
+            {
+                e.Cancel = true;
+                Hide();
+            }
+            else
+            {
+                ExitApplication();
+            }
         }
 
         private void ExitApplication()
@@ -176,6 +184,8 @@ namespace Ven4Tools.Launcher
             _watchdog?.Dispose();
             _updateService?.Dispose();
             _notifyIcon?.Dispose();
+            try { _clientProcess?.Dispose(); } catch { }
+            _clientProcess = null;
             System.Windows.Application.Current.Shutdown();
         }
 
