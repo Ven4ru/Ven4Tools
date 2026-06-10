@@ -45,7 +45,14 @@ namespace Ven4Tools.Launcher
                     LastNotifiedClientVersion   = _lastNotifiedClientVersion
                 };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented);
-                File.WriteAllText(_settingsPath, json);
+                // Атомарная запись: сначала во временный файл, затем замена.
+                // Так настройки не побьются при сбое в момент записи.
+                string tmp = _settingsPath + ".tmp";
+                File.WriteAllText(tmp, json);
+                if (File.Exists(_settingsPath))
+                    File.Replace(tmp, _settingsPath, null);
+                else
+                    File.Move(tmp, _settingsPath);
             }
             catch { }
         }

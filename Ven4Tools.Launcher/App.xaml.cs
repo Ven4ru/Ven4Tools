@@ -52,7 +52,7 @@ public partial class App : Application
     {
         e.Handled = true;
         WriteLauncherCrash(e.Exception);
-        // Shutdown after logging — continuing with corrupted UI state is unsafe
+        // Завершаем работу после записи лога — продолжать с повреждённым состоянием UI небезопасно
         Application.Current?.Shutdown(1);
     }
 
@@ -64,7 +64,8 @@ public partial class App : Application
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "Ven4Tools", "logs");
             Directory.CreateDirectory(dir);
-            var file = Path.Combine(dir, $"launcher_crash_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+            // Миллисекунды + GUID исключают коллизию имён при двух крашах в одну секунду
+            var file = Path.Combine(dir, $"launcher_crash_{DateTime.Now:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}.txt");
             File.WriteAllText(file,
                 $"[{DateTime.UtcNow:O}] {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
         }
