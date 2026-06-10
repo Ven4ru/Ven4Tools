@@ -576,10 +576,15 @@ namespace Ven4Tools
             }
         }
 
-        private void BtnLogout_Click(object sender, RoutedEventArgs e)
+        private async void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
+            // Сначала очищаем локальную сессию — пользователь выходит сразу,
+            // даже если сервер недоступен. Серверный logout уходит в фоне.
+            var token = UserSession.Token;
             UserSession.Logout();
             AppLogger.Write("✅ Вы вышли из аккаунта");
+            if (!string.IsNullOrEmpty(token))
+                await new AuthService().LogoutAsync(token);
         }
 
         private void BtnProfile_Click(object sender, RoutedEventArgs e)
