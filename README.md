@@ -15,6 +15,12 @@
 
 **Ven4Tools** — бесплатная программа с открытым исходным кодом для автоматической установки популярного софта на Windows. Работает сразу после установки системы — не требует установленного .NET или других компонентов.
 
+<p align="center">
+  <a href="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.4.2/Ven4Tools.Launcher-3.4.2.exe">
+    <img src="https://img.shields.io/badge/⬇%20Скачать%20Лаунчер-v3.4.2-00b4a0?style=for-the-badge&logo=windows&logoColor=white" alt="Скачать Лаунчер v3.4.2" />
+  </a>
+</p>
+
 <img alt="demo" src="https://github.com/Ven4ru/Ven4Tools/releases/download/v3.3.3/demo.gif" />
 
 ---
@@ -102,7 +108,7 @@
 
 ### Вариант 1: Лаунчер (рекомендуется)
 
-1. Скачайте `Ven4Tools.Launcher-3.4.1.exe` из [последнего релиза](https://github.com/Ven4ru/Ven4Tools/releases/latest)
+1. Скачайте `Ven4Tools.Launcher-3.4.2.exe` из [последнего релиза](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 2. Запустите — лаунчер проверит компоненты и предложит установить winget если нужно
 3. Нажмите **«Загрузить Ven4Tools»** — клиент скачается автоматически
 4. Нажмите **«Запустить Ven4Tools»**
@@ -111,7 +117,7 @@
 
 ### Вариант 2: Клиент напрямую
 
-1. Скачайте `Ven4Tools-Client-3.4.1.zip` из [последнего релиза](https://github.com/Ven4ru/Ven4Tools/releases/latest)
+1. Скачайте `Ven4Tools-Client-3.4.2.zip` из [последнего релиза](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 2. Распакуйте в любую папку
 3. Запустите `Ven4Tools.exe` с правами администратора
 
