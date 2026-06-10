@@ -6,13 +6,10 @@
   <img src="https://img.shields.io/github/stars/Ven4ru/Ven4Tools" />
   <img src="https://img.shields.io/github/issues/Ven4ru/Ven4Tools" />
   <img src="https://img.shields.io/github/license/Ven4ru/Ven4Tools" />
-  <img src="https://img.shields.io/github/repo-size/Ven4ru/Ven4Tools" />
   <img src="https://img.shields.io/github/last-commit/Ven4ru/Ven4Tools" />
   <img src="https://badgen.net/badge/platform/Windows%2010%2B/0078D6">
-  <img src="https://badgen.net/badge/Language/TypeScript/3178C6">
-  <img src="https://badgen.net/badge/platform/Windows%2010+/0078D6">
-<img src="https://badgen.net/badge/Electron/33.x/47848F">
-<img src="https://badgen.net/badge/Node.js/22.x/339933">
+  <img src="https://badgen.net/badge/.NET/8.0/512BD4">
+  <img src="https://badgen.net/badge/UI/WPF/5C2D91">
   <img src="https://badgen.net/badge/PRs/welcome/green">
 </p>
 
@@ -24,7 +21,7 @@
 
 ## Каталог приложений
 
-- **71 приложение** в 10 категориях: браузеры, коммуникации, разработка, мультимедиа, утилиты и другие
+- **70+ приложений** в 9 категориях: браузеры, коммуникации, разработка, мультимедиа, утилиты и другие
 - **Умная установка**: сначала winget, при недоступности — прямая ссылка
 - **Проверка доступности** каждого источника — зелёный/красный индикатор в реальном времени
 - **Альтернативные источники** для приложений, недоступных в регионе
@@ -40,6 +37,12 @@
 - **Добавление своих приложений** вручную: название, winget ID или прямая ссылка
 - Пользовательские приложения **синхронизируются с аккаунтом** — доступны на любом устройстве после входа
 
+### Пресеты
+
+- **Сохрани набор приложений** как именованный пресет — один клик и весь список установится заново
+- **Поделись пресетом** по короткому коду: другой пользователь вводит код и получает твой набор
+- Пресеты **хранятся в облаке** и доступны с любого устройства после входа в аккаунт
+
 ### Избранное
 
 - Отметь любое приложение звёздочкой ★ — включи фильтр «только избранные»
@@ -49,7 +52,7 @@
 ## Аккаунты
 
 - **Вход по email и паролю** или через **Яндекс OAuth**
-- Пользовательские приложения и избранное **синхронизируются между устройствами** через аккаунт
+- Пользовательские приложения, избранное и пресеты **синхронизируются между устройствами**
 - Полный контроль приватности: анонимная статистика, история установок и локальное хранение — всё отключаемо
 
 ---
@@ -99,7 +102,7 @@
 
 ### Вариант 1: Лаунчер (рекомендуется)
 
-1. Скачайте `Ven4Tools.Launcher-3.3.3.exe` из [последнего релиза](https://github.com/Ven4ru/Ven4Tools/releases/latest)
+1. Скачайте `Ven4Tools.Launcher-3.4.1.exe` из [последнего релиза](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 2. Запустите — лаунчер проверит компоненты и предложит установить winget если нужно
 3. Нажмите **«Загрузить Ven4Tools»** — клиент скачается автоматически
 4. Нажмите **«Запустить Ven4Tools»**
@@ -108,7 +111,7 @@
 
 ### Вариант 2: Клиент напрямую
 
-1. Скачайте `Ven4Tools-Client-3.3.3.zip` из [последнего релиза](https://github.com/Ven4ru/Ven4Tools/releases/latest)
+1. Скачайте `Ven4Tools-Client-3.4.1.zip` из [последнего релиза](https://github.com/Ven4ru/Ven4Tools/releases/latest)
 2. Распакуйте в любую папку
 3. Запустите `Ven4Tools.exe` с правами администратора
 
@@ -134,17 +137,17 @@
 
 ---
 
-## Интеграция: Zapret
+## Интеграция: инструмент обхода DPI
 
-Во вкладке **«Сеть»** доступна интеграция [zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube) от [Flowseal](https://github.com/Flowseal) — инструмент для обхода DPI.
+Во вкладке **«Сеть»** доступен инструмент с открытым кодом для обхода глубокой инспекции пакетов (DPI). Использует системный сетевой драйвер.
 
-Ven4Tools **только** скачивает и распаковывает файлы zapret. Все настройки пользователь выполняет самостоятельно через оригинальное меню `service.bat`. Zapret использует системный драйвер WinDivert — **используйте на свой страх и риск** и ознакомьтесь с [документацией проекта](https://github.com/Flowseal/zapret-discord-youtube).
+Ven4Tools **только** скачивает и распаковывает файлы инструмента. Все настройки пользователь выполняет самостоятельно через оригинальное меню. **Используйте на свой страх и риск.**
 
 ---
 
-## Интеграция: Microsoft Activation Scripts
+## Интеграция: инструменты активации
 
-Вкладка **«Активация»** предоставляет интерфейс для запуска [Microsoft Activation Scripts (MAS)](https://github.com/massgravel/Microsoft-Activation-Scripts) от [massgravel](https://github.com/massgravel).
+Вкладка **«Активация»** предоставляет интерфейс для запуска сторонних открытых скриптов активации продуктов Microsoft.
 
 Ven4Tools **не содержит** скрипты активации — программа только предоставляет удобный интерфейс для их запуска. Пользователь несёт полную ответственность за использование инструментов активации.
 
@@ -152,8 +155,8 @@ Ven4Tools **не содержит** скрипты активации — про
 
 ## Благодарности
 
-- **[zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube)** от [Flowseal](https://github.com/Flowseal)
-- **[Microsoft Activation Scripts](https://github.com/massgravel/Microsoft-Activation-Scripts)** от [massgravel](https://github.com/massgravel)
+- [Flowseal](https://github.com/Flowseal) — инструмент обхода DPI
+- [massgravel](https://github.com/massgravel) — скрипты активации
 
 ---
 

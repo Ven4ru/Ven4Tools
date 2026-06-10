@@ -39,6 +39,13 @@ namespace Ven4Tools.Launcher
         {
             if (version == null) return;
 
+            // Защита от подмены: качаем только с доверенных доменов GitHub по HTTPS
+            if (!DownloadValidator.IsAllowedDownloadHost(version.DownloadUrl))
+            {
+                AddLog($"⛔ Недоверенный URL загрузки — скачивание отменено: {version.DownloadUrl}");
+                return;
+            }
+
             AddLog($"📥 Скачивание клиента {version.Version}...");
 
             string tempZip     = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Client_{version.Version}_{Guid.NewGuid()}.zip");
