@@ -44,6 +44,13 @@ namespace Ven4Tools.Launcher
 
                     if (clientAsset != null)
                     {
+                        // Качаем только с доверенных доменов GitHub по HTTPS
+                        if (!DownloadValidator.IsAllowedDownloadHost(clientAsset.browser_download_url))
+                        {
+                            AddLog($"   ⛔ {version} — недоверенный хост загрузки, релиз пропущен: {clientAsset.browser_download_url}");
+                            continue;
+                        }
+
                         AddLog($"   ✅ {version}{(release.prerelease ? " [PRE]" : "")} → {clientAsset.name}");
                         _availableVersions.Add(new ClientVersionInfo
                         {
