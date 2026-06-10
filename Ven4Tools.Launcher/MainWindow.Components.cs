@@ -18,23 +18,24 @@ namespace Ven4Tools.Launcher
         {
             AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             AddLog("🔧 Проверка компонентов...");
-            _hasIssues = false;
+            bool hasIssues = false;
 
+            // Постоянные права администратора лаунчеру не нужны: элевация
+            // запрашивается точечно при установке компонентов.
             bool isAdmin = IsRunAsAdmin();
-            AddLog($"🔍 Права администратора: {(isAdmin ? "✅ есть" : "⚠️ нет")}");
-            if (!isAdmin) _hasIssues = true;
+            AddLog($"🔍 Права администратора: {(isAdmin ? "✅ есть" : "ℹ️ нет (запросим при необходимости)")}");
 
             AddLog("🔍 Winget...");
             var wingetInfo = await CheckWingetWithVersionAsync();
             if (wingetInfo.IsInstalled)
             {
                 AddLog($"   ✅ Winget {wingetInfo.Version}");
-                if (wingetInfo.IsOutdated) { AddLog("   ⚠️ Доступна новая версия winget"); _hasIssues = true; }
+                if (wingetInfo.IsOutdated) { AddLog("   ⚠️ Доступна новая версия winget"); hasIssues = true; }
             }
             else
             {
                 AddLog("   ❌ Winget не установлен!");
-                _hasIssues = true;
+                hasIssues = true;
             }
 
             AddLog("🔍 WebView2 Runtime...");
@@ -43,7 +44,7 @@ namespace Ven4Tools.Launcher
             else
             {
                 AddLog("   ❌ WebView2 Runtime не установлен (нужен для Яндекс-авторизации)");
-                _hasIssues = true;
+                hasIssues = true;
             }
 
             AddLog("🔍 Visual C++ Redistributable 2015-2022 x64...");
@@ -52,7 +53,7 @@ namespace Ven4Tools.Launcher
             else
             {
                 AddLog("   ❌ Visual C++ Redistributable 2015-2022 x64 не установлен");
-                _hasIssues = true;
+                hasIssues = true;
             }
 
             AddLog("🔍 Версия Windows...");
@@ -61,7 +62,7 @@ namespace Ven4Tools.Launcher
             else
             {
                 AddLog($"   ⚠️ Windows Build {Environment.OSVersion.Version.Build} ниже минимального (17763)");
-                _hasIssues = true;
+                hasIssues = true;
             }
 
             AddLog("🔍 Свободное место на диске...");
@@ -73,14 +74,15 @@ namespace Ven4Tools.Launcher
                 AddLog($"   ⚠️ Мало свободного места: ≈{freeGB} ГБ (рекомендуется минимум 2 ГБ)");
 
             AddLog("🔍 Обновления лаунчера...");
-            var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "3.3.2";
+            var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            var currentVersion = ver != null ? $"{ver.Major}.{ver.Minor}.{ver.Build}" : "0.0.0";
             using var gitHubServiceCheck = new GitHubService();
             var updateInfo = await gitHubServiceCheck.CheckLauncherUpdate(currentVersion);
             if (updateInfo?.HasUpdate == true)
             {
                 AddLog($"   📢 Доступно обновление лаунчера {updateInfo.LatestVersion}");
                 Dispatcher.Invoke(() => btnInstallUpdate.Visibility = Visibility.Visible);
-                _hasIssues = true;
+                hasIssues = true;
             }
             else
             {
@@ -89,7 +91,7 @@ namespace Ven4Tools.Launcher
             }
 
             AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            if (_hasIssues)
+            if (hasIssues)
             {
                 AddLog("⚠️ Найдены проблемы. Нажмите «Установить компоненты».");
                 Dispatcher.Invoke(() => btnInstallMissing.Visibility = Visibility.Visible);
@@ -112,15 +114,21 @@ namespace Ven4Tools.Launcher
             AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             AddLog("🔧 Устранение проблем...");
 
+            // Перезапуск с правами администратора предлагаем только когда они
+            // действительно нужны — для установки WebView2 или VC++ Redistributable.
+            // Иначе элевация запрашивается точечно через UAC при запуске установщиков.
             bool isAdmin = IsRunAsAdmin();
-            if (!isAdmin)
+            bool needsAdminComponents = !IsWebView2Installed() || !IsVcRedistInstalled();
+            if (!isAdmin && needsAdminComponents)
             {
                 var restartResult = System.Windows.MessageBox.Show(
-                    "Лаунчер запущен без прав администратора.\n\n" +
-                    "Для корректной работы рекомендуется перезапустить с правами администратора.\n\n" +
-                    "Перезапустить сейчас?",
-                    "Требуются права администратора",
-                    MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    "Для установки системных компонентов (WebView2, Visual C++ Redistributable)\n" +
+                    "потребуются права администратора.\n\n" +
+                    "Можно перезапустить лаунчер с правами администратора,\n" +
+                    "либо продолжить — тогда запрос UAC появится при запуске установщиков.\n\n" +
+                    "Перезапустить с правами администратора сейчас?",
+                    "Права администратора",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (restartResult == MessageBoxResult.Yes) { RestartAsAdmin(); return; }
             }
 
@@ -287,6 +295,13 @@ namespace Ven4Tools.Launcher
 
                 if (msixUrl == null) { AddLog("❌ Не удалось найти файл установки winget в последнем релизе"); return; }
 
+                // Защита от подмены: качаем только с доверенных доменов по HTTPS
+                if (!DownloadValidator.IsAllowedDownloadHost(msixUrl))
+                {
+                    AddLog($"⛔ Недоверенный URL загрузки winget — скачивание отменено: {msixUrl}");
+                    return;
+                }
+
                 AddLog("⬇️ Скачивание зависимостей...");
                 Dispatcher.Invoke(() => txtDownloadStatus.Text = "Скачивание зависимостей...");
 
@@ -302,17 +317,24 @@ namespace Ven4Tools.Launcher
                 using var resp = await _httpClient.GetAsync(msixUrl, HttpCompletionOption.ResponseHeadersRead, ct);
                 resp.EnsureSuccessStatusCode();
 
+                // После редиректов хост мог измениться — проверяем итоговый URL
+                if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(resp))
+                {
+                    AddLog("⛔ Загрузка winget перенаправлена на недоверенный хост — скачивание отменено");
+                    return;
+                }
+
                 var total = resp.Content.Headers.ContentLength ?? -1L;
                 var read  = 0L;
                 var buf   = new byte[81920];
 
                 using (var fs = new FileStream(tempMsix, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
-                using (var stream = await resp.Content.ReadAsStreamAsync())
+                using (var stream = await resp.Content.ReadAsStreamAsync(ct))
                 {
                     int bytes;
-                    while ((bytes = await stream.ReadAsync(buf.AsMemory())) > 0)
+                    while ((bytes = await stream.ReadAsync(buf.AsMemory(), ct)) > 0)
                     {
-                        await fs.WriteAsync(buf.AsMemory(0, bytes));
+                        await fs.WriteAsync(buf.AsMemory(0, bytes), ct);
                         read += bytes;
                         if (total > 0)
                         {
@@ -320,6 +342,7 @@ namespace Ven4Tools.Launcher
                             Dispatcher.Invoke(() => { progressDownload.Value = pct; txtDownloadStatus.Text = $"Winget: {pct}%"; });
                         }
                     }
+                    await fs.FlushAsync(ct);
                 }
 
                 AddLog("📦 Установка winget...");
@@ -328,7 +351,7 @@ namespace Ven4Tools.Launcher
                 string tempScript = Path.Combine(Path.GetTempPath(), $"winget_install_{Guid.NewGuid():N}.ps1");
                 try
                 {
-                    // Single-quoted PS strings prevent $-variable expansion for paths containing $
+                    // Одинарные кавычки в PowerShell отключают подстановку $-переменных в путях
                     File.WriteAllText(tempScript,
                         $"$ErrorActionPreference = 'Stop'\r\n" +
                         $"try {{ Add-AppxPackage -Path '{tempVcLibs.Replace("'", "''")}' }} catch {{}}\r\n" +
@@ -398,7 +421,12 @@ namespace Ven4Tools.Launcher
         {
             try
             {
-                var data = await http.GetByteArrayAsync(url, ct);
+                // Качаем только с доверенных доменов, включая итоговый URL после редиректов
+                if (!DownloadValidator.IsAllowedDownloadHost(url)) return;
+                using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+                resp.EnsureSuccessStatusCode();
+                if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(resp)) return;
+                var data = await resp.Content.ReadAsByteArrayAsync(ct);
                 await File.WriteAllBytesAsync(dest, data, ct);
             }
             catch { }
@@ -492,21 +520,41 @@ namespace Ven4Tools.Launcher
         private async Task InstallWebView2Async()
         {
             string tempFile = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_MicrosoftEdgeWebview2Setup.exe");
+            const string webView2Url = "https://go.microsoft.com/fwlink/p/?LinkId=2124703";
             AddLog("⬇️ Скачивание WebView2 Runtime...");
             Dispatcher.Invoke(() => { progressDownload.Value = 0; txtDownloadStatus.Text = "WebView2: скачивание..."; btnLaunchApp.IsEnabled = false; });
             try
             {
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-                var data = await _httpClient.GetByteArrayAsync("https://go.microsoft.com/fwlink/p/?LinkId=2124703", timeoutCts.Token);
-                await File.WriteAllBytesAsync(tempFile, data);
+                var ct = timeoutCts.Token;
+
+                // Защита от подмены: качаем только с доверенных доменов по HTTPS
+                if (!DownloadValidator.IsAllowedDownloadHost(webView2Url))
+                {
+                    AddLog("⛔ Недоверенный URL загрузки WebView2 — скачивание отменено");
+                    return;
+                }
+
+                using var resp = await _httpClient.GetAsync(webView2Url, HttpCompletionOption.ResponseHeadersRead, ct);
+                resp.EnsureSuccessStatusCode();
+                if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(resp))
+                {
+                    AddLog("⛔ Загрузка WebView2 перенаправлена на недоверенный хост — скачивание отменено");
+                    return;
+                }
+                var data = await resp.Content.ReadAsByteArrayAsync(ct);
+                await File.WriteAllBytesAsync(tempFile, data, ct);
 
                 AddLog("📦 Установка WebView2 Runtime...");
                 Dispatcher.Invoke(() => txtDownloadStatus.Text = "WebView2: установка...");
+                // Без прав администратора — точечная элевация через UAC (Verb = runas)
+                bool needElevation = !IsRunAsAdmin();
                 var psi = new ProcessStartInfo
                 {
                     FileName = tempFile, Arguments = "/silent /install",
-                    UseShellExecute = false, CreateNoWindow = true
+                    UseShellExecute = needElevation, CreateNoWindow = !needElevation
                 };
+                if (needElevation) psi.Verb = "runas";
                 using var proc = Process.Start(psi);
                 if (proc != null) await proc.WaitForExitAsync();
                 Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = "WebView2: готово"; });
@@ -527,25 +575,40 @@ namespace Ven4Tools.Launcher
         private async Task InstallVcRedistAsync()
         {
             string tempFile = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_vc_redist.x64.exe");
+            const string vcRedistUrl = "https://aka.ms/vs/17/release/vc_redist.x64.exe";
             AddLog("⬇️ Скачивание Visual C++ Redistributable 2015-2022 x64...");
             Dispatcher.Invoke(() => { progressDownload.Value = 0; txtDownloadStatus.Text = "VC++: скачивание..."; btnLaunchApp.IsEnabled = false; });
             try
             {
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-                using var resp = await _httpClient.GetAsync("https://aka.ms/vs/17/release/vc_redist.x64.exe",
-                    HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
+                var ct = timeoutCts.Token;
+
+                // Защита от подмены: качаем только с доверенных доменов по HTTPS
+                if (!DownloadValidator.IsAllowedDownloadHost(vcRedistUrl))
+                {
+                    AddLog("⛔ Недоверенный URL загрузки VC++ — скачивание отменено");
+                    return;
+                }
+
+                using var resp = await _httpClient.GetAsync(vcRedistUrl,
+                    HttpCompletionOption.ResponseHeadersRead, ct);
                 resp.EnsureSuccessStatusCode();
+                if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(resp))
+                {
+                    AddLog("⛔ Загрузка VC++ перенаправлена на недоверенный хост — скачивание отменено");
+                    return;
+                }
 
                 var total = resp.Content.Headers.ContentLength ?? -1L;
                 var read  = 0L;
                 var buf   = new byte[81920];
                 using (var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
-                using (var stream = await resp.Content.ReadAsStreamAsync())
+                using (var stream = await resp.Content.ReadAsStreamAsync(ct))
                 {
                     int bytes;
-                    while ((bytes = await stream.ReadAsync(buf.AsMemory())) > 0)
+                    while ((bytes = await stream.ReadAsync(buf.AsMemory(), ct)) > 0)
                     {
-                        await fs.WriteAsync(buf.AsMemory(0, bytes));
+                        await fs.WriteAsync(buf.AsMemory(0, bytes), ct);
                         read += bytes;
                         if (total > 0)
                         {
@@ -553,15 +616,19 @@ namespace Ven4Tools.Launcher
                             Dispatcher.Invoke(() => { progressDownload.Value = pct; txtDownloadStatus.Text = $"VC++: {pct}%"; });
                         }
                     }
+                    await fs.FlushAsync(ct);
                 }
 
                 AddLog("📦 Установка Visual C++ Redistributable...");
                 Dispatcher.Invoke(() => txtDownloadStatus.Text = "VC++: установка...");
+                // Без прав администратора — точечная элевация через UAC (Verb = runas)
+                bool needElevation = !IsRunAsAdmin();
                 var psi = new ProcessStartInfo
                 {
                     FileName = tempFile, Arguments = "/install /quiet /norestart",
-                    UseShellExecute = false, CreateNoWindow = true
+                    UseShellExecute = needElevation, CreateNoWindow = !needElevation
                 };
+                if (needElevation) psi.Verb = "runas";
                 using var proc = Process.Start(psi);
                 if (proc != null) await proc.WaitForExitAsync();
                 Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = "VC++: готово"; });

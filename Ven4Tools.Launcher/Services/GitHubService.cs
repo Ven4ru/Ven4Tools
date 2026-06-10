@@ -96,7 +96,16 @@ namespace Ven4Tools.Launcher.Services
             var versions = new List<ClientVersionInfo>();
             var releases = await GetAllReleases();
 
-            var firstStable = releases.FirstOrDefault(r => !r.prerelease);
+            // Ищем первый стабильный релиз с клиентским zip-архивом:
+            // launcher-only релизы (без zip) не должны попадать в «latest».
+            var firstStable = releases.FirstOrDefault(r =>
+                !r.prerelease &&
+                r.assets?.Any(a =>
+                    a.name != null &&
+                    (a.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
+                     a.name.Contains("Ven4Tools", StringComparison.OrdinalIgnoreCase)) &&
+                    a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                    !a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase)) == true);
             foreach (var release in releases)
             {
                 var version = release.tag_name?.TrimStart('v');
@@ -129,38 +138,68 @@ namespace Ven4Tools.Launcher.Services
         }
 
         /// <summary>
-        /// Проверка, есть ли обновление лаунчера
+        /// Проверка, есть ли обновление лаунчера.
+        /// Сканирует все релизы — GetLatestRelease() не подходит: при раздельных тегах
+        /// (launcher-vX.Y.Z и vX.Y.Z) «latest» может быть клиентским релизом без exe-ассета.
         /// </summary>
         public async Task<UpdateInfo?> CheckLauncherUpdate(string currentVersion)
         {
             try
             {
-                var latest = await GetLatestRelease();
-                if (latest?.tag_name == null) return null;
+                var (releases, _) = await GetAllReleasesWithError();
+                if (releases.Count == 0) return null;
 
-                string latestVersion = latest.tag_name.TrimStart('v');
-                bool hasUpdate = VersionComparer.IsNewer(latestVersion, currentVersion);
+                string? latestVersion = null;
+                string? downloadUrl = null;
+                long fileSize = 0;
+                string? releaseNotes = null;
 
-                // Ищем asset лаунчера
-                var launcherAsset = latest.assets?.FirstOrDefault(a =>
-                    a.name != null &&
-                    a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase) &&
-                    a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
+                foreach (var release in releases)
+                {
+                    if (release.prerelease || release.tag_name == null) continue;
+
+                    var asset = release.assets?.FirstOrDefault(a =>
+                        a.name != null &&
+                        a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase) &&
+                        a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
+
+                    if (asset == null) continue;
+
+                    string ver = ParseVersionFromTag(release.tag_name);
+                    if (latestVersion == null || VersionComparer.IsNewer(ver, latestVersion))
+                    {
+                        latestVersion = ver;
+                        downloadUrl = asset.browser_download_url;
+                        fileSize = asset.size;
+                        releaseNotes = release.body;
+                    }
+                }
+
+                if (latestVersion == null) return null;
 
                 return new UpdateInfo
                 {
-                    HasUpdate = hasUpdate,
+                    HasUpdate = VersionComparer.IsNewer(latestVersion, currentVersion),
                     CurrentVersion = currentVersion,
                     LatestVersion = latestVersion,
-                    DownloadUrl = launcherAsset?.browser_download_url,
-                    ReleaseNotes = latest.body,
-                    FileSize = launcherAsset?.size ?? 0
+                    DownloadUrl = downloadUrl,
+                    ReleaseNotes = releaseNotes,
+                    FileSize = fileSize
                 };
             }
             catch
             {
                 return null;
             }
+        }
+
+        // "launcher-v2.0.0" → "2.0.0", "v3.4.2" → "3.4.2"
+        private static string ParseVersionFromTag(string tag)
+        {
+            string v = tag.TrimStart('v');
+            if (v.StartsWith("launcher-", StringComparison.OrdinalIgnoreCase))
+                v = v["launcher-".Length..].TrimStart('v');
+            return v;
         }
 
         /// <summary>
@@ -200,6 +239,46 @@ namespace Ven4Tools.Launcher.Services
         private const string CrashProxyUrl = "https://ven4tools.ru/api/db.php?action=report_crash";
 
         /// <summary>
+        /// Удаление персональных данных из текста перед отправкой в публичный репозиторий:
+        /// имя пользователя, имя машины и пути вида C:\Users\имя\ заменяются плейсхолдерами.
+        /// </summary>
+        public static string SanitizePersonalData(string? text)
+        {
+            if (string.IsNullOrEmpty(text)) return text ?? "";
+
+            // Пути профилей: C:\Users\имя\ → C:\Users\<пользователь>\
+            text = System.Text.RegularExpressions.Regex.Replace(
+                text,
+                @"([A-Za-z]:\\Users\\)[^\\\r\n]+",
+                "$1<пользователь>",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            // Имя пользователя и имя машины в произвольных местах текста.
+            // Короткие значения (< 3 символов) не заменяем — слишком много ложных срабатываний.
+            string user = Environment.UserName;
+            if (!string.IsNullOrEmpty(user) && user.Length >= 3)
+                text = text.Replace(user, "<пользователь>", StringComparison.OrdinalIgnoreCase);
+
+            string machine = Environment.MachineName;
+            if (!string.IsNullOrEmpty(machine) && machine.Length >= 3)
+                text = text.Replace(machine, "<машина>", StringComparison.OrdinalIgnoreCase);
+
+            return text;
+        }
+
+        /// <summary>
+        /// Короткий хэш идентификатора сессии: достаточен для дедупликации отчётов,
+        /// но не раскрывает исходный SessionId в публичном репозитории.
+        /// </summary>
+        public static string HashSessionId(string? sessionId)
+        {
+            if (string.IsNullOrEmpty(sessionId)) return "";
+            byte[] hash = System.Security.Cryptography.SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(sessionId));
+            return Convert.ToHexString(hash)[..8].ToLowerInvariant();
+        }
+
+        /// <summary>
         /// Отправка отчёта об ошибке через серверный прокси ven4tools.ru.
         /// Сервер сам создаёт issue в репозитории, используя свой токен.
         /// </summary>
@@ -208,10 +287,12 @@ namespace Ven4Tools.Launcher.Services
         {
             try
             {
+                // Защита от утечки PII: убираем имя пользователя, машины и пути профиля
+                // из любых данных, уходящих в публичный репозиторий
                 var payload = new
                 {
-                    title,
-                    body,
+                    title = SanitizePersonalData(title),
+                    body  = SanitizePersonalData(body),
                     labels = labels ?? new[] { "bug" }
                 };
 
