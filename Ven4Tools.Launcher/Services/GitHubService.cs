@@ -24,11 +24,12 @@ namespace Ven4Tools.Launcher.Services
             this.repoOwner = repoOwner;
             this.repoName = repoName;
 
+            // Листинг релизов публичного репозитория не требует авторизации:
+            // лимит 60 запросов/час с IP лаунчеру хватает с запасом, а токен
+            // в распространяемом exe был бы доступен для извлечения.
             httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
             httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-            if (!string.IsNullOrEmpty(Secrets.GitHubToken))
-                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {Secrets.GitHubToken}");
             httpClient.Timeout = TimeSpan.FromSeconds(15);
         }
 
@@ -65,7 +66,7 @@ namespace Ven4Tools.Launcher.Services
                 using var response = await httpClient.GetAsync(url);
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
-                    return (new(), $"GitHub rate limit (403) — подождите ~1 час или добавьте токен");
+                    return (new(), $"GitHub rate limit (403) — подождите ~1 час");
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     return (new(), $"Репозиторий не найден (404)");
                 if (!response.IsSuccessStatusCode)

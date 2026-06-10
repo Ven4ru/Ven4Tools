@@ -36,6 +36,55 @@ namespace Ven4Tools.Services
         // сервер обменивает OAuth-код на токен и сам создаёт сессию. Клиент получает
         // готовый токен и не передаёт личность вручную (см. YandexAuthWindow).
 
+        // Серверный выход из аккаунта: помечает токен недействительным на сервере.
+        // Локальная сессия очищается отдельно (UserSession.Logout) — этот вызов лишь
+        // уведомляет сервер и не влияет на то, что пользователь уже вышел локально.
+        public async Task LogoutAsync(string token)
+        {
+            if (string.IsNullOrEmpty(token)) return;
+            try
+            {
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}?action=logout");
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                await _http.SendAsync(request);
+            }
+            catch (Exception ex) { AppLogger.Write($"[AuthService] logout: {ex.Message}"); }
+        }
+
+        // Установка или смена пароля. old_password нужен, если у пользователя пароль уже есть
+        // (для аккаунтов Яндекса без пароля передаётся только new_password).
+        public async Task<AuthResult> SetPasswordAsync(string token, string newPassword, string? oldPassword = null)
+        {
+            try
+            {
+                object payload = oldPassword != null
+                    ? (object)new { new_password = newPassword, old_password = oldPassword }
+                    : new { new_password = newPassword };
+
+                var json = JsonConvert.SerializeObject(payload);
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}?action=set_password");
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _http.SendAsync(request);
+                var body = await response.Content.ReadAsStringAsync();
+                var data = JObject.Parse(body);
+
+                if (data["error"] != null)
+                    return new AuthResult { Error = data["error"]!.ToString() };
+
+                return new AuthResult { Success = true };
+            }
+            catch (TaskCanceledException)
+            {
+                return new AuthResult { Error = "Превышено время ожидания." };
+            }
+            catch (Exception ex)
+            {
+                return new AuthResult { Error = $"Ошибка: {ex.Message}" };
+            }
+        }
+
         private async Task<AuthResult> PostAsync(string action, object payload)
         {
             try

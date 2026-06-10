@@ -83,6 +83,13 @@ namespace Ven4Tools.Launcher.Services
                 if (updateInfo == null || !updateInfo.HasUpdate) return false;
                 if (string.IsNullOrEmpty(updateInfo.DownloadUrl)) return false;
 
+                // Защита от подмены: обновление лаунчера качаем только с доверенных доменов GitHub
+                if (!DownloadValidator.IsAllowedDownloadHost(updateInfo.DownloadUrl))
+                {
+                    Debug.WriteLine($"Недоверенный URL обновления — скачивание отменено: {updateInfo.DownloadUrl}");
+                    return false;
+                }
+
                 string tempFile = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Launcher_{updateInfo.LatestVersion}.exe");
 
                 using var response = await _httpClient.GetAsync(updateInfo.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);

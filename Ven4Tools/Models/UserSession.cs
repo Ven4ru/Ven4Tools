@@ -96,8 +96,10 @@ namespace Ven4Tools.Models
             }
             catch (Exception ex)
             {
-                Services.AppLogger.Write($"[UserSession] {ex.Message}");
-                return plain; // в крайнем случае не теряем токен
+                Services.AppLogger.Write($"[UserSession] DPAPI шифрование недоступно: {ex.Message}");
+                // Не сохраняем токен открытым текстом: сессия останется только в памяти,
+                // после перезапуска потребуется повторный вход. Это безопаснее plaintext на диске.
+                return "";
             }
         }
 
