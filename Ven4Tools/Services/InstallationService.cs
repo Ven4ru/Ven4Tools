@@ -259,6 +259,19 @@ namespace Ven4Tools.Services
                         case SourceOrderSettings.Direct:
                         {
                             if (!app.InstallerUrls.Any()) break;
+
+                            // Прямые ссылки без SHA256 в каталоге не выполняем:
+                            // скачанный установщик нечем верифицировать, запускать его небезопасно.
+                            if (!HashHelper.HasExpectedHash(app.Sha256))
+                            {
+                                appProgress.Status = "⚠ Нет SHA256 в каталоге — прямая ссылка пропущена";
+                                progress.Report(appProgress);
+                                Log($"⚠ Прямая ссылка без SHA256 для {app.DisplayName} — установка из этого источника отменена");
+                                AppLogger.Write($"[InstallationService] ⚠ Прямая ссылка без SHA256 для {app.DisplayName} — установка отменена");
+                                InstallFailureService.Append(app.DisplayName, app.Id, "direct", "В каталоге не указан SHA256");
+                                break;
+                            }
+
                             foreach (var url in app.InstallerUrls)
                             {
                                 token.ThrowIfCancellationRequested();
@@ -304,25 +317,18 @@ namespace Ven4Tools.Services
                                     appProgress.Percentage = 55;
                                     progress.Report(appProgress);
 
-                                    if (HashHelper.HasExpectedHash(app.Sha256))
+                                    // SHA256 гарантированно указан (проверено перед циклом) —
+                                    // верификация выполняется всегда, без исключений.
+                                    if (!await HashHelper.VerifyHashAsync(tempFile, app.Sha256!))
                                     {
-                                        if (!await HashHelper.VerifyHashAsync(tempFile, app.Sha256!))
-                                        {
-                                            Log($"❌ SHA256 mismatch: {app.DisplayName}");
-                                            try { File.Delete(tempFile); } catch { }
-                                            appProgress.Status = "❌ Ошибка SHA256";
-                                            progress.Report(appProgress);
-                                            InstallFailureService.Append(app.DisplayName, app.Id, "direct", "SHA256 mismatch");
-                                            return (false, "SHA256 mismatch", appProgress);
-                                        }
-                                        Log($"✅ SHA256 OK: {app.DisplayName}");
+                                        Log($"❌ SHA256 mismatch: {app.DisplayName}");
+                                        try { File.Delete(tempFile); } catch { }
+                                        appProgress.Status = "❌ Ошибка SHA256";
+                                        progress.Report(appProgress);
+                                        InstallFailureService.Append(app.DisplayName, app.Id, "direct", "SHA256 mismatch");
+                                        return (false, "SHA256 mismatch", appProgress);
                                     }
-                                    else
-                                    {
-                                        // Хеш в каталоге не указан — продолжаем установку,
-                                        // но фиксируем, что проверка не выполнялась.
-                                        Log($"⚠ SHA256 не указан, проверка пропущена: {app.DisplayName}");
-                                    }
+                                    Log($"✅ SHA256 OK: {app.DisplayName}");
 
                                     token.ThrowIfCancellationRequested();
                                     appProgress.Status = "⚙️ Установка...";
