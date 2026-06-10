@@ -11,7 +11,9 @@ namespace Ven4Tools.Launcher.Services
     public class UpdateBackgroundService : IDisposable
     {
         private Timer? _timer;
-        private CancellationTokenSource _cts = new CancellationTokenSource();
+        // volatile: поле переприсваивается из UI-потока (Start), а читается
+        // из ThreadPool-потока таймера — гарантируем видимость актуальной ссылки
+        private volatile CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly string _launcherVersion;
         private readonly Func<string> _getClientPath;
         private readonly GitHubService _github = new GitHubService();

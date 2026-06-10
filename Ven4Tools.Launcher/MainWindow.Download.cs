@@ -112,7 +112,6 @@ namespace Ven4Tools.Launcher
                     {
                         AddLog($"⚠️ Попытка распаковки {attempt}/5: {ex.Message}");
                         await Task.Delay(2000, token);
-                        GC.Collect(); GC.WaitForPendingFinalizers();
                     }
                 }
                 if (!extracted) throw new IOException("Не удалось распаковать архив после 5 попыток");
@@ -168,7 +167,6 @@ namespace Ven4Tools.Launcher
                     catch (IOException) when (attempt < 5)
                     {
                         await Task.Delay(1000);
-                        GC.Collect(); GC.WaitForPendingFinalizers();
                     }
                 }
 
@@ -264,11 +262,17 @@ namespace Ven4Tools.Launcher
                 var psi = new ProcessStartInfo { FileName = clientExe, UseShellExecute = true };
                 try
                 {
+                    // Освобождаем объект предыдущего запуска: EnableRaisingEvents + Exited
+                    // держат ссылку на Process, без Dispose это утечка
+                    _clientProcess?.Dispose();
+                    _clientProcess = null;
+
                     var clientProcess = Process.Start(psi);
                     AddLog("✅ Клиент запущен");
 
                     if (clientProcess != null)
                     {
+                        _clientProcess = clientProcess;
                         _watchdog?.Dispose();
                         _watchdog = new WatchdogService(clientProcess);
                         _watchdog.ClientFrozen += report => Dispatcher.Invoke(() =>
@@ -300,6 +304,12 @@ namespace Ven4Tools.Launcher
                                 wd.ReportKill(exitCode);
 
                             wd?.Dispose();
+
+                            // Освобождаем объект процесса и очищаем поле,
+                            // если за это время не был запущен новый экземпляр
+                            if (ReferenceEquals(_clientProcess, clientProcess))
+                                _clientProcess = null;
+                            clientProcess.Dispose();
                         };
                     }
                 }
@@ -433,8 +443,8 @@ namespace Ven4Tools.Launcher
                 $"• Папка клиента: {_clientPath}\n" +
                 "• Ярлыки на рабочем столе\n" +
                 "• Ярлыки в меню Пуск\n" +
-                "• Запись автозапуска в реестре\n" +
-                "• Папка %LocalAppData%\\Ven4Tools\n\n" +
+                "• Запись автозапуска в реестре\n\n" +
+                "Настройки и логи лаунчера сохраняются.\n\n" +
                 "Продолжить?",
                 "Удаление клиента Ven4Tools",
                 MessageBoxButton.YesNo,
@@ -500,13 +510,10 @@ namespace Ven4Tools.Launcher
                 }
                 catch (Exception ex) { AddLog($"   ⚠️ Реестр: {ex.Message}"); }
 
-                string appData = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
-                if (Directory.Exists(appData))
-                {
-                    try { Directory.Delete(appData, true); AddLog("   ✅ %LocalAppData%\\Ven4Tools удалена"); }
-                    catch (Exception ex) { AddLog($"   ⚠️ AppData: {ex.Message}"); }
-                }
+                // Корневую папку %LocalAppData%\Ven4Tools не трогаем: в ней лежат
+                // настройки и логи работающего лаунчера. После удаления пересоздаём
+                // папку клиента, чтобы состояние осталось консистентным.
+                try { Directory.CreateDirectory(_clientPath); } catch { }
             });
 
             Dispatcher.Invoke(() =>

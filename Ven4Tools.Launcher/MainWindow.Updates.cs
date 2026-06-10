@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using Ven4Tools.Launcher.Services;
@@ -15,9 +14,8 @@ namespace Ven4Tools.Launcher
                 AddLog("🔍 Проверка обновлений лаунчера...");
                 btnCheckUpdates.IsEnabled = false;
 
-                using var gitHubService = new GitHubService();
-                var currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "3.3.2";
-                var updateInfo = await gitHubService.CheckLauncherUpdate(currentVersion);
+                var updateSvc = new LauncherUpdateService(AddLog);
+                var updateInfo = await updateSvc.CheckForUpdateAsync();
 
                 if (updateInfo != null && updateInfo.HasUpdate)
                 {
@@ -58,8 +56,8 @@ namespace Ven4Tools.Launcher
                 AddLog("📥 Начинаем скачивание обновления лаунчера...");
                 btnInstallUpdate.Visibility = Visibility.Collapsed;
 
-                var updateService = new UpdateService();
-                var result = await updateService.DownloadAndInstallUpdateAsync();
+                var updateSvc = new LauncherUpdateService(AddLog);
+                var result = await updateSvc.DownloadAndApplyUpdateAsync();
 
                 if (result)
                 {

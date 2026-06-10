@@ -32,7 +32,7 @@ namespace Ven4Tools.Launcher
         private List<ClientVersionInfo> _availableVersions = new();
         private ClientVersionInfo?   _selectedVersion;
         private bool                 _detailsPanelOpen = false;
-        private bool                 _hasIssues        = false;
+        private System.Diagnostics.Process? _clientProcess;
         private CancellationTokenSource? _downloadCts;
         private UpdateBackgroundService? _updateService;
         private bool                 _backgroundUpdates = true;
@@ -56,7 +56,6 @@ namespace Ven4Tools.Launcher
 
             LoadSettings();
             CreateTrayIcon();
-            StartBackgroundService();
             SyncCheckboxes();
 
             if (string.IsNullOrEmpty(_installPath))
@@ -66,8 +65,21 @@ namespace Ven4Tools.Launcher
             Directory.CreateDirectory(_clientPath);
             txtInstallPath.Text = _clientPath;
 
+            // Фоновый сервис запускается после установки _clientPath:
+            // он читает путь клиента при первой проверке обновлений
+            StartBackgroundService();
+
             Loaded += async (s, e) =>
             {
+                // Лаунчер запущен не из папки установки — предлагаем установить.
+                // Если пользователь согласился и установщик запущен — выходим.
+                var installSvc = new LauncherUpdateService(AddLog);
+                if (await installSvc.OfferInstallationAsync())
+                {
+                    ExitApplication();
+                    return;
+                }
+
                 if (_startMinimized) Hide();
                 await LoadVersionsAsync();
                 await CheckComponentsAutoAsync();

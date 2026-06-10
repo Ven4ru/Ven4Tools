@@ -104,6 +104,16 @@ namespace Ven4Tools.Launcher
                 System.Globalization.DateTimeStyles.RoundtripKind, out var d)
                 ? d.ToLocalTime() : DateTime.Now;
 
+            // Issue уходит в публичный репозиторий — персональные данные не отправляем:
+            // имя машины опускаем, SessionId заменяем коротким хэшем (хватает для
+            // дедупликации), а текст исключения и stack trace очищаем от путей
+            // профиля и имени пользователя.
+            string sessionHash = GitHubService.HashSessionId(_report.SessionId);
+            string exceptionBlock = GitHubService.SanitizePersonalData(
+                $"{_report.ExceptionType}: {_report.Message}{(_report.InnerMessage != null ? $"\n  → {_report.InnerMessage}" : "")}");
+            string stackTrace = GitHubService.SanitizePersonalData(_report.StackTrace);
+            userNote = GitHubService.SanitizePersonalData(userNote);
+
             return $"""
 ## 🐛 Автоматический отчёт о вылете
 
@@ -112,19 +122,18 @@ namespace Ven4Tools.Launcher
 | **Версия** | `{_report.Version}` |
 | **Время** | {ts:dd.MM.yyyy HH:mm:ss} |
 | **ОС** | {_report.OsVersion} |
-| **Машина** | `{_report.MachineName}` |
-| **Session ID** | `{_report.SessionId}` |
+| **Session** | `{sessionHash}` |
 
 ### Исключение
 
 ```
-{_report.ExceptionType}: {_report.Message}{(_report.InnerMessage != null ? $"\n  → {_report.InnerMessage}" : "")}
+{exceptionBlock}
 ```
 
 ### Stack Trace
 
 ```
-{_report.StackTrace}
+{stackTrace}
 ```
 
 {(userNote.Length > 0 ? $"### Описание от пользователя\n\n{userNote}\n\n" : "")}
