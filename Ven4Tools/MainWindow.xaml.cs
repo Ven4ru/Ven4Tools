@@ -357,8 +357,9 @@ namespace Ven4Tools
             var catalogApp = catalog?.Apps.FirstOrDefault(a => a.Id == id);
             if (catalogApp == null) { AppLogger.Write($"❌ Приложение {id} не найдено в каталоге"); return; }
 
+            var btn = sender as Button;
+
             AppLogger.Write($"📌 Установка из пина: {catalogApp.Name}...");
-            using var installer = new Services.InstallationService();
             var appInfo = new Models.AppInfo
             {
                 Id = catalogApp.Id, DisplayName = catalogApp.Name,
@@ -367,7 +368,6 @@ namespace Ven4Tools
                     ? new System.Collections.Generic.List<string> { catalogApp.DownloadUrl } : new(),
                 ChocoId = catalogApp.ChocoId, ScoopId = catalogApp.ScoopId
             };
-            var cts = new System.Threading.CancellationTokenSource();
             var prog = new Progress<Services.AppInstallProgress>(p => AppLogger.Write($"  {p.Status}"));
             async Task<bool> confirmPm(string pmName) =>
                 await Dispatcher.InvokeAsync(() =>
@@ -377,8 +377,21 @@ namespace Ven4Tools
                         System.Windows.MessageBoxButton.YesNo,
                         System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes);
 
-            var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, "C:\\", null, confirmPm);
-            AppLogger.Write(r.Success ? $"✅ {catalogApp.Name}" : $"❌ {r.Message}");
+            // Общий семафор: не даём пину запустить установку параллельно с каталогом/историей.
+            if (btn != null) btn.IsEnabled = false;
+            await Services.InstallationService.InstallSemaphore.WaitAsync();
+            try
+            {
+                using var installer = new Services.InstallationService();
+                using var cts = new System.Threading.CancellationTokenSource();
+                var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, "C:\\", null, confirmPm);
+                AppLogger.Write(r.Success ? $"✅ {catalogApp.Name}" : $"❌ {r.Message}");
+            }
+            finally
+            {
+                Services.InstallationService.InstallSemaphore.Release();
+                if (btn != null) btn.IsEnabled = true;
+            }
         }
 
         private void PinUnpinBtn_Click(object sender, RoutedEventArgs e)

@@ -19,6 +19,8 @@ namespace Ven4Tools.Services
             string query, CancellationToken token = default)
         {
             var results = new List<WingetPackage>();
+            query = CommandLineGuard.SanitizeQuery(query);
+            if (string.IsNullOrEmpty(query)) return results;
             try
             {
                 var psi = new ProcessStartInfo
@@ -83,12 +85,13 @@ namespace Ven4Tools.Services
         /// </summary>
         public static async Task<(string? Name, string? Version)> ValidateIdAsync(string id)
         {
+            if (!CommandLineGuard.ValidateId(id)) return (null, null);
             try
             {
                 var psi = new ProcessStartInfo
                 {
                     FileName = "winget.exe",
-                    Arguments = $"show --id {id} -e --source winget --accept-source-agreements",
+                    Arguments = $"show --id \"{id}\" -e --source winget --accept-source-agreements",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

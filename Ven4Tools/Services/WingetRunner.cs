@@ -33,7 +33,8 @@ namespace Ven4Tools.Services
         }
 
         // Запуск winget, захват stdout целиком. Таймаут по умолчанию — 120 с.
-        public static async Task<string> RunAsync(string args, TimeSpan? timeout = null)
+        // Возвращает код выхода и вывод. ExitCode = -1, если процесс убит по таймауту.
+        public static async Task<(int ExitCode, string Output)> RunAsync(string args, TimeSpan? timeout = null)
         {
             var psi = new ProcessStartInfo
             {
@@ -49,9 +50,11 @@ namespace Ven4Tools.Services
             using var cts = new System.Threading.CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(120));
             var outputTask = p.StandardOutput.ReadToEndAsync();
             var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
+            int exitCode = -1;
             try
             {
                 await p.WaitForExitAsync(cts.Token);
+                exitCode = p.ExitCode;
             }
             catch (OperationCanceledException)
             {
@@ -59,7 +62,7 @@ namespace Ven4Tools.Services
             }
             string output = await outputTask;
             await stderrTask;
-            return output;
+            return (exitCode, output);
         }
 
         // Построчный стриминг вывода winget с фильтрацией прогресс-бара и ANSI.

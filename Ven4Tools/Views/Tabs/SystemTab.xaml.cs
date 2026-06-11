@@ -289,7 +289,7 @@ namespace Ven4Tools.Views.Tabs
             txtUpdatesLog.Text = "⏳ Проверка...";
             try
             {
-                string raw = await WingetRunner.RunAsync(
+                var (_, raw) = await WingetRunner.RunAsync(
                     "upgrade --include-unknown --source winget",
                     TimeSpan.FromMinutes(3));
 

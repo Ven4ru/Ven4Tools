@@ -29,7 +29,16 @@ namespace Ven4Tools.Launcher
                 AddLog($"📦 Найдено релизов: {releases.Count}");
 
                 _availableVersions = new System.Collections.Generic.List<ClientVersionInfo>();
-                var firstStable = releases.FirstOrDefault(r => !r.prerelease);
+                // «latest» — первый стабильный релиз именно с клиентским zip-архивом;
+                // launcher-only релизы (без Client-*.zip) не должны помечаться как latest.
+                var firstStable = releases.FirstOrDefault(r =>
+                    !r.prerelease &&
+                    r.assets?.Any(a =>
+                        a.name != null &&
+                        (a.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
+                         a.name.Contains("Ven4Tools", StringComparison.OrdinalIgnoreCase)) &&
+                        a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                        !a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase)) == true);
                 foreach (var release in releases)
                 {
                     var version = release.tag_name?.TrimStart('v');

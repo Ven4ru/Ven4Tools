@@ -150,6 +150,17 @@ namespace Ven4Tools
                 UseWingetFirst = chkPriorityWinget.IsChecked == true;
             }
 
+            // ID будет подставлен в командную строку winget — проверяем допустимость
+            // символов, чтобы исключить внедрение посторонних аргументов.
+            if (SelectedPackage != null && !CommandLineGuard.ValidateId(SelectedPackage.Id))
+            {
+                MessageBox.Show(
+                    "Недопустимый Winget ID: разрешены только буквы, цифры, точка, дефис, плюс, подчёркивание и пробел.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                SelectedPackage = null;
+                return;
+            }
+
             DialogResult = true;
             Close();
         }

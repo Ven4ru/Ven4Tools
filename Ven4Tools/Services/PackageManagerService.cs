@@ -75,13 +75,18 @@ namespace Ven4Tools.Services
         public static async Task<bool> RunChocoInstallAsync(
             string packageId, CancellationToken token, Action<string>? log = null)
         {
+            if (!CommandLineGuard.ValidateId(packageId))
+            {
+                log?.Invoke($"❌ Choco: недопустимый идентификатор пакета «{packageId}»");
+                return false;
+            }
             log?.Invoke($"🍫 Choco: установка {packageId}...");
             try
             {
                 var psi = new ProcessStartInfo
                 {
                     FileName = "choco.exe",
-                    Arguments = $"install {packageId} -y --no-progress --limit-output",
+                    Arguments = $"install \"{packageId}\" -y --no-progress --limit-output",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -178,6 +183,11 @@ namespace Ven4Tools.Services
         public static async Task<bool> RunScoopInstallAsync(
             string packageId, CancellationToken token, Action<string>? log = null)
         {
+            if (!CommandLineGuard.ValidateId(packageId))
+            {
+                log?.Invoke($"❌ Scoop: недопустимый идентификатор пакета «{packageId}»");
+                return false;
+            }
             log?.Invoke($"🪣 Scoop: установка {packageId}...");
             string scoopExe = GetScoopExe();
 
@@ -186,7 +196,7 @@ namespace Ven4Tools.Services
                 var psi = new ProcessStartInfo
                 {
                     FileName = scoopExe,
-                    Arguments = $"install {packageId}",
+                    Arguments = $"install \"{packageId}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -222,11 +232,12 @@ namespace Ven4Tools.Services
             string query, CancellationToken token = default)
         {
             var results = new List<(string, string, string)>();
-            if (!IsChocoInstalled()) return results;
+            query = CommandLineGuard.SanitizeQuery(query);
+            if (string.IsNullOrEmpty(query) || !IsChocoInstalled()) return results;
             try
             {
                 var psi = new ProcessStartInfo("choco.exe",
-                    $"search {query} --limit-output --page-size 8")
+                    $"search \"{query}\" --limit-output --page-size 8")
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true,
@@ -255,11 +266,12 @@ namespace Ven4Tools.Services
             string query, CancellationToken token = default)
         {
             var results = new List<(string, string)>();
-            if (!IsScoopInstalled()) return results;
+            query = CommandLineGuard.SanitizeQuery(query);
+            if (string.IsNullOrEmpty(query) || !IsScoopInstalled()) return results;
             try
             {
                 string scoopExe = GetScoopExe();
-                var psi = new ProcessStartInfo(scoopExe, $"search {query}")
+                var psi = new ProcessStartInfo(scoopExe, $"search \"{query}\"")
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true,

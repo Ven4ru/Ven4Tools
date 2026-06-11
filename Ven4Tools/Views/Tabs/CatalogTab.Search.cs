@@ -326,7 +326,7 @@ namespace Ven4Tools.Views.Tabs
                 AddUserAppToUI(newApp);
 
                 if (UserSession.IsLoggedIn)
-                    await _userAppsService.SaveAsync(UserSession.UserId, newApp);
+                    await _userAppsService.SaveAsync(newApp);
 
                 AddLog($"➕ Добавлено из winget: {name} ({id})");
 

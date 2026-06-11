@@ -18,17 +18,22 @@ namespace Ven4Tools.Views.Tabs
         {
             InitializeComponent();
             Loaded += async (_, _) => await RefreshAsync();
-            InstallHistoryService.Instance.Changed += () =>
-                _ = Dispatcher.InvokeAsync(async () =>
-                {
-                    try { await RefreshAsync(); }
-                    catch (Exception ex) { AppLogger.Write(ex.Message); }
-                });
+            // Именованный обработчик + отписка в Unloaded — иначе подписка через
+            // анонимную лямбду удерживала вкладку в памяти (утечка).
+            InstallHistoryService.Instance.Changed += OnHistoryChanged;
+            Unloaded += (_, _) => InstallHistoryService.Instance.Changed -= OnHistoryChanged;
 
             txtHistorySearch.GotFocus  += (_, _) => { if (txtHistorySearch.Text == (string)txtHistorySearch.Tag) txtHistorySearch.Text = ""; };
             txtHistorySearch.LostFocus += (_, _) => { if (string.IsNullOrWhiteSpace(txtHistorySearch.Text)) txtHistorySearch.Text = (string)txtHistorySearch.Tag; };
             txtHistorySearch.Text = (string)txtHistorySearch.Tag;
         }
+
+        private void OnHistoryChanged() =>
+            _ = Dispatcher.InvokeAsync(async () =>
+            {
+                try { await RefreshAsync(); }
+                catch (Exception ex) { AppLogger.Write(ex.Message); }
+            });
 
         public async Task RefreshAsync()
         {
@@ -97,8 +102,6 @@ namespace Ven4Tools.Views.Tabs
 
             AppLogger.Write($"🔄 Переустановка: {entry.AppName}...");
 
-            using var installer = new InstallationService();
-            var cts = new CancellationTokenSource();
             var progress = new Progress<AppInstallProgress>(p =>
                 AppLogger.Write($"  {p.Status}"));
 
@@ -110,12 +113,27 @@ namespace Ven4Tools.Views.Tabs
                         System.Windows.MessageBoxButton.YesNo,
                         System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes);
 
-            var result = await installer.InstallAppAsync(
-                appInfo, new[] { "winget", "msstore" }, cts.Token, progress, "C:\\", null, confirmPm);
+            // Общий семафор: переустановка из истории не должна идти параллельно
+            // с установкой из каталога или пина (конфликт msiexec, ошибка 1618).
+            var btn = sender as Button;
+            if (btn != null) btn.IsEnabled = false;
+            await InstallationService.InstallSemaphore.WaitAsync();
+            try
+            {
+                using var installer = new InstallationService();
+                using var cts = new CancellationTokenSource();
+                var result = await installer.InstallAppAsync(
+                    appInfo, new[] { "winget", "msstore" }, cts.Token, progress, "C:\\", null, confirmPm);
 
-            AppLogger.Write(result.Success
-                ? $"✅ {entry.AppName} переустановлен"
-                : $"❌ {entry.AppName}: {result.Message}");
+                AppLogger.Write(result.Success
+                    ? $"✅ {entry.AppName} переустановлен"
+                    : $"❌ {entry.AppName}: {result.Message}");
+            }
+            finally
+            {
+                InstallationService.InstallSemaphore.Release();
+                if (btn != null) btn.IsEnabled = true;
+            }
         }
     }
 }

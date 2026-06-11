@@ -76,12 +76,14 @@ namespace Ven4Tools.Services
                 catch { }
             }
 
-            // fallback — локальное хранение
+            // fallback — локальное хранение.
+            // Помечаем как локальный всегда, даже если у пресета есть серверный Id:
+            // иначе при следующем удалении/шаринге он будет ошибочно считаться облачным.
+            preset.IsLocal = true;
             var local = LoadLocal();
             if (preset.Id == 0)
             {
                 preset.Id = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                preset.IsLocal = true;
                 local.Add(preset);
             }
             else
@@ -96,7 +98,7 @@ namespace Ven4Tools.Services
 
         // ── Удалить пресет ────────────────────────────────────────────────────────
 
-        public static async Task DeleteAsync(int? userId, Preset preset)
+        public static async Task<bool> DeleteAsync(int? userId, Preset preset)
         {
             if (userId.HasValue && !preset.IsLocal && !string.IsNullOrEmpty(UserSession.Token))
             {
@@ -105,19 +107,23 @@ namespace Ven4Tools.Services
                     var body = JsonConvert.SerializeObject(new { preset_id = preset.Id });
                     var req = Req(HttpMethod.Post, $"{ApiBase}?action=delete_preset");
                     req.Content = new StringContent(body, Encoding.UTF8, "application/json");
-                    await _http.SendAsync(req);
-                    return;
+                    var resp = await _http.SendAsync(req);
+                    var json = await resp.Content.ReadAsStringAsync();
+                    var r = JObject.Parse(json);
+                    // При неуспехе сервера локальную копию не трогаем
+                    return r["success"]?.Value<bool>() == true;
                 }
-                catch { }
+                catch { return false; }
             }
             var local = LoadLocal();
             local.RemoveAll(p => p.Id == preset.Id);
             SaveLocal(local);
+            return true;
         }
 
         // ── Поделиться ────────────────────────────────────────────────────────────
 
-        public static async Task<string?> ShareAsync(int userId, int presetId)
+        public static async Task<string?> ShareAsync(int presetId)
         {
             try
             {

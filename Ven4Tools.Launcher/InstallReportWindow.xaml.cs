@@ -156,11 +156,16 @@ namespace Ven4Tools.Launcher
         private string BuildBody()
         {
             var sb = new StringBuilder();
+            // Issue уходит в публичный репозиторий — персональные данные не отправляем:
+            // имя машины опускаем, SessionId заменяем коротким хэшем (хватает для
+            // дедупликации), а тексты ошибок очищаем от путей профиля и имени пользователя.
+            var firstFail = _failures.First();
+            string sessionHash = GitHubService.HashSessionId(firstFail.SessionId);
+
             sb.AppendLine("## 📦 Отчёт об ошибках установки\n");
-            sb.AppendLine($"**Версия:** `{_failures.First().Version}`  ");
-            sb.AppendLine($"**ОС:** {_failures.First().OsVersion}  ");
-            sb.AppendLine($"**Сессия:** `{_failures.First().SessionId}`  ");
-            sb.AppendLine($"**Машина:** `{_failures.First().MachineName}`\n");
+            sb.AppendLine($"**Версия:** `{firstFail.Version}`  ");
+            sb.AppendLine($"**ОС:** {firstFail.OsVersion}  ");
+            sb.AppendLine($"**Session:** `{sessionHash}`\n");
             sb.AppendLine("| Приложение | ID | Метод | Ошибка | Время |");
             sb.AppendLine("|---|---|---|---|---|");
             foreach (var f in _failures)
@@ -168,8 +173,9 @@ namespace Ven4Tools.Launcher
                 DateTime ts = DateTime.TryParse(f.Timestamp, null,
                     DateTimeStyles.RoundtripKind, out var d)
                     ? d.ToLocalTime() : DateTime.Now;
+                string error = GitHubService.SanitizePersonalData(f.Error);
                 sb.AppendLine(
-                    $"| {f.AppName} | `{f.AppId}` | {f.Method} | {f.Error} | {ts:dd.MM.yyyy HH:mm} |");
+                    $"| {f.AppName} | `{f.AppId}` | {f.Method} | {error} | {ts:dd.MM.yyyy HH:mm} |");
             }
             sb.AppendLine("\n---\n*Отчёт создан автоматически через Ven4Tools Launcher*");
             return sb.ToString();
