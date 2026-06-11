@@ -7,9 +7,27 @@
             <TextBlock Text="Активация Windows и Office" FontSize="24" FontWeight="Bold" 
                        Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20"/>
             
-            <TextBlock Text="Используется Microsoft Activation Scripts (MAS) — безопасный и проверенный инструмент" 
+            <TextBlock Text="Используется сторонний скрипт активации. Применяйте только если понимаете последствия."
                        Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,20" TextWrapping="Wrap"/>
-            
+
+            <!-- Чекбокс согласия — разблокирует кнопки активации -->
+            <Border Background="#1A1E2A" CornerRadius="8" Padding="14,10" Margin="0,0,0,20"
+                    BorderBrush="#FF6B35" BorderThickness="1">
+                <CheckBox x:Name="chkActivationConsent"
+                          Foreground="{DynamicResource TextPrimary}"
+                          FontSize="12"
+                          Checked="ChkActivationConsent_Changed"
+                          Unchecked="ChkActivationConsent_Changed">
+                    <CheckBox.Content>
+                        <TextBlock TextWrapping="Wrap" MaxWidth="560">
+                            <Run Text="Я понимаю, что данная функция использует сторонний скрипт активации, который может нарушать "/>
+                            <Run Text="лицензионное соглашение Microsoft." FontWeight="SemiBold"/>
+                            <Run Text=" Принимаю полную ответственность за его использование."/>
+                        </TextBlock>
+                    </CheckBox.Content>
+                </CheckBox>
+            </Border>
+
             <!-- Блок активации — только для авторизованных пользователей -->
             <Grid>
                 <StackPanel>
@@ -52,12 +70,12 @@
                     <!-- Интерактивная активация -->
                     <GroupBox Header="🎮 Для продвинутых пользователей" Margin="0,0,0,15">
                         <StackPanel Margin="10">
-                            <TextBlock Text="Интерактивный режим Microsoft Activation Scripts"
+                            <TextBlock Text="Интерактивный режим — открытое окно PowerShell"
                                        Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
-                            <Button x:Name="btnInteractiveMAS" Content="🚀 Запустить интерактивный MAS"
+                            <Button x:Name="btnInteractiveMAS" Content="🚀 Интерактивный режим"
                                     Height="40" Width="250" HorizontalAlignment="Left"
                                     Background="#FFA500" Foreground="White" FontWeight="Bold"
-                                    ToolTip="Откроет PowerShell с полным меню MAS для ручного выбора параметров"/>
+                                    ToolTip="Откроет PowerShell для ручного выбора параметров активации"/>
                             <TextBlock Text="ℹ️ В интерактивном режиме вы сможете выбрать нужные параметры вручную"
                                        Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,5,0,0"/>
                         </StackPanel>
@@ -104,9 +122,9 @@
             </GroupBox>
             
             <!-- Информация -->
-            <GroupBox Header="ℹ️ О MAS" Margin="0,0,0,15">
+            <GroupBox Header="ℹ️ О скрипте активации" Margin="0,0,0,15">
                 <StackPanel Margin="10">
-                    <TextBlock Text="Microsoft Activation Scripts (MAS) — это открытый скрипт для активации Windows и Office." 
+                    <TextBlock Text="Используется скрипт активации с открытым исходным кодом."
                                Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
                     <TextBlock Text="Источник: https://github.com/massgravel/Microsoft-Activation-Scripts" 
                                Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,5,0,0"/>
