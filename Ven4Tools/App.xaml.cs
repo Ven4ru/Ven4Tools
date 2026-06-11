@@ -29,6 +29,10 @@ namespace Ven4Tools
                 try { LocalizationService.Init(); } catch { }
                 try { ThemeService.Apply(ProfileService.Current.Theme); } catch { }
                 try { _heartbeat = new HeartbeatService(); } catch { }
+                // Отправка краш-репорта прошлого сеанса — fire-and-forget, старт не блокирует
+                try { _ = CrashReportService.TrySendPendingAsync(); } catch { }
+                // Отправка отложенного отзыва — тоже fire-and-forget
+                try { _ = FeedbackService.TrySendPendingAsync(); } catch { }
 
                 try
                 {
