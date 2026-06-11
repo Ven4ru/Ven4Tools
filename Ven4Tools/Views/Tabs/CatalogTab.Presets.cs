@@ -58,12 +58,20 @@ namespace Ven4Tools.Views.Tabs
             int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
             var preset  = new Preset { Name = dlg.PresetName, Description = dlg.PresetDescription, Apps = selected };
 
-            var saved = await PresetService.SaveAsync(userId, preset);
-            if (saved == null) { AppLogger.Write("❌ Не удалось сохранить пресет"); return; }
+            btnSavePreset.IsEnabled = false;
+            try
+            {
+                var saved = await PresetService.SaveAsync(userId, preset);
+                if (saved == null) { AppLogger.Write("❌ Не удалось сохранить пресет"); return; }
 
-            _presets.Insert(0, saved);
-            txtPresetsEmpty.Visibility = Visibility.Collapsed;
-            AppLogger.Write($"✅ Пресет «{saved.Name}» сохранён ({selected.Count} прил.)");
+                _presets.Insert(0, saved);
+                txtPresetsEmpty.Visibility = Visibility.Collapsed;
+                AppLogger.Write($"✅ Пресет «{saved.Name}» сохранён ({selected.Count} прил.)");
+            }
+            finally
+            {
+                btnSavePreset.IsEnabled = true;
+            }
         }
 
         // ── Применить пресет ──────────────────────────────────────────────────────
@@ -105,7 +113,7 @@ namespace Ven4Tools.Views.Tabs
             if (preset.IsLoading) return;
             preset.IsLoading = true;
 
-            string? code = await PresetService.ShareAsync(UserSession.UserId, preset.Id);
+            string? code = await PresetService.ShareAsync(preset.Id);
             preset.IsLoading = false;
 
             if (code == null) { AppLogger.Write("❌ Не удалось получить ссылку на пресет"); return; }
@@ -127,7 +135,14 @@ namespace Ven4Tools.Views.Tabs
             if (r != MessageBoxResult.Yes) return;
 
             int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
-            await PresetService.DeleteAsync(userId, preset);
+            bool deleted = await PresetService.DeleteAsync(userId, preset);
+            if (!deleted)
+            {
+                AppLogger.Write($"❌ Не удалось удалить пресет «{preset.Name}» — сервер недоступен");
+                MessageBox.Show("Не удалось удалить пресет. Сервер недоступен — попробуйте позже.",
+                    "Пресеты", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             _presets.Remove(preset);
             txtPresetsEmpty.Visibility = _presets.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -158,6 +173,10 @@ namespace Ven4Tools.Views.Tabs
             if (save == MessageBoxResult.Yes)
             {
                 int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
+                // Сохраняем как новый собственный пресет: серверный Id и код шаринга
+                // чужого пресета сбрасываем, иначе перезапишем оригинал на сервере.
+                preset.Id = 0;
+                preset.ShareCode = null;
                 var saved = await PresetService.SaveAsync(userId, preset);
                 if (saved != null)
                 {

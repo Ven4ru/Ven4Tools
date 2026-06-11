@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using Ven4Tools.Services;
@@ -9,11 +10,34 @@ namespace Ven4Tools
     public partial class App : Application
     {
         private static HeartbeatService? _heartbeat;
+        private static Mutex? _instanceMutex;
 
         public App()
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Application.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
+        }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            // Единственный экземпляр клиента: два процесса гонялись бы за файлами
+            // (profile.json, apps.json) и могли запустить параллельные установки.
+            _instanceMutex = new Mutex(true, "Ven4Tools.Client.SingleInstance", out bool createdNew);
+            if (!createdNew)
+            {
+                MessageBox.Show(
+                    "Приложение Ven4Tools уже запущено.",
+                    "Уже запущено",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                _instanceMutex.Dispose();
+                _instanceMutex = null;
+                Shutdown();
+                return;
+            }
+
+            // base.OnStartup поднимает событие Startup → выполняется App_Startup (см. App.xaml).
+            base.OnStartup(e);
         }
 
         private async void App_Startup(object sender, StartupEventArgs e)
@@ -69,6 +93,12 @@ namespace Ven4Tools
         protected override void OnExit(ExitEventArgs e)
         {
             _heartbeat?.Dispose();
+            if (_instanceMutex != null)
+            {
+                _instanceMutex.ReleaseMutex();
+                _instanceMutex.Dispose();
+                _instanceMutex = null;
+            }
             base.OnExit(e);
         }
 
