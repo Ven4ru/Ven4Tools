@@ -28,6 +28,9 @@ public partial class App : Application
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
             _mutex.Dispose();
+            // Обнуляем поле: иначе OnExit вызовет ReleaseMutex() на уже освобождённом
+            // мьютексе → ObjectDisposedException.
+            _mutex = null;
             Shutdown();
             return;
         }
@@ -37,8 +40,12 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        _mutex?.ReleaseMutex();
-        _mutex?.Dispose();
+        if (_mutex != null)
+        {
+            _mutex.ReleaseMutex();
+            _mutex.Dispose();
+            _mutex = null;
+        }
         base.OnExit(e);
     }
 

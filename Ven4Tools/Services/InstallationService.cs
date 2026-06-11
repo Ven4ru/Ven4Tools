@@ -13,6 +13,11 @@ namespace Ven4Tools.Services
 {
     public class InstallationService : IDisposable
     {
+        // Общий семафор установки на всё приложение. Установка запускается из трёх мест
+        // (каталог, пины в MainWindow, переустановка из истории) — без единого ограничения
+        // можно запустить параллельные msiexec, что вызывает ошибку Windows Installer 1618.
+        public static readonly SemaphoreSlim InstallSemaphore = new SemaphoreSlim(1, 1);
+
         private readonly HttpClient _httpClient;
         private readonly string _logPath;
         private readonly object _logLock = new object();
@@ -170,11 +175,17 @@ namespace Ven4Tools.Services
                 // ── Source-ordered install loop ────────────────────────────────
                 string primaryId = !string.IsNullOrEmpty(app.AlternativeId) ? app.AlternativeId : app.Id;
 
-                // ID пользовательских приложений приходит из ручного ввода —
-                // проверяем перед подстановкой в командную строку winget,
-                // чтобы исключить внедрение посторонних аргументов.
-                if (app.IsUserAdded && !string.IsNullOrEmpty(primaryId))
-                    ValidateWingetId(primaryId);
+                // ID может приходить из ручного ввода (пользовательские приложения,
+                // альтернативные источники) — проверяем всегда перед подстановкой в
+                // командную строку winget/choco/scoop, чтобы исключить внедрение аргументов.
+                if (!CommandLineGuard.ValidateId(primaryId))
+                {
+                    appProgress.Status = "❌ Недопустимый идентификатор пакета";
+                    progress.Report(appProgress);
+                    Log($"❌ {app.DisplayName}: недопустимый ID «{primaryId}» — установка отменена");
+                    InstallFailureService.Append(app.DisplayName, app.Id, "validation", $"Недопустимый ID «{primaryId}»");
+                    return (false, "Недопустимый идентификатор пакета", appProgress);
+                }
 
                 var sourceOrder  = SourceOrderService.GetOrderForCategory(app.CategoryString);
                 Log($"🔀 Порядок источников для «{app.DisplayName}»: {string.Join(" → ", sourceOrder)}");
@@ -427,25 +438,6 @@ namespace Ven4Tools.Services
             }
         }
 
-        // ── Валидация Winget ID ─────────────────────────────────────────────────
-
-        // Допустимые символы winget ID: буквы, цифры, точка, дефис, плюс,
-        // подчёркивание и пробел. Всё остальное — потенциальное внедрение аргументов.
-        private static readonly System.Text.RegularExpressions.Regex _wingetIdRegex =
-            new(@"^[A-Za-z0-9.\-+_ ]+$", System.Text.RegularExpressions.RegexOptions.Compiled);
-
-        /// <summary>
-        /// Проверяет, что Winget ID состоит только из допустимых символов.
-        /// Используется для пользовательских приложений, где ID вводится вручную.
-        /// </summary>
-        private static void ValidateWingetId(string id)
-        {
-            if (!_wingetIdRegex.IsMatch(id))
-                throw new ArgumentException(
-                    $"Недопустимый Winget ID «{id}»: разрешены только буквы, цифры, " +
-                    "точка, дефис, плюс, подчёркивание и пробел.");
-        }
-
         // ── Помощники для выбора диска установки ───────────────────────────────
 
         private static string GetSystemDriveRoot()
@@ -588,24 +580,6 @@ namespace Ven4Tools.Services
                 if (process.ExitCode == 3010)
                     Log($"⚠ Установлено. Требуется перезагрузка. ({appId})");
                 return process.ExitCode == 0 || process.ExitCode == 3010;
-            }
-        }
-
-        public bool CheckDiskSpace(long requiredMB, out long availableMB, string? installDrive = null)
-        {
-            try
-            {
-                string drivePath = !string.IsNullOrEmpty(installDrive)
-                    ? installDrive
-                    : Path.GetPathRoot(Environment.SystemDirectory)!;
-                var drive = new DriveInfo(drivePath);
-                availableMB = drive.AvailableFreeSpace / 1024 / 1024;
-                return availableMB >= requiredMB;
-            }
-            catch
-            {
-                availableMB = 0;
-                return true;
             }
         }
 

@@ -147,7 +147,7 @@ namespace Ven4Tools.Views.Tabs
 
             var tasks = appsToInstall.Select(app => Task.Run(async () =>
             {
-                await installSemaphore.WaitAsync();
+                await InstallationService.InstallSemaphore.WaitAsync();
                 try
                 {
                     if (token.IsCancellationRequested) return;
@@ -172,7 +172,7 @@ namespace Ven4Tools.Views.Tabs
                         txtOverallStatus.Text = $"⏳ Установка: {completed + failed}/{appsToInstall.Count} (✅ {completed} | ❌ {failed})";
                     });
                 }
-                finally { installSemaphore.Release(); }
+                finally { InstallationService.InstallSemaphore.Release(); }
             }, token));
 
             try
