@@ -1,0 +1,53 @@
+name: Релиз клиента
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+jobs:
+  release:
+    name: Сборка и публикация релиза
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Настройка .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Получить версию из тега
+        id: ver
+        shell: pwsh
+        run: |
+          $ver = "${{ github.ref_name }}".TrimStart('v')
+          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Публикация
+        shell: pwsh
+        run: |
+          dotnet publish Ven4Tools/Ven4Tools.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -o _release/client_${{ steps.ver.outputs.VERSION }} `
+            --nologo
+
+      - name: Создать ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path "_release/client_${{ steps.ver.outputs.VERSION }}/*" `
+            -DestinationPath "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip"
+
+      - name: Создать черновик релиза
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} `
+            "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip" `
+            --title "Ven4Tools ${{ steps.ver.outputs.VERSION }}" `
+            --generate-notes `
+            --draft `
+            --latest
