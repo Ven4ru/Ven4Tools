@@ -24,7 +24,7 @@ namespace Ven4Tools.Views.Tabs
         private readonly string[] wingetSources = { "winget", "msstore" };
         // Последовательная установка: два параллельных MSI вызывают конфликт
         // Windows Installer (ошибка 1618). Жертвуем скоростью ради надёжности.
-        private readonly SemaphoreSlim installSemaphore = new SemaphoreSlim(1);
+        // Семафор общий на всё приложение — см. InstallationService.InstallSemaphore.
         private bool isCancelled = false;
         private CancellationTokenSource? cancellationTokenSource;
         private readonly AppManager appManager = null!;

@@ -143,6 +143,17 @@ namespace Ven4Tools.Services
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+            if (!isWinget)
+            {
+                string urlCandidate = txtUrl.Text.Trim();
+                if (!urlCandidate.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                    !urlCandidate.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show("Ссылка должна начинаться с http:// или https://",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
 
             var app = new AppInfo
             {

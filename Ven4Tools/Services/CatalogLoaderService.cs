@@ -49,13 +49,12 @@ namespace Ven4Tools.Services
             // Offline mode — skip remote, use local cache or embedded
             if (ProfileService.Current.OfflineMode)
             {
-                if (File.Exists(_localCatalogPath))
+                var cached = await TryReadCacheAsync(ct);
+                if (cached != null)
                 {
-                    var cat = Deserialize(await File.ReadAllTextAsync(_localCatalogPath, ct));
-                    cat.Source = "cache";
-                    LoadedCatalog = cat;
-                    CatalogReady?.Invoke(cat);
-                    return cat;
+                    LoadedCatalog = cached;
+                    CatalogReady?.Invoke(cached);
+                    return cached;
                 }
                 var empty = new MasterCatalog { Source = "embedded" };
                 LoadedCatalog = empty;
@@ -95,22 +94,44 @@ namespace Ven4Tools.Services
             }
             catch
             {
-                if (File.Exists(_localCatalogPath))
+                var cached = await TryReadCacheAsync(ct);
+                if (cached != null)
                 {
-                    string localJson =
-                        await File.ReadAllTextAsync(_localCatalogPath, ct);
-
-                    var catalog = Deserialize(localJson);
-                    catalog.Source = "cache";
-                    LoadedCatalog = catalog;
-                    CatalogReady?.Invoke(catalog);
-                    return catalog;
+                    LoadedCatalog = cached;
+                    CatalogReady?.Invoke(cached);
+                    return cached;
                 }
 
                 var empty = new MasterCatalog { Source = "embedded" };
                 LoadedCatalog = empty;
                 CatalogReady?.Invoke(empty);
                 return empty;
+            }
+        }
+
+        /// <summary>
+        /// Читает кэш каталога с диска. При повреждённом JSON удаляет битый файл
+        /// и возвращает null, чтобы цепочка загрузки продолжилась на embedded.
+        /// </summary>
+        private async Task<MasterCatalog?> TryReadCacheAsync(CancellationToken ct)
+        {
+            if (!File.Exists(_localCatalogPath)) return null;
+            try
+            {
+                var json = await File.ReadAllTextAsync(_localCatalogPath, ct);
+                var catalog = Deserialize(json);
+                catalog.Source = "cache";
+                return catalog;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                // Битый кэш — удаляем, чтобы при следующем запуске не споткнуться снова
+                try { File.Delete(_localCatalogPath); } catch { }
+                return null;
             }
         }
 

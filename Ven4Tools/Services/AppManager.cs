@@ -134,12 +134,6 @@ public void ApplyAlternativesToCatalog(MasterCatalog catalog)
             catch { }
         }
 
-        public void HideStandardApp(string appId)
-        {
-            lock (lockObj) { hiddenApps.Add(appId); }
-            SaveHiddenApps();
-        }
-
         public bool IsAppHidden(string appId) { lock (lockObj) { return hiddenApps.Contains(appId); } }
 
 public void LoadAlternativeSources()
@@ -224,24 +218,6 @@ public void LoadAlternativeSources()
             catch { }
         }
 
-        public void IncrementAlternativeSuccess(string appId)
-        {
-            try
-            {
-                bool changed = false;
-                lock (lockObj)
-                {
-                    if (alternatives.ContainsKey(appId))
-                    {
-                        alternatives[appId].SuccessCount++;
-                        changed = true;
-                    }
-                }
-                if (changed) SaveAlternatives();
-            }
-            catch { }
-        }
-
         public void RemoveAlternativeSource(string appId)
         {
             try
@@ -260,11 +236,6 @@ public void LoadAlternativeSources()
                 if (removed) SaveAlternatives();
             }
             catch { }
-        }
-
-        public Dictionary<string, AlternativeSource> GetAllAlternatives()
-        {
-            lock (lockObj) { return new Dictionary<string, AlternativeSource>(alternatives); }
         }
 
 private void SaveAlternatives()
@@ -316,30 +287,6 @@ private void SaveAlternatives()
                 FileHelper.WriteAllTextAtomic(selectionPath, JsonSerializer.Serialize(settings));
             }
             catch { }
-        }
-
-        public List<string> LoadSelectedApps()
-        {
-            try
-            {
-                string selectionPath = configPath + ".selection";
-                if (File.Exists(selectionPath))
-                {
-                    var json = File.ReadAllText(selectionPath);
-                    var settings = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
-                    if (settings != null && settings.ContainsKey("SelectedApps"))
-                    {
-                        var element = (JsonElement)settings["SelectedApps"];
-                        return element.EnumerateArray()
-                            .Select(x => x.GetString())
-                            .Where(x => x != null)
-                            .Select(x => x!)
-                            .ToList();
-                    }
-                }
-            }
-            catch { }
-            return new List<string>();
         }
 
         public void AddUserApp(AppInfo app)

@@ -59,20 +59,6 @@ namespace Ven4Tools.Services
             catch { return 0; }
         }
 
-        public static List<string> GetCachedAppIds()
-        {
-            try
-            {
-                var dir = CachePath;
-                if (!Directory.Exists(dir)) return new();
-                return Directory.GetFiles(dir)
-                    .Select(f => Path.GetFileNameWithoutExtension(f))
-                    .Where(n => !string.IsNullOrEmpty(n))
-                    .ToList();
-            }
-            catch { return new(); }
-        }
-
         public static (int count, long sizeMB) GetCacheStats()
         {
             try
@@ -204,6 +190,32 @@ namespace Ven4Tools.Services
                 }
 
                 bool ok = p.ExitCode == 0;
+                if (ok)
+                {
+                    // winget сохраняет установщик под собственным именем («Имя пакета X.Y.Z.exe»),
+                    // а кэш ищет файлы по шаблону SanitizeId(appId).*. Переименовываем самый
+                    // свежий установщик в ожидаемое имя и убираем служебные .yaml-манифесты.
+                    try
+                    {
+                        var installerExts = new[] { ".exe", ".msi" };
+                        var newest = Directory.GetFiles(CachePath)
+                            .Where(f => installerExts.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                            .OrderByDescending(File.GetCreationTimeUtc)
+                            .FirstOrDefault();
+                        if (newest != null)
+                        {
+                            var target = Path.Combine(CachePath, SanitizeId(app.Id) + Path.GetExtension(newest));
+                            if (!string.Equals(newest, target, StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (File.Exists(target)) File.Delete(target);
+                                File.Move(newest, target);
+                            }
+                        }
+                        foreach (var yaml in Directory.GetFiles(CachePath, "*.yaml"))
+                            try { File.Delete(yaml); } catch { }
+                    }
+                    catch { /* переименование/очистка — best-effort */ }
+                }
                 progress?.Report((ok ? $"✅ {app.Name} (winget)" : $"⚠️ {app.Name}: код {p.ExitCode}", ok ? 100 : 0));
                 return ok;
             }
