@@ -24,6 +24,10 @@ namespace Ven4Tools.Views.Tabs
             btnCheckStatus.Click += BtnCheckStatus_Click;
             btnInteractiveMAS.Click += BtnInteractiveMAS_Click;
 
+            btnActivateWindows.IsEnabled = false;
+            btnActivateOffice.IsEnabled = false;
+            btnInteractiveMAS.IsEnabled = false;
+
             _sessionChangedHandler = () => Dispatcher.Invoke(UpdateAuthState);
             Loaded += async (_, _) =>
             {
@@ -40,16 +44,24 @@ namespace Ven4Tools.Views.Tabs
             pnlActivationAuth.Visibility = UserSession.IsLoggedIn ? Visibility.Collapsed : Visibility.Visible;
         }
 
+        private void ChkActivationConsent_Changed(object sender, RoutedEventArgs e)
+        {
+            bool agreed = chkActivationConsent.IsChecked == true;
+            btnActivateWindows.IsEnabled = agreed && IsRunningAsAdmin();
+            btnActivateOffice.IsEnabled  = agreed && IsRunningAsAdmin();
+            btnInteractiveMAS.IsEnabled  = agreed;
+        }
+
         private void ApplyAdminState()
         {
             if (!IsRunningAsAdmin())
             {
                 btnActivateWindows.IsEnabled = false;
                 btnActivateOffice.IsEnabled  = false;
-                btnActivateWindows.ToolTip = "Требуются права администратора. Перезапустите приложение от имени администратора.";
-                btnActivateOffice.ToolTip  = "Требуются права администратора. Перезапустите приложение от имени администратора.";
+                btnActivateWindows.ToolTip = "Требуются права администратора.";
+                btnActivateOffice.ToolTip  = "Требуются права администратора.";
                 AddLog("⚠️ Тихая активация недоступна — нет прав администратора.");
-                AddLog("   Используйте интерактивный режим MAS или перезапустите от имени администратора.");
+                AddLog("   Используйте интерактивный режим или перезапустите от имени администратора.");
             }
         }
 
@@ -243,7 +255,7 @@ namespace Ven4Tools.Views.Tabs
                 "⚠️ ПРЕДУПРЕЖДЕНИЕ\n\n" +
                 "Будет открыт PowerShell с правами администратора.\n" +
                 "Запускается скрипт из интернета: get.activated.win\n\n" +
-                "Это открытый проект Microsoft Activation Scripts (MAS).\n" +
+                "Это инструмент активации с открытым кодом.\n" +
                 "Исходный код: github.com/massgravel/Microsoft-Activation-Scripts\n\n" +
                 "Убедитесь, что доверяете источнику. Продолжить?",
                 "Активация — внимание",
@@ -255,7 +267,7 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 AddLog("━━━━━━━━━━━━━━━━━━━━━━");
-                AddLog("🚀 Запуск интерактивного режима MAS...");
+                AddLog("🚀 Запуск в интерактивном режиме...");
                 AddLog("━━━━━━━━━━━━━━━━━━━━━━");
                 
                 string command = "irm https://get.activated.win | iex";
@@ -269,7 +281,7 @@ namespace Ven4Tools.Views.Tabs
                 };
                 
                 Process.Start(psi);
-                AddLog("✅ Интерактивный MAS запущен в отдельном окне");
+                AddLog("✅ Запущен в отдельном окне");
             }
             catch (Exception ex)
             {
@@ -296,7 +308,7 @@ namespace Ven4Tools.Views.Tabs
             var warn = MessageBox.Show(
                 $"⚠️ ПРЕДУПРЕЖДЕНИЕ\n\n" +
                 $"Активация {product} выполняется через скрипт из интернета: get.activated.win\n\n" +
-                "Это открытый проект Microsoft Activation Scripts (MAS).\n" +
+                "Это инструмент активации с открытым кодом.\n" +
                 "Исходный код: github.com/massgravel/Microsoft-Activation-Scripts\n\n" +
                 "Продолжить?",
                 $"Активация {product} — внимание",
