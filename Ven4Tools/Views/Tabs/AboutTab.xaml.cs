@@ -17,7 +17,7 @@ namespace Ven4Tools.Views.Tabs
             InitializeComponent();
 
             var version = Assembly.GetExecutingAssembly().GetName().Version;
-            txtVersion.Text = $"Версия {version?.ToString() ?? "2.3.0"}";
+            txtVersion.Text = $"Версия {version?.ToString() ?? "—"}";
 
             btnGitHub.Click += BtnGitHub_Click;
             btnFeedback.Click += BtnFeedback_Click;
@@ -118,7 +118,7 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 var osVersion = Environment.OSVersion.VersionString;
-                var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.3.0";
+                var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "—";
                 
                 var title = Uri.EscapeDataString($"Обратная связь: {appVersion}");
                 var body = Uri.EscapeDataString(
@@ -151,7 +151,7 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 var osVersion = Environment.OSVersion.VersionString;
-                var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.3.0";
+                var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "—";
                 
                 string lastLogs = GetLastLogLines();
                 

@@ -169,6 +169,13 @@ namespace Ven4Tools.Services
 
                 // ── Source-ordered install loop ────────────────────────────────
                 string primaryId = !string.IsNullOrEmpty(app.AlternativeId) ? app.AlternativeId : app.Id;
+
+                // ID пользовательских приложений приходит из ручного ввода —
+                // проверяем перед подстановкой в командную строку winget,
+                // чтобы исключить внедрение посторонних аргументов.
+                if (app.IsUserAdded && !string.IsNullOrEmpty(primaryId))
+                    ValidateWingetId(primaryId);
+
                 var sourceOrder  = SourceOrderService.GetOrderForCategory(app.CategoryString);
                 Log($"🔀 Порядок источников для «{app.DisplayName}»: {string.Join(" → ", sourceOrder)}");
 
@@ -418,6 +425,25 @@ namespace Ven4Tools.Services
                 Log($"❌ {app.DisplayName}: {ex.Message}");
                 return (false, ex.Message, appProgress);
             }
+        }
+
+        // ── Валидация Winget ID ─────────────────────────────────────────────────
+
+        // Допустимые символы winget ID: буквы, цифры, точка, дефис, плюс,
+        // подчёркивание и пробел. Всё остальное — потенциальное внедрение аргументов.
+        private static readonly System.Text.RegularExpressions.Regex _wingetIdRegex =
+            new(@"^[A-Za-z0-9.\-+_ ]+$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        /// <summary>
+        /// Проверяет, что Winget ID состоит только из допустимых символов.
+        /// Используется для пользовательских приложений, где ID вводится вручную.
+        /// </summary>
+        private static void ValidateWingetId(string id)
+        {
+            if (!_wingetIdRegex.IsMatch(id))
+                throw new ArgumentException(
+                    $"Недопустимый Winget ID «{id}»: разрешены только буквы, цифры, " +
+                    "точка, дефис, плюс, подчёркивание и пробел.");
         }
 
         // ── Помощники для выбора диска установки ───────────────────────────────

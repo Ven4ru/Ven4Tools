@@ -19,10 +19,10 @@ namespace Ven4Tools.Views.Tabs
         private CancellationTokenSource? _cancellationTokenSource;
         private string? _downloadedFilePath;
 
-        // Saved region state (both Office CC and Windows GeoID)
-        private string? _originalOfficeCC;   // raw value from ExperimentConfigs\Ecs\CountryCode
-        private string? _originalGeoName;    // e.g. "RU" from Control Panel\International\Geo\Name
-        private string? _originalGeoNation;  // e.g. "203" from Control Panel\International\Geo\Nation
+        // Сохранённое состояние региона (Office CC и Windows GeoID)
+        private string? _originalOfficeCC;   // исходное значение из ExperimentConfigs\Ecs\CountryCode
+        private string? _originalGeoName;    // например "RU" из Control Panel\International\Geo\Name
+        private string? _originalGeoNation;  // например "203" из Control Panel\International\Geo\Nation
 
         public event Action? GoToActivation;
 
@@ -64,13 +64,13 @@ namespace Ven4Tools.Views.Tabs
                 pnlActivationHint.Visibility = UserSession.IsLoggedIn ? Visibility.Visible : Visibility.Collapsed);
         }
 
-        // ── Region display (reads registry directly — reflects runtime changes) ──
+        // ── Отображение региона (читаем реестр напрямую — изменения видны сразу) ──
 
         private void UpdateRegionDisplay()
         {
             Dispatcher.Invoke(() =>
             {
-                // Windows GeoID — read directly from registry so changes are immediate
+                // Windows GeoID — читаем прямо из реестра, чтобы изменения были видны сразу
                 try
                 {
                     using var geo = Registry.CurrentUser.OpenSubKey(@"Control Panel\International\Geo");
@@ -100,7 +100,7 @@ namespace Ven4Tools.Views.Tabs
             });
         }
 
-        // ── Region save / set / restore ───────────────────────────────────────
+        // ── Сохранение / смена / восстановление региона ───────────────────────
 
         private void SaveRegion()
         {
@@ -132,7 +132,7 @@ namespace Ven4Tools.Views.Tabs
             }
             catch (Exception ex) { AddLog($"⚠️ Office CountryCode: {ex.Message}"); }
 
-            // Windows GeoID (Name = ISO-3166 alpha-2, Nation = numeric LCID-era GeoID)
+            // Windows GeoID (Name = код ISO-3166 alpha-2, Nation = числовой GeoID)
             try
             {
                 using var geo = Registry.CurrentUser.OpenSubKey(@"Control Panel\International\Geo", writable: true);
@@ -186,7 +186,7 @@ namespace Ven4Tools.Views.Tabs
             UpdateRegionDisplay();
         }
 
-        // ── Download ──────────────────────────────────────────────────────────
+        // ── Скачивание ────────────────────────────────────────────────────────
 
         private async void BtnDownloadOffice_Click(object sender, RoutedEventArgs e)
         {
@@ -195,7 +195,7 @@ namespace Ven4Tools.Views.Tabs
             var (displayName, productId) = GetSelectedVersion();
             string lang = cmbOfficeLanguage.SelectedItem.ToString()!;
 
-            // Clean up any previous download
+            // Удаляем предыдущий скачанный установщик, если он остался
             if (_downloadedFilePath != null)
             {
                 try { File.Delete(_downloadedFilePath); } catch { }
@@ -284,7 +284,7 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        // ── Install ───────────────────────────────────────────────────────────
+        // ── Установка ─────────────────────────────────────────────────────────
 
         private async void BtnInstallOffice_Click(object sender, RoutedEventArgs e)
         {
@@ -402,7 +402,7 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        // ── C2R process helpers ───────────────────────────────────────────────
+        // ── Помощники для процессов C2R ───────────────────────────────────────
 
         private static HashSet<int> GetC2RProcessPids()
         {
@@ -447,7 +447,7 @@ namespace Ven4Tools.Views.Tabs
                 AddLog("⚠️ Таймаут ожидания — продолжаем без подтверждения");
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────
+        // ── Вспомогательные методы ────────────────────────────────────────────
 
         private (string DisplayName, string ProductId) GetSelectedVersion()
         {

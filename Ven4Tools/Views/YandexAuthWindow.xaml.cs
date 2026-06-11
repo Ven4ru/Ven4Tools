@@ -61,10 +61,37 @@ namespace Ven4Tools.Views
             }
         }
 
+        /// <summary>
+        /// Проверяет источник web-сообщения: доверяем только страницам OAuth Яндекса
+        /// и нашему серверу (там живёт yandex-callback.php, который и шлёт сессию).
+        /// Сообщения с любых других страниц игнорируются.
+        /// </summary>
+        private static bool IsTrustedOrigin(string? source)
+        {
+            if (string.IsNullOrWhiteSpace(source)) return false;
+            if (!Uri.TryCreate(source, UriKind.Absolute, out var uri)) return false;
+            if (uri.Scheme != Uri.UriSchemeHttps) return false;
+
+            string host = uri.Host;
+            string ownHost = new Uri(ApiConfig.BaseUrl).Host;
+            return host.Equals(ownHost, StringComparison.OrdinalIgnoreCase)
+                || host.Equals("oauth.yandex.ru", StringComparison.OrdinalIgnoreCase)
+                || host.Equals("yandex.ru", StringComparison.OrdinalIgnoreCase)
+                || host.EndsWith(".yandex.ru", StringComparison.OrdinalIgnoreCase);
+        }
+
         private void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
         {
             try
             {
+                // Сообщения с недоверенных страниц не обрабатываем — защита от
+                // подмены сессии произвольным сайтом, открытым внутри WebView
+                if (!IsTrustedOrigin(e.Source))
+                {
+                    AppLogger.Write($"[YandexAuth] ⚠ Отклонено сообщение от недоверенного источника: {e.Source}");
+                    return;
+                }
+
                 var json = e.TryGetWebMessageAsString();
                 var data = JObject.Parse(json);
 
