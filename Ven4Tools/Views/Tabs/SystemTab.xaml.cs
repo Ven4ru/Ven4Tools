@@ -289,33 +289,17 @@ namespace Ven4Tools.Views.Tabs
             txtUpdatesLog.Text = "⏳ Проверка...";
             try
             {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "winget",
-                    Arguments = "upgrade --include-unknown --source winget",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
+                string raw = await WingetRunner.RunAsync(
+                    "upgrade --include-unknown --source winget",
+                    TimeSpan.FromMinutes(3));
 
-                using var process = Process.Start(psi);
-                if (process == null) { txtUpdatesLog.Text = "❌ Не удалось запустить winget"; return; }
-
-                var stderrTask = process.StandardError.ReadToEndAsync();
-                string output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
-                await stderrTask;
-
-                var upgradable = output.Split('\n')
+                var upgradable = raw.Split('\n')
+                    .Select(l => WingetRunner.StripAnsi(l).Trim())
                     .Where(l => !string.IsNullOrWhiteSpace(l)
-                             && !l.TrimStart().StartsWith("Name")
-                             && !l.TrimStart().StartsWith("-")
-                             && !l.TrimStart().StartsWith("The ")
+                             && !l.StartsWith("Name")
+                             && !l.StartsWith("-")
+                             && !l.StartsWith("The ")
                              && l.Contains("  "))
-                    .Select(l => l.Trim())
-                    .Where(l => l.Length > 0)
                     .ToList();
 
                 if (upgradable.Count > 0)
