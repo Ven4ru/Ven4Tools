@@ -17,6 +17,28 @@ namespace Ven4Tools.Models
         Пользовательские
     }
 
+    /// <summary>
+    /// Общий хелпер преобразования строкового имени категории в AppCategory.
+    /// Используется каталогом и пользовательскими приложениями — единая точка маппинга.
+    /// </summary>
+    public static class AppCategoryHelper
+    {
+        public static AppCategory Parse(string category) => category switch
+        {
+            "Браузеры"         => AppCategory.Браузеры,
+            "Офис"             => AppCategory.Офис,
+            "Графика"          => AppCategory.Графика,
+            "Разработка"       => AppCategory.Разработка,
+            "Мессенджеры"      => AppCategory.Мессенджеры,
+            "Мультимедиа"      => AppCategory.Мультимедиа,
+            "Системные"        => AppCategory.Системные,
+            "Игровые сервисы"  => AppCategory.ИгровыеСервисы,
+            "Драйверпаки"      => AppCategory.Драйверпаки,
+            "Пользовательские" => AppCategory.Пользовательские,
+            _                  => AppCategory.Другое
+        };
+    }
+
     public class AppInfo
     {
         public string? Sha256 { get; set; }

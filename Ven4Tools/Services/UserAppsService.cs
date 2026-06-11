@@ -87,7 +87,7 @@ namespace Ven4Tools.Services
             {
                 Id             = item.TryGetProperty("app_id", out var id)   ? id.GetString()   ?? Guid.NewGuid().ToString() : Guid.NewGuid().ToString(),
                 DisplayName    = item.TryGetProperty("display_name", out var n) ? n.GetString() ?? "" : "",
-                Category       = ParseCategory(categoryStr),
+                Category       = AppCategoryHelper.Parse(categoryStr),
                 InstallerUrls  = urls,
                 AlternativeId  = item.TryGetProperty("winget_id", out var wid)  ? wid.GetString() : null,
                 SilentArgs     = item.TryGetProperty("silent_args", out var sa)  ? sa.GetString() ?? "/S" : "/S",
@@ -95,18 +95,5 @@ namespace Ven4Tools.Services
                 IsUserAdded    = true
             };
         }
-
-        private static AppCategory ParseCategory(string s) => s switch
-        {
-            "Браузеры"        => AppCategory.Браузеры,
-            "Офис"            => AppCategory.Офис,
-            "Графика"         => AppCategory.Графика,
-            "Разработка"      => AppCategory.Разработка,
-            "Мессенджеры"     => AppCategory.Мессенджеры,
-            "Мультимедиа"     => AppCategory.Мультимедиа,
-            "Системные"       => AppCategory.Системные,
-            "Пользовательские"=> AppCategory.Пользовательские,
-            _                 => AppCategory.Другое
-        };
     }
 }

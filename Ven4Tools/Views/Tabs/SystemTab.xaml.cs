@@ -165,7 +165,7 @@ namespace Ven4Tools.Views.Tabs
                 }
                 
                 var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-                txtAppVersion.Text = version?.ToString() ?? "2.3.0";
+                txtAppVersion.Text = version?.ToString() ?? "—";
             }
             catch (Exception ex)
             {

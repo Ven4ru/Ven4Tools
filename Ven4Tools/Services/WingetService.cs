@@ -57,7 +57,7 @@ namespace Ven4Tools.Services
                     if (parts.Length < 2) continue;
 
                     string id = parts[1].Trim();
-                    if (!id.Contains('.')) continue; // genuine winget IDs contain a dot
+                    if (!id.Contains('.')) continue; // настоящие winget ID всегда содержат точку
 
                     results.Add(new WingetPackage
                     {

@@ -47,22 +47,6 @@ namespace Ven4Tools
             NavigateToCatalog(null, null);
 
             UserSession.Changed += UpdateUserUI;
-            Closing += (_, args) =>
-            {
-                // При сворачивании в трей окно не закрывается (Window_Closing_Extended
-                // отменяет закрытие и прячет окно) — окно отзыва показывать нельзя,
-                // иначе fw.Closed -> Close() завершит приложение в обход трея.
-                if (ProfileService.Current.MinimizeToTray) return;
-
-                if (ChannelService.IsPreRelease && !_feedbackShown)
-                {
-                    args.Cancel = true;
-                    _feedbackShown = true;
-                    var fw = new Views.FeedbackWindow { Owner = this };
-                    fw.Closed += (_, _) => Close();
-                    fw.Show();
-                }
-            };
             UpdateUserUI();
 
             Loaded += (s, e) => ShowCategorySelectionIfNeeded();
@@ -260,11 +244,24 @@ namespace Ven4Tools
             Application.Current.Shutdown();
         }
 
+        // Единственный обработчик Closing (подключён в XAML) — объединяет сворачивание
+        // в трей, предупреждение об активной установке и окно отзыва на prerelease.
         private void Window_Closing_Extended(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // Предупреждение при закрытии во время активной установки.
-            // При сворачивании в трей окно не закрывается — установка продолжается, предупреждение не нужно.
-            if (!ProfileService.Current.MinimizeToTray && _catalogTab?.IsInstalling == true)
+            // При сворачивании в трей окно не закрывается — установка продолжается,
+            // предупреждение и окно отзыва не нужны.
+            if (ProfileService.Current.MinimizeToTray)
+            {
+                e.Cancel = true;
+                Hide();
+                _trayIcon?.ShowBalloonTip(2000, "Ven4Tools",
+                    "Приложение свёрнуто в трей. Двойной клик для открытия.",
+                    System.Windows.Forms.ToolTipIcon.Info);
+                return;
+            }
+
+            // Предупреждение при закрытии во время активной установки
+            if (_catalogTab?.IsInstalling == true)
             {
                 var res = MessageBox.Show(
                     "Идёт установка приложений.\n\nЗакрыть программу и прервать установку?",
@@ -280,20 +277,21 @@ namespace Ven4Tools
                 }
             }
 
-            if (ProfileService.Current.MinimizeToTray)
+            // На prerelease-канале перед выходом один раз показываем окно отзыва;
+            // после его закрытия Close() вызывается повторно и приложение завершается.
+            if (ChannelService.IsPreRelease && !_feedbackShown)
             {
                 e.Cancel = true;
-                Hide();
-                _trayIcon?.ShowBalloonTip(2000, "Ven4Tools",
-                    "Приложение свёрнуто в трей. Двойной клик для открытия.",
-                    System.Windows.Forms.ToolTipIcon.Info);
+                _feedbackShown = true;
+                var fw = new Views.FeedbackWindow { Owner = this };
+                fw.Closed += (_, _) => Close();
+                fw.Show();
+                return;
             }
-            else
-            {
-                UserSession.Changed -= UpdateUserUI;
-                _trayIcon?.Dispose();
-                ConnectivityMonitor.Stop();
-            }
+
+            UserSession.Changed -= UpdateUserUI;
+            _trayIcon?.Dispose();
+            ConnectivityMonitor.Stop();
         }
 
         // ── Quick pins ────────────────────────────────────────────────────────────

@@ -1,295 +1,234 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using Ven4Tools.Models;
+using System.Windows.Media;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
 {
     public partial class NetworkTab : UserControl
     {
-        private ZapretService? _zapretService;
-        private bool _isZapretActionInProgress = false;
-        private bool _initialized = false;
-        private Action? _sessionChangedHandler;
+        private bool _busy = false;
 
         public NetworkTab()
         {
             InitializeComponent();
-            _zapretService = new ZapretService(AddLog);
 
-            _sessionChangedHandler = () => Dispatcher.Invoke(UpdateAuthState);
-            Loaded += (_, _) =>
+            btnRunAll.Click          += async (_, _) => await RunAllAsync();
+            btnRefreshAdapters.Click += (_, _) => RefreshAdapters();
+            btnPing.Click            += async (_, _) => await RunPingAsync();
+            btnCheckServices.Click   += async (_, _) => await RunServicesAsync();
+            btnGetIp.Click           += async (_, _) => await RunGetIpAsync();
+            btnCheckDns.Click        += async (_, _) => await RunDnsAsync();
+            btnResetNetwork.Click    += async (_, _) => await RunResetNetworkAsync();
+
+            Loaded += (_, _) => RefreshAdapters();
+        }
+
+        // ── Полная диагностика ────────────────────────────────────────────────
+
+        private async Task RunAllAsync()
+        {
+            if (_busy) return;
+            _busy = true;
+            btnRunAll.IsEnabled = false;
+            btnRunAll.Content = "⏳ Диагностика...";
+            try
             {
-                UserSession.Changed += _sessionChangedHandler;
-                if (!_initialized)
-                {
-                    CheckZapretStatus();
-                    _initialized = true;
-                }
-                UpdateAuthState();
+                RefreshAdapters();
+                await RunPingAsync();
+                await RunServicesAsync();
+                await RunGetIpAsync();
+            }
+            finally
+            {
+                _busy = false;
+                btnRunAll.IsEnabled = true;
+                btnRunAll.Content = "🔍 Запустить полную диагностику";
+            }
+        }
+
+        // ── Адаптеры ─────────────────────────────────────────────────────────
+
+        private void RefreshAdapters()
+        {
+            var adapters = DiagnosticsService.GetAdapters();
+            lstAdapters.ItemsSource = adapters;
+            txtAdaptersEmpty.Visibility = adapters.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            AppLogger.Write($"[Сеть] Адаптеров: {adapters.Count}");
+        }
+
+        // ── Пинг ─────────────────────────────────────────────────────────────
+
+        private async Task RunPingAsync()
+        {
+            btnPing.IsEnabled = false;
+            SetPingRow(txtPing1, txtPingIcon1, "...", null);
+            SetPingRow(txtPing2, txtPingIcon2, "...", null);
+            SetPingRow(txtPing3, txtPingIcon3, "...", null);
+            SetPingRow(txtPing4, txtPingIcon4, "...", null);
+
+            var hosts = new[] { "1.1.1.1", "8.8.8.8", "google.com", "ven4tools.ru" };
+            var targets = new[] {
+                (txtPing1, txtPingIcon1), (txtPing2, txtPingIcon2),
+                (txtPing3, txtPingIcon3), (txtPing4, txtPingIcon4)
             };
-            Unloaded += (_, _) => UserSession.Changed -= _sessionChangedHandler;
+
+            var tasks = new List<Task>();
+            for (int i = 0; i < hosts.Length; i++)
+            {
+                var host = hosts[i];
+                var (ms, icon) = targets[i];
+                tasks.Add(Task.Run(async () =>
+                {
+                    var r = await DiagnosticsService.PingHostAsync(host);
+                    Dispatcher.Invoke(() => SetPingRow(ms, icon, r.Display, r.Reachable));
+                    AppLogger.Write($"[Сеть] Пинг {host}: {r.Display}");
+                }));
+            }
+            await Task.WhenAll(tasks);
+            btnPing.IsEnabled = true;
         }
 
-        private void UpdateAuthState()
+        private static void SetPingRow(TextBlock txt, TextBlock icon, string ms, bool? ok)
         {
-            pnlZapretAuth.Visibility = UserSession.IsLoggedIn ? Visibility.Collapsed : Visibility.Visible;
+            txt.Text = ms;
+            if (ok == null)  { icon.Text = "⬜"; icon.Foreground = Brushes.Gray; return; }
+            if (ok == true)  { icon.Text = "✅"; icon.Foreground = new SolidColorBrush(Color.FromRgb(74,222,128)); }
+            else             { icon.Text = "❌"; icon.Foreground = new SolidColorBrush(Colors.LightCoral); }
         }
-        
-        private static void AddLog(string message) => AppLogger.Write(message);
-        
-        private void CheckZapretStatus()
+
+        // ── Доступность сервисов ──────────────────────────────────────────────
+
+        private async Task RunServicesAsync()
         {
-            if (_zapretService?.IsInstalled == true)
+            btnCheckServices.IsEnabled = false;
+            var icons = new[] { txtSvc1, txtSvc2, txtSvc3, txtSvc4, txtSvc5 };
+            var mstxts = new[] { txtSvcMs1, txtSvcMs2, txtSvcMs3, txtSvcMs4, txtSvcMs5 };
+            foreach (var i in icons) { i.Text = "⏳"; i.Foreground = Brushes.Gray; }
+
+            var checks = new[]
             {
-                txtZapretStatus.Text = "✅ Установлен";
-                btnInstallZapret.Visibility = Visibility.Collapsed;
-                btnZapretActions.Visibility = Visibility.Visible;
-                AddLog("✅ Zapret обнаружен в системе");
-            }
-            else
+                ("Google",     "https://www.google.com"),
+                ("YouTube",    "https://www.youtube.com"),
+                ("Discord",    "https://discord.com"),
+                ("Cloudflare", "https://www.cloudflare.com"),
+                ("GitHub",     "https://github.com"),
+            };
+
+            var tasks = new List<Task>();
+            for (int i = 0; i < checks.Length; i++)
             {
-                txtZapretStatus.Text = "❌ Не установлен";
-                btnInstallZapret.Visibility = Visibility.Visible;
-                btnZapretActions.Visibility = Visibility.Collapsed;
-            }
-        }
-        
-        private async void BtnInstallZapret_Click(object sender, RoutedEventArgs e)
-        {
-            if (_isZapretActionInProgress) return;
-            
-            var warning1 = MessageBox.Show(
-                "⚠️ ВАЖНОЕ ПРЕДУПРЕЖДЕНИЕ\n\n" +
-                "Zapret устанавливает системный драйвер WinDivert, который работает на уровне ядра Windows.\n\n" +
-                "Возможные риски:\n" +
-                "• Синие экраны смерти (BSOD)\n" +
-                "• Конфликты с антивирусами, античитами, VPN\n" +
-                "• Срабатывание антивирусов\n\n" +
-                "Ven4Tools только скачивает и распаковывает файлы.\n" +
-                "Все риски и ответственность — полностью на вас.\n\n" +
-                "Продолжить?",
-                "Предупреждение",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-            
-            if (warning1 != MessageBoxResult.Yes) return;
-            
-            var warning2 = MessageBox.Show(
-                "Вы уверены?\n\n" +
-                "Zapret — инструмент для продвинутых пользователей.\n" +
-                "Если вы не понимаете, что делает драйвер WinDivert — откажитесь.\n\n" +
-                "Продолжить?",
-                "Подтверждение",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-            
-            if (warning2 != MessageBoxResult.Yes) return;
-            
-            _isZapretActionInProgress = true;
-            btnInstallZapret.IsEnabled = false;
-            txtZapretState.Text = "Установка...";
-            
-            try
-            {
-                AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                AddLog("📥 Начинаем установку zapret...");
-                
-                bool success = await _zapretService!.InstallAsync();
-                
-                if (success)
+                var (name, url) = checks[i];
+                var ic = icons[i]; var ms = mstxts[i];
+                tasks.Add(Task.Run(async () =>
                 {
-                    AddLog("✅ Zapret успешно установлен!");
-                    txtZapretState.Text = "Готово";
-                    CheckZapretStatus();
-                    
-                    var openMenu = MessageBox.Show(
-                        "✅ Zapret установлен!\n\n" +
-                        "Открыть меню service.bat для настройки?",
-                        "Установка завершена",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question);
-                    
-                    if (openMenu == MessageBoxResult.Yes)
+                    var r = await DiagnosticsService.CheckServiceAsync(name, url);
+                    Dispatcher.Invoke(() =>
                     {
-                        _zapretService.OpenServiceMenu();
-                    }
-                }
-                else
-                {
-                    AddLog("❌ Ошибка установки zapret");
-                    txtZapretState.Text = "Ошибка установки";
-                }
+                        ic.Text = r.Available ? "✅" : "❌";
+                        ic.Foreground = r.Available
+                            ? new SolidColorBrush(Color.FromRgb(74,222,128))
+                            : new SolidColorBrush(Colors.LightCoral);
+                        ms.Text = r.Available ? $"{r.Ms} мс" : "таймаут";
+                    });
+                    AppLogger.Write($"[Сеть] {name}: {(r.Available ? "✅" : "❌")} {r.Ms}мс");
+                }));
             }
-            catch (Exception ex)
-            {
-                AddLog($"❌ Исключение: {ex.Message}");
-                txtZapretState.Text = "Ошибка";
-            }
-            finally
-            {
-                _isZapretActionInProgress = false;
-                btnInstallZapret.IsEnabled = true;
-            }
+            await Task.WhenAll(tasks);
+            btnCheckServices.IsEnabled = true;
         }
-        
-        private void BtnOpenServiceMenu_Click(object sender, RoutedEventArgs e)
+
+        // ── Внешний IP ───────────────────────────────────────────────────────
+
+        private async Task RunGetIpAsync()
         {
-            if (_isZapretActionInProgress) return;
-            _zapretService!.OpenServiceMenu();
-            txtZapretState.Text = "Открыто меню";
-            AddLog("📟 Открыто меню service.bat");
-        }
-        
-        private void BtnOpenZapretFolder_Click(object sender, RoutedEventArgs e)
-        {
-            _zapretService!.OpenInstallFolder();
-            txtZapretState.Text = "Папка открыта";
-            AddLog($"📁 Открыта папка: {_zapretService.InstallPath}");
-        }
-        
-        private void BtnOpenDocumentation_Click(object sender, RoutedEventArgs e)
-        {
-            _zapretService!.OpenDocumentation();
-            txtZapretState.Text = "Документация открыта";
-            AddLog("📖 Открыта документация");
-        }
-        
-        private async void BtnRemoveZapret_Click(object sender, RoutedEventArgs e)
-        {
-            if (_isZapretActionInProgress) return;
-            
-            var confirm = MessageBox.Show(
-                "Вы действительно хотите удалить zapret?\n\n" +
-                "Будут удалены:\n" +
-                "• Все файлы zapret\n" +
-                "• Службы, связанные с zapret\n\n" +
-                "⚠️ Для полного удаления драйвера потребуется перезагрузка.\n\n" +
-                "Продолжить?",
-                "Удаление zapret",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-            
-            if (confirm != MessageBoxResult.Yes) return;
-            
-            _isZapretActionInProgress = true;
-            btnRemoveZapret.IsEnabled = false;
-            txtZapretState.Text = "Удаление...";
-            
+            btnGetIp.IsEnabled = false;
+            txtPublicIp.Text = "определяется...";
             try
             {
-                AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                AddLog("🗑️ Удаление zapret...");
-                
-                await _zapretService!.RemoveAsync();
-                CheckZapretStatus();
-                txtZapretState.Text = "Готово";
-                
-                AddLog("✅ Zapret удалён");
+                var ip = await DiagnosticsService.GetPublicIpAsync();
+                txtPublicIp.Text = ip;
+                AppLogger.Write($"[Сеть] Внешний IP: {ip}");
             }
-            catch (Exception ex)
-            {
-                AddLog($"❌ Ошибка удаления: {ex.Message}");
-                txtZapretState.Text = "Ошибка";
-            }
-            finally
-            {
-                _isZapretActionInProgress = false;
-                btnRemoveZapret.IsEnabled = true;
-            }
+            finally { btnGetIp.IsEnabled = true; }
         }
-        
-        private async void BtnCheckDns_Click(object sender, RoutedEventArgs e)
+
+        // ── DNS ──────────────────────────────────────────────────────────────
+
+        private async Task RunDnsAsync()
         {
-            AddLog("🔍 Проверка DNS (nslookup google.com)...");
+            btnCheckDns.IsEnabled = false;
+            txtDnsResult.Visibility = Visibility.Visible;
+            txtDnsResult.Text = "Проверка DNS...";
             try
             {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "nslookup",
-                    Arguments = "google.com",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
-
-                using var process = Process.Start(psi);
-                if (process == null) { AddLog("❌ Не удалось запустить nslookup"); return; }
-
-                var outputTask = process.StandardOutput.ReadToEndAsync();
-                var errorTask  = process.StandardError.ReadToEndAsync();
-                await Task.WhenAll(outputTask, errorTask);
-                await process.WaitForExitAsync();
-                string output = outputTask.Result;
-                string error  = errorTask.Result;
-
-                foreach (var line in (output + error).Split('\n'))
-                {
-                    string trimmed = line.Trim('\r', ' ');
-                    if (!string.IsNullOrWhiteSpace(trimmed))
-                        AddLog($"   {trimmed}");
-                }
-
-                AddLog(process.ExitCode == 0 ? "✅ DNS работает" : "⚠️ Возможны проблемы с DNS");
+                var result = await DiagnosticsService.CheckDnsAsync("google.com");
+                txtDnsResult.Text = result;
+                AppLogger.Write("[Сеть] DNS проверка завершена");
             }
-            catch (Exception ex)
-            {
-                AddLog($"❌ Ошибка DNS-проверки: {ex.Message}");
-            }
+            catch (Exception ex) { txtDnsResult.Text = $"Ошибка: {ex.Message}"; }
+            finally { btnCheckDns.IsEnabled = true; }
         }
 
-        private async void BtnResetNetwork_Click(object sender, RoutedEventArgs e)
+        // ── Сброс сети ───────────────────────────────────────────────────────
+
+        private async Task RunResetNetworkAsync()
         {
             var confirm = MessageBox.Show(
                 "Сброс сетевых настроек:\n\n" +
-                "• netsh winsock reset\n" +
-                "• netsh int ip reset\n" +
-                "• ipconfig /release\n" +
-                "• ipconfig /renew\n\n" +
-                "Потребуются права администратора и перезагрузка.\n\n" +
-                "Продолжить?",
-                "Сброс сети",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
+                "• netsh winsock reset\n• netsh int ip reset\n• ipconfig /release\n• ipconfig /renew\n\n" +
+                "Потребуются права администратора и перезагрузка.\n\nПродолжить?",
+                "Сброс сети", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (confirm != MessageBoxResult.Yes) return;
 
+            btnResetNetwork.IsEnabled = false;
             try
             {
-                AddLog("🔄 Запуск сброса сетевых настроек с правами администратора...");
-
-                // Run elevated; /c runs all commands, pause lets user read before window closes
+                AppLogger.Write("[Сеть] Запуск сброса сетевых настроек...");
+                // Приложение уже работает с правами администратора (перезапуск через UAC
+                // в MainWindow), поэтому runas не нужен — запускаем скрыто и перенаправляем
+                // вывод команд в лог-панель вместо отдельного окна консоли.
                 var psi = new ProcessStartInfo
                 {
                     FileName  = "cmd.exe",
                     Arguments = "/c netsh winsock reset & netsh int ip reset & " +
-                                "ipconfig /release & ipconfig /renew & " +
-                                "echo. & echo Готово. Нажмите любую клавишу... & pause > nul",
-                    UseShellExecute = true,
-                    Verb = "runas",
-                    WindowStyle = ProcessWindowStyle.Normal
+                                "ipconfig /release & ipconfig /renew",
+                    UseShellExecute        = false,
+                    CreateNoWindow         = true,
+                    WindowStyle            = ProcessWindowStyle.Hidden,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true
                 };
+                using var p = Process.Start(psi);
+                if (p != null)
+                {
+                    var stdoutTask = p.StandardOutput.ReadToEndAsync();
+                    var stderrTask = p.StandardError.ReadToEndAsync();
+                    await p.WaitForExitAsync();
 
-                using var process = Process.Start(psi);
-                if (process != null)
-                    await process.WaitForExitAsync();
-
-                AddLog("✅ Сброс сетевых настроек завершён");
-                MessageBox.Show(
-                    "Для применения изменений перезагрузите компьютер.",
-                    "Готово",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    // Выводим результат команд в лог-панель построчно
+                    foreach (var line in (await stdoutTask).Split('\n'))
+                    {
+                        var t = line.Trim();
+                        if (!string.IsNullOrWhiteSpace(t)) AppLogger.Write($"[Сеть] {t}");
+                    }
+                    var err = (await stderrTask).Trim();
+                    if (!string.IsNullOrWhiteSpace(err)) AppLogger.Write($"[Сеть] ⚠ {err}");
+                }
+                AppLogger.Write("[Сеть] Сброс завершён");
+                MessageBox.Show("Перезагрузите компьютер для применения изменений.",
+                    "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка сброса сети: {ex.Message}");
+                AppLogger.Write($"[Сеть] Ошибка сброса: {ex.Message}");
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            finally { btnResetNetwork.IsEnabled = true; }
         }
     }
 }

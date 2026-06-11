@@ -111,7 +111,7 @@ namespace Ven4Tools.Services
         /// {"error": "..."}. HTTP-статус всегда 200, поэтому опираемся
         /// именно на содержимое тела.
         /// </summary>
-        private static bool IsSuccessBody(string? body)
+        internal static bool IsSuccessBody(string? body)
         {
             if (string.IsNullOrWhiteSpace(body)) return false;
             try
@@ -164,7 +164,7 @@ namespace Ven4Tools.Services
         /// Короткий SHA256-хеш имени машины: позволяет группировать отчёты
         /// с одного ПК, не раскрывая реальное имя компьютера.
         /// </summary>
-        private static string AnonymizeMachineName()
+        public static string AnonymizeMachineName()
         {
             try
             {

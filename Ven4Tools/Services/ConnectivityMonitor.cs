@@ -20,6 +20,13 @@ namespace Ven4Tools.Services
 
         public static void Start()
         {
+            // Защита от повторного вызова: старый таймер останавливаем и освобождаем,
+            // иначе каждый Start() создавал бы новый таймер и они копились бы навсегда
+            if (_timer != null)
+            {
+                _timer.Dispose();
+                _timer = null;
+            }
             _timer = new Timer(_ => _ = CheckAsync(), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
         }
 

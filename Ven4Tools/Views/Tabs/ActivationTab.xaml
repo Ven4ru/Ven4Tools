@@ -4,13 +4,15 @@
              Background="{DynamicResource ContentBackground}">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="20">
-            <TextBlock Text="Активация Windows и Office" FontSize="24" FontWeight="Bold" 
-                       Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20"/>
-            
-            <TextBlock Text="Используется сторонний скрипт активации. Применяйте только если понимаете последствия."
-                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,20" TextWrapping="Wrap"/>
+            <TextBlock Text="Управление лицензиями" FontSize="24" FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10"/>
 
-            <!-- Чекбокс согласия — разблокирует кнопки активации -->
+            <TextBlock Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,20">
+                <Run Text="Ven4Tools открывает официальный сайт стороннего инструмента с открытым кодом. "/>
+                <Run Text="Вся дальнейшая работа выполняется пользователем самостоятельно."/>
+            </TextBlock>
+
+            <!-- Чекбокс согласия -->
             <Border Background="#1A1E2A" CornerRadius="8" Padding="14,10" Margin="0,0,0,20"
                     BorderBrush="#FF6B35" BorderThickness="1">
                 <CheckBox x:Name="chkActivationConsent"
@@ -28,73 +30,50 @@
                 </CheckBox>
             </Border>
 
-            <!-- Блок активации — только для авторизованных пользователей -->
+            <!-- Блок активации — только для авторизованных -->
             <Grid>
                 <StackPanel>
-                    <!-- Активация Windows -->
-                    <GroupBox Header="🪟 Активация Windows" Margin="0,0,0,15">
+                    <!-- Управление активацией Windows -->
+                    <GroupBox Header="🪟 Управление активацией Windows" Margin="0,0,0,15">
                         <StackPanel Margin="10">
-                            <TextBlock Text="Выберите тип активации:" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8"/>
-
-                            <RadioButton x:Name="rdbHwid" GroupName="ActivationType"
-                                         Content="HWID (аппаратная привязка, постоянная активация)"
-                                         Foreground="{DynamicResource TextPrimary}" Margin="0,5" IsChecked="True"/>
-                            <RadioButton x:Name="rdbKms38" GroupName="ActivationType"
-                                         Content="KMS38 (активация до 2038 года)"
-                                         Foreground="{DynamicResource TextPrimary}" Margin="0,5"/>
-
-                            <Button x:Name="btnActivateWindows" Content="🔑 Активировать Windows"
-                                    Height="40" Width="200" Margin="0,15,0,0" HorizontalAlignment="Left"
-                                    Background="#0078D4" Foreground="White" FontWeight="Bold"/>
+                            <TextBlock Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,10">
+                                <Run Text="Сторонний инструмент с открытым кодом. Откроется официальный сайт — "/>
+                                <Run Text="дальнейшие действия выполняет пользователь самостоятельно."/>
+                            </TextBlock>
+                            <Button x:Name="btnActivateWindows" Content="🌐 Открыть официальный сайт →"
+                                    Height="40" Width="260" HorizontalAlignment="Left"
+                                    Background="#0078D4" Foreground="White" FontWeight="Bold" IsEnabled="False"/>
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Активация Office -->
-                    <GroupBox Header="📁 Активация Office" Margin="0,0,0,15">
+                    <!-- Управление активацией Office -->
+                    <GroupBox Header="📁 Управление активацией Office" Margin="0,0,0,15">
                         <StackPanel Margin="10">
-                            <TextBlock Text="Выберите тип активации:" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8"/>
-
-                            <RadioButton x:Name="rdbOhook" GroupName="OfficeActivationType"
-                                         Content="Ohook (обход активации, работает навсегда)"
-                                         Foreground="{DynamicResource TextPrimary}" Margin="0,5" IsChecked="True"/>
-                            <RadioButton x:Name="rdbKms" GroupName="OfficeActivationType"
-                                         Content="KMS (активация на 180 дней, требует продления)"
-                                         Foreground="{DynamicResource TextPrimary}" Margin="0,5"/>
-
-                            <Button x:Name="btnActivateOffice" Content="🔑 Активировать Office"
-                                    Height="40" Width="200" Margin="0,15,0,0" HorizontalAlignment="Left"
-                                    Background="#0078D4" Foreground="White" FontWeight="Bold"/>
+                            <TextBlock Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,10">
+                                <Run Text="Сторонний инструмент с открытым кодом. Откроется официальный сайт — "/>
+                                <Run Text="дальнейшие действия выполняет пользователь самостоятельно."/>
+                            </TextBlock>
+                            <Button x:Name="btnActivateOffice" Content="🌐 Открыть официальный сайт →"
+                                    Height="40" Width="260" HorizontalAlignment="Left"
+                                    Background="#0078D4" Foreground="White" FontWeight="Bold" IsEnabled="False"/>
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- Интерактивная активация -->
-                    <GroupBox Header="🎮 Для продвинутых пользователей" Margin="0,0,0,15">
-                        <StackPanel Margin="10">
-                            <TextBlock Text="Интерактивный режим — открытое окно PowerShell"
-                                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
-                            <Button x:Name="btnInteractiveMAS" Content="🚀 Интерактивный режим"
-                                    Height="40" Width="250" HorizontalAlignment="Left"
-                                    Background="#FFA500" Foreground="White" FontWeight="Bold"
-                                    ToolTip="Откроет PowerShell для ручного выбора параметров активации"/>
-                            <TextBlock Text="ℹ️ В интерактивном режиме вы сможете выбрать нужные параметры вручную"
-                                       Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,5,0,0"/>
-                        </StackPanel>
-                    </GroupBox>
                 </StackPanel>
 
-                <!-- Auth gate overlay — скрывается после входа в аккаунт -->
+                <!-- Auth gate overlay -->
                 <Border x:Name="pnlActivationAuth" Background="#CC0D1117" CornerRadius="4" MinHeight="200">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20">
                         <TextBlock Text="🔒 Только для авторизованных пользователей"
                                    FontSize="14" FontWeight="Bold" Foreground="White"
                                    HorizontalAlignment="Center"/>
-                        <TextBlock Text="Войдите в аккаунт для доступа к активации Windows и Office"
+                        <TextBlock Text="Войдите в аккаунт для доступа к управлению лицензиями"
                                    Foreground="#AAAAAA" Margin="0,8,0,0"
                                    HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
             </Grid>
-            
+
             <!-- Статус активации -->
             <GroupBox Header="📊 Статус активации" Margin="0,0,0,15">
                 <StackPanel Margin="10">
@@ -104,7 +83,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Windows:" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock x:Name="txtWindowsStatus" Grid.Column="1" 
+                        <TextBlock x:Name="txtWindowsStatus" Grid.Column="1"
                                    Foreground="{DynamicResource TextPrimary}" Text="Проверка..."/>
                     </Grid>
                     <Grid Margin="0,5">
@@ -113,22 +92,22 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Office:" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock x:Name="txtOfficeStatus" Grid.Column="1" 
+                        <TextBlock x:Name="txtOfficeStatus" Grid.Column="1"
                                    Foreground="{DynamicResource TextPrimary}" Text="Проверка..."/>
                     </Grid>
-                    <Button x:Name="btnCheckStatus" Content="🔄 Проверить статус" 
+                    <Button x:Name="btnCheckStatus" Content="🔄 Проверить статус"
                             Height="32" Width="150" Margin="0,10,0,0" HorizontalAlignment="Left"/>
                 </StackPanel>
             </GroupBox>
-            
+
             <!-- Информация -->
-            <GroupBox Header="ℹ️ О скрипте активации" Margin="0,0,0,15">
+            <GroupBox Header="ℹ️ О стороннем инструменте" Margin="0,0,0,15">
                 <StackPanel Margin="10">
-                    <TextBlock Text="Используется скрипт активации с открытым исходным кодом."
+                    <TextBlock Text="Сторонний инструмент с открытым исходным кодом для управления лицензиями."
                                Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
-                    <TextBlock Text="Источник: https://github.com/massgravel/Microsoft-Activation-Scripts" 
+                    <TextBlock Text="Источник: github.com/massgravel/Microsoft-Activation-Scripts"
                                Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,5,0,0"/>
-                    <TextBlock Text="⚠️ Активация может срабатывать не на всех редакциях Windows. Рекомендуется использовать Windows 10/11 Pro." 
+                    <TextBlock Text="⚠️ Может не поддерживать все редакции Windows. Рекомендуется Windows 10/11 Pro."
                                Foreground="#FFA500" TextWrapping="Wrap" Margin="0,10,0,0"/>
                 </StackPanel>
             </GroupBox>

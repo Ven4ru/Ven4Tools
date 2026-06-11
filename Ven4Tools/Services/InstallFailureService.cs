@@ -23,7 +23,8 @@ namespace Ven4Tools.Services
                 list.Add(new InstallFailure
                 {
                     SessionId   = CrashReportService.SessionId,
-                    MachineName = Environment.MachineName,
+                    // Имя машины не сохраняем в открытом виде — только короткий хеш
+                    MachineName = CrashReportService.AnonymizeMachineName(),
                     AppName     = appName,
                     AppId       = appId,
                     Method      = method,
@@ -33,6 +34,10 @@ namespace Ven4Tools.Services
                     Timestamp   = DateTime.UtcNow.ToString("O"),
                     Reported    = false
                 });
+                // Защита от неограниченного роста файла — храним не более 100 последних записей
+                const int maxRecords = 100;
+                if (list.Count > maxRecords)
+                    list.RemoveRange(0, list.Count - maxRecords);
                 Save(list);
             }
             catch { }
