@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Threading.Tasks;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
+using Ven4Tools.Views;
 
 namespace Ven4Tools.Views.Tabs
 {
@@ -22,18 +23,15 @@ namespace Ven4Tools.Views.Tabs
             btnActivateWindows.Click += BtnActivateWindows_Click;
             btnActivateOffice.Click += BtnActivateOffice_Click;
             btnCheckStatus.Click += BtnCheckStatus_Click;
-            btnInteractiveMAS.Click += BtnInteractiveMAS_Click;
 
             btnActivateWindows.IsEnabled = false;
             btnActivateOffice.IsEnabled = false;
-            btnInteractiveMAS.IsEnabled = false;
 
             _sessionChangedHandler = () => Dispatcher.Invoke(UpdateAuthState);
             Loaded += async (_, _) =>
             {
                 UserSession.Changed += _sessionChangedHandler;
                 UpdateAuthState();
-                ApplyAdminState();
                 await CheckActivationStatusAsync();
             };
             Unloaded += (_, _) => UserSession.Changed -= _sessionChangedHandler;
@@ -47,38 +45,43 @@ namespace Ven4Tools.Views.Tabs
         private void ChkActivationConsent_Changed(object sender, RoutedEventArgs e)
         {
             bool agreed = chkActivationConsent.IsChecked == true;
-            btnActivateWindows.IsEnabled = agreed && IsRunningAsAdmin();
-            btnActivateOffice.IsEnabled  = agreed && IsRunningAsAdmin();
-            btnInteractiveMAS.IsEnabled  = agreed;
+            btnActivateWindows.IsEnabled = agreed;
+            btnActivateOffice.IsEnabled = agreed;
         }
 
-        private void ApplyAdminState()
+        // Открывает сайт и окно-помощник для активации Windows
+        private void BtnActivateWindows_Click(object sender, RoutedEventArgs e)
         {
-            if (!IsRunningAsAdmin())
+            try
             {
-                btnActivateWindows.IsEnabled = false;
-                btnActivateOffice.IsEnabled  = false;
-                btnActivateWindows.ToolTip = "Требуются права администратора.";
-                btnActivateOffice.ToolTip  = "Требуются права администратора.";
-                AddLog("⚠️ Тихая активация недоступна — нет прав администратора.");
-                AddLog("   Используйте интерактивный режим или перезапустите от имени администратора.");
+                Process.Start(new ProcessStartInfo("https://massgrave.dev") { UseShellExecute = true });
+                AddLog("🌐 Открыт сайт для управления лицензией Windows");
+                var guide = new MasGuideWindow("Windows") { Owner = Window.GetWindow(this) };
+                guide.Show();
             }
+            catch (Exception ex) { AddLog($"❌ Ошибка: {ex.Message}"); }
         }
 
-        private static bool IsRunningAsAdmin()
+        // Открывает сайт и окно-помощник для активации Office
+        private void BtnActivateOffice_Click(object sender, RoutedEventArgs e)
         {
-            using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
-            return new System.Security.Principal.WindowsPrincipal(identity)
-                .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+            try
+            {
+                Process.Start(new ProcessStartInfo("https://massgrave.dev") { UseShellExecute = true });
+                AddLog("🌐 Открыт сайт для управления лицензией Office");
+                var guide = new MasGuideWindow("Office") { Owner = Window.GetWindow(this) };
+                guide.Show();
+            }
+            catch (Exception ex) { AddLog($"❌ Ошибка: {ex.Message}"); }
         }
-        
+
         private async Task CheckActivationStatusAsync()
         {
             try
             {
                 txtWindowsStatus.Text = "Проверка...";
                 txtOfficeStatus.Text = "Проверка...";
-                
+
                 await Task.Run(() =>
                 {
                     try
@@ -124,7 +127,7 @@ namespace Ven4Tools.Views.Tabs
                         });
                     }
                 });
-                
+
                 await Task.Run(() => CheckOfficeActivation());
             }
             catch (Exception ex)
@@ -132,7 +135,7 @@ namespace Ven4Tools.Views.Tabs
                 AddLog($"❌ Ошибка проверки статуса: {ex.Message}");
             }
         }
-        
+
         private void CheckOfficeActivation()
         {
             try
@@ -248,171 +251,24 @@ namespace Ven4Tools.Views.Tabs
             });
         }
 
-        // Интерактивный режим — открывает окно PowerShell
-        private void BtnInteractiveMAS_Click(object sender, RoutedEventArgs e)
+        private async void BtnCheckStatus_Click(object sender, RoutedEventArgs e)
         {
-            var warn = MessageBox.Show(
-                "⚠️ ПРЕДУПРЕЖДЕНИЕ\n\n" +
-                "Будет открыт PowerShell с правами администратора.\n" +
-                "Запускается скрипт из интернета: get.activated.win\n\n" +
-                "Это инструмент активации с открытым кодом.\n" +
-                "Исходный код: github.com/massgravel/Microsoft-Activation-Scripts\n\n" +
-                "Убедитесь, что доверяете источнику. Продолжить?",
-                "Активация — внимание",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (warn != MessageBoxResult.Yes) return;
-
+            btnCheckStatus.IsEnabled = false;
             try
             {
-                AddLog("━━━━━━━━━━━━━━━━━━━━━━");
-                AddLog("🚀 Запуск в интерактивном режиме...");
-                AddLog("━━━━━━━━━━━━━━━━━━━━━━");
-                
-                string command = "irm https://get.activated.win | iex";
-                
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = $"-NoExit -Command \"{command}\"",
-                    UseShellExecute = true,
-                    Verb = "runas"
-                };
-                
-                Process.Start(psi);
-                AddLog("✅ Запущен в отдельном окне");
-            }
-            catch (Exception ex)
-            {
-                AddLog($"❌ Ошибка запуска: {ex.Message}");
-                MessageBox.Show($"Ошибка запуска: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-        
-        // Тихая активация — без окна, вывод в лог
-        private async void BtnActivateWindows_Click(object sender, RoutedEventArgs e)
-        {
-            string parameter = rdbHwid.IsChecked == true ? "/hwid" : "/kms38";
-            await RunSilentActivationAsync(parameter, "Windows");
-        }
-        
-        private async void BtnActivateOffice_Click(object sender, RoutedEventArgs e)
-        {
-            string parameter = rdbOhook.IsChecked == true ? "/ohook" : "/kms";
-            await RunSilentActivationAsync(parameter, "Office");
-        }
-        
-        private async Task RunSilentActivationAsync(string parameter, string product)
-        {
-            var warn = MessageBox.Show(
-                $"⚠️ ПРЕДУПРЕЖДЕНИЕ\n\n" +
-                $"Активация {product} выполняется через скрипт из интернета: get.activated.win\n\n" +
-                "Это инструмент активации с открытым кодом.\n" +
-                "Исходный код: github.com/massgravel/Microsoft-Activation-Scripts\n\n" +
-                "Продолжить?",
-                $"Активация {product} — внимание",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (warn != MessageBoxResult.Yes) return;
-
-            if (!IsRunningAsAdmin())
-            {
-                AddLog("⚠️ Требуются права администратора.");
-                MessageBox.Show(
-                    "Для активации требуются права администратора.\n\nПерезапустите Ven4Tools от имени администратора.",
-                    "Недостаточно прав",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                AddLog("━━━━━━━━━━━━━━━━━━━━━━");
-                AddLog($"🔑 Активация {product} с параметром {parameter}...");
-                AddLog("━━━━━━━━━━━━━━━━━━━━━━");
-                
-                string command = $"& ([ScriptBlock]::Create((iwr -UseB https://get.activated.win | Select-Object -ExpandProperty Content))) {parameter}";
-                
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = $"-ExecutionPolicy Bypass -Command \"{command}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                
-                using (var process = new Process { StartInfo = psi })
-                {
-                    var outputBuilder = new System.Text.StringBuilder();
-                    var errorBuilder = new System.Text.StringBuilder();
-                    
-                    process.OutputDataReceived += (s, e) =>
-                    {
-                        if (!string.IsNullOrEmpty(e.Data))
-                        {
-                            outputBuilder.AppendLine(e.Data);
-                            Dispatcher.Invoke(() => AddLog($"  {e.Data}"));
-                        }
-                    };
-                    
-                    process.ErrorDataReceived += (s, e) =>
-                    {
-                        if (!string.IsNullOrEmpty(e.Data))
-                        {
-                            errorBuilder.AppendLine(e.Data);
-                            Dispatcher.Invoke(() => AddLog($"⚠️ {e.Data}"));
-                        }
-                    };
-                    
-                    process.Start();
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-                    
-                    await process.WaitForExitAsync();
-                    
-                    AddLog($"📊 Код завершения: {process.ExitCode}");
-                    
-                    if (process.ExitCode == 0)
-                    {
-                        AddLog($"✅ Активация {product} выполнена успешно!");
-                        AddLog("━━━━━━━━━━━━━━━━━━━━━━");
-                        MessageBox.Show($"Активация {product} выполнена успешно!", "Успех",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    else
-                    {
-                        AddLog($"❌ Ошибка активации {product}");
-                        AddLog("━━━━━━━━━━━━━━━━━━━━━━");
-                        
-                        MessageBox.Show($"Ошибка активации {product}.\n\nПроверьте подключение к интернету и повторите попытку.", "Ошибка", 
-                            MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-                
-                AddLog($"🔄 Обновление статуса...");
                 await CheckActivationStatusAsync();
-                AddLog($"✅ Статус обновлён");
+                AddLog("🔄 Статус активации обновлён");
             }
             catch (Exception ex)
             {
                 AddLog($"❌ Ошибка: {ex.Message}");
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                btnCheckStatus.IsEnabled = true;
             }
         }
-        
-        private async void BtnCheckStatus_Click(object sender, RoutedEventArgs e)
-        {
-            btnCheckStatus.IsEnabled = false;
-            await CheckActivationStatusAsync();
-            btnCheckStatus.IsEnabled = true;
-            AddLog("🔄 Статус активации обновлён");
-        }
-        
+
         private static void AddLog(string message) => AppLogger.Write(message);
     }
 }

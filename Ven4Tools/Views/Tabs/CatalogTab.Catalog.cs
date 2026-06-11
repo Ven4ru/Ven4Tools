@@ -167,19 +167,9 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private AppCategory GetCategoryFromString(string category) => category switch
-        {
-            "Браузеры"        => AppCategory.Браузеры,
-            "Офис"            => AppCategory.Офис,
-            "Графика"         => AppCategory.Графика,
-            "Разработка"      => AppCategory.Разработка,
-            "Мессенджеры"     => AppCategory.Мессенджеры,
-            "Мультимедиа"     => AppCategory.Мультимедиа,
-            "Системные"       => AppCategory.Системные,
-            "Игровые сервисы" => AppCategory.ИгровыеСервисы,
-            "Драйверпаки"     => AppCategory.Драйверпаки,
-            _                 => AppCategory.Другое
-        };
+        // Маппинг вынесен в общий хелпер — используется и пользовательскими приложениями
+        private static AppCategory GetCategoryFromString(string category) =>
+            AppCategoryHelper.Parse(category);
 
         private int ParseSizeToMB(string size)
         {
