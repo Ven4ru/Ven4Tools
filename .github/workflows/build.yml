@@ -1,0 +1,23 @@
+name: Сборка
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Компиляция клиента
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Настройка .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Сборка (0 ошибок, 0 предупреждений)
+        run: dotnet build Ven4Tools/Ven4Tools.csproj -c Release --nologo -v quiet
