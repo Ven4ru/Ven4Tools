@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,7 +47,7 @@ namespace Ven4Tools.Views.Tabs
         private async Task SyncUserAppsFromServerAsync()
         {
             if (!UserSession.IsLoggedIn) return;
-            var serverApps = await _userAppsService.FetchAsync(UserSession.UserId);
+            var serverApps = await _userAppsService.FetchAsync();
 
             // Пустой список = сервер недоступен или приложений нет —
             // в обоих случаях локальный список не трогаем
@@ -88,6 +89,9 @@ namespace Ven4Tools.Views.Tabs
                 AddLog($"Каталог содержит {_catalog.Apps.Count} приложений");
 
                 var availabilityTasks = new List<Task>();
+                // Не более 5 одновременных winget-проверок, иначе при первой загрузке
+                // запускается лавина процессов winget на каждое приложение каталога.
+                var availabilitySem = new SemaphoreSlim(5);
                 _ruBlockedIds.Clear();
 
                 var appsToShow = ProfileService.Current.DefaultSort switch
@@ -145,7 +149,13 @@ namespace Ven4Tools.Views.Tabs
 
                         panel.Children.Add(row);
                         appCheckBoxes[app.Id] = checkBox;
-                        availabilityTasks.Add(CheckAppAvailabilityFromCatalog(app));
+                        var localApp = app;
+                        availabilityTasks.Add(Task.Run(async () =>
+                        {
+                            await availabilitySem.WaitAsync();
+                            try { await CheckAppAvailabilityFromCatalog(localApp); }
+                            finally { availabilitySem.Release(); }
+                        }));
                     }
                 }
 
@@ -245,7 +255,7 @@ namespace Ven4Tools.Views.Tabs
                 {
                     appManager.RemoveUserApp(appId);
                     if (UserSession.IsLoggedIn)
-                        _ = _userAppsService.DeleteAsync(UserSession.UserId, appId);
+                        _ = _userAppsService.DeleteAsync(appId);
 
                     var toRemove = PanelПользовательские.Children
                         .OfType<StackPanel>()

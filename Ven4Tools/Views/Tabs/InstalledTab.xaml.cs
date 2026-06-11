@@ -108,7 +108,7 @@ namespace Ven4Tools.Views.Tabs
 
         private static async Task<List<InstalledApp>> RunWingetListAsync()
         {
-            var output = await WingetRunner.RunAsync("list --accept-source-agreements");
+            var (_, output) = await WingetRunner.RunAsync("list --accept-source-agreements");
             return ParseWingetList(output);
         }
 
@@ -469,8 +469,10 @@ namespace Ven4Tools.Views.Tabs
             if (!string.IsNullOrWhiteSpace(app.WingetId) && !app.WingetId.Contains('…'))
             {
                 string args = $"uninstall --id \"{app.WingetId}\" --silent --accept-source-agreements";
-                string output = await WingetRunner.RunAsync(args);
-                if (output.Contains("Successfully uninstalled") || output.Contains("Успешно удалено"))
+                var (exitCode, _) = await WingetRunner.RunAsync(args);
+                // Проверяем код выхода, а не локализованный текст вывода winget.
+                // 0 = успех, 0x8A150014 = пакет не установлен (нечего удалять — считаем успехом).
+                if (exitCode == 0 || exitCode == unchecked((int)0x8A150014))
                     return true;
             }
 
@@ -631,7 +633,7 @@ namespace Ven4Tools.Views.Tabs
             Log($"📤 Экспорт в {System.IO.Path.GetFileName(dlg.FileName)}...");
             try
             {
-                string output = await WingetRunner.RunAsync($"export -o \"{dlg.FileName}\" --accept-source-agreements");
+                var (_, output) = await WingetRunner.RunAsync($"export -o \"{dlg.FileName}\" --accept-source-agreements");
                 bool ok = System.IO.File.Exists(dlg.FileName);
                 Log(ok ? $"✅ Экспортировано → {dlg.FileName}"
                        : $"⚠ winget: {output.Trim().Split('\n').LastOrDefault()}");
@@ -654,7 +656,7 @@ namespace Ven4Tools.Views.Tabs
             Log("⏳ Это может занять несколько минут...");
             try
             {
-                string output = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements");
+                var (_, output) = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements");
                 bool ok = output.Contains("успешно") || output.Contains("successfully") || output.Contains("All packages");
                 Log(ok ? "✅ Импорт завершён"
                        : $"⚠ {output.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l))}");

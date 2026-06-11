@@ -10,12 +10,13 @@ namespace Ven4Tools.Services
     {
         public static async Task<List<string>> FetchVersionsAsync(string wingetId, CancellationToken token = default)
         {
+            if (!CommandLineGuard.ValidateId(wingetId)) return new List<string>();
             try
             {
                 var psi = new ProcessStartInfo
                 {
                     FileName = "winget",
-                    Arguments = $"show --id {wingetId} --versions -e --source winget",
+                    Arguments = $"show --id \"{wingetId}\" --versions -e --source winget",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

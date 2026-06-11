@@ -15,8 +15,9 @@ namespace Ven4Tools.Services
         private const string ApiBase = ApiConfig.DbApi;
         private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
 
-        // Формируем запрос с токеном авторизации — сервер обязан проверять,
-        // что user_id принадлежит владельцу токена (защита от IDOR).
+        // Формируем запрос с токеном авторизации. Сервер сам определяет
+        // пользователя по Bearer-токену — user_id с клиента не передаётся
+        // (защита от IDOR).
         private static HttpRequestMessage Req(HttpMethod method, string url)
         {
             var req = new HttpRequestMessage(method, url);
@@ -25,11 +26,11 @@ namespace Ven4Tools.Services
             return req;
         }
 
-        public async Task<List<AppInfo>> FetchAsync(int userId)
+        public async Task<List<AppInfo>> FetchAsync()
         {
             try
             {
-                using var req = Req(HttpMethod.Get, $"{ApiBase}?action=get_user_apps&user_id={userId}");
+                using var req = Req(HttpMethod.Get, $"{ApiBase}?action=get_user_apps");
                 using var resp = await _http.SendAsync(req);
                 var json = await resp.Content.ReadAsStringAsync();
                 var doc = JsonDocument.Parse(json);
@@ -40,13 +41,12 @@ namespace Ven4Tools.Services
             catch (Exception ex) { AppLogger.Write($"[UserAppsService] {ex.Message}"); return new(); }
         }
 
-        public async Task SaveAsync(int userId, AppInfo app)
+        public async Task SaveAsync(AppInfo app)
         {
             try
             {
                 var payload = new
                 {
-                    user_id = userId,
                     app_id = app.Id,
                     display_name = app.DisplayName,
                     category = app.Category.ToString(),
@@ -62,11 +62,11 @@ namespace Ven4Tools.Services
             catch (Exception ex) { AppLogger.Write($"[UserAppsService] {ex.Message}"); }
         }
 
-        public async Task DeleteAsync(int userId, string appId)
+        public async Task DeleteAsync(string appId)
         {
             try
             {
-                var payload = new { user_id = userId, app_id = appId };
+                var payload = new { app_id = appId };
                 using var req = Req(HttpMethod.Post, $"{ApiBase}?action=delete_user_app");
                 req.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
                 await _http.SendAsync(req);

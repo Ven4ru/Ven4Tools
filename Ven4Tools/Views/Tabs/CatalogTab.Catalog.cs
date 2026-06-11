@@ -240,6 +240,7 @@ namespace Ven4Tools.Views.Tabs
                     {
                         string src = item.Tag?.ToString() ?? "";
                         SourceOrderService.SetCategoryPrimary(catName, src);
+                        SourceOrderService.Save();
                     }
                 };
 
