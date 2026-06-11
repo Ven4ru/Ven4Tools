@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace Ven4Tools.Services
@@ -61,6 +63,72 @@ namespace Ven4Tools.Services
                 File.WriteAllText(CrashFilePath, JsonConvert.SerializeObject(report, Formatting.Indented));
             }
             catch (Exception ex) { AppLogger.Write($"[CrashReportService] {ex.Message}"); }
+        }
+
+        /// <summary>
+        /// Отправляет неотправленный краш-репорт на сервер (best-effort).
+        /// Вызывается при старте приложения — если прошлый сеанс упал,
+        /// отчёт уйдёт сейчас и будет помечен как отправленный.
+        /// </summary>
+        public static async Task TrySendPendingAsync()
+        {
+            try
+            {
+                var report = Read();
+                if (report == null || report.Reported) return;
+
+                using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+                var payload = new System.Net.Http.FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("action",     "crash_report"),
+                    new KeyValuePair<string, string>("session_id", report.SessionId),
+                    new KeyValuePair<string, string>("machine",    report.MachineName),
+                    new KeyValuePair<string, string>("version",    report.Version),
+                    new KeyValuePair<string, string>("timestamp",  report.Timestamp),
+                    new KeyValuePair<string, string>("os",         report.OsVersion),
+                    new KeyValuePair<string, string>("type",       report.ExceptionType),
+                    new KeyValuePair<string, string>("message",    report.Message),
+                    new KeyValuePair<string, string>("trace",      report.StackTrace ?? ""),
+                });
+
+                var response = await http.PostAsync(ApiConfig.DbApi, payload);
+
+                // Сервер всегда отвечает HTTP 200 — даже при ошибке или
+                // несуществующем action. Поэтому проверяем не статус,
+                // а тело ответа на признак успеха ("success": true).
+                if (!response.IsSuccessStatusCode) return;
+
+                var bodyText = await response.Content.ReadAsStringAsync();
+                if (IsSuccessBody(bodyText))
+                    MarkReported();
+            }
+            catch (Exception ex) { AppLogger.Write($"[CrashReportService] TrySendPending: {ex.Message}"); }
+        }
+
+        /// <summary>
+        /// Проверяет тело ответа сервера на признак успеха.
+        /// db.php при успехе возвращает {"success": true}, при ошибке —
+        /// {"error": "..."}. HTTP-статус всегда 200, поэтому опираемся
+        /// именно на содержимое тела.
+        /// </summary>
+        private static bool IsSuccessBody(string? body)
+        {
+            if (string.IsNullOrWhiteSpace(body)) return false;
+            try
+            {
+                var obj = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+                if (obj == null) return false;
+                // Явная ошибка — не успех.
+                if (obj.ContainsKey("error")) return false;
+                // Признак успеха.
+                return obj.TryGetValue("success", out var s)
+                       && s != null
+                       && string.Equals(s.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
