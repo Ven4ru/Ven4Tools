@@ -14,6 +14,8 @@ namespace Ven4Tools.Views.Tabs
     {
         private readonly ObservableCollection<Preset> _presets = new();
 
+        private Preset? _pendingUpdatePreset; // пресет, состав которого обновляется
+
         private void InitPresets()
         {
             lstPresets.ItemsSource = _presets;
@@ -32,6 +34,11 @@ namespace Ven4Tools.Views.Tabs
 
         private async Task RefreshPresetsAsync()
         {
+            // Сбрасываем режим обновления состава при перезагрузке списка
+            _pendingUpdatePreset    = null;
+            btnSavePreset.Content   = "💾 Сохранить выбор";
+            btnSavePreset.ToolTip   = "Сохранить отмеченные приложения как пресет";
+
             int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
 
             txtPresetsSyncHint.Visibility = userId.HasValue
@@ -49,6 +56,32 @@ namespace Ven4Tools.Views.Tabs
 
         private async void BtnSavePreset_Click(object sender, RoutedEventArgs e)
         {
+            // Режим обновления состава существующего пресета
+            if (_pendingUpdatePreset != null)
+            {
+                var updating = _pendingUpdatePreset;
+                _pendingUpdatePreset = null;
+                btnSavePreset.Content = "💾 Сохранить выбор";
+                btnSavePreset.ToolTip = "Сохранить отмеченные приложения как пресет";
+
+                var selectedApps = GetSelectedApps();
+                if (selectedApps.Count == 0) return;
+
+                updating.Apps = selectedApps;
+                int? uid = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
+                btnSavePreset.IsEnabled = false;
+                try
+                {
+                    bool ok = await PresetService.UpdateAsync(uid, updating);
+                    if (ok) updating.RaiseAppCountChanged();
+                    AppLogger.Write(ok
+                        ? $"✅ Состав пресета «{updating.Name}» обновлён ({selectedApps.Count} прил.)"
+                        : $"❌ Не удалось обновить состав пресета «{updating.Name}»");
+                }
+                finally { btnSavePreset.IsEnabled = true; }
+                return;
+            }
+
             var selected = GetSelectedApps();
             if (selected.Count == 0) return;
 
@@ -95,6 +128,40 @@ namespace Ven4Tools.Views.Tabs
             }
             UpdateInstallButton();
             AppLogger.Write($"📋 Пресет «{preset.Name}» применён: {applied} из {preset.Apps.Count} приложений отмечено");
+        }
+
+        // ── Переименовать (имя / описание) ────────────────────────────────────────
+
+        private async void BtnRenamePreset_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as Button)?.Tag is not Preset preset) return;
+
+            var dlg = new Views.PresetSaveDialog(preset.Name, preset.Description)
+                { Owner = Window.GetWindow(this) };
+            if (dlg.ShowDialog() != true) return;
+
+            preset.Name        = dlg.PresetName;
+            preset.Description = dlg.PresetDescription;
+
+            int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
+            bool ok = await PresetService.UpdateAsync(userId, preset);
+            if (ok) preset.RaiseNameChanged();
+            AppLogger.Write(ok
+                ? $"✅ Пресет переименован: «{preset.Name}»"
+                : $"❌ Не удалось переименовать пресет «{preset.Name}»");
+        }
+
+        // ── Обновить состав (применить + перейти в режим обновления) ──────────────
+
+        private void BtnUpdateAppsPreset_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as Button)?.Tag is not Preset preset) return;
+
+            ApplyPreset(preset);
+            _pendingUpdatePreset    = preset;
+            btnSavePreset.Content   = $"↻ Обновить «{preset.Name}»";
+            btnSavePreset.IsEnabled = true;
+            btnSavePreset.ToolTip   = "Сохранить текущий выбор как новый состав пресета";
         }
 
         // ── Поделиться ────────────────────────────────────────────────────────────

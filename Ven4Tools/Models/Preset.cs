@@ -25,6 +25,16 @@ namespace Ven4Tools.Models
             set { _isLoading = value; OnPropertyChanged(); }
         }
 
+        // Уведомить UI об изменении названия/описания (после редактирования)
+        public void RaiseNameChanged()
+        {
+            OnPropertyChanged(nameof(Name));
+            OnPropertyChanged(nameof(Description));
+        }
+
+        // Уведомить UI об изменении состава (после обновления списка приложений)
+        public void RaiseAppCountChanged() => OnPropertyChanged(nameof(AppCountLabel));
+
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? n = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
