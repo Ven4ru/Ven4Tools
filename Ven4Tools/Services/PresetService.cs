@@ -121,6 +121,40 @@ namespace Ven4Tools.Services
             return true;
         }
 
+        // ── Обновить пресет (имя / описание / состав) ─────────────────────────────
+
+        public static async Task<bool> UpdateAsync(int? userId, Preset preset)
+        {
+            if (userId.HasValue && !preset.IsLocal && !string.IsNullOrEmpty(UserSession.Token))
+            {
+                try
+                {
+                    var body = JsonConvert.SerializeObject(new
+                    {
+                        preset_id   = preset.Id,
+                        name        = preset.Name,
+                        description = preset.Description,
+                        apps        = preset.Apps
+                    });
+                    var req = Req(HttpMethod.Post, $"{ApiBase}?action=update_preset");
+                    req.Content = new StringContent(body, Encoding.UTF8, "application/json");
+                    var resp = await _http.SendAsync(req);
+                    var json = await resp.Content.ReadAsStringAsync();
+                    var r    = JObject.Parse(json);
+                    return r["success"]?.Value<bool>() == true;
+                }
+                catch { return false; }
+            }
+
+            // Локальный fallback
+            var local = LoadLocal();
+            var idx   = local.FindIndex(p => p.Id == preset.Id);
+            if (idx < 0) return false;
+            local[idx] = preset;
+            SaveLocal(local);
+            return true;
+        }
+
         // ── Поделиться ────────────────────────────────────────────────────────────
 
         public static async Task<string?> ShareAsync(int presetId)
