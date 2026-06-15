@@ -19,6 +19,7 @@ namespace Ven4Tools.Models
         public string AppCountLabel => $"{Apps.Count} прил.";
 
         private bool _isLoading;
+        [JsonIgnore]
         public bool IsLoading
         {
             get => _isLoading;

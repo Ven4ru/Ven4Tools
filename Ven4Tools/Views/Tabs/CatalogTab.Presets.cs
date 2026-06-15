@@ -67,6 +67,7 @@ namespace Ven4Tools.Views.Tabs
                 var selectedApps = GetSelectedApps();
                 if (selectedApps.Count == 0) return;
 
+                var previousApps = updating.Apps;
                 updating.Apps = selectedApps;
                 int? uid = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
                 btnSavePreset.IsEnabled = false;
@@ -74,6 +75,7 @@ namespace Ven4Tools.Views.Tabs
                 {
                     bool ok = await PresetService.UpdateAsync(uid, updating);
                     if (ok) updating.RaiseAppCountChanged();
+                    else    updating.Apps = previousApps;
                     AppLogger.Write(ok
                         ? $"✅ Состав пресета «{updating.Name}» обновлён ({selectedApps.Count} прил.)"
                         : $"❌ Не удалось обновить состав пресета «{updating.Name}»");
@@ -135,20 +137,34 @@ namespace Ven4Tools.Views.Tabs
         private async void BtnRenamePreset_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.Tag is not Preset preset) return;
+            var btn = (Button)sender;
 
             var dlg = new Views.PresetSaveDialog(preset.Name, preset.Description)
                 { Owner = Window.GetWindow(this) };
             if (dlg.ShowDialog() != true) return;
 
+            string oldName        = preset.Name;
+            string oldDescription = preset.Description;
             preset.Name        = dlg.PresetName;
             preset.Description = dlg.PresetDescription;
 
             int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
-            bool ok = await PresetService.UpdateAsync(userId, preset);
-            if (ok) preset.RaiseNameChanged();
-            AppLogger.Write(ok
-                ? $"✅ Пресет переименован: «{preset.Name}»"
-                : $"❌ Не удалось переименовать пресет «{preset.Name}»");
+            btn.IsEnabled = false;
+            try
+            {
+                bool ok = await PresetService.UpdateAsync(userId, preset);
+                if (ok)
+                    preset.RaiseNameChanged();
+                else
+                {
+                    preset.Name        = oldName;
+                    preset.Description = oldDescription;
+                }
+                AppLogger.Write(ok
+                    ? $"✅ Пресет переименован: «{preset.Name}»"
+                    : $"❌ Не удалось переименовать пресет «{oldName}»");
+            }
+            finally { btn.IsEnabled = true; }
         }
 
         // ── Обновить состав (применить + перейти в режим обновления) ──────────────
@@ -179,16 +195,17 @@ namespace Ven4Tools.Views.Tabs
 
             if (preset.IsLoading) return;
             preset.IsLoading = true;
+            try
+            {
+                string? code = await PresetService.ShareAsync(preset.Id);
+                if (code == null) { AppLogger.Write("❌ Не удалось получить ссылку на пресет"); return; }
 
-            string? code = await PresetService.ShareAsync(preset.Id);
-            preset.IsLoading = false;
-
-            if (code == null) { AppLogger.Write("❌ Не удалось получить ссылку на пресет"); return; }
-
-            preset.ShareCode = code;
-            string link = $"ven4tools.ru/p/{code}";
-            try { Clipboard.SetText(link); } catch { }
-            AppLogger.Write($"🔗 Ссылка скопирована: {link}");
+                preset.ShareCode = code;
+                string link = $"ven4tools.ru/p/{code}";
+                try { Clipboard.SetText(link); } catch { }
+                AppLogger.Write($"🔗 Ссылка скопирована: {link}");
+            }
+            finally { preset.IsLoading = false; }
         }
 
         // ── Удалить пресет ────────────────────────────────────────────────────────
@@ -200,6 +217,13 @@ namespace Ven4Tools.Views.Tabs
             var r = MessageBox.Show($"Удалить пресет «{preset.Name}»?",
                 "Пресеты", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (r != MessageBoxResult.Yes) return;
+
+            if (_pendingUpdatePreset == preset)
+            {
+                _pendingUpdatePreset  = null;
+                btnSavePreset.Content  = "💾 Сохранить выбор";
+                btnSavePreset.ToolTip  = "Сохранить отмеченные приложения как пресет";
+            }
 
             int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
             bool deleted = await PresetService.DeleteAsync(userId, preset);
