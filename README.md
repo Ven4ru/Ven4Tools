@@ -21,6 +21,14 @@
   </a>
 </p>
 
+<p align="center">
+
+```powershell
+irm ven4tools.ru/install.ps1 | iex
+```
+
+</p>
+
 ---
 
 ## Каталог приложений
