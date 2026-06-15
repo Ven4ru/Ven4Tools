@@ -83,7 +83,10 @@ namespace Ven4Tools.Services
             var local = LoadLocal();
             if (preset.Id == 0)
             {
-                preset.Id = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                // Отрицательные ID для локальных пресетов: не пересекаются с серверными (положительные auto-increment)
+                int newId;
+                do { newId = Random.Shared.Next(int.MinValue + 1, 0); } while (local.Exists(p => p.Id == newId));
+                preset.Id = newId;
                 local.Add(preset);
             }
             else
@@ -143,7 +146,7 @@ namespace Ven4Tools.Services
                     var r    = JObject.Parse(json);
                     return r["success"]?.Value<bool>() == true;
                 }
-                catch { return false; }
+                catch (Exception ex) { AppLogger.Write($"❌ UpdateAsync: {ex.Message}"); return false; }
             }
 
             // Локальный fallback
@@ -214,7 +217,7 @@ namespace Ven4Tools.Services
                 Directory.CreateDirectory(Path.GetDirectoryName(LocalPath)!);
                 File.WriteAllText(LocalPath, JsonConvert.SerializeObject(list, Formatting.Indented), Encoding.UTF8);
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"❌ Сохранение локального файла пресетов: {ex.Message}"); }
         }
     }
 }
