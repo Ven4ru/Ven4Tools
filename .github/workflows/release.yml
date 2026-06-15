@@ -45,9 +45,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${{ github.ref_name }} `
-            "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip" `
-            --title "Ven4Tools ${{ steps.ver.outputs.VERSION }}" `
-            --generate-notes `
-            --draft `
-            --latest
+          $exists = gh release view ${{ github.ref_name }} 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Релиз ${{ github.ref_name }} уже существует — загружаем ассет"
+            gh release upload ${{ github.ref_name }} `
+              "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip" `
+              --clobber
+          } else {
+            gh release create ${{ github.ref_name }} `
+              "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip" `
+              --title "Ven4Tools ${{ steps.ver.outputs.VERSION }}" `
+              --generate-notes `
+              --draft `
+              --latest
+          }
