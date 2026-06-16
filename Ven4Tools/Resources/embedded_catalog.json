@@ -93,8 +93,8 @@
       "iconUrl": "",
       "description": "Быстрый, безопасный и приватный браузер с открытым исходным кодом.",
       "sha256": "94bb387d2c07c29f2da48b47a6c5ed4446d89303a90f49817f6d23cf995148be",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "firefox",
+      "scoopId": "firefox"
     },
     {
       "id": "google-chrome",
@@ -108,8 +108,8 @@
       "iconUrl": "",
       "description": "Самый популярный браузер с интеграцией сервисов Google.",
       "sha256": "203980641389366aaf5c8da29c2de1a6535980888ef6479bff8fb6a89bc39ddd",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "googlechrome",
+      "scoopId": "googlechrome"
     },
     {
       "id": "microsoft-edge",
@@ -123,8 +123,8 @@
       "iconUrl": "",
       "description": "Современный браузер от Microsoft на базе Chromium.",
       "sha256": "3ad90c212004436e020479c593e168f36309d746ab7c6fde9fbf2b6a46faa796",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "microsoft-edge",
+      "scoopId": ""
     },
     {
       "id": "opera",
@@ -138,8 +138,8 @@
       "iconUrl": "",
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
       "sha256": "437793cecf650ff2aa59fe83a7d35fb983a8f366e175ff87081f732a4c6b700d",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "opera",
+      "scoopId": "opera"
     },
     {
       "id": "brave",
@@ -153,8 +153,8 @@
       "iconUrl": "",
       "description": "Браузер с фокусом на приватность и встроенным блокировщиком рекламы.",
       "sha256": "6e7887eb04aa28b9b9fcc5b4a6ae9c0e7a96460bd7005c929a4b0fe31d1c496d",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "brave",
+      "scoopId": "brave"
     },
     {
       "id": "yandex-browser",
@@ -168,8 +168,8 @@
       "iconUrl": "",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
       "sha256": "79bae4ffdbb04fea1a2b42f9927bc578c603a797dc49dc3b830436496d2ed1c0",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "",
+      "scoopId": ""
     },
     {
       "id": "librewolf",
@@ -183,8 +183,8 @@
       "iconUrl": "",
       "description": "Firefox-форк с максимальной приватностью и без телеметрии.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "librewolf",
+      "scoopId": "librewolf"
     },
     {
       "id": "onlyoffice",
@@ -198,8 +198,8 @@
       "iconUrl": "",
       "description": "Совместимый с MS Office редактор с облачной интеграцией.",
       "sha256": "88b52a453e3baab439d683c7f278192e0e20aca0aa154a5ed2bfb051c7da849e",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "onlyoffice",
+      "scoopId": "onlyoffice"
     },
     {
       "id": "adobe-acrobat-reader",
@@ -213,8 +213,8 @@
       "iconUrl": "",
       "description": "Стандарт для работы с PDF-документами от Adobe.",
       "sha256": "",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "adobereader",
+      "scoopId": "acrobatreader"
     },
     {
       "id": "sumatra-pdf",
@@ -228,8 +228,8 @@
       "iconUrl": "",
       "description": "Минималистичный и быстрый просмотрщик PDF, EPUB, MOBI.",
       "sha256": "2be4a27b83830ea07c6671c3557673d509544e5f70fc6b2dc8cc4388b302c1f2",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "sumatrapdf",
+      "scoopId": "sumatrapdf"
     },
     {
       "id": "drawio",
@@ -243,8 +243,8 @@
       "iconUrl": "",
       "description": "Создание диаграмм, схем и визуализаций.",
       "sha256": "a12b0c11307dc246c5bb8c8dc9129604abe932fa05807ad84a63b385bebbb718",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "drawio",
+      "scoopId": "draw.io"
     },
     {
       "id": "foxit-pdf-reader",
@@ -258,8 +258,8 @@
       "iconUrl": "",
       "description": "Мощная программа для чтения PDF.",
       "sha256": "",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "foxitreader",
+      "scoopId": ""
     },
     {
       "id": "libreoffice",
@@ -273,8 +273,8 @@
       "iconUrl": "",
       "description": "Бесплатный офисный пакет с полным аналогом Word, Excel, PowerPoint.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "libreoffice",
+      "scoopId": "libreoffice"
     },
     {
       "id": "obsidian",
@@ -288,8 +288,8 @@
       "iconUrl": "",
       "description": "База знаний и заметки в Markdown с двусвязными ссылками.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "obsidian",
+      "scoopId": "obsidian"
     },
     {
       "id": "notion",
@@ -302,9 +302,9 @@
       "official": true,
       "iconUrl": "",
       "description": "Всё-в-одном: заметки, задачи, базы данных и вики.",
-      "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "sha256": "5bef72e6c479025a3a95b20a7daca16b279702877bffc6b6639efc9761898745",
+      "chocoId": "notion",
+      "scoopId": "notion"
     },
     {
       "id": "gimp",
@@ -318,8 +318,8 @@
       "iconUrl": "",
       "description": "Мощный бесплатный редактор изображений, альтернатива Photoshop.",
       "sha256": "ab6f9aa481120097f032c39f07cb70990929878fa65bf4ec6d1669d7a616770a",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "gimp",
+      "scoopId": "gimp"
     },
     {
       "id": "krita",
@@ -333,8 +333,8 @@
       "iconUrl": "",
       "description": "Цифровая живопись и иллюстрации. Поддержка графических планшетов.",
       "sha256": "f419f4f71a99e59c4c65573388f2f5440e65341c47805240659578973a7516d8",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "krita",
+      "scoopId": "krita"
     },
     {
       "id": "blender",
@@ -348,8 +348,8 @@
       "iconUrl": "",
       "description": "Полноценный 3D-пакет: моделирование, анимация, рендеринг.",
       "sha256": "2c9326290887ef004fe71998d1fbb7fa6bc6f725d884f0e985e05c226f7db53c",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "blender",
+      "scoopId": "blender"
     },
     {
       "id": "inkscape",
@@ -363,8 +363,8 @@
       "iconUrl": "",
       "description": "Профессиональный редактор векторной графики SVG.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "inkscape",
+      "scoopId": "inkscape"
     },
     {
       "id": "paint-net",
@@ -378,8 +378,8 @@
       "iconUrl": "",
       "description": "Простой и мощный редактор изображений с поддержкой плагинов.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "paint.net",
+      "scoopId": "paint.net"
     },
     {
       "id": "lunacy",
@@ -392,9 +392,9 @@
       "official": true,
       "iconUrl": "",
       "description": "Российский аналог Figma от Icons8. Дизайн интерфейсов, прототипирование, работает офлайн.",
-      "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "sha256": "115550663360ace09d4ee5a149ea245a6a483fc74a9c4ad93ab6696e0a741ab7",
+      "chocoId": "",
+      "scoopId": "lunacy"
     },
     {
       "id": "xnview",
@@ -407,9 +407,9 @@
       "official": true,
       "iconUrl": "",
       "description": "Просмотрщик и конвертер изображений с поддержкой 500+ форматов.",
-      "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "sha256": "b98de5ad8b3d02e9d92496420cc290196540970b8a8fefa1b0394b129a31e594",
+      "chocoId": "xnviewmp",
+      "scoopId": "xnviewmp"
     },
     {
       "id": "vscode",
@@ -423,8 +423,8 @@
       "iconUrl": "",
       "description": "Легкий, но мощный редактор кода от Microsoft.",
       "sha256": "7d08422f0d793280236460b05016831c6285ee2ec0257797dfa99981180b4bc7",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "vscode",
+      "scoopId": "vscode"
     },
     {
       "id": "visual-studio-community",
@@ -438,8 +438,8 @@
       "iconUrl": "",
       "description": "Полноценная IDE для .NET, C++, Python и других языков.",
       "sha256": "2496604f6f40984de26d2f88a9cd84ca99136427ad3b952d1e93b667201cfc05",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "visualstudio2022community",
+      "scoopId": ""
     },
     {
       "id": "python",
@@ -453,8 +453,8 @@
       "iconUrl": "",
       "description": "Интерпретатор Python с установщиком и добавлением в PATH.",
       "sha256": "9aaa1075d0bd3e8abd0623d2d05de692ff00780579e1b232f259028bac19bb51",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "python3",
+      "scoopId": "python"
     },
     {
       "id": "nodejs",
@@ -468,8 +468,8 @@
       "iconUrl": "",
       "description": "JavaScript-среда для разработки серверных приложений.",
       "sha256": "821566022dc3b262ac2f76598ee4f46003a6edafe5dadb84e5fbc7daaa1a78c7",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "nodejs",
+      "scoopId": "nodejs"
     },
     {
       "id": "git",
@@ -483,8 +483,8 @@
       "iconUrl": "",
       "description": "Система контроля версий с Bash-эмулятором.",
       "sha256": "ce45e23275049f4b36edd90d5fd986a1e230efb6c511e9260a90176ce8e825df",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "git",
+      "scoopId": "git"
     },
     {
       "id": "docker-desktop",
@@ -498,8 +498,8 @@
       "iconUrl": "",
       "description": "Контейнеризация приложений для разработки и тестирования.",
       "sha256": "42978fa07e50e3beb6923448e970d03aadd9abf5ea52230cf8a28ff81d2815e0",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "docker-desktop",
+      "scoopId": "docker-desktop"
     },
     {
       "id": "postman",
@@ -513,8 +513,8 @@
       "iconUrl": "",
       "description": "Платформа для тестирования API и работы с запросами.",
       "sha256": "be873b49868ba2e47401a46e3526788fbc662c74a13f0460120ba1464cf34308",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "postman",
+      "scoopId": "postman"
     },
     {
       "id": "notepad-plus-plus",
@@ -528,8 +528,8 @@
       "iconUrl": "",
       "description": "Мощный текстовый редактор с подсветкой синтаксиса.",
       "sha256": "23d8e9bde3d08df26626af9978a09f8837d7162fd1accf563248d0eef89006fe",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "notepadplusplus",
+      "scoopId": "notepadplusplus"
     },
     {
       "id": "github-desktop",
@@ -543,8 +543,8 @@
       "iconUrl": "",
       "description": "Официальный клиент GitHub для работы с репозиториями.",
       "sha256": "338e6fe3430ddb7db3e370f11b98e2d6a25998d5d7bdc7d714b77cfb5b13afc0",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "github-desktop",
+      "scoopId": "github"
     },
     {
       "id": "putty",
@@ -558,8 +558,8 @@
       "iconUrl": "",
       "description": "SSH и Telnet клиент для подключения к серверам.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "putty",
+      "scoopId": "putty"
     },
     {
       "id": "telegram",
@@ -573,8 +573,8 @@
       "iconUrl": "",
       "description": "Быстрый и безопасный мессенджер с облачными хранилищами.",
       "sha256": "4b44fd42c7f963e9f57d59fac659a9e4990422b0195b08b9aee1d784ebe0bc53",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "telegram",
+      "scoopId": "telegram"
     },
     {
       "id": "discord",
@@ -588,8 +588,8 @@
       "iconUrl": "",
       "description": "Голосовой и текстовый чат для геймеров и сообществ.",
       "sha256": "85060117d7c75378fcbf8b3824e79549002bc5298ae46fcaa2524c83c476596a",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "discord",
+      "scoopId": "discord"
     },
     {
       "id": "slack",
@@ -603,8 +603,8 @@
       "iconUrl": "",
       "description": "Корпоративный мессенджер с интеграциями.",
       "sha256": "7f19726c535990ab430a71c0789aceec5110855bf43f18232dc8b2a98739d2ca",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "slack",
+      "scoopId": "slack"
     },
     {
       "id": "zoom",
@@ -618,8 +618,8 @@
       "iconUrl": "",
       "description": "Видеоконференции, вебинары и командная работа.",
       "sha256": "7eb91fc484ab27a8bc96fae11e176d34eac39dc619d485af96346f390ee338be",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "zoom",
+      "scoopId": "zoom"
     },
     {
       "id": "microsoft-teams",
@@ -633,8 +633,8 @@
       "iconUrl": "",
       "description": "Платформа для совместной работы и видеозвонков.",
       "sha256": "e0bf5a435db69ae03488a366fb741e93e840b2faabe93b2aa3593000de7df06a",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "microsoft-teams",
+      "scoopId": "teams"
     },
     {
       "id": "element",
@@ -648,8 +648,8 @@
       "iconUrl": "",
       "description": "Децентрализованный мессенджер на базе Matrix.",
       "sha256": "198002b7235f75cdb630eebf0fcf8c371e3e8238e7a2a4e8dc3d2c7bc1b9942c",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "element-desktop",
+      "scoopId": "element"
     },
     {
       "id": "whatsapp",
@@ -663,8 +663,8 @@
       "iconUrl": "",
       "description": "Официальный клиент WhatsApp для Windows.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "whatsapp",
+      "scoopId": "whatsapp"
     },
     {
       "id": "vlc",
@@ -678,8 +678,8 @@
       "iconUrl": "",
       "description": "Универсальный плеер, воспроизводящий все форматы.",
       "sha256": "9742689a50e96ddc04d80ceff046b28da2beefd617be18166f8c5e715ec60c59",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "vlc",
+      "scoopId": "vlc"
     },
     {
       "id": "yandex-music",
@@ -693,8 +693,8 @@
       "iconUrl": "",
       "description": "Стриминговый музыкальный сервис с огромной библиотекой. Работает в России без ограничений.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "",
+      "scoopId": ""
     },
     {
       "id": "obs-studio",
@@ -708,8 +708,8 @@
       "iconUrl": "",
       "description": "Запись видео и стриминг с профессиональными настройками.",
       "sha256": "edb3f77c3ee4eae769924d1673bb826dac8898907d06f6f40a4c99b6bc8cdc8b",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "obs-studio",
+      "scoopId": "obs-studio"
     },
     {
       "id": "handbrake",
@@ -723,8 +723,8 @@
       "iconUrl": "",
       "description": "Конвертер видео с поддержкой большинства форматов.",
       "sha256": "9f8e649d9ec9ddf532ef82e2fb9f32ff0009ae2f8c124bcabfb0846dff9f585c",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "handbrake",
+      "scoopId": "handbrake"
     },
     {
       "id": "audacity",
@@ -737,9 +737,9 @@
       "official": true,
       "iconUrl": "",
       "description": "Бесплатный редактор аудио для записи и обработки звука.",
-      "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "sha256": "5eae3e6167be049f0995d86f24273e94f763c5a2b860ddb876d753ec8a69527e",
+      "chocoId": "audacity",
+      "scoopId": "audacity"
     },
     {
       "id": "foobar2000",
@@ -753,8 +753,8 @@
       "iconUrl": "",
       "description": "Мощный аудиоплеер для требовательных меломанов.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "foobar2000",
+      "scoopId": "foobar2000"
     },
     {
       "id": "mpc-be",
@@ -768,8 +768,8 @@
       "iconUrl": "",
       "description": "Лёгкий медиаплеер на базе Media Player Classic с современными кодеками.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "mpc-be",
+      "scoopId": "mpc-be"
     },
     {
       "id": "7zip",
@@ -783,8 +783,8 @@
       "iconUrl": "",
       "description": "Архиватор с высокой степенью сжатия. Поддерживает множество форматов.",
       "sha256": "bdd1a33de78618d16ee4ce148b849932c05d0015491c34887846d431d29f308e",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "7zip",
+      "scoopId": "7zip"
     },
     {
       "id": "winrar",
@@ -798,8 +798,8 @@
       "iconUrl": "",
       "description": "Популярный архиватор с поддержкой RAR и ZIP.",
       "sha256": "4b0dfd4dd3b06b4ae28740498a4f21310dc760823bf495867f837cd7fb819880",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "winrar",
+      "scoopId": "winrar"
     },
     {
       "id": "everything",
@@ -813,8 +813,8 @@
       "iconUrl": "",
       "description": "Мгновенный поиск файлов по имени.",
       "sha256": "dae32a49b6052f0ec70895dd4e35b2b26222f7f4c19c36d9d309033e2fb622bc",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "everything",
+      "scoopId": "everything"
     },
     {
       "id": "crystaldiskinfo",
@@ -828,8 +828,8 @@
       "iconUrl": "",
       "description": "Мониторинг состояния жёстких дисков и SSD.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "crystaldiskinfo",
+      "scoopId": "crystaldiskinfo"
     },
     {
       "id": "crystaldiskmark",
@@ -843,8 +843,8 @@
       "iconUrl": "",
       "description": "Тестирование производительности накопителей.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "crystaldiskmark",
+      "scoopId": "crystaldiskmark"
     },
     {
       "id": "greenshot",
@@ -858,8 +858,8 @@
       "iconUrl": "",
       "description": "Мощный инструмент для создания скриншотов.",
       "sha256": "1687311b4e7a3720be20490e8ed6cc772a32336a7bed8896e475b8ec616c6b81",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "greenshot",
+      "scoopId": "greenshot"
     },
     {
       "id": "sharex",
@@ -873,8 +873,8 @@
       "iconUrl": "",
       "description": "Скриншоты, запись экрана, загрузка файлов.",
       "sha256": "8f082b1939af2894fea681e6e807e577d15ea546fc0231f84720ac62867ca7f4",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "sharex",
+      "scoopId": "sharex"
     },
     {
       "id": "yandex-disk",
@@ -888,8 +888,8 @@
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов.",
       "sha256": "93a308ad7e067a22b3bbf75762d38694aea82b786c05bd13b51e5c7f04d8d7e3",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "",
+      "scoopId": ""
     },
     {
       "id": "powertoys",
@@ -903,8 +903,8 @@
       "iconUrl": "",
       "description": "Набор утилит для повышения производительности Windows.",
       "sha256": "e18ac8f9023e341cf7dad35367fb9dddb6565d83d8155dbcddb40ae8a24ae731",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "powertoys",
+      "scoopId": "powertoys"
     },
     {
       "id": "rufus",
@@ -917,9 +917,9 @@
       "official": true,
       "iconUrl": "",
       "description": "Создание загрузочных USB-флешек из ISO-образов.",
-      "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "sha256": "8279696c1d78b14618500e9135886a3667b9decc65946f3729002e4bfdbb20ab",
+      "chocoId": "rufus",
+      "scoopId": "rufus"
     },
     {
       "id": "steam",
@@ -933,8 +933,8 @@
       "iconUrl": "",
       "description": "Крупнейший игровой магазин и платформа для игр.",
       "sha256": "7d3654531c32d941b8cae81c4137fc542172bfa9635f169cb392f245a0a12bcb",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "steam",
+      "scoopId": "steam"
     },
     {
       "id": "itch",
@@ -948,8 +948,8 @@
       "iconUrl": "",
       "description": "Платформа инди-игр. Тысячи бесплатных и платных игр без региональных ограничений.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "",
+      "scoopId": "itch"
     },
     {
       "id": "playnite",
@@ -963,8 +963,8 @@
       "iconUrl": "",
       "description": "Менеджер игровых библиотек. Объединяет Steam, GOG, itch.io и другие платформы в одном интерфейсе.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "playnite",
+      "scoopId": "playnite"
     },
     {
       "id": "gog-galaxy",
@@ -978,8 +978,8 @@
       "iconUrl": "",
       "description": "Лаунчер без DRM и агрегатор библиотек из других платформ.",
       "sha256": "826eef5ab19f127a77e79719a5af515d6a6c1ff6d4bf664dbf868a19e6d4287d",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "goggalaxy",
+      "scoopId": "gog-galaxy"
     },
     {
       "id": "snappy-driver",
@@ -993,8 +993,8 @@
       "iconUrl": "",
       "description": "Мощный офлайн-инсталлятор драйверов с огромной базой.",
       "sha256": "64bfc0d9196e7cbde12e046fce71fd6c1846d389c4454da8f5c5734fe71ae420",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "",
+      "scoopId": ""
     },
     {
       "id": "ddu",
@@ -1008,8 +1008,8 @@
       "iconUrl": "",
       "description": "Полное удаление драйверов видеокарты без остатков.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "display-driver-uninstaller",
+      "scoopId": "ddu"
     },
     {
       "id": "nvcleanstall",
@@ -1023,8 +1023,8 @@
       "iconUrl": "",
       "description": "Установка чистых драйверов NVIDIA без телеметрии, GeForce Experience и лишних компонентов.",
       "sha256": "",
-      "skipHash": true,
-      "ruBlocked": false
+      "chocoId": "",
+      "scoopId": "nvcleanstall"
     },
     {
       "id": "malwarebytes",
@@ -1038,8 +1038,8 @@
       "iconUrl": "",
       "description": "Антивирус для защиты от вредоносного ПО.",
       "sha256": "f450cef035a0355bdc9c5da156a92a83ea1ca3787cf8ccc6ace3559c3c1100f9",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "malwarebytes",
+      "scoopId": "malwarebytes"
     },
     {
       "id": "aida64",
@@ -1053,8 +1053,8 @@
       "iconUrl": "",
       "description": "Диагностика и тестирование компонентов компьютера.",
       "sha256": "16ece784678bf4547d75b5dd99c2c69507fe7219e9437d2a3b92ee3434187f9e",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "aida64",
+      "scoopId": ""
     },
     {
       "id": "hwmonitor",
@@ -1068,8 +1068,8 @@
       "iconUrl": "",
       "description": "Мониторинг температуры, напряжений и частот.",
       "sha256": "e85cf0d7541d8682c521d61d457e6822a2c1785b72afb9dfd102cc39ffdaad03",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "hwmonitor",
+      "scoopId": "hwmonitor"
     },
     {
       "id": "rclone",
@@ -1083,8 +1083,8 @@
       "iconUrl": "",
       "description": "Консольный клиент для облачных хранилищ.",
       "sha256": "ecb0ed9006e0d1a693757007716a11dab6c2cde6dac3f2fd87da962eaa73d11d",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "rclone",
+      "scoopId": "rclone"
     },
     {
       "id": "f.lux",
@@ -1098,8 +1098,8 @@
       "iconUrl": "",
       "description": "Автоматическая настройка цветовой температуры экрана.",
       "sha256": "f035d1c4cd78468d76407afbb90ce4b73b2d04b7647c0d6143969a1823cff1ae",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "flux",
+      "scoopId": "flux"
     },
     {
       "id": "autohotkey",
@@ -1113,8 +1113,8 @@
       "iconUrl": "",
       "description": "Скриптовый язык для автоматизации действий.",
       "sha256": "49a48e879f7480238d2fe17520ac19afe83685aac0b886719f9e1eac818b75cc",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "autohotkey",
+      "scoopId": "autohotkey"
     },
     {
       "id": "wiztree",
@@ -1128,8 +1128,8 @@
       "iconUrl": "",
       "description": "Самый быстрый анализатор дискового пространства.",
       "sha256": "8367f467070a8cf6e0608eace0dfc96796ed145e291e88f96d2621ea45fd7b5e",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "wiztree",
+      "scoopId": "wiztree"
     },
     {
       "id": "cpu-z",
@@ -1143,8 +1143,8 @@
       "iconUrl": "",
       "description": "Детальная информация о процессоре, памяти и материнской плате.",
       "sha256": "d7a83bfc6b9e868b6c3d011c48a9c3a80af57d2bc0bb658cf1f76fa57b84a716",
-      "skipHash": false,
-      "ruBlocked": false
+      "chocoId": "cpu-z",
+      "scoopId": "cpu-z"
     }
   ]
 }

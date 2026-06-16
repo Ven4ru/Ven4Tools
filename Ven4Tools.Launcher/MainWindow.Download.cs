@@ -155,21 +155,6 @@ namespace Ven4Tools.Launcher
                 }
                 copyCompleted = true;
 
-                txtDownloadStatus.Text = "Очистка...";
-                for (int attempt = 1; attempt <= 5; attempt++)
-                {
-                    try
-                    {
-                        if (File.Exists(tempZip)) File.Delete(tempZip);
-                        if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true);
-                        break;
-                    }
-                    catch (IOException) when (attempt < 5)
-                    {
-                        await Task.Delay(1000);
-                    }
-                }
-
                 txtDownloadStatus.Text = "Готово";
                 progressDownload.Value = 100;
                 AddLog($"✅ Клиент {version.Version} скачан и распакован");
@@ -188,20 +173,33 @@ namespace Ven4Tools.Launcher
                 progressDownload.Value = 0;
                 AddLog("⏹ Загрузка отменена");
                 if (!copyCompleted) RestoreClientBackup(clientBackup);
-                try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { }
-                try { if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true); } catch { }
             }
             catch (Exception ex)
             {
                 txtDownloadStatus.Text = "Ошибка";
                 AddLog($"❌ Ошибка скачивания: {ex.Message}");
                 if (!copyCompleted) RestoreClientBackup(clientBackup);
-                try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { }
-                try { if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true); } catch { }
                 System.Windows.MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
+                // Очистка временных файлов в любом исходе: успех, ошибка, отмена
+                // и ранний return (клиент запущен). Несколько попыток на случай,
+                // если файл ещё держит распаковщик/антивирус.
+                for (int attempt = 1; attempt <= 5; attempt++)
+                {
+                    try
+                    {
+                        if (File.Exists(tempZip)) File.Delete(tempZip);
+                        if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true);
+                        break;
+                    }
+                    catch (IOException) when (attempt < 5)
+                    {
+                        try { await Task.Delay(1000); } catch { }
+                    }
+                    catch { break; }
+                }
                 try { if (clientBackup != null && Directory.Exists(clientBackup)) Directory.Delete(clientBackup, true); } catch { }
                 btnCancelDownload.Visibility = Visibility.Collapsed;
                 btnCancelDownload.IsEnabled  = true;
