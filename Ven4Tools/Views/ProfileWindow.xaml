@@ -84,15 +84,11 @@
                         <ComboBox x:Name="cmbSort" Width="220" HorizontalAlignment="Left">
                             <ComboBoxItem x:Name="sortAlpha" Content="{DynamicResource prof_catalog_sort_alpha}"/>
                             <ComboBoxItem x:Name="sortCategory" Content="{DynamicResource prof_catalog_sort_category}"/>
-                            <ComboBoxItem x:Name="sortPopularity" Content="{DynamicResource prof_catalog_sort_popularity}"/>
                         </ComboBox>
 
-                        <TextBlock Style="{StaticResource SectionHeader}">Фильтры</TextBlock>
+                        <TextBlock Text="{DynamicResource prof_section_filters}" Style="{StaticResource SectionHeader}"/>
                         <CheckBox x:Name="chkHideInstalled" Margin="0,4">
                             <TextBlock Text="{DynamicResource prof_catalog_hide_installed}"/>
-                        </CheckBox>
-                        <CheckBox x:Name="chkFreeOnly" Margin="0,4">
-                            <TextBlock Text="{DynamicResource prof_catalog_free_only}"/>
                         </CheckBox>
                     </StackPanel>
                 </ScrollViewer>
@@ -114,9 +110,16 @@
                             </RadioButton>
                             <RadioButton x:Name="rbWeb" GroupName="Theme"
                                          Checked="RbTheme_Checked">
-                                <TextBlock Text="🌐 Ven4Tools Web"/>
+                                <TextBlock Text="{DynamicResource prof_ui_theme_web}"/>
                             </RadioButton>
                         </StackPanel>
+
+                        <TextBlock Text="{DynamicResource prof_ui_accent_label}" Style="{StaticResource SectionHeader}"/>
+                        <WrapPanel x:Name="wpAccentColors" Margin="0,0,0,2"/>
+                        <Button x:Name="btnClearAccent" Content="{DynamicResource prof_ui_accent_clear}"
+                                HorizontalAlignment="Left" Width="100" Height="24"
+                                FontSize="11" FontWeight="Normal" Margin="0,2,0,8"
+                                Click="BtnClearAccent_Click"/>
 
                         <TextBlock Text="{DynamicResource prof_ui_lang_label}" Style="{StaticResource SectionHeader}"/>
                         <ComboBox x:Name="cmbLang" Width="240" HorizontalAlignment="Left">
@@ -125,12 +128,9 @@
                             <ComboBoxItem x:Name="langEn" Content="{DynamicResource prof_ui_lang_en}" Tag="en"/>
                         </ComboBox>
 
-                        <TextBlock Style="{StaticResource SectionHeader}">Отображение</TextBlock>
+                        <TextBlock Text="{DynamicResource prof_section_display}" Style="{StaticResource SectionHeader}"/>
                         <CheckBox x:Name="chkCompact" Margin="0,4">
                             <TextBlock Text="{DynamicResource prof_ui_compact}"/>
-                        </CheckBox>
-                        <CheckBox x:Name="chkDescriptions" Margin="0,4">
-                            <TextBlock Text="{DynamicResource prof_ui_descriptions}"/>
                         </CheckBox>
                     </StackPanel>
                 </ScrollViewer>
@@ -140,12 +140,9 @@
             <TabItem Header="{DynamicResource prof_tab_install}" Style="{StaticResource ProfTabItem}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,8,24,16">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHeader}">Поведение</TextBlock>
+                        <TextBlock Text="{DynamicResource prof_section_behavior}" Style="{StaticResource SectionHeader}"/>
                         <CheckBox x:Name="chkSilent" Margin="0,4">
                             <TextBlock Text="{DynamicResource prof_install_silent}"/>
-                        </CheckBox>
-                        <CheckBox x:Name="chkAutoDeps" Margin="0,4">
-                            <TextBlock Text="{DynamicResource prof_install_auto_deps}"/>
                         </CheckBox>
 
                         <TextBlock Text="{DynamicResource prof_install_folder_label}" Style="{StaticResource SectionHeader}"/>
@@ -170,7 +167,7 @@
             <TabItem Header="{DynamicResource prof_tab_notif}" Style="{StaticResource ProfTabItem}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,8,24,16">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHeader}">Обновления</TextBlock>
+                        <TextBlock Text="{DynamicResource prof_section_updates}" Style="{StaticResource SectionHeader}"/>
                         <CheckBox x:Name="chkNotifUpdates" Margin="0,4">
                             <TextBlock Text="{DynamicResource prof_notif_app_updates}"/>
                         </CheckBox>
@@ -185,7 +182,7 @@
             <TabItem Header="{DynamicResource prof_tab_privacy}" Style="{StaticResource ProfTabItem}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,8,24,16">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHeader}">Синхронизация</TextBlock>
+                        <TextBlock Text="{DynamicResource prof_section_sync}" Style="{StaticResource SectionHeader}"/>
                         <CheckBox x:Name="chkSyncFavorites" Margin="0,4">
                             <TextBlock Text="{DynamicResource prof_privacy_sync_favorites}"/>
                         </CheckBox>
@@ -193,7 +190,7 @@
                             <TextBlock Text="{DynamicResource prof_privacy_history}"/>
                         </CheckBox>
 
-                        <TextBlock Style="{StaticResource SectionHeader}">Данные</TextBlock>
+                        <TextBlock Text="{DynamicResource prof_section_data}" Style="{StaticResource SectionHeader}"/>
                         <CheckBox x:Name="chkStats" Margin="0,4">
                             <TextBlock Text="{DynamicResource prof_privacy_stats}"/>
                         </CheckBox>

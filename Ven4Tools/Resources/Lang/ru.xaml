@@ -42,31 +42,38 @@
     <s:String x:Key="prof_catalog_sort_popularity">По популярности</s:String>
     <s:String x:Key="prof_catalog_hide_installed">Скрывать уже установленные приложения</s:String>
     <s:String x:Key="prof_catalog_free_only">Показывать только бесплатные</s:String>
+    <s:String x:Key="prof_section_filters">Фильтры</s:String>
 
     <!-- UI tab -->
     <s:String x:Key="prof_ui_theme_label">Тема:</s:String>
     <s:String x:Key="prof_ui_theme_dark">🌙 Тёмная</s:String>
     <s:String x:Key="prof_ui_theme_light">☀️ Светлая</s:String>
+    <s:String x:Key="prof_ui_theme_web">🌐 Ven4Tools Web</s:String>
+    <s:String x:Key="prof_ui_accent_label">Акцентный цвет</s:String>
+    <s:String x:Key="prof_ui_accent_clear">Сбросить цвет</s:String>
     <s:String x:Key="prof_ui_lang_label">Язык интерфейса:</s:String>
     <s:String x:Key="prof_ui_lang_auto">Автоопределение (системный)</s:String>
     <s:String x:Key="prof_ui_lang_ru">Русский</s:String>
     <s:String x:Key="prof_ui_lang_en">English</s:String>
     <s:String x:Key="prof_ui_compact">Компактный режим каталога</s:String>
-    <s:String x:Key="prof_ui_descriptions">Показывать описания приложений в каталоге</s:String>
+    <s:String x:Key="prof_section_display">Отображение</s:String>
 
     <!-- Install tab -->
+    <s:String x:Key="prof_section_behavior">Поведение</s:String>
     <s:String x:Key="prof_install_silent">Тихая установка (без диалогов подтверждения)</s:String>
-    <s:String x:Key="prof_install_auto_deps">Устанавливать зависимости автоматически</s:String>
     <s:String x:Key="prof_install_folder_label">Папка установки по умолчанию:</s:String>
     <s:String x:Key="prof_install_folder_browse">Обзор...</s:String>
 
     <!-- Notifications tab -->
+    <s:String x:Key="prof_section_updates">Обновления</s:String>
     <s:String x:Key="prof_notif_app_updates">Уведомлять об обновлениях приложений из каталога</s:String>
     <s:String x:Key="prof_notif_new_apps">Уведомлять о новых приложениях в каталоге</s:String>
 
     <!-- Privacy tab -->
+    <s:String x:Key="prof_section_sync">Синхронизация</s:String>
     <s:String x:Key="prof_privacy_sync_favorites">Синхронизировать избранное между устройствами</s:String>
     <s:String x:Key="prof_privacy_history">Сохранять историю установок</s:String>
+    <s:String x:Key="prof_section_data">Данные</s:String>
     <s:String x:Key="prof_privacy_stats">Анонимная статистика использования</s:String>
     <s:String x:Key="prof_privacy_stats_hint">Помогает нам улучшать подборку приложений</s:String>
     <s:String x:Key="prof_privacy_device_label">Данные на устройстве</s:String>

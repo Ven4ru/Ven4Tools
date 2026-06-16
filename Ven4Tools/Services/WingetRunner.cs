@@ -58,7 +58,9 @@ namespace Ven4Tools.Services
             }
             catch (OperationCanceledException)
             {
-                try { p.Kill(); } catch { }
+                // Kill(true) завершает всё дерево процессов: winget порождает дочерние
+                // процессы, без них пайп не закрывается и ReadToEndAsync зависает.
+                try { p.Kill(true); } catch { }
             }
             string output = await outputTask;
             await stderrTask;

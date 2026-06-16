@@ -10,6 +10,7 @@ namespace Ven4Tools
     public partial class App : Application
     {
         private static HeartbeatService? _heartbeat;
+        private static UpdateBackgroundService? _updateBgService;
         private static Mutex? _instanceMutex;
 
         public App()
@@ -68,6 +69,15 @@ namespace Ven4Tools
 
                 var main = new MainWindow();
                 main.Show();
+
+                // Фоновые уведомления об обновлениях/новых приложениях — после показа
+                // окна, чтобы трей-иконка успела зарегистрироваться. Старт не блокирует.
+                try
+                {
+                    _updateBgService = new UpdateBackgroundService();
+                    _updateBgService.Start();
+                }
+                catch { }
             }
             catch (Exception ex)
             {
@@ -93,6 +103,7 @@ namespace Ven4Tools
         protected override void OnExit(ExitEventArgs e)
         {
             _heartbeat?.Dispose();
+            _updateBgService?.Dispose();
             if (_instanceMutex != null)
             {
                 _instanceMutex.ReleaseMutex();
