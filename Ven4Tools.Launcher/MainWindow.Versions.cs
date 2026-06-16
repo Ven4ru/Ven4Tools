@@ -76,6 +76,7 @@ namespace Ven4Tools.Launcher
                         string githubUrl   = clientAsset.browser_download_url ?? "";
                         string downloadUrl = githubUrl;
                         string? fallbackUrl = null;
+                        string? expectedSha256 = null;
 
                         // Если CDN знает эту версию — качаем с CDN (быстрее),
                         // GitHub оставляем как резерв на случай недоступности CDN.
@@ -86,6 +87,10 @@ namespace Ven4Tools.Launcher
                         {
                             downloadUrl = cdnInfo.Client.ZipUrl!;
                             fallbackUrl = cdnInfo.Client.ZipFallback ?? githubUrl;
+                            // Хеш из version.json относится к одному и тому же zip
+                            // (CDN и GitHub отдают идентичный архив), поэтому годится
+                            // и для основной, и для резервной ссылки.
+                            expectedSha256 = cdnInfo.Client.ZipSha256;
                             AddLog($"   ⚡ {version} → CDN (резерв: GitHub)");
                         }
 
@@ -95,6 +100,7 @@ namespace Ven4Tools.Launcher
                             Version      = version,
                             DownloadUrl  = downloadUrl,
                             FallbackUrl  = fallbackUrl,
+                            ExpectedSha256 = expectedSha256,
                             ReleaseDate  = release.published_at,
                             ReleaseNotes = release.body,
                             IsPreRelease = release.prerelease,

@@ -83,6 +83,20 @@ namespace Ven4Tools.Launcher
 
                 token.ThrowIfCancellationRequested();
 
+                // Верификация SHA256 если хеш известен (CDN отдаёт его в version.json).
+                if (!string.IsNullOrEmpty(version.ExpectedSha256))
+                {
+                    txtDownloadStatus.Text = "Проверка целостности...";
+                    string actual = await Task.Run(() => ComputeSha256(tempZip), token);
+                    if (!string.Equals(actual, version.ExpectedSha256, StringComparison.OrdinalIgnoreCase))
+                    {
+                        AddLog("⛔ Контрольная сумма не совпала — файл повреждён или подменён");
+                        File.Delete(tempZip);
+                        throw new IOException("Контрольная сумма не совпала. Файл повреждён или подменён.");
+                    }
+                    AddLog("🔒 Целостность подтверждена (SHA256)");
+                }
+
                 txtDownloadStatus.Text = "Распаковка...";
                 await Task.Delay(1000, token);
 
@@ -238,6 +252,18 @@ namespace Ven4Tools.Launcher
             if (totalBytes > 0 && bytesRead != totalBytes)
                 throw new IOException(
                     $"Загрузка неполная: получено {bytesRead} из {totalBytes} байт. Проверьте соединение и повторите.");
+        }
+
+        /// <summary>
+        /// Вычисляет SHA256 файла в виде hex-строки нижнего регистра.
+        /// Читает потоково — память не зависит от размера архива.
+        /// </summary>
+        private static string ComputeSha256(string path)
+        {
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            using var stream = File.OpenRead(path);
+            byte[] hash = sha.ComputeHash(stream);
+            return Convert.ToHexString(hash).ToLowerInvariant();
         }
 
         private static void CopyDirectory(string sourceDir, string destDir)
