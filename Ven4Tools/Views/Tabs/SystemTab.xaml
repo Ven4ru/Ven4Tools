@@ -7,16 +7,6 @@
             <TextBlock Text="Системные настройки" FontSize="24" FontWeight="Bold" 
                        Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20"/>
             
-            <!-- Автозагрузка -->
-            <GroupBox Header="🚀 Автозагрузка" Margin="0,0,0,15">
-                <StackPanel>
-                    <CheckBox x:Name="chkAutoStart" Content="Запускать Ven4Tools при старте Windows" 
-                              Margin="10" Foreground="{DynamicResource TextPrimary}"/>
-                    <TextBlock Text="Добавляет программу в автозагрузку системы" 
-                               Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="10,0,10,10"/>
-                </StackPanel>
-            </GroupBox>
-            
             <!-- Уведомления -->
             <GroupBox Header="🔔 Уведомления" Margin="0,0,0,15">
                 <StackPanel>

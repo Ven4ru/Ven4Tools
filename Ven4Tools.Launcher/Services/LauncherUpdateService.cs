@@ -154,7 +154,9 @@ namespace Ven4Tools.Launcher.Services
         /// тихо сдастся, удалив только себя).
         /// </summary>
         /// <param name="updateInfo">Готовая информация об обновлении; если null — проверяется заново.</param>
-        public async Task<bool> DownloadAndApplyUpdateAsync(UpdateInfo? updateInfo = null)
+        /// <param name="expectedSha256">Ожидаемый SHA256 exe (из version.json CDN). Если задан — после
+        /// скачивания проверяется целостность; при несовпадении обновление отменяется.</param>
+        public async Task<bool> DownloadAndApplyUpdateAsync(UpdateInfo? updateInfo = null, string? expectedSha256 = null)
         {
             try
             {
@@ -184,6 +186,18 @@ namespace Ven4Tools.Launcher.Services
                 // отсекаем страницы ошибок и обрезанные загрузки.
                 if (bytesRead < 1024 * 1024)
                     throw new IOException($"Скачанный файл подозрительно мал ({bytesRead} байт) — обновление отменено.");
+
+                // Верификация SHA256, если хеш известен (CDN отдаёт его в version.json).
+                if (!string.IsNullOrEmpty(expectedSha256))
+                {
+                    string actual = await Task.Run(() => ComputeSha256(stagedExe));
+                    if (!string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase))
+                    {
+                        try { File.Delete(stagedExe); } catch { }
+                        throw new IOException("Контрольная сумма не совпала. Файл повреждён или подменён.");
+                    }
+                    Log("Целостность подтверждена (SHA256).");
+                }
 
                 // Создаём и запускаем bat-скрипт замены exe.
                 string batPath = Path.Combine(Path.GetTempPath(), $"ven4tools_update_{Guid.NewGuid():N}.bat");
@@ -363,6 +377,18 @@ namespace Ven4Tools.Launcher.Services
                     $"Загрузка неполная: получено {bytesRead} из {totalBytes} байт. Проверьте соединение.");
 
             return bytesRead;
+        }
+
+        /// <summary>
+        /// Вычисляет SHA256 файла в виде hex-строки нижнего регистра.
+        /// Читает потоково — память не зависит от размера файла.
+        /// </summary>
+        private static string ComputeSha256(string path)
+        {
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            using var stream = File.OpenRead(path);
+            byte[] hash = sha.ComputeHash(stream);
+            return Convert.ToHexString(hash).ToLowerInvariant();
         }
     }
 }
