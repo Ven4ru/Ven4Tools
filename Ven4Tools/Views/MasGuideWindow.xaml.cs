@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Windows;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Views
 {
@@ -27,7 +28,8 @@ namespace Ven4Tools.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Не удалось открыть PowerShell: {ex.Message}",
+                AppLogger.Write($"[MasGuide] Не удалось открыть PowerShell: {ex.Message}");
+                MessageBox.Show("Не удалось открыть PowerShell. Откройте его вручную через меню «Пуск».",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

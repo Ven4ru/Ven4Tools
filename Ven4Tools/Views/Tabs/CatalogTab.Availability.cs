@@ -388,7 +388,12 @@ namespace Ven4Tools.Views.Tabs
                         ? appInfo!.AlternativeId
                         : kvp.Key;
 
-                    if (installedAppsService.IsInstalled(wingetId) && kvp.Value.Content is TextBlock tb)
+                    bool isInstalled = installedAppsService.IsInstalled(wingetId);
+                    // Помечаем состояние установки на чекбоксе явным флагом —
+                    // ApplyHideInstalled полагается на него, а не на текст тултипа.
+                    CatalogTab.SetInstalled(kvp.Value, isInstalled);
+
+                    if (isInstalled && kvp.Value.Content is TextBlock tb)
                     {
                         string version = installedAppsService.GetInstalledVersion(wingetId);
                         bool hasUpdate = false;
@@ -426,13 +431,28 @@ namespace Ven4Tools.Views.Tabs
         {
             foreach (var kvp in appCheckBoxes)
             {
-                if (kvp.Value.ToolTip?.ToString()?.StartsWith("✓") == true)
+                if (GetInstalled(kvp.Value))
                 {
                     var row = System.Windows.Media.VisualTreeHelper.GetParent(kvp.Value) as FrameworkElement ?? kvp.Value;
                     row.Visibility = Visibility.Collapsed;
                 }
             }
         }
+
+        // Attached property: хранит признак «приложение установлено» на чекбоксе.
+        // Заменяет хрупкую проверку текста тултипа в ApplyHideInstalled.
+        public static readonly DependencyProperty IsInstalledProperty =
+            DependencyProperty.RegisterAttached(
+                "IsInstalled",
+                typeof(bool),
+                typeof(CatalogTab),
+                new PropertyMetadata(false));
+
+        public static void SetInstalled(DependencyObject element, bool value) =>
+            element.SetValue(IsInstalledProperty, value);
+
+        public static bool GetInstalled(DependencyObject element) =>
+            (bool)element.GetValue(IsInstalledProperty);
 
     }
 }

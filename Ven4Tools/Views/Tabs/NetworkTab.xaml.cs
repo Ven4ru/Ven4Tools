@@ -226,7 +226,8 @@ namespace Ven4Tools.Views.Tabs
             catch (Exception ex)
             {
                 AppLogger.Write($"[Сеть] Ошибка сброса: {ex.Message}");
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Не удалось сбросить сетевые настройки. Запустите приложение от имени администратора и попробуйте ещё раз.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally { btnResetNetwork.IsEnabled = true; }
         }
