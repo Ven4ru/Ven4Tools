@@ -27,6 +27,11 @@ namespace Ven4Tools.Views.Tabs
         // Семафор общий на всё приложение — см. InstallationService.InstallSemaphore.
         private bool isCancelled = false;
         private CancellationTokenSource? cancellationTokenSource;
+        // Отдельный источник отмены для ретраев проверки доступности: не зависит от
+        // токена установки (его отмена не должна гасить независимые проверки).
+        // Отменяется при закрытии окна приложения.
+        private readonly CancellationTokenSource _availabilityCts = new();
+        private bool _availabilityShutdownHooked = false;
         private readonly AppManager appManager = null!;
         private readonly InstallationService installService = null!;
         private readonly AvailabilityChecker availabilityChecker = null!;
@@ -82,6 +87,21 @@ namespace Ven4Tools.Views.Tabs
                     AppSettings.Changed        += OnAppSettingsChanged;
                     SourceOrderService.Changed += OnSourceOrderChanged;
                     _eventsSubscribed = true;
+                }
+                // Отменяем ретраи доступности при закрытии окна (вкладка кэшируется и
+                // переиспользуется, поэтому привязываемся к закрытию окна, а не к Unloaded).
+                if (!_availabilityShutdownHooked)
+                {
+                    var window = Window.GetWindow(this);
+                    if (window != null)
+                    {
+                        window.Closed += (_, _) =>
+                        {
+                            try { _availabilityCts.Cancel(); } catch { }
+                            _availabilityCts.Dispose();
+                        };
+                        _availabilityShutdownHooked = true;
+                    }
                 }
                 if (!_initialized)
                 {

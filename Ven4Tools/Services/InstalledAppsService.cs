@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -52,18 +53,55 @@ namespace Ven4Tools.Services
             if (string.IsNullOrEmpty(wingetId) || string.IsNullOrEmpty(_rawOutput))
                 return string.Empty;
 
-            var match = Regex.Match(_rawOutput, $@"(?<!\S){Regex.Escape(wingetId)}\s+(\S+)", RegexOptions.IgnoreCase);
-            if (!match.Success) return string.Empty;
+            // Колонки `winget list` выровнены пробелами, поэтому «следующее слово»
+            // после Id может оказаться соседней колонкой (Available и т.п.).
+            // Берём версию строго по позиции колонки Version из строки заголовка.
+            var lines = _rawOutput.Replace("\r\n", "\n").Split('\n');
 
-            string captured = match.Groups[1].Value;
+            // Строка-разделитель ("-----") идёт сразу после заголовка с именами колонок.
+            int sepIndex = Array.FindIndex(lines, IsSeparatorLine);
+            if (sepIndex <= 0) return string.Empty;
 
-            // Из-за выравнивания колонок в `winget list` регэксп может захватить
-            // не «Version», а соседнюю колонку («Available» и т.п.). Версия всегда
-            // начинается с цифры — если первый символ не цифра, это ложное срабатывание.
-            if (captured.Length == 0 || !char.IsDigit(captured[0]))
-                return string.Empty;
+            int versionColumn = FindVersionColumn(lines[sepIndex - 1]);
+            if (versionColumn < 0) return string.Empty;
 
-            return captured;
+            var pattern = $@"(?<!\S){Regex.Escape(wingetId)}(?!\S)";
+            for (int i = sepIndex + 1; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                if (!Regex.IsMatch(line, pattern, RegexOptions.IgnoreCase))
+                    continue;
+
+                // Строка приложения короче позиции колонки Version — версии нет.
+                if (line.Length <= versionColumn)
+                    return string.Empty;
+
+                // Первое слово, начиная с позиции колонки Version.
+                string rest = line.Substring(versionColumn).TrimStart();
+                int space = rest.IndexOfAny(new[] { ' ', '\t' });
+                return space < 0 ? rest : rest.Substring(0, space);
+            }
+
+            return string.Empty;
+        }
+
+        // Строка из одних дефисов (с возможными пробелами) — разделитель под заголовком.
+        private static bool IsSeparatorLine(string line)
+        {
+            string t = line.Trim();
+            return t.Length > 0 && t.IndexOf('-') >= 0 && t.All(c => c == '-' || c == ' ');
+        }
+
+        // Позиция начала колонки Version в строке заголовка (по символу 'V' слова "Version").
+        // Поддерживаем нелокализованный и русский заголовок на случай локализации winget.
+        private static int FindVersionColumn(string header)
+        {
+            foreach (var key in new[] { "Version", "Версия" })
+            {
+                int idx = header.IndexOf(key, StringComparison.OrdinalIgnoreCase);
+                if (idx >= 0) return idx;
+            }
+            return -1;
         }
     }
 }
