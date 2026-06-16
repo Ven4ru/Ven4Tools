@@ -99,7 +99,8 @@ namespace Ven4Tools.Services
                         Log(reboot
                             ? $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — локальный установщик"
                             : $"✅ {app.DisplayName} — локальный установщик");
-                        await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "local", app.CategoryString);
+                        if (ProfileService.Current.SaveInstallHistory)
+                            await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "local", app.CategoryString);
                         return (true, reboot ? "Установлено (требуется перезагрузка)" : "Установлено из локального файла", appProgress);
                     }
 
@@ -214,7 +215,8 @@ namespace Ven4Tools.Services
                                     progress.Report(appProgress);
                                     Log($"✅ {app.DisplayName} — Winget ({wsrc}): {primaryId}");
                                     await StatsService.Instance.TrackOverrideAsync(app.Id, primaryId, null, true);
-                                    await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "winget", app.CategoryString);
+                                    if (ProfileService.Current.SaveInstallHistory)
+                                        await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "winget", app.CategoryString);
                                     return (true, "Установлено через Winget", appProgress);
                                 }
                             }
@@ -241,7 +243,8 @@ namespace Ven4Tools.Services
                                 progress.Report(appProgress);
                                 Log($"✅ {app.DisplayName} — Chocolatey: {app.ChocoId}");
                                 await StatsService.Instance.TrackOverrideAsync(app.Id, app.ChocoId, null, true);
-                                await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "choco", app.CategoryString);
+                                if (ProfileService.Current.SaveInstallHistory)
+                                    await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "choco", app.CategoryString);
                                 return (true, "Установлено через Chocolatey", appProgress);
                             }
                             break;
@@ -267,7 +270,8 @@ namespace Ven4Tools.Services
                                 progress.Report(appProgress);
                                 Log($"✅ {app.DisplayName} — Scoop: {app.ScoopId}");
                                 await StatsService.Instance.TrackOverrideAsync(app.Id, app.ScoopId, null, true);
-                                await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "scoop", app.CategoryString);
+                                if (ProfileService.Current.SaveInstallHistory)
+                                    await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "scoop", app.CategoryString);
                                 return (true, "Установлено через Scoop", appProgress);
                             }
                             break;
@@ -398,7 +402,8 @@ namespace Ven4Tools.Services
                                                 ? $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — прямая ссылка: {url}"
                                                 : $"✅ {app.DisplayName} — прямая ссылка: {url}");
                                             await StatsService.Instance.TrackOverrideAsync(app.Id, null, url, true);
-                                            await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "direct", app.CategoryString);
+                                            if (ProfileService.Current.SaveInstallHistory)
+                                                await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "direct", app.CategoryString);
                                             return (true, reboot ? "Установлено (требуется перезагрузка)" : "Установлено", appProgress);
                                         }
                                     }

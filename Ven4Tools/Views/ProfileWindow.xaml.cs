@@ -1,6 +1,10 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
 
@@ -9,11 +13,13 @@ namespace Ven4Tools.Views
     public partial class ProfileWindow : Window
     {
         private bool _langChanged = false;
+        private string _selectedAccentHex = "";
 
         public ProfileWindow()
         {
             InitializeComponent();
             LoadFromProfile();
+            BuildAccentSwatches();
         }
 
         private void LoadFromProfile()
@@ -28,13 +34,12 @@ namespace Ven4Tools.Views
             // Sort
             cmbSort.SelectedIndex = p.DefaultSort switch
             {
-                "category"   => 1,
-                "popularity" => 2,
-                _            => 0
+                "category" => 1,
+                _          => 0
             };
 
             chkHideInstalled.IsChecked = p.HideInstalled;
-            chkFreeOnly.IsChecked      = p.FreeOnly;
+            _selectedAccentHex = p.AccentColorHex;
 
             // UI
             rbDark.IsChecked  = p.Theme == "dark" || p.Theme == "teal" || (p.Theme != "light" && p.Theme != "web");
@@ -49,11 +54,9 @@ namespace Ven4Tools.Views
             };
 
             chkCompact.IsChecked      = p.CompactMode;
-            chkDescriptions.IsChecked = p.ShowDescriptions;
 
             // Install
             chkSilent.IsChecked   = p.SilentInstall;
-            chkAutoDeps.IsChecked  = p.AutoDependencies;
             txtInstallFolder.Text  = p.DefaultInstallFolder;
 
             // Notifications
@@ -65,6 +68,7 @@ namespace Ven4Tools.Views
             chkHistory.IsChecked        = p.SaveInstallHistory;
             chkStats.IsChecked          = p.AnonymousStats;
             chkNoLocalStorage.IsChecked = p.NoLocalStorage;
+            UpdateSwatchHighlights();
         }
 
         private void RbTheme_Checked(object sender, RoutedEventArgs e)
@@ -95,17 +99,14 @@ namespace Ven4Tools.Views
             p.DefaultSort = cmbSort.SelectedIndex switch
             {
                 1 => "category",
-                2 => "popularity",
                 _ => "alpha"
             };
 
-            p.HideInstalled   = chkHideInstalled.IsChecked == true;
-            p.FreeOnly        = chkFreeOnly.IsChecked == true;
-            p.Theme           = rbWeb.IsChecked == true ? "web" : (rbLight.IsChecked == true ? "light" : "teal");
+            p.HideInstalled  = chkHideInstalled.IsChecked == true;
+            p.AccentColorHex = _selectedAccentHex;
+            p.Theme          = rbWeb.IsChecked == true ? "web" : (rbLight.IsChecked == true ? "light" : "teal");
             p.CompactMode     = chkCompact.IsChecked == true;
-            p.ShowDescriptions = chkDescriptions.IsChecked == true;
             p.SilentInstall   = chkSilent.IsChecked == true;
-            p.AutoDependencies = chkAutoDeps.IsChecked == true;
             p.DefaultInstallFolder = txtInstallFolder.Text.Trim();
             p.NotifyAppUpdates = chkNotifUpdates.IsChecked == true;
             p.NotifyNewApps    = chkNotifNew.IsChecked == true;
@@ -189,6 +190,56 @@ namespace Ven4Tools.Views
                 LocalizationService.Init();
                 LoadFromProfile();
             }
+        }
+
+        private void BuildAccentSwatches()
+        {
+            foreach (var (name, hex) in ThemeService.Palettes)
+            {
+                var border = new Border
+                {
+                    Width = 26, Height = 26,
+                    Margin = new Thickness(0, 0, 6, 4),
+                    CornerRadius = new CornerRadius(4),
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)),
+                    BorderThickness = new Thickness(2),
+                    Cursor = Cursors.Hand,
+                    Tag = hex,
+                    ToolTip = name
+                };
+                border.MouseLeftButtonUp += AccentSwatch_Click;
+                wpAccentColors.Children.Add(border);
+            }
+            UpdateSwatchHighlights();
+        }
+
+        private void UpdateSwatchHighlights()
+        {
+            foreach (Border b in wpAccentColors.Children.OfType<Border>())
+            {
+                bool selected = !string.IsNullOrEmpty(_selectedAccentHex) && b.Tag?.ToString() == _selectedAccentHex;
+                b.BorderBrush = selected ? Brushes.White : Brushes.Transparent;
+            }
+        }
+
+        private void AccentSwatch_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border b && b.Tag is string hex)
+            {
+                _selectedAccentHex = _selectedAccentHex == hex ? "" : hex;
+                if (string.IsNullOrEmpty(_selectedAccentHex))
+                    ThemeService.Apply(ProfileService.Current.Theme);
+                else
+                    ThemeService.ApplyAccent(_selectedAccentHex);
+                UpdateSwatchHighlights();
+            }
+        }
+
+        private void BtnClearAccent_Click(object sender, RoutedEventArgs e)
+        {
+            _selectedAccentHex = "";
+            ThemeService.Apply(ProfileService.Current.Theme);
+            UpdateSwatchHighlights();
         }
     }
 }

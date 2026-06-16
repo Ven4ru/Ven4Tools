@@ -5,20 +5,16 @@ namespace Ven4Tools.Models
         // Catalog
         public string CatalogMode { get; set; } = "full"; // "basic", "extended", "full"
         public bool HideInstalled { get; set; } = false;
-        public bool ShowRuBlocked { get; set; } = true;
-        public string DefaultSort { get; set; } = "alpha"; // "alpha", "category", "popularity"
-        public bool FreeOnly { get; set; } = false;
+        public string DefaultSort { get; set; } = "alpha"; // "alpha", "category"
 
         // UI
         public string Theme { get; set; } = "teal";
         public string Language { get; set; } = "auto"; // "auto", "ru", "en"
         public bool CompactMode { get; set; } = false;
-        public bool ShowDescriptions { get; set; } = true;
         public string AccentColorHex { get; set; } = ""; // "" = theme default
 
         // Install
         public bool SilentInstall { get; set; } = false;
-        public bool AutoDependencies { get; set; } = true;
         public string DefaultInstallFolder { get; set; } = "";
 
         // Notifications

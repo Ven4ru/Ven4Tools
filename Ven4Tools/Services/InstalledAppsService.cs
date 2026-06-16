@@ -53,7 +53,17 @@ namespace Ven4Tools.Services
                 return string.Empty;
 
             var match = Regex.Match(_rawOutput, $@"(?<!\S){Regex.Escape(wingetId)}\s+(\S+)", RegexOptions.IgnoreCase);
-            return match.Success ? match.Groups[1].Value : string.Empty;
+            if (!match.Success) return string.Empty;
+
+            string captured = match.Groups[1].Value;
+
+            // Из-за выравнивания колонок в `winget list` регэксп может захватить
+            // не «Version», а соседнюю колонку («Available» и т.п.). Версия всегда
+            // начинается с цифры — если первый символ не цифра, это ложное срабатывание.
+            if (captured.Length == 0 || !char.IsDigit(captured[0]))
+                return string.Empty;
+
+            return captured;
         }
     }
 }

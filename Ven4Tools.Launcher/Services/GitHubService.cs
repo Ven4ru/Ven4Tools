@@ -15,6 +15,13 @@ namespace Ven4Tools.Launcher.Services
         private readonly string repoOwner;
         private readonly string repoName;
 
+        // Кэш списка релизов: CheckLauncherUpdate, GetAvailableClientVersions и
+        // OfferInstallationAsync дёргают один и тот же endpoint. Без кэша каждый
+        // вызов — отдельный запрос к GitHub API (лимит 60/час с IP). Живёт 5 минут.
+        private static readonly object _releasesCacheLock = new();
+        private static (List<GitHubRelease>? data, DateTime ts) _releasesCache;
+        private static readonly TimeSpan _releasesCacheTtl = TimeSpan.FromMinutes(5);
+
         public GitHubService() : this("Ven4ru", "Ven4Tools")
         {
         }
@@ -60,6 +67,14 @@ namespace Ven4Tools.Launcher.Services
         /// </summary>
         public async Task<(List<GitHubRelease> Releases, string? Error)> GetAllReleasesWithError()
         {
+            // Свежий кэш — отдаём без запроса к API.
+            lock (_releasesCacheLock)
+            {
+                if (_releasesCache.data != null &&
+                    DateTime.UtcNow - _releasesCache.ts < _releasesCacheTtl)
+                    return (_releasesCache.data, null);
+            }
+
             try
             {
                 string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases";
@@ -74,6 +89,10 @@ namespace Ven4Tools.Launcher.Services
 
                 string json = await response.Content.ReadAsStringAsync();
                 var list = JsonSerializer.Deserialize<List<GitHubRelease>>(json) ?? new();
+
+                lock (_releasesCacheLock)
+                    _releasesCache = (list, DateTime.UtcNow);
+
                 return (list, null);
             }
             catch (Exception ex)

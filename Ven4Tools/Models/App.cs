@@ -29,26 +29,20 @@ namespace Ven4Tools.Models
         [JsonProperty("official")]
         public bool Official { get; set; } = true;
 
-        [JsonProperty("offlineCapable")]
-        public bool OfflineCapable { get; set; } = false;
-
         [JsonProperty("iconUrl")]
         public string IconUrl { get; set; } = string.Empty;
 
         [JsonProperty("description")]
         public string Description { get; set; } = string.Empty;
 
-        [JsonProperty("ruBlocked")]
-        public bool RuBlocked { get; set; } = false;
+        [JsonProperty("profile")]
+        public string Profile { get; set; } = "full";
 
         [JsonProperty("chocoId")]
         public string ChocoId { get; set; } = string.Empty;
 
         [JsonProperty("scoopId")]
         public string ScoopId { get; set; } = string.Empty;
-
-        [JsonProperty("popularity")]
-        public int Popularity { get; set; } = 0;
 
         [JsonProperty("sha256")]
         public string? Sha256 { get; set; }

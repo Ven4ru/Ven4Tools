@@ -73,6 +73,7 @@ namespace Ven4Tools
             AppLogger.MessageReceived -= AddLog;
             UserSession.Changed -= UpdateUserUI;
             ConnectivityMonitor.StatusChanged -= OnConnectivityChanged;
+            UpdateBackgroundService.UnregisterNotifier();
             base.OnClosed(e);
         }
 
@@ -226,6 +227,19 @@ namespace Ven4Tools
 
                 _trayIcon.ContextMenuStrip = menu;
                 _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(ShowFromTray);
+
+                // Фоновый сервис уведомлений показывает балуны через нашу трей-иконку,
+                // чтобы не плодить вторую иконку в трее.
+                UpdateBackgroundService.RegisterNotifier((title, body) =>
+                    Dispatcher.Invoke(() =>
+                    {
+                        try
+                        {
+                            _trayIcon?.ShowBalloonTip(8000, title, body,
+                                System.Windows.Forms.ToolTipIcon.Info);
+                        }
+                        catch { }
+                    }));
             }
             catch { }
         }

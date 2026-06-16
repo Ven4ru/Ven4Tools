@@ -51,22 +51,9 @@ namespace Ven4Tools.Views.Tabs
         public bool IsInstalling => _isInstalling;
         private bool _eventsSubscribed = false;
         private bool _showFavoritesOnly = false;
-        private bool _showRuBlocked = true;
-        private readonly System.Collections.Generic.HashSet<string> _ruBlockedIds = new();
         private CancellationTokenSource? _searchDebounce;
         private Action? _profileChangedHandler;
         public event Action? SwitchToUpdatesRequested;
-
-        // Categories visible per mode
-        private static readonly System.Collections.Generic.HashSet<AppCategory> BasicCategories = new()
-        {
-            AppCategory.Браузеры, AppCategory.Офис, AppCategory.Мультимедиа,
-            AppCategory.Системные, AppCategory.Другое
-        };
-        private static readonly System.Collections.Generic.HashSet<AppCategory> ExtendedCategories = new(BasicCategories)
-        {
-            AppCategory.Разработка, AppCategory.Графика, AppCategory.Мессенджеры
-        };
 
         public CatalogTab()
         {
@@ -132,10 +119,6 @@ namespace Ven4Tools.Views.Tabs
             btnClearSearch.Click          += (_, _) => { txtSearch.Text = (string)txtSearch.Tag; };
             btnFavoritesOnly.Click        += BtnFavoritesOnly_Click;
             btnFavoritesOnly.Foreground    = new SolidColorBrush(Color.FromRgb(100, 100, 100));
-
-            _showRuBlocked = ProfileService.Current.ShowRuBlocked;
-            btnShowRuBlocked.Click += BtnShowRuBlocked_Click;
-            UpdateRuBlockedButton();
         }
 
         private void InitCategoryPanels()

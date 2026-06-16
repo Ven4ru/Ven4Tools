@@ -29,7 +29,13 @@ namespace Ven4Tools.Services
             _consentService = new ConsentService();
         }
 
-        public async Task<bool> IsStatsAllowedAsync() => await _consentService.IsStatsAllowedAsync();
+        public async Task<bool> IsStatsAllowedAsync()
+        {
+            // Статистика отправляется только если пользователь включил анонимную
+            // статистику в профиле И отдельно дал согласие (consent.json).
+            if (!ProfileService.Current.AnonymousStats) return false;
+            return await _consentService.IsStatsAllowedAsync();
+        }
 
         public async Task TrackUserAddAsync(string appId, string? wingetId = null, string? url = null)
         {

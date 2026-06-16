@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
@@ -6,6 +6,8 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools", "Ven4Tools\Ven4Tools.csproj", "{2E536D78-5E4F-6109-0A86-EC26092FC845}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.Launcher", "Ven4Tools.Launcher\Ven4Tools.Launcher.csproj", "{A3B5C7D9-1E2F-4A6B-8C0D-3E5F7A9B1C2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.UITests", "Ven4Tools.UITests\Ven4Tools.UITests.csproj", "{462EFBA2-A8B6-4B4F-9FB0-E303C05851E9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{A3B5C7D9-1E2F-4A6B-8C0D-3E5F7A9B1C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3B5C7D9-1E2F-4A6B-8C0D-3E5F7A9B1C2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3B5C7D9-1E2F-4A6B-8C0D-3E5F7A9B1C2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{462EFBA2-A8B6-4B4F-9FB0-E303C05851E9}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{462EFBA2-A8B6-4B4F-9FB0-E303C05851E9}.Debug|Any CPU.Build.0 = Debug|x64
+		{462EFBA2-A8B6-4B4F-9FB0-E303C05851E9}.Release|Any CPU.ActiveCfg = Release|x64
+		{462EFBA2-A8B6-4B4F-9FB0-E303C05851E9}.Release|Any CPU.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

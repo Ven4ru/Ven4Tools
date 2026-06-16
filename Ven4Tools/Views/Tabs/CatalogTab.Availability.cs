@@ -242,7 +242,9 @@ namespace Ven4Tools.Views.Tabs
                                 {
                                     tb.Foreground    = Brushes.Gray;
                                     checkBox.ToolTip = $"⏳ Повторная проверка... ({attempt}/3)";
-                                    var token = cancellationTokenSource?.Token ?? CancellationToken.None;
+                                    // Ретраи проверки доступности независимы от установки:
+                                    // токен установки отменял бы и несвязанные проверки.
+                                    var token = CancellationToken.None;
                                     _ = Task.Delay(2000, token).ContinueWith(
                                         t => { if (!t.IsCanceled) return CheckSingleAppAvailability(appId, attempt + 1); return Task.CompletedTask; },
                                         TaskScheduler.Default).Unwrap();
@@ -432,37 +434,5 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private void ApplyRuBlockedVisibility()
-        {
-            foreach (var appId in _ruBlockedIds)
-            {
-                if (!appCheckBoxes.TryGetValue(appId, out var checkBox)) continue;
-                var row = System.Windows.Media.VisualTreeHelper.GetParent(checkBox) as FrameworkElement ?? checkBox;
-                row.Visibility = _showRuBlocked ? Visibility.Visible : Visibility.Collapsed;
-            }
-        }
-
-        private void UpdateRuBlockedButton()
-        {
-            btnShowRuBlocked.Foreground = _showRuBlocked
-                ? new SolidColorBrush(Color.FromRgb(255, 165, 0))
-                : new SolidColorBrush(Color.FromRgb(100, 100, 100));
-            btnShowRuBlocked.ToolTip = _showRuBlocked
-                ? "Скрыть недоступные в РФ"
-                : "Показывать недоступные в РФ";
-        }
-
-        private void BtnShowRuBlocked_Click(object sender, RoutedEventArgs e)
-        {
-            _showRuBlocked = !_showRuBlocked;
-            ProfileService.Current.ShowRuBlocked = _showRuBlocked;
-            ProfileService.Save();
-            UpdateRuBlockedButton();
-            string query = txtSearch.Text == (string)txtSearch.Tag ? "" : txtSearch.Text;
-            if (string.IsNullOrEmpty(query) && !_showFavoritesOnly)
-                ApplyRuBlockedVisibility();
-            else
-                FilterApps(query);
-        }
     }
 }

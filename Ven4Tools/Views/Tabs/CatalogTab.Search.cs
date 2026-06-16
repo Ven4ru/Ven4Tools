@@ -16,37 +16,37 @@ namespace Ven4Tools.Views.Tabs
     {
         private void ApplyProfileFilters()
         {
-            _showRuBlocked = ProfileService.Current.ShowRuBlocked;
-            UpdateRuBlockedButton();
-
-            var mode    = ProfileService.Current.CatalogMode;
+            var mode = ProfileService.Current.CatalogMode;
             bool compact = ProfileService.Current.CompactMode;
+            int modeLevel = mode switch { "basic" => 0, "extended" => 1, _ => 2 };
 
             foreach (var kvp in categoryPanels)
             {
-                if (kvp.Value.Parent is System.Windows.Controls.Expander expander)
+                int visibleCount = 0;
+                foreach (FrameworkElement child in kvp.Value.Children)
                 {
-                    bool visible = mode switch
+                    string? appId = GetChildAppId(child);
+                    bool profileOk = true;
+                    if (appId != null && _catalog != null)
                     {
-                        "basic"    => BasicCategories.Contains(kvp.Key),
-                        "extended" => ExtendedCategories.Contains(kvp.Key),
-                        _          => true
-                    };
-                    expander.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+                        var app = _catalog.Apps.FirstOrDefault(a => a.Id == appId);
+                        if (app != null)
+                        {
+                            int appLevel = app.Profile switch { "extended" => 1, "full" => 2, _ => 0 };
+                            profileOk = appLevel <= modeLevel;
+                        }
+                    }
+                    child.Visibility = profileOk ? Visibility.Visible : Visibility.Collapsed;
+                    child.Margin = compact ? new Thickness(0) : new Thickness(0, 2, 0, 2);
+                    if (profileOk) visibleCount++;
                 }
 
-                var margin = compact ? new Thickness(0, 0, 0, 0) : new Thickness(0, 2, 0, 2);
-                foreach (var child in kvp.Value.Children)
-                {
-                    if (child is System.Windows.FrameworkElement fe)
-                        fe.Margin = margin;
-                }
+                if (kvp.Value.Parent is Expander expander)
+                    expander.Visibility = visibleCount > 0 ? Visibility.Visible : Visibility.Collapsed;
             }
 
             if (ProfileService.Current.HideInstalled)
                 ApplyHideInstalled();
-
-            ApplyRuBlockedVisibility();
         }
 
         private void OnAppSettingsChanged()
@@ -134,9 +134,8 @@ namespace Ven4Tools.Views.Tabs
 
                     bool matchSearch = !hasSearch || (label?.ToLower().Contains(lower) == true);
                     bool matchFav    = !_showFavoritesOnly || (appId != null && _favoritesService.IsFavorite(appId));
-                    bool matchRu     = _showRuBlocked || (appId == null || !_ruBlockedIds.Contains(appId));
 
-                    bool visible = matchSearch && matchFav && matchRu;
+                    bool visible = matchSearch && matchFav;
                     child.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
                     if (visible) { panelVisible++; totalVisible++; }
                 }
@@ -266,22 +265,50 @@ namespace Ven4Tools.Views.Tabs
             pnlWingetResults.Children.Add(btn);
         }
 
-        private void AddChocoSuggestion(string id)
+        private async void AddChocoSuggestion(string id)
         {
-            if (appManager.GetAppById(id) != null) { AddLog($"ℹ️ {id} уже есть в списке"); return; }
-            var app = new AppInfo { Id = id, DisplayName = id, Category = AppCategory.Другое, ChocoId = id, InstallerUrls = new List<string>(), IsUserAdded = true };
-            appManager.AddUserApp(app);
-            AddUserAppToUI(app);
-            AddLog($"➕ Добавлено из Chocolatey: {id}");
+            try
+            {
+                // Префикс User. отделяет пользовательский Id от каталожного —
+                // иначе совпадение Id перезаписывало бы чекбокс из каталога.
+                string userId = $"User.{id}";
+                if (appManager.GetAppById(userId) != null) { AddLog($"ℹ️ {id} уже есть в списке"); return; }
+                var app = new AppInfo { Id = userId, DisplayName = id, Category = AppCategory.Другое, ChocoId = id, InstallerUrls = new List<string>(), IsUserAdded = true };
+                appManager.AddUserApp(app);
+                AddUserAppToUI(app);
+
+                if (UserSession.IsLoggedIn)
+                    await _userAppsService.SaveAsync(app);
+
+                AddLog($"➕ Добавлено из Chocolatey: {id}");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка добавления приложения: {ex.Message}");
+            }
         }
 
-        private void AddScoopSuggestion(string id)
+        private async void AddScoopSuggestion(string id)
         {
-            if (appManager.GetAppById(id) != null) { AddLog($"ℹ️ {id} уже есть в списке"); return; }
-            var app = new AppInfo { Id = id, DisplayName = id, Category = AppCategory.Другое, ScoopId = id, InstallerUrls = new List<string>(), IsUserAdded = true };
-            appManager.AddUserApp(app);
-            AddUserAppToUI(app);
-            AddLog($"➕ Добавлено из Scoop: {id}");
+            try
+            {
+                // Префикс User. отделяет пользовательский Id от каталожного —
+                // иначе совпадение Id перезаписывало бы чекбокс из каталога.
+                string userId = $"User.{id}";
+                if (appManager.GetAppById(userId) != null) { AddLog($"ℹ️ {id} уже есть в списке"); return; }
+                var app = new AppInfo { Id = userId, DisplayName = id, Category = AppCategory.Другое, ScoopId = id, InstallerUrls = new List<string>(), IsUserAdded = true };
+                appManager.AddUserApp(app);
+                AddUserAppToUI(app);
+
+                if (UserSession.IsLoggedIn)
+                    await _userAppsService.SaveAsync(app);
+
+                AddLog($"➕ Добавлено из Scoop: {id}");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка добавления приложения: {ex.Message}");
+            }
         }
 
         private void HideWingetSuggestions()

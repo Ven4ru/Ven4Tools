@@ -42,31 +42,38 @@
     <s:String x:Key="prof_catalog_sort_popularity">By popularity</s:String>
     <s:String x:Key="prof_catalog_hide_installed">Hide already installed apps</s:String>
     <s:String x:Key="prof_catalog_free_only">Show free apps only</s:String>
+    <s:String x:Key="prof_section_filters">Filters</s:String>
 
     <!-- UI tab -->
     <s:String x:Key="prof_ui_theme_label">Theme:</s:String>
     <s:String x:Key="prof_ui_theme_dark">🌙 Dark</s:String>
     <s:String x:Key="prof_ui_theme_light">☀️ Light</s:String>
+    <s:String x:Key="prof_ui_theme_web">🌐 Ven4Tools Web</s:String>
+    <s:String x:Key="prof_ui_accent_label">Accent color</s:String>
+    <s:String x:Key="prof_ui_accent_clear">Reset color</s:String>
     <s:String x:Key="prof_ui_lang_label">Interface language:</s:String>
     <s:String x:Key="prof_ui_lang_auto">Auto-detect (system)</s:String>
     <s:String x:Key="prof_ui_lang_ru">Русский</s:String>
     <s:String x:Key="prof_ui_lang_en">English</s:String>
     <s:String x:Key="prof_ui_compact">Compact catalog mode</s:String>
-    <s:String x:Key="prof_ui_descriptions">Show app descriptions in catalog</s:String>
+    <s:String x:Key="prof_section_display">Display</s:String>
 
     <!-- Install tab -->
+    <s:String x:Key="prof_section_behavior">Behavior</s:String>
     <s:String x:Key="prof_install_silent">Silent install (no confirmation dialogs)</s:String>
-    <s:String x:Key="prof_install_auto_deps">Install dependencies automatically</s:String>
     <s:String x:Key="prof_install_folder_label">Default install folder:</s:String>
     <s:String x:Key="prof_install_folder_browse">Browse...</s:String>
 
     <!-- Notifications tab -->
+    <s:String x:Key="prof_section_updates">Updates</s:String>
     <s:String x:Key="prof_notif_app_updates">Notify about app updates from catalog</s:String>
     <s:String x:Key="prof_notif_new_apps">Notify about new apps in catalog</s:String>
 
     <!-- Privacy tab -->
+    <s:String x:Key="prof_section_sync">Synchronization</s:String>
     <s:String x:Key="prof_privacy_sync_favorites">Sync favorites across devices</s:String>
     <s:String x:Key="prof_privacy_history">Save installation history</s:String>
+    <s:String x:Key="prof_section_data">Data</s:String>
     <s:String x:Key="prof_privacy_stats">Anonymous usage statistics</s:String>
     <s:String x:Key="prof_privacy_stats_hint">Helps us improve the app selection</s:String>
     <s:String x:Key="prof_privacy_device_label">Data on this device</s:String>
