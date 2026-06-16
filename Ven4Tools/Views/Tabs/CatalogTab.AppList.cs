@@ -92,14 +92,12 @@ namespace Ven4Tools.Views.Tabs
                 // Не более 5 одновременных winget-проверок, иначе при первой загрузке
                 // запускается лавина процессов winget на каждое приложение каталога.
                 var availabilitySem = new SemaphoreSlim(5);
-                _ruBlockedIds.Clear();
 
                 var appsToShow = ProfileService.Current.DefaultSort switch
                 {
-                    "alpha"      => _catalog.Apps.OrderBy(a => a.Name).ToList(),
-                    "category"   => _catalog.Apps.OrderBy(a => a.Category).ThenBy(a => a.Name).ToList(),
-                    "popularity" => _catalog.Apps.OrderByDescending(a => a.Popularity).ThenBy(a => a.Name).ToList(),
-                    _            => _catalog.Apps
+                    "alpha"    => _catalog.Apps.OrderBy(a => a.Name).ToList(),
+                    "category" => _catalog.Apps.OrderBy(a => a.Category).ThenBy(a => a.Name).ToList(),
+                    _          => _catalog.Apps
                 };
 
                 foreach (var app in appsToShow)
@@ -125,21 +123,9 @@ namespace Ven4Tools.Views.Tabs
                         checkBox.Unchecked += AppCheckBox_Changed;
 
                         var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
+                        row.Children.Add(MakeAppIcon(app.IconUrl));
                         row.Children.Add(checkBox);
                         row.Children.Add(MakeStarButton(app.Id));
-                        if (app.RuBlocked)
-                        {
-                            _ruBlockedIds.Add(app.Id);
-                            row.Children.Add(new TextBlock
-                            {
-                                Text = "⚠ РФ",
-                                Foreground = new SolidColorBrush(Color.FromRgb(255, 165, 0)),
-                                FontSize = 10,
-                                VerticalAlignment = VerticalAlignment.Center,
-                                Margin = new Thickness(4, 0, 0, 0),
-                                ToolTip = "Загрузка может быть заблокирована в России"
-                            });
-                        }
                         if (!string.IsNullOrEmpty(app.WingetId))
                         {
                             var versionCombo = MakeVersionCombo(app.Id);
@@ -168,6 +154,9 @@ namespace Ven4Tools.Views.Tabs
 
                 ApplyProfileFilters();
                 UpdateInstallButton();
+
+                // Ленивая фоновая загрузка иконок приложений (пачками по 10, таймаут 3 с на иконку).
+                StartIconLoading();
 
                 _ = Task.WhenAll(availabilityTasks).ContinueWith(async _ =>
                 {

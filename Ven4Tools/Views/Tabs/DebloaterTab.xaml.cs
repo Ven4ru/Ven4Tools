@@ -122,6 +122,15 @@ namespace Ven4Tools.Views.Tabs
             progressDebloat.Visibility = Visibility.Visible;
             progressDebloat.Value = 0;
 
+            // Точка восстановления перед удалением приложений и системными твиками,
+            // чтобы можно было откатить изменения при нежелательных последствиях.
+            txtDebloatStatus.Text = "🛡️ Создаю точку восстановления...";
+            AppLogger.Write("🛡️ Создаю точку восстановления перед дебло́тингом...");
+            bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед очисткой системы");
+            AppLogger.Write(rpOk
+                ? "✅ Точка восстановления создана"
+                : "⚠️ Точка восстановления не создана (продолжаю)");
+
             _cts = new CancellationTokenSource();
             int done = 0;
 
