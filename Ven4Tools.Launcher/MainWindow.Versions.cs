@@ -15,6 +15,19 @@ namespace Ven4Tools.Launcher
         {
             try
             {
+                // CDN — основной источник ссылки на текущую версию (быстрее GitHub).
+                // Список всех версий по-прежнему берём из GitHub-релизов; для версии,
+                // совпадающей с CDN, основной ссылкой ставим CDN, а GitHub — резервом.
+                CdnVersionInfo? cdnInfo = null;
+                try
+                {
+                    using var cdnService = new CdnService();
+                    cdnInfo = await cdnService.GetVersionInfoAsync();
+                    if (cdnInfo?.Client?.ZipUrl != null)
+                        AddLog($"🌐 CDN доступен: клиент {cdnInfo.Client.Version}");
+                }
+                catch { /* CDN недоступен — молча продолжаем через GitHub */ }
+
                 AddLog("🔍 Загрузка списка версий с GitHub...");
                 using var gitHubService = new GitHubService();
 
@@ -60,11 +73,28 @@ namespace Ven4Tools.Launcher
                             continue;
                         }
 
+                        string githubUrl   = clientAsset.browser_download_url ?? "";
+                        string downloadUrl = githubUrl;
+                        string? fallbackUrl = null;
+
+                        // Если CDN знает эту версию — качаем с CDN (быстрее),
+                        // GitHub оставляем как резерв на случай недоступности CDN.
+                        if (cdnInfo?.Client != null &&
+                            string.Equals(cdnInfo.Client.Version, version, StringComparison.OrdinalIgnoreCase) &&
+                            !string.IsNullOrWhiteSpace(cdnInfo.Client.ZipUrl) &&
+                            DownloadValidator.IsAllowedDownloadHost(cdnInfo.Client.ZipUrl))
+                        {
+                            downloadUrl = cdnInfo.Client.ZipUrl!;
+                            fallbackUrl = cdnInfo.Client.ZipFallback ?? githubUrl;
+                            AddLog($"   ⚡ {version} → CDN (резерв: GitHub)");
+                        }
+
                         AddLog($"   ✅ {version}{(release.prerelease ? " [PRE]" : "")} → {clientAsset.name}");
                         _availableVersions.Add(new ClientVersionInfo
                         {
                             Version      = version,
-                            DownloadUrl  = clientAsset.browser_download_url ?? "",
+                            DownloadUrl  = downloadUrl,
+                            FallbackUrl  = fallbackUrl,
                             ReleaseDate  = release.published_at,
                             ReleaseNotes = release.body,
                             IsPreRelease = release.prerelease,

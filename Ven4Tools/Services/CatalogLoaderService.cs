@@ -18,8 +18,16 @@ namespace Ven4Tools.Services
 
         private readonly HttpClient _httpClient;
 
+        // CDN — основной источник: быстрее GitHub и без RKN-блокировок.
+        private const string CdnCatalogUrl =
+            "https://cdn.ven4tools.ru/master.json";
+
+        // GitHub raw — резервный источник, если CDN недоступен.
         private const string RemoteCatalogUrl =
             "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/master.json";
+
+        // Короткий таймаут на CDN: если он не ответил быстро — не ждём, сразу пробуем GitHub.
+        private const int CdnTimeoutSeconds = 4;
 
         private readonly string _localCatalogPath =
             Path.Combine(
@@ -62,19 +70,26 @@ namespace Ven4Tools.Services
                 return empty;
             }
 
+            // Источник 1 — CDN (быстрый таймаут), источник 2 — GitHub raw.
+            // Первый ответивший источник выигрывает; "source" помечается соответственно.
             try
             {
-                // Таймаут per-request: связываем с внешним токеном отмены
-                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                timeoutCts.CancelAfter(TimeSpan.FromSeconds(_timeoutSeconds));
+                string? remoteJson = await TryDownloadAsync(CdnCatalogUrl, CdnTimeoutSeconds, ct);
+                string source = "cdn";
 
-                string remoteJson =
-                    await _httpClient.GetStringAsync(RemoteCatalogUrl, timeoutCts.Token);
+                if (remoteJson == null)
+                {
+                    remoteJson = await TryDownloadAsync(RemoteCatalogUrl, _timeoutSeconds, ct);
+                    source = "online";
+                }
+
+                if (remoteJson == null)
+                    throw new HttpRequestException("Каталог недоступен ни с CDN, ни с GitHub");
 
                 // Присваиваем результат до записи на диск: ошибка кэширования
                 // (например, Program Files без прав на запись) не должна обнулять каталог.
                 var catalog = Deserialize(remoteJson);
-                catalog.Source = "online";
+                catalog.Source = source;
                 LoadedCatalog = catalog;
                 CatalogReady?.Invoke(catalog);
 
@@ -106,6 +121,30 @@ namespace Ven4Tools.Services
                 LoadedCatalog = empty;
                 CatalogReady?.Invoke(empty);
                 return empty;
+            }
+        }
+
+        /// <summary>
+        /// Скачивает каталог с указанного URL с заданным таймаутом.
+        /// Возвращает null при любой сетевой ошибке/таймауте источника — чтобы
+        /// вызывающий код продолжил цепочку (CDN → GitHub). Внешняя отмена пробрасывается.
+        /// </summary>
+        private async Task<string?> TryDownloadAsync(string url, int timeoutSeconds, CancellationToken ct)
+        {
+            try
+            {
+                // Таймаут per-request: связываем с внешним токеном отмены
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(Math.Max(1, timeoutSeconds)));
+                return await _httpClient.GetStringAsync(url, timeoutCts.Token);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                return null;
             }
         }
 

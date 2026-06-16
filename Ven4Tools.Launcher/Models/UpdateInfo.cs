@@ -37,6 +37,8 @@ namespace Ven4Tools.Launcher.Models
     {
         public string Version { get; set; } = string.Empty;
         public string DownloadUrl { get; set; } = string.Empty;
+        // Резервная ссылка (GitHub), когда основная DownloadUrl указывает на CDN.
+        public string? FallbackUrl { get; set; }
         public DateTime ReleaseDate { get; set; }
         public string? ReleaseNotes { get; set; }
         public bool IsLatest { get; set; }
