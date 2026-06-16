@@ -77,13 +77,19 @@ namespace Ven4Tools.Services
             }
 
             // fallback — локальное хранение.
-            // Новый пресет (Id == 0) помечаем локальным — сервер мог не сохранить его.
+            // Новый пресет (Id == 0) НЕ помечаем IsLocal: пользователь авторизован и хотел
+            // облачный пресет, просто сеть подвела. Ставим NeedsSync и храним под отрицательным
+            // Id — при следующем UpdateAsync пресет будет создан на сервере (POST).
             // Существующий облачный пресет (Id > 0) IsLocal не трогаем: он точно есть на
             // сервере, и при следующем сохранении retry снова попадёт в облако.
             var local = LoadLocal();
             if (preset.Id == 0)
             {
-                preset.IsLocal = true;
+                // Если пользователь авторизован — это «отложенный облачный» пресет (NeedsSync).
+                // Если нет — обычный локальный пресет.
+                bool loggedIn = userId.HasValue && !string.IsNullOrEmpty(UserSession.Token);
+                preset.IsLocal   = !loggedIn;
+                preset.NeedsSync = loggedIn;
                 // Отрицательные ID для локальных пресетов: не пересекаются с серверными (положительные auto-increment)
                 int newId;
                 do { newId = Random.Shared.Next(int.MinValue + 1, 0); } while (local.Exists(p => p.Id == newId));
@@ -131,6 +137,48 @@ namespace Ven4Tools.Services
         {
             if (userId.HasValue && !preset.IsLocal && !string.IsNullOrEmpty(UserSession.Token))
             {
+                // Отрицательный Id у не-локального пресета означает «отложенную синхронизацию»:
+                // пресет создавался офлайн и в облако ещё не попал. Обновлять его по
+                // несуществующему preset_id нельзя — создаём на сервере как новый (POST).
+                if (preset.Id < 0)
+                {
+                    int oldLocalId = preset.Id;
+                    try
+                    {
+                        var createBody = JsonConvert.SerializeObject(new
+                        {
+                            name        = preset.Name,
+                            description = preset.Description,
+                            apps        = preset.Apps
+                        });
+                        var createReq = Req(HttpMethod.Post, $"{ApiBase}?action=save_preset");
+                        createReq.Content = new StringContent(createBody, Encoding.UTF8, "application/json");
+                        var createResp = await _http.SendAsync(createReq);
+                        var createJson = await createResp.Content.ReadAsStringAsync();
+                        var cr = JObject.Parse(createJson);
+                        if (cr["success"]?.Value<bool>() == true)
+                        {
+                            var p = cr["preset"]?.ToObject<Preset>();
+                            if (p != null) preset.Id = p.Id;
+                            preset.NeedsSync = false;
+                            // Пресет переехал в облако — убираем локальную копию с отрицательным Id.
+                            var localAfterSync = LoadLocal();
+                            localAfterSync.RemoveAll(x => x.Id == oldLocalId);
+                            SaveLocal(localAfterSync);
+                            return true;
+                        }
+                    }
+                    catch (Exception ex) { AppLogger.Write($"❌ UpdateAsync(sync new): {ex.Message}"); }
+
+                    // Сервер по-прежнему недоступен — обновляем локальную копию, ждём следующей попытки.
+                    var localPending = LoadLocal();
+                    var pi = localPending.FindIndex(x => x.Id == oldLocalId);
+                    if (pi < 0) return false;
+                    localPending[pi] = preset;
+                    SaveLocal(localPending);
+                    return true;
+                }
+
                 try
                 {
                     var body = JsonConvert.SerializeObject(new
