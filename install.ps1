@@ -22,6 +22,18 @@ try {
     $tmp = Join-Path $env:TEMP 'Ven4Tools.Setup.exe'
     Invoke-WebRequest $url -OutFile $tmp -UseBasicParsing
 
+    # Проверка целостности, если сервер отдаёт хеш. Пока launcher_sha256 не
+    # реализован в latest_version.php — блок условный и не ломает установку;
+    # включится автоматически, как только сервер начнёт отдавать хеш.
+    if ($api.downloads.launcher_sha256) {
+        Write-Host "  Verifying..." -ForegroundColor Gray
+        $actual = (Get-FileHash $tmp -Algorithm SHA256).Hash
+        if ($actual -ne $api.downloads.launcher_sha256.ToUpper()) {
+            Remove-Item $tmp -Force
+            throw "SHA256 mismatch — installation aborted"
+        }
+    }
+
     Write-Host "  Installing..." -ForegroundColor Gray
     $proc = Start-Process $tmp -ArgumentList '/S' -PassThru -Wait
     if (Test-Path $tmp) { Remove-Item $tmp -Force }

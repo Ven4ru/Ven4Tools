@@ -11,9 +11,20 @@ namespace Ven4Tools.Launcher.Services
 {
     public class GitHubService : IDisposable
     {
-        private readonly HttpClient httpClient;
+        // Единый HttpClient на весь процесс: пересоздание экземпляра в каждом
+        // GitHubService приводит к утечке сокетов (socket exhaustion). Заголовки
+        // и таймаут задаются один раз и не меняются между запросами.
+        private static readonly HttpClient _sharedClient = CreateSharedClient();
         private readonly string repoOwner;
         private readonly string repoName;
+
+        private static HttpClient CreateSharedClient()
+        {
+            var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
+            client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+            return client;
+        }
 
         // Кэш списка релизов: CheckLauncherUpdate, GetAvailableClientVersions и
         // OfferInstallationAsync дёргают один и тот же endpoint. Без кэша каждый
@@ -34,10 +45,7 @@ namespace Ven4Tools.Launcher.Services
             // Листинг релизов публичного репозитория не требует авторизации:
             // лимит 60 запросов/час с IP лаунчеру хватает с запасом, а токен
             // в распространяемом exe был бы доступен для извлечения.
-            httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
-            httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-            httpClient.Timeout = TimeSpan.FromSeconds(15);
+            // HttpClient — статический singleton (см. _sharedClient).
         }
 
         /// <summary>
@@ -48,7 +56,7 @@ namespace Ven4Tools.Launcher.Services
             try
             {
                 string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases/latest";
-                using var response = await httpClient.GetAsync(url);
+                using var response = await _sharedClient.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                     return null;
@@ -78,7 +86,7 @@ namespace Ven4Tools.Launcher.Services
             try
             {
                 string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases";
-                using var response = await httpClient.GetAsync(url);
+                using var response = await _sharedClient.GetAsync(url);
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
                     return (new(), $"GitHub rate limit (403) — подождите ~1 час");
@@ -229,7 +237,7 @@ namespace Ven4Tools.Launcher.Services
             try
             {
                 string url = "https://api.github.com/repos/microsoft/winget-cli/releases/latest";
-                using var response = await httpClient.GetAsync(url);
+                using var response = await _sharedClient.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                     return null;
@@ -351,7 +359,8 @@ namespace Ven4Tools.Launcher.Services
 
         public void Dispose()
         {
-            httpClient?.Dispose();
+            // HttpClient — статический singleton, разделяется между всеми
+            // экземплярами и живёт весь процесс. Здесь его не освобождаем.
         }
     }
 }

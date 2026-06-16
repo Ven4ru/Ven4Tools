@@ -1,7 +1,14 @@
 ﻿# Деплой релиза на CDN cdn.ven4tools.ru.
 # Загружает master.json и zip клиента на VPS, обновляет version.json.
 #
-# Перед запуском: $env:CDN_VPS_PWD = 'пароль_от_vps'
+# Перед запуском (обязательно):
+#   $env:CDN_VPS_HOST = '138.16.152.133'
+#   $env:CDN_VPS_USER = 'root'
+#   $env:CDN_VPS_PWD  = 'пароль_от_vps'
+#
+# Опционально (рекомендуется): $env:CDN_VPS_HOSTKEY = 'ssh-ed25519 AAAA...'
+# Получить: ssh-keyscan -t ed25519 138.16.152.133
+# Если задан — host key VPS проверяется, иначе соединение прерывается.
 #
 # Использование:
 #   .\deploy_cdn.ps1 -Version 3.4.5
@@ -19,10 +26,12 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# --- Параметры VPS ---
-$VpsHost = if ($env:CDN_VPS_HOST) { $env:CDN_VPS_HOST } else { "138.16.152.133" }
-$VpsUser = if ($env:CDN_VPS_USER) { $env:CDN_VPS_USER } else { "root" }
-$VpsPwd  = $env:CDN_VPS_PWD  # обязательная — без дефолта
+# --- Параметры VPS (только через env, без хардкода) ---
+$VpsHost = $env:CDN_VPS_HOST
+$VpsUser = $env:CDN_VPS_USER
+$VpsPwd  = $env:CDN_VPS_PWD
+if (-not $VpsHost) { Write-Host "ОШИБКА: CDN_VPS_HOST не задан" -ForegroundColor Red; exit 1 }
+if (-not $VpsUser) { Write-Host "ОШИБКА: CDN_VPS_USER не задан" -ForegroundColor Red; exit 1 }
 if (-not $VpsPwd) {
     Write-Host "ОШИБКА: не задана переменная CDN_VPS_PWD" -ForegroundColor Red
     Write-Host "Установите: `$env:CDN_VPS_PWD = 'пароль'" -ForegroundColor Yellow
@@ -63,13 +72,14 @@ Write-Host ""
 $env:CDN_HOST          = $VpsHost
 $env:CDN_USER          = $VpsUser
 $env:CDN_PWD           = $VpsPwd
+$env:CDN_HOSTKEY       = $env:CDN_VPS_HOSTKEY
 $env:CDN_MASTER        = $MasterJson
 $env:CDN_ZIP           = $ClientZip
 $env:CDN_VERSION       = $Version
 $env:CDN_LVERSION      = $LauncherVersion
 
 $pyCode = @'
-import os, sys, json
+import os, sys, json, hashlib, base64
 import paramiko
 
 host  = os.environ["CDN_HOST"]
@@ -82,8 +92,37 @@ lver  = os.environ["CDN_LVERSION"]
 
 zip_name = os.path.basename(zip_path)
 
+def sha256_file(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(65536), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+zip_sha256 = sha256_file(zip_path)
+print("SHA256 zip:", zip_sha256)
+
 cli = paramiko.SSHClient()
-cli.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+# Проверка host key VPS. Если CDN_VPS_HOSTKEY задан — соединение пройдёт
+# только при совпадении ключа (защита от MITM). Формат: "ssh-ed25519 AAAA..."
+# Получить один раз: ssh-keyscan -t ed25519 <host>
+known_hosts_line = os.environ.get("CDN_HOSTKEY", "")
+if known_hosts_line:
+    parts = known_hosts_line.split(None, 1)
+    key_type, key_b64 = parts[0], parts[1]
+    host_keys = cli.get_host_keys()
+    key_bytes = base64.b64decode(key_b64)
+    if key_type == "ssh-rsa":
+        host_keys.add(host, key_type, paramiko.RSAKey(data=key_bytes))
+    elif key_type == "ssh-ed25519":
+        host_keys.add(host, key_type, paramiko.Ed25519Key(data=key_bytes))
+    cli.set_missing_host_key_policy(paramiko.RejectPolicy())
+else:
+    # HOSTKEY не задан — принимаем (для первого запуска), но предупреждаем.
+    cli.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    print("ПРЕДУПРЕЖДЕНИЕ: CDN_VPS_HOSTKEY не задан, host key не проверяется")
+
 cli.connect(host, username=user, password=pwd, timeout=20)
 
 # Гарантируем структуру папок
@@ -104,7 +143,8 @@ version_obj = {
     "client": {
         "version": ver,
         "zip_url": f"https://cdn.ven4tools.ru/releases/Ven4Tools-Client-{ver}.zip",
-        "zip_fallback": f"https://github.com/Ven4ru/Ven4Tools/releases/download/v{ver}/Ven4Tools-Client-{ver}.zip"
+        "zip_fallback": f"https://github.com/Ven4ru/Ven4Tools/releases/download/v{ver}/Ven4Tools-Client-{ver}.zip",
+        "zip_sha256": zip_sha256
     },
     "launcher": {
         "version": lver,
