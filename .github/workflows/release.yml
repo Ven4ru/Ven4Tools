@@ -1,10 +1,13 @@
 name: Релиз клиента
 
 on:
+  push:
+    tags:
+      - 'v[0-9]*'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Версия (например 3.4.6)'
+        description: 'Версия (например 3.4.7)'
         required: true
 
 permissions:
@@ -27,8 +30,13 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          $ver = "v${{ inputs.version }}".TrimStart('v')
+          if ("${{ github.event_name }}" -eq "push") {
+            $ver = "${{ github.ref_name }}".TrimStart('v')
+          } else {
+            $ver = "${{ inputs.version }}".TrimStart('v')
+          }
           echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+          echo "TAG=v$ver" >> $env:GITHUB_OUTPUT
 
       - name: Публикация
         shell: pwsh
@@ -50,14 +58,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $exists = gh release view v${{ inputs.version }} 2>$null
+          $exists = gh release view ${{ steps.ver.outputs.TAG }} 2>$null
           if ($LASTEXITCODE -eq 0) {
-            Write-Host "Релиз v${{ inputs.version }} уже существует — загружаем ассет"
-            gh release upload v${{ inputs.version }} `
+            Write-Host "Релиз ${{ steps.ver.outputs.TAG }} уже существует — загружаем ассет"
+            gh release upload ${{ steps.ver.outputs.TAG }} `
               "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip" `
               --clobber
           } else {
-            gh release create v${{ inputs.version }} `
+            gh release create ${{ steps.ver.outputs.TAG }} `
               "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip" `
               --title "Ven4Tools ${{ steps.ver.outputs.VERSION }}" `
               --generate-notes `
