@@ -85,3 +85,7 @@ Ven4Tools.UITests/
 # Remote install (фича на паузе — добавить в git когда будет готова)
 Ven4Tools/Models/RemoteCommand.cs
 Ven4Tools/Services/RemoteCommandService.cs
+
+# Внутренние ops-скрипты (не для публичного репо)
+deploy_cdn.ps1
+scripts/
