@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows;
+using Ven4Tools.Launcher.Models;
 using Ven4Tools.Launcher.Services;
 
 namespace Ven4Tools.Launcher
@@ -57,7 +58,30 @@ namespace Ven4Tools.Launcher
                 btnInstallUpdate.Visibility = Visibility.Collapsed;
 
                 var updateSvc = new LauncherUpdateService(AddLog);
-                var result = await updateSvc.DownloadAndApplyUpdateAsync();
+
+                // Сначала узнаём, какую версию ставим, чтобы взять с CDN хеш именно для неё.
+                var updateInfo = await updateSvc.CheckForUpdateAsync();
+
+                // SHA256 exe лаунчера берём из version.json CDN — но только если версия
+                // на CDN совпадает с устанавливаемой (иначе хеш относится к другому билду).
+                string? expectedSha256 = null;
+                if (updateInfo?.HasUpdate == true)
+                {
+                    try
+                    {
+                        using var cdnService = new CdnService();
+                        CdnVersionInfo? cdnInfo = await cdnService.GetVersionInfoAsync();
+                        if (cdnInfo?.Launcher != null &&
+                            !string.IsNullOrWhiteSpace(cdnInfo.Launcher.ExeSha256) &&
+                            string.Equals(cdnInfo.Launcher.Version, updateInfo.LatestVersion, StringComparison.OrdinalIgnoreCase))
+                        {
+                            expectedSha256 = cdnInfo.Launcher.ExeSha256;
+                        }
+                    }
+                    catch { /* CDN недоступен — обновляемся без хеш-проверки (как раньше) */ }
+                }
+
+                var result = await updateSvc.DownloadAndApplyUpdateAsync(updateInfo, expectedSha256);
 
                 if (result)
                 {

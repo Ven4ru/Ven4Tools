@@ -44,7 +44,6 @@ namespace Ven4Tools.Views.Tabs
 
             Loaded += SystemTab_Loaded;
 
-            chkAutoStart.Click += ToggleAutoStart;
             chkMinimizeToTray.IsChecked = ProfileService.Current.MinimizeToTray;
             chkNotifications.Click += (_, _) => SaveSettings();
             chkUpdateNotifications.Click += (_, _) => SaveSettings();
@@ -96,7 +95,6 @@ namespace Ven4Tools.Views.Tabs
             _initialized = true;
 
             LoadSystemInfo();
-            LoadAutoStartStatus();
             LoadSourceOrderUI();
             UpdateCacheStats();
             LoadCacheAppsList();
@@ -173,57 +171,12 @@ namespace Ven4Tools.Views.Tabs
             }
         }
         
-        private void LoadAutoStartStatus()
-        {
-            try
-            {
-                using (var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"))
-                {
-                    chkAutoStart.IsChecked = key?.GetValue("Ven4Tools") != null;
-                }
-            }
-            catch
-            {
-                chkAutoStart.IsChecked = false;
-            }
-        }
-        
         private void ChkMinimizeToTray_Click(object sender, RoutedEventArgs e)
         {
             ProfileService.Current.MinimizeToTray = chkMinimizeToTray.IsChecked == true;
             ProfileService.Save();
         }
 
-        private void ToggleAutoStart(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                using (var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true))
-                {
-                    if (key == null) return;
-                    
-                    if (chkAutoStart.IsChecked == true)
-                    {
-                        string? exePath = Process.GetCurrentProcess().MainModule?.FileName;
-                        if (exePath != null)
-                        {
-                            key.SetValue("Ven4Tools", exePath);
-                            AddLog("✅ Ven4Tools добавлен в автозагрузку");
-                        }
-                    }
-                    else
-                    {
-                        key.DeleteValue("Ven4Tools", false);
-                        AddLog("❌ Ven4Tools удалён из автозагрузки");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                AddLog($"⚠️ Ошибка настройки автозагрузки: {ex.Message}");
-            }
-        }
-        
         private void BtnCopySystemInfo_Click(object sender, RoutedEventArgs e)
         {
             try
