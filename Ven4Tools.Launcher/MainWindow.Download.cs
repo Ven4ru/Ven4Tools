@@ -60,38 +60,28 @@ namespace Ven4Tools.Launcher
 
             try
             {
-                using var response = await _httpClient.GetAsync(version.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, token);
-                response.EnsureSuccessStatusCode();
-
-                var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                var bytesRead  = 0L;
-                var buffer     = new byte[81920];
-
-                using (var fs = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
+                // Скачиваем с основного URL (обычно CDN). Если он упал не из-за отмены —
+                // пробуем резервный GitHub-URL (version.FallbackUrl), если он задан.
+                try
                 {
-                    using var stream = await response.Content.ReadAsStreamAsync(token);
-                    int bytes;
-                    while ((bytes = await stream.ReadAsync(buffer.AsMemory(), token)) > 0)
-                    {
-                        await fs.WriteAsync(buffer.AsMemory(0, bytes), token);
-                        bytesRead += bytes;
-                        if (totalBytes > 0)
-                        {
-                            var percent = (int)((double)bytesRead / totalBytes * 100);
-                            progressDownload.Value = percent;
-                            txtDownloadStatus.Text = $"Скачивание: {percent}%";
-                        }
-                    }
-                    await fs.FlushAsync(token);
+                    await DownloadToFileAsync(version.DownloadUrl, tempZip, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception primaryEx) when (
+                    !string.IsNullOrWhiteSpace(version.FallbackUrl) &&
+                    !string.Equals(version.FallbackUrl, version.DownloadUrl, StringComparison.OrdinalIgnoreCase) &&
+                    DownloadValidator.IsAllowedDownloadHost(version.FallbackUrl))
+                {
+                    AddLog($"⚠️ CDN недоступен, переключаюсь на GitHub... ({primaryEx.Message})");
+                    progressDownload.Value = 0;
+                    txtDownloadStatus.Text = "Скачивание: 0%";
+                    await DownloadToFileAsync(version.FallbackUrl!, tempZip, token);
                 }
 
                 token.ThrowIfCancellationRequested();
-
-                // Проверка целостности: если сервер сообщил размер, а получили меньше —
-                // соединение оборвалось, архив битый.
-                if (totalBytes > 0 && bytesRead != totalBytes)
-                    throw new IOException(
-                        $"Загрузка неполная: получено {bytesRead} из {totalBytes} байт. Проверьте соединение и повторите.");
 
                 txtDownloadStatus.Text = "Распаковка...";
                 await Task.Delay(1000, token);
@@ -207,6 +197,47 @@ namespace Ven4Tools.Launcher
                 _downloadCts?.Dispose();
                 _downloadCts = null;
             }
+        }
+
+        /// <summary>
+        /// Скачивает файл по URL в указанный путь с отображением прогресса.
+        /// Проверяет целостность по Content-Length. Бросает исключение при любой ошибке —
+        /// чтобы вызывающий код мог переключиться на резервный источник.
+        /// </summary>
+        private async Task DownloadToFileAsync(string url, string targetPath, CancellationToken token)
+        {
+            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token);
+            response.EnsureSuccessStatusCode();
+
+            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+            var bytesRead  = 0L;
+            var buffer     = new byte[81920];
+
+            using (var fs = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
+            {
+                using var stream = await response.Content.ReadAsStreamAsync(token);
+                int bytes;
+                while ((bytes = await stream.ReadAsync(buffer.AsMemory(), token)) > 0)
+                {
+                    await fs.WriteAsync(buffer.AsMemory(0, bytes), token);
+                    bytesRead += bytes;
+                    if (totalBytes > 0)
+                    {
+                        var percent = (int)((double)bytesRead / totalBytes * 100);
+                        progressDownload.Value = percent;
+                        txtDownloadStatus.Text = $"Скачивание: {percent}%";
+                    }
+                }
+                await fs.FlushAsync(token);
+            }
+
+            token.ThrowIfCancellationRequested();
+
+            // Проверка целостности: если сервер сообщил размер, а получили меньше —
+            // соединение оборвалось, архив битый.
+            if (totalBytes > 0 && bytesRead != totalBytes)
+                throw new IOException(
+                    $"Загрузка неполная: получено {bytesRead} из {totalBytes} байт. Проверьте соединение и повторите.");
         }
 
         private static void CopyDirectory(string sourceDir, string destDir)

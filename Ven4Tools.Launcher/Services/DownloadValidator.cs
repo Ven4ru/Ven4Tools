@@ -38,6 +38,7 @@ namespace Ven4Tools.Launcher.Services
                 || host.EndsWith(".github.com", StringComparison.Ordinal)
                 || host == "objects.githubusercontent.com"
                 || host.EndsWith(".githubusercontent.com", StringComparison.Ordinal)
+                || host == "cdn.ven4tools.ru"
                 || host == "aka.ms"
                 || host == "go.microsoft.com"
                 || host == "download.microsoft.com"
