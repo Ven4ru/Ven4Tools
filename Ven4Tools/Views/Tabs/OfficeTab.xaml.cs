@@ -268,9 +268,10 @@ namespace Ven4Tools.Views.Tabs
             catch (Exception ex)
             {
                 AddLog($"❌ Ошибка скачивания: {ex.Message}");
-                SetProgress(true, "❌ Ошибка", 0, ex.Message);
+                SetProgress(true, "❌ Ошибка", 0, "");
                 try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Не удалось скачать Office. Проверьте подключение к интернету и попробуйте ещё раз.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -381,8 +382,9 @@ namespace Ven4Tools.Views.Tabs
             catch (Exception ex)
             {
                 AddLog($"❌ Ошибка установки: {ex.Message}");
-                SetProgress(true, "❌ Ошибка установки", 0, ex.Message);
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                SetProgress(true, "❌ Ошибка установки", 0, "");
+                MessageBox.Show("Не удалось установить Office. Попробуйте ещё раз или установите вручную.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
