@@ -25,6 +25,10 @@ namespace Ven4Tools.Launcher.Models
 
         [JsonPropertyName("zip_fallback")]
         public string? ZipFallback { get; set; }
+
+        // SHA256 zip-архива клиента для проверки целостности после скачивания.
+        [JsonPropertyName("zip_sha256")]
+        public string? ZipSha256 { get; set; }
     }
 
     public class CdnLauncherInfo
