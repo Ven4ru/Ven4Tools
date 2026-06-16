@@ -288,8 +288,8 @@ namespace Ven4Tools.Services
                             {
                                 appProgress.Status = "⚠ Нет SHA256 в каталоге — прямая ссылка пропущена";
                                 progress.Report(appProgress);
-                                Log($"⚠ Прямая ссылка без SHA256 для {app.DisplayName} — установка из этого источника отменена");
-                                AppLogger.Write($"[InstallationService] ⚠ Прямая ссылка без SHA256 для {app.DisplayName} — установка отменена");
+                                Log($"⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, пробую следующий");
+                                AppLogger.Write($"[InstallationService] ⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, продолжаю через winget");
                                 InstallFailureService.Append(app.DisplayName, app.Id, "direct", "В каталоге не указан SHA256");
                                 break;
                             }

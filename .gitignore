@@ -67,6 +67,7 @@ _publish*/
 _publish_*/
 
 # Local backups (symlink to OneDrive, not for git)
+_backups
 _backups/
 _backup_*/
 
@@ -74,3 +75,9 @@ _backup_*/
 _screenshots/
 _release/
 CLAUDE.md
+
+# UI-тесты (отдельная папка тестов)
+Ven4Tools.UITests/
+
+# Локальные служебные файлы ассистента разработки
+.claude/

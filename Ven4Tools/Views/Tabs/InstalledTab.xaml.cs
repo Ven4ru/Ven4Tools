@@ -108,7 +108,7 @@ namespace Ven4Tools.Views.Tabs
 
         private static async Task<List<InstalledApp>> RunWingetListAsync()
         {
-            var (_, output) = await WingetRunner.RunAsync("list --accept-source-agreements");
+            var (_, output) = await WingetRunner.RunAsync("list --accept-source-agreements --disable-interactivity");
             return ParseWingetList(output);
         }
 
