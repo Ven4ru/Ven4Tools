@@ -3,14 +3,18 @@
 Регистрация и ключ: https://www.virustotal.com/gui/my-apikey
 
 Использование:
-    python scripts/vt_audit.py --key YOUR_VT_API_KEY
-    python scripts/vt_audit.py --key YOUR_VT_API_KEY --only-missing
+    $env:VT_API_KEY = "YOUR_VT_API_KEY"; python scripts/vt_audit.py
+    python scripts/vt_audit.py --only-missing
+    python scripts/vt_audit.py --key YOUR_VT_API_KEY   # ключ можно передать и явно
+
+Ключ берётся из переменной окружения VT_API_KEY либо из аргумента --key.
 
 Free tier: 4 запроса/мин, 500/день.
 Скрипт автоматически соблюдает лимит.
 """
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -55,10 +59,19 @@ def check_hash(sha256: str, api_key: str) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="VirusTotal аудит каталога")
-    parser.add_argument("--key", required=True, help="VT API ключ")
+    parser.add_argument("--key", default=None,
+                        help="VT API ключ (по умолчанию берётся из VT_API_KEY)")
     parser.add_argument("--only-missing", action="store_true",
                         help="Показывать только приложения без SHA256")
     args = parser.parse_args()
+
+    api_key = args.key or os.environ.get("VT_API_KEY")
+    if not api_key:
+        print("ОШИБКА: не задан VT API ключ.")
+        print("Установите переменную окружения:")
+        print('  $env:VT_API_KEY = "YOUR_VT_API_KEY"   # PowerShell')
+        print("или передайте аргументом: --key YOUR_VT_API_KEY")
+        sys.exit(1)
 
     with open(CATALOG_PATH, encoding="utf-8") as f:
         catalog = json.load(f)
@@ -98,7 +111,7 @@ def main():
         sha = app["sha256"]
         print(f"[{i:2}/{len(to_check)}] {name}...", end=" ", flush=True)
 
-        result = check_hash(sha, args.key)
+        result = check_hash(sha, api_key)
 
         if result["status"] == "not_found":
             print("❓ не найден в VT")
