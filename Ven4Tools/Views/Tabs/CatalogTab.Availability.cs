@@ -244,7 +244,9 @@ namespace Ven4Tools.Views.Tabs
                                     checkBox.ToolTip = $"⏳ Повторная проверка... ({attempt}/3)";
                                     // Ретраи проверки доступности независимы от установки:
                                     // токен установки отменял бы и несвязанные проверки.
-                                    var token = CancellationToken.None;
+                                    // Используем выделенный токен, который гасится только
+                                    // при закрытии окна приложения.
+                                    var token = _availabilityCts.Token;
                                     _ = Task.Delay(2000, token).ContinueWith(
                                         t => { if (!t.IsCanceled) return CheckSingleAppAvailability(appId, attempt + 1); return Task.CompletedTask; },
                                         TaskScheduler.Default).Unwrap();

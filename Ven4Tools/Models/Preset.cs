@@ -16,6 +16,12 @@ namespace Ven4Tools.Models
         public string? ShareCode   { get; set; }
         public bool    IsLocal     { get; set; }
 
+        // Локальный флаг: пресет создан офлайн (Id < 0) и ещё не попал в облако.
+        // Не сериализуется в JSON сервера — устойчивым признаком пересинхронизации
+        // служит сама пара (Id < 0 && !IsLocal), поэтому потеря флага при перезапуске не критична.
+        [JsonIgnore]
+        public bool    NeedsSync   { get; set; }
+
         public string AppCountLabel => $"{Apps.Count} прил.";
 
         private bool _isLoading;
