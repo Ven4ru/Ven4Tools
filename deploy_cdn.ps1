@@ -1,6 +1,8 @@
 ﻿# Деплой релиза на CDN cdn.ven4tools.ru.
 # Загружает master.json и zip клиента на VPS, обновляет version.json.
 #
+# Перед запуском: $env:CDN_VPS_PWD = 'пароль_от_vps'
+#
 # Использование:
 #   .\deploy_cdn.ps1 -Version 3.4.5
 #   .\deploy_cdn.ps1 -Version 3.4.5 -LauncherVersion 2.0.0
@@ -18,9 +20,14 @@ param(
 $ErrorActionPreference = "Stop"
 
 # --- Параметры VPS ---
-$VpsHost = "138.16.152.133"
-$VpsUser = "root"
-$VpsPwd  = "***REMOVED***"
+$VpsHost = if ($env:CDN_VPS_HOST) { $env:CDN_VPS_HOST } else { "138.16.152.133" }
+$VpsUser = if ($env:CDN_VPS_USER) { $env:CDN_VPS_USER } else { "root" }
+$VpsPwd  = $env:CDN_VPS_PWD  # обязательная — без дефолта
+if (-not $VpsPwd) {
+    Write-Host "ОШИБКА: не задана переменная CDN_VPS_PWD" -ForegroundColor Red
+    Write-Host "Установите: `$env:CDN_VPS_PWD = 'пароль'" -ForegroundColor Yellow
+    exit 1
+}
 
 # --- Локальные пути ---
 $RepoRoot   = $PSScriptRoot
