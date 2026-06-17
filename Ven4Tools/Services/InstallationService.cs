@@ -18,19 +18,21 @@ namespace Ven4Tools.Services
         // можно запустить параллельные msiexec, что вызывает ошибку Windows Installer 1618.
         public static readonly SemaphoreSlim InstallSemaphore = new SemaphoreSlim(1, 1);
 
-        private readonly HttpClient _httpClient;
+        // Один общий HttpClient на приложение: пересоздание на каждый инстанс
+        // приводит к socket exhaustion (рекомендация MS).
+        // Без глобального таймаута: HttpClient.Timeout ограничивает всё тело ответа,
+        // и загрузки больших установщиков (100+ МБ) обрывались через 30 секунд.
+        // Таймаут на получение заголовков задаётся per-request через CancellationTokenSource.
+        private static readonly HttpClient _httpClient = new HttpClient
+        {
+            Timeout = Timeout.InfiniteTimeSpan,
+            DefaultRequestHeaders = { { "User-Agent", "Ven4Tools" } }
+        };
         private readonly string _logPath;
         private readonly object _logLock = new object();
 
         public InstallationService()
         {
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
-            // Без глобального таймаута: HttpClient.Timeout ограничивает всё тело ответа,
-            // и загрузки больших установщиков (100+ МБ) обрывались через 30 секунд.
-            // Таймаут на получение заголовков задаётся per-request через CancellationTokenSource.
-            _httpClient.Timeout = Timeout.InfiniteTimeSpan;
-
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var logsFolder = Path.Combine(appData, "Ven4Tools", "logs");
             Directory.CreateDirectory(logsFolder);
@@ -623,7 +625,7 @@ namespace Ven4Tools.Services
 
         public void Dispose()
         {
-            _httpClient?.Dispose();
+            // HttpClient общий (static) — живёт всё время работы приложения, не освобождается здесь.
         }
     }
 

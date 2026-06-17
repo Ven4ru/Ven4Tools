@@ -34,6 +34,11 @@ namespace Ven4Tools.Models
         public bool OfflineMode { get; set; } = false;
         public string OfflineCachePath { get; set; } = "";
 
+        // Принудительный онлайн-режим: игнорировать результат ConnectivityMonitor
+        // и всегда считать соединение активным. Нужен для VPN/прокси, где детект
+        // сети даёт ложноотрицательные результаты и онлайн-вкладки ошибочно скрываются.
+        public bool ForceOnlineMode { get; set; } = false;
+
         // Quick pins (max 6 app IDs)
         public System.Collections.Generic.List<string> PinnedAppIds { get; set; } = new();
 
