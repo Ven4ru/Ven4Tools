@@ -16,7 +16,13 @@ namespace Ven4Tools.Services
 
         private static readonly SemaphoreSlim _preloadLock = new(1, 1);
 
-        private readonly HttpClient _httpClient;
+        // Один общий HttpClient на приложение: пересоздание на каждый инстанс
+        // приводит к socket exhaustion (рекомендация MS).
+        private static readonly HttpClient _httpClient = new HttpClient
+        {
+            Timeout = Timeout.InfiniteTimeSpan,
+            DefaultRequestHeaders = { { "User-Agent", "Ven4Tools" } }
+        };
 
         // CDN — основной источник: быстрее GitHub и без RKN-блокировок.
         private const string CdnCatalogUrl =
@@ -41,9 +47,6 @@ namespace Ven4Tools.Services
 
         public CatalogLoaderService()
         {
-            _httpClient = new HttpClient();
-            _httpClient.Timeout = Timeout.InfiniteTimeSpan;
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
             _timeoutSeconds = Math.Max(3, AppSettings.CatalogTimeout);
         }
 
@@ -204,6 +207,7 @@ namespace Ven4Tools.Services
                        })
                    ?? new MasterCatalog();
         }
-        public void Dispose() => _httpClient.Dispose();
+        // HttpClient общий (static) — живёт всё время работы приложения, не освобождается здесь.
+        public void Dispose() { }
     }
 }

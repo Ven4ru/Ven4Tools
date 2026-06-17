@@ -15,6 +15,11 @@ namespace Ven4Tools.Services
 
         public static bool IsOnline { get; private set; } = true;
 
+        // Эффективный статус с учётом ручного override. Если пользователь включил
+        // принудительный онлайн-режим (для VPN/прокси, где детект соединения даёт
+        // ложноотрицательные результаты) — считаем соединение активным всегда.
+        public static bool IsEffectivelyOnline => ProfileService.Current.ForceOnlineMode || IsOnline;
+
         // Fires on every change: true = came online, false = went offline
         public static event Action<bool>? StatusChanged;
 

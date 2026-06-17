@@ -13,7 +13,13 @@ namespace Ven4Tools.Services
 {
     public class AvailabilityChecker : IDisposable
     {
-        private readonly HttpClient httpClient;
+        // Один общий HttpClient на приложение: пересоздание на каждый инстанс
+        // приводит к socket exhaustion (рекомендация MS).
+        private static readonly HttpClient httpClient = new HttpClient
+        {
+            Timeout = Timeout.InfiniteTimeSpan,
+            DefaultRequestHeaders = { { "User-Agent", "Ven4Tools" } }
+        };
         private readonly ConcurrentDictionary<string, CachedAvailability> cache = new();
         private readonly TimeSpan cacheDuration = TimeSpan.FromMinutes(5);
         // Таймаут хранится отдельно и применяется per-request через CancellationTokenSource:
@@ -22,9 +28,6 @@ namespace Ven4Tools.Services
 
         public AvailabilityChecker()
         {
-            httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
-            httpClient.Timeout = Timeout.InfiniteTimeSpan;
             _timeoutSeconds = Math.Max(5, AppSettings.CheckTimeout);
         }
 
@@ -225,7 +228,7 @@ namespace Ven4Tools.Services
 
         public void Dispose()
         {
-            httpClient?.Dispose();
+            // HttpClient общий (static) — живёт всё время работы приложения, не освобождается здесь.
         }
     }
 }
