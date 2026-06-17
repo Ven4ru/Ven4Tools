@@ -120,7 +120,7 @@ public void ApplyAlternativesToCatalog(MasterCatalog catalog)
                     lock (lockObj) { hiddenApps = loaded; }
                 }
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[AppManager] LoadHiddenApps: {ex.Message}"); }
         }
 
         private void SaveHiddenApps()
@@ -131,7 +131,7 @@ public void ApplyAlternativesToCatalog(MasterCatalog catalog)
                 lock (lockObj) { json = JsonSerializer.Serialize(hiddenApps, new JsonSerializerOptions { WriteIndented = true }); }
                 FileHelper.WriteAllTextAtomic(hiddenAppsPath, json);
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[AppManager] SaveHiddenApps: {ex.Message}"); }
         }
 
         public bool IsAppHidden(string appId) { lock (lockObj) { return hiddenApps.Contains(appId); } }
@@ -173,7 +173,7 @@ public void LoadAlternativeSources()
             }
         }
     }
-    catch { }
+    catch (Exception ex) { AppLogger.Write($"[AppManager] LoadAlternativeSources: {ex.Message}"); }
 }
 
         public void SaveAlternativeSource(string appId, string? wingetId, string? url, bool priority = false)
@@ -215,7 +215,7 @@ public void LoadAlternativeSources()
 
                 SaveAlternatives();
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[AppManager] SaveAlternativeSource: {ex.Message}"); }
         }
 
         public void RemoveAlternativeSource(string appId)
@@ -235,7 +235,7 @@ public void LoadAlternativeSources()
                 }
                 if (removed) SaveAlternatives();
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[AppManager] RemoveAlternativeSource: {ex.Message}"); }
         }
 
 private void SaveAlternatives()
@@ -246,7 +246,7 @@ private void SaveAlternatives()
         lock (lockObj) { json = JsonSerializer.Serialize(alternatives, new JsonSerializerOptions { WriteIndented = true }); }
         FileHelper.WriteAllTextAtomic(alternativesPath, json);
     }
-    catch { }
+    catch (Exception ex) { AppLogger.Write($"[AppManager] SaveAlternatives: {ex.Message}"); }
 }
 
         public List<AppInfo> GetAllApps()
@@ -286,7 +286,7 @@ private void SaveAlternatives()
                 string selectionPath = configPath + ".selection";
                 FileHelper.WriteAllTextAtomic(selectionPath, JsonSerializer.Serialize(settings));
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[AppManager] SaveSelectedApps: {ex.Message}"); }
         }
 
         public void AddUserApp(AppInfo app)
@@ -336,7 +336,7 @@ private void SaveAlternatives()
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[AppManager] LoadUserApps: {ex.Message}"); }
         }
 
         private void SaveUserApps()
@@ -346,7 +346,7 @@ private void SaveAlternatives()
                 var userApps = apps.Where(a => a.IsUserAdded).ToList();
                 FileHelper.WriteAllTextAtomic(configPath, JsonSerializer.Serialize(userApps, new JsonSerializerOptions { WriteIndented = true }));
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[AppManager] SaveUserApps: {ex.Message}"); }
         }
 
     }
