@@ -206,6 +206,14 @@
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
                                FontSize="11" Margin="0,0,0,14"/>
 
+                    <!-- Force online override -->
+                    <CheckBox x:Name="chkForceOnlineMode"
+                              Content="Принудительный онлайн-режим"
+                              Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
+                    <TextBlock Text="Всегда считать соединение активным (для VPN/прокси). Игнорирует автодетект сети, чтобы онлайн-вкладки не скрывались при ложноотрицательном определении."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,0,0,14"/>
+
                     <!-- Connectivity status -->
                     <Border x:Name="pnlConnStatus" CornerRadius="8" Padding="10,7" Margin="0,0,0,14">
                         <StackPanel Orientation="Horizontal">

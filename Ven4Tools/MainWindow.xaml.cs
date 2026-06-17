@@ -155,7 +155,7 @@ namespace Ven4Tools
 
         public void UpdateTabVisibility()
         {
-            bool online    = ConnectivityMonitor.IsOnline && !ProfileService.Current.OfflineMode;
+            bool online    = ConnectivityMonitor.IsEffectivelyOnline && !ProfileService.Current.OfflineMode;
             bool loggedIn  = UserSession.IsLoggedIn;
 
             // Online-only tabs
@@ -168,7 +168,7 @@ namespace Ven4Tools
 
             if (!online)
             {
-                string reason = !ConnectivityMonitor.IsOnline
+                string reason = !ConnectivityMonitor.IsEffectivelyOnline
                     ? "🔌 Нет интернета — часть вкладок скрыта"
                     : "🔌 Офлайн режим — часть вкладок скрыта";
                 AppLogger.Write(reason);
