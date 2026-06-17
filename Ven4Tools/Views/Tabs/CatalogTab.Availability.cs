@@ -344,16 +344,26 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 var selected = GetSelectedApps();
+                var semaphore = new SemaphoreSlim(5);
                 long totalRequired = 0;
-                foreach (var appId in selected)
+                var lockObj = new object();
+
+                var tasks = selected.Select(async appId =>
                 {
                     var app = appManager.GetAppById(appId);
-                    if (app != null)
+                    if (app == null) return;
+                    await semaphore.WaitAsync();
+                    try
                     {
                         var result = await availabilityChecker.CheckAppAvailabilityWithSize(app);
-                        totalRequired += result.Status == AvailabilityChecker.AvailabilityStatus.Available ? result.SizeMB : 100;
+                        long mb = result.Status == AvailabilityChecker.AvailabilityStatus.Available ? result.SizeMB : 100;
+                        lock (lockObj) { totalRequired += mb; }
                     }
-                }
+                    finally { semaphore.Release(); }
+                });
+
+                await Task.WhenAll(tasks);
+
                 string disk  = selectedInstallDrive.TrimEnd('\\');
                 var drive    = new DriveInfo(disk);
                 if (drive.IsReady)
