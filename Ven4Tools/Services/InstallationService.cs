@@ -297,6 +297,13 @@ namespace Ven4Tools.Services
                             foreach (var url in app.InstallerUrls)
                             {
                                 token.ThrowIfCancellationRequested();
+
+                                if (!DownloadValidator.ValidateUrl(url))
+                                {
+                                    AppLogger.Write($"[InstallationService] ⚠ Пропущен небезопасный URL (не HTTPS): {url}");
+                                    continue;
+                                }
+
                                 appProgress.Status = "📥 Скачивание...";
                                 appProgress.Percentage = 20;
                                 progress.Report(appProgress);
@@ -314,6 +321,13 @@ namespace Ven4Tools.Services
                                     using (var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, headersCts.Token))
                                     {
                                         response.EnsureSuccessStatusCode();
+
+                                        if (!DownloadValidator.ValidateAfterRedirect(response))
+                                        {
+                                            AppLogger.Write($"[InstallationService] ⚠ Редирект на небезопасный хост: {response.RequestMessage?.RequestUri?.Host}");
+                                            throw new InvalidOperationException($"Редирект на небезопасный хост: {response.RequestMessage?.RequestUri?.Host}");
+                                        }
+
                                         var totalBytes = response.Content.Headers.ContentLength ?? -1L;
                                         using var contentStream = await response.Content.ReadAsStreamAsync();
                                         using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
@@ -368,6 +382,11 @@ namespace Ven4Tools.Services
                                     else
                                     {
                                         silentArgs = app.SilentArgs;
+                                        if (!CommandLineGuard.ValidateSilentArgs(silentArgs))
+                                        {
+                                            AppLogger.Write($"[InstallationService] ⚠ SilentArgs содержит недопустимые символы для {app.DisplayName} — использую /S");
+                                            silentArgs = "/S";
+                                        }
                                         if (string.IsNullOrWhiteSpace(silentArgs) && ProfileService.Current.SilentInstall)
                                             silentArgs = "/S";
                                         // Best-effort путь установки для прямого EXE
@@ -507,7 +526,7 @@ namespace Ven4Tools.Services
                     ? $" --location \"{profile.DefaultInstallFolder}\""
                     : $" --location \"{ProgramFilesOn(installDrive!)}\"";
             }
-            else if (!string.IsNullOrWhiteSpace(profile.DefaultInstallFolder))
+            else if (!string.IsNullOrWhiteSpace(profile.DefaultInstallFolder) && CommandLineGuard.ValidateInstallFolder(profile.DefaultInstallFolder))
                 location = $" --location \"{profile.DefaultInstallFolder}\"";
             else
                 location = "";

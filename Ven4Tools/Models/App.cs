@@ -1,50 +1,36 @@
-﻿using System;
-using Newtonsoft.Json;
+using System;
+using System.Text.Json.Serialization;
 
 namespace Ven4Tools.Models
 {
     public class App
     {
-        [JsonProperty("id")]
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        [JsonProperty("name")]
         public string Name { get; set; } = string.Empty;
 
-        [JsonProperty("category")]
         public string Category { get; set; } = "Другое";
 
-        [JsonProperty("wingetId")]
         public string WingetId { get; set; } = string.Empty;
 
-        [JsonProperty("downloadUrl")]
         public string DownloadUrl { get; set; } = string.Empty;
 
-        [JsonProperty("version")]
         public string Version { get; set; } = string.Empty;
 
-        [JsonProperty("size")]
         public string Size { get; set; } = string.Empty;
 
-        [JsonProperty("official")]
         public bool Official { get; set; } = true;
 
-        [JsonProperty("iconUrl")]
         public string IconUrl { get; set; } = string.Empty;
 
-        [JsonProperty("description")]
         public string Description { get; set; } = string.Empty;
 
-        [JsonProperty("profile")]
         public string Profile { get; set; } = "full";
 
-        [JsonProperty("chocoId")]
         public string ChocoId { get; set; } = string.Empty;
 
-        [JsonProperty("scoopId")]
         public string ScoopId { get; set; } = string.Empty;
 
-        [JsonProperty("sha256")]
         public string? Sha256 { get; set; }
 
         [JsonIgnore]
@@ -55,7 +41,7 @@ namespace Ven4Tools.Models
 
         [JsonIgnore]
         public string Status => IsUnavailable ? "❌ Недоступно" : "✅ Доступно";
-        
+
         [JsonIgnore]
         public string Source { get; set; } = "online";
     }

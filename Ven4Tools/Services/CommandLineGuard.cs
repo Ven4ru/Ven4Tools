@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -43,6 +44,31 @@ namespace Ven4Tools.Services
             if (string.IsNullOrEmpty(query)) return "";
             var cleaned = _stripChars.Replace(query, "");
             return cleaned.Length > 100 ? cleaned.Substring(0, 100) : cleaned;
+        }
+
+        private static readonly Regex _safeArgsPattern =
+            new(@"^[A-Za-z0-9/\\\-=\s""'.,_+:]+$", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Проверяет аргументы тихой установки: пусто допустимо, длина до 300,
+        /// только безопасные символы (без shell-метасимволов &amp; | ; и др.).
+        /// </summary>
+        public static bool ValidateSilentArgs(string? args)
+        {
+            if (string.IsNullOrWhiteSpace(args)) return true;
+            if (args.Length > 300) return false;
+            return _safeArgsPattern.IsMatch(args);
+        }
+
+        /// <summary>
+        /// Проверяет путь установки: пусто допустимо, UNC-пути (\\server\share)
+        /// запрещены, путь должен быть абсолютным.
+        /// </summary>
+        public static bool ValidateInstallFolder(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return true;
+            if (path.StartsWith(@"\\")) return false;
+            return Path.IsPathRooted(path);
         }
     }
 }
