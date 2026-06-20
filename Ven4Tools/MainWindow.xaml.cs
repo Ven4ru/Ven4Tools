@@ -62,6 +62,12 @@ namespace Ven4Tools
                 ConnectivityMonitor.StatusChanged += OnConnectivityChanged;
                 UpdateTabVisibility();
             };
+            Loaded += (_, _) =>
+            {
+                // Предзагрузка winget list в фоне — пока пользователь смотрит на каталог,
+                // InstalledTab уже готов и откроется мгновенно
+                InstalledTab.StartPreload();
+            };
         }
 
         private void OnConnectivityChanged(bool online) =>
