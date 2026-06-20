@@ -126,6 +126,7 @@ namespace Ven4Tools.Views.Tabs
                                     tb.Foreground    = Brushes.LightGreen;
                                     checkBox.ToolTip = $"✅ Доступно для установки ({(size > 0 ? $"~{size} МБ" : "размер неизвестен")})";
                                     checkBox.IsEnabled = true;
+                                    RemoveSuggestionButton(checkBox, catalogApp.Id);
                                     break;
                                 case AvailabilityChecker.AvailabilityStatus.Unavailable:
                                     tb.Foreground    = Brushes.LightCoral;
@@ -148,6 +149,15 @@ namespace Ven4Tools.Views.Tabs
             {
                 AddLog($"❌ Ошибка при проверке {catalogApp.Name}: {ex.Message}");
             }
+        }
+
+        private void RemoveSuggestionButton(CheckBox checkBox, string appId)
+        {
+            var rowPanel = System.Windows.Media.VisualTreeHelper.GetParent(checkBox) as StackPanel;
+            if (rowPanel == null) return;
+            var btn = rowPanel.Children.OfType<Button>()
+                              .FirstOrDefault(b => b.Tag?.ToString() == appId + "_suggest");
+            if (btn != null) rowPanel.Children.Remove(btn);
         }
 
         private void AddSuggestionButton(Models.App catalogApp, CheckBox checkBox)
@@ -236,6 +246,7 @@ namespace Ven4Tools.Views.Tabs
                                 tb.Foreground    = Brushes.LightGreen;
                                 checkBox.ToolTip = $"✅ Доступно для установки ({(size > 0 ? $"~{size} МБ" : "размер неизвестен")})";
                                 checkBox.IsEnabled = true;
+                                RemoveSuggestionButton(checkBox, appId);
                                 break;
                             case AvailabilityChecker.AvailabilityStatus.Unavailable:
                                 if (attempt < 3)
