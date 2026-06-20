@@ -35,7 +35,7 @@ namespace Ven4Tools.Services
             {
                 FileHelper.WriteAllTextAtomic(FilePath, JsonConvert.SerializeObject(new List<string>(_favorites)));
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[FavoritesService] Save: {ex.Message}"); }
         }
 
         public bool IsFavorite(string appId) => _favorites.Contains(appId);

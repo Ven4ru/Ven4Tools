@@ -88,4 +88,8 @@ Ven4Tools/Services/RemoteCommandService.cs
 
 # Внутренние ops-скрипты (не для публичного репо)
 deploy_cdn.ps1
+_deploy_env.ps1
 scripts/
+
+# Артефакты OneDrive-конфликтов (дубли файлов)
+* (2).*

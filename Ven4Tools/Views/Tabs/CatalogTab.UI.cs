@@ -17,6 +17,15 @@ namespace Ven4Tools.Views.Tabs
         private void HideLoading() =>
             Dispatcher.Invoke(() => txtLoadingStatus.Visibility = Visibility.Collapsed);
 
+        private void ShowCatalogError(string detail) => Dispatcher.Invoke(() =>
+        {
+            txtCatalogErrorDetail.Text = detail;
+            pnlCatalogError.Visibility = Visibility.Visible;
+        });
+
+        private void HideCatalogError() =>
+            Dispatcher.Invoke(() => pnlCatalogError.Visibility = Visibility.Collapsed);
+
         // ── Favorites ─────────────────────────────────────────────────────────
 
         private Button MakeStarButton(string appId)

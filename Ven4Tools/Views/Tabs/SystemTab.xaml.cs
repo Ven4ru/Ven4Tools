@@ -135,7 +135,7 @@ namespace Ven4Tools.Views.Tabs
                 File.WriteAllText(SettingsPath, Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented));
                 AppSettings.NotifyChanged();
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[SystemTab] SaveSettings: {ex.Message}"); }
         }
         
         private void LoadSystemInfo()

@@ -49,7 +49,7 @@ namespace Ven4Tools.Services
                 FileHelper.WriteAllTextAtomic(_path, JsonConvert.SerializeObject(Current, Formatting.Indented));
                 Changed?.Invoke();
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[SourceOrderService] Save: {ex.Message}"); }
         }
 
         // Returns effective source order for a category.

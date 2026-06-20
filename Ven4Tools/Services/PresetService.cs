@@ -42,7 +42,7 @@ namespace Ven4Tools.Services
                     var list = JsonConvert.DeserializeObject<List<Preset>>(json);
                     return list ?? new();
                 }
-                catch { }
+                catch (Exception ex) { AppLogger.Write($"[PresetService] LoadAsync: {ex.Message}"); }
             }
             return LoadLocal();
         }
@@ -73,7 +73,7 @@ namespace Ven4Tools.Services
                         return preset;
                     }
                 }
-                catch { }
+                catch (Exception ex) { AppLogger.Write($"[PresetService] SaveAsync: {ex.Message}"); }
             }
 
             // fallback — локальное хранение.
