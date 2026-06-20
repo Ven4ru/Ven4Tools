@@ -47,7 +47,9 @@ namespace Ven4Tools.Views.Tabs
 
                     string preloadedSource = _catalog.Source switch
                     {
-                        "online"   => "🌐 Каталог загружен из интернета",
+                        "hosting"  => "🏠 Каталог загружен с ven4tools.ru",
+                        "cdn"      => "🌐 Каталог загружен с CDN (cdn.ven4tools.ru)",
+                        "online"   => "🌐 Каталог загружен с GitHub",
                         "cache"    => "💾 Каталог из кэша (интернет недоступен)",
                         "embedded" => "📀 Встроенный каталог (минимальный набор)",
                         _          => "❓ Неизвестный источник"
@@ -78,7 +80,9 @@ namespace Ven4Tools.Views.Tabs
 
                 string sourceText = _catalog.Source switch
                 {
-                    "online"   => "🌐 Каталог загружен из интернета",
+                    "hosting"  => "🏠 Каталог загружен с ven4tools.ru",
+                    "cdn"      => "🌐 Каталог загружен с CDN (cdn.ven4tools.ru)",
+                    "online"   => "🌐 Каталог загружен с GitHub",
                     "cache"    => "💾 Каталог из кэша (интернет недоступен)",
                     "embedded" => "📀 Встроенный каталог (минимальный набор)",
                     _          => "❓ Неизвестный источник"
