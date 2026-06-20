@@ -40,6 +40,27 @@
                            FontSize="11" Margin="0,0,0,5"
                            Visibility="Collapsed"/>
 
+                <!-- Заглушка при ошибке загрузки каталога -->
+                <Border x:Name="pnlCatalogError" DockPanel.Dock="Top"
+                        Background="{DynamicResource CardBackground}"
+                        BorderBrush="#C0392B"
+                        BorderThickness="1" CornerRadius="3"
+                        Margin="0,0,0,6" Visibility="Collapsed">
+                    <StackPanel Margin="8,6">
+                        <TextBlock Text="❌ Каталог недоступен"
+                                   Foreground="#C0392B"
+                                   FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3"/>
+                        <TextBlock x:Name="txtCatalogErrorDetail"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="11" TextWrapping="Wrap"/>
+                        <Button x:Name="btnRetryLoadCatalog"
+                                Content="🔄 Повторить загрузку"
+                                Click="BtnRetryLoadCatalog_Click"
+                                Margin="0,5,0,0" HorizontalAlignment="Left"
+                                Padding="8,3" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Winget подсказки -->
                 <Border x:Name="pnlWingetSuggestions" DockPanel.Dock="Top"
                         Background="{DynamicResource CardBackground}"
