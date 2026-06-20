@@ -74,6 +74,26 @@ namespace Ven4Tools.Views.Tabs
     {
         private List<InstalledApp> _allApps = new();
 
+        // Фоновая предзагрузка — запускается из MainWindow.Loaded, до открытия вкладки.
+        // Первое открытие вкладки просто awaits уже идущую задачу вместо нового winget list.
+        private static Task? _preloadTask;
+        private static volatile string? _cachedRawOutput;
+
+        public static void StartPreload()
+        {
+            if (_preloadTask != null) return;
+            _preloadTask = Task.Run(async () =>
+            {
+                try
+                {
+                    var (_, output) = await WingetRunner.RunAsync(
+                        "list --accept-source-agreements --disable-interactivity");
+                    _cachedRawOutput = output;
+                }
+                catch { _cachedRawOutput = string.Empty; }
+            });
+        }
+
         public InstalledTab()
         {
             InitializeComponent();
@@ -91,25 +111,39 @@ namespace Ven4Tools.Views.Tabs
         private async Task LoadAppsAsync()
         {
             ShowState("loading");
-            txtLoadingMsg.Text = "⏳ Получение списка установленных приложений...";
+
+            string rawOutput;
+            var preload = _preloadTask;
+            if (preload != null)
+            {
+                txtLoadingMsg.Text = preload.IsCompleted
+                    ? "⏳ Загрузка списка приложений..."
+                    : "⏳ Почти готово, дожидаемся предзагрузки...";
+                try { await preload; } catch { }
+                rawOutput = _cachedRawOutput ?? string.Empty;
+                _preloadTask = null;
+                _cachedRawOutput = null;
+            }
+            else
+            {
+                txtLoadingMsg.Text = "⏳ Получение списка установленных приложений...";
+                var (_, output) = await WingetRunner.RunAsync(
+                    "list --accept-source-agreements --disable-interactivity");
+                rawOutput = output;
+            }
 
             try
             {
-                _allApps = await RunWingetListAsync();
+                _allApps = ParseWingetList(rawOutput);
                 ApplyFilter();
                 ShowState(_allApps.Count == 0 ? "empty" : "list");
                 UpdateStats();
             }
             catch (Exception ex)
             {
+                ShowState("loading");
                 txtLoadingMsg.Text = $"❌ Ошибка: {ex.Message}";
             }
-        }
-
-        private static async Task<List<InstalledApp>> RunWingetListAsync()
-        {
-            var (_, output) = await WingetRunner.RunAsync("list --accept-source-agreements --disable-interactivity");
-            return ParseWingetList(output);
         }
 
         private static List<InstalledApp> ParseWingetList(string raw)
@@ -251,6 +285,9 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 btnRefresh.IsEnabled = false;
+                // Сброс кэша предзагрузки — "Обновить" всегда идёт напрямую в winget
+                _preloadTask = null;
+                _cachedRawOutput = null;
                 await LoadAppsAsync();
             }
             catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
