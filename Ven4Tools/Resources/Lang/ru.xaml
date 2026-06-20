@@ -39,7 +39,6 @@
     <s:String x:Key="prof_catalog_sort_label">Сортировка по умолчанию:</s:String>
     <s:String x:Key="prof_catalog_sort_alpha">По алфавиту</s:String>
     <s:String x:Key="prof_catalog_sort_category">По категории</s:String>
-    <s:String x:Key="prof_catalog_sort_popularity">По популярности</s:String>
     <s:String x:Key="prof_catalog_hide_installed">Скрывать уже установленные приложения</s:String>
     <s:String x:Key="prof_catalog_free_only">Показывать только бесплатные</s:String>
     <s:String x:Key="prof_section_filters">Фильтры</s:String>

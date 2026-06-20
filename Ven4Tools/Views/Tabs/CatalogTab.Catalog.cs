@@ -32,6 +32,7 @@ namespace Ven4Tools.Views.Tabs
 
         private async Task LoadCatalogAndRefreshAsync()
         {
+            HideCatalogError();
             ShowLoading();
             try
             {
@@ -67,6 +68,7 @@ namespace Ven4Tools.Views.Tabs
                 if (loadedCatalog == null)
                 {
                     AddLog("❌ Ошибка: не удалось загрузить каталог");
+                    ShowCatalogError("Нет подключения к интернету или CDN недоступен.\nПроверьте сеть и нажмите «Повторить загрузку».");
                     return;
                 }
 
@@ -99,6 +101,9 @@ namespace Ven4Tools.Views.Tabs
                 HideLoading();
             }
         }
+
+        private async void BtnRetryLoadCatalog_Click(object sender, RoutedEventArgs e) =>
+            await LoadCatalogAndRefreshAsync();
 
         private async void BtnRefreshCatalog_Click(object sender, RoutedEventArgs e)
         {

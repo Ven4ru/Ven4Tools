@@ -36,43 +36,45 @@ namespace Ven4Tools.Services
             LoadAlternativeSources();
             LoadHiddenApps();
         }
-public void AddCatalogApp(AppInfo app)
-{
-    lock (lockObj)
-    {
-        var existing = apps.FirstOrDefault(a => a.Id == app.Id);
-        if (existing == null)
+        public void AddCatalogApp(AppInfo app)
         {
-            apps.Add(app);
-        }
-        else
-        {
-            existing.DisplayName = app.DisplayName;
-            existing.Category = app.Category;
-            existing.InstallerUrls = app.InstallerUrls;
-            existing.AlternativeId = app.AlternativeId;
-        }
-    }
-}
-public void ApplyAlternativesToCatalog(MasterCatalog catalog)
-{
-    if (catalog?.Apps == null || catalog.Apps.Count == 0)
-        return;
-
-    lock (lockObj)
-    {
-        foreach (var catalogApp in catalog.Apps)
-        {
-            if (alternatives.TryGetValue(catalogApp.Id, out var alt))
+            lock (lockObj)
             {
-                if (!string.IsNullOrEmpty(alt.WingetId))
-                    catalogApp.WingetId = alt.WingetId;
-                if (!string.IsNullOrEmpty(alt.Url))
-                    catalogApp.DownloadUrl = alt.Url;
+                var existing = apps.FirstOrDefault(a => a.Id == app.Id);
+                if (existing == null)
+                {
+                    apps.Add(app);
+                }
+                else
+                {
+                    existing.DisplayName = app.DisplayName;
+                    existing.Category = app.Category;
+                    existing.InstallerUrls = app.InstallerUrls;
+                    existing.AlternativeId = app.AlternativeId;
+                }
             }
         }
-    }
-}
+
+        public void ApplyAlternativesToCatalog(MasterCatalog catalog)
+        {
+            if (catalog?.Apps == null || catalog.Apps.Count == 0)
+                return;
+
+            lock (lockObj)
+            {
+                foreach (var catalogApp in catalog.Apps)
+                {
+                    if (alternatives.TryGetValue(catalogApp.Id, out var alt))
+                    {
+                        if (!string.IsNullOrEmpty(alt.WingetId))
+                            catalogApp.WingetId = alt.WingetId;
+                        if (!string.IsNullOrEmpty(alt.Url))
+                            catalogApp.DownloadUrl = alt.Url;
+                    }
+                }
+            }
+        }
+
         private bool DetectPortableMode()
         {
             try
@@ -136,45 +138,45 @@ public void ApplyAlternativesToCatalog(MasterCatalog catalog)
 
         public bool IsAppHidden(string appId) { lock (lockObj) { return hiddenApps.Contains(appId); } }
 
-public void LoadAlternativeSources()
-{
-    try
-    {
-        if (File.Exists(alternativesPath))
+        public void LoadAlternativeSources()
         {
-            var json = File.ReadAllText(alternativesPath);
-            var loaded = JsonSerializer.Deserialize<Dictionary<string, AlternativeSource>>(json)
-                ?? new Dictionary<string, AlternativeSource>();
-
-            lock (lockObj)
+            try
             {
-                alternatives = loaded;
-
-                // Применяем альтернативные источники к приложениям
-                foreach (var kvp in alternatives)
+                if (File.Exists(alternativesPath))
                 {
-                    var app = apps.FirstOrDefault(a => a.Id == kvp.Key);
-                    if (app != null)
-                    {
-                        if (!string.IsNullOrEmpty(kvp.Value.WingetId))
-                        {
-                            app.AlternativeId = kvp.Value.WingetId;
-                        }
+                    var json = File.ReadAllText(alternativesPath);
+                    var loaded = JsonSerializer.Deserialize<Dictionary<string, AlternativeSource>>(json)
+                        ?? new Dictionary<string, AlternativeSource>();
 
-                        if (!string.IsNullOrEmpty(kvp.Value.Url) && !app.InstallerUrls.Contains(kvp.Value.Url))
+                    lock (lockObj)
+                    {
+                        alternatives = loaded;
+
+                        // Применяем альтернативные источники к приложениям
+                        foreach (var kvp in alternatives)
                         {
-                            if (kvp.Value.UrlPriority)
-                                app.InstallerUrls.Insert(0, kvp.Value.Url);
-                            else
-                                app.InstallerUrls.Add(kvp.Value.Url);
+                            var app = apps.FirstOrDefault(a => a.Id == kvp.Key);
+                            if (app != null)
+                            {
+                                if (!string.IsNullOrEmpty(kvp.Value.WingetId))
+                                {
+                                    app.AlternativeId = kvp.Value.WingetId;
+                                }
+
+                                if (!string.IsNullOrEmpty(kvp.Value.Url) && !app.InstallerUrls.Contains(kvp.Value.Url))
+                                {
+                                    if (kvp.Value.UrlPriority)
+                                        app.InstallerUrls.Insert(0, kvp.Value.Url);
+                                    else
+                                        app.InstallerUrls.Add(kvp.Value.Url);
+                                }
+                            }
                         }
                     }
                 }
             }
+            catch (Exception ex) { AppLogger.Write($"[AppManager] LoadAlternativeSources: {ex.Message}"); }
         }
-    }
-    catch (Exception ex) { AppLogger.Write($"[AppManager] LoadAlternativeSources: {ex.Message}"); }
-}
 
         public void SaveAlternativeSource(string appId, string? wingetId, string? url, bool priority = false)
         {
@@ -238,16 +240,16 @@ public void LoadAlternativeSources()
             catch (Exception ex) { AppLogger.Write($"[AppManager] RemoveAlternativeSource: {ex.Message}"); }
         }
 
-private void SaveAlternatives()
-{
-    try
-    {
-        string json;
-        lock (lockObj) { json = JsonSerializer.Serialize(alternatives, new JsonSerializerOptions { WriteIndented = true }); }
-        FileHelper.WriteAllTextAtomic(alternativesPath, json);
-    }
-    catch (Exception ex) { AppLogger.Write($"[AppManager] SaveAlternatives: {ex.Message}"); }
-}
+        private void SaveAlternatives()
+        {
+            try
+            {
+                string json;
+                lock (lockObj) { json = JsonSerializer.Serialize(alternatives, new JsonSerializerOptions { WriteIndented = true }); }
+                FileHelper.WriteAllTextAtomic(alternativesPath, json);
+            }
+            catch (Exception ex) { AppLogger.Write($"[AppManager] SaveAlternatives: {ex.Message}"); }
+        }
 
         public List<AppInfo> GetAllApps()
         {

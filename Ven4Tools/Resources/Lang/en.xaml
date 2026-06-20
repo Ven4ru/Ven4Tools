@@ -39,7 +39,6 @@
     <s:String x:Key="prof_catalog_sort_label">Default sort:</s:String>
     <s:String x:Key="prof_catalog_sort_alpha">Alphabetical</s:String>
     <s:String x:Key="prof_catalog_sort_category">By category</s:String>
-    <s:String x:Key="prof_catalog_sort_popularity">By popularity</s:String>
     <s:String x:Key="prof_catalog_hide_installed">Hide already installed apps</s:String>
     <s:String x:Key="prof_catalog_free_only">Show free apps only</s:String>
     <s:String x:Key="prof_section_filters">Filters</s:String>
