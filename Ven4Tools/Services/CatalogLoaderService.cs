@@ -24,15 +24,22 @@ namespace Ven4Tools.Services
             DefaultRequestHeaders = { { "User-Agent", "Ven4Tools" } }
         };
 
-        // CDN — основной источник: быстрее GitHub и без RKN-блокировок.
+        // Хостинг — первый источник: минимальный RTT (тот же сервер, что и API).
+        private const string HostingCatalogUrl =
+            "https://ven4tools.ru/catalog/master.json";
+
+        // CDN — второй источник: быстрее GitHub и без RKN-блокировок.
         private const string CdnCatalogUrl =
             "https://cdn.ven4tools.ru/master.json";
 
-        // GitHub raw — резервный источник, если CDN недоступен.
+        // GitHub raw — резервный источник, если хостинг и CDN недоступны.
         private const string RemoteCatalogUrl =
             "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/master.json";
 
-        // Короткий таймаут на CDN: если он не ответил быстро — не ждём, сразу пробуем GitHub.
+        // Короткий таймаут на хостинг: если не ответил быстро — сразу пробуем CDN.
+        private const int HostingTimeoutSeconds = 3;
+
+        // Таймаут на CDN: если не ответил — переходим на GitHub.
         private const int CdnTimeoutSeconds = 4;
 
         private readonly string _localCatalogPath =
@@ -73,12 +80,18 @@ namespace Ven4Tools.Services
                 return empty;
             }
 
-            // Источник 1 — CDN (быстрый таймаут), источник 2 — GitHub raw.
+            // Источник 1 — хостинг (3s), источник 2 — CDN (4s), источник 3 — GitHub raw.
             // Первый ответивший источник выигрывает; "source" помечается соответственно.
             try
             {
-                string? remoteJson = await TryDownloadAsync(CdnCatalogUrl, CdnTimeoutSeconds, ct);
-                string source = "cdn";
+                string? remoteJson = await TryDownloadAsync(HostingCatalogUrl, HostingTimeoutSeconds, ct);
+                string source = "hosting";
+
+                if (remoteJson == null)
+                {
+                    remoteJson = await TryDownloadAsync(CdnCatalogUrl, CdnTimeoutSeconds, ct);
+                    source = "cdn";
+                }
 
                 if (remoteJson == null)
                 {
@@ -87,7 +100,7 @@ namespace Ven4Tools.Services
                 }
 
                 if (remoteJson == null)
-                    throw new HttpRequestException("Каталог недоступен ни с CDN, ни с GitHub");
+                    throw new HttpRequestException("Каталог недоступен ни с хостинга, ни с CDN, ни с GitHub");
 
                 // Присваиваем результат до записи на диск: ошибка кэширования
                 // (например, Program Files без прав на запись) не должна обнулять каталог.
