@@ -243,7 +243,10 @@
             <Setter Property="Margin" Value="0,0,0,3"/>
         </Style>
 
-        <!-- Стиль для TextBox — полный шаблон чтобы Windows 11 не перебивал фон -->
+        <!-- Стиль для TextBox — только Setter'ы, без кастомного шаблона.
+             Кастомный шаблон с Foreground на PART_ContentHost ломал отрисовку
+             текста в .NET 8 WPF на Windows 11 (текст становился невидимым).
+             Дефолтный шаблон WPF корректно уважает Background/Foreground из стиля. -->
         <Style TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
@@ -251,26 +254,11 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="SelectionBrush" Value="{DynamicResource AccentColor}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4">
-                            <ScrollViewer x:Name="PART_ContentHost"
-                                          Focusable="False"
-                                          Margin="{TemplateBinding Padding}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <!-- Стиль для ToggleButton -->
