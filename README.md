@@ -29,6 +29,43 @@ irm ven4tools.ru/install.ps1 | iex
 
 </p>
 
+<details>
+<summary>📁 Структура проекта</summary>
+
+<br>
+
+```text
+Ven4Tools.exe
+ └─ SplashWindow — предзагрузка: каталог, winget, WebView2, права
+      └─ MainWindow — навигация, лог-панель, трей, быстрые пины
+          │
+          ├─ 📦 Каталог          — установка, поиск, пресеты, иконки, фильтры
+          ├─ 🖥  Установленные   — winget list, обновления, удаление, импорт/экспорт
+          ├─ ⚙  Система          — инфо, Turbo Boost, источники установки, кэш
+          ├─ 📄 Office           — загрузка O365/2024/2021/2019, регион
+          ├─ 🔑 Лицензии         — активация через massgrave.dev (браузер)
+          ├─ 🧹 Дебloatер        — 25 твиков: Xbox, Cortana, DiagTrack и др.
+          ├─ 🌐 Сеть             — адаптеры, пинг, внешний IP, сброс настроек
+          ├─ 📋 История          — логи установок, переустановка из истории
+          └─ ℹ  О программе      — версия, changelog, обратная связь
+```
+
+```text
+Сервисный слой
+ ├─ CatalogLoaderService   — hosting → CDN → GitHub → кэш → встроенная копия
+ ├─ InstallationService    — winget → choco → scoop → прямая ссылка, SHA256
+ ├─ WingetRunner           — стриминг вывода, ANSI-strip, фикс кириллицы
+ ├─ AvailabilityChecker    — проверка доступности пакетов, кэш 5 мин
+ ├─ AuthService            — email/пароль + Яндекс OAuth, DPAPI-токен
+ ├─ PresetService          — облачные пресеты + локальный fallback
+ ├─ ThemeService           — 4 темы, 8 акцентных палитр
+ ├─ ConnectivityMonitor    — пинг каждые 30 сек, offline-режим
+ ├─ SystemRestoreService   — точки восстановления перед массовыми операциями
+ └─ UpdateBackgroundService — проверка обновлений winget каждые 3 часа
+```
+
+</details>
+
 ---
 
 ## Каталог приложений
