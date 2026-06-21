@@ -139,7 +139,9 @@ namespace Ven4Tools.Services
 
                 bool success = process.ExitCode == 0 &&
                                (output.Contains("Version", StringComparison.OrdinalIgnoreCase) ||
-                                output.Contains("Found", StringComparison.OrdinalIgnoreCase));
+                                output.Contains("Found", StringComparison.OrdinalIgnoreCase) ||
+                                output.Contains("Версия", StringComparison.OrdinalIgnoreCase) ||
+                                output.Contains("Найдено", StringComparison.OrdinalIgnoreCase));
 
                 if (success)
                 {
@@ -147,7 +149,7 @@ namespace Ven4Tools.Services
                     return (AvailabilityStatus.Available, size > 0 ? size : 120);
                 }
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[AvailabilityChecker] winget show ошибка для {appId}: {ex.Message}"); }
 
             return (AvailabilityStatus.Unavailable, 0);
         }
@@ -219,7 +221,7 @@ namespace Ven4Tools.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[AvailabilityChecker] HEAD/GET ошибка для {url}: {ex.Message}"); }
 
             return (AvailabilityStatus.Unavailable, 0);
         }
