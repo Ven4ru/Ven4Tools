@@ -41,7 +41,7 @@
                 </StackPanel>
 
                 <!-- Переключатель режима -->
-                <Grid Grid.Row="1" Margin="0,0,0,24">
+                <Grid x:Name="panelModeSwitch" Grid.Row="1" Margin="0,0,0,24">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
@@ -63,18 +63,28 @@
                     <StackPanel x:Name="panelName" Visibility="Collapsed" Margin="0,0,0,12">
                         <TextBlock Text="Имя" FontSize="12" Margin="0,0,0,4"
                                    Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBox x:Name="txtName" Height="36" Padding="10,8" FontSize="13"/>
+                        <TextBox x:Name="txtName" Height="36" Padding="10,8" FontSize="13"
+                                 Background="{DynamicResource CardBackground}"
+                                 Foreground="{DynamicResource TextPrimary}"
+                                 BorderBrush="{DynamicResource BorderBrush}"
+                                 BorderThickness="1"
+                                 CaretBrush="{DynamicResource TextPrimary}"/>
                     </StackPanel>
 
                     <!-- Email -->
                     <StackPanel Margin="0,0,0,12">
                         <TextBlock Text="Email" FontSize="12" Margin="0,0,0,4"
                                    Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBox x:Name="txtEmail" Height="36" Padding="10,8" FontSize="13"/>
+                        <TextBox x:Name="txtEmail" Height="36" Padding="10,8" FontSize="13"
+                                 Background="{DynamicResource CardBackground}"
+                                 Foreground="{DynamicResource TextPrimary}"
+                                 BorderBrush="{DynamicResource BorderBrush}"
+                                 BorderThickness="1"
+                                 CaretBrush="{DynamicResource TextPrimary}"/>
                     </StackPanel>
 
                     <!-- Пароль -->
-                    <StackPanel Margin="0,0,0,12">
+                    <StackPanel x:Name="panelPassword" Margin="0,0,0,12">
                         <TextBlock Text="Пароль" FontSize="12" Margin="0,0,0,4"
                                    Foreground="{DynamicResource TextSecondary}"/>
                         <PasswordBox x:Name="txtPassword" Height="36" Padding="10,8"
@@ -113,8 +123,40 @@
                             FontSize="14"
                             Click="BtnSubmit_Click"/>
 
+                    <!-- Забыли пароль? (только login-режим) -->
+                    <Button x:Name="btnForgotPassword" Content="Забыли пароль?"
+                            Height="28" Margin="0,8,0,0"
+                            HorizontalAlignment="Center"
+                            Background="Transparent"
+                            Foreground="{DynamicResource AccentColor}"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            FontSize="13"
+                            Click="BtnForgotPassword_Click"/>
+
+                    <!-- Назад (только forgot-режим) -->
+                    <Button x:Name="btnBack" Content="← Назад"
+                            Height="28" Margin="0,8,0,0"
+                            HorizontalAlignment="Center"
+                            Background="Transparent"
+                            Foreground="{DynamicResource TextSecondary}"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            FontSize="13"
+                            Visibility="Collapsed"
+                            Click="BtnBack_Click"/>
+
+                    <!-- Письмо отправлено (только forgot-режим) -->
+                    <StackPanel x:Name="panelForgotSuccess" Visibility="Collapsed" Margin="0,12,0,0">
+                        <TextBlock Text="📧 Письмо отправлено. Проверьте почту."
+                                   Foreground="#4CAF50" FontSize="13"
+                                   TextWrapping="Wrap"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"/>
+                    </StackPanel>
+
                     <!-- Разделитель -->
-                    <Grid Margin="0,20,0,14">
+                    <Grid x:Name="panelDivider" Margin="0,20,0,14">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
@@ -131,11 +173,11 @@
 
                     <!-- Яндекс -->
                     <Button x:Name="btnYandex" Height="40"
-                            Background="#FFDB4D" Foreground="#1A1A1A"
+                            Background="#FC3F1D" Foreground="White"
                             BorderThickness="0" FontSize="14"
                             Click="BtnYandex_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🟡" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="Я" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <TextBlock Text="Войти через Яндекс" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
