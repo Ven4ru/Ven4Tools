@@ -32,6 +32,10 @@ namespace Ven4Tools.Services
         public Task<AuthResult> RegisterAsync(string name, string email, string password) =>
             PostAsync("register", new { name, email, password });
 
+        // Запрос восстановления пароля: сервер отправляет письмо со ссылкой на сброс.
+        public Task<AuthResult> ForgotPasswordAsync(string email) =>
+            PostAsync("forgot_password", new { email });
+
         // Вход через Яндекс выполняется полностью на сервере (yandex-callback.php):
         // сервер обменивает OAuth-код на токен и сам создаёт сессию. Клиент получает
         // готовый токен и не передаёт личность вручную (см. YandexAuthWindow).
