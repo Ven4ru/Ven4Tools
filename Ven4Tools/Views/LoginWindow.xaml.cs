@@ -9,6 +9,7 @@ namespace Ven4Tools.Views
     {
         private readonly AuthService _auth = new AuthService();
         private bool _isRegisterMode = false;
+        private bool _isForgotMode = false;
 
         public LoginWindow()
         {
@@ -22,8 +23,21 @@ namespace Ven4Tools.Views
         private void SetMode(bool register)
         {
             _isRegisterMode = register;
+            _isForgotMode = false;
+
+            // Стандартная раскладка login/register
+            panelModeSwitch.Visibility = Visibility.Visible;
             panelName.Visibility = register ? Visibility.Visible : Visibility.Collapsed;
+            panelPassword.Visibility = Visibility.Visible;
             panelConfirm.Visibility = register ? Visibility.Visible : Visibility.Collapsed;
+            panelDivider.Visibility = Visibility.Visible;
+            btnYandex.Visibility = Visibility.Visible;
+            panelForgotSuccess.Visibility = Visibility.Collapsed;
+            btnBack.Visibility = Visibility.Collapsed;
+
+            // «Забыли пароль?» — только в login-режиме
+            btnForgotPassword.Visibility = register ? Visibility.Collapsed : Visibility.Visible;
+
             txtTitle.Text = register ? "Создать аккаунт" : "Войти в аккаунт";
             btnSubmit.Content = register ? "Зарегистрироваться" : "Войти";
 
@@ -44,6 +58,40 @@ namespace Ven4Tools.Views
             HideError();
         }
 
+        private void BtnForgotPassword_Click(object sender, RoutedEventArgs e) => SetForgotMode(true);
+        private void BtnBack_Click(object sender, RoutedEventArgs e) => SetForgotMode(false);
+
+        private void SetForgotMode(bool forgot)
+        {
+            _isForgotMode = forgot;
+
+            if (!forgot)
+            {
+                // Возврат в login-режим
+                SetMode(false);
+                return;
+            }
+
+            _isRegisterMode = false;
+
+            // Скрыть всё лишнее
+            panelModeSwitch.Visibility = Visibility.Collapsed;
+            panelName.Visibility = Visibility.Collapsed;
+            panelPassword.Visibility = Visibility.Collapsed;
+            panelConfirm.Visibility = Visibility.Collapsed;
+            panelDivider.Visibility = Visibility.Collapsed;
+            btnYandex.Visibility = Visibility.Collapsed;
+            btnForgotPassword.Visibility = Visibility.Collapsed;
+            panelForgotSuccess.Visibility = Visibility.Collapsed;
+
+            // Показать email + «Отправить письмо» + «Назад»
+            btnBack.Visibility = Visibility.Visible;
+            txtTitle.Text = "Восстановление пароля";
+            btnSubmit.Content = "Отправить письмо";
+
+            HideError();
+        }
+
         private async void BtnSubmit_Click(object sender, RoutedEventArgs e)
         {
             HideError();
@@ -53,6 +101,29 @@ namespace Ven4Tools.Views
             try
             {
                 AuthResult result;
+
+                if (_isForgotMode)
+                {
+                    var email = txtEmail.Text.Trim();
+
+                    if (string.IsNullOrEmpty(email))
+                    {
+                        ShowError("Введите email");
+                        return;
+                    }
+
+                    result = await _auth.ForgotPasswordAsync(email);
+
+                    if (result.Success)
+                    {
+                        panelForgotSuccess.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        ShowError(result.Error ?? "Неизвестная ошибка");
+                    }
+                    return;
+                }
 
                 if (_isRegisterMode)
                 {
@@ -105,7 +176,9 @@ namespace Ven4Tools.Views
                 if (IsLoaded && IsVisible)
                 {
                     btnSubmit.IsEnabled = true;
-                    btnSubmit.Content = _isRegisterMode ? "Зарегистрироваться" : "Войти";
+                    btnSubmit.Content = _isForgotMode
+                        ? "Отправить письмо"
+                        : (_isRegisterMode ? "Зарегистрироваться" : "Войти");
                 }
             }
         }
