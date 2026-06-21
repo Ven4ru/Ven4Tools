@@ -1,6 +1,6 @@
 {
   "version": 5,
-  "lastUpdated": "2026-06-06 21:08:40",
+  "lastUpdated": "2026-06-21 02:10:00",
   "changelog": [
     {
       "version": 5,
@@ -325,7 +325,7 @@
       "id": "gimp",
       "name": "GIMP",
       "category": "Графика",
-      "wingetId": "GIMP.GIMP.2",
+      "wingetId": "GIMP.GIMP",
       "downloadUrl": "https://download.gimp.org/mirror/pub/gimp/v3.0/windows/gimp-3.0.0-setup.exe",
       "version": "3.0.0",
       "size": "367.4 MB",
