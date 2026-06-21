@@ -131,6 +131,8 @@
                        Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap"/>
             <TextBlock Text="⚠️ Требуется подключение к интернету для скачивания установщика."
                        Foreground="#FFA500" FontSize="11" Margin="0,5,0,0"/>
+            <TextBlock Text="🔑 Для использования Microsoft Office требуется действующая лицензия Microsoft. Ven4Tools только скачивает официальный установщик."
+                       Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
 
             <!-- Кнопка активации — только для авторизованных -->
             <Border x:Name="pnlActivationHint" Visibility="Collapsed"
