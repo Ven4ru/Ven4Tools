@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
+using Newtonsoft.Json;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
 
@@ -23,6 +24,13 @@ namespace Ven4Tools.Views.Tabs
         private string? _originalOfficeCC;   // исходное значение из ExperimentConfigs\Ecs\CountryCode
         private string? _originalGeoName;    // например "RU" из Control Panel\International\Geo\Name
         private string? _originalGeoNation;  // например "203" из Control Panel\International\Geo\Nation
+
+        // Persistent-маркер региона на диске — страховка от hard-kill / отключения питания
+        // между SetRegionUS() и RestoreRegion(). Если процесс убит, файл переживёт и регион
+        // будет восстановлен при следующем запуске (см. конструктор).
+        private static readonly string _regionBackupPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "region_backup.json");
 
         public event Action? GoToActivation;
 
@@ -40,6 +48,11 @@ namespace Ven4Tools.Views.Tabs
         public OfficeTab()
         {
             InitializeComponent();
+
+            // Восстановление региона после аварийного завершения (hard-kill / отключение питания
+            // во время установки Office, когда finally в BtnInstallOffice_Click не успел отработать).
+            RecoverRegionFromBackup();
+
             FillComboBoxes();
 
             btnDownloadOffice.Click += BtnDownloadOffice_Click;
@@ -119,6 +132,81 @@ namespace Ven4Tools.Views.Tabs
                 _originalGeoNation = geo?.GetValue("Nation")?.ToString();
             }
             catch { _originalGeoName = _originalGeoNation = null; }
+
+            // Persistent-маркер: сохраняем исходный регион на диск ДО SetRegionUS(),
+            // чтобы при аварийном завершении его можно было восстановить при следующем запуске.
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(_regionBackupPath)!);
+                var backup = new RegionBackup
+                {
+                    OfficeCC   = _originalOfficeCC,
+                    GeoName    = _originalGeoName,
+                    GeoNation  = _originalGeoNation
+                };
+                File.WriteAllText(_regionBackupPath, JsonConvert.SerializeObject(backup));
+            }
+            catch (Exception ex) { AddLog($"⚠️ Сохранение маркера региона: {ex.Message}"); }
+        }
+
+        // Восстановление региона из persistent-маркера при старте (после hard-kill).
+        private void RecoverRegionFromBackup()
+        {
+            try
+            {
+                if (!File.Exists(_regionBackupPath)) return;
+
+                var backup = JsonConvert.DeserializeObject<RegionBackup>(File.ReadAllText(_regionBackupPath));
+                if (backup == null)
+                {
+                    try { File.Delete(_regionBackupPath); } catch { }
+                    return;
+                }
+
+                // Office CountryCode — те же ключи, что и в RestoreRegion()
+                try
+                {
+                    using var key = Registry.CurrentUser.OpenSubKey(
+                        @"Software\Microsoft\Office\16.0\Common\ExperimentConfigs\Ecs", writable: true);
+                    if (key != null)
+                    {
+                        if (backup.OfficeCC != null)
+                            key.SetValue("CountryCode", backup.OfficeCC, RegistryValueKind.String);
+                        else
+                            key.DeleteValue("CountryCode", throwOnMissingValue: false);
+                    }
+                }
+                catch { /* ключа может не быть — игнорируем */ }
+
+                // Windows GeoID
+                try
+                {
+                    using var geo = Registry.CurrentUser.OpenSubKey(@"Control Panel\International\Geo", writable: true);
+                    if (geo != null)
+                    {
+                        if (backup.GeoName != null)
+                            geo.SetValue("Name", backup.GeoName, RegistryValueKind.String);
+
+                        if (backup.GeoNation != null)
+                            geo.SetValue("Nation", backup.GeoNation, RegistryValueKind.String);
+                        else
+                            geo.DeleteValue("Nation", throwOnMissingValue: false);
+                    }
+                }
+                catch { /* игнорируем */ }
+
+                try { File.Delete(_regionBackupPath); } catch { }
+                AddLog("🔁 Регион восстановлен после аварийного завершения предыдущей установки Office");
+            }
+            catch (Exception ex) { AddLog($"⚠️ Восстановление региона из маркера: {ex.Message}"); }
+        }
+
+        // Модель persistent-маркера региона (region_backup.json). Поля могут быть null.
+        private sealed class RegionBackup
+        {
+            public string? OfficeCC   { get; set; }
+            public string? GeoName    { get; set; }
+            public string? GeoNation  { get; set; }
         }
 
         private void SetRegionUS()
@@ -182,6 +270,9 @@ namespace Ven4Tools.Views.Tabs
                 }
             }
             catch (Exception ex) { AddLog($"⚠️ Восстановление Windows GeoID: {ex.Message}"); }
+
+            // Регистр восстановлен — удаляем persistent-маркер, он больше не нужен.
+            try { if (File.Exists(_regionBackupPath)) File.Delete(_regionBackupPath); } catch { }
 
             UpdateRegionDisplay();
         }
