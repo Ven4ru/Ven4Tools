@@ -79,19 +79,26 @@ namespace Ven4Tools.Views.Tabs
         private static Task? _preloadTask;
         private static volatile string? _cachedRawOutput;
 
+        // Синхронизация доступа к _preloadTask и _cachedRawOutput: защита от гонки
+        // при одновременных вызовах (предзагрузка из MainWindow vs открытие вкладки vs «Обновить»)
+        private static readonly object _preloadLock = new object();
+
         public static void StartPreload()
         {
-            if (_preloadTask != null) return;
-            _preloadTask = Task.Run(async () =>
+            lock (_preloadLock)
             {
-                try
+                if (_preloadTask != null) return;
+                _preloadTask = Task.Run(async () =>
                 {
-                    var (_, output) = await WingetRunner.RunAsync(
-                        "list --accept-source-agreements --disable-interactivity");
-                    _cachedRawOutput = output;
-                }
-                catch { _cachedRawOutput = string.Empty; }
-            });
+                    try
+                    {
+                        var (_, output) = await WingetRunner.RunAsync(
+                            "list --accept-source-agreements --disable-interactivity");
+                        _cachedRawOutput = output;
+                    }
+                    catch { _cachedRawOutput = string.Empty; }
+                });
+            }
         }
 
         public InstalledTab()
@@ -113,16 +120,21 @@ namespace Ven4Tools.Views.Tabs
             ShowState("loading");
 
             string rawOutput;
-            var preload = _preloadTask;
+            Task? preload;
+            lock (_preloadLock) { preload = _preloadTask; }
             if (preload != null)
             {
                 txtLoadingMsg.Text = preload.IsCompleted
                     ? "⏳ Загрузка списка приложений..."
                     : "⏳ Почти готово, дожидаемся предзагрузки...";
                 try { await preload; } catch { }
-                rawOutput = _cachedRawOutput ?? string.Empty;
-                _preloadTask = null;
-                _cachedRawOutput = null;
+                // Чтение и обнуление кэша — атомарно под блокировкой
+                lock (_preloadLock)
+                {
+                    rawOutput = _cachedRawOutput ?? string.Empty;
+                    _preloadTask = null;
+                    _cachedRawOutput = null;
+                }
             }
             else
             {
@@ -286,8 +298,11 @@ namespace Ven4Tools.Views.Tabs
             {
                 btnRefresh.IsEnabled = false;
                 // Сброс кэша предзагрузки — "Обновить" всегда идёт напрямую в winget
-                _preloadTask = null;
-                _cachedRawOutput = null;
+                lock (_preloadLock)
+                {
+                    _preloadTask = null;
+                    _cachedRawOutput = null;
+                }
                 await LoadAppsAsync();
             }
             catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }

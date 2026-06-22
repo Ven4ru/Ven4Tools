@@ -95,7 +95,7 @@ namespace Ven4Tools.Views.Tabs
             if (_initialized) return;
             _initialized = true;
 
-            LoadSystemInfo();
+            await LoadSystemInfoAsync();
             LoadSourceOrderUI();
             UpdateCacheStats();
             LoadCacheAppsList();
@@ -138,33 +138,46 @@ namespace Ven4Tools.Views.Tabs
             catch (Exception ex) { AppLogger.Write($"[SystemTab] SaveSettings: {ex.Message}"); }
         }
         
-        private void LoadSystemInfo()
+        private async Task LoadSystemInfoAsync()
         {
             try
             {
-                txtOSVersion.Text = Environment.OSVersion.VersionString;
-                
-                using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor"))
+                // Значения, читаемые быстро на UI-потоке
+                string osVersion  = Environment.OSVersion.VersionString;
+                var version       = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                string appVersion = version?.ToString() ?? "—";
+
+                // WMI-запросы могут занимать 100-500 мс — выполняем в фоне, чтобы не морозить UI
+                string processor = "Неизвестно";
+                string ram       = "";
+
+                await Task.Run(() =>
                 {
-                    foreach (var obj in searcher.Get())
+                    using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor"))
                     {
-                        txtProcessor.Text = obj["Name"]?.ToString()?.Trim() ?? "Неизвестно";
-                        break;
+                        foreach (var obj in searcher.Get())
+                        {
+                            processor = obj["Name"]?.ToString()?.Trim() ?? "Неизвестно";
+                            break;
+                        }
                     }
-                }
-                
-                using (var searcher = new ManagementObjectSearcher("SELECT TotalVisibleMemorySize FROM Win32_OperatingSystem"))
-                {
-                    foreach (var obj in searcher.Get())
+
+                    using (var searcher = new ManagementObjectSearcher("SELECT TotalVisibleMemorySize FROM Win32_OperatingSystem"))
                     {
-                        long totalMemory = Convert.ToInt64(obj["TotalVisibleMemorySize"]) / 1024 / 1024;
-                        txtRAM.Text = $"{totalMemory} ГБ";
-                        break;
+                        foreach (var obj in searcher.Get())
+                        {
+                            long totalMemory = Convert.ToInt64(obj["TotalVisibleMemorySize"]) / 1024 / 1024;
+                            ram = $"{totalMemory} ГБ";
+                            break;
+                        }
                     }
-                }
-                
-                var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-                txtAppVersion.Text = version?.ToString() ?? "—";
+                });
+
+                // Обновление UI — уже на UI-потоке после await, Dispatcher не нужен
+                txtOSVersion.Text  = osVersion;
+                txtProcessor.Text  = processor;
+                txtRAM.Text        = ram;
+                txtAppVersion.Text = appVersion;
             }
             catch (Exception ex)
             {
