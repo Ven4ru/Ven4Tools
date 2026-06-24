@@ -40,7 +40,10 @@ namespace Ven4Tools.Services
                     list.RemoveRange(0, list.Count - maxRecords);
                 Save(list);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "Ошибка сервиса сбоев установки");
+            }
         }
 
         public static List<InstallFailure> GetUnreported()
@@ -57,7 +60,10 @@ namespace Ven4Tools.Services
                 list.ForEach(f => f.Reported = true);
                 Save(list);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "Ошибка сервиса сбоев установки");
+            }
         }
 
         private static List<InstallFailure> ReadAll()
