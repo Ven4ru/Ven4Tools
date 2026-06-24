@@ -132,7 +132,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="ОС:" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock x:Name="txtOSVersion" Grid.Column="1" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock x:Name="txtOSVersion" Grid.Column="1" Text="Загрузка..." Foreground="{DynamicResource TextPrimary}"/>
                     </Grid>
                     <Grid Margin="0,5">
                         <Grid.ColumnDefinitions>
@@ -140,7 +140,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Процессор:" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock x:Name="txtProcessor" Grid.Column="1" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock x:Name="txtProcessor" Grid.Column="1" Text="Загрузка..." Foreground="{DynamicResource TextPrimary}"/>
                     </Grid>
                     <Grid Margin="0,5">
                         <Grid.ColumnDefinitions>
@@ -148,7 +148,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="ОЗУ:" Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBlock x:Name="txtRAM" Grid.Column="1" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock x:Name="txtRAM" Grid.Column="1" Text="Загрузка..." Foreground="{DynamicResource TextPrimary}"/>
                     </Grid>
                     <Grid Margin="0,5">
                         <Grid.ColumnDefinitions>

@@ -33,7 +33,10 @@ namespace Ven4Tools.Services
                 Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
                 File.WriteAllText(_path, JsonConvert.SerializeObject(_data, Formatting.Indented));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "Ошибка трекинга версий");
+            }
         }
 
         public void TrackInstall(string appId, string installedVersion, string latestVersion)

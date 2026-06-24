@@ -39,7 +39,10 @@ namespace Ven4Tools.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "Ошибка сохранения порядка источников");
+            }
         }
 
         public static void Save()

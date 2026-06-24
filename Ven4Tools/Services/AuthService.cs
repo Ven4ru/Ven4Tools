@@ -55,15 +55,13 @@ namespace Ven4Tools.Services
             catch (Exception ex) { AppLogger.Write($"[AuthService] logout: {ex.Message}"); }
         }
 
-        // Установка или смена пароля. old_password нужен, если у пользователя пароль уже есть
-        // (для аккаунтов Яндекса без пароля передаётся только new_password).
+        // Установка или смена пароля. Сервер (db.php, action set_password) ждёт поле password.
+        // Для OAuth-аккаунтов (например, Яндекс) старый пароль не требуется.
         public async Task<AuthResult> SetPasswordAsync(string token, string newPassword, string? oldPassword = null)
         {
             try
             {
-                object payload = oldPassword != null
-                    ? (object)new { new_password = newPassword, old_password = oldPassword }
-                    : new { new_password = newPassword };
+                object payload = new { password = newPassword };
 
                 var json = JsonConvert.SerializeObject(payload);
                 var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}?action=set_password");

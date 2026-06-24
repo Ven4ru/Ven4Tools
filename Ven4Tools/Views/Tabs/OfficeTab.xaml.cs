@@ -171,7 +171,12 @@ namespace Ven4Tools.Views.Tabs
                     if (key != null)
                     {
                         if (backup.OfficeCC != null)
-                            key.SetValue("CountryCode", backup.OfficeCC, RegistryValueKind.String);
+                        {
+                            if (IsValidRegionValue(backup.OfficeCC))
+                                key.SetValue("CountryCode", backup.OfficeCC, RegistryValueKind.String);
+                            else
+                                AppLogger.Write($"Невалидное значение региона (OfficeCC): {backup.OfficeCC}");
+                        }
                         else
                             key.DeleteValue("CountryCode", throwOnMissingValue: false);
                     }
@@ -185,10 +190,20 @@ namespace Ven4Tools.Views.Tabs
                     if (geo != null)
                     {
                         if (backup.GeoName != null)
-                            geo.SetValue("Name", backup.GeoName, RegistryValueKind.String);
+                        {
+                            if (IsValidRegionValue(backup.GeoName))
+                                geo.SetValue("Name", backup.GeoName, RegistryValueKind.String);
+                            else
+                                AppLogger.Write($"Невалидное значение региона (GeoName): {backup.GeoName}");
+                        }
 
                         if (backup.GeoNation != null)
-                            geo.SetValue("Nation", backup.GeoNation, RegistryValueKind.String);
+                        {
+                            if (IsValidRegionValue(backup.GeoNation))
+                                geo.SetValue("Nation", backup.GeoNation, RegistryValueKind.String);
+                            else
+                                AppLogger.Write($"Невалидное значение региона (GeoNation): {backup.GeoNation}");
+                        }
                         else
                             geo.DeleteValue("Nation", throwOnMissingValue: false);
                     }
@@ -199,6 +214,16 @@ namespace Ven4Tools.Views.Tabs
                 AddLog("🔁 Регион восстановлен после аварийного завершения предыдущей установки Office");
             }
             catch (Exception ex) { AddLog($"⚠️ Восстановление региона из маркера: {ex.Message}"); }
+        }
+
+        // Валидация значений региона из region_backup.json перед записью в реестр.
+        // Допускаются только буквы, цифры, пробелы и безопасные разделители (включая
+        // формат Office CountryCode вида "std::wstring|US"). Макс. длина — 100 символов.
+        private static bool IsValidRegionValue(string value)
+        {
+            return !string.IsNullOrEmpty(value)
+                && value.Length <= 100
+                && System.Text.RegularExpressions.Regex.IsMatch(value, @"^[\w\s\-.,:|]+$");
         }
 
         // Модель persistent-маркера региона (region_backup.json). Поля могут быть null.

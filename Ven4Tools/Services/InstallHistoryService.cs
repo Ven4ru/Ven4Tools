@@ -82,7 +82,10 @@ namespace Ven4Tools.Services
                            ?? new List<HistoryEntry>();
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "Ошибка загрузки истории установок");
+            }
             return new List<HistoryEntry>();
         }
 
@@ -93,7 +96,10 @@ namespace Ven4Tools.Services
                 await FileHelper.WriteAllTextAtomicAsync(_path,
                     JsonConvert.SerializeObject(list, Formatting.Indented));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "Ошибка сохранения истории установок");
+            }
         }
     }
 }

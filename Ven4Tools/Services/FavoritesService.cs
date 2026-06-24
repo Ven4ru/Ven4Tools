@@ -26,7 +26,10 @@ namespace Ven4Tools.Services
                     foreach (var id in ids)
                         _favorites.Add(id);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "Ошибка загрузки избранного");
+            }
         }
 
         public void Save()

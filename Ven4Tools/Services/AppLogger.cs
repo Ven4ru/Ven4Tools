@@ -20,6 +20,12 @@ namespace Ven4Tools.Services
             MessageReceived?.Invoke(message);
         }
 
+        // Логирование исключения с контекстом: единый формат для catch-блоков
+        public static void Write(Exception ex, string context)
+        {
+            Write($"{context}: {ex.Message}");
+        }
+
         private static void WriteToFile(string message)
         {
             try
