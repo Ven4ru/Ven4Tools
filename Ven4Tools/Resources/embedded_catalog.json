@@ -92,6 +92,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Быстрый, безопасный и приватный браузер с открытым исходным кодом.",
+      "profile": "basic",
       "sha256": "94bb387d2c07c29f2da48b47a6c5ed4446d89303a90f49817f6d23cf995148be",
       "chocoId": "firefox",
       "scoopId": "firefox"
@@ -107,6 +108,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Самый популярный браузер с интеграцией сервисов Google.",
+      "profile": "basic",
       "sha256": "203980641389366aaf5c8da29c2de1a6535980888ef6479bff8fb6a89bc39ddd",
       "chocoId": "googlechrome",
       "scoopId": "googlechrome"
@@ -122,6 +124,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Современный браузер от Microsoft на базе Chromium.",
+      "profile": "basic",
       "sha256": "3ad90c212004436e020479c593e168f36309d746ab7c6fde9fbf2b6a46faa796",
       "chocoId": "microsoft-edge",
       "scoopId": ""
@@ -137,6 +140,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
+      "profile": "basic",
       "sha256": "437793cecf650ff2aa59fe83a7d35fb983a8f366e175ff87081f732a4c6b700d",
       "chocoId": "opera",
       "scoopId": "opera"
@@ -152,6 +156,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер с фокусом на приватность и встроенным блокировщиком рекламы.",
+      "profile": "extended",
       "sha256": "6e7887eb04aa28b9b9fcc5b4a6ae9c0e7a96460bd7005c929a4b0fe31d1c496d",
       "chocoId": "brave",
       "scoopId": "brave"
@@ -167,6 +172,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
+      "profile": "basic",
       "sha256": "79bae4ffdbb04fea1a2b42f9927bc578c603a797dc49dc3b830436496d2ed1c0",
       "chocoId": "",
       "scoopId": ""
@@ -182,6 +188,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Firefox-форк с максимальной приватностью и без телеметрии.",
+      "profile": "full",
       "sha256": "",
       "chocoId": "librewolf",
       "scoopId": "librewolf"
@@ -197,6 +204,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Совместимый с MS Office редактор с облачной интеграцией.",
+      "profile": "basic",
       "sha256": "88b52a453e3baab439d683c7f278192e0e20aca0aa154a5ed2bfb051c7da849e",
       "chocoId": "onlyoffice",
       "scoopId": "onlyoffice"
@@ -212,6 +220,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Стандарт для работы с PDF-документами от Adobe.",
+      "profile": "basic",
       "sha256": "",
       "chocoId": "adobereader",
       "scoopId": "acrobatreader"
@@ -227,6 +236,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Минималистичный и быстрый просмотрщик PDF, EPUB, MOBI.",
+      "profile": "basic",
       "sha256": "2be4a27b83830ea07c6671c3557673d509544e5f70fc6b2dc8cc4388b302c1f2",
       "chocoId": "sumatrapdf",
       "scoopId": "sumatrapdf"
@@ -242,6 +252,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Создание диаграмм, схем и визуализаций.",
+      "profile": "extended",
       "sha256": "a12b0c11307dc246c5bb8c8dc9129604abe932fa05807ad84a63b385bebbb718",
       "chocoId": "drawio",
       "scoopId": "draw.io"
@@ -257,6 +268,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Мощная программа для чтения PDF.",
+      "profile": "extended",
       "sha256": "",
       "chocoId": "foxitreader",
       "scoopId": ""
@@ -272,6 +284,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Бесплатный офисный пакет с полным аналогом Word, Excel, PowerPoint.",
+      "profile": "basic",
       "sha256": "",
       "chocoId": "libreoffice",
       "scoopId": "libreoffice"
@@ -287,6 +300,7 @@
       "official": true,
       "iconUrl": "",
       "description": "База знаний и заметки в Markdown с двусвязными ссылками.",
+      "profile": "extended",
       "sha256": "",
       "chocoId": "obsidian",
       "scoopId": "obsidian"
@@ -302,6 +316,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Всё-в-одном: заметки, задачи, базы данных и вики.",
+      "profile": "extended",
       "sha256": "5bef72e6c479025a3a95b20a7daca16b279702877bffc6b6639efc9761898745",
       "chocoId": "notion",
       "scoopId": "notion"
@@ -317,6 +332,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Мощный бесплатный редактор изображений, альтернатива Photoshop.",
+      "profile": "extended",
       "sha256": "ab6f9aa481120097f032c39f07cb70990929878fa65bf4ec6d1669d7a616770a",
       "chocoId": "gimp",
       "scoopId": "gimp"
@@ -332,6 +348,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Цифровая живопись и иллюстрации. Поддержка графических планшетов.",
+      "profile": "extended",
       "sha256": "f419f4f71a99e59c4c65573388f2f5440e65341c47805240659578973a7516d8",
       "chocoId": "krita",
       "scoopId": "krita"
@@ -347,6 +364,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Полноценный 3D-пакет: моделирование, анимация, рендеринг.",
+      "profile": "full",
       "sha256": "2c9326290887ef004fe71998d1fbb7fa6bc6f725d884f0e985e05c226f7db53c",
       "chocoId": "blender",
       "scoopId": "blender"
@@ -362,6 +380,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Профессиональный редактор векторной графики SVG.",
+      "profile": "extended",
       "sha256": "",
       "chocoId": "inkscape",
       "scoopId": "inkscape"
@@ -377,6 +396,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Простой и мощный редактор изображений с поддержкой плагинов.",
+      "profile": "extended",
       "sha256": "",
       "chocoId": "paint.net",
       "scoopId": "paint.net"
@@ -392,6 +412,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Российский аналог Figma от Icons8. Дизайн интерфейсов, прототипирование, работает офлайн.",
+      "profile": "full",
       "sha256": "115550663360ace09d4ee5a149ea245a6a483fc74a9c4ad93ab6696e0a741ab7",
       "chocoId": "",
       "scoopId": "lunacy"
@@ -407,6 +428,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Просмотрщик и конвертер изображений с поддержкой 500+ форматов.",
+      "profile": "extended",
       "sha256": "b98de5ad8b3d02e9d92496420cc290196540970b8a8fefa1b0394b129a31e594",
       "chocoId": "xnviewmp",
       "scoopId": "xnviewmp"
@@ -422,6 +444,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Легкий, но мощный редактор кода от Microsoft.",
+      "profile": "extended",
       "sha256": "7d08422f0d793280236460b05016831c6285ee2ec0257797dfa99981180b4bc7",
       "chocoId": "vscode",
       "scoopId": "vscode"
@@ -437,6 +460,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Полноценная IDE для .NET, C++, Python и других языков.",
+      "profile": "full",
       "sha256": "2496604f6f40984de26d2f88a9cd84ca99136427ad3b952d1e93b667201cfc05",
       "chocoId": "visualstudio2022community",
       "scoopId": ""
@@ -452,6 +476,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Интерпретатор Python с установщиком и добавлением в PATH.",
+      "profile": "extended",
       "sha256": "9aaa1075d0bd3e8abd0623d2d05de692ff00780579e1b232f259028bac19bb51",
       "chocoId": "python3",
       "scoopId": "python"
@@ -467,6 +492,7 @@
       "official": true,
       "iconUrl": "",
       "description": "JavaScript-среда для разработки серверных приложений.",
+      "profile": "extended",
       "sha256": "821566022dc3b262ac2f76598ee4f46003a6edafe5dadb84e5fbc7daaa1a78c7",
       "chocoId": "nodejs",
       "scoopId": "nodejs"
@@ -482,6 +508,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Система контроля версий с Bash-эмулятором.",
+      "profile": "extended",
       "sha256": "ce45e23275049f4b36edd90d5fd986a1e230efb6c511e9260a90176ce8e825df",
       "chocoId": "git",
       "scoopId": "git"
@@ -497,6 +524,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Контейнеризация приложений для разработки и тестирования.",
+      "profile": "full",
       "sha256": "42978fa07e50e3beb6923448e970d03aadd9abf5ea52230cf8a28ff81d2815e0",
       "chocoId": "docker-desktop",
       "scoopId": "docker-desktop"
@@ -512,6 +540,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Платформа для тестирования API и работы с запросами.",
+      "profile": "full",
       "sha256": "be873b49868ba2e47401a46e3526788fbc662c74a13f0460120ba1464cf34308",
       "chocoId": "postman",
       "scoopId": "postman"
@@ -527,6 +556,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Мощный текстовый редактор с подсветкой синтаксиса.",
+      "profile": "extended",
       "sha256": "23d8e9bde3d08df26626af9978a09f8837d7162fd1accf563248d0eef89006fe",
       "chocoId": "notepadplusplus",
       "scoopId": "notepadplusplus"
@@ -542,6 +572,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Официальный клиент GitHub для работы с репозиториями.",
+      "profile": "full",
       "sha256": "338e6fe3430ddb7db3e370f11b98e2d6a25998d5d7bdc7d714b77cfb5b13afc0",
       "chocoId": "github-desktop",
       "scoopId": "github"
@@ -557,6 +588,7 @@
       "official": true,
       "iconUrl": "",
       "description": "SSH и Telnet клиент для подключения к серверам.",
+      "profile": "full",
       "sha256": "",
       "chocoId": "putty",
       "scoopId": "putty"
@@ -572,6 +604,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Быстрый и безопасный мессенджер с облачными хранилищами.",
+      "profile": "basic",
       "sha256": "4b44fd42c7f963e9f57d59fac659a9e4990422b0195b08b9aee1d784ebe0bc53",
       "chocoId": "telegram",
       "scoopId": "telegram"
@@ -587,6 +620,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Голосовой и текстовый чат для геймеров и сообществ.",
+      "profile": "basic",
       "sha256": "85060117d7c75378fcbf8b3824e79549002bc5298ae46fcaa2524c83c476596a",
       "chocoId": "discord",
       "scoopId": "discord"
@@ -602,6 +636,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Корпоративный мессенджер с интеграциями.",
+      "profile": "extended",
       "sha256": "7f19726c535990ab430a71c0789aceec5110855bf43f18232dc8b2a98739d2ca",
       "chocoId": "slack",
       "scoopId": "slack"
@@ -617,6 +652,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Видеоконференции, вебинары и командная работа.",
+      "profile": "basic",
       "sha256": "7eb91fc484ab27a8bc96fae11e176d34eac39dc619d485af96346f390ee338be",
       "chocoId": "zoom",
       "scoopId": "zoom"
@@ -632,6 +668,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Платформа для совместной работы и видеозвонков.",
+      "profile": "extended",
       "sha256": "e0bf5a435db69ae03488a366fb741e93e840b2faabe93b2aa3593000de7df06a",
       "chocoId": "microsoft-teams",
       "scoopId": "teams"
@@ -647,6 +684,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Децентрализованный мессенджер на базе Matrix.",
+      "profile": "full",
       "sha256": "198002b7235f75cdb630eebf0fcf8c371e3e8238e7a2a4e8dc3d2c7bc1b9942c",
       "chocoId": "element-desktop",
       "scoopId": "element"
@@ -662,6 +700,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Официальный клиент WhatsApp для Windows.",
+      "profile": "basic",
       "sha256": "",
       "chocoId": "whatsapp",
       "scoopId": "whatsapp"
@@ -677,6 +716,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Универсальный плеер, воспроизводящий все форматы.",
+      "profile": "basic",
       "sha256": "9742689a50e96ddc04d80ceff046b28da2beefd617be18166f8c5e715ec60c59",
       "chocoId": "vlc",
       "scoopId": "vlc"
@@ -692,6 +732,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Стриминговый музыкальный сервис с огромной библиотекой. Работает в России без ограничений.",
+      "profile": "basic",
       "sha256": "",
       "chocoId": "",
       "scoopId": ""
@@ -707,6 +748,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Запись видео и стриминг с профессиональными настройками.",
+      "profile": "extended",
       "sha256": "edb3f77c3ee4eae769924d1673bb826dac8898907d06f6f40a4c99b6bc8cdc8b",
       "chocoId": "obs-studio",
       "scoopId": "obs-studio"
@@ -722,6 +764,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Конвертер видео с поддержкой большинства форматов.",
+      "profile": "extended",
       "sha256": "9f8e649d9ec9ddf532ef82e2fb9f32ff0009ae2f8c124bcabfb0846dff9f585c",
       "chocoId": "handbrake",
       "scoopId": "handbrake"
@@ -737,6 +780,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Бесплатный редактор аудио для записи и обработки звука.",
+      "profile": "extended",
       "sha256": "5eae3e6167be049f0995d86f24273e94f763c5a2b860ddb876d753ec8a69527e",
       "chocoId": "audacity",
       "scoopId": "audacity"
@@ -752,6 +796,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Мощный аудиоплеер для требовательных меломанов.",
+      "profile": "full",
       "sha256": "",
       "chocoId": "foobar2000",
       "scoopId": "foobar2000"
@@ -767,6 +812,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Лёгкий медиаплеер на базе Media Player Classic с современными кодеками.",
+      "profile": "extended",
       "sha256": "",
       "chocoId": "mpc-be",
       "scoopId": "mpc-be"
@@ -782,6 +828,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Архиватор с высокой степенью сжатия. Поддерживает множество форматов.",
+      "profile": "basic",
       "sha256": "bdd1a33de78618d16ee4ce148b849932c05d0015491c34887846d431d29f308e",
       "chocoId": "7zip",
       "scoopId": "7zip"
@@ -797,6 +844,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Популярный архиватор с поддержкой RAR и ZIP.",
+      "profile": "basic",
       "sha256": "4b0dfd4dd3b06b4ae28740498a4f21310dc760823bf495867f837cd7fb819880",
       "chocoId": "winrar",
       "scoopId": "winrar"
@@ -812,6 +860,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Мгновенный поиск файлов по имени.",
+      "profile": "basic",
       "sha256": "dae32a49b6052f0ec70895dd4e35b2b26222f7f4c19c36d9d309033e2fb622bc",
       "chocoId": "everything",
       "scoopId": "everything"
@@ -827,6 +876,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Мониторинг состояния жёстких дисков и SSD.",
+      "profile": "extended",
       "sha256": "",
       "chocoId": "crystaldiskinfo",
       "scoopId": "crystaldiskinfo"
@@ -842,6 +892,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Тестирование производительности накопителей.",
+      "profile": "extended",
       "sha256": "",
       "chocoId": "crystaldiskmark",
       "scoopId": "crystaldiskmark"
@@ -857,6 +908,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Мощный инструмент для создания скриншотов.",
+      "profile": "basic",
       "sha256": "1687311b4e7a3720be20490e8ed6cc772a32336a7bed8896e475b8ec616c6b81",
       "chocoId": "greenshot",
       "scoopId": "greenshot"
@@ -872,6 +924,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Скриншоты, запись экрана, загрузка файлов.",
+      "profile": "extended",
       "sha256": "8f082b1939af2894fea681e6e807e577d15ea546fc0231f84720ac62867ca7f4",
       "chocoId": "sharex",
       "scoopId": "sharex"
@@ -887,6 +940,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Облачное хранилище с синхронизацией файлов.",
+      "profile": "basic",
       "sha256": "93a308ad7e067a22b3bbf75762d38694aea82b786c05bd13b51e5c7f04d8d7e3",
       "chocoId": "",
       "scoopId": ""
@@ -902,6 +956,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Набор утилит для повышения производительности Windows.",
+      "profile": "extended",
       "sha256": "e18ac8f9023e341cf7dad35367fb9dddb6565d83d8155dbcddb40ae8a24ae731",
       "chocoId": "powertoys",
       "scoopId": "powertoys"
@@ -917,6 +972,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Создание загрузочных USB-флешек из ISO-образов.",
+      "profile": "extended",
       "sha256": "8279696c1d78b14618500e9135886a3667b9decc65946f3729002e4bfdbb20ab",
       "chocoId": "rufus",
       "scoopId": "rufus"
@@ -932,6 +988,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Крупнейший игровой магазин и платформа для игр.",
+      "profile": "basic",
       "sha256": "7d3654531c32d941b8cae81c4137fc542172bfa9635f169cb392f245a0a12bcb",
       "chocoId": "steam",
       "scoopId": "steam"
@@ -947,6 +1004,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Платформа инди-игр. Тысячи бесплатных и платных игр без региональных ограничений.",
+      "profile": "extended",
       "sha256": "",
       "chocoId": "",
       "scoopId": "itch"
@@ -962,6 +1020,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Менеджер игровых библиотек. Объединяет Steam, GOG, itch.io и другие платформы в одном интерфейсе.",
+      "profile": "extended",
       "sha256": "",
       "chocoId": "playnite",
       "scoopId": "playnite"
@@ -977,6 +1036,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Лаунчер без DRM и агрегатор библиотек из других платформ.",
+      "profile": "extended",
       "sha256": "826eef5ab19f127a77e79719a5af515d6a6c1ff6d4bf664dbf868a19e6d4287d",
       "chocoId": "goggalaxy",
       "scoopId": "gog-galaxy"
@@ -988,10 +1048,11 @@
       "wingetId": "samlab-ws.SnappyDriverInstaller",
       "downloadUrl": "https://sdi-tool.org/download/SDIO_2025.exe",
       "version": "1.26.1",
-      "size": "0.0 MB",
+      "size": "0.3 MB",
       "official": true,
       "iconUrl": "",
       "description": "Мощный офлайн-инсталлятор драйверов с огромной базой.",
+      "profile": "full",
       "sha256": "64bfc0d9196e7cbde12e046fce71fd6c1846d389c4454da8f5c5734fe71ae420",
       "chocoId": "",
       "scoopId": ""
@@ -1007,6 +1068,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Полное удаление драйверов видеокарты без остатков.",
+      "profile": "full",
       "sha256": "",
       "chocoId": "display-driver-uninstaller",
       "scoopId": "ddu"
@@ -1022,6 +1084,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Установка чистых драйверов NVIDIA без телеметрии, GeForce Experience и лишних компонентов.",
+      "profile": "full",
       "sha256": "",
       "chocoId": "",
       "scoopId": "nvcleanstall"
@@ -1037,6 +1100,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Антивирус для защиты от вредоносного ПО.",
+      "profile": "basic",
       "sha256": "f450cef035a0355bdc9c5da156a92a83ea1ca3787cf8ccc6ace3559c3c1100f9",
       "chocoId": "malwarebytes",
       "scoopId": "malwarebytes"
@@ -1052,6 +1116,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Диагностика и тестирование компонентов компьютера.",
+      "profile": "extended",
       "sha256": "16ece784678bf4547d75b5dd99c2c69507fe7219e9437d2a3b92ee3434187f9e",
       "chocoId": "aida64",
       "scoopId": ""
@@ -1063,10 +1128,11 @@
       "wingetId": "CPUID.HWMonitor",
       "downloadUrl": "https://www.cpuid.com/downloads/hwmonitor/hwmonitor_1.56.exe",
       "version": "1.56",
-      "size": "0.0 MB",
+      "size": "1.5 MB",
       "official": true,
       "iconUrl": "",
       "description": "Мониторинг температуры, напряжений и частот.",
+      "profile": "extended",
       "sha256": "e85cf0d7541d8682c521d61d457e6822a2c1785b72afb9dfd102cc39ffdaad03",
       "chocoId": "hwmonitor",
       "scoopId": "hwmonitor"
@@ -1082,6 +1148,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Консольный клиент для облачных хранилищ.",
+      "profile": "full",
       "sha256": "ecb0ed9006e0d1a693757007716a11dab6c2cde6dac3f2fd87da962eaa73d11d",
       "chocoId": "rclone",
       "scoopId": "rclone"
@@ -1097,6 +1164,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Автоматическая настройка цветовой температуры экрана.",
+      "profile": "basic",
       "sha256": "f035d1c4cd78468d76407afbb90ce4b73b2d04b7647c0d6143969a1823cff1ae",
       "chocoId": "flux",
       "scoopId": "flux"
@@ -1112,6 +1180,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Скриптовый язык для автоматизации действий.",
+      "profile": "full",
       "sha256": "49a48e879f7480238d2fe17520ac19afe83685aac0b886719f9e1eac818b75cc",
       "chocoId": "autohotkey",
       "scoopId": "autohotkey"
@@ -1127,6 +1196,7 @@
       "official": true,
       "iconUrl": "",
       "description": "Самый быстрый анализатор дискового пространства.",
+      "profile": "extended",
       "sha256": "8367f467070a8cf6e0608eace0dfc96796ed145e291e88f96d2621ea45fd7b5e",
       "chocoId": "wiztree",
       "scoopId": "wiztree"
@@ -1138,10 +1208,11 @@
       "wingetId": "CPUID.CPU-Z",
       "downloadUrl": "https://www.cpuid.com/downloads/cpu-z/cpu-z_2.12-en.exe",
       "version": "2.12",
-      "size": "0.0 MB",
+      "size": "2.2 MB",
       "official": true,
       "iconUrl": "",
       "description": "Детальная информация о процессоре, памяти и материнской плате.",
+      "profile": "extended",
       "sha256": "d7a83bfc6b9e868b6c3d011c48a9c3a80af57d2bc0bb658cf1f76fa57b84a716",
       "chocoId": "cpu-z",
       "scoopId": "cpu-z"
