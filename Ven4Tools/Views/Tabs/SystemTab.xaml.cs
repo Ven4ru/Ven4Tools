@@ -21,7 +21,17 @@ namespace Ven4Tools.Views.Tabs
         private const string TurboBoostRegPath = @"SYSTEM\ControlSet001\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7";
         private const string TurboSubgroup = "54533251-82be-4824-96c1-47b60b740d00";
         private const string TurboSetting  = "be337238-0d82-4146-a960-4f3749d470c7";
-        
+
+        // Единый HttpClient для скачивания установщиков в кэш — переиспользуется,
+        // чтобы не плодить сокеты (socket exhaustion) при каждом запуске загрузки.
+        private static readonly HttpClient _httpClient = CreateCacheHttpClient();
+
+        private static HttpClient CreateCacheHttpClient()
+        {
+            var client = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
+            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+            return client;
+        }
 
         private bool _initialized = false;
         private bool _connSubscribed = false;
@@ -671,8 +681,7 @@ namespace Ven4Tools.Views.Tabs
                 SaveOfflineSettings();
                 OfflineService.EnsureCacheDir();
 
-                using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
-                http.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
+                var http = _httpClient;
 
                 int done = 0, total = selected.Count, errors = 0;
 

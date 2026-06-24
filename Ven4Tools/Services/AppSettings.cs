@@ -31,7 +31,10 @@ namespace Ven4Tools.Services
                 Notifications = data.Notifications;
                 UpdateNotifications = data.UpdateNotifications;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "Ошибка сохранения настроек");
+            }
         }
 
         private sealed class SettingsData
