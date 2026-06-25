@@ -49,28 +49,6 @@ namespace Ven4Tools.Launcher.Services
         }
 
         /// <summary>
-        /// Получение последнего релиза
-        /// </summary>
-        public async Task<GitHubRelease?> GetLatestRelease()
-        {
-            try
-            {
-                string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases/latest";
-                using var response = await _sharedClient.GetAsync(url);
-
-                if (!response.IsSuccessStatusCode)
-                    return null;
-
-                string json = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<GitHubRelease>(json);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
         /// Получение всех релизов
         /// </summary>
         public async Task<(List<GitHubRelease> Releases, string? Error)> GetAllReleasesWithError()
@@ -85,7 +63,9 @@ namespace Ven4Tools.Launcher.Services
 
             try
             {
-                string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases";
+                // ?per_page=100 — без пагинации GitHub отдаёт лишь первые 30 релизов,
+                // и самообновление сломается, как только релизов станет больше 30.
+                string url = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases?per_page=100";
                 using var response = await _sharedClient.GetAsync(url);
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)

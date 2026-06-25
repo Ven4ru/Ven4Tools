@@ -15,6 +15,10 @@ namespace Ven4Tools.Launcher
                 AddLog("🔍 Проверка обновлений лаунчера...");
                 btnCheckUpdates.IsEnabled = false;
 
+                // Кнопка обновляет не только статус лаунчера, но и список
+                // клиентских версий (CDN + GitHub-релизы).
+                await LoadVersionsAsync();
+
                 var updateSvc = new LauncherUpdateService(AddLog);
                 var updateInfo = await updateSvc.CheckForUpdateAsync();
 
