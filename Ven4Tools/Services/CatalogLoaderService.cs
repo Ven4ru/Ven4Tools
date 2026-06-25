@@ -123,8 +123,9 @@ namespace Ven4Tools.Services
             {
                 throw;
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Write($"[CatalogLoaderService] Не удалось загрузить каталог из сети — переход на кэш/встроенный: {ex.Message}");
                 var cached = await TryReadCacheAsync(ct);
                 if (cached != null)
                 {
@@ -182,8 +183,9 @@ namespace Ven4Tools.Services
             {
                 throw;
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Write($"[CatalogLoaderService] Повреждён кэш каталога — файл удалён: {ex.Message}");
                 // Битый кэш — удаляем, чтобы при следующем запуске не споткнуться снова
                 try { File.Delete(_localCatalogPath); } catch { }
                 return null;

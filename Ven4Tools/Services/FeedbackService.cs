@@ -32,7 +32,7 @@ namespace Ven4Tools.Services
                 File.WriteAllText(FeedbackPath,
                     JsonConvert.SerializeObject(payload, Formatting.Indented));
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[FeedbackService] Сохранение отзыва: {ex.Message}"); }
         }
 
         public static FeedbackRecord? Read()

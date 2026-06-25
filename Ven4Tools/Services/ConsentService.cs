@@ -30,8 +30,9 @@ namespace Ven4Tools.Services
                 var json = await File.ReadAllTextAsync(_consentPath);
                 return JsonConvert.DeserializeObject<Consent>(json);
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Write($"[ConsentService] Чтение настроек согласия: {ex.Message}");
                 return null;
             }
         }

@@ -34,8 +34,9 @@ namespace Ven4Tools.Services
                 await process.WaitForExitAsync();
                 await stderrTask;
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Write($"[InstalledAppsService] Получение списка установленных приложений (winget list): {ex.Message}");
                 _rawOutput = string.Empty;
             }
         }
