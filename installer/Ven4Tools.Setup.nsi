@@ -134,7 +134,7 @@ Section "Лаунчер Ven4Tools (обязательно)" SEC_MAIN
   WriteRegDWORD HKCU "${UNINST_KEY}" "EstimatedSize" "$0"
 SectionEnd
 
-Section "Автозапуск при входе в Windows" SEC_AUTORUN
+Section /o "Автозапуск при входе в Windows" SEC_AUTORUN
   ; Та же запись, которой управляет галка «Запускать при старте Windows»
   ; в трее лаунчера — конфликтов не будет.
   WriteRegStr HKCU "${RUN_KEY}" "${RUN_VALUE}" '"$INSTDIR\${EXE_NAME}"'

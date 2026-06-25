@@ -242,12 +242,17 @@ namespace Ven4Tools.Launcher.Services
             sb.AppendLine("copy /y \"%SRC%\\*.exe\" \"%DST%\\\" >nul 2>&1");
             sb.AppendLine("if %errorlevel%==0 goto ok");
             sb.AppendLine("set /a ATTEMPTS+=1");
-            sb.AppendLine("if %ATTEMPTS% geq 15 goto cleanup");
+            sb.AppendLine("if %ATTEMPTS% geq 15 goto fail");
             sb.AppendLine("timeout /t 1 /nobreak >nul");
             sb.AppendLine("goto retry");
             sb.AppendLine();
             sb.AppendLine(":ok");
             sb.AppendLine("rmdir /s /q \"%SRC%\" >nul 2>&1");
+            sb.AppendLine("start \"\" \"%DST%\\Ven4Tools.Launcher.exe\"");
+            sb.AppendLine("goto cleanup");
+            sb.AppendLine();
+            sb.AppendLine(":fail");
+            sb.AppendLine("rem Обновление не удалось: запускаем уже установленный лаунчер, чтобы пользователь не остался без него.");
             sb.AppendLine("start \"\" \"%DST%\\Ven4Tools.Launcher.exe\"");
             sb.AppendLine();
             sb.AppendLine(":cleanup");
