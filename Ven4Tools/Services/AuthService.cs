@@ -83,6 +83,7 @@ namespace Ven4Tools.Services
             }
             catch (Exception ex)
             {
+                AppLogger.Write($"[AuthService] set_password: {ex.Message}");
                 return new AuthResult { Error = $"Ошибка: {ex.Message}" };
             }
         }
@@ -117,6 +118,7 @@ namespace Ven4Tools.Services
             }
             catch (Exception ex)
             {
+                AppLogger.Write($"[AuthService] {action}: {ex.Message}");
                 return new AuthResult { Error = $"Ошибка подключения: {ex.Message}" };
             }
         }
