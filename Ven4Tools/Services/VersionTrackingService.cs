@@ -23,7 +23,11 @@ namespace Ven4Tools.Services
                     _data = JsonConvert.DeserializeObject<Dictionary<string, TrackedInstall>>(
                         File.ReadAllText(_path)) ?? new();
             }
-            catch { _data = new(); }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[VersionTrackingService] Чтение данных трекинга версий: {ex.Message}");
+                _data = new();
+            }
         }
 
         private void Save()

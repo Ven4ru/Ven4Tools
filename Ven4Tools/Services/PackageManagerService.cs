@@ -258,7 +258,7 @@ namespace Ven4Tools.Services
                         results.Add((parts[0].Trim(), parts[0].Trim(), parts[1].Trim()));
                 }
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[PackageManagerService] Поиск в Chocolatey: {ex.Message}"); }
             return results;
         }
 
@@ -298,7 +298,7 @@ namespace Ven4Tools.Services
                     if (results.Count >= 8) break;
                 }
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[PackageManagerService] Поиск в Scoop: {ex.Message}"); }
             return results;
         }
 

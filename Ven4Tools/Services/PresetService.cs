@@ -123,7 +123,7 @@ namespace Ven4Tools.Services
                     // При неуспехе сервера локальную копию не трогаем
                     return r["success"]?.Value<bool>() == true;
                 }
-                catch { return false; }
+                catch (Exception ex) { AppLogger.Write($"[PresetService] DeleteAsync: {ex.Message}"); return false; }
             }
             var local = LoadLocal();
             local.RemoveAll(p => p.Id == preset.Id);
@@ -221,7 +221,7 @@ namespace Ven4Tools.Services
                 var r = JObject.Parse(json);
                 return r["success"]?.Value<bool>() == true ? r["share_code"]?.ToString() : null;
             }
-            catch { return null; }
+            catch (Exception ex) { AppLogger.Write($"[PresetService] ShareAsync: {ex.Message}"); return null; }
         }
 
         // ── Загрузить по коду ─────────────────────────────────────────────────────
@@ -243,7 +243,7 @@ namespace Ven4Tools.Services
                     ShareCode   = r["share_code"]?.ToString()
                 };
             }
-            catch { return null; }
+            catch (Exception ex) { AppLogger.Write($"[PresetService] GetByCodeAsync: {ex.Message}"); return null; }
         }
 
         // ── Локальное хранение ────────────────────────────────────────────────────
@@ -256,7 +256,7 @@ namespace Ven4Tools.Services
                 var json = File.ReadAllText(LocalPath, Encoding.UTF8);
                 return JsonConvert.DeserializeObject<List<Preset>>(json) ?? new();
             }
-            catch { return new(); }
+            catch (Exception ex) { AppLogger.Write($"[PresetService] Чтение локальных пресетов: {ex.Message}"); return new(); }
         }
 
         private static void SaveLocal(List<Preset> list)

@@ -81,7 +81,7 @@ namespace Ven4Tools.Services
                 foreach (var file in Directory.GetFiles(dir))
                     try { File.Delete(file); } catch { }
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[OfflineService] Очистка офлайн-кэша: {ex.Message}"); }
         }
 
         public static void EnsureCacheDir() =>
@@ -141,6 +141,7 @@ namespace Ven4Tools.Services
             catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
+                AppLogger.Write($"[OfflineService] Кэширование установщика «{app.Name}» (прямая ссылка): {ex.Message}");
                 progress?.Report(($"❌ {app.Name}: {ex.Message}", 0));
                 try { if (File.Exists(dest)) File.Delete(dest); } catch { }
                 return false;
@@ -220,7 +221,12 @@ namespace Ven4Tools.Services
                 return ok;
             }
             catch (OperationCanceledException) { throw; }
-            catch (Exception ex) { progress?.Report(($"❌ {app.Name}: {ex.Message}", 0)); return false; }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[OfflineService] Кэширование установщика «{app.Name}» (winget): {ex.Message}");
+                progress?.Report(($"❌ {app.Name}: {ex.Message}", 0));
+                return false;
+            }
         }
 
         private static readonly HashSet<char> _invalidChars =

@@ -34,8 +34,9 @@ namespace Ven4Tools.Services
 
                 return ParseVersions(output);
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Write($"[WingetVersionsService] Получение списка версий «{wingetId}»: {ex.Message}");
                 return new List<string>();
             }
         }
