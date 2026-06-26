@@ -159,7 +159,7 @@ namespace Ven4Tools.Services
                 return count;
             }
             catch (OperationCanceledException) { throw; }
-            catch { return 0; }
+            catch (Exception ex) { AppLogger.Write($"[UpdateBg] Ошибка winget upgrade: {ex.Message}"); return 0; }
         }
 
         // ── Новые приложения в каталоге ─────────────────────────────────────────
@@ -167,7 +167,9 @@ namespace Ven4Tools.Services
         private async Task CheckNewAppsAsync(CancellationToken ct)
         {
             // Гарантируем загрузку каталога (online → cache → embedded).
-            try { await CatalogLoaderService.PreloadAsync(ct); } catch { }
+            try { await CatalogLoaderService.PreloadAsync(ct); }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex) { AppLogger.Write($"[UpdateBg] Ошибка PreloadAsync: {ex.Message}"); }
             ct.ThrowIfCancellationRequested();
 
             var catalog = CatalogLoaderService.LoadedCatalog;
@@ -220,7 +222,7 @@ namespace Ven4Tools.Services
                 var ids = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(KnownAppsPath));
                 return ids == null ? null : new HashSet<string>(ids, StringComparer.OrdinalIgnoreCase);
             }
-            catch { return null; }
+            catch (Exception ex) { AppLogger.Write($"[UpdateBg] Ошибка чтения known_apps: {ex.Message}"); return null; }
         }
 
         private static void SaveKnownApps(HashSet<string> ids)
@@ -231,7 +233,7 @@ namespace Ven4Tools.Services
                 File.WriteAllText(KnownAppsPath,
                     JsonConvert.SerializeObject(ids.ToList(), Formatting.Indented));
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Write($"[UpdateBg] Ошибка записи known_apps: {ex.Message}"); }
         }
 
         // ── Вспомогательное ─────────────────────────────────────────────────────
