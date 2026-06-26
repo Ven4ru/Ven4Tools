@@ -43,8 +43,9 @@ namespace Ven4Tools.Services
 
                     return true;
                 }
-                catch
+                catch (System.Exception ex)
                 {
+                    AppLogger.Write($"[SystemRestore] Ошибка создания точки: {ex.GetType().Name}: {ex.Message}");
                     return false;
                 }
             });

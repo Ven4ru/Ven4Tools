@@ -157,6 +157,13 @@ namespace Ven4Tools.Services
             if (!string.IsNullOrEmpty(profile))
                 text = text.Replace(profile, "%USERPROFILE%", StringComparison.OrdinalIgnoreCase);
 
+            // Убираем имя пользователя из непутевого контекста (SQL-ошибки, UNC-пути).
+            // Делаем это в конце — после замены путей на переменные окружения,
+            // иначе имя внутри путей пропало бы и %LOCALAPPDATA%/%USERPROFILE% не сработали.
+            var userName = Environment.UserName;
+            if (!string.IsNullOrEmpty(userName))
+                text = text.Replace(userName, "<user>", StringComparison.OrdinalIgnoreCase);
+
             return text;
         }
 

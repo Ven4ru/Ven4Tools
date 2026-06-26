@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -9,9 +11,78 @@ namespace Ven4Tools.Services
     // Универсальные методы запуска winget. Не для Launcher — он самостоятельный проект.
     internal static class WingetRunner
     {
+        // Белый список символов для аргумента winget (id пакета, флаги, значения).
+        // Дополнительно к набору из аудита разрешён '+' — он встречается в реальных
+        // id пакетов (например "Notepad++.Notepad++"), его наличие безопасно.
+        private static readonly Regex _safeArgRegex =
+            new(@"^[A-Za-z0-9._\-+{}()]+$", RegexOptions.Compiled);
+
+        // Флаги, после которых идёт путь к файлу (export/import). Для них значение
+        // в кавычках — это путь, выбранный пользователем через системный диалог,
+        // поэтому к нему белый список символов не применяется.
+        private static readonly HashSet<string> _pathFlags =
+            new(StringComparer.OrdinalIgnoreCase)
+            { "-o", "--output", "-i", "--import-file", "--manifest", "-m" };
+
+        private static bool IsArgSafe(string arg) => _safeArgRegex.IsMatch(arg);
+
+        // Разбивает строку аргументов на токены с учётом кавычек. Возвращает текст
+        // токена и признак того, был ли он заключён в двойные кавычки.
+        private static List<(string Value, bool Quoted)> TokenizeArgs(string args)
+        {
+            var result = new List<(string, bool)>();
+            var sb = new StringBuilder();
+            bool inQuotes = false, quoted = false, hasToken = false;
+
+            foreach (char c in args)
+            {
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                    quoted = true;
+                    hasToken = true;
+                    continue;
+                }
+                if (!inQuotes && char.IsWhiteSpace(c))
+                {
+                    if (hasToken)
+                    {
+                        result.Add((sb.ToString(), quoted));
+                        sb.Clear();
+                        quoted = false;
+                        hasToken = false;
+                    }
+                    continue;
+                }
+                sb.Append(c);
+                hasToken = true;
+            }
+            if (hasToken) result.Add((sb.ToString(), quoted));
+            return result;
+        }
+
+        // Проверяет строку аргументов перед запуском процесса. Защита от инъекции
+        // дополнительных winget-флагов через скомпрометированный id пакета
+        // (например 'Foo" --override "/payload'): попытка «вырваться» из кавычек
+        // создаёт токены, которые не проходят белый список → ArgumentException.
+        private static void ValidateArgs(string args)
+        {
+            string prev = "";
+            foreach (var (value, quoted) in TokenizeArgs(args))
+            {
+                // Значение в кавычках сразу после флага пути (-o/-i и т.п.) —
+                // это путь к файлу из системного диалога, проверку символов пропускаем.
+                bool isTrustedPath = quoted && _pathFlags.Contains(prev);
+                if (!isTrustedPath && !IsArgSafe(value))
+                    throw new ArgumentException($"Недопустимый аргумент winget: '{value}'");
+                prev = value;
+            }
+        }
         // [0-9;?]* — параметры CSI включая private-mode '?'; lLM — cursor hide/show.
+        // OSC закрывается либо BEL (\x07), либо ST (ESC \). C1 CSI (\x9B) — однобайтовый
+        // вариант ESC[ в наборе C1, тоже вырезаем.
         private static readonly Regex _ansiRegex =
-            new(@"\x1B(?:\[[0-9;?]*[mGKHFABCDsuJhlLM]|\][^\x07]*\x07|[()][0-9A-Za-z])",
+            new(@"\x1B(?:\[[0-9;?]*[mGKHFABCDsuJhlLM]|\][^\x07\x1B]*(?:\x07|\x1B\\)|[()][0-9A-Za-z])|\x9B[0-9;?]*[mGKHFABCDsuJhlLM]",
                 RegexOptions.Compiled);
 
         public static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
@@ -36,6 +107,7 @@ namespace Ven4Tools.Services
         // Возвращает код выхода и вывод. ExitCode = -1, если процесс убит по таймауту.
         public static async Task<(int ExitCode, string Output)> RunAsync(string args, TimeSpan? timeout = null)
         {
+            ValidateArgs(args);
             var psi = new ProcessStartInfo
             {
                 FileName               = "winget",
@@ -71,6 +143,7 @@ namespace Ven4Tools.Services
         // Таймаут по умолчанию — 45 мин (upgrade --all).
         public static async Task<int> RunStreamingAsync(string args, Action<string> onLine, TimeSpan? timeout = null)
         {
+            ValidateArgs(args);
             var psi = new ProcessStartInfo
             {
                 FileName               = "winget",
