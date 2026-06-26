@@ -129,98 +129,132 @@ namespace Ven4Tools.Views.Tabs
             bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед очисткой системы");
             AppLogger.Write(rpOk
                 ? "✅ Точка восстановления создана"
-                : "⚠️ Точка восстановления не создана (продолжаю)");
+                : "⚠️ Точка восстановления не создана");
+
+            // Если точку восстановления создать не удалось — предупреждаем пользователя
+            // и даём возможность отказаться: без неё откат изменений штатными
+            // средствами Windows будет невозможен.
+            if (!rpOk)
+            {
+                var proceed = MessageBox.Show(
+                    "Не удалось создать точку восстановления системы.\n\n" +
+                    "Без неё откатить изменения штатными средствами Windows будет нельзя.\n\n" +
+                    "Продолжить без точки восстановления?",
+                    "Debloater — нет точки восстановления",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                if (proceed != MessageBoxResult.Yes)
+                {
+                    txtDebloatStatus.Text = "Отменено: точка восстановления не создана";
+                    progressDebloat.Visibility = Visibility.Collapsed;
+                    btnApplyDebloat.IsEnabled = true;
+                    return;
+                }
+            }
 
             _cts = new CancellationTokenSource();
             int done = 0;
+            int succeeded = 0;
 
             foreach (var item in selected)
             {
                 txtDebloatStatus.Text = $"⚙️ {item.Name}...";
                 progressDebloat.Value = (double)done / selected.Count * 100;
 
-                bool ok = await ApplyItemAsync(item);
+                bool ok = await ApplyItemAsync(item, _cts.Token);
                 AppLogger.Write($"{(ok ? "✅" : "❌")} {item.Name}");
+                if (ok) succeeded++;
                 done++;
             }
 
             progressDebloat.Value = 100;
-            txtDebloatStatus.Text = $"✅ Готово: применено {done} из {selected.Count}";
+            txtDebloatStatus.Text = $"✅ Готово: применено {succeeded} из {selected.Count}";
             btnApplyDebloat.IsEnabled = true;
             _cts.Dispose(); _cts = null;
         }
 
-        private async Task<bool> ApplyItemAsync(DebloatItem item)
+        private async Task<bool> ApplyItemAsync(DebloatItem item, CancellationToken ct = default)
         {
             try
             {
                 if (item.Category == "app")
-                    return await RemoveAppxAsync(item.Id);
+                    return await RemoveAppxAsync(item.Id, ct);
 
                 if (item.Category == "privacy")
-                    return ApplyPrivacyTweak(item.Id);
+                    return await ApplyPrivacyTweak(item.Id, ct);
 
                 if (item.Category == "service")
-                    return await DisableServiceAsync(item.Id);
+                    return await DisableServiceAsync(item.Id, ct);
 
                 return false;
             }
-            catch { return false; }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[Дебоатер] Ошибка в ApplyItemAsync [{item.Name}]: {ex.Message}");
+                return false;
+            }
         }
 
-        private async Task<bool> RemoveAppxAsync(string packageName)
+        private async Task<bool> RemoveAppxAsync(string packageName, CancellationToken ct = default)
         {
             string script = $"Get-AppxPackage -Name '*{packageName}*' | Remove-AppxPackage -ErrorAction SilentlyContinue; " +
                             $"Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like '*{packageName}*' | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue";
-            return await RunPSAsync(script);
+            return await RunPSAsync(script, ct);
         }
 
-        private bool ApplyPrivacyTweak(string tweakId)
+        private async Task<bool> ApplyPrivacyTweak(string tweakId, CancellationToken ct = default)
         {
             switch (tweakId)
             {
                 case "telemetry":
-                    SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0);
-                    SetReg(@"HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection", "AllowTelemetry", 0);
-                    return true;
+                {
+                    bool a = await SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0, ct);
+                    bool b = await SetReg(@"HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection", "AllowTelemetry", 0, ct);
+                    return a && b;
+                }
                 case "activity_history":
-                    SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\System", "EnableActivityFeed", 0);
-                    SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 0);
-                    return true;
+                {
+                    bool a = await SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\System", "EnableActivityFeed", 0, ct);
+                    bool b = await SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 0, ct);
+                    return a && b;
+                }
                 case "advertising_id":
-                    SetReg(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo", "Enabled", 0);
-                    return true;
+                    return await SetReg(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo", "Enabled", 0, ct);
                 case "content_delivery":
-                    SetReg(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SystemPaneSuggestionsEnabled", 0);
-                    SetReg(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SilentInstalledAppsEnabled", 0);
-                    return true;
+                {
+                    bool a = await SetReg(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SystemPaneSuggestionsEnabled", 0, ct);
+                    bool b = await SetReg(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SilentInstalledAppsEnabled", 0, ct);
+                    return a && b;
+                }
                 case "cortana_registry":
-                    SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search", "AllowCortana", 0);
-                    return true;
+                    return await SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search", "AllowCortana", 0, ct);
                 case "input_tracking":
-                    SetReg(@"HKCU:\SOFTWARE\Microsoft\Input\TIPC", "Enabled", 0);
-                    return true;
+                    return await SetReg(@"HKCU:\SOFTWARE\Microsoft\Input\TIPC", "Enabled", 0, ct);
                 case "diag_track":
-                    _ = RunPSAsync("Stop-Service DiagTrack -Force -ErrorAction SilentlyContinue; Set-Service DiagTrack -StartupType Disabled -ErrorAction SilentlyContinue");
-                    return true;
+                    return await RunPSAsync("Stop-Service DiagTrack -Force -ErrorAction SilentlyContinue; Set-Service DiagTrack -StartupType Disabled -ErrorAction SilentlyContinue", ct);
                 default:
                     return false;
             }
         }
 
-        private async Task<bool> DisableServiceAsync(string tweakId)
+        private async Task<bool> DisableServiceAsync(string tweakId, CancellationToken ct = default)
         {
-            string svcName = tweakId switch
+            string? svcName = tweakId switch
             {
                 "svc_diagtrack"     => "DiagTrack",
                 "svc_sysmain"       => "SysMain",
                 "svc_dmwappushsvc"  => "dmwappushservice",
-                _                   => tweakId
+                _                   => null
             };
-            return await RunPSAsync($"Stop-Service {svcName} -Force -ErrorAction SilentlyContinue; Set-Service {svcName} -StartupType Disabled -ErrorAction SilentlyContinue");
+            if (svcName == null)
+            {
+                AppLogger.Write($"[Дебоатер] Неизвестный tweakId: {tweakId}");
+                return false;
+            }
+            return await RunPSAsync($"Stop-Service {svcName} -Force -ErrorAction SilentlyContinue; Set-Service {svcName} -StartupType Disabled -ErrorAction SilentlyContinue", ct);
         }
 
-        private void SetReg(string path, string name, int value)
+        private static async Task<bool> SetReg(string path, string name, int value, CancellationToken ct = default)
         {
             try
             {
@@ -231,17 +265,36 @@ namespace Ven4Tools.Views.Tabs
                     RedirectStandardOutput = true, RedirectStandardError = true
                 };
                 using var p = Process.Start(psi);
-                if (p != null)
+                if (p == null) return false;
+
+                var outTask = p.StandardOutput.ReadToEndAsync();
+                var errTask = p.StandardError.ReadToEndAsync();
+
+                // Тайм-аут 5 секунд: запись в реестр не должна блокировать процесс надолго.
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(5));
+                try
                 {
-                    var outTask = Task.Run(() => p.StandardOutput.ReadToEnd());
-                    var errTask = Task.Run(() => p.StandardError.ReadToEnd());
-                    p.WaitForExit(5000);
+                    await p.WaitForExitAsync(timeoutCts.Token);
                 }
+                catch (OperationCanceledException)
+                {
+                    try { p.Kill(true); } catch { }
+                    AppLogger.Write($"[Дебоатер] SetReg: тайм-аут или отмена [{path}\\{name}]");
+                    return false;
+                }
+
+                await Task.WhenAll(outTask, errTask);
+                return p.ExitCode == 0;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[Дебоатер] Ошибка SetReg [{path}\\{name}]: {ex.Message}");
+                return false;
+            }
         }
 
-        private async Task<bool> RunPSAsync(string script)
+        private async Task<bool> RunPSAsync(string script, CancellationToken ct = default)
         {
             try
             {
@@ -256,10 +309,14 @@ namespace Ven4Tools.Views.Tabs
                 await Task.WhenAll(
                     p.StandardOutput.ReadToEndAsync(),
                     p.StandardError.ReadToEndAsync());
-                await p.WaitForExitAsync();
+                await p.WaitForExitAsync(ct);
                 return p.ExitCode == 0;
             }
-            catch { return false; }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[Дебоатер] Ошибка RunPSAsync: {ex.Message}");
+                return false;
+            }
         }
     }
 
