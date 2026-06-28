@@ -75,6 +75,7 @@ _backup_*/
 _screenshots/
 _release/
 CLAUDE.md
+AGENTS.md
 
 # UI-тесты (отдельная папка тестов)
 Ven4Tools.UITests/
