@@ -47,6 +47,7 @@ namespace Ven4Tools.Services
                 AppDomain.CurrentDomain.BaseDirectory,
                 "Data",
                 "master.json");
+        private string LocalSignaturePath => _localCatalogPath + ".sig";
 
         // Таймаут хранится отдельно и применяется per-request через CancellationTokenSource:
         // менять HttpClient.Timeout после первого запроса нельзя (InvalidOperationException)
@@ -84,18 +85,18 @@ namespace Ven4Tools.Services
             // Первый ответивший источник выигрывает; "source" помечается соответственно.
             try
             {
-                string? remoteJson = await TryDownloadAsync(HostingCatalogUrl, HostingTimeoutSeconds, ct);
+                string? remoteJson = await TryDownloadVerifiedAsync(HostingCatalogUrl, HostingTimeoutSeconds, ct);
                 string source = "hosting";
 
                 if (remoteJson == null)
                 {
-                    remoteJson = await TryDownloadAsync(CdnCatalogUrl, CdnTimeoutSeconds, ct);
+                    remoteJson = await TryDownloadVerifiedAsync(CdnCatalogUrl, CdnTimeoutSeconds, ct);
                     source = "cdn";
                 }
 
                 if (remoteJson == null)
                 {
-                    remoteJson = await TryDownloadAsync(RemoteCatalogUrl, _timeoutSeconds, ct);
+                    remoteJson = await TryDownloadVerifiedAsync(RemoteCatalogUrl, _timeoutSeconds, ct);
                     source = "online";
                 }
 
@@ -113,6 +114,9 @@ namespace Ven4Tools.Services
                 {
                     Directory.CreateDirectory(Path.GetDirectoryName(_localCatalogPath)!);
                     await File.WriteAllTextAsync(_localCatalogPath, remoteJson, ct);
+                    var sig = await TryDownloadAsync(GetSignatureUrl(source), _timeoutSeconds, ct);
+                    if (sig != null && CatalogSignatureVerifier.Verify(remoteJson, sig))
+                        await File.WriteAllTextAsync(LocalSignaturePath, sig, ct);
                 }
                 catch { /* кэш — best-effort; каталог уже загружен */ }
 
@@ -165,6 +169,26 @@ namespace Ven4Tools.Services
             }
         }
 
+        private async Task<string?> TryDownloadVerifiedAsync(string url, int timeoutSeconds, CancellationToken ct)
+        {
+            var json = await TryDownloadAsync(url, timeoutSeconds, ct);
+            if (json == null) return null;
+            var signature = await TryDownloadAsync(url + ".sig", timeoutSeconds, ct);
+            if (signature == null || !CatalogSignatureVerifier.Verify(json, signature))
+            {
+                AppLogger.Write($"[CatalogLoaderService] Подпись каталога недействительна: {url}");
+                return null;
+            }
+            return json;
+        }
+
+        private static string GetSignatureUrl(string source) => source switch
+        {
+            "hosting" => HostingCatalogUrl + ".sig",
+            "cdn" => CdnCatalogUrl + ".sig",
+            _ => RemoteCatalogUrl + ".sig"
+        };
+
         /// <summary>
         /// Читает кэш каталога с диска. При повреждённом JSON удаляет битый файл
         /// и возвращает null, чтобы цепочка загрузки продолжилась на embedded.
@@ -175,6 +199,9 @@ namespace Ven4Tools.Services
             try
             {
                 var json = await File.ReadAllTextAsync(_localCatalogPath, ct);
+                if (!File.Exists(LocalSignaturePath)) return null;
+                var signature = await File.ReadAllTextAsync(LocalSignaturePath, ct);
+                if (!CatalogSignatureVerifier.Verify(json, signature)) return null;
                 var catalog = Deserialize(json);
                 catalog.Source = "cache";
                 return catalog;
