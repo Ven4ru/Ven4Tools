@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Ven4Tools.Services
@@ -26,7 +27,7 @@ namespace Ven4Tools.Services
         /// Проверяет, указан ли ожидаемый SHA256-хеш в каталоге.
         /// </summary>
         public static bool HasExpectedHash(string? expectedHash)
-            => !string.IsNullOrWhiteSpace(expectedHash);
+            => expectedHash?.Length == 64 && expectedHash.All(Uri.IsHexDigit);
 
         /// <summary>
         /// Проверяет SHA256 файла. При пустом/отсутствующем ожидаемом хеше

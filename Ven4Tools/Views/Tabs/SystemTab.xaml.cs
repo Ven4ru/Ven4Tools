@@ -46,6 +46,7 @@ namespace Ven4Tools.Views.Tabs
             public bool   HasDirectUrl { get; set; }
             public string DownloadUrl { get; set; } = "";
             public string WingetId    { get; set; } = "";
+            public string Sha256      { get; set; } = "";
         }
 
         public SystemTab()
@@ -506,7 +507,7 @@ namespace Ven4Tools.Views.Tabs
             chkForceOnlineMode.IsChecked  = ProfileService.Current.ForceOnlineMode;
             txtOfflineCachePath.Text      = ProfileService.Current.OfflineCachePath;
             if (string.IsNullOrEmpty(txtOfflineCachePath.Text))
-                txtOfflineCachePath.Text = OfflineService.CachePath;
+                txtOfflineCachePath.Text = OfflineService.CacheBasePath;
         }
 
         private void SaveOfflineSettings()
@@ -583,7 +584,8 @@ namespace Ven4Tools.Views.Tabs
             }
 
             _cacheAppItems = catalog.Apps
-                .Where(a => !string.IsNullOrEmpty(a.DownloadUrl) || !string.IsNullOrEmpty(a.WingetId))
+                .Where(a => HashHelper.HasExpectedHash(a.Sha256) &&
+                            (!string.IsNullOrEmpty(a.DownloadUrl) || !string.IsNullOrEmpty(a.WingetId)))
                 .OrderBy(a => a.Name)
                 .Select(a => new CacheAppItem
                 {
@@ -591,7 +593,8 @@ namespace Ven4Tools.Views.Tabs
                     DisplayName  = $"{a.Name}  [{a.Category}]{(OfflineService.HasCachedInstaller(a.Id) ? " ✅" : "")}",
                     HasDirectUrl = !string.IsNullOrEmpty(a.DownloadUrl),
                     DownloadUrl  = a.DownloadUrl,
-                    WingetId     = a.WingetId
+                    WingetId     = a.WingetId,
+                    Sha256       = a.Sha256!
                 })
                 .ToList();
 
@@ -695,7 +698,8 @@ namespace Ven4Tools.Views.Tabs
                         Id          = item.Id,
                         Name        = item.DisplayName.Split('[')[0].Trim().TrimEnd(' ', '✅').Trim(),
                         DownloadUrl = item.DownloadUrl,
-                        WingetId    = item.WingetId
+                        WingetId    = item.WingetId,
+                        Sha256      = item.Sha256
                     };
 
                     var progress = new Progress<(string status, int pct)>(v =>
