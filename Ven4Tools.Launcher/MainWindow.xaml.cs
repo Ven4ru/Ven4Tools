@@ -47,6 +47,7 @@ namespace Ven4Tools.Launcher
         public MainWindow()
         {
             InitializeComponent();
+            bool isUiTest = Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1";
 
             string appData = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -55,7 +56,10 @@ namespace Ven4Tools.Launcher
             _settingsPath = Path.Combine(appData, "launcher_settings.json");
 
             LoadSettings();
-            CreateTrayIcon();
+            if (isUiTest)
+                _minimizeToTray = false;
+            if (!isUiTest)
+                CreateTrayIcon();
             SyncCheckboxes();
 
             if (string.IsNullOrEmpty(_installPath))
@@ -63,14 +67,18 @@ namespace Ven4Tools.Launcher
 
             _clientPath = Path.Combine(_installPath, "Ven4Tools_Client");
             Directory.CreateDirectory(_clientPath);
-            txtInstallPath.Text = _clientPath;
+            txtInstallPath.Text = isUiTest ? @"C:\Ven4Tools-Test\Client" : _clientPath;
 
             // Фоновый сервис запускается после установки _clientPath:
             // он читает путь клиента при первой проверке обновлений
-            StartBackgroundService();
+            if (!isUiTest)
+                StartBackgroundService();
 
             Loaded += async (s, e) =>
             {
+                if (isUiTest)
+                    return;
+
                 // Лаунчер запущен не из папки установки — предлагаем установить.
                 // Если пользователь согласился и установщик запущен — выходим.
                 var installSvc = new LauncherUpdateService(AddLog);

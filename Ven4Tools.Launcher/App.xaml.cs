@@ -18,6 +18,12 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        if (Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1")
+        {
+            base.OnStartup(e);
+            return;
+        }
+
         _mutex = new Mutex(true, "Ven4Tools.Launcher.SingleInstance", out bool createdNew);
 
         if (!createdNew)

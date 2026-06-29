@@ -7,7 +7,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools", "Ven4Tools\Ven4
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.Launcher", "Ven4Tools.Launcher\Ven4Tools.Launcher.csproj", "{A3B5C7D9-1E2F-4A6B-8C0D-3E5F7A9B1C2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.UITests", "Ven4Tools.UITests\Ven4Tools.UITests.csproj", "{462EFBA2-A8B6-4B4F-9FB0-E303C05851E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.UITests", "tests\Ven4Tools.UITests\Ven4Tools.UITests.csproj", "{462EFBA2-A8B6-4B4F-9FB0-E303C05851E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.Tests", "tests\Ven4Tools.Tests\Ven4Tools.Tests.csproj", "{6B4F5D34-9213-4E60-A1D0-8D4743397631}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{462EFBA2-A8B6-4B4F-9FB0-E303C05851E9}.Debug|Any CPU.Build.0 = Debug|x64
 		{462EFBA2-A8B6-4B4F-9FB0-E303C05851E9}.Release|Any CPU.ActiveCfg = Release|x64
 		{462EFBA2-A8B6-4B4F-9FB0-E303C05851E9}.Release|Any CPU.Build.0 = Release|x64
+		{6B4F5D34-9213-4E60-A1D0-8D4743397631}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{6B4F5D34-9213-4E60-A1D0-8D4743397631}.Debug|Any CPU.Build.0 = Debug|x64
+		{6B4F5D34-9213-4E60-A1D0-8D4743397631}.Release|Any CPU.ActiveCfg = Release|x64
+		{6B4F5D34-9213-4E60-A1D0-8D4743397631}.Release|Any CPU.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
