@@ -39,6 +39,8 @@ ghp_*
 *.log
 *.cache
 *.tmp
+TestResults/
+*.actual.png
 
 # NuGet packages
 packages/
@@ -56,7 +58,7 @@ publish/
 
 Ven4Tools/Data/master.json
 
-# Admin tool lives in its own separate repo (C:\Users\Vench\Documents\GitHub\Ven4Admin)
+# Admin tool lives in its own separate repository
 Ven4Admin/
 
 # Secrets — never commit real tokens
@@ -76,9 +78,6 @@ _screenshots/
 _release/
 CLAUDE.md
 AGENTS.md
-
-# UI-тесты (отдельная папка тестов)
-Ven4Tools.UITests/
 
 # Локальные файлы Claude Code
 .claude/

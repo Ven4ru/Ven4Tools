@@ -1,4 +1,4 @@
-name: Сборка
+name: Проверка качества
 
 on:
   push:
@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Компиляция клиента
+  quality:
+    name: Сборка и тесты
     runs-on: windows-latest
 
     steps:
@@ -22,5 +22,33 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Сборка (0 ошибок, 0 предупреждений)
-        run: dotnet build Ven4Tools/Ven4Tools.csproj -c Release --nologo -v quiet
+      - name: Восстановление зависимостей
+        run: dotnet restore Ven4Tools.sln --nologo
+
+      - name: Сборка solution
+        run: dotnet build Ven4Tools.sln -c Release --no-restore --nologo -v minimal -warnaserror
+
+      - name: Быстрые unit-тесты
+        run: dotnet test tests/Ven4Tools.Tests/Ven4Tools.Tests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --logger "trx;LogFileName=unit-tests.trx" --results-directory TestResults/Unit
+
+      - name: Проверка уязвимых NuGet-зависимостей
+        shell: pwsh
+        run: |
+          $json = dotnet list Ven4Tools.sln package --vulnerable --include-transitive --format json | Out-String | ConvertFrom-Json
+          $vulnerable = @(
+            $json.projects.frameworks.topLevelPackages
+            $json.projects.frameworks.transitivePackages
+          ) | Where-Object { $_.vulnerabilities.Count -gt 0 }
+          if ($vulnerable.Count -gt 0) {
+            $vulnerable | Format-Table id, resolvedVersion
+            throw "Обнаружены уязвимые NuGet-зависимости."
+          }
+
+      - name: Артефакты неуспешных тестов
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failures
+          path: |
+            TestResults/**/*.trx
+          if-no-files-found: warn
