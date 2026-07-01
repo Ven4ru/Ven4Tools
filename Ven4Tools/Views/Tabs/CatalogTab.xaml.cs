@@ -36,7 +36,6 @@ namespace Ven4Tools.Views.Tabs
         private readonly InstallationService installService = null!;
         private readonly AvailabilityChecker availabilityChecker = null!;
         private readonly InstalledAppsService installedAppsService = new();
-        private readonly UserAppsService _userAppsService = new();
         private readonly FavoritesService _favoritesService = new();
         private Dictionary<string, CheckBox> appCheckBoxes = new();
         private Dictionary<AppCategory, StackPanel> categoryPanels = new();
@@ -82,8 +81,6 @@ namespace Ven4Tools.Views.Tabs
                 if (!_eventsSubscribed)
                 {
                     ProfileService.Changed     += _profileChangedHandler;
-                    UserSession.Changed        += OnUserSessionChanged;
-                    UserSession.Changed        += OnUserSessionChangedPresets;
                     AppSettings.Changed        += OnAppSettingsChanged;
                     SourceOrderService.Changed += OnSourceOrderChanged;
                     _eventsSubscribed = true;
@@ -115,8 +112,6 @@ namespace Ven4Tools.Views.Tabs
                 if (_eventsSubscribed)
                 {
                     ProfileService.Changed     -= _profileChangedHandler;
-                    UserSession.Changed        -= OnUserSessionChanged;
-                    UserSession.Changed        -= OnUserSessionChangedPresets;
                     AppSettings.Changed        -= OnAppSettingsChanged;
                     SourceOrderService.Changed -= OnSourceOrderChanged;
                     _eventsSubscribed = false;

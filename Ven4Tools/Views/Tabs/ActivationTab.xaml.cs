@@ -14,8 +14,6 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class ActivationTab : UserControl
     {
-        private Action? _sessionChangedHandler;
-
         public ActivationTab()
         {
             InitializeComponent();
@@ -27,19 +25,10 @@ namespace Ven4Tools.Views.Tabs
             btnActivateWindows.IsEnabled = false;
             btnActivateOffice.IsEnabled = false;
 
-            _sessionChangedHandler = () => Dispatcher.Invoke(UpdateAuthState);
             Loaded += async (_, _) =>
             {
-                UserSession.Changed += _sessionChangedHandler;
-                UpdateAuthState();
                 await CheckActivationStatusAsync();
             };
-            Unloaded += (_, _) => UserSession.Changed -= _sessionChangedHandler;
-        }
-
-        private void UpdateAuthState()
-        {
-            pnlActivationAuth.Visibility = UserSession.IsLoggedIn ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private void ChkActivationConsent_Changed(object sender, RoutedEventArgs e)
