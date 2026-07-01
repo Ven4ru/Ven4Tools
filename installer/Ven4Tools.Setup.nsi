@@ -1,8 +1,8 @@
 ﻿; ============================================================================
-; Ven4Tools.Setup.nsi — установщик Ven4Tools Launcher 2.0
+; Ven4Tools.Setup.nsi — установщик Ven4Tools Launcher
 ; ============================================================================
 ; Компиляция (из корня репозитория):
-;   makensis /INPUTCHARSET UTF8 /DVERSION=2.0.0 installer\Ven4Tools.Setup.nsi
+;   makensis /INPUTCHARSET UTF8 /DVERSION=2.1.0 installer\Ven4Tools.Setup.nsi
 ; Обычно вызывается через build_installer.ps1 — он передаёт VERSION,
 ; PUBLISH_DIR и OUTFILE автоматически.
 ;
@@ -19,7 +19,7 @@ Unicode true
 
 ; --- Параметры сборки (переопределяются через /D из build_installer.ps1) ---
 !ifndef VERSION
-  !define VERSION "2.0.0"
+  !define VERSION "2.1.0"
 !endif
 !ifndef PUBLISH_DIR
   !define PUBLISH_DIR "..\Ven4Tools.Launcher\bin\Release\net8.0-windows\win-x64\publish"

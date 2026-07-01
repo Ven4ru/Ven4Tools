@@ -163,6 +163,11 @@ namespace Ven4Tools.Launcher.Services
                 updateInfo ??= await CheckForUpdateAsync();
                 if (updateInfo == null || !updateInfo.HasUpdate) return false;
                 if (string.IsNullOrEmpty(updateInfo.DownloadUrl)) return false;
+                if (!IsValidSha256(expectedSha256))
+                {
+                    Log("Обновление лаунчера пропущено: проверенная контрольная сумма недоступна.");
+                    return false;
+                }
 
                 // Защита от подмены: качаем только с доверенных доменов GitHub.
                 if (!DownloadValidator.IsAllowedDownloadHost(updateInfo.DownloadUrl))
@@ -187,17 +192,14 @@ namespace Ven4Tools.Launcher.Services
                 if (bytesRead < 1024 * 1024)
                     throw new IOException($"Скачанный файл подозрительно мал ({bytesRead} байт) — обновление отменено.");
 
-                // Верификация SHA256, если хеш известен (CDN отдаёт его в version.json).
-                if (!string.IsNullOrEmpty(expectedSha256))
+                // SHA256 обязателен: файл не применяется без подтверждённой контрольной суммы.
+                string actual = await Task.Run(() => ComputeSha256(stagedExe));
+                if (!string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase))
                 {
-                    string actual = await Task.Run(() => ComputeSha256(stagedExe));
-                    if (!string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase))
-                    {
-                        try { File.Delete(stagedExe); } catch { }
-                        throw new IOException("Контрольная сумма не совпала. Файл повреждён или подменён.");
-                    }
-                    Log("Целостность подтверждена (SHA256).");
+                    try { File.Delete(stagedExe); } catch { }
+                    throw new IOException("Контрольная сумма не совпала. Файл повреждён или подменён.");
                 }
+                Log("Целостность подтверждена (SHA256).");
 
                 // Создаём и запускаем bat-скрипт замены exe.
                 string batPath = Path.Combine(Path.GetTempPath(), $"ven4tools_update_{Guid.NewGuid():N}.bat");
@@ -258,6 +260,11 @@ namespace Ven4Tools.Launcher.Services
             sb.AppendLine(":cleanup");
             sb.AppendLine("del \"%~f0\"");
             return sb.ToString();
+        }
+
+        internal static bool IsValidSha256(string? value)
+        {
+            return value?.Length == 64 && value.All(Uri.IsHexDigit);
         }
 
         /// <summary>

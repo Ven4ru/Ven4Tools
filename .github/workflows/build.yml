@@ -29,7 +29,7 @@ jobs:
         run: dotnet build Ven4Tools.sln -c Release --no-restore --nologo -v minimal -warnaserror
 
       - name: Быстрые unit-тесты
-        run: dotnet test tests/Ven4Tools.Tests/Ven4Tools.Tests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --logger "trx;LogFileName=unit-tests.trx" --results-directory TestResults/Unit
+        run: dotnet test tests/Ven4Tools.Tests/Ven4Tools.Tests.csproj -c Release -p:Platform=x64 -p:CollectCoverage=true --no-build --no-restore --nologo --logger "trx;LogFileName=unit-tests.trx" --results-directory TestResults/Unit
 
       - name: Проверка уязвимых NuGet-зависимостей
         shell: pwsh
@@ -51,4 +51,5 @@ jobs:
           name: test-failures
           path: |
             TestResults/**/*.trx
+            TestResults/Coverage/**
           if-no-files-found: warn

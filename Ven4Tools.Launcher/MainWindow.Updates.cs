@@ -46,6 +46,12 @@ namespace Ven4Tools.Launcher
 
         private void BtnCheckUpdates_Click(object sender, RoutedEventArgs e)
         {
+            if (_isUiTestMode)
+            {
+                AddLog("UI test: проверка обновлений");
+                return;
+            }
+
             _ = CheckForUpdatesAsync();
         }
 
@@ -82,7 +88,10 @@ namespace Ven4Tools.Launcher
                             expectedSha256 = cdnInfo.Launcher.ExeSha256;
                         }
                     }
-                    catch { /* CDN недоступен — обновляемся без хеш-проверки (как раньше) */ }
+                    catch
+                    {
+                        // Без подтверждённого SHA-256 обновление будет тихо пропущено.
+                    }
                 }
 
                 var result = await updateSvc.DownloadAndApplyUpdateAsync(updateInfo, expectedSha256);
