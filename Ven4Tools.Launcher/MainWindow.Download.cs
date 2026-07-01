@@ -420,42 +420,20 @@ namespace Ven4Tools.Launcher
                     Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                     Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory)
                 };
-                foreach (var desktop in desktops)
-                {
-                    if (string.IsNullOrEmpty(desktop)) continue;
-                    foreach (var name in new[] { "Ven4Tools.lnk", "Ven4Tools Launcher.lnk", "Ven4Tools Client.lnk" })
-                    {
-                        string path = Path.Combine(desktop, name);
-                        if (File.Exists(path)) { try { File.Delete(path); } catch { } }
-                    }
-                }
-                AddLog("   ✅ Ярлыки рабочего стола проверены");
-
                 string[] startMenuRoots = {
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs"),
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs")
                 };
-                foreach (var root in startMenuRoots)
-                {
-                    if (string.IsNullOrEmpty(root)) continue;
-                    string ven4Dir = Path.Combine(root, "Ven4Tools");
-                    if (Directory.Exists(ven4Dir)) { try { Directory.Delete(ven4Dir, true); } catch { } }
-                    foreach (var name in new[] { "Ven4Tools.lnk", "Ven4Tools Launcher.lnk" })
-                    {
-                        string path = Path.Combine(root, name);
-                        if (File.Exists(path)) { try { File.Delete(path); } catch { } }
-                    }
-                }
-                AddLog("   ✅ Ярлыки меню Пуск проверены");
+                ClientShortcutCleaner.Clean(desktops, startMenuRoots);
+                AddLog("   ✅ Ярлыки клиента проверены");
 
                 try
                 {
                     using var runKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
                         @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", writable: true);
                     runKey?.DeleteValue("Ven4Tools", throwOnMissingValue: false);
-                    runKey?.DeleteValue("Ven4Tools.Launcher", throwOnMissingValue: false);
                     runKey?.DeleteValue("Ven4Tools Client", throwOnMissingValue: false);
-                    AddLog("   ✅ Записи автозапуска удалены");
+                    AddLog("   ✅ Записи автозапуска клиента удалены");
                 }
                 catch (Exception ex) { AddLog($"   ⚠️ Реестр: {ex.Message}"); }
 
