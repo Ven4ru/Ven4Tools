@@ -9,21 +9,33 @@ using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace Ven4Tools.UITests;
 
 public sealed class LauncherSmokeTests : IDisposable
 {
+    private static readonly IntPtr HwndTopmost = new(-1);
+    private static readonly IntPtr HwndNotTopmost = new(-2);
+    private const uint SwpNoMove = 0x0002;
+    private const uint SwpNoSize = 0x0001;
+    private const uint SwpShowWindow = 0x0040;
+
+    private readonly string _testRoot;
     private readonly Application _application;
     private readonly UIA3Automation _automation;
     private readonly Window _window;
 
     public LauncherSmokeTests()
     {
+        _testRoot = Path.Combine(
+            Path.GetTempPath(),
+            $"Ven4Tools.UI.Tests-{Guid.NewGuid():N}");
         string executable = FindLauncher();
         var startInfo = new ProcessStartInfo(executable);
         startInfo.Environment["VEN4TOOLS_UI_TEST"] = "1";
+        startInfo.Environment["VEN4TOOLS_UI_TEST_ROOT"] = _testRoot;
         _application = Application.Launch(startInfo);
         _automation = new UIA3Automation();
         _window = Retry.WhileNull(
@@ -46,6 +58,7 @@ public sealed class LauncherSmokeTests : IDisposable
         Assert.NotEqual(WindowVisualState.Minimized, _window.Patterns.Window.PatternOrDefault?.WindowVisualState.Value);
         Assert.True(_window.BoundingRectangle.Width >= 600);
         Assert.True(_window.BoundingRectangle.Height >= 400);
+        AssertPrimaryControlsAreAvailable();
 
         string root = FindRepositoryRoot();
         string snapshotDirectory = Path.Combine(root, "tests", "Ven4Tools.UITests", "Snapshots");
@@ -55,7 +68,34 @@ public sealed class LauncherSmokeTests : IDisposable
         string actual = Path.Combine(resultDirectory, "launcher-main.actual.png");
         string baseline = Path.Combine(snapshotDirectory, "launcher-main.png");
 
-        Capture.Element(_window).ToFile(actual);
+        IntPtr windowHandle = new(_window.Properties.NativeWindowHandle.Value);
+        Assert.NotEqual(IntPtr.Zero, windowHandle);
+        var originalBounds = _window.BoundingRectangle;
+        Assert.True(SetWindowPos(
+            windowHandle,
+            HwndTopmost,
+            100,
+            100,
+            0,
+            0,
+            SwpNoSize | SwpShowWindow));
+        try
+        {
+            _window.Focus();
+            Thread.Sleep(TimeSpan.FromMilliseconds(250));
+            Capture.Element(_window).ToFile(actual);
+        }
+        finally
+        {
+            SetWindowPos(
+                windowHandle,
+                HwndNotTopmost,
+                (int)originalBounds.X,
+                (int)originalBounds.Y,
+                0,
+                0,
+                SwpNoSize | SwpShowWindow);
+        }
         using (Image<Rgba32> captured = Image.Load<Rgba32>(actual))
         {
             const int frameMargin = 10;
@@ -104,6 +144,8 @@ public sealed class LauncherSmokeTests : IDisposable
         double changedRatio = (double)changed / compared;
         Assert.True(changedRatio <= 0.001,
             $"Изменилось {changedRatio:P3} пикселей клиентской области; допустимо не более 0.100%.");
+
+        ExercisePrimaryControlBindings();
     }
 
     public void Dispose()
@@ -115,10 +157,32 @@ public sealed class LauncherSmokeTests : IDisposable
         }
         _automation.Dispose();
         _application.Dispose();
+        try
+        {
+            if (Directory.Exists(_testRoot))
+            {
+                Directory.Delete(_testRoot, recursive: true);
+            }
+        }
+        catch
+        {
+            // Остаток тестового sandbox не должен маскировать результат UI-теста.
+        }
     }
 
     private static string FindLauncher()
     {
+        string? explicitPath = Environment.GetEnvironmentVariable("LAUNCHER_UNDER_TEST");
+        if (!string.IsNullOrWhiteSpace(explicitPath))
+        {
+            string resolvedPath = Path.GetFullPath(explicitPath);
+            return File.Exists(resolvedPath)
+                ? resolvedPath
+                : throw new FileNotFoundException(
+                    "Указанный launcher для UI-теста не найден.",
+                    resolvedPath);
+        }
+
         string root = FindRepositoryRoot();
         string path = Path.Combine(
             root,
@@ -133,6 +197,83 @@ public sealed class LauncherSmokeTests : IDisposable
             : throw new FileNotFoundException("Сначала соберите solution в Release.", path);
     }
 
+    private void AssertPrimaryControlsAreAvailable()
+    {
+        string[] requiredEnabledControls =
+        [
+            "btnSelectFolder",
+            "btnFindClient",
+            "btnCheckUpdates",
+            "btnLaunchApp",
+            "btnChangelog",
+            "btnDeleteClient",
+            "btnExit",
+            "chkBackgroundUpdates",
+            "chkStartMinimized",
+            "chkAutostart"
+        ];
+
+        foreach (string automationId in requiredEnabledControls)
+        {
+            AutomationElement? element = _window.FindFirstDescendant(
+                condition => condition.ByAutomationId(automationId));
+            Assert.True(element is not null, $"Не найден обязательный контрол {automationId}.");
+            Assert.True(element.IsEnabled, $"Контрол {automationId} недоступен.");
+        }
+
+        Assert.True(
+            _window.FindFirstDescendant(
+                condition => condition.ByAutomationId("cmbVersions")) is not null,
+            "Не найден обязательный контрол cmbVersions.");
+    }
+
+    private void ExercisePrimaryControlBindings()
+    {
+        foreach (string automationId in new[]
+        {
+            "btnSelectFolder",
+            "btnFindClient",
+            "btnCheckUpdates",
+            "btnLaunchApp",
+            "btnDeleteClient"
+        })
+        {
+            _window.FindFirstDescendant(
+                    condition => condition.ByAutomationId(automationId))!
+                .AsButton()
+                .Invoke();
+            Assert.False(_application.HasExited, $"Кнопка {automationId} завершила launcher.");
+        }
+
+        Button changelog = _window.FindFirstDescendant(
+                condition => condition.ByAutomationId("btnChangelog"))!
+            .AsButton();
+        changelog.Invoke();
+        Button closeDetails = Retry.WhileNull(
+            () => _window.FindFirstDescendant(
+                    condition => condition.ByAutomationId("btnCloseDetails"))?
+                .AsButton(),
+            timeout: TimeSpan.FromSeconds(3)).Result
+            ?? throw new InvalidOperationException("Кнопка закрытия истории изменений не появилась.");
+        closeDetails.Invoke();
+
+        foreach (string automationId in new[]
+        {
+            "chkBackgroundUpdates",
+            "chkStartMinimized",
+            "chkAutostart"
+        })
+        {
+            CheckBox checkBox = _window.FindFirstDescendant(
+                    condition => condition.ByAutomationId(automationId))!
+                .AsCheckBox();
+            ToggleState initialState = checkBox.ToggleState;
+            checkBox.Toggle();
+            checkBox.Toggle();
+            Assert.Equal(initialState, checkBox.ToggleState);
+        }
+    }
+
     private static string FindRepositoryRoot()
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
@@ -144,4 +285,15 @@ public sealed class LauncherSmokeTests : IDisposable
         return directory?.FullName
             ?? throw new DirectoryNotFoundException("Корень репозитория не найден.");
     }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowPos(
+        IntPtr windowHandle,
+        IntPtr insertAfter,
+        int x,
+        int y,
+        int width,
+        int height,
+        uint flags);
 }

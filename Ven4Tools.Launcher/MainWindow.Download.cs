@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -18,6 +17,12 @@ namespace Ven4Tools.Launcher
     {
         private void BtnSelectFolder_Click(object sender, RoutedEventArgs e)
         {
+            if (_isUiTestMode)
+            {
+                AddLog("UI test: выбор папки");
+                return;
+            }
+
             using var dialog = new FolderBrowserDialog
             {
                 Description      = "Выберите папку для установки Ven4Tools",
@@ -48,10 +53,14 @@ namespace Ven4Tools.Launcher
 
             AddLog($"📥 Скачивание клиента {version.Version}...");
 
-            string tempZip     = Path.Combine(Path.GetTempPath(), $"Ven4Tools_Client_{version.Version}_{Guid.NewGuid()}.zip");
-            string extractPath = Path.Combine(Path.GetTempPath(), $"extract_{Guid.NewGuid()}");
-            string? clientBackup  = null;
-            bool copyCompleted = false;
+            string tempZip = Path.Combine(
+                Path.GetTempPath(),
+                $"Ven4Tools_Client_{version.Version}_{Guid.NewGuid():N}.zip");
+            string clientParent = Path.GetDirectoryName(Path.GetFullPath(_clientPath))
+                ?? throw new InvalidOperationException("Не удалось определить каталог установки.");
+            string extractPath = Path.Combine(
+                clientParent,
+                $".Ven4Tools_Client.staging-{Guid.NewGuid():N}");
 
             progressDownload.Value    = 0;
             txtDownloadStatus.Text    = "Скачивание: 0%";
@@ -60,65 +69,42 @@ namespace Ven4Tools.Launcher
 
             try
             {
-                // Скачиваем с основного URL (обычно CDN). Если он упал не из-за отмены —
-                // пробуем резервный GitHub-URL (version.FallbackUrl), если он задан.
-                try
-                {
-                    await DownloadToFileAsync(version.DownloadUrl, tempZip, token);
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (Exception primaryEx) when (
-                    !string.IsNullOrWhiteSpace(version.FallbackUrl) &&
-                    !string.Equals(version.FallbackUrl, version.DownloadUrl, StringComparison.OrdinalIgnoreCase) &&
-                    DownloadValidator.IsAllowedDownloadHost(version.FallbackUrl))
-                {
-                    AddLog($"⚠️ CDN недоступен, переключаюсь на GitHub... ({primaryEx.Message})");
-                    progressDownload.Value = 0;
-                    txtDownloadStatus.Text = "Скачивание: 0%";
-                    await DownloadToFileAsync(version.FallbackUrl!, tempZip, token);
-                }
+                var downloader = new FallbackDownloader(_httpClient);
+                await downloader.DownloadAsync(
+                    version.DownloadUrl,
+                    version.FallbackUrl,
+                    tempZip,
+                    token,
+                    version.ExpectedSha256,
+                    progress: (received, total) =>
+                    {
+                        if (total is > 0)
+                        {
+                            int percent = (int)((double)received / total.Value * 100);
+                            progressDownload.Value = percent;
+                            txtDownloadStatus.Text = $"Скачивание: {percent}%";
+                        }
+                    },
+                    switchingToFallback: () =>
+                    {
+                        AddLog("⚠️ Основной источник недоступен, переключаюсь на резервный...");
+                        progressDownload.Value = 0;
+                        txtDownloadStatus.Text = "Скачивание: 0%";
+                    });
 
                 token.ThrowIfCancellationRequested();
 
-                // Верификация SHA256 если хеш известен (CDN отдаёт его в version.json).
+                // SHA256 проверяется загрузчиком до принятия файла; при несовпадении
+                // основного источника автоматически пробуется резервный.
                 if (!string.IsNullOrEmpty(version.ExpectedSha256))
                 {
                     txtDownloadStatus.Text = "Проверка целостности...";
-                    string actual = await Task.Run(() => ComputeSha256(tempZip), token);
-                    if (!string.Equals(actual, version.ExpectedSha256, StringComparison.OrdinalIgnoreCase))
-                    {
-                        AddLog("⛔ Контрольная сумма не совпала — файл повреждён или подменён");
-                        File.Delete(tempZip);
-                        throw new IOException("Контрольная сумма не совпала. Файл повреждён или подменён.");
-                    }
                     AddLog("🔒 Целостность подтверждена (SHA256)");
                 }
 
                 txtDownloadStatus.Text = "Распаковка...";
-                await Task.Delay(1000, token);
-
-                bool extracted = false;
-                for (int attempt = 1; attempt <= 5; attempt++)
-                {
-                    try
-                    {
-                        if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true);
-                        Directory.CreateDirectory(extractPath);
-                        ZipFile.ExtractToDirectory(tempZip, extractPath, true);
-                        extracted = true;
-                        AddLog($"✅ Распаковано с попытки {attempt}");
-                        break;
-                    }
-                    catch (IOException ex) when (attempt < 5)
-                    {
-                        AddLog($"⚠️ Попытка распаковки {attempt}/5: {ex.Message}");
-                        await Task.Delay(2000, token);
-                    }
-                }
-                if (!extracted) throw new IOException("Не удалось распаковать архив после 5 попыток");
+                await SafeZipExtractor.ExtractAsync(tempZip, extractPath, token);
+                AddLog("✅ Архив безопасно распакован");
 
                 token.ThrowIfCancellationRequested();
 
@@ -133,31 +119,9 @@ namespace Ven4Tools.Launcher
                     return;
                 }
 
-                txtDownloadStatus.Text = "Копирование файлов...";
-
-                if (Directory.Exists(_clientPath))
-                {
-                    // Бэкап: если копирование оборвётся — восстановим рабочую версию.
-                    clientBackup = Path.Combine(Path.GetTempPath(), $"ven4_client_backup_{Guid.NewGuid():N}");
-                    CopyDirectory(_clientPath, clientBackup);
-
-                    foreach (var file in Directory.GetFiles(_clientPath)) try { File.Delete(file); } catch { }
-                    foreach (var dir in Directory.GetDirectories(_clientPath)) try { Directory.Delete(dir, true); } catch { }
-                }
-
-                var allFiles  = Directory.GetFiles(extractPath, "*", SearchOption.AllDirectories);
-                int fileCount = 0;
-                foreach (var file in allFiles)
-                {
-                    token.ThrowIfCancellationRequested();
-                    string relativePath = file.Substring(extractPath.Length + 1);
-                    string targetFile   = Path.Combine(_clientPath, relativePath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
-                    File.Copy(file, targetFile, true);
-                    if (++fileCount % 20 == 0)
-                        txtDownloadStatus.Text = $"Копирование: {fileCount}/{allFiles.Length} файлов";
-                }
-                copyCompleted = true;
+                txtDownloadStatus.Text = "Установка файлов...";
+                var installer = new TransactionalDirectoryInstaller();
+                installer.Install(extractPath, _clientPath, token);
 
                 txtDownloadStatus.Text = "Готово";
                 progressDownload.Value = 100;
@@ -176,13 +140,11 @@ namespace Ven4Tools.Launcher
                 txtDownloadStatus.Text = "Отменено";
                 progressDownload.Value = 0;
                 AddLog("⏹ Загрузка отменена");
-                if (!copyCompleted) RestoreClientBackup(clientBackup);
             }
             catch (Exception ex)
             {
                 txtDownloadStatus.Text = "Ошибка";
                 AddLog($"❌ Ошибка скачивания: {ex.Message}");
-                if (!copyCompleted) RestoreClientBackup(clientBackup);
                 System.Windows.MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -204,7 +166,6 @@ namespace Ven4Tools.Launcher
                     }
                     catch { break; }
                 }
-                try { if (clientBackup != null && Directory.Exists(clientBackup)) Directory.Delete(clientBackup, true); } catch { }
                 btnCancelDownload.Visibility = Visibility.Collapsed;
                 btnCancelDownload.IsEnabled  = true;
                 btnLaunchApp.IsEnabled       = true;
@@ -213,93 +174,14 @@ namespace Ven4Tools.Launcher
             }
         }
 
-        /// <summary>
-        /// Скачивает файл по URL в указанный путь с отображением прогресса.
-        /// Проверяет целостность по Content-Length. Бросает исключение при любой ошибке —
-        /// чтобы вызывающий код мог переключиться на резервный источник.
-        /// </summary>
-        private async Task DownloadToFileAsync(string url, string targetPath, CancellationToken token)
-        {
-            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token);
-            response.EnsureSuccessStatusCode();
-
-            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-            var bytesRead  = 0L;
-            var buffer     = new byte[81920];
-
-            using (var fs = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
-            {
-                using var stream = await response.Content.ReadAsStreamAsync(token);
-                int bytes;
-                while ((bytes = await stream.ReadAsync(buffer.AsMemory(), token)) > 0)
-                {
-                    await fs.WriteAsync(buffer.AsMemory(0, bytes), token);
-                    bytesRead += bytes;
-                    if (totalBytes > 0)
-                    {
-                        var percent = (int)((double)bytesRead / totalBytes * 100);
-                        progressDownload.Value = percent;
-                        txtDownloadStatus.Text = $"Скачивание: {percent}%";
-                    }
-                }
-                await fs.FlushAsync(token);
-            }
-
-            token.ThrowIfCancellationRequested();
-
-            // Проверка целостности: если сервер сообщил размер, а получили меньше —
-            // соединение оборвалось, архив битый.
-            if (totalBytes > 0 && bytesRead != totalBytes)
-                throw new IOException(
-                    $"Загрузка неполная: получено {bytesRead} из {totalBytes} байт. Проверьте соединение и повторите.");
-        }
-
-        /// <summary>
-        /// Вычисляет SHA256 файла в виде hex-строки нижнего регистра.
-        /// Читает потоково — память не зависит от размера архива.
-        /// </summary>
-        private static string ComputeSha256(string path)
-        {
-            using var sha = System.Security.Cryptography.SHA256.Create();
-            using var stream = File.OpenRead(path);
-            byte[] hash = sha.ComputeHash(stream);
-            return Convert.ToHexString(hash).ToLowerInvariant();
-        }
-
-        private static void CopyDirectory(string sourceDir, string destDir)
-        {
-            Directory.CreateDirectory(destDir);
-            foreach (var file in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
-            {
-                string relativePath = file.Substring(sourceDir.Length + 1);
-                string target       = Path.Combine(destDir, relativePath);
-                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-                File.Copy(file, target, true);
-            }
-        }
-
-        private void RestoreClientBackup(string? clientBackup)
-        {
-            if (clientBackup == null || !Directory.Exists(clientBackup)) return;
-            try
-            {
-                AddLog("↩️ Восстановление предыдущей версии клиента...");
-                if (Directory.Exists(_clientPath))
-                {
-                    foreach (var file in Directory.GetFiles(_clientPath)) try { File.Delete(file); } catch { }
-                    foreach (var dir in Directory.GetDirectories(_clientPath)) try { Directory.Delete(dir, true); } catch { }
-                }
-                CopyDirectory(clientBackup, _clientPath);
-                AddLog("✅ Предыдущая версия клиента восстановлена");
-            }
-            catch (Exception rex)
-            {
-                AddLog($"⚠️ Не удалось восстановить предыдущую версию: {rex.Message}");
-            }
-        }
-
         private async void BtnLaunchApp_Click(object sender, RoutedEventArgs e)
         {
+            if (_isUiTestMode)
+            {
+                AddLog("UI test: загрузка или запуск клиента");
+                return;
+            }
+
             if (_selectedVersion == null)
             {
                 var latest = _availableVersions.FirstOrDefault(v => v.IsLatest);
@@ -389,6 +271,12 @@ namespace Ven4Tools.Launcher
 
         private async void BtnFindClient_Click(object sender, RoutedEventArgs e)
         {
+            if (_isUiTestMode)
+            {
+                AddLog("UI test: поиск клиента");
+                return;
+            }
+
             btnFindClient.IsEnabled = false;
             AddLog("🔍 Поиск Ven4Tools.exe на диске...");
 
@@ -493,6 +381,12 @@ namespace Ven4Tools.Launcher
 
         private async void BtnDeleteClient_Click(object sender, RoutedEventArgs e)
         {
+            if (_isUiTestMode)
+            {
+                AddLog("UI test: удаление клиента");
+                return;
+            }
+
             var answer = System.Windows.MessageBox.Show(
                 "Будет удалено:\n" +
                 $"• Папка клиента: {_clientPath}\n" +

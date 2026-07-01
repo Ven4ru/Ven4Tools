@@ -2,7 +2,7 @@
 # build_installer.ps1 — сборка установщика Ven4Tools Launcher
 # ============================================================================
 # Использование (из корня репозитория):
-#   .\build_installer.ps1 -Version "2.0.0"
+#   .\build_installer.ps1 -Version "2.1.0"
 #
 # Делает:
 #   1. dotnet publish лаунчера (Release, win-x64, self-contained, single-file)
@@ -139,4 +139,5 @@ Write-Host "=== Готово ===" -ForegroundColor Green
 Write-Host "Лаунчер:    $launcherAsset ($launcherSizeMb МБ)"
 Write-Host "Установщик: $setupAsset ($setupSizeMb МБ)"
 Write-Host ""
-Write-Host "Проверка установки после запуска установщика: .\test_install.ps1 -ExpectedVersion $Version"
+Write-Host "Проверка установки после запуска установщика:"
+Write-Host ".\tests\scripts\verify_launcher_install.ps1 -ExpectedVersion $Version"
