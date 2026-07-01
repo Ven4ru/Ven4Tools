@@ -20,17 +20,7 @@ namespace Ven4Tools.Views.Tabs
         {
             lstPresets.ItemsSource = _presets;
             _ = RefreshPresetsAsync();
-            // Подписка на UserSession.Changed вынесена в общий блок Loaded/Unloaded
-            // (CatalogTab.xaml.cs), чтобы не было утечки через анонимную лямбду.
         }
-
-        // Обновление списка пресетов при входе/выходе пользователя
-        private void OnUserSessionChangedPresets() =>
-            _ = Dispatcher.InvokeAsync(async () =>
-            {
-                try { await RefreshPresetsAsync(); }
-                catch (Exception ex) { AppLogger.Write(ex.Message); }
-            });
 
         private async Task RefreshPresetsAsync()
         {
@@ -39,11 +29,7 @@ namespace Ven4Tools.Views.Tabs
             btnSavePreset.Content   = "💾 Сохранить выбор";
             btnSavePreset.ToolTip   = "Сохранить отмеченные приложения как пресет";
 
-            int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
-
-            txtPresetsSyncHint.Visibility = userId.HasValue
-                ? Visibility.Collapsed : Visibility.Visible;
-
+            int? userId = null;
             var list = await PresetService.LoadAsync(userId);
             _presets.Clear();
             foreach (var p in list) _presets.Add(p);
@@ -69,7 +55,7 @@ namespace Ven4Tools.Views.Tabs
 
                 var previousApps = updating.Apps;
                 updating.Apps = selectedApps;
-                int? uid = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
+                int? uid = null;
                 btnSavePreset.IsEnabled = false;
                 try
                 {
@@ -90,7 +76,7 @@ namespace Ven4Tools.Views.Tabs
             var dlg = new Views.PresetSaveDialog(selected.Count) { Owner = Window.GetWindow(this) };
             if (dlg.ShowDialog() != true) return;
 
-            int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
+            int? userId = null;
             var preset  = new Preset { Name = dlg.PresetName, Description = dlg.PresetDescription, Apps = selected };
 
             btnSavePreset.IsEnabled = false;
@@ -148,7 +134,7 @@ namespace Ven4Tools.Views.Tabs
             preset.Name        = dlg.PresetName;
             preset.Description = dlg.PresetDescription;
 
-            int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
+            int? userId = null;
             btn.IsEnabled = false;
             try
             {
@@ -186,7 +172,7 @@ namespace Ven4Tools.Views.Tabs
         {
             if ((sender as Button)?.Tag is not Preset preset) return;
 
-            if (!UserSession.IsLoggedIn || preset.IsLocal)
+            if (preset.IsLocal)
             {
                 MessageBox.Show("Шаринг пресетов доступен только для облачных пресетов авторизованных пользователей.",
                     "Пресеты", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -225,7 +211,7 @@ namespace Ven4Tools.Views.Tabs
                 btnSavePreset.ToolTip  = "Сохранить отмеченные приложения как пресет";
             }
 
-            int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
+            int? userId = null;
             bool deleted = await PresetService.DeleteAsync(userId, preset);
             if (!deleted)
             {
@@ -263,7 +249,7 @@ namespace Ven4Tools.Views.Tabs
                 "Пресеты", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (save == MessageBoxResult.Yes)
             {
-                int? userId = UserSession.IsLoggedIn ? UserSession.UserId : (int?)null;
+                int? userId = null;
                 // Сохраняем как новый собственный пресет: серверный Id и код шаринга
                 // чужого пресета сбрасываем, иначе перезапишем оригинал на сервере.
                 preset.Id = 0;

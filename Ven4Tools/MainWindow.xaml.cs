@@ -46,9 +46,6 @@ namespace Ven4Tools
 
             NavigateToCatalog(null, null);
 
-            UserSession.Changed += UpdateUserUI;
-            UpdateUserUI();
-
             Loaded += (s, e) => ShowCategorySelectionIfNeeded();
             Loaded += (s, e) =>
             {
@@ -77,7 +74,6 @@ namespace Ven4Tools
         {
             // Снимаем подписки на статические события, иначе окно не освобождается GC
             AppLogger.MessageReceived -= AddLog;
-            UserSession.Changed -= UpdateUserUI;
             ConnectivityMonitor.StatusChanged -= OnConnectivityChanged;
             UpdateBackgroundService.UnregisterNotifier();
             base.OnClosed(e);
@@ -162,15 +158,13 @@ namespace Ven4Tools
         public void UpdateTabVisibility()
         {
             bool online    = ConnectivityMonitor.IsEffectivelyOnline && !ProfileService.Current.OfflineMode;
-            bool loggedIn  = UserSession.IsLoggedIn;
 
             // Online-only tabs
             btnOfficeTab.Visibility     = online ? Visibility.Visible : Visibility.Collapsed;
             btnActivationTab.Visibility = online ? Visibility.Visible : Visibility.Collapsed;
             btnNetworkTab.Visibility    = online ? Visibility.Visible : Visibility.Collapsed;
 
-            // Auth-gated tabs
-            btnHistoryTab.Visibility = loggedIn ? Visibility.Visible : Visibility.Collapsed;
+            btnHistoryTab.Visibility = Visibility.Visible;
 
             if (!online)
             {
@@ -183,9 +177,6 @@ namespace Ven4Tools
                     NavigateToCatalog(null, null);
             }
 
-            // If auth-gated tab is active but user logged out — go to catalog
-            if (!loggedIn && _currentTab is "history")
-                NavigateToCatalog(null, null);
         }
 
         // ── Debloater tab ─────────────────────────────────────────────────────────
@@ -309,7 +300,6 @@ namespace Ven4Tools
                 return;
             }
 
-            UserSession.Changed -= UpdateUserUI;
             _trayIcon?.Dispose();
             ConnectivityMonitor.Stop();
         }
@@ -574,61 +564,10 @@ namespace Ven4Tools
                 Clipboard.SetText(text);
         }
 
-        private void UpdateUserUI()
-        {
-            Dispatcher.Invoke(() =>
-            {
-                if (UserSession.IsLoggedIn)
-                {
-                    btnUserNav.Content = UserSession.Name;
-                    AppLogger.Write($"👋 Привет, {UserSession.Name}!");
-                    ShowCategorySelectionIfNeeded();
-                }
-                else
-                {
-                    btnUserNav.Content = "Войти в аккаунт";
-                }
-                UpdateTabVisibility();
-            });
-        }
-
-        private void BtnUserNav_Click(object sender, RoutedEventArgs e)
-        {
-            if (UserSession.IsLoggedIn)
-            {
-                var win = new ProfileWindow { Owner = this };
-                win.ShowDialog();
-                UpdateMascot(_currentTab);
-            }
-            else
-            {
-                var win = new LoginWindow { Owner = this };
-                win.ShowDialog();
-            }
-        }
-
-        private async void BtnLogout_Click(object sender, RoutedEventArgs e)
-        {
-            // Сначала очищаем локальную сессию — пользователь выходит сразу,
-            // даже если сервер недоступен. Серверный logout уходит в фоне.
-            var token = UserSession.Token;
-            UserSession.Logout();
-            AppLogger.Write("✅ Вы вышли из аккаунта");
-            if (!string.IsNullOrEmpty(token))
-                await new AuthService().LogoutAsync(token);
-        }
-
-        private void BtnProfile_Click(object sender, RoutedEventArgs e)
-        {
-            var win = new ProfileWindow { Owner = this };
-            win.ShowDialog();
-            UpdateMascot(_currentTab);
-        }
-
         private void ShowCategorySelectionIfNeeded()
         {
             if (_categorySelectionShown) return;
-            if (!UserSession.IsLoggedIn || ProfileService.Current.HasSelectedCategory) return;
+            if (ProfileService.Current.HasSelectedCategory) return;
             _categorySelectionShown = true;
 
             var win = new CategorySelectionWindow { Owner = this };

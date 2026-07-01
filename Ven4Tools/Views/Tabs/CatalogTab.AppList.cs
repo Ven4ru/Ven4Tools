@@ -13,25 +13,6 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class CatalogTab
     {
-        private void OnUserSessionChanged()
-        {
-            _ = Dispatcher.InvokeAsync(async () =>
-            {
-                if (UserSession.IsLoggedIn)
-                {
-                    // Сначала запрашиваем сервер и только при успешном непустом ответе
-                    // заменяем локальный список — иначе вход при недоступном сервере
-                    // безвозвратно стирал локальные пользовательские приложения.
-                    await SyncUserAppsFromServerAsync();
-                }
-                else
-                {
-                    // Выход из аккаунта — убираем приложения аккаунта из интерфейса
-                    ClearUserAppsUI();
-                }
-            });
-        }
-
         private void ClearUserAppsUI()
         {
             var userApps = appManager.GetAllApps().Where(a => a.IsUserAdded).ToList();
@@ -42,30 +23,6 @@ namespace Ven4Tools.Views.Tabs
             }
             PanelПользовательские.Children.Clear();
             appManager.ClearUserApps();
-        }
-
-        private async Task SyncUserAppsFromServerAsync()
-        {
-            if (!UserSession.IsLoggedIn) return;
-            var serverApps = await _userAppsService.FetchAsync();
-
-            // Пустой список = сервер недоступен или приложений нет —
-            // в обоих случаях локальный список не трогаем
-            if (serverApps == null || serverApps.Count == 0)
-                return;
-
-            await Dispatcher.InvokeAsync(ClearUserAppsUI);
-
-            int added = 0;
-            foreach (var app in serverApps)
-            {
-                if (appManager.GetAppById(app.Id) != null) continue;
-                appManager.AddUserApp(app);
-                await Dispatcher.InvokeAsync(() => AddUserAppToUI(app));
-                added++;
-            }
-            if (added > 0)
-                AddLog($"☁️ Синхронизировано {added} приложений с аккаунта");
         }
 
         private void LoadApps()
@@ -243,9 +200,6 @@ namespace Ven4Tools.Views.Tabs
                 try
                 {
                     appManager.RemoveUserApp(appId);
-                    if (UserSession.IsLoggedIn)
-                        _ = _userAppsService.DeleteAsync(appId);
-
                     var toRemove = PanelПользовательские.Children
                         .OfType<StackPanel>()
                         .FirstOrDefault(sp => sp.Children

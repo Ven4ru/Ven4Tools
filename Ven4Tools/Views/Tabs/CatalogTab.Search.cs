@@ -265,7 +265,7 @@ namespace Ven4Tools.Views.Tabs
             pnlWingetResults.Children.Add(btn);
         }
 
-        private async void AddChocoSuggestion(string id)
+        private void AddChocoSuggestion(string id)
         {
             try
             {
@@ -277,9 +277,6 @@ namespace Ven4Tools.Views.Tabs
                 appManager.AddUserApp(app);
                 AddUserAppToUI(app);
 
-                if (UserSession.IsLoggedIn)
-                    await _userAppsService.SaveAsync(app);
-
                 AddLog($"➕ Добавлено из Chocolatey: {id}");
             }
             catch (Exception ex)
@@ -288,7 +285,7 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private async void AddScoopSuggestion(string id)
+        private void AddScoopSuggestion(string id)
         {
             try
             {
@@ -299,9 +296,6 @@ namespace Ven4Tools.Views.Tabs
                 var app = new AppInfo { Id = userId, DisplayName = id, Category = AppCategory.Другое, ScoopId = id, InstallerUrls = new List<string>(), IsUserAdded = true };
                 appManager.AddUserApp(app);
                 AddUserAppToUI(app);
-
-                if (UserSession.IsLoggedIn)
-                    await _userAppsService.SaveAsync(app);
 
                 AddLog($"➕ Добавлено из Scoop: {id}");
             }
@@ -320,18 +314,10 @@ namespace Ven4Tools.Views.Tabs
             });
         }
 
-        private async void AddWingetSuggestion(string name, string id)
+        private void AddWingetSuggestion(string name, string id)
         {
             try
             {
-                if (!UserSession.IsLoggedIn)
-                {
-                    var prompt = MessageBox.Show(
-                        $"Добавить «{name}» в локальный список?\n\nДля синхронизации между устройствами войдите в аккаунт.",
-                        "Добавить приложение", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (prompt != MessageBoxResult.Yes) return;
-                }
-
                 if (appManager.GetAppById(id) != null)
                 {
                     AddLog($"ℹ️ {name} уже есть в списке");
@@ -351,9 +337,6 @@ namespace Ven4Tools.Views.Tabs
 
                 appManager.AddUserApp(newApp);
                 AddUserAppToUI(newApp);
-
-                if (UserSession.IsLoggedIn)
-                    await _userAppsService.SaveAsync(newApp);
 
                 AddLog($"➕ Добавлено из winget: {name} ({id})");
 
