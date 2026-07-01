@@ -15,7 +15,7 @@ namespace Ven4Tools.Services
         public static void Write(string message)
         {
             // Файловый лог: сообщения до подписки MainWindow (статические конструкторы,
-            // UserSession.Load и т.п.) раньше терялись безвозвратно
+            // Ранние сообщения сервисов раньше терялись безвозвратно
             WriteToFile(message);
             MessageReceived?.Invoke(message);
         }

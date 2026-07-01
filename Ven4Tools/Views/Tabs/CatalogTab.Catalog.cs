@@ -59,9 +59,6 @@ namespace Ven4Tools.Views.Tabs
 
                     LoadApps();
 
-                    if (UserSession.IsLoggedIn)
-                        await SyncUserAppsFromServerAsync();
-
                     return;
                 }
 
@@ -93,8 +90,6 @@ namespace Ven4Tools.Views.Tabs
 
                 LoadApps();
 
-                if (UserSession.IsLoggedIn)
-                    await SyncUserAppsFromServerAsync();
             }
             catch (Exception ex)
             {

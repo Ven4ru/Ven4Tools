@@ -65,16 +65,8 @@ namespace Ven4Tools.Views.Tabs
             };
             btnGoActivation.Click += (_, _) => GoToActivation?.Invoke();
 
-            UserSession.Changed += UpdateActivationPanel;
-            Unloaded += (_, _) => UserSession.Changed -= UpdateActivationPanel;
-            UpdateActivationPanel();
+            pnlActivationHint.Visibility = Visibility.Visible;
             UpdateRegionDisplay();
-        }
-
-        private void UpdateActivationPanel()
-        {
-            Dispatcher.Invoke(() =>
-                pnlActivationHint.Visibility = UserSession.IsLoggedIn ? Visibility.Visible : Visibility.Collapsed);
         }
 
         // ── Отображение региона (читаем реестр напрямую — изменения видны сразу) ──

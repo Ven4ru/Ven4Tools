@@ -150,20 +150,6 @@
                                 Tag="ℹ️"
                                 Content="О программе"
                                 Click="NavigateToAbout"/>
-                        <Separator Background="{DynamicResource BorderBrush}" Margin="16,4"/>
-                        <Button x:Name="btnUserNav"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="👤"
-                                Content="Войти в аккаунт"
-                                Click="BtnUserNav_Click">
-                            <Button.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="👤  Профиль" Click="BtnProfile_Click"/>
-                                    <Separator/>
-                                    <MenuItem Header="Выйти" Click="BtnLogout_Click"/>
-                                </ContextMenu>
-                            </Button.ContextMenu>
-                        </Button>
                     </StackPanel>
 
                     <!-- Лог активности в сайдбаре -->
