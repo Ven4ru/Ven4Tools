@@ -1,0 +1,131 @@
+name: Релиз лаунчера
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия лаунчера без префикса (например 2.1.0)'
+        required: true
+        default: '2.1.0'
+      local_check:
+        description: 'Введите RELEASE-APPROVED после полного локального прохода'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Сборка launcher release
+    runs-on: windows-latest
+
+    steps:
+      - name: Проверка release gate
+        shell: pwsh
+        run: |
+          if ("${{ inputs.local_check }}" -ne "RELEASE-APPROVED") {
+            throw "Релиз запрещён: полный локальный проход лаунчера не подтверждён."
+          }
+          if ("${{ inputs.version }}" -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Версия должна иметь формат X.Y.Z."
+          }
+
+      - uses: actions/checkout@v4
+
+      - name: Настройка .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Восстановление зависимостей
+        run: dotnet restore Ven4Tools.sln --nologo
+
+      - name: Сборка и unit-тесты с coverage gate
+        run: |
+          dotnet build Ven4Tools.sln -c Release --no-restore --nologo -v minimal -warnaserror
+          dotnet test tests/Ven4Tools.Tests/Ven4Tools.Tests.csproj -c Release -p:Platform=x64 -p:CollectCoverage=true --no-build --no-restore --nologo
+
+      - name: Публикация launcher exe
+        shell: pwsh
+        run: |
+          dotnet publish Ven4Tools.Launcher/Ven4Tools.Launcher.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:Version=${{ inputs.version }} `
+            -o _release/launcher_publish `
+            --nologo
+          Copy-Item `
+            "_release/launcher_publish/Ven4Tools.Launcher.exe" `
+            "_release/Ven4Tools.Launcher-${{ inputs.version }}.exe"
+
+      - name: UI smoke опубликованного launcher exe
+        shell: pwsh
+        run: |
+          $env:LAUNCHER_UNDER_TEST = Resolve-Path `
+            "_release/Ven4Tools.Launcher-${{ inputs.version }}.exe"
+          dotnet test tests/Ven4Tools.UITests/Ven4Tools.UITests.csproj `
+            -c Release -p:Platform=x64 --no-build --no-restore --nologo
+
+      - name: Установка NSIS
+        shell: pwsh
+        run: choco install nsis -y --no-progress
+
+      - name: Сборка Setup
+        shell: pwsh
+        run: |
+          $makensis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+          & $makensis `
+            /INPUTCHARSET UTF8 `
+            "/DVERSION=${{ inputs.version }}" `
+            "/DPUBLISH_DIR=$pwd\_release\launcher_publish" `
+            "/DOUTFILE=$pwd\_release\Ven4Tools.Setup-${{ inputs.version }}.exe" `
+            "installer\Ven4Tools.Setup.nsi"
+          if ($LASTEXITCODE -ne 0) {
+            throw "NSIS завершился с кодом $LASTEXITCODE."
+          }
+
+      - name: Тихая установка и проверка Setup
+        shell: pwsh
+        run: |
+          $setup = Resolve-Path "_release/Ven4Tools.Setup-${{ inputs.version }}.exe"
+          $process = Start-Process `
+            -FilePath $setup `
+            -ArgumentList '/S' `
+            -WindowStyle Hidden `
+            -Wait `
+            -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "Setup завершился с кодом $($process.ExitCode)."
+          }
+          ./tests/scripts/verify_launcher_install.ps1 -ExpectedVersion "${{ inputs.version }}"
+
+      - name: UI smoke установленного launcher
+        shell: pwsh
+        run: |
+          $env:LAUNCHER_UNDER_TEST = Join-Path `
+            $env:LOCALAPPDATA `
+            "Ven4Tools\Launcher\Ven4Tools.Launcher.exe"
+          dotnet test tests/Ven4Tools.UITests/Ven4Tools.UITests.csproj `
+            -c Release -p:Platform=x64 --no-build --no-restore --nologo
+
+      - name: Контрольные суммы
+        shell: pwsh
+        run: |
+          Get-FileHash "_release/Ven4Tools.Launcher-${{ inputs.version }}.exe" -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  Ven4Tools.Launcher-${{ inputs.version }}.exe" } |
+            Set-Content "_release/SHA256SUMS.txt" -Encoding ascii
+          Get-FileHash "_release/Ven4Tools.Setup-${{ inputs.version }}.exe" -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  Ven4Tools.Setup-${{ inputs.version }}.exe" } |
+            Add-Content "_release/SHA256SUMS.txt" -Encoding ascii
+
+      - name: Создание черновика отдельного launcher-релиза
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "launcher-v${{ inputs.version }}" `
+            "_release/Ven4Tools.Launcher-${{ inputs.version }}.exe" `
+            "_release/Ven4Tools.Setup-${{ inputs.version }}.exe" `
+            "_release/SHA256SUMS.txt" `
+            --title "Ven4Tools Launcher ${{ inputs.version }}" `
+            --generate-notes `
+            --draft

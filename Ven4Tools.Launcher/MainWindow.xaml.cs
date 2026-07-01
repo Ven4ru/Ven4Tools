@@ -38,6 +38,7 @@ namespace Ven4Tools.Launcher
         private bool                 _backgroundUpdates = true;
         private bool                 _autostart         = false;
         private bool                 _startMinimized    = false;
+        private readonly bool        _isUiTestMode;
         private string               _lastNotifiedLauncherVersion = "";
         private string               _lastNotifiedClientVersion   = "";
         private ToolStripMenuItem?   _trayItemAutostart;
@@ -47,36 +48,41 @@ namespace Ven4Tools.Launcher
         public MainWindow()
         {
             InitializeComponent();
-            bool isUiTest = Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1";
+            _isUiTestMode = Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1";
 
-            string appData = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Ven4Tools");
+            string appData = _isUiTestMode
+                ? Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST_ROOT")
+                    ?? Path.Combine(Path.GetTempPath(), "Ven4Tools.UI.Tests")
+                : Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Ven4Tools");
             Directory.CreateDirectory(appData);
             _settingsPath = Path.Combine(appData, "launcher_settings.json");
 
             LoadSettings();
-            if (isUiTest)
+            if (_isUiTestMode)
                 _minimizeToTray = false;
-            if (!isUiTest)
+            if (!_isUiTestMode)
                 CreateTrayIcon();
             SyncCheckboxes();
 
             if (string.IsNullOrEmpty(_installPath))
-                _installPath = AppDomain.CurrentDomain.BaseDirectory;
+                _installPath = _isUiTestMode
+                    ? Path.Combine(appData, "Install")
+                    : AppDomain.CurrentDomain.BaseDirectory;
 
             _clientPath = Path.Combine(_installPath, "Ven4Tools_Client");
             Directory.CreateDirectory(_clientPath);
-            txtInstallPath.Text = isUiTest ? @"C:\Ven4Tools-Test\Client" : _clientPath;
+            txtInstallPath.Text = _isUiTestMode ? @"C:\Ven4Tools-Test\Client" : _clientPath;
 
             // Фоновый сервис запускается после установки _clientPath:
             // он читает путь клиента при первой проверке обновлений
-            if (!isUiTest)
+            if (!_isUiTestMode)
                 StartBackgroundService();
 
             Loaded += async (s, e) =>
             {
-                if (isUiTest)
+                if (_isUiTestMode)
                     return;
 
                 // Лаунчер запущен не из папки установки — предлагаем установить.

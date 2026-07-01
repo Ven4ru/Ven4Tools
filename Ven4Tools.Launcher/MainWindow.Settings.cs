@@ -85,7 +85,8 @@ namespace Ven4Tools.Launcher
         {
             _autostart = chkAutostart.IsChecked == true;
             if (_trayItemAutostart != null) _trayItemAutostart.Checked = _autostart;
-            SetAutostart(_autostart);
+            if (!_isUiTestMode)
+                SetAutostart(_autostart);
             SaveSettings();
         }
 
