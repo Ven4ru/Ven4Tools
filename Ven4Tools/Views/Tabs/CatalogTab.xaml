@@ -176,12 +176,6 @@
                                                         Tag="{Binding}"
                                                         ToolTip="Применить пресет"
                                                         Click="BtnApplyPreset_Click"/>
-                                                <Button Content="🔗"
-                                                        Width="26" Height="26" Padding="0"
-                                                        FontSize="11" Margin="2,0,0,0"
-                                                        Tag="{Binding}"
-                                                        ToolTip="Скопировать ссылку"
-                                                        Click="BtnSharePreset_Click"/>
                                                 <Button Content="✏"
                                                         Width="26" Height="26" Padding="0"
                                                         FontSize="11" Margin="2,0,0,0"
@@ -217,19 +211,6 @@
                                    HorizontalAlignment="Center"
                                    Visibility="Collapsed"/>
 
-                        <Button x:Name="btnImportByCode"
-                                Content="📥 По коду..."
-                                Height="30" Margin="3,2,3,3"
-                                FontSize="11"
-                                Click="BtnImportByCode_Click"
-                                ToolTip="Загрузить пресет по коду от другого пользователя"/>
-
-                        <TextBlock x:Name="txtPresetsSyncHint"
-                                   Text="☁ Войдите для синхронизации между ПК"
-                                   FontSize="10" Margin="6,2,6,4"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   HorizontalAlignment="Center"
-                                   Visibility="Collapsed"/>
                     </StackPanel>
                 </GroupBox>
 
