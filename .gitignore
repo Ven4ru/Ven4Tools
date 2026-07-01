@@ -90,6 +90,8 @@ Ven4Tools/Services/RemoteCommandService.cs
 deploy_cdn.ps1
 _deploy_env.ps1
 scripts/
+!tests/scripts/
+!tests/scripts/*.ps1
 
 # Артефакты OneDrive-конфликтов (дубли файлов)
 * (2).*
