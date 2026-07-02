@@ -1,4 +1,4 @@
-﻿; ============================================================================
+; ============================================================================
 ; Ven4Tools.Setup.nsi — установщик Ven4Tools Launcher
 ; ============================================================================
 ; Компиляция (из корня репозитория):
@@ -9,10 +9,23 @@
 ; Ключевые решения:
 ;   - Установка в %LOCALAPPDATA%\Ven4Tools\Launcher — не требует прав
 ;     администратора (RequestExecutionLevel user, без UAC).
-;   - Страницы выбора папки НЕТ намеренно: лаунчер 2.0 проверяет, что он
+;   - Страницы выбора папки НЕТ намеренно: лаунчер проверяет, что он
 ;     запущен именно из этой папки (LauncherUpdateService), путь фиксирован.
 ;   - Повторный запуск установщика поверх старой версии = тихое обновление:
 ;     процесс лаунчера закрывается, файлы перезаписываются (SetOverwrite on).
+;
+; Режим тихого самообновления (запускается самим лаунчером):
+;   Ven4Tools.Setup-X.Y.Z.exe /S /UPDATE /WAITPID=<pid> /RELAUNCH
+;     /UPDATE   — обновить уже установленную копию: дождаться завершения
+;                 лаунчера, сделать бэкап exe, поставить новую версию,
+;                 проверить её и при неудаче откатить бэкап;
+;     /WAITPID= — PID процесса лаунчера, завершения которого нужно дождаться;
+;     /RELAUNCH — запустить лаунчер после установки (или после отката).
+;   В этом режиме НЕ создаются ярлыки и НЕ трогаются автозапуск,
+;   настройки и каталог клиента — обновляется только exe лаунчера,
+;   деинсталлятор и версия в «Программы и компоненты».
+;   Коды возврата: 0 — успех; 3 — установка не удалась, выполнен откат;
+;   4 — версия нового exe не совпала с ожидаемой; 5 — файл лаунчера занят.
 ; ============================================================================
 
 Unicode true
@@ -90,32 +103,58 @@ VIAddVersionKey /LANG=1049 "LegalCopyright"  "© ${PUBLISHER}"
 !insertmacro MUI_LANGUAGE "Russian"
 
 ; ============================================================================
-; Секции установки
+; Параметры командной строки (режим самообновления)
 ; ============================================================================
 
-Section "Лаунчер Ven4Tools (обязательно)" SEC_MAIN
-  SectionIn RO
+Var UpdateMode   ; "1" — тихое самообновление (/UPDATE)
+Var WaitPid      ; PID процесса лаунчера, завершения которого ждём (/WAITPID=)
+Var Relaunch     ; "1" — перезапустить лаунчер после установки (/RELAUNCH)
 
-  ; Закрываем работающий лаунчер, чтобы exe не был занят (путь обновления).
-  ; nsExec прячет окно консоли taskkill.
-  nsExec::Exec 'taskkill /f /im "${EXE_NAME}"'
-  Pop $0
-  Sleep 500
+Function .onInit
+  StrCpy $UpdateMode "0"
+  StrCpy $WaitPid ""
+  StrCpy $Relaunch "0"
 
-  SetOutPath "$INSTDIR"
-  SetOverwrite on
-  File "${PUBLISH_DIR}\${EXE_NAME}"
+  ${GetParameters} $R0
 
-  ; Деинсталлятор
+  ClearErrors
+  ${GetOptions} $R0 "/UPDATE" $R1
+  IfErrors no_update_flag
+  StrCpy $UpdateMode "1"
+  SetSilent silent
+  no_update_flag:
+
+  ClearErrors
+  ${GetOptions} $R0 "/WAITPID=" $R1
+  IfErrors no_waitpid_flag
+  StrCpy $WaitPid $R1
+  no_waitpid_flag:
+
+  ClearErrors
+  ${GetOptions} $R0 "/RELAUNCH" $R1
+  IfErrors no_relaunch_flag
+  StrCpy $Relaunch "1"
+  no_relaunch_flag:
+
+  ; PID принимается только целым числом — мусор в аргументах игнорируется
+  ; (значение подставляется в командную строку tasklist).
+  StrCmp $WaitPid "" pid_checked
+  IntOp $R2 $WaitPid + 0
+  StrCmp $R2 $WaitPid pid_checked
+  StrCpy $WaitPid ""
+  pid_checked:
+FunctionEnd
+
+; ============================================================================
+; Общие функции
+; ============================================================================
+
+; Деинсталлятор + регистрация в «Программы и компоненты» (HKCU).
+; Вызывается и при обычной установке, и при тихом самообновлении —
+; версия в реестре всегда соответствует установленному exe.
+Function WriteUninstallRegistry
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
-  ; Ярлыки: рабочий стол + меню «Пуск»
-  CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}" "" "$INSTDIR\${EXE_NAME}" 0
-  CreateDirectory "${SM_DIR}"
-  CreateShortCut "${SM_DIR}\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}" "" "$INSTDIR\${EXE_NAME}" 0
-  CreateShortCut "${SM_DIR}\Удалить ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
-
-  ; Регистрация в «Программы и компоненты» (Add/Remove Programs, HKCU)
   WriteRegStr   HKCU "${UNINST_KEY}" "DisplayName"          "${APP_NAME}"
   WriteRegStr   HKCU "${UNINST_KEY}" "DisplayVersion"       "${VERSION}"
   WriteRegStr   HKCU "${UNINST_KEY}" "Publisher"            "${PUBLISHER}"
@@ -132,6 +171,144 @@ Section "Лаунчер Ven4Tools (обязательно)" SEC_MAIN
   ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
   IntFmt $0 "0x%08X" $0
   WriteRegDWORD HKCU "${UNINST_KEY}" "EstimatedSize" "$0"
+FunctionEnd
+
+; Ожидание завершения процесса лаунчера с PID из /WAITPID= (до 60 секунд).
+; По таймауту процесс закрывается принудительно — как при обычной установке.
+Function WaitForLauncherExit
+  StrCmp $WaitPid "" wait_done
+  StrCpy $R2 0
+  wait_loop:
+    ; find возвращает 0, пока процесс с этим PID и именем лаунчера жив
+    nsExec::ExecToStack 'cmd /c tasklist /FI "PID eq $WaitPid" /FI "IMAGENAME eq ${EXE_NAME}" /NH /FO CSV | find "$WaitPid"'
+    Pop $R3
+    Pop $R4
+    StrCmp $R3 "0" 0 wait_done
+    IntOp $R2 $R2 + 1
+    IntCmp $R2 60 wait_timeout 0 wait_timeout
+    Sleep 1000
+    Goto wait_loop
+  wait_timeout:
+    DetailPrint "Лаунчер не завершился за 60 секунд — закрываем принудительно"
+    nsExec::Exec 'taskkill /f /im "${EXE_NAME}"'
+    Pop $R3
+    Sleep 500
+  wait_done:
+FunctionEnd
+
+; Запуск установленного лаунчера, если передан /RELAUNCH.
+; Вызывается и при успехе, и после отката — пользователь не остаётся без лаунчера.
+Function RelaunchInstalled
+  StrCmp $Relaunch "1" 0 relaunch_skip
+  IfFileExists "$INSTDIR\${EXE_NAME}" 0 relaunch_skip
+  Exec '"$INSTDIR\${EXE_NAME}"'
+  relaunch_skip:
+FunctionEnd
+
+; Тихое самообновление установленной копии: бэкап → установка → проверка →
+; при неудаче откат. Ярлыки, автозапуск, настройки и каталог клиента не трогаются.
+Function UpdateInstall
+  DetailPrint "Тихое самообновление ${APP_NAME} до версии ${VERSION}"
+  InitPluginsDir
+
+  ; 1. Новый exe во временную папку установщика + контроль его версии
+  File "/oname=$PLUGINSDIR\${EXE_NAME}" "${PUBLISH_DIR}\${EXE_NAME}"
+  ${GetFileVersion} "$PLUGINSDIR\${EXE_NAME}" $R5
+  StrCmp $R5 "${VERSION}.0" version_ok
+    DetailPrint "Версия нового exe ($R5) не совпадает с ожидаемой (${VERSION}.0) — отмена"
+    SetErrorLevel 4
+    Call RelaunchInstalled
+    Quit
+  version_ok:
+
+  ; 2. Ждём завершения процесса лаунчера, запустившего обновление
+  Call WaitForLauncherExit
+
+  ; 3. Бэкап текущего exe. Rename не проходит, пока файл занят другим
+  ;    процессом — это одновременно и проверка разблокировки (до 15 попыток).
+  IfFileExists "$INSTDIR\${EXE_NAME}" 0 backup_done
+  Delete "$INSTDIR\${EXE_NAME}.bak"
+  StrCpy $R2 0
+  backup_retry:
+    ClearErrors
+    Rename "$INSTDIR\${EXE_NAME}" "$INSTDIR\${EXE_NAME}.bak"
+    IfErrors 0 backup_done
+    IntOp $R2 $R2 + 1
+    IntCmp $R2 15 backup_failed 0 backup_failed
+    Sleep 1000
+    Goto backup_retry
+  backup_failed:
+    DetailPrint "Файл лаунчера занят — обновление отменено, старая версия сохранена"
+    SetErrorLevel 5
+    Call RelaunchInstalled
+    Quit
+  backup_done:
+
+  ; 4. Установка нового exe в папку установки
+  CreateDirectory "$INSTDIR"
+  ClearErrors
+  CopyFiles /SILENT "$PLUGINSDIR\${EXE_NAME}" "$INSTDIR"
+  IfErrors update_rollback
+
+  ; 5. Проверка результата: файл на месте и его версия совпадает с ожидаемой
+  IfFileExists "$INSTDIR\${EXE_NAME}" 0 update_rollback
+  ${GetFileVersion} "$INSTDIR\${EXE_NAME}" $R5
+  StrCmp $R5 "${VERSION}.0" update_ok update_rollback
+
+  update_ok:
+  ; 6. Успех: удаляем бэкап, обновляем деинсталлятор и версию в реестре
+  Delete "$INSTDIR\${EXE_NAME}.bak"
+  Call WriteUninstallRegistry
+  DetailPrint "Обновление до ${VERSION} завершено"
+  Call RelaunchInstalled
+  Return
+
+  update_rollback:
+  ; 7. Неудача: возвращаем бэкап на место и запускаем старую версию
+  DetailPrint "Установка новой версии не удалась — откат на предыдущую"
+  Delete "$INSTDIR\${EXE_NAME}"
+  IfFileExists "$INSTDIR\${EXE_NAME}.bak" 0 rollback_done
+  Rename "$INSTDIR\${EXE_NAME}.bak" "$INSTDIR\${EXE_NAME}"
+  rollback_done:
+  SetErrorLevel 3
+  Call RelaunchInstalled
+  Quit
+FunctionEnd
+
+; ============================================================================
+; Секции установки
+; ============================================================================
+
+Section "Лаунчер Ven4Tools (обязательно)" SEC_MAIN
+  SectionIn RO
+
+  ; Режим самообновления: только замена exe с бэкапом и откатом.
+  StrCmp $UpdateMode "1" 0 normal_install
+  Call UpdateInstall
+  Goto section_done
+
+  normal_install:
+  ; Закрываем работающий лаунчер, чтобы exe не был занят (переустановка поверх).
+  ; nsExec прячет окно консоли taskkill.
+  nsExec::Exec 'taskkill /f /im "${EXE_NAME}"'
+  Pop $0
+  Sleep 500
+
+  SetOutPath "$INSTDIR"
+  SetOverwrite on
+  File "${PUBLISH_DIR}\${EXE_NAME}"
+
+  ; Ярлыки: рабочий стол + меню «Пуск» (только при обычной установке —
+  ; тихое самообновление не воссоздаёт удалённые пользователем ярлыки)
+  CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}" "" "$INSTDIR\${EXE_NAME}" 0
+  CreateDirectory "${SM_DIR}"
+  CreateShortCut "${SM_DIR}\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}" "" "$INSTDIR\${EXE_NAME}" 0
+  CreateShortCut "${SM_DIR}\Удалить ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
+
+  ; Деинсталлятор + регистрация в «Программы и компоненты»
+  Call WriteUninstallRegistry
+
+  section_done:
 SectionEnd
 
 Section /o "Автозапуск при входе в Windows" SEC_AUTORUN
@@ -161,8 +338,9 @@ Section "Uninstall"
   Pop $0
   Sleep 500
 
-  ; Файлы лаунчера
+  ; Файлы лаунчера (включая возможный бэкап незавершённого самообновления)
   Delete "$INSTDIR\${EXE_NAME}"
+  Delete "$INSTDIR\${EXE_NAME}.bak"
   Delete "$INSTDIR\uninstall.exe"
 
   ; Ярлыки

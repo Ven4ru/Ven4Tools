@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Ven4Tools.Launcher.Models;
@@ -12,13 +12,18 @@ using Ven4Tools.Launcher.Models;
 namespace Ven4Tools.Launcher.Services
 {
     /// <summary>
-    /// Сервис обновления установленного лаунчера (схема 2.0).
+    /// Сервис обновления установленного лаунчера (схема 2.1: только установщик).
     ///
-    /// Лаунчер 2.0 ставится установщиком в %LOCALAPPDATA%\Ven4Tools\Launcher\
-    /// и регистрируется в «Программы и компоненты». Самообновление работает так:
-    ///   1. Новый exe скачивается в %TEMP%\ven4tools_update\Ven4Tools.Launcher.exe;
-    ///   2. В %TEMP% создаётся update.bat: ждёт завершения текущего процесса,
-    ///      копирует новый exe в папку установки, запускает его и удаляет себя;
+    /// Лаунчер ставится установщиком Ven4Tools.Setup-X.Y.Z.exe в
+    /// %LOCALAPPDATA%\Ven4Tools\Launcher\ и регистрируется в «Программы и
+    /// компоненты». Самообновление работает через тот же установщик:
+    ///   1. Setup-X.Y.Z.exe скачивается в уникальную папку %TEMP%\ven4tools_setup_&lt;guid&gt;
+    ///      с обязательной проверкой SHA256 (из version.json CDN) и хоста после редиректа;
+    ///   2. Установщик запускается с флагами тихого самообновления
+    ///      (/S /UPDATE /WAITPID=&lt;pid&gt; /RELAUNCH — см. installer\Ven4Tools.Setup.nsi):
+    ///      он дожидается завершения текущего процесса, делает бэкап exe,
+    ///      ставит новую версию, проверяет её и перезапускает лаунчер
+    ///      (при неудаче откатывает бэкап и запускает старую версию);
     ///   3. Текущий процесс завершается (это делает вызывающий код).
     ///
     /// Если лаунчер запущен НЕ из папки установки (например, из Downloads),
@@ -37,12 +42,8 @@ namespace Ven4Tools.Launcher.Services
         /// <summary>Полный путь к установленному exe лаунчера.</summary>
         public static string InstalledExePath { get; } = Path.Combine(InstallDir, ExeName);
 
-        /// <summary>Папка для скачанного обновления: %TEMP%\ven4tools_update.</summary>
-        public static string UpdateStagingDir { get; } = Path.Combine(
-            Path.GetTempPath(), "ven4tools_update");
-
         // Один HttpClient на всё время жизни процесса — стандартная практика.
-        // Таймаут 10 минут: exe лаунчера ~70 МБ, на медленном канале нужен запас.
+        // Таймаут 10 минут: установщик лаунчера ~30 МБ, на медленном канале нужен запас.
         private static readonly HttpClient _httpClient = CreateClient();
 
         private readonly Action<string>? _log;
@@ -130,8 +131,8 @@ namespace Ven4Tools.Launcher.Services
 
                 if (info.HasUpdate && string.IsNullOrEmpty(info.DownloadUrl))
                 {
-                    // Релиз новее, но exe-ассета лаунчера в нём нет — обновлять нечем.
-                    Log($"В релизе {info.LatestVersion} нет exe-ассета лаунчера — обновление пропущено.");
+                    // Релиз новее, но установщика в нём нет — обновлять нечем.
+                    Log($"В релизе {info.LatestVersion} нет установщика Ven4Tools.Setup — обновление пропущено.");
                     info.HasUpdate = false;
                 }
 
@@ -145,121 +146,102 @@ namespace Ven4Tools.Launcher.Services
         }
 
         /// <summary>
-        /// Скачивает новый exe лаунчера и запускает update.bat, который после
-        /// завершения текущего процесса заменит exe в папке установки и
+        /// Аргументы запуска установщика в режиме тихого самообновления.
+        /// Обрабатываются в installer\Ven4Tools.Setup.nsi (.onInit):
+        ///   /S        — тихий режим NSIS (без диалогов);
+        ///   /UPDATE   — режим самообновления (бэкап, откат при неудаче);
+        ///   /WAITPID= — дождаться завершения процесса лаунчера с этим PID;
+        ///   /RELAUNCH — запустить лаунчер после установки (или отката).
+        /// </summary>
+        internal static string BuildSetupUpdateArguments(int waitPid)
+        {
+            return $"/S /UPDATE /WAITPID={waitPid} /RELAUNCH";
+        }
+
+        /// <summary>
+        /// Имя файла установщика для версии X.Y.Z. Недопустимые для имени файла
+        /// символы заменяются — версия приходит из внешних данных (тег релиза).
+        /// </summary>
+        internal static string BuildSetupFileName(string version)
+        {
+            string name = $"Ven4Tools.Setup-{version}.exe";
+            foreach (char c in Path.GetInvalidFileNameChars())
+                name = name.Replace(c, '_');
+            return name;
+        }
+
+        /// <summary>
+        /// Скачивает установщик Ven4Tools.Setup-X.Y.Z.exe и запускает его в режиме
+        /// тихого самообновления: установщик дождётся завершения текущего процесса,
+        /// заменит exe в папке установки (с бэкапом и откатом при неудаче) и
         /// перезапустит лаунчер.
         ///
-        /// При результате true вызывающий код ОБЯЗАН завершить приложение
-        /// (иначе bat не сможет перезаписать занятый exe и через ~15 секунд
-        /// тихо сдастся, удалив только себя).
+        /// SHA256 обязателен (fail-closed): без подтверждённой контрольной суммы
+        /// из version.json CDN обновление не выполняется.
+        ///
+        /// При результате true вызывающий код ОБЯЗАН завершить приложение —
+        /// установщик ждёт завершения процесса и только потом меняет файлы.
         /// </summary>
         /// <param name="updateInfo">Готовая информация об обновлении; если null — проверяется заново.</param>
-        /// <param name="expectedSha256">Ожидаемый SHA256 exe (из version.json CDN). Если задан — после
-        /// скачивания проверяется целостность; при несовпадении обновление отменяется.</param>
-        public async Task<bool> DownloadAndApplyUpdateAsync(UpdateInfo? updateInfo = null, string? expectedSha256 = null)
+        /// <param name="expectedSha256">Ожидаемый SHA256 установщика (из version.json CDN). Обязателен.</param>
+        /// <param name="fallbackUrl">Резервный URL установщика (CDN), если основной недоступен.</param>
+        public async Task<bool> DownloadAndRunSetupUpdateAsync(
+            UpdateInfo? updateInfo = null,
+            string? expectedSha256 = null,
+            string? fallbackUrl = null)
         {
+            string? stagingDir = null;
             try
             {
                 updateInfo ??= await CheckForUpdateAsync();
                 if (updateInfo == null || !updateInfo.HasUpdate) return false;
                 if (string.IsNullOrEmpty(updateInfo.DownloadUrl)) return false;
+                if (string.IsNullOrEmpty(updateInfo.LatestVersion)) return false;
                 if (!IsValidSha256(expectedSha256))
                 {
-                    Log("Обновление лаунчера пропущено: проверенная контрольная сумма недоступна.");
+                    Log("Обновление лаунчера отменено: контрольная сумма установщика недоступна " +
+                        "(CDN не ответил или версия на CDN не совпадает с релизом).");
                     return false;
                 }
 
-                // Защита от подмены: качаем только с доверенных доменов GitHub.
-                if (!DownloadValidator.IsAllowedDownloadHost(updateInfo.DownloadUrl))
-                {
-                    Log($"Недоверенный URL обновления — скачивание отменено: {updateInfo.DownloadUrl}");
-                    return false;
-                }
+                Log($"Скачивание установщика лаунчера {updateInfo.LatestVersion}...");
 
-                Log($"Скачивание лаунчера {updateInfo.LatestVersion}...");
+                // Уникальная папка на каждое обновление: никто не может заранее
+                // подложить файл в известный путь (в отличие от общей папки staging).
+                stagingDir = Path.Combine(Path.GetTempPath(), $"ven4tools_setup_{Guid.NewGuid():N}");
+                Directory.CreateDirectory(stagingDir);
+                string setupPath = Path.Combine(stagingDir, BuildSetupFileName(updateInfo.LatestVersion));
 
-                Directory.CreateDirectory(UpdateStagingDir);
-                string stagedExe = Path.Combine(UpdateStagingDir, ExeName);
-                long bytesRead = await DownloadFileAsync(updateInfo.DownloadUrl, stagedExe);
+                // FallbackDownloader: проверка доверенного хоста (включая редиректы),
+                // .partial-загрузка и обязательная сверка SHA256 до принятия файла.
+                var downloader = new FallbackDownloader(_httpClient);
+                await downloader.DownloadAsync(
+                    updateInfo.DownloadUrl,
+                    fallbackUrl,
+                    setupPath,
+                    CancellationToken.None,
+                    expectedSha256);
+                Log("Целостность установщика подтверждена (SHA256).");
 
-                // Контроль целостности: размер из API релиза должен совпасть с фактическим.
-                if (updateInfo.FileSize > 0 && bytesRead != updateInfo.FileSize)
-                    throw new IOException(
-                        $"Размер скачанного файла ({bytesRead} байт) не совпадает с ожидаемым ({updateInfo.FileSize} байт).");
-
-                // Однофайловый self-contained exe не бывает крошечным —
-                // отсекаем страницы ошибок и обрезанные загрузки.
-                if (bytesRead < 1024 * 1024)
-                    throw new IOException($"Скачанный файл подозрительно мал ({bytesRead} байт) — обновление отменено.");
-
-                // SHA256 обязателен: файл не применяется без подтверждённой контрольной суммы.
-                string actual = await Task.Run(() => ComputeSha256(stagedExe));
-                if (!string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase))
-                {
-                    try { File.Delete(stagedExe); } catch { }
-                    throw new IOException("Контрольная сумма не совпала. Файл повреждён или подменён.");
-                }
-                Log("Целостность подтверждена (SHA256).");
-
-                // Создаём и запускаем bat-скрипт замены exe.
-                string batPath = Path.Combine(Path.GetTempPath(), $"ven4tools_update_{Guid.NewGuid():N}.bat");
-                File.WriteAllText(batPath, BuildUpdateBat(), new UTF8Encoding(false));
-
+                // Заметка: при появлении сертификата подписи кода здесь дополнительно
+                // проверяется Authenticode-подпись установщика перед запуском.
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = batPath,
+                    FileName = setupPath,
+                    Arguments = BuildSetupUpdateArguments(Environment.ProcessId),
                     UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    WorkingDirectory = Path.GetTempPath()
+                    WorkingDirectory = stagingDir
                 });
 
-                Log("Скрипт обновления запущен. Лаунчер перезапустится через несколько секунд.");
+                Log("Установщик обновления запущен. Лаунчер перезапустится через несколько секунд.");
                 return true;
             }
             catch (Exception ex)
             {
                 Log($"Ошибка обновления лаунчера: {ex.Message}");
+                TryDeleteDirectory(stagingDir);
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Содержимое update.bat. Пути заданы через переменные окружения cmd —
-        /// скрипт не зависит от кодировки и имени пользователя (в т.ч. кириллицы).
-        /// </summary>
-        private static string BuildUpdateBat()
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine("@echo off");
-            sb.AppendLine("rem Скрипт обновления Ven4Tools Launcher. Создаётся автоматически и удаляет сам себя.");
-            sb.AppendLine("timeout /t 2 /nobreak >nul");
-            sb.AppendLine();
-            sb.AppendLine("set \"SRC=%TEMP%\\ven4tools_update\"");
-            sb.AppendLine("set \"DST=%LOCALAPPDATA%\\Ven4Tools\\Launcher\"");
-            sb.AppendLine("if not exist \"%DST%\" mkdir \"%DST%\"");
-            sb.AppendLine();
-            sb.AppendLine("rem До 15 попыток с паузой 1 сек: ждём, пока старый процесс освободит exe.");
-            sb.AppendLine("set ATTEMPTS=0");
-            sb.AppendLine(":retry");
-            sb.AppendLine("copy /y \"%SRC%\\*.exe\" \"%DST%\\\" >nul 2>&1");
-            sb.AppendLine("if %errorlevel%==0 goto ok");
-            sb.AppendLine("set /a ATTEMPTS+=1");
-            sb.AppendLine("if %ATTEMPTS% geq 15 goto fail");
-            sb.AppendLine("timeout /t 1 /nobreak >nul");
-            sb.AppendLine("goto retry");
-            sb.AppendLine();
-            sb.AppendLine(":ok");
-            sb.AppendLine("rmdir /s /q \"%SRC%\" >nul 2>&1");
-            sb.AppendLine("start \"\" \"%DST%\\Ven4Tools.Launcher.exe\"");
-            sb.AppendLine("goto cleanup");
-            sb.AppendLine();
-            sb.AppendLine(":fail");
-            sb.AppendLine("rem Обновление не удалось: запускаем уже установленный лаунчер, чтобы пользователь не остался без него.");
-            sb.AppendLine("start \"\" \"%DST%\\Ven4Tools.Launcher.exe\"");
-            sb.AppendLine();
-            sb.AppendLine(":cleanup");
-            sb.AppendLine("del \"%~f0\"");
-            return sb.ToString();
         }
 
         internal static bool IsValidSha256(string? value)
@@ -294,27 +276,16 @@ namespace Ven4Tools.Launcher.Services
 
                 if (answer != MessageBoxResult.Yes) return false;
 
-                // Ищем ассет установщика (Ven4Tools.Setup-X.Y.Z.exe).
-                // GetLatestRelease() не подходит: если после launcher-релиза вышел
-                // клиентский релиз, он становится «latest» и не содержит Setup.exe.
+                // Ищем последний стабильный релиз с установщиком Ven4Tools.Setup-X.Y.Z.exe.
+                // "0.0.0" — любой найденный релиз считается новее, берём самый свежий.
                 using var gitHub = new GitHubService();
-                var allReleases = await gitHub.GetAllReleases();
-                var release = allReleases.FirstOrDefault(r =>
-                    !r.prerelease &&
-                    r.assets?.Any(a =>
-                        a.name != null &&
-                        a.name.StartsWith("Ven4Tools.Setup", StringComparison.OrdinalIgnoreCase) &&
-                        a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) == true);
+                var latest = await gitHub.CheckLauncherUpdate("0.0.0");
 
-                var setupAsset = release?.assets?.FirstOrDefault(a =>
-                    a.name != null &&
-                    a.name.StartsWith("Ven4Tools.Setup", StringComparison.OrdinalIgnoreCase) &&
-                    a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
-
-                if (setupAsset?.browser_download_url == null ||
-                    !DownloadValidator.IsAllowedDownloadHost(setupAsset.browser_download_url))
+                if (latest?.DownloadUrl == null ||
+                    string.IsNullOrEmpty(latest.LatestVersion) ||
+                    !DownloadValidator.IsAllowedDownloadHost(latest.DownloadUrl))
                 {
-                    Log("Установщик в последнем релизе не найден — продолжаем в переносном режиме.");
+                    Log("Установщик в релизах не найден — продолжаем в переносном режиме.");
                     MessageBox.Show(
                         "Не удалось найти установщик в последнем релизе.\n" +
                         "Лаунчер продолжит работу в переносном режиме.",
@@ -324,19 +295,43 @@ namespace Ven4Tools.Launcher.Services
                     return false;
                 }
 
-                // name гарантированно не null — это условие фильтра FirstOrDefault выше.
-                // Path.GetFileName отсекает возможные разделители путей в имени ассета
-                // из GitHub API — защита от path injection при формировании пути в %TEMP%.
-                string setupName = Path.GetFileName(setupAsset.name ?? "Ven4Tools.Setup.exe");
-                if (string.IsNullOrWhiteSpace(setupName)) setupName = "Ven4Tools.Setup.exe";
+                // SHA256 обязателен (fail-closed): хеш берём из version.json CDN и только
+                // если версия на CDN совпадает с версией релиза — иначе хеш от другого билда.
+                (string? expectedSha256, string? fallbackUrl) =
+                    await GetSetupHashFromCdnAsync(latest.LatestVersion);
+
+                if (expectedSha256 == null)
+                {
+                    Log("Контрольная сумма установщика недоступна (CDN) — установка отменена.");
+                    MessageBox.Show(
+                        "Не удалось подтвердить целостность установщика.\n" +
+                        "Лаунчер продолжит работу в переносном режиме.",
+                        "Ven4Tools Launcher",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return false;
+                }
+
+                string setupName = BuildSetupFileName(latest.LatestVersion);
                 Log($"Скачивание установщика {setupName}...");
-                string setupPath = Path.Combine(Path.GetTempPath(), setupName);
-                long bytesRead = await DownloadFileAsync(setupAsset.browser_download_url, setupPath);
 
-                if (setupAsset.size > 0 && bytesRead != setupAsset.size)
-                    throw new IOException(
-                        $"Загрузка установщика неполная: получено {bytesRead} из {setupAsset.size} байт.");
+                // Уникальная папка: файл нельзя подменить между проверкой и запуском
+                // по заранее известному пути.
+                string stagingDir = Path.Combine(Path.GetTempPath(), $"ven4tools_setup_{Guid.NewGuid():N}");
+                Directory.CreateDirectory(stagingDir);
+                string setupPath = Path.Combine(stagingDir, setupName);
 
+                var downloader = new FallbackDownloader(_httpClient);
+                await downloader.DownloadAsync(
+                    latest.DownloadUrl,
+                    fallbackUrl,
+                    setupPath,
+                    CancellationToken.None,
+                    expectedSha256);
+                Log("Целостность установщика подтверждена (SHA256).");
+
+                // Заметка: при появлении сертификата подписи кода здесь дополнительно
+                // проверяется Authenticode-подпись установщика перед запуском.
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = setupPath,
@@ -360,47 +355,42 @@ namespace Ven4Tools.Launcher.Services
         }
 
         /// <summary>
-        /// Потоковое скачивание файла с проверкой полноты по Content-Length.
-        /// Возвращает число фактически записанных байт.
+        /// SHA256 установщика и резервный URL из version.json CDN — только если
+        /// версия лаунчера на CDN совпадает с запрошенной. Любая ошибка → (null, null):
+        /// вызывающий код обязан отменить установку (fail-closed).
         /// </summary>
-        private static async Task<long> DownloadFileAsync(string url, string destinationPath)
+        private static async Task<(string? Sha256, string? FallbackUrl)> GetSetupHashFromCdnAsync(string version)
         {
-            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-
-            long totalBytes = response.Content.Headers.ContentLength ?? -1L;
-            long bytesRead = 0L;
-            var buffer = new byte[81920];
-
-            using (var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
+            try
             {
-                using var stream = await response.Content.ReadAsStreamAsync();
-                int read;
-                while ((read = await stream.ReadAsync(buffer.AsMemory())) > 0)
+                using var cdnService = new CdnService();
+                CdnVersionInfo? cdnInfo = await cdnService.GetVersionInfoAsync();
+                if (cdnInfo?.Launcher != null &&
+                    string.Equals(cdnInfo.Launcher.Version, version, StringComparison.OrdinalIgnoreCase) &&
+                    IsValidSha256(cdnInfo.Launcher.SetupSha256))
                 {
-                    await fs.WriteAsync(buffer.AsMemory(0, read));
-                    bytesRead += read;
+                    return (cdnInfo.Launcher.SetupSha256, cdnInfo.Launcher.SetupUrl);
                 }
-                await fs.FlushAsync();
+            }
+            catch
+            {
+                // CDN недоступен — хеш подтвердить нечем, установка будет отменена.
             }
 
-            if (totalBytes > 0 && bytesRead != totalBytes)
-                throw new IOException(
-                    $"Загрузка неполная: получено {bytesRead} из {totalBytes} байт. Проверьте соединение.");
-
-            return bytesRead;
+            return (null, null);
         }
 
-        /// <summary>
-        /// Вычисляет SHA256 файла в виде hex-строки нижнего регистра.
-        /// Читает потоково — память не зависит от размера файла.
-        /// </summary>
-        private static string ComputeSha256(string path)
+        private static void TryDeleteDirectory(string? path)
         {
-            using var sha = System.Security.Cryptography.SHA256.Create();
-            using var stream = File.OpenRead(path);
-            byte[] hash = sha.ComputeHash(stream);
-            return Convert.ToHexString(hash).ToLowerInvariant();
+            if (string.IsNullOrEmpty(path)) return;
+            try
+            {
+                if (Directory.Exists(path)) Directory.Delete(path, true);
+            }
+            catch
+            {
+                // Временная папка будет удалена системной очисткой %TEMP%.
+            }
         }
     }
 }

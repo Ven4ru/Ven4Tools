@@ -72,9 +72,11 @@ namespace Ven4Tools.Launcher
                 // Сначала узнаём, какую версию ставим, чтобы взять с CDN хеш именно для неё.
                 var updateInfo = await updateSvc.CheckForUpdateAsync();
 
-                // SHA256 exe лаунчера берём из version.json CDN — но только если версия
+                // SHA256 установщика берём из version.json CDN — но только если версия
                 // на CDN совпадает с устанавливаемой (иначе хеш относится к другому билду).
+                // Без подтверждённого хеша обновление не выполняется (fail-closed).
                 string? expectedSha256 = null;
+                string? fallbackUrl = null;
                 if (updateInfo?.HasUpdate == true)
                 {
                     try
@@ -82,31 +84,32 @@ namespace Ven4Tools.Launcher
                         using var cdnService = new CdnService();
                         CdnVersionInfo? cdnInfo = await cdnService.GetVersionInfoAsync();
                         if (cdnInfo?.Launcher != null &&
-                            !string.IsNullOrWhiteSpace(cdnInfo.Launcher.ExeSha256) &&
+                            !string.IsNullOrWhiteSpace(cdnInfo.Launcher.SetupSha256) &&
                             string.Equals(cdnInfo.Launcher.Version, updateInfo.LatestVersion, StringComparison.OrdinalIgnoreCase))
                         {
-                            expectedSha256 = cdnInfo.Launcher.ExeSha256;
+                            expectedSha256 = cdnInfo.Launcher.SetupSha256;
+                            fallbackUrl    = cdnInfo.Launcher.SetupUrl;
                         }
                     }
                     catch
                     {
-                        // Без подтверждённого SHA-256 обновление будет тихо пропущено.
+                        // CDN недоступен — сервис откажет в обновлении и объяснит причину в логе.
                     }
                 }
 
-                var result = await updateSvc.DownloadAndApplyUpdateAsync(updateInfo, expectedSha256);
+                var result = await updateSvc.DownloadAndRunSetupUpdateAsync(updateInfo, expectedSha256, fallbackUrl);
 
                 if (result)
                 {
-                    // Скрипт запущен: через 2 сек скопирует новый exe и перезапустит лаунчер.
-                    // Выходим, чтобы освободить exe для замены.
-                    AddLog("✅ Скрипт обновления запущен. Лаунчер перезапустится через несколько секунд...");
+                    // Установщик запущен в режиме самообновления: он дождётся завершения
+                    // этого процесса, заменит exe и перезапустит лаунчер.
+                    AddLog("✅ Установщик обновления запущен. Лаунчер перезапустится через несколько секунд...");
                     await Task.Delay(500);
                     ExitApplication();
                 }
                 else
                 {
-                    AddLog("❌ Ошибка при установке обновления");
+                    AddLog("❌ Обновление не выполнено — подробности выше в журнале");
                 }
             }
             catch (Exception ex)

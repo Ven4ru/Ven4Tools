@@ -83,25 +83,29 @@ namespace Ven4Tools.Services
 
             // Источник 1 — хостинг (3s), источник 2 — CDN (4s), источник 3 — GitHub raw.
             // Первый ответивший источник выигрывает; "source" помечается соответственно.
+            // Подпись обязательна для КАЖДОГО источника (fail-closed): источник без
+            // валидной подписи пропускается, каталог без подписи не принимается.
             try
             {
-                string? remoteJson = await TryDownloadVerifiedAsync(HostingCatalogUrl, HostingTimeoutSeconds, ct);
+                var verified = await TryDownloadVerifiedAsync(HostingCatalogUrl, HostingTimeoutSeconds, ct);
                 string source = "hosting";
 
-                if (remoteJson == null)
+                if (verified == null)
                 {
-                    remoteJson = await TryDownloadVerifiedAsync(CdnCatalogUrl, CdnTimeoutSeconds, ct);
+                    verified = await TryDownloadVerifiedAsync(CdnCatalogUrl, CdnTimeoutSeconds, ct);
                     source = "cdn";
                 }
 
-                if (remoteJson == null)
+                if (verified == null)
                 {
-                    remoteJson = await TryDownloadVerifiedAsync(RemoteCatalogUrl, _timeoutSeconds, ct);
+                    verified = await TryDownloadVerifiedAsync(RemoteCatalogUrl, _timeoutSeconds, ct);
                     source = "online";
                 }
 
-                if (remoteJson == null)
+                if (verified == null)
                     throw new HttpRequestException("Каталог недоступен ни с хостинга, ни с CDN, ни с GitHub");
+
+                var (remoteJson, remoteSignature) = verified.Value;
 
                 // Присваиваем результат до записи на диск: ошибка кэширования
                 // (например, Program Files без прав на запись) не должна обнулять каталог.
@@ -112,11 +116,13 @@ namespace Ven4Tools.Services
 
                 try
                 {
+                    // В кэш пишем ровно ту пару json+sig, которая прошла проверку.
+                    // Повторное скачивание подписи создавало гонку версий: каталог на
+                    // сервере мог обновиться между запросами, свежая подпись не совпадала
+                    // с уже скачанным json — и кэш оставался без валидной подписи.
                     Directory.CreateDirectory(Path.GetDirectoryName(_localCatalogPath)!);
                     await File.WriteAllTextAsync(_localCatalogPath, remoteJson, ct);
-                    var sig = await TryDownloadAsync(GetSignatureUrl(source), _timeoutSeconds, ct);
-                    if (sig != null && CatalogSignatureVerifier.Verify(remoteJson, sig))
-                        await File.WriteAllTextAsync(LocalSignaturePath, sig, ct);
+                    await File.WriteAllTextAsync(LocalSignaturePath, remoteSignature, ct);
                 }
                 catch { /* кэш — best-effort; каталог уже загружен */ }
 
@@ -169,7 +175,15 @@ namespace Ven4Tools.Services
             }
         }
 
-        private async Task<string?> TryDownloadVerifiedAsync(string url, int timeoutSeconds, CancellationToken ct)
+        /// <summary>
+        /// Скачивает каталог и его подпись, проверяет пару и возвращает её целиком.
+        /// Проверка строгая (fail-closed): нет подписи или подпись невалидна —
+        /// источник отклоняется (null), «мягкого» режима без подписи не существует.
+        /// Возврат пары позволяет закэшировать именно проверенные json+sig,
+        /// не скачивая подпись повторно.
+        /// </summary>
+        private async Task<(string Json, string Signature)?> TryDownloadVerifiedAsync(
+            string url, int timeoutSeconds, CancellationToken ct)
         {
             var json = await TryDownloadAsync(url, timeoutSeconds, ct);
             if (json == null) return null;
@@ -179,19 +193,13 @@ namespace Ven4Tools.Services
                 AppLogger.Write($"[CatalogLoaderService] Подпись каталога недействительна: {url}");
                 return null;
             }
-            return json;
+            return (json, signature);
         }
 
-        private static string GetSignatureUrl(string source) => source switch
-        {
-            "hosting" => HostingCatalogUrl + ".sig",
-            "cdn" => CdnCatalogUrl + ".sig",
-            _ => RemoteCatalogUrl + ".sig"
-        };
-
         /// <summary>
-        /// Читает кэш каталога с диска. При повреждённом JSON удаляет битый файл
-        /// и возвращает null, чтобы цепочка загрузки продолжилась на embedded.
+        /// Читает кэш каталога с диска. Кэш тоже строго fail-closed: без файла
+        /// подписи или с невалидной подписью возвращается null. При повреждённом
+        /// JSON удаляет битый файл, чтобы цепочка загрузки продолжилась на embedded.
         /// </summary>
         private async Task<MasterCatalog?> TryReadCacheAsync(CancellationToken ct)
         {

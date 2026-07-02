@@ -14,8 +14,12 @@ namespace Ven4Tools.Launcher.Services
         // volatile: поле переприсваивается из UI-потока (Start), а читается
         // из ThreadPool-потока таймера — гарантируем видимость актуальной ссылки
         private volatile CancellationTokenSource _cts = new CancellationTokenSource();
+        // Защита от параллельного запуска CheckAllAsync: таймер и ручной вызов
+        // (CheckNowAsync) могут наложиться. Повторный запуск пропускается, не ждёт.
+        private readonly SemaphoreSlim _checkGate = new SemaphoreSlim(1, 1);
         private readonly string _launcherVersion;
         private readonly Func<string> _getClientPath;
+        private readonly Action<string>? _log;
         private readonly GitHubService _github = new GitHubService();
         private string _lastNotificationId = "";
 
@@ -27,10 +31,19 @@ namespace Ven4Tools.Launcher.Services
         public event Action<int>? WingetUpgradeCountChanged;
         public event Action<Notification>? NotificationAvailable;
 
-        public UpdateBackgroundService(string launcherVersion, Func<string> getClientPath)
+        public UpdateBackgroundService(string launcherVersion, Func<string> getClientPath, Action<string>? log = null)
         {
             _launcherVersion = launcherVersion;
             _getClientPath = getClientPath;
+            _log = log;
+        }
+
+        private void Log(string message)
+        {
+            // Внешний логгер может использовать Dispatcher, который недоступен
+            // при завершении приложения — сбой логирования не должен ронять проверку.
+            try { _log?.Invoke(message); } catch { }
+            Debug.WriteLine($"[UpdateBackgroundService] {message}");
         }
 
         public void Start()
@@ -56,28 +69,49 @@ namespace Ven4Tools.Launcher.Services
 
         private async Task CheckAllAsync()
         {
-            if (_cts.IsCancellationRequested) return;
-            try { await CheckLauncherAsync(); } catch { }
-            if (_cts.IsCancellationRequested) return;
-            try { await CheckClientAsync(); } catch { }
-            if (_cts.IsCancellationRequested) return;
-            try
+            // Уже идёт проверка (таймер наложился на ручной вызов) — не ждём, выходим.
+            if (!await _checkGate.WaitAsync(0))
             {
-                int count = await CountWingetUpgradesAsync();
-                WingetUpgradeCountChanged?.Invoke(count);
+                Log("Проверка обновлений уже выполняется — повторный запуск пропущен.");
+                return;
             }
-            catch { }
-            if (_cts.IsCancellationRequested) return;
+
             try
             {
-                var notif = await NotificationService.GetLatestAsync();
-                if (notif != null && notif.Id != _lastNotificationId && !string.IsNullOrEmpty(notif.Message))
+                var token = _cts.Token;
+                if (token.IsCancellationRequested) return;
+                try { await CheckLauncherAsync(); }
+                catch (Exception ex) { Log($"Ошибка проверки обновления лаунчера: {ex.Message}"); }
+
+                if (token.IsCancellationRequested) return;
+                try { await CheckClientAsync(); }
+                catch (Exception ex) { Log($"Ошибка проверки обновления клиента: {ex.Message}"); }
+
+                if (token.IsCancellationRequested) return;
+                try
                 {
-                    _lastNotificationId = notif.Id;
-                    NotificationAvailable?.Invoke(notif);
+                    int count = await CountWingetUpgradesAsync(token);
+                    WingetUpgradeCountChanged?.Invoke(count);
                 }
+                catch (Exception ex) { Log($"Ошибка подсчёта обновлений winget: {ex.Message}"); }
+
+                if (token.IsCancellationRequested) return;
+                try
+                {
+                    var notif = await NotificationService.GetLatestAsync();
+                    if (notif != null && notif.Id != _lastNotificationId && !string.IsNullOrEmpty(notif.Message))
+                    {
+                        _lastNotificationId = notif.Id;
+                        NotificationAvailable?.Invoke(notif);
+                    }
+                }
+                catch (Exception ex) { Log($"Ошибка получения уведомлений: {ex.Message}"); }
             }
-            catch { }
+            finally
+            {
+                // Dispose может освободить семафор, пока фоновая проверка ещё идёт.
+                try { _checkGate.Release(); } catch (ObjectDisposedException) { }
+            }
         }
 
         private async Task CheckLauncherAsync()
@@ -126,10 +160,16 @@ namespace Ven4Tools.Launcher.Services
 
         private static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
 
-        private async Task<int> CountWingetUpgradesAsync()
+        private async Task<int> CountWingetUpgradesAsync(CancellationToken token)
         {
+            System.Diagnostics.Process? p = null;
             try
             {
+                // Таймаут 60 сек: зависший winget не должен навсегда блокировать
+                // фоновую проверку. Отмена через Stop/Dispose тоже прерывает ожидание.
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(60));
+
                 var psi = new System.Diagnostics.ProcessStartInfo("winget",
                     "upgrade --include-unknown --accept-source-agreements --disable-interactivity --locale en-US")
                 {
@@ -139,11 +179,11 @@ namespace Ven4Tools.Launcher.Services
                     CreateNoWindow         = true,
                     StandardOutputEncoding = System.Text.Encoding.UTF8
                 };
-                using var p = System.Diagnostics.Process.Start(psi);
+                p = System.Diagnostics.Process.Start(psi);
                 if (p == null) return 0;
-                var errTask = p.StandardError.ReadToEndAsync();
-                string output = await p.StandardOutput.ReadToEndAsync();
-                await p.WaitForExitAsync();
+                var errTask = p.StandardError.ReadToEndAsync(timeoutCts.Token);
+                string output = await p.StandardOutput.ReadToEndAsync(timeoutCts.Token);
+                await p.WaitForExitAsync(timeoutCts.Token);
                 await errTask;
                 // Считаем только строки таблицы между разделителем «---» и футером.
                 // Футер winget («N upgrades available.») отделён пустой строкой —
@@ -171,7 +211,23 @@ namespace Ven4Tools.Launcher.Services
                 }
                 return count;
             }
-            catch { return 0; }
+            catch (OperationCanceledException)
+            {
+                // Зависший winget завершаем принудительно, иначе он останется висеть.
+                try { p?.Kill(entireProcessTree: true); }
+                catch (Exception killEx) { Log($"Не удалось завершить winget: {killEx.Message}"); }
+                Log("winget upgrade не ответил за 60 секунд — проверка обновлений winget пропущена.");
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Log($"Ошибка запуска winget upgrade: {ex.Message}");
+                return 0;
+            }
+            finally
+            {
+                p?.Dispose();
+            }
         }
 
 
@@ -180,6 +236,7 @@ namespace Ven4Tools.Launcher.Services
             _cts.Cancel();
             _timer?.Dispose();
             _github.Dispose();
+            _checkGate.Dispose();
         }
     }
 }

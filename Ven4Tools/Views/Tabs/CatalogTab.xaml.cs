@@ -94,8 +94,12 @@ namespace Ven4Tools.Views.Tabs
                     {
                         window.Closed += (_, _) =>
                         {
+                            // Только Cancel, без Dispose: отложенные ретраи проверки
+                            // доступности ещё могут читать _availabilityCts.Token, и
+                            // Dispose приводил к ObjectDisposedException — ложным
+                            // «❌ Ошибка при проверке» в логе при закрытии окна.
+                            // CTS живёт до конца процесса, утечки нет.
                             try { _availabilityCts.Cancel(); } catch { }
-                            _availabilityCts.Dispose();
                         };
                         _availabilityShutdownHooked = true;
                     }

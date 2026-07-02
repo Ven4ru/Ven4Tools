@@ -23,41 +23,20 @@ namespace Ven4Tools.Services
                 list.Add(new InstallFailure
                 {
                     SessionId   = CrashReportService.SessionId,
-                    // Имя машины не сохраняем в открытом виде — только короткий хеш
-                    MachineName = CrashReportService.AnonymizeMachineName(),
+                    // Случайный локальный идентификатор — не связан с именем машины
+                    DeviceId    = CrashReportService.GetDeviceId(),
                     AppName     = appName,
                     AppId       = appId,
                     Method      = method,
                     Error       = error,
                     Version     = _version,
                     OsVersion   = Environment.OSVersion.ToString(),
-                    Timestamp   = DateTime.UtcNow.ToString("O"),
-                    Reported    = false
+                    Timestamp   = DateTime.UtcNow.ToString("O")
                 });
                 // Защита от неограниченного роста файла — храним не более 100 последних записей
                 const int maxRecords = 100;
                 if (list.Count > maxRecords)
                     list.RemoveRange(0, list.Count - maxRecords);
-                Save(list);
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write(ex, "Ошибка сервиса сбоев установки");
-            }
-        }
-
-        public static List<InstallFailure> GetUnreported()
-        {
-            try { return ReadAll().FindAll(f => !f.Reported); }
-            catch { return new(); }
-        }
-
-        public static void MarkAllReported()
-        {
-            try
-            {
-                var list = ReadAll();
-                list.ForEach(f => f.Reported = true);
                 Save(list);
             }
             catch (Exception ex)
@@ -85,7 +64,7 @@ namespace Ven4Tools.Services
     public class InstallFailure
     {
         public string SessionId   { get; set; } = "";
-        public string MachineName { get; set; } = "";
+        public string DeviceId    { get; set; } = "";
         public string AppName     { get; set; } = "";
         public string AppId       { get; set; } = "";
         public string Method      { get; set; } = "";
@@ -93,6 +72,5 @@ namespace Ven4Tools.Services
         public string Version     { get; set; } = "";
         public string OsVersion   { get; set; } = "";
         public string Timestamp   { get; set; } = "";
-        public bool   Reported    { get; set; }
     }
 }

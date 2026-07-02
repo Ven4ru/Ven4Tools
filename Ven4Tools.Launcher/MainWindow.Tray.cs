@@ -86,7 +86,7 @@ namespace Ven4Tools.Launcher
                 ? $"{ver.Major}.{ver.Minor}.{ver.Build}"
                 : "0.0.0";
 
-            _updateService = new UpdateBackgroundService(launcherVersion, () => _clientPath)
+            _updateService = new UpdateBackgroundService(launcherVersion, () => _clientPath, AddLog)
             {
                 LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
                 LastNotifiedClientVersion   = _lastNotifiedClientVersion

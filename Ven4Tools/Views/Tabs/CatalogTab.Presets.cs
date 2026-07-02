@@ -29,8 +29,7 @@ namespace Ven4Tools.Views.Tabs
             btnSavePreset.Content   = "💾 Сохранить выбор";
             btnSavePreset.ToolTip   = "Сохранить отмеченные приложения как пресет";
 
-            int? userId = null;
-            var list = await PresetService.LoadAsync(userId);
+            var list = await PresetService.LoadAsync();
             _presets.Clear();
             foreach (var p in list) _presets.Add(p);
 
@@ -55,11 +54,10 @@ namespace Ven4Tools.Views.Tabs
 
                 var previousApps = updating.Apps;
                 updating.Apps = selectedApps;
-                int? uid = null;
                 btnSavePreset.IsEnabled = false;
                 try
                 {
-                    bool ok = await PresetService.UpdateAsync(uid, updating);
+                    bool ok = await PresetService.UpdateAsync(updating);
                     if (ok) updating.RaiseAppCountChanged();
                     else    updating.Apps = previousApps;
                     AppLogger.Write(ok
@@ -76,13 +74,12 @@ namespace Ven4Tools.Views.Tabs
             var dlg = new Views.PresetSaveDialog(selected.Count) { Owner = Window.GetWindow(this) };
             if (dlg.ShowDialog() != true) return;
 
-            int? userId = null;
-            var preset  = new Preset { Name = dlg.PresetName, Description = dlg.PresetDescription, Apps = selected };
+            var preset = new Preset { Name = dlg.PresetName, Description = dlg.PresetDescription, Apps = selected };
 
             btnSavePreset.IsEnabled = false;
             try
             {
-                var saved = await PresetService.SaveAsync(userId, preset);
+                var saved = await PresetService.SaveAsync(preset);
                 if (saved == null) { AppLogger.Write("❌ Не удалось сохранить пресет"); return; }
 
                 _presets.Insert(0, saved);
@@ -134,11 +131,10 @@ namespace Ven4Tools.Views.Tabs
             preset.Name        = dlg.PresetName;
             preset.Description = dlg.PresetDescription;
 
-            int? userId = null;
             btn.IsEnabled = false;
             try
             {
-                bool ok = await PresetService.UpdateAsync(userId, preset);
+                bool ok = await PresetService.UpdateAsync(preset);
                 if (ok)
                     preset.RaiseNameChanged();
                 else
@@ -166,34 +162,6 @@ namespace Ven4Tools.Views.Tabs
             btnSavePreset.ToolTip   = "Сохранить текущий выбор как новый состав пресета";
         }
 
-        // ── Поделиться ────────────────────────────────────────────────────────────
-
-        private async void BtnSharePreset_Click(object sender, RoutedEventArgs e)
-        {
-            if ((sender as Button)?.Tag is not Preset preset) return;
-
-            if (preset.IsLocal)
-            {
-                MessageBox.Show("Шаринг пресетов доступен только для облачных пресетов авторизованных пользователей.",
-                    "Пресеты", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            if (preset.IsLoading) return;
-            preset.IsLoading = true;
-            try
-            {
-                string? code = await PresetService.ShareAsync(preset.Id);
-                if (code == null) { AppLogger.Write("❌ Не удалось получить ссылку на пресет"); return; }
-
-                preset.ShareCode = code;
-                string link = $"ven4tools.ru/p/{code}";
-                try { Clipboard.SetText(link); } catch { }
-                AppLogger.Write($"🔗 Ссылка скопирована: {link}");
-            }
-            finally { preset.IsLoading = false; }
-        }
-
         // ── Удалить пресет ────────────────────────────────────────────────────────
 
         private async void BtnDeletePreset_Click(object sender, RoutedEventArgs e)
@@ -211,57 +179,11 @@ namespace Ven4Tools.Views.Tabs
                 btnSavePreset.ToolTip  = "Сохранить отмеченные приложения как пресет";
             }
 
-            int? userId = null;
-            bool deleted = await PresetService.DeleteAsync(userId, preset);
-            if (!deleted)
-            {
-                AppLogger.Write($"❌ Не удалось удалить пресет «{preset.Name}» — сервер недоступен");
-                MessageBox.Show("Не удалось удалить пресет. Сервер недоступен — попробуйте позже.",
-                    "Пресеты", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            await PresetService.DeleteAsync(preset);
 
             _presets.Remove(preset);
             txtPresetsEmpty.Visibility = _presets.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             AppLogger.Write($"🗑️ Пресет «{preset.Name}» удалён");
-        }
-
-        // ── Импорт по коду ────────────────────────────────────────────────────────
-
-        private async void BtnImportByCode_Click(object sender, RoutedEventArgs e)
-        {
-            var dlg = new Views.PresetCodeDialog { Owner = Window.GetWindow(this) };
-            if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.Code)) return;
-
-            var preset = await PresetService.GetByCodeAsync(dlg.Code);
-            if (preset == null)
-            {
-                MessageBox.Show("Пресет не найден или недоступен.", "Пресеты",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            AppLogger.Write($"📥 Загружен пресет «{preset.Name}» ({preset.Apps.Count} прил.)");
-            ApplyPreset(preset);
-
-            // Предложить сохранить
-            var save = MessageBox.Show($"Пресет «{preset.Name}» применён.\n\nСохранить в свой список?",
-                "Пресеты", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (save == MessageBoxResult.Yes)
-            {
-                int? userId = null;
-                // Сохраняем как новый собственный пресет: серверный Id и код шаринга
-                // чужого пресета сбрасываем, иначе перезапишем оригинал на сервере.
-                preset.Id = 0;
-                preset.ShareCode = null;
-                var saved = await PresetService.SaveAsync(userId, preset);
-                if (saved != null)
-                {
-                    _presets.Insert(0, saved);
-                    txtPresetsEmpty.Visibility = Visibility.Collapsed;
-                    AppLogger.Write($"✅ Пресет «{preset.Name}» сохранён");
-                }
-            }
         }
     }
 }
