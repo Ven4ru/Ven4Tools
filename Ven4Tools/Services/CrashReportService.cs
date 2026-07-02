@@ -17,6 +17,58 @@ namespace Ven4Tools.Services
         public static readonly string SessionId =
             Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
 
+        // Случайный идентификатор устройства: генерируется один раз и хранится локально.
+        // Не выводится из имени машины/пользователя — восстановить по нему ничего нельзя.
+        private static readonly string DeviceIdPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "device_id.txt");
+
+        private static string? _deviceId;
+        private static readonly object _deviceIdLock = new();
+
+        /// <summary>
+        /// Возвращает случайный идентификатор устройства для группировки отчётов.
+        /// Генерируется один раз (Guid.NewGuid) и сохраняется в device_id.txt;
+        /// никакие характеристики машины или пользователя не используются.
+        /// </summary>
+        public static string GetDeviceId()
+        {
+            if (_deviceId != null) return _deviceId;
+            lock (_deviceIdLock)
+            {
+                _deviceId ??= LoadOrCreateDeviceId(DeviceIdPath);
+                return _deviceId;
+            }
+        }
+
+        /// <summary>
+        /// Читает идентификатор устройства из файла или создаёт новый случайный.
+        /// Повреждённое содержимое заменяется свежим Guid. При ошибке записи
+        /// идентификатор живёт до конца сеанса (в следующий раз будет новый —
+        /// в сторону меньшей связываемости отчётов, а не большей).
+        /// </summary>
+        public static string LoadOrCreateDeviceId(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    var existing = File.ReadAllText(path).Trim();
+                    if (Guid.TryParse(existing, out var parsed))
+                        return parsed.ToString("N");
+                }
+                var id = Guid.NewGuid().ToString("N");
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                File.WriteAllText(path, id);
+                return id;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[CrashReportService] device_id: {ex.Message}");
+                return Guid.NewGuid().ToString("N");
+            }
+        }
+
         public static void Write(Exception ex)
         {
             try
@@ -24,8 +76,8 @@ namespace Ven4Tools.Services
                 var report = new CrashReport
                 {
                     SessionId     = SessionId,
-                    // Имя машины не отправляем в открытом виде — только короткий хеш
-                    MachineName   = AnonymizeMachineName(),
+                    // Случайный локальный идентификатор — не связан с именем машины
+                    DeviceId      = GetDeviceId(),
                     Version       = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "unknown",
                     Timestamp     = DateTime.UtcNow.ToString("O"),
                     OsVersion     = Environment.OSVersion.ToString(),
@@ -33,7 +85,8 @@ namespace Ven4Tools.Services
                     Message       = SanitizePath(ex.Message),
                     StackTrace    = SanitizePath(ex.StackTrace ?? ""),
                     InnerMessage  = ex.InnerException != null ? SanitizePath(ex.InnerException.Message) : null,
-                    Reported      = false
+                    Reported      = false,
+                    SendApproved  = false
                 };
 
                 Directory.CreateDirectory(Path.GetDirectoryName(CrashFilePath)!);
@@ -66,23 +119,55 @@ namespace Ven4Tools.Services
         }
 
         /// <summary>
-        /// Отправляет неотправленный краш-репорт на сервер (best-effort).
-        /// Вызывается при старте приложения — если прошлый сеанс упал,
-        /// отчёт уйдёт сейчас и будет помечен как отправленный.
+        /// Помечает отложенный отчёт как одобренный пользователем к отправке.
+        /// Если отправка сорвётся (нет сети), при следующем старте отчёт уйдёт
+        /// без повторного вопроса — согласие уже получено.
+        /// </summary>
+        public static void MarkSendApproved()
+        {
+            try
+            {
+                var report = Read();
+                if (report == null) return;
+                report.SendApproved = true;
+                File.WriteAllText(CrashFilePath, JsonConvert.SerializeObject(report, Formatting.Indented));
+            }
+            catch (Exception ex) { AppLogger.Write($"[CrashReportService] {ex.Message}"); }
+        }
+
+        /// <summary>
+        /// Удаляет отложенный отчёт о сбое (пользователь отказался от отправки).
+        /// Повторно этот отчёт предлагаться не будет.
+        /// </summary>
+        public static void DeletePending()
+        {
+            try
+            {
+                if (File.Exists(CrashFilePath)) File.Delete(CrashFilePath);
+            }
+            catch (Exception ex) { AppLogger.Write($"[CrashReportService] {ex.Message}"); }
+        }
+
+        /// <summary>
+        /// Отправляет отложенный краш-репорт на сервер (best-effort).
+        /// Вызывается при старте приложения ТОЛЬКО после явного согласия
+        /// пользователя (SendApproved) — без него метод ничего не отправляет.
         /// </summary>
         public static async Task TrySendPendingAsync()
         {
             try
             {
                 var report = Read();
-                if (report == null || report.Reported) return;
+                if (report == null || report.Reported || !report.SendApproved) return;
 
                 using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) };
                 var payload = new System.Net.Http.FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("action",     "crash_report"),
                     new KeyValuePair<string, string>("session_id", report.SessionId),
-                    new KeyValuePair<string, string>("machine",    report.MachineName),
+                    // Ключ "machine" сохранён для совместимости с серверным API,
+                    // но содержит случайный идентификатор устройства, а не имя машины.
+                    new KeyValuePair<string, string>("machine",    report.DeviceId),
                     new KeyValuePair<string, string>("version",    report.Version),
                     new KeyValuePair<string, string>("timestamp",  report.Timestamp),
                     new KeyValuePair<string, string>("os",         report.OsVersion),
@@ -167,26 +252,12 @@ namespace Ven4Tools.Services
             return text;
         }
 
-        /// <summary>
-        /// Короткий SHA256-хеш имени машины: позволяет группировать отчёты
-        /// с одного ПК, не раскрывая реальное имя компьютера.
-        /// </summary>
-        public static string AnonymizeMachineName()
-        {
-            try
-            {
-                var bytes = System.Security.Cryptography.SHA256.HashData(
-                    System.Text.Encoding.UTF8.GetBytes(Environment.MachineName));
-                return Convert.ToHexString(bytes)[..8];
-            }
-            catch { return "unknown"; }
-        }
     }
 
     public class CrashReport
     {
         public string  SessionId     { get; set; } = "";
-        public string  MachineName   { get; set; } = "";
+        public string  DeviceId      { get; set; } = "";
         public string  Version       { get; set; } = "";
         public string  Timestamp     { get; set; } = "";
         public string  OsVersion     { get; set; } = "";
@@ -195,5 +266,7 @@ namespace Ven4Tools.Services
         public string  StackTrace    { get; set; } = "";
         public string? InnerMessage  { get; set; }
         public bool    Reported      { get; set; }
+        // Явное согласие пользователя на отправку этого отчёта
+        public bool    SendApproved  { get; set; }
     }
 }

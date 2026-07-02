@@ -48,22 +48,14 @@ jobs:
       - name: Публикация launcher exe
         shell: pwsh
         run: |
+          # Публикуемый exe — только вход для NSIS-упаковки, отдельным ассетом
+          # релиза он не становится: самообновление и первая установка идут
+          # через единственный Ven4Tools.Setup-X.Y.Z.exe (см. build_installer.ps1).
           dotnet publish Ven4Tools.Launcher/Ven4Tools.Launcher.csproj `
             -c Release -r win-x64 --self-contained true `
             -p:Version=${{ inputs.version }} `
             -o _release/launcher_publish `
             --nologo
-          Copy-Item `
-            "_release/launcher_publish/Ven4Tools.Launcher.exe" `
-            "_release/Ven4Tools.Launcher-${{ inputs.version }}.exe"
-
-      - name: UI smoke опубликованного launcher exe
-        shell: pwsh
-        run: |
-          $env:LAUNCHER_UNDER_TEST = Resolve-Path `
-            "_release/Ven4Tools.Launcher-${{ inputs.version }}.exe"
-          dotnet test tests/Ven4Tools.UITests/Ven4Tools.UITests.csproj `
-            -c Release -p:Platform=x64 --no-build --no-restore --nologo
 
       - name: Установка NSIS
         shell: pwsh
@@ -110,12 +102,9 @@ jobs:
       - name: Контрольные суммы
         shell: pwsh
         run: |
-          Get-FileHash "_release/Ven4Tools.Launcher-${{ inputs.version }}.exe" -Algorithm SHA256 |
-            ForEach-Object { "$($_.Hash.ToLower())  Ven4Tools.Launcher-${{ inputs.version }}.exe" } |
-            Set-Content "_release/SHA256SUMS.txt" -Encoding ascii
           Get-FileHash "_release/Ven4Tools.Setup-${{ inputs.version }}.exe" -Algorithm SHA256 |
             ForEach-Object { "$($_.Hash.ToLower())  Ven4Tools.Setup-${{ inputs.version }}.exe" } |
-            Add-Content "_release/SHA256SUMS.txt" -Encoding ascii
+            Set-Content "_release/SHA256SUMS.txt" -Encoding ascii
 
       - name: Создание черновика отдельного launcher-релиза
         shell: pwsh
@@ -123,7 +112,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "launcher-v${{ inputs.version }}" `
-            "_release/Ven4Tools.Launcher-${{ inputs.version }}.exe" `
             "_release/Ven4Tools.Setup-${{ inputs.version }}.exe" `
             "_release/SHA256SUMS.txt" `
             --title "Ven4Tools Launcher ${{ inputs.version }}" `
