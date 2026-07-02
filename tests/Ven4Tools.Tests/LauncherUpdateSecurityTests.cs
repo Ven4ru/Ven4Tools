@@ -14,4 +14,36 @@ public sealed class LauncherUpdateSecurityTests
     {
         Assert.Equal(expected, LauncherUpdateService.IsValidSha256(value));
     }
+
+    [Fact]
+    public void BuildSetupUpdateArguments_ContainsSilentUpdateWaitAndRelaunchFlags()
+    {
+        string args = LauncherUpdateService.BuildSetupUpdateArguments(waitPid: 4242);
+
+        Assert.Contains("/S", args);
+        Assert.Contains("/UPDATE", args);
+        Assert.Contains("/WAITPID=4242", args);
+        Assert.Contains("/RELAUNCH", args);
+    }
+
+    [Theory]
+    [InlineData("2.1.0", "Ven4Tools.Setup-2.1.0.exe")]
+    [InlineData("10.20.30", "Ven4Tools.Setup-10.20.30.exe")]
+    public void BuildSetupFileName_ProducesExpectedName(string version, string expected)
+    {
+        Assert.Equal(expected, LauncherUpdateService.BuildSetupFileName(version));
+    }
+
+    [Fact]
+    public void BuildSetupFileName_SanitizesPathSeparatorsFromUntrustedVersionString()
+    {
+        // Версия приходит из тега GitHub-релиза — не доверенные данные.
+        // Разделители пути не должны попасть в итоговое имя файла, иначе
+        // комбинация Path.Combine(stagingDir, fileName) могла бы уйти
+        // за пределы временной папки.
+        string name = LauncherUpdateService.BuildSetupFileName("1.0.0/../evil");
+
+        Assert.DoesNotContain("/", name);
+        Assert.DoesNotContain("\\", name);
+    }
 }

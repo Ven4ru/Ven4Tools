@@ -121,7 +121,7 @@ namespace Ven4Tools.Services
             }
         }
 
-        private async void BtnOk_Click(object sender, RoutedEventArgs e)
+        private void BtnOk_Click(object sender, RoutedEventArgs e)
         {
             bool isWinget = rbWinget.IsChecked == true;
 
@@ -163,26 +163,12 @@ namespace Ven4Tools.Services
                 IsUserAdded = true
             };
 
-            string? wingetId = null;
             if (isWinget)
-            {
-                wingetId = txtWingetId.Text.Trim();
-                app.AlternativeId = wingetId;
-            }
+                app.AlternativeId = txtWingetId.Text.Trim();
             else
-            {
                 app.InstallerUrls.Add(txtUrl.Text.Trim());
-            }
 
             Result = app;
-
-            try
-            {
-                if (await new ConsentService().IsStatsAllowedAsync())
-                    await StatsService.Instance.TrackUserAddAsync(
-                        app.Id, wingetId, app.InstallerUrls.Count > 0 ? app.InstallerUrls[0] : null);
-            }
-            catch { }
 
             DialogResult = true;
             Close();

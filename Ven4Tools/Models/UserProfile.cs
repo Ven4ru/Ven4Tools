@@ -21,11 +21,8 @@ namespace Ven4Tools.Models
         public bool NotifyAppUpdates { get; set; } = true;
         public bool NotifyNewApps { get; set; } = false;
 
-        // Sync & Privacy
-        public bool SyncFavorites { get; set; } = true;
+        // Privacy
         public bool SaveInstallHistory { get; set; } = true;
-        public bool AnonymousStats { get; set; } = false;
-        public bool NoLocalStorage { get; set; } = false;
 
         // First-run
         public bool HasSelectedCategory { get; set; } = false;
