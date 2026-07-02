@@ -54,8 +54,8 @@ namespace Ven4Tools
                 try { LocalizationService.Init(); } catch { }
                 try { ThemeService.Apply(ProfileService.Current.Theme); } catch { }
                 try { _heartbeat = new HeartbeatService(); } catch { }
-                // Отправка краш-репорта прошлого сеанса — fire-and-forget, старт не блокирует
-                try { _ = CrashReportService.TrySendPendingAsync(); } catch { }
+                // Краш-репорт прошлого сеанса отправляется только с явного согласия пользователя
+                try { AskAndSendPendingCrashReport(); } catch { }
                 // Отправка отложенного отзыва — тоже fire-and-forget
                 try { _ = FeedbackService.TrySendPendingAsync(); } catch { }
 
@@ -98,6 +98,41 @@ namespace Ven4Tools
                 // splash закрываем в любом случае — даже если MainWindow упал до Show().
                 try { splash?.Close(); } catch { }
             }
+        }
+
+        /// <summary>
+        /// Если прошлый сеанс завершился сбоем — спрашивает пользователя, отправить
+        /// ли отчёт разработчику. Отправка выполняется только при явном «Да»;
+        /// при «Нет» отчёт удаляется и повторно не предлагается. Если согласие
+        /// уже было дано ранее (отправка сорвалась из-за сети) — отправляем без
+        /// повторного вопроса.
+        /// </summary>
+        private static void AskAndSendPendingCrashReport()
+        {
+            var report = CrashReportService.Read();
+            if (report == null || report.Reported) return;
+
+            if (!report.SendApproved)
+            {
+                var answer = MessageBox.Show(
+                    "Обнаружен отчёт о сбое предыдущего запуска.\n\n" +
+                    "Отправить разработчику для диагностики?\n" +
+                    "Отчёт не содержит личных данных.",
+                    "Ven4Tools — отчёт о сбое",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (answer != MessageBoxResult.Yes)
+                {
+                    CrashReportService.DeletePending();
+                    return;
+                }
+
+                CrashReportService.MarkSendApproved();
+            }
+
+            // Отправка — fire-and-forget, старт приложения не блокирует
+            _ = CrashReportService.TrySendPendingAsync();
         }
 
         protected override void OnExit(ExitEventArgs e)

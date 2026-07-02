@@ -7,10 +7,13 @@
 # Делает:
 #   1. dotnet publish лаунчера (Release, win-x64, self-contained, single-file)
 #      с прошивкой версии через -p:Version (csproj не редактируется);
-#   2. Копирует чистый exe в _release\Ven4Tools.Launcher-X.Y.Z.exe
-#      (имя по правилам релизов проекта);
-#   3. Компилирует installer\Ven4Tools.Setup.nsi через makensis
+#   2. Компилирует installer\Ven4Tools.Setup.nsi через makensis
 #      → _release\Ven4Tools.Setup-X.Y.Z.exe.
+#
+# Единственный публикуемый исполняемый ассет — установщик Ven4Tools.Setup-X.Y.Z.exe.
+# Отдельный «голый» Ven4Tools.Launcher-X.Y.Z.exe больше не собирается: лаунчер
+# самообновляется, скачивая и запуская тот же Setup в тихом режиме обновления
+# (см. LauncherUpdateService.DownloadAndRunSetupUpdateAsync и installer\Ven4Tools.Setup.nsi).
 #
 # Требования: .NET 8 SDK, NSIS 3.x (winget install NSIS.NSIS).
 # Совместим с Windows PowerShell 5.1 и PowerShell 7.
@@ -65,7 +68,7 @@ Write-Host "makensis: $makensis"
 # 1. Публикация лаунчера
 # ----------------------------------------------------------------------------
 Write-Host ""
-Write-Host "[1/3] dotnet publish (Release, win-x64, self-contained)..." -ForegroundColor Yellow
+Write-Host "[1/2] dotnet publish (Release, win-x64, self-contained)..." -ForegroundColor Yellow
 
 dotnet publish $csproj `
     -c Release `
@@ -93,23 +96,13 @@ if (-not $fileVersion.StartsWith($Version)) {
 }
 
 # ----------------------------------------------------------------------------
-# 2. Копия чистого exe в _release (стандартный релизный ассет)
+# 2. Компиляция установщика NSIS
 # ----------------------------------------------------------------------------
 Write-Host ""
-Write-Host "[2/3] Копирование exe в _release..." -ForegroundColor Yellow
+Write-Host "[2/2] makensis..." -ForegroundColor Yellow
 
 $releaseDir = Join-Path $root "_release"
 New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
-
-$launcherAsset = Join-Path $releaseDir "Ven4Tools.Launcher-$Version.exe"
-Copy-Item $publishedExe $launcherAsset -Force
-Write-Host "-> $launcherAsset"
-
-# ----------------------------------------------------------------------------
-# 3. Компиляция установщика NSIS
-# ----------------------------------------------------------------------------
-Write-Host ""
-Write-Host "[3/3] makensis..." -ForegroundColor Yellow
 
 $setupAsset = Join-Path $releaseDir "Ven4Tools.Setup-$Version.exe"
 
@@ -131,12 +124,10 @@ if (-not (Test-Path $setupAsset)) {
 # ----------------------------------------------------------------------------
 # Итог
 # ----------------------------------------------------------------------------
-$launcherSizeMb = [math]::Round((Get-Item $launcherAsset).Length / 1MB, 1)
-$setupSizeMb    = [math]::Round((Get-Item $setupAsset).Length / 1MB, 1)
+$setupSizeMb = [math]::Round((Get-Item $setupAsset).Length / 1MB, 1)
 
 Write-Host ""
 Write-Host "=== Готово ===" -ForegroundColor Green
-Write-Host "Лаунчер:    $launcherAsset ($launcherSizeMb МБ)"
 Write-Host "Установщик: $setupAsset ($setupSizeMb МБ)"
 Write-Host ""
 Write-Host "Проверка установки после запуска установщика:"

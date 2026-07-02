@@ -106,30 +106,28 @@ namespace Ven4Tools.Views.Tabs
 
         private async void BtnRefreshCatalog_Click(object sender, RoutedEventArgs e)
         {
-            AddLog("🔄 Обновление каталога с GitHub...");
+            AddLog("🔄 Обновление каталога...");
             try
             {
-                var url = "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/master.json";
-                AddLog($"📡 URL: {url}");
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(AppSettings.CatalogTimeout));
-                var response = await _httpClient.GetAsync(url, cts.Token);
-                AddLog($"📡 HTTP статус: {response.StatusCode}");
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    AddLog($"📦 Размер JSON: {json.Length} байт");
-                    var dateMatch = System.Text.RegularExpressions.Regex.Match(json, @"""lastUpdated"":\s*""([^""]+)""");
-                    if (dateMatch.Success) AddLog($"📅 Версия на GitHub: {dateMatch.Groups[1].Value}");
-                }
+                // Сбрасываем локальный кэш (json + подпись), чтобы загрузчик
+                // гарантированно пошёл в сеть, а не вернул устаревшую копию.
                 var catalogCachePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "master.json");
-                try { if (File.Exists(catalogCachePath)) File.Delete(catalogCachePath); } catch { }
+                try
+                {
+                    if (File.Exists(catalogCachePath)) File.Delete(catalogCachePath);
+                    if (File.Exists(catalogCachePath + ".sig")) File.Delete(catalogCachePath + ".sig");
+                }
+                catch { }
                 if (_catalogLoader == null) { AddLog("❌ Ошибка: загрузчик каталога не инициализирован"); return; }
+                // Единственный запрос — через основной верифицированный путь загрузки
                 var loadedCatalog = await _catalogLoader.LoadCatalogAsync();
                 if (loadedCatalog == null) { AddLog("❌ Ошибка: не удалось загрузить каталог"); return; }
                 _catalog = loadedCatalog;
                 SyncCatalogToAppManager();
                 appManager.LoadAlternativeSources();
                 appManager.ApplyAlternativesToCatalog(_catalog);
+                if (!string.IsNullOrEmpty(_catalog.LastUpdated))
+                    AddLog($"📅 Версия каталога: {_catalog.LastUpdated}");
                 AddLog($"📦 Загружено приложений: {_catalog.Apps.Count}");
                 LoadApps();
                 AddLog("✅ Каталог успешно обновлён");

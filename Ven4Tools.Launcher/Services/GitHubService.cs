@@ -147,7 +147,7 @@ namespace Ven4Tools.Launcher.Services
         /// <summary>
         /// Проверка, есть ли обновление лаунчера.
         /// Сканирует все релизы — GetLatestRelease() не подходит: при раздельных тегах
-        /// (launcher-vX.Y.Z и vX.Y.Z) «latest» может быть клиентским релизом без exe-ассета.
+        /// (launcher-vX.Y.Z и vX.Y.Z) «latest» может быть клиентским релизом без установщика.
         /// </summary>
         public async Task<UpdateInfo?> CheckLauncherUpdate(string currentVersion)
         {
@@ -155,44 +155,7 @@ namespace Ven4Tools.Launcher.Services
             {
                 var (releases, _) = await GetAllReleasesWithError();
                 if (releases.Count == 0) return null;
-
-                string? latestVersion = null;
-                string? downloadUrl = null;
-                long fileSize = 0;
-                string? releaseNotes = null;
-
-                foreach (var release in releases)
-                {
-                    if (release.prerelease || release.tag_name == null) continue;
-
-                    var asset = release.assets?.FirstOrDefault(a =>
-                        a.name != null &&
-                        a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase) &&
-                        a.name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
-
-                    if (asset == null) continue;
-
-                    string ver = ParseVersionFromTag(release.tag_name);
-                    if (latestVersion == null || VersionComparer.IsNewer(ver, latestVersion))
-                    {
-                        latestVersion = ver;
-                        downloadUrl = asset.browser_download_url;
-                        fileSize = asset.size;
-                        releaseNotes = release.body;
-                    }
-                }
-
-                if (latestVersion == null) return null;
-
-                return new UpdateInfo
-                {
-                    HasUpdate = VersionComparer.IsNewer(latestVersion, currentVersion),
-                    CurrentVersion = currentVersion,
-                    LatestVersion = latestVersion,
-                    DownloadUrl = downloadUrl,
-                    ReleaseNotes = releaseNotes,
-                    FileSize = fileSize
-                };
+                return SelectLauncherUpdate(releases, currentVersion);
             }
             catch
             {
@@ -200,8 +163,61 @@ namespace Ven4Tools.Launcher.Services
             }
         }
 
+        /// <summary>
+        /// Ассет установщика лаунчера в релизе: Ven4Tools.Setup-X.Y.Z.exe.
+        /// Самообновление и установка идут только через установщик — отдельный
+        /// «голый» exe лаунчера в релизах больше не публикуется и не ищется.
+        /// </summary>
+        internal static bool IsLauncherSetupAsset(string? name)
+        {
+            return name != null &&
+                   name.StartsWith("Ven4Tools.Setup", StringComparison.OrdinalIgnoreCase) &&
+                   name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Выбор новейшего стабильного релиза лаунчера с установщиком.
+        /// Чистая функция без сети — покрыта unit-тестами.
+        /// </summary>
+        internal static UpdateInfo? SelectLauncherUpdate(List<GitHubRelease> releases, string currentVersion)
+        {
+            string? latestVersion = null;
+            string? downloadUrl = null;
+            long fileSize = 0;
+            string? releaseNotes = null;
+
+            foreach (var release in releases)
+            {
+                if (release.prerelease || release.tag_name == null) continue;
+
+                var asset = release.assets?.FirstOrDefault(a => IsLauncherSetupAsset(a.name));
+                if (asset == null) continue;
+
+                string ver = ParseVersionFromTag(release.tag_name);
+                if (latestVersion == null || VersionComparer.IsNewer(ver, latestVersion))
+                {
+                    latestVersion = ver;
+                    downloadUrl = asset.browser_download_url;
+                    fileSize = asset.size;
+                    releaseNotes = release.body;
+                }
+            }
+
+            if (latestVersion == null) return null;
+
+            return new UpdateInfo
+            {
+                HasUpdate = VersionComparer.IsNewer(latestVersion, currentVersion),
+                CurrentVersion = currentVersion,
+                LatestVersion = latestVersion,
+                DownloadUrl = downloadUrl,
+                ReleaseNotes = releaseNotes,
+                FileSize = fileSize
+            };
+        }
+
         // "launcher-v2.0.0" → "2.0.0", "v3.4.2" → "3.4.2"
-        private static string ParseVersionFromTag(string tag)
+        internal static string ParseVersionFromTag(string tag)
         {
             string v = tag.TrimStart('v');
             if (v.StartsWith("launcher-", StringComparison.OrdinalIgnoreCase))

@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
 
 namespace Ven4Tools.Models
 {
@@ -12,25 +10,8 @@ namespace Ven4Tools.Models
         public string  Name        { get; set; } = "";
         public string  Description { get; set; } = "";
         public List<string> Apps   { get; set; } = new();
-        [JsonProperty("share_code")]
-        public string? ShareCode   { get; set; }
-        public bool    IsLocal     { get; set; }
-
-        // Локальный флаг: пресет создан офлайн (Id < 0) и ещё не попал в облако.
-        // Не сериализуется в JSON сервера — устойчивым признаком пересинхронизации
-        // служит сама пара (Id < 0 && !IsLocal), поэтому потеря флага при перезапуске не критична.
-        [JsonIgnore]
-        public bool    NeedsSync   { get; set; }
 
         public string AppCountLabel => $"{Apps.Count} прил.";
-
-        private bool _isLoading;
-        [JsonIgnore]
-        public bool IsLoading
-        {
-            get => _isLoading;
-            set { _isLoading = value; OnPropertyChanged(); }
-        }
 
         // Уведомить UI об изменении названия/описания (после редактирования)
         public void RaiseNameChanged()

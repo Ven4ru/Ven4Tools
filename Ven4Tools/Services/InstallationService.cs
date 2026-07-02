@@ -216,7 +216,6 @@ namespace Ven4Tools.Services
                                     appProgress.Percentage = 100;
                                     progress.Report(appProgress);
                                     Log($"✅ {app.DisplayName} — Winget ({wsrc}): {primaryId}");
-                                    await StatsService.Instance.TrackOverrideAsync(app.Id, primaryId, null, true);
                                     if (ProfileService.Current.SaveInstallHistory)
                                         await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "winget", app.CategoryString);
                                     return (true, "Установлено через Winget", appProgress);
@@ -244,7 +243,6 @@ namespace Ven4Tools.Services
                                 appProgress.Percentage = 100;
                                 progress.Report(appProgress);
                                 Log($"✅ {app.DisplayName} — Chocolatey: {app.ChocoId}");
-                                await StatsService.Instance.TrackOverrideAsync(app.Id, app.ChocoId, null, true);
                                 if (ProfileService.Current.SaveInstallHistory)
                                     await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "choco", app.CategoryString);
                                 return (true, "Установлено через Chocolatey", appProgress);
@@ -271,7 +269,6 @@ namespace Ven4Tools.Services
                                 appProgress.Percentage = 100;
                                 progress.Report(appProgress);
                                 Log($"✅ {app.DisplayName} — Scoop: {app.ScoopId}");
-                                await StatsService.Instance.TrackOverrideAsync(app.Id, app.ScoopId, null, true);
                                 if (ProfileService.Current.SaveInstallHistory)
                                     await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "scoop", app.CategoryString);
                                 return (true, "Установлено через Scoop", appProgress);
@@ -422,7 +419,6 @@ namespace Ven4Tools.Services
                                             Log(reboot
                                                 ? $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — прямая ссылка: {url}"
                                                 : $"✅ {app.DisplayName} — прямая ссылка: {url}");
-                                            await StatsService.Instance.TrackOverrideAsync(app.Id, null, url, true);
                                             if (ProfileService.Current.SaveInstallHistory)
                                                 await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "direct", app.CategoryString);
                                             return (true, reboot ? "Установлено (требуется перезагрузка)" : "Установлено", appProgress);

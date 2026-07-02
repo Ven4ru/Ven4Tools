@@ -14,9 +14,9 @@ namespace Ven4Tools.Services
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Ven4Tools", "presets.json");
 
-        public static Task<List<Preset>> LoadAsync(int? userId) => Task.FromResult(LoadLocal());
+        public static Task<List<Preset>> LoadAsync() => Task.FromResult(LoadLocal());
 
-        public static Task<Preset?> SaveAsync(int? userId, Preset preset)
+        public static Task<Preset?> SaveAsync(Preset preset)
         {
             var local = LoadLocal();
             if (preset.Id == 0)
@@ -32,36 +32,27 @@ namespace Ven4Tools.Services
                 var index = local.FindIndex(p => p.Id == preset.Id);
                 if (index >= 0) local[index] = preset; else local.Add(preset);
             }
-            preset.IsLocal = true;
-            preset.NeedsSync = false;
-            preset.ShareCode = null;
             SaveLocal(local);
             return Task.FromResult<Preset?>(preset);
         }
 
-        public static Task<bool> DeleteAsync(int? userId, Preset preset)
+        public static Task DeleteAsync(Preset preset)
         {
             var local = LoadLocal();
             local.RemoveAll(p => p.Id == preset.Id);
             SaveLocal(local);
-            return Task.FromResult(true);
+            return Task.CompletedTask;
         }
 
-        public static Task<bool> UpdateAsync(int? userId, Preset preset)
+        public static Task<bool> UpdateAsync(Preset preset)
         {
             var local = LoadLocal();
             var index = local.FindIndex(p => p.Id == preset.Id);
             if (index < 0) return Task.FromResult(false);
-            preset.IsLocal = true;
-            preset.NeedsSync = false;
-            preset.ShareCode = null;
             local[index] = preset;
             SaveLocal(local);
             return Task.FromResult(true);
         }
-
-        public static Task<string?> ShareAsync(int presetId) => Task.FromResult<string?>(null);
-        public static Task<Preset?> GetByCodeAsync(string code) => Task.FromResult<Preset?>(null);
 
         private static List<Preset> LoadLocal()
         {

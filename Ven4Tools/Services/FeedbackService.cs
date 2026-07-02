@@ -19,8 +19,8 @@ namespace Ven4Tools.Services
                 var payload = new FeedbackRecord
                 {
                     SessionId   = CrashReportService.SessionId,
-                    // Имя машины не сохраняем в открытом виде — только короткий хеш
-                    MachineName = CrashReportService.AnonymizeMachineName(),
+                    // Случайный локальный идентификатор — не связан с именем машины
+                    DeviceId    = CrashReportService.GetDeviceId(),
                     Version     = ChannelService.InstalledVersion,
                     Channel     = "prerelease",
                     Rating      = rating,
@@ -74,7 +74,9 @@ namespace Ven4Tools.Services
                 {
                     new KeyValuePair<string, string>("action",     "submit_feedback"),
                     new KeyValuePair<string, string>("session_id", record.SessionId),
-                    new KeyValuePair<string, string>("machine",    record.MachineName),
+                    // Ключ "machine" сохранён для совместимости с серверным API,
+                    // но содержит случайный идентификатор устройства, а не имя машины.
+                    new KeyValuePair<string, string>("machine",    record.DeviceId),
                     new KeyValuePair<string, string>("version",    record.Version),
                     new KeyValuePair<string, string>("channel",    record.Channel),
                     new KeyValuePair<string, string>("rating",     record.Rating.ToString()),
@@ -98,7 +100,7 @@ namespace Ven4Tools.Services
     public class FeedbackRecord
     {
         public string SessionId   { get; set; } = "";
-        public string MachineName { get; set; } = "";
+        public string DeviceId    { get; set; } = "";
         public string Version     { get; set; } = "";
         public string Channel     { get; set; } = "";
         public int    Rating      { get; set; }

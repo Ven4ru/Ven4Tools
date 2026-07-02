@@ -31,20 +31,13 @@ namespace Ven4Tools.Launcher.Models
         public string? ZipSha256 { get; set; }
     }
 
+    // Самообновление лаунчера идёт только через установщик Ven4Tools.Setup-X.Y.Z.exe,
+    // поэтому поля голого exe (exe_url/exe_fallback/exe_sha256) удалены из модели.
+    // Если version.json на CDN всё ещё содержит их — они игнорируются при разборе.
     public class CdnLauncherInfo
     {
         [JsonPropertyName("version")]
         public string? Version { get; set; }
-
-        [JsonPropertyName("exe_url")]
-        public string? ExeUrl { get; set; }
-
-        [JsonPropertyName("exe_fallback")]
-        public string? ExeFallback { get; set; }
-
-        // SHA256 exe лаунчера для проверки целостности при самообновлении.
-        [JsonPropertyName("exe_sha256")]
-        public string? ExeSha256 { get; set; }
 
         [JsonPropertyName("setup_url")]
         public string? SetupUrl { get; set; }
