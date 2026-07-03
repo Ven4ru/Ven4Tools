@@ -44,6 +44,13 @@ namespace Ven4Tools.Services
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Атомарно заменяет весь список пресетов одной записью файла.
+        /// Возвращает false, если запись на диск не удалась.
+        /// </summary>
+        public static Task<bool> ReplaceAllAsync(List<Preset> presets)
+            => Task.FromResult(SaveLocal(presets));
+
         public static Task<bool> UpdateAsync(Preset preset)
         {
             var local = LoadLocal();
@@ -69,17 +76,19 @@ namespace Ven4Tools.Services
             }
         }
 
-        private static void SaveLocal(List<Preset> list)
+        private static bool SaveLocal(List<Preset> list)
         {
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(LocalPath)!);
                 File.WriteAllText(LocalPath,
                     JsonConvert.SerializeObject(list, Formatting.Indented), Encoding.UTF8);
+                return true;
             }
             catch (Exception ex)
             {
                 AppLogger.Write($"[PresetService] Сохранение локальных пресетов: {ex.Message}");
+                return false;
             }
         }
     }
