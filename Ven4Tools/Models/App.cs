@@ -15,15 +15,9 @@ namespace Ven4Tools.Models
 
         public string DownloadUrl { get; set; } = string.Empty;
 
-        public string Version { get; set; } = string.Empty;
-
         public string Size { get; set; } = string.Empty;
 
-        public bool Official { get; set; } = true;
-
         public string IconUrl { get; set; } = string.Empty;
-
-        public string Description { get; set; } = string.Empty;
 
         public string Profile { get; set; } = "full";
 
