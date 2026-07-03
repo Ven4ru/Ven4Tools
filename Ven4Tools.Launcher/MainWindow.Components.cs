@@ -19,6 +19,7 @@ namespace Ven4Tools.Launcher
             AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             AddLog("🔧 Проверка компонентов...");
             bool hasIssues = false;
+            bool hasOptionalMissing = false;
 
             // Постоянные права администратора лаунчеру не нужны: элевация
             // запрашивается точечно при установке компонентов.
@@ -36,6 +37,27 @@ namespace Ven4Tools.Launcher
             {
                 AddLog("   ❌ Winget не установлен!");
                 hasIssues = true;
+            }
+
+            // Chocolatey и Scoop — опциональные дополнительные источники установки:
+            // их отсутствие не считается проблемой и ничего не блокирует
+            AddLog("🔍 Chocolatey (опционально)...");
+            var chocoInfo = await CheckChocoInstalledAsync();
+            if (chocoInfo.IsInstalled)
+                AddLog($"   ✅ Chocolatey {chocoInfo.Version}");
+            else
+            {
+                AddLog("   ⚠️ Chocolatey не установлен — по желанию можно установить как дополнительный источник");
+                hasOptionalMissing = true;
+            }
+
+            AddLog("🔍 Scoop (опционально)...");
+            if (await CheckScoopInstalledAsync())
+                AddLog("   ✅ Scoop установлен");
+            else
+            {
+                AddLog("   ⚠️ Scoop не установлен — по желанию можно установить как дополнительный источник");
+                hasOptionalMissing = true;
             }
 
             AddLog("🔍 WebView2 Runtime...");
@@ -94,6 +116,12 @@ namespace Ven4Tools.Launcher
             if (hasIssues)
             {
                 AddLog("⚠️ Найдены проблемы. Нажмите «Установить компоненты».");
+                Dispatcher.Invoke(() => btnInstallMissing.Visibility = Visibility.Visible);
+            }
+            else if (hasOptionalMissing)
+            {
+                AddLog("✅ Все обязательные компоненты в порядке.");
+                AddLog("ℹ️ Доступны опциональные источники (Chocolatey/Scoop) — при желании нажмите «Установить компоненты».");
                 Dispatcher.Invoke(() => btnInstallMissing.Visibility = Visibility.Visible);
             }
             else
@@ -191,6 +219,10 @@ namespace Ven4Tools.Launcher
                         : "   ⚠️ VC++ не обнаружен после установки. Возможно, требуется перезагрузка.");
                 }
             }
+
+            // Опциональные менеджеры пакетов — предлагаем, но не настаиваем:
+            // отказ ничем не грозит, клиент работает и без них
+            await OfferOptionalPackageManagersAsync();
 
             if (!CheckWindowsVersionOk())
             {
