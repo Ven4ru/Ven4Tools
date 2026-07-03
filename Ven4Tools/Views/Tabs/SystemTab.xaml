@@ -340,6 +340,25 @@
                 </StackPanel>
             </GroupBox>
 
+            <!-- Перенос настроек -->
+            <GroupBox Header="💾 Перенос настроек" Margin="0,0,0,15">
+                <StackPanel Margin="10">
+                    <TextBlock Text="Профиль, пресеты, избранное и настройки сохраняются в один файл для переноса на другой компьютер. Данные не покидают устройство — файл переносится вручную."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,0,0,10"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="btnExportSettings" Content="📤 Экспорт настроек"
+                                Height="35" Width="180" Margin="0,0,10,0"
+                                Click="BtnExportSettings_Click"/>
+                        <Button x:Name="btnImportSettings" Content="📥 Импорт настроек"
+                                Height="35" Width="180"
+                                Click="BtnImportSettings_Click"/>
+                    </StackPanel>
+                    <TextBlock x:Name="txtTransferStatus" Margin="0,8,0,0"
+                               FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                </StackPanel>
+            </GroupBox>
+
             <!-- Turbo Boost -->
             <GroupBox Header="⚡ Turbo Boost (Intel)" Margin="0,0,0,15">
                 <StackPanel>
