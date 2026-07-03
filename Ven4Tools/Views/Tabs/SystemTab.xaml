@@ -382,6 +382,75 @@
                                Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="10,5,10,10"/>
                 </StackPanel>
             </GroupBox>
+
+            <!-- Снапшоты конфигурации -->
+            <GroupBox Header="📸 Снапшоты конфигурации" Margin="0,0,0,15">
+                <StackPanel Margin="10">
+                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,0,0,10">
+                        Локальная точка отката «было — стало» на этой машине: сохраняет
+                        отмеченные твики Debloater и локальные пресеты, не зависит от точки
+                        восстановления Windows.
+                    </TextBlock>
+
+                    <Button x:Name="btnSaveSnapshot" Content="📸 Сохранить снапшот"
+                            Height="34" HorizontalAlignment="Left" Width="200"
+                            Margin="0,0,0,10" Click="BtnSaveSnapshot_Click"/>
+
+                    <Border Background="{DynamicResource CardBackground}" CornerRadius="8"
+                            Padding="6" MaxHeight="260">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="lstSnapshots">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,2" Padding="8,6"
+                                                Background="{DynamicResource ContentBackground}"
+                                                CornerRadius="6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding DisplayLabel}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextPrimary}"
+                                                           TextWrapping="Wrap"
+                                                           VerticalAlignment="Center"/>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                    <Button Content="↺ Восстановить"
+                                                            Height="26" Padding="8,0"
+                                                            FontSize="11" Margin="6,0,0,0"
+                                                            Tag="{Binding}"
+                                                            ToolTip="Восстановить твики Debloater и пресеты из этого снапшота"
+                                                            Click="BtnRestoreSnapshot_Click"/>
+                                                    <Button Content="✕"
+                                                            Width="26" Height="26" Padding="0"
+                                                            FontSize="11" Margin="4,0,0,0"
+                                                            Background="Transparent"
+                                                            Foreground="{DynamicResource TextSecondary}"
+                                                            BorderThickness="0"
+                                                            Tag="{Binding}"
+                                                            ToolTip="Удалить снапшот"
+                                                            Click="BtnDeleteSnapshot_Click"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
+                    <TextBlock x:Name="txtSnapshotsEmpty"
+                               Text="Нет сохранённых снапшотов"
+                               FontSize="11" Margin="6,6,6,0"
+                               Foreground="{DynamicResource TextSecondary}"/>
+
+                    <TextBlock x:Name="txtSnapshotStatus" Margin="0,8,0,0"
+                               FontSize="11" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondary}"/>
+                </StackPanel>
+            </GroupBox>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
