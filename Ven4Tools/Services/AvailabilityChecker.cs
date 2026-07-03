@@ -59,6 +59,14 @@ namespace Ven4Tools.Services
 
         public async Task<(AvailabilityStatus Status, long SizeMB)> CheckAppAvailabilityWithSize(AppInfo app)
         {
+            // Параноидальный режим: проверка доступности — это ни загрузка каталога,
+            // ни сама установка, поэтому сетевые запросы к сторонним хостам (HEAD/GET)
+            // и внешний winget-source здесь запрещены. Возвращаем нейтральный статус
+            // «неизвестно»: индикатор в каталоге станет серым, но чекбокс останется
+            // активным — установка (одно из двух разрешённых исключений) не блокируется.
+            if (ProfileService.Current.ParanoidMode)
+                return (AvailabilityStatus.Unknown, 0);
+
             // Offline: skip network, report from local cache only
             if (OfflineService.IsOffline)
             {
