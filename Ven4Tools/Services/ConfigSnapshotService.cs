@@ -126,9 +126,13 @@ namespace Ven4Tools.Services
         {
             try
             {
-                // Защита от выхода за пределы папки снапшотов
+                // Защита от выхода за пределы папки снапшотов: сравнение строго
+                // по границе каталога, чтобы сосед вида "snapshots_evil" не прошёл проверку
                 string fullPath = Path.GetFullPath(filePath);
-                if (!fullPath.StartsWith(Path.GetFullPath(SnapshotsDir), StringComparison.OrdinalIgnoreCase))
+                string baseDir  = Path.GetFullPath(SnapshotsDir)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    + Path.DirectorySeparatorChar;
+                if (!fullPath.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase))
                 {
                     AppLogger.Write($"[Снапшоты] Отказ удаления вне папки снапшотов: {filePath}");
                     return false;
@@ -147,26 +151,28 @@ namespace Ven4Tools.Services
 
         /// <summary>
         /// Восстанавливает локальные пресеты из снапшота: текущие пресеты заменяются
-        /// содержимым снимка. Идёт через штатный PresetService — без прямой записи его файла.
+        /// содержимым снимка. Финальный список собирается в памяти и пишется на диск
+        /// одной операцией через PresetService — без промежуточного состояния,
+        /// когда старые пресеты уже стёрты, а новые ещё не добавлены.
         /// </summary>
         public static async Task<bool> RestorePresetsAsync(ConfigSnapshot snapshot)
         {
             try
             {
-                var current = await PresetService.LoadAsync();
-                foreach (var preset in current)
-                    await PresetService.DeleteAsync(preset);
-
-                foreach (var sp in snapshot.Presets)
+                var restored = snapshot.Presets.Select(sp => new Preset
                 {
-                    await PresetService.SaveAsync(new Preset
-                    {
-                        Id          = sp.Id,
-                        Name        = sp.Name,
-                        Description = sp.Description,
-                        Apps        = new List<string>(sp.Apps)
-                    });
+                    Id          = sp.Id,
+                    Name        = sp.Name,
+                    Description = sp.Description,
+                    Apps        = new List<string>(sp.Apps)
+                }).ToList();
+
+                if (!await PresetService.ReplaceAllAsync(restored))
+                {
+                    AppLogger.Write($"[Снапшоты] Не удалось записать пресеты из снапшота «{snapshot.Name}» — текущие пресеты не изменены");
+                    return false;
                 }
+
                 AppLogger.Write($"📸 Пресеты восстановлены из снапшота «{snapshot.Name}»: {snapshot.Presets.Count} шт.");
                 return true;
             }
