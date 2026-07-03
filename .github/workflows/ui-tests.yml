@@ -22,14 +22,17 @@ jobs:
       - name: Сборка
         run: dotnet build Ven4Tools.sln -c Release --nologo -v minimal -warnaserror
 
-      - name: UI smoke и snapshot
+      - name: UI smoke и snapshot (лаунчер)
         run: dotnet test tests/Ven4Tools.UITests/Ven4Tools.UITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
+
+      - name: UI-тесты клиента
+        run: dotnet test Ven4Tools.ClientUITests/Ven4Tools.ClientUITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --logger "trx;LogFileName=client-ui-tests.trx" --results-directory TestResults/ClientUI
 
       - name: Диагностика падения
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: launcher-ui-failure
+          name: ui-failure
           path: |
             TestResults/**/*.trx
             TestResults/**/*.actual.png
