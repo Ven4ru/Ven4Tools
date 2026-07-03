@@ -1,0 +1,66 @@
+name: 🐛 Сообщить об ошибке
+description: Что-то работает не так, как ожидалось
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Перед тем как создать issue — проверьте [существующие issues](https://github.com/Ven4ru/Ven4Tools/issues), возможно, о проблеме уже сообщили.
+
+        ⚠️ Если это уязвимость безопасности — не создавайте публичный issue, см. [SECURITY.md](https://github.com/Ven4ru/Ven4Tools/security/policy).
+
+  - type: input
+    id: version
+    attributes:
+      label: Версия
+      description: Версия клиента и/или лаунчера (см. вкладку «О программе»)
+      placeholder: "клиент 3.5.1, лаунчер 2.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Версия Windows
+      placeholder: "Windows 11 24H2"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги воспроизведения
+      description: Как повторить проблему пошагово
+      placeholder: |
+        1. Открыть вкладку «Каталог»
+        2. Нажать «Установить» на приложении X
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактическое поведение
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи (если есть)
+      description: Файлы логов лежат в `%LocalAppData%\Ven4Tools\logs\` и `%LocalAppData%\Ven4Tools\app.log`. Перед вставкой уберите личную информацию, если она там оказалась.
+      render: text
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Дополнительный контекст
+      description: Скриншоты, что угодно ещё полезное
