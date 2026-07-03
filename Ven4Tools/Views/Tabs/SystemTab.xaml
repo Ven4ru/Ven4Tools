@@ -214,6 +214,14 @@
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
                                FontSize="11" Margin="0,0,0,14"/>
 
+                    <!-- Параноидальный режим -->
+                    <CheckBox x:Name="chkParanoidMode"
+                              Content="Параноидальный режим — отключить все сетевые запросы, кроме каталога и установки"
+                              Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
+                    <TextBlock Text="Блокирует отправку краш-отчётов, отзывов, фоновые проверки обновлений и авто-пинги определения сети. Загрузка каталога и скачивание/установка приложений продолжают работать."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,0,0,14"/>
+
                     <!-- Connectivity status -->
                     <Border x:Name="pnlConnStatus" CornerRadius="8" Padding="10,7" Margin="0,0,0,14">
                         <StackPanel Orientation="Horizontal">
