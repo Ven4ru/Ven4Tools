@@ -98,6 +98,42 @@ namespace Ven4Tools.Views.Tabs
             ApplyFilter();
         }
 
+        // ── Публичный доступ для снапшотов конфигурации ─────────────────────────
+
+        /// <summary>Идентификаторы отмеченных сейчас твиков (для сохранения в снапшот).</summary>
+        public IReadOnlyList<string> GetSelectedTweakIds() =>
+            _allItems.Where(i => i.IsSelected).Select(i => i.Id).ToList();
+
+        /// <summary>Отмечает в UI ровно те твики, чьи идентификаторы переданы.</summary>
+        public void SetSelectedTweakIds(IReadOnlyCollection<string> ids)
+        {
+            foreach (var item in _allItems)
+                item.IsSelected = ids.Contains(item.Id);
+            ApplyFilter();
+        }
+
+        /// <summary>
+        /// Применяет твики по идентификаторам тем же путём, что и обычная кнопка
+        /// «Применить» (удаление Appx, реестр, службы). Используется восстановлением
+        /// снапшота конфигурации. Неизвестные идентификаторы пропускаются.
+        /// </summary>
+        public async Task<(int Succeeded, int Total)> ApplyTweaksByIdsAsync(
+            IReadOnlyCollection<string> ids,
+            IProgress<string>? progress = null,
+            CancellationToken ct = default)
+        {
+            var items = _allItems.Where(i => ids.Contains(i.Id)).ToList();
+            int succeeded = 0;
+            foreach (var item in items)
+            {
+                progress?.Report(item.Name);
+                bool ok = await ApplyItemAsync(item, ct);
+                AppLogger.Write($"{(ok ? "✅" : "❌")} {item.Name} (из снапшота)");
+                if (ok) succeeded++;
+            }
+            return (succeeded, items.Count);
+        }
+
         // ── Apply ────────────────────────────────────────────────────────────────
 
         private async void BtnApplyDebloat_Click(object sender, RoutedEventArgs e)
