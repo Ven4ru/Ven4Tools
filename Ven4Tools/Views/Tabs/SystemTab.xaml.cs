@@ -43,9 +43,7 @@ namespace Ven4Tools.Views.Tabs
             public string Id          { get; set; } = "";
             public string DisplayName { get; set; } = "";
             public bool   IsSelected  { get; set; }
-            public bool   HasDirectUrl { get; set; }
             public string DownloadUrl { get; set; } = "";
-            public string WingetId    { get; set; } = "";
             public string Sha256      { get; set; } = "";
         }
 
@@ -583,17 +581,18 @@ namespace Ven4Tools.Views.Tabs
                 return;
             }
 
+            // Кэшируются только приложения с прямой ссылкой и контрольной суммой SHA256.
+            // Источник winget не поддерживает докачивание установщика в кэш, поэтому
+            // winget-only приложения в этот список не попадают.
             _cacheAppItems = catalog.Apps
                 .Where(a => HashHelper.HasExpectedHash(a.Sha256) &&
-                            (!string.IsNullOrEmpty(a.DownloadUrl) || !string.IsNullOrEmpty(a.WingetId)))
+                            !string.IsNullOrEmpty(a.DownloadUrl))
                 .OrderBy(a => a.Name)
                 .Select(a => new CacheAppItem
                 {
                     Id           = a.Id,
                     DisplayName  = $"{a.Name}  [{a.Category}]{(OfflineService.HasCachedInstaller(a.Id) ? " ✅" : "")}",
-                    HasDirectUrl = !string.IsNullOrEmpty(a.DownloadUrl),
                     DownloadUrl  = a.DownloadUrl,
-                    WingetId     = a.WingetId,
                     Sha256       = a.Sha256!
                 })
                 .ToList();
@@ -698,24 +697,19 @@ namespace Ven4Tools.Views.Tabs
                         Id          = item.Id,
                         Name        = item.DisplayName.Split('[')[0].Trim().TrimEnd(' ', '✅').Trim(),
                         DownloadUrl = item.DownloadUrl,
-                        WingetId    = item.WingetId,
                         Sha256      = item.Sha256
                     };
 
                     var progress = new Progress<(string status, int pct)>(v =>
                     {
                         if (v.pct >= 0) progressCache.Value = v.pct;
-                        if (!v.status.StartsWith("  ")) // пропускаем подробные строки winget
-                            txtCacheLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {v.status}\n");
+                        txtCacheLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {v.status}\n");
                         txtCacheLog.ScrollToEnd();
                     });
 
                     try
                     {
-                        bool ok = item.HasDirectUrl
-                            ? await OfflineService.CacheInstallerDirectAsync(app, http, progress, token)
-                            : await OfflineService.CacheInstallerWingetAsync(app, progress, token);
-
+                        bool ok = await OfflineService.CacheInstallerDirectAsync(app, http, progress, token);
                         if (!ok) errors++;
                     }
                     catch (OperationCanceledException) { break; }
