@@ -113,20 +113,29 @@ namespace Ven4Tools.Services
                             { allowed = true; break; }
                         if (!allowed) continue;
 
-                        if (entry.Length > MaxEntrySize)
-                        {
-                            AppLogger.Write($"[ProfileExportService] Import: запись {entry.FullName} слишком велика, пропущена");
-                            errors++;
-                            continue;
-                        }
-
                         var target = Path.Combine(BaseDir, entry.Name);
                         var tmp = target + "." + Path.GetRandomFileName() + ".tmp";
                         try
                         {
+                            // Лимит проверяется по фактически распакованным байтам:
+                            // entry.Length — лишь заявленный размер из метаданных архива,
+                            // он не проверяется при декомпрессии, и zip-бомба может
+                            // объявить малый размер, а распаковать гигабайты.
                             using (var src = entry.Open())
                             using (var dst = new FileStream(tmp, FileMode.Create, FileAccess.Write))
-                                src.CopyTo(dst);
+                            {
+                                var buffer = new byte[16 * 1024];
+                                long total = 0;
+                                int read;
+                                while ((read = src.Read(buffer, 0, buffer.Length)) > 0)
+                                {
+                                    total += read;
+                                    if (total > MaxEntrySize)
+                                        throw new InvalidDataException(
+                                            "запись слишком велика, распаковка прервана");
+                                    dst.Write(buffer, 0, read);
+                                }
+                            }
                             File.Move(tmp, target, overwrite: true);
                             replaced++;
                         }
