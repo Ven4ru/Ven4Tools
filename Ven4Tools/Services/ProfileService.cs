@@ -38,6 +38,14 @@ namespace Ven4Tools.Services
             catch (Exception ex) { AppLogger.Write($"[ProfileService] {ex.Message}"); }
         }
 
+        // Перечитать профиль с диска и уведомить подписчиков.
+        // Используется после импорта настроек из файла.
+        public static void Reload()
+        {
+            Load();
+            Changed?.Invoke();
+        }
+
         public static void Reset(bool keepCategorySelection = true)
         {
             bool had = Current.HasSelectedCategory;
