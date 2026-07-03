@@ -64,6 +64,8 @@ namespace Ven4Tools.Services
         /// </summary>
         public static async Task TrySendPendingAsync()
         {
+            // Параноидальный режим: отправка отзывов на сервер запрещена.
+            if (ProfileService.Current.ParanoidMode) return;
             try
             {
                 var record = Read();
