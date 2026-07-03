@@ -66,24 +66,27 @@ namespace Ven4Tools.Launcher
                 btnLaunchApp.IsEnabled = false;
             });
 
-            // Официальный установочный скрипт Chocolatey (community.chocolatey.org)
-            string tempScript = Path.Combine(Path.GetTempPath(), $"choco_install_{Guid.NewGuid():N}.ps1");
+            // Официальный установочный скрипт Chocolatey (community.chocolatey.org).
+            // Команда передаётся напрямую через -EncodedCommand (Base64 UTF-16LE),
+            // без временного .ps1-файла: у файла в %TEMP% между записью и
+            // elevated-запуском есть окно подмены содержимого (TOCTOU), а аргумент
+            // командной строки фиксируется в момент старта процесса.
+            const string installCommand =
+                "Set-ExecutionPolicy Bypass -Scope Process -Force\r\n" +
+                "[System.Net.ServicePointManager]::SecurityProtocol = " +
+                "[System.Net.ServicePointManager]::SecurityProtocol -bor 3072\r\n" +
+                "iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))\r\n";
+            string encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(installCommand));
+
             try
             {
-                File.WriteAllText(tempScript,
-                    "Set-ExecutionPolicy Bypass -Scope Process -Force\r\n" +
-                    "[System.Net.ServicePointManager]::SecurityProtocol = " +
-                    "[System.Net.ServicePointManager]::SecurityProtocol -bor 3072\r\n" +
-                    "iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))\r\n",
-                    Encoding.UTF8);
-
                 // Chocolatey ставится в C:\ProgramData — без прав администратора
                 // используем точечную элевацию через UAC (Verb = runas)
                 bool needElevation = !IsRunAsAdmin();
                 var psi = new ProcessStartInfo
                 {
                     FileName               = "powershell.exe",
-                    Arguments              = $"-NoProfile -ExecutionPolicy Bypass -File \"{tempScript}\"",
+                    Arguments              = $"-NoProfile -ExecutionPolicy Bypass -EncodedCommand {encodedCommand}",
                     UseShellExecute        = needElevation,
                     RedirectStandardOutput = !needElevation,
                     RedirectStandardError  = !needElevation,
@@ -128,7 +131,6 @@ namespace Ven4Tools.Launcher
             }
             finally
             {
-                try { File.Delete(tempScript); } catch { }
                 Dispatcher.Invoke(() => { progressDownload.Value = 0; btnLaunchApp.IsEnabled = true; });
             }
         }
