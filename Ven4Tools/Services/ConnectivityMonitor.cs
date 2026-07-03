@@ -57,6 +57,9 @@ namespace Ven4Tools.Services
 
         private static async Task<bool> PingAsync()
         {
+            // Параноидальный режим: не пингуем сторонние хосты (Cloudflare/Google).
+            // Считаем соединение активным, чтобы каталог и установка не блокировались.
+            if (ProfileService.Current.ParanoidMode) return true;
             try
             {
                 // Заголовки передаём через HttpRequestMessage — не трогаем DefaultRequestHeaders (не thread-safe)

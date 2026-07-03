@@ -155,6 +155,8 @@ namespace Ven4Tools.Services
         /// </summary>
         public static async Task TrySendPendingAsync()
         {
+            // Параноидальный режим: отправка краш-отчётов на сервер запрещена.
+            if (ProfileService.Current.ParanoidMode) return;
             try
             {
                 var report = Read();
