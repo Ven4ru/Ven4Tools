@@ -190,6 +190,17 @@ namespace Ven4Tools
             UpdateMascot("debloater");
         }
 
+        /// <summary>
+        /// Гарантирует создание вкладки Debloater (без перехода на неё) и возвращает её —
+        /// нужно снапшотам конфигурации, чтобы прочитать/применить твики даже если
+        /// пользователь ни разу не открывал вкладку «Очистка» за эту сессию.
+        /// </summary>
+        public DebloaterTab EnsureDebloaterTab()
+        {
+            if (_debloaterTab == null) _debloaterTab = new DebloaterTab();
+            return _debloaterTab;
+        }
+
         // ── History tab ───────────────────────────────────────────────────────────
 
         private void NavigateToHistory(object? sender, RoutedEventArgs? e)
