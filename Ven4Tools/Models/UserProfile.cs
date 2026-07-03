@@ -24,6 +24,12 @@ namespace Ven4Tools.Models
         // Privacy
         public bool SaveInstallHistory { get; set; } = true;
 
+        // Параноидальный режим: отключает ВСЕ исходящие сетевые запросы клиента,
+        // кроме двух жизненно необходимых — загрузки каталога приложений и
+        // скачивания/установки самих приложений. Блокирует отправку краш-отчётов,
+        // отзывов, фоновые проверки обновлений и авто-пинги определения сети.
+        public bool ParanoidMode { get; set; } = false;
+
         // First-run
         public bool HasSelectedCategory { get; set; } = false;
 

@@ -88,6 +88,8 @@ namespace Ven4Tools.Services
         {
             // Без интернета и в офлайн-режиме проверки бессмысленны — пропускаем цикл.
             if (ProfileService.Current.OfflineMode) return;
+            // Параноидальный режим: фоновые проверки обновлений (winget/каталог) отключены.
+            if (ProfileService.Current.ParanoidMode) return;
             if (!ConnectivityMonitor.IsOnline)
             {
                 await ConnectivityMonitor.CheckAsync();
