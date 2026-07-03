@@ -71,6 +71,7 @@ namespace Ven4Tools.Views.Tabs
             // Offline mode
             chkOfflineMode.Click      += ChkOfflineMode_Click;
             chkForceOnlineMode.Click  += ChkForceOnlineMode_Click;
+            chkParanoidMode.Click     += ChkParanoidMode_Click;
             txtOfflineCachePath.LostFocus += (_, _) => SaveOfflineSettings();
 
             // Подписка на ConnectivityMonitor — в Loaded: вкладка кэшируется и переиспользуется,
@@ -505,6 +506,7 @@ namespace Ven4Tools.Views.Tabs
         {
             chkOfflineMode.IsChecked      = ProfileService.Current.OfflineMode;
             chkForceOnlineMode.IsChecked  = ProfileService.Current.ForceOnlineMode;
+            chkParanoidMode.IsChecked     = ProfileService.Current.ParanoidMode;
             txtOfflineCachePath.Text      = ProfileService.Current.OfflineCachePath;
             if (string.IsNullOrEmpty(txtOfflineCachePath.Text))
                 txtOfflineCachePath.Text = OfflineService.CacheBasePath;
@@ -532,6 +534,12 @@ namespace Ven4Tools.Views.Tabs
             if (Window.GetWindow(this) is MainWindow mw)
                 mw.UpdateTabVisibility();
             UpdateConnectivityStatus();
+        }
+
+        private void ChkParanoidMode_Click(object sender, RoutedEventArgs e)
+        {
+            ProfileService.Current.ParanoidMode = chkParanoidMode.IsChecked == true;
+            ProfileService.Save();
         }
 
         private void UpdateConnectivityStatus()
