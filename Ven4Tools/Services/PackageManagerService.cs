@@ -180,6 +180,55 @@ namespace Ven4Tools.Services
             }
         }
 
+        // Большинство манифестов каталога (element, putty, autohotkey, aida64extreme, ddu и др.)
+        // лежат не в main, а в extras; Steam — в versions. Ни один из них не добавляется
+        // автоматически при установке Scoop, поэтому install падает с "couldn't find manifest".
+        private static readonly string[] RequiredScoopBuckets = { "extras", "versions" };
+
+        private static async Task EnsureScoopBucketsAsync(Action<string>? log)
+        {
+            string scoopExe = GetScoopExe();
+            string existing;
+            try
+            {
+                var listPsi = new ProcessStartInfo(scoopExe, "bucket list")
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+                using var listProc = Process.Start(listPsi);
+                if (listProc == null) return;
+                existing = await listProc.StandardOutput.ReadToEndAsync();
+                await listProc.WaitForExitAsync();
+            }
+            catch { return; }
+
+            foreach (var bucket in RequiredScoopBuckets)
+            {
+                if (existing.Contains(bucket, StringComparison.OrdinalIgnoreCase)) continue;
+                try
+                {
+                    var addPsi = new ProcessStartInfo(scoopExe, $"bucket add {bucket}")
+                    {
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var addProc = Process.Start(addPsi);
+                    if (addProc == null) continue;
+                    await addProc.WaitForExitAsync();
+                    log?.Invoke(addProc.ExitCode == 0
+                        ? $"🪣 Scoop: добавлен бакет {bucket}"
+                        : $"⚠️ Scoop: не удалось добавить бакет {bucket}");
+                }
+                catch (Exception ex) { log?.Invoke($"⚠️ Scoop bucket add {bucket}: {ex.Message}"); }
+            }
+        }
+
         public static async Task<bool> RunScoopInstallAsync(
             string packageId, CancellationToken token, Action<string>? log = null)
         {
@@ -190,6 +239,7 @@ namespace Ven4Tools.Services
             }
             log?.Invoke($"🪣 Scoop: установка {packageId}...");
             string scoopExe = GetScoopExe();
+            await EnsureScoopBucketsAsync(log);
 
             try
             {
