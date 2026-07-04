@@ -174,7 +174,7 @@
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
       "profile": "basic",
       "sha256": "79bae4ffdbb04fea1a2b42f9927bc578c603a797dc49dc3b830436496d2ed1c0",
-      "chocoId": "",
+      "chocoId": "yandex-browser",
       "scoopId": ""
     },
     {
@@ -207,7 +207,7 @@
       "profile": "basic",
       "sha256": "88b52a453e3baab439d683c7f278192e0e20aca0aa154a5ed2bfb051c7da849e",
       "chocoId": "onlyoffice",
-      "scoopId": "onlyoffice"
+      "scoopId": "onlyoffice-desktopeditors"
     },
     {
       "id": "adobe-acrobat-reader",
@@ -223,7 +223,7 @@
       "profile": "basic",
       "sha256": "",
       "chocoId": "adobereader",
-      "scoopId": "acrobatreader"
+      "scoopId": ""
     },
     {
       "id": "sumatra-pdf",
@@ -271,7 +271,7 @@
       "profile": "extended",
       "sha256": "",
       "chocoId": "foxitreader",
-      "scoopId": ""
+      "scoopId": "foxit-pdf-reader"
     },
     {
       "id": "libreoffice",
@@ -286,7 +286,7 @@
       "description": "Бесплатный офисный пакет с полным аналогом Word, Excel, PowerPoint.",
       "profile": "basic",
       "sha256": "",
-      "chocoId": "libreoffice",
+      "chocoId": "libreoffice-fresh",
       "scoopId": "libreoffice"
     },
     {
@@ -414,7 +414,7 @@
       "description": "Российский аналог Figma от Icons8. Дизайн интерфейсов, прототипирование, работает офлайн.",
       "profile": "full",
       "sha256": "115550663360ace09d4ee5a149ea245a6a483fc74a9c4ad93ab6696e0a741ab7",
-      "chocoId": "",
+      "chocoId": "lunacy",
       "scoopId": "lunacy"
     },
     {
@@ -527,7 +527,7 @@
       "profile": "full",
       "sha256": "42978fa07e50e3beb6923448e970d03aadd9abf5ea52230cf8a28ff81d2815e0",
       "chocoId": "docker-desktop",
-      "scoopId": "docker-desktop"
+      "scoopId": ""
     },
     {
       "id": "postman",
@@ -671,7 +671,7 @@
       "profile": "extended",
       "sha256": "e0bf5a435db69ae03488a366fb741e93e840b2faabe93b2aa3593000de7df06a",
       "chocoId": "microsoft-teams",
-      "scoopId": "teams"
+      "scoopId": ""
     },
     {
       "id": "element",
@@ -703,7 +703,7 @@
       "profile": "basic",
       "sha256": "",
       "chocoId": "whatsapp",
-      "scoopId": "whatsapp"
+      "scoopId": ""
     },
     {
       "id": "vlc",
@@ -942,7 +942,7 @@
       "description": "Облачное хранилище с синхронизацией файлов.",
       "profile": "basic",
       "sha256": "93a308ad7e067a22b3bbf75762d38694aea82b786c05bd13b51e5c7f04d8d7e3",
-      "chocoId": "",
+      "chocoId": "yandexdisk",
       "scoopId": ""
     },
     {
@@ -1006,7 +1006,7 @@
       "description": "Платформа инди-игр. Тысячи бесплатных и платных игр без региональных ограничений.",
       "profile": "extended",
       "sha256": "",
-      "chocoId": "",
+      "chocoId": "itch",
       "scoopId": "itch"
     },
     {
@@ -1039,7 +1039,7 @@
       "profile": "extended",
       "sha256": "826eef5ab19f127a77e79719a5af515d6a6c1ff6d4bf664dbf868a19e6d4287d",
       "chocoId": "goggalaxy",
-      "scoopId": "gog-galaxy"
+      "scoopId": ""
     },
     {
       "id": "snappy-driver",
@@ -1054,7 +1054,7 @@
       "description": "Мощный офлайн-инсталлятор драйверов с огромной базой.",
       "profile": "full",
       "sha256": "64bfc0d9196e7cbde12e046fce71fd6c1846d389c4454da8f5c5734fe71ae420",
-      "chocoId": "",
+      "chocoId": "snappy-driver-installer",
       "scoopId": ""
     },
     {
@@ -1070,7 +1070,7 @@
       "description": "Полное удаление драйверов видеокарты без остатков.",
       "profile": "full",
       "sha256": "",
-      "chocoId": "display-driver-uninstaller",
+      "chocoId": "ddu",
       "scoopId": "ddu"
     },
     {
@@ -1103,7 +1103,7 @@
       "profile": "basic",
       "sha256": "f450cef035a0355bdc9c5da156a92a83ea1ca3787cf8ccc6ace3559c3c1100f9",
       "chocoId": "malwarebytes",
-      "scoopId": "malwarebytes"
+      "scoopId": ""
     },
     {
       "id": "aida64",
@@ -1119,7 +1119,7 @@
       "profile": "extended",
       "sha256": "16ece784678bf4547d75b5dd99c2c69507fe7219e9437d2a3b92ee3434187f9e",
       "chocoId": "aida64",
-      "scoopId": ""
+      "scoopId": "aida64extreme"
     },
     {
       "id": "hwmonitor",
@@ -1166,7 +1166,7 @@
       "description": "Автоматическая настройка цветовой температуры экрана.",
       "profile": "basic",
       "sha256": "f035d1c4cd78468d76407afbb90ce4b73b2d04b7647c0d6143969a1823cff1ae",
-      "chocoId": "flux",
+      "chocoId": "f.lux",
       "scoopId": "flux"
     },
     {

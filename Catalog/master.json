@@ -1,7 +1,14 @@
 {
-  "version": 5,
-  "lastUpdated": "2026-06-21 02:10:00",
+  "version": 6,
+  "lastUpdated": "2026-07-04 12:40:00",
   "changelog": [
+    {
+      "version": 6,
+      "date": "2026-07-04",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "Заполнены и проверены chocoId/scoopId для choco/scoop-фолбэка установки (71 приложение). Исправлены неверные значения: ddu (был display-driver-uninstaller), gog-galaxy (несуществующий scoop-манифест), f.lux (choco-id указывал на другой пакет), onlyoffice/libreoffice/docker-desktop/microsoft-teams/whatsapp/malwarebytes и др."
+    },
     {
       "version": 5,
       "date": "2026-06-04",
@@ -95,7 +102,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "94bb387d2c07c29f2da48b47a6c5ed4446d89303a90f49817f6d23cf995148be",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "firefox",
+      "scoopId": "firefox"
     },
     {
       "id": "google-chrome",
@@ -111,7 +120,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "203980641389366aaf5c8da29c2de1a6535980888ef6479bff8fb6a89bc39ddd",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "googlechrome",
+      "scoopId": "googlechrome"
     },
     {
       "id": "microsoft-edge",
@@ -127,7 +138,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "3ad90c212004436e020479c593e168f36309d746ab7c6fde9fbf2b6a46faa796",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "microsoft-edge",
+      "scoopId": ""
     },
     {
       "id": "opera",
@@ -143,7 +156,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "437793cecf650ff2aa59fe83a7d35fb983a8f366e175ff87081f732a4c6b700d",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "opera",
+      "scoopId": "opera"
     },
     {
       "id": "brave",
@@ -159,7 +174,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "6e7887eb04aa28b9b9fcc5b4a6ae9c0e7a96460bd7005c929a4b0fe31d1c496d",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "brave",
+      "scoopId": "brave"
     },
     {
       "id": "yandex-browser",
@@ -175,7 +192,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "79bae4ffdbb04fea1a2b42f9927bc578c603a797dc49dc3b830436496d2ed1c0",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "yandex-browser",
+      "scoopId": ""
     },
     {
       "id": "librewolf",
@@ -191,7 +210,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "librewolf",
+      "scoopId": "librewolf"
     },
     {
       "id": "onlyoffice",
@@ -207,7 +228,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "88b52a453e3baab439d683c7f278192e0e20aca0aa154a5ed2bfb051c7da849e",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "onlyoffice",
+      "scoopId": "onlyoffice-desktopeditors"
     },
     {
       "id": "adobe-acrobat-reader",
@@ -223,7 +246,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "adobereader",
+      "scoopId": ""
     },
     {
       "id": "sumatra-pdf",
@@ -239,7 +264,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "2be4a27b83830ea07c6671c3557673d509544e5f70fc6b2dc8cc4388b302c1f2",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "sumatrapdf",
+      "scoopId": "sumatrapdf"
     },
     {
       "id": "drawio",
@@ -255,7 +282,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "a12b0c11307dc246c5bb8c8dc9129604abe932fa05807ad84a63b385bebbb718",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "drawio",
+      "scoopId": "draw.io"
     },
     {
       "id": "foxit-pdf-reader",
@@ -271,7 +300,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "foxitreader",
+      "scoopId": "foxit-pdf-reader"
     },
     {
       "id": "libreoffice",
@@ -287,7 +318,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "libreoffice-fresh",
+      "scoopId": "libreoffice"
     },
     {
       "id": "obsidian",
@@ -303,7 +336,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "obsidian",
+      "scoopId": "obsidian"
     },
     {
       "id": "notion",
@@ -319,7 +354,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "notion",
+      "scoopId": "notion"
     },
     {
       "id": "gimp",
@@ -335,7 +372,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "ab6f9aa481120097f032c39f07cb70990929878fa65bf4ec6d1669d7a616770a",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "gimp",
+      "scoopId": "gimp"
     },
     {
       "id": "krita",
@@ -351,7 +390,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "f419f4f71a99e59c4c65573388f2f5440e65341c47805240659578973a7516d8",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "krita",
+      "scoopId": "krita"
     },
     {
       "id": "blender",
@@ -367,7 +408,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "2c9326290887ef004fe71998d1fbb7fa6bc6f725d884f0e985e05c226f7db53c",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "blender",
+      "scoopId": "blender"
     },
     {
       "id": "inkscape",
@@ -383,7 +426,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "inkscape",
+      "scoopId": "inkscape"
     },
     {
       "id": "paint-net",
@@ -399,7 +444,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "paint.net",
+      "scoopId": "paint.net"
     },
     {
       "id": "lunacy",
@@ -415,7 +462,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "lunacy",
+      "scoopId": "lunacy"
     },
     {
       "id": "xnview",
@@ -431,7 +480,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "xnviewmp",
+      "scoopId": "xnviewmp"
     },
     {
       "id": "vscode",
@@ -447,7 +498,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "7d08422f0d793280236460b05016831c6285ee2ec0257797dfa99981180b4bc7",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "vscode",
+      "scoopId": "vscode"
     },
     {
       "id": "visual-studio-community",
@@ -463,7 +516,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "2496604f6f40984de26d2f88a9cd84ca99136427ad3b952d1e93b667201cfc05",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "visualstudio2022community",
+      "scoopId": ""
     },
     {
       "id": "python",
@@ -479,7 +534,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "9aaa1075d0bd3e8abd0623d2d05de692ff00780579e1b232f259028bac19bb51",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "python3",
+      "scoopId": "python"
     },
     {
       "id": "nodejs",
@@ -495,7 +552,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "821566022dc3b262ac2f76598ee4f46003a6edafe5dadb84e5fbc7daaa1a78c7",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "nodejs",
+      "scoopId": "nodejs"
     },
     {
       "id": "git",
@@ -511,7 +570,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "ce45e23275049f4b36edd90d5fd986a1e230efb6c511e9260a90176ce8e825df",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "git",
+      "scoopId": "git"
     },
     {
       "id": "docker-desktop",
@@ -527,7 +588,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "42978fa07e50e3beb6923448e970d03aadd9abf5ea52230cf8a28ff81d2815e0",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "docker-desktop",
+      "scoopId": ""
     },
     {
       "id": "postman",
@@ -543,7 +606,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "be873b49868ba2e47401a46e3526788fbc662c74a13f0460120ba1464cf34308",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "postman",
+      "scoopId": "postman"
     },
     {
       "id": "notepad-plus-plus",
@@ -559,7 +624,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "23d8e9bde3d08df26626af9978a09f8837d7162fd1accf563248d0eef89006fe",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "notepadplusplus",
+      "scoopId": "notepadplusplus"
     },
     {
       "id": "github-desktop",
@@ -575,7 +642,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "338e6fe3430ddb7db3e370f11b98e2d6a25998d5d7bdc7d714b77cfb5b13afc0",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "github-desktop",
+      "scoopId": "github"
     },
     {
       "id": "putty",
@@ -591,7 +660,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "putty",
+      "scoopId": "putty"
     },
     {
       "id": "telegram",
@@ -607,7 +678,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "4b44fd42c7f963e9f57d59fac659a9e4990422b0195b08b9aee1d784ebe0bc53",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "telegram",
+      "scoopId": "telegram"
     },
     {
       "id": "discord",
@@ -623,7 +696,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "85060117d7c75378fcbf8b3824e79549002bc5298ae46fcaa2524c83c476596a",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "discord",
+      "scoopId": "discord"
     },
     {
       "id": "slack",
@@ -639,7 +714,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "7f19726c535990ab430a71c0789aceec5110855bf43f18232dc8b2a98739d2ca",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "slack",
+      "scoopId": "slack"
     },
     {
       "id": "zoom",
@@ -655,7 +732,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "7eb91fc484ab27a8bc96fae11e176d34eac39dc619d485af96346f390ee338be",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "zoom",
+      "scoopId": "zoom"
     },
     {
       "id": "microsoft-teams",
@@ -671,7 +750,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "e0bf5a435db69ae03488a366fb741e93e840b2faabe93b2aa3593000de7df06a",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "microsoft-teams",
+      "scoopId": ""
     },
     {
       "id": "element",
@@ -687,7 +768,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "198002b7235f75cdb630eebf0fcf8c371e3e8238e7a2a4e8dc3d2c7bc1b9942c",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "element-desktop",
+      "scoopId": "element"
     },
     {
       "id": "whatsapp",
@@ -703,7 +786,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "whatsapp",
+      "scoopId": ""
     },
     {
       "id": "vlc",
@@ -719,7 +804,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "9742689a50e96ddc04d80ceff046b28da2beefd617be18166f8c5e715ec60c59",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "vlc",
+      "scoopId": "vlc"
     },
     {
       "id": "yandex-music",
@@ -735,7 +822,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "",
+      "scoopId": ""
     },
     {
       "id": "obs-studio",
@@ -751,7 +840,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "edb3f77c3ee4eae769924d1673bb826dac8898907d06f6f40a4c99b6bc8cdc8b",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "obs-studio",
+      "scoopId": "obs-studio"
     },
     {
       "id": "handbrake",
@@ -767,7 +858,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "9f8e649d9ec9ddf532ef82e2fb9f32ff0009ae2f8c124bcabfb0846dff9f585c",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "handbrake",
+      "scoopId": "handbrake"
     },
     {
       "id": "audacity",
@@ -783,7 +876,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "audacity",
+      "scoopId": "audacity"
     },
     {
       "id": "foobar2000",
@@ -799,7 +894,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "foobar2000",
+      "scoopId": "foobar2000"
     },
     {
       "id": "mpc-be",
@@ -815,7 +912,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "mpc-be",
+      "scoopId": "mpc-be"
     },
     {
       "id": "7zip",
@@ -831,7 +930,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "bdd1a33de78618d16ee4ce148b849932c05d0015491c34887846d431d29f308e",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "7zip",
+      "scoopId": "7zip"
     },
     {
       "id": "winrar",
@@ -847,7 +948,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "4b0dfd4dd3b06b4ae28740498a4f21310dc760823bf495867f837cd7fb819880",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "winrar",
+      "scoopId": "winrar"
     },
     {
       "id": "everything",
@@ -863,7 +966,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "dae32a49b6052f0ec70895dd4e35b2b26222f7f4c19c36d9d309033e2fb622bc",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "everything",
+      "scoopId": "everything"
     },
     {
       "id": "crystaldiskinfo",
@@ -879,7 +984,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "crystaldiskinfo",
+      "scoopId": "crystaldiskinfo"
     },
     {
       "id": "crystaldiskmark",
@@ -895,7 +1002,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "crystaldiskmark",
+      "scoopId": "crystaldiskmark"
     },
     {
       "id": "greenshot",
@@ -911,7 +1020,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "1687311b4e7a3720be20490e8ed6cc772a32336a7bed8896e475b8ec616c6b81",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "greenshot",
+      "scoopId": "greenshot"
     },
     {
       "id": "sharex",
@@ -927,7 +1038,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "8f082b1939af2894fea681e6e807e577d15ea546fc0231f84720ac62867ca7f4",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "sharex",
+      "scoopId": "sharex"
     },
     {
       "id": "yandex-disk",
@@ -943,7 +1056,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "93a308ad7e067a22b3bbf75762d38694aea82b786c05bd13b51e5c7f04d8d7e3",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "yandexdisk",
+      "scoopId": ""
     },
     {
       "id": "powertoys",
@@ -959,7 +1074,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "e18ac8f9023e341cf7dad35367fb9dddb6565d83d8155dbcddb40ae8a24ae731",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "powertoys",
+      "scoopId": "powertoys"
     },
     {
       "id": "rufus",
@@ -975,7 +1092,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "rufus",
+      "scoopId": "rufus"
     },
     {
       "id": "steam",
@@ -991,7 +1110,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "7d3654531c32d941b8cae81c4137fc542172bfa9635f169cb392f245a0a12bcb",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "steam",
+      "scoopId": "steam"
     },
     {
       "id": "itch",
@@ -1007,7 +1128,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "itch",
+      "scoopId": "itch"
     },
     {
       "id": "playnite",
@@ -1023,7 +1146,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "playnite",
+      "scoopId": "playnite"
     },
     {
       "id": "gog-galaxy",
@@ -1039,7 +1164,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "826eef5ab19f127a77e79719a5af515d6a6c1ff6d4bf664dbf868a19e6d4287d",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "goggalaxy",
+      "scoopId": ""
     },
     {
       "id": "snappy-driver",
@@ -1055,7 +1182,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "64bfc0d9196e7cbde12e046fce71fd6c1846d389c4454da8f5c5734fe71ae420",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "snappy-driver-installer",
+      "scoopId": ""
     },
     {
       "id": "ddu",
@@ -1071,7 +1200,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "ddu",
+      "scoopId": "ddu"
     },
     {
       "id": "nvcleanstall",
@@ -1087,7 +1218,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "",
-      "skipHash": true
+      "skipHash": true,
+      "chocoId": "",
+      "scoopId": "nvcleanstall"
     },
     {
       "id": "malwarebytes",
@@ -1103,7 +1236,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "f450cef035a0355bdc9c5da156a92a83ea1ca3787cf8ccc6ace3559c3c1100f9",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "malwarebytes",
+      "scoopId": ""
     },
     {
       "id": "aida64",
@@ -1119,7 +1254,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "16ece784678bf4547d75b5dd99c2c69507fe7219e9437d2a3b92ee3434187f9e",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "aida64",
+      "scoopId": "aida64extreme"
     },
     {
       "id": "hwmonitor",
@@ -1135,7 +1272,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "e85cf0d7541d8682c521d61d457e6822a2c1785b72afb9dfd102cc39ffdaad03",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "hwmonitor",
+      "scoopId": "hwmonitor"
     },
     {
       "id": "rclone",
@@ -1151,7 +1290,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "ecb0ed9006e0d1a693757007716a11dab6c2cde6dac3f2fd87da962eaa73d11d",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "rclone",
+      "scoopId": "rclone"
     },
     {
       "id": "f.lux",
@@ -1167,7 +1308,9 @@
       "ruBlocked": false,
       "profile": "basic",
       "sha256": "f035d1c4cd78468d76407afbb90ce4b73b2d04b7647c0d6143969a1823cff1ae",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "f.lux",
+      "scoopId": "flux"
     },
     {
       "id": "autohotkey",
@@ -1183,7 +1326,9 @@
       "ruBlocked": false,
       "profile": "full",
       "sha256": "49a48e879f7480238d2fe17520ac19afe83685aac0b886719f9e1eac818b75cc",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "autohotkey",
+      "scoopId": "autohotkey"
     },
     {
       "id": "wiztree",
@@ -1199,7 +1344,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "8367f467070a8cf6e0608eace0dfc96796ed145e291e88f96d2621ea45fd7b5e",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "wiztree",
+      "scoopId": "wiztree"
     },
     {
       "id": "cpu-z",
@@ -1215,7 +1362,9 @@
       "ruBlocked": false,
       "profile": "extended",
       "sha256": "d7a83bfc6b9e868b6c3d011c48a9c3a80af57d2bc0bb658cf1f76fa57b84a716",
-      "skipHash": false
+      "skipHash": false,
+      "chocoId": "cpu-z",
+      "scoopId": "cpu-z"
     }
   ]
 }
