@@ -1,0 +1,7 @@
+# Подписанный каталог: ECDSA-подпись master.json.sig посчитана над байтами
+# master.json с LF-окончаниями строк. Любая конверсия окончаний (например
+# LF -> CRLF при checkout на Windows с core.autocrlf=true, как на CI-раннере)
+# меняет байты и ломает проверку подписи. -text полностью отключает любую
+# EOL-нормализацию — файлы всегда чекаутятся байт-в-байт как в git-объекте.
+Catalog/master.json -text
+Catalog/master.json.sig -text
