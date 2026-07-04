@@ -53,7 +53,7 @@ namespace Ven4Tools.Services
                 string fileName = $"{SanitizeFileName(snapshot.Name)}_{snapshot.CreatedAt:yyyyMMdd_HHmmss}.json";
                 string filePath = Path.Combine(SnapshotsDir, fileName);
 
-                File.WriteAllText(filePath,
+                await File.WriteAllTextAsync(filePath,
                     JsonConvert.SerializeObject(snapshot, Formatting.Indented), Encoding.UTF8);
 
                 TrimOldSnapshots();
