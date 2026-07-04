@@ -65,12 +65,22 @@ namespace Ven4Tools.Services
 
                     bool isMsi = app.LocalInstallerPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
                     string locArgLocal = BuildInstallerLocationArg(isMsi, installDrive, app.DisplayName);
+                    // SilentArgs может приходить извне (каталог, ручной ввод) — валидируем
+                    // перед подстановкой в elevated-процесс, как в ветке прямой загрузки.
+                    string silentArgsLocal = app.SilentArgs;
+                    if (!CommandLineGuard.ValidateSilentArgs(silentArgsLocal))
+                    {
+                        AppLogger.Write($"[InstallationService] ⚠ SilentArgs содержит недопустимые символы для {app.DisplayName} — использую /S");
+                        silentArgsLocal = "/S";
+                    }
+                    if (string.IsNullOrWhiteSpace(silentArgsLocal))
+                        silentArgsLocal = "/S";
                     var psiLocal = new ProcessStartInfo
                     {
                         FileName        = isMsi ? "msiexec" : app.LocalInstallerPath,
                         Arguments       = isMsi
                                           ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart{locArgLocal}"
-                                          : (string.IsNullOrWhiteSpace(app.SilentArgs) ? "/S" : app.SilentArgs) + locArgLocal,
+                                          : silentArgsLocal + locArgLocal,
                         UseShellExecute = true,
                         Verb            = "runas",
                         WindowStyle     = ProcessWindowStyle.Hidden
@@ -533,7 +543,18 @@ namespace Ven4Tools.Services
             if (source.Equals("msstore", StringComparison.OrdinalIgnoreCase))
                 location = "";
 
-            string versionArg = !string.IsNullOrEmpty(version) ? $" --version \"{version}\"" : "";
+            // Версия приходит из внешнего каталога или выбора пользователя —
+            // валидируем перед подстановкой в командную строку (паритет с appId).
+            string versionArg = "";
+            if (!string.IsNullOrEmpty(version))
+            {
+                if (!CommandLineGuard.ValidateId(version))
+                {
+                    Log($"❌ Недопустимая версия «{version}» для {appId} — источник Winget пропущен");
+                    return false;
+                }
+                versionArg = $" --version \"{version}\"";
+            }
             string args = $"install --id \"{appId}\" -e --source \"{source}\"{versionArg} --accept-package-agreements --accept-source-agreements --disable-interactivity{silent}{location}";
 
             var psi = new ProcessStartInfo
