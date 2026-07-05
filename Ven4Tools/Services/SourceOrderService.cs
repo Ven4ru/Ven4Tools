@@ -31,6 +31,29 @@ namespace Ven4Tools.Services
                         File.ReadAllText(_path));
                     if (loaded != null)
                     {
+                        // Migrate the previous untouched default. Preserve every
+                        // genuinely customized order.
+                        var legacyDefault = new[]
+                        {
+                            SourceOrderSettings.Winget,
+                            SourceOrderSettings.Choco,
+                            "scoop",
+                            SourceOrderSettings.Direct
+                        };
+                        if (loaded.GlobalOrder.SequenceEqual(legacyDefault))
+                            loaded.GlobalOrder = new List<string>(SourceOrderSettings.AllSources);
+
+                        // Защитная очистка для сохранённых настроек, где ещё остался
+                        // удалённый источник Scoop: убираем "scoop" из глобального порядка
+                        // и все категории, где он был назначен основным (GetOrderForCategory
+                        // корректно фолбэкнется на глобальный порядок).
+                        loaded.GlobalOrder.RemoveAll(s => s == "scoop");
+                        foreach (var key in loaded.CategoryPrimary
+                                     .Where(kv => kv.Value == "scoop")
+                                     .Select(kv => kv.Key)
+                                     .ToList())
+                            loaded.CategoryPrimary.Remove(key);
+
                         // Ensure all sources are present in GlobalOrder (forward compat)
                         foreach (var s in SourceOrderSettings.AllSources)
                             if (!loaded.GlobalOrder.Contains(s))
@@ -41,7 +64,7 @@ namespace Ven4Tools.Services
             }
             catch (Exception ex)
             {
-                AppLogger.Write(ex, "Ошибка сохранения порядка источников");
+                AppLogger.Write(ex, "Ошибка загрузки порядка источников");
             }
         }
 

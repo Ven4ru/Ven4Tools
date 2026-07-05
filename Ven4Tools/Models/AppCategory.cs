@@ -55,7 +55,6 @@ namespace Ven4Tools.Models
         public string? LocalInstallerPath { get; set; }
 
         public string ChocoId { get; set; } = string.Empty;
-        public string ScoopId { get; set; } = string.Empty;
 
         public string CategoryString => Category switch
         {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Ven4Tools.Models;
@@ -76,6 +77,7 @@ namespace Ven4Tools.Views.Tabs
                             Tag = app.Id,
                             ToolTip = "⏳ Проверка доступности..."
                         };
+                        AutomationProperties.SetAutomationId(checkBox, $"chkApp_{app.Id}");
                         checkBox.Checked   += AppCheckBox_Changed;
                         checkBox.Unchecked += AppCheckBox_Changed;
 
