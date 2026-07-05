@@ -39,8 +39,8 @@ namespace Ven4Tools.Launcher
                 hasIssues = true;
             }
 
-            // Chocolatey и Scoop — опциональные дополнительные источники установки:
-            // их отсутствие не считается проблемой и ничего не блокирует
+            // Chocolatey — опциональный дополнительный источник установки:
+            // его отсутствие не считается проблемой и ничего не блокирует
             AddLog("🔍 Chocolatey (опционально)...");
             var chocoInfo = await CheckChocoInstalledAsync();
             if (chocoInfo.IsInstalled)
@@ -48,15 +48,6 @@ namespace Ven4Tools.Launcher
             else
             {
                 AddLog("   ⚠️ Chocolatey не установлен — по желанию можно установить как дополнительный источник");
-                hasOptionalMissing = true;
-            }
-
-            AddLog("🔍 Scoop (опционально)...");
-            if (await CheckScoopInstalledAsync())
-                AddLog("   ✅ Scoop установлен");
-            else
-            {
-                AddLog("   ⚠️ Scoop не установлен — по желанию можно установить как дополнительный источник");
                 hasOptionalMissing = true;
             }
 
@@ -121,7 +112,7 @@ namespace Ven4Tools.Launcher
             else if (hasOptionalMissing)
             {
                 AddLog("✅ Все обязательные компоненты в порядке.");
-                AddLog("ℹ️ Доступны опциональные источники (Chocolatey/Scoop) — при желании нажмите «Установить компоненты».");
+                AddLog("ℹ️ Доступен опциональный источник (Chocolatey) — при желании нажмите «Установить компоненты».");
                 Dispatcher.Invoke(() => btnInstallMissing.Visibility = Visibility.Visible);
             }
             else
@@ -295,7 +286,10 @@ namespace Ven4Tools.Launcher
             System.Windows.Application.Current.Shutdown();
         }
 
-        private async Task InstallWingetAsync()
+        // interactive = false — автоматический (marker-driven) вызов из setup:
+        // не показываем модальные диалоги и не предлагаем перезагрузку, чтобы
+        // ничего не всплывало из скрытого/фонового окна (только запись в лог).
+        private async Task InstallWingetAsync(bool interactive = true)
         {
             AddLog("📦 Получение информации о winget с GitHub...");
 
@@ -428,11 +422,20 @@ namespace Ven4Tools.Launcher
                     AddLog("⚠️ Winget не найден после установки. Возможно, требуется перезагрузка.");
                     Dispatcher.Invoke(() => txtDownloadStatus.Text = "Требуется перезагрузка");
 
-                    var reboot = System.Windows.MessageBox.Show(
-                        "Winget не обнаружен после установки.\n\nПерезагрузить компьютер сейчас?",
-                        "Требуется перезагрузка", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (reboot == MessageBoxResult.Yes)
-                        Process.Start(new ProcessStartInfo("shutdown", "/r /t 10") { UseShellExecute = true });
+                    if (interactive)
+                    {
+                        var reboot = System.Windows.MessageBox.Show(
+                            "Winget не обнаружен после установки.\n\nПерезагрузить компьютер сейчас?",
+                            "Требуется перезагрузка", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        if (reboot == MessageBoxResult.Yes)
+                            Process.Start(new ProcessStartInfo("shutdown", "/r /t 10") { UseShellExecute = true });
+                    }
+                    else
+                    {
+                        // Автоматический вызов из setup: не показываем диалог и не
+                        // предлагаем перезагрузку — только сообщаем в лог.
+                        AddLog("ℹ️ Winget установлен из setup; для применения может потребоваться перезагрузка — выполните её вручную при необходимости.");
+                    }
                 }
             }
             catch (Exception ex)

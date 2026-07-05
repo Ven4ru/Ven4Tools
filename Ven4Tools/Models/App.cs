@@ -23,8 +23,6 @@ namespace Ven4Tools.Models
 
         public string ChocoId { get; set; } = string.Empty;
 
-        public string ScoopId { get; set; } = string.Empty;
-
         public string? Sha256 { get; set; }
 
         [JsonIgnore]

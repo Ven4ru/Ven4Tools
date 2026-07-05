@@ -75,10 +75,10 @@ namespace Ven4Tools.Services
                     CatalogReady?.Invoke(cached);
                     return cached;
                 }
-                var empty = new MasterCatalog { Source = "embedded" };
-                LoadedCatalog = empty;
-                CatalogReady?.Invoke(empty);
-                return empty;
+                var embedded = LoadEmbeddedCatalog();
+                LoadedCatalog = embedded;
+                CatalogReady?.Invoke(embedded);
+                return embedded;
             }
 
             // Источник 1 — хостинг (3s), источник 2 — CDN (4s), источник 3 — GitHub raw.
@@ -144,10 +144,10 @@ namespace Ven4Tools.Services
                     return cached;
                 }
 
-                var empty = new MasterCatalog { Source = "embedded" };
-                LoadedCatalog = empty;
-                CatalogReady?.Invoke(empty);
-                return empty;
+                var embedded = LoadEmbeddedCatalog();
+                LoadedCatalog = embedded;
+                CatalogReady?.Invoke(embedded);
+                return embedded;
             }
         }
 
@@ -245,6 +245,35 @@ namespace Ven4Tools.Services
             {
                 _preloadLock.Release();
             }
+        }
+
+        /// <summary>
+        /// Читает встроенный каталог (Resources/embedded_catalog.json) — последний
+        /// резерв, когда сеть и дисковый кэш недоступны. Даёт офлайн-установку с
+        /// реальным набором приложений вместо пустого каталога. При отсутствии/ошибке
+        /// ресурса возвращает пустой каталог, чтобы приложение не падало.
+        /// </summary>
+        private MasterCatalog LoadEmbeddedCatalog()
+        {
+            try
+            {
+                var asm = typeof(CatalogLoaderService).Assembly;
+                using var stream = asm.GetManifestResourceStream("Ven4Tools.Resources.embedded_catalog.json");
+                if (stream != null)
+                {
+                    using var reader = new StreamReader(stream);
+                    var json = reader.ReadToEnd();
+                    var catalog = Deserialize(json);
+                    catalog.Source = "embedded";
+                    return catalog;
+                }
+                AppLogger.Write("[CatalogLoaderService] Встроенный каталог не найден среди ресурсов сборки");
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[CatalogLoaderService] Не удалось прочитать встроенный каталог: {ex.Message}");
+            }
+            return new MasterCatalog { Source = "embedded" };
         }
 
         private MasterCatalog Deserialize(string json)

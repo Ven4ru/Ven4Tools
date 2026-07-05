@@ -155,7 +155,9 @@ namespace Ven4Tools.Views.Tabs
                         RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
                         IsUserAdded = false,
                         ChocoId = catalogApp.ChocoId,
-                        ScoopId = catalogApp.ScoopId
+                        // SHA256 из каталога обязателен для установки по прямой ссылке:
+                        // без него InstallationService пропускает Direct-источник.
+                        Sha256 = catalogApp.Sha256
                     };
                     appManager.AddCatalogApp(appInfo);
                 }
@@ -165,6 +167,9 @@ namespace Ven4Tools.Views.Tabs
                         existing.InstallerUrls = new List<string> { catalogApp.DownloadUrl };
                     if (!string.IsNullOrEmpty(catalogApp.WingetId))
                         existing.AlternativeId = catalogApp.WingetId;
+                    // SHA256 может появиться/измениться при обновлении каталога —
+                    // синхронизируем, иначе Direct-источник останется без верификации.
+                    existing.Sha256 = catalogApp.Sha256;
                 }
             }
         }
