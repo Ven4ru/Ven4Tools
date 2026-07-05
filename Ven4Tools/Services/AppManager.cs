@@ -51,6 +51,11 @@ namespace Ven4Tools.Services
                     existing.Category = app.Category;
                     existing.InstallerUrls = app.InstallerUrls;
                     existing.AlternativeId = app.AlternativeId;
+                    // SHA256 обязателен для верификации Direct-источника, а Choco
+                    // идентификатор — для соответствующего источника: без синхронизации
+                    // при обновлении каталога эти поля терялись у уже добавленного приложения.
+                    existing.Sha256 = app.Sha256;
+                    existing.ChocoId = app.ChocoId;
                 }
             }
         }
