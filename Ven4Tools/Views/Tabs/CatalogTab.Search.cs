@@ -81,11 +81,10 @@ namespace Ven4Tools.Views.Tabs
                     if (t.IsCanceled) return;
                     var wingetTask = WingetService.SearchAsync(query, token);
                     var chocoTask  = PackageManagerService.SearchChocoAsync(query, token);
-                    var scoopTask  = PackageManagerService.SearchScoopAsync(query, token);
-                    await Task.WhenAll(wingetTask, chocoTask, scoopTask);
+                    await Task.WhenAll(wingetTask, chocoTask);
                     if (!token.IsCancellationRequested)
                         await Dispatcher.InvokeAsync(() =>
-                            ShowAllSuggestions(query, wingetTask.Result, chocoTask.Result, scoopTask.Result));
+                            ShowAllSuggestions(query, wingetTask.Result, chocoTask.Result));
                 });
             }
             else
@@ -178,13 +177,12 @@ namespace Ven4Tools.Views.Tabs
         private void ShowAllSuggestions(
             string query,
             List<WingetPackage> winget,
-            List<(string Id, string Name, string Version)> choco,
-            List<(string Id, string Name)> scoop)
+            List<(string Id, string Name, string Version)> choco)
         {
             pnlWingetResults.Children.Clear();
             txtWingetStatus.Visibility = Visibility.Collapsed;
 
-            bool any = winget.Count > 0 || choco.Count > 0 || scoop.Count > 0;
+            bool any = winget.Count > 0 || choco.Count > 0;
             if (!any)
             {
                 txtWingetStatus.Text       = $"😕 Ничего не найдено по запросу «{query}» ни в одном источнике";
@@ -211,17 +209,6 @@ namespace Ven4Tools.Views.Tabs
                     var captureId = id;
                     AddSuggestionRow(name.Length > 0 ? name : id, $"v{ver}", id,
                         () => AddChocoSuggestion(captureId));
-                }
-            }
-
-            if (scoop.Count > 0)
-            {
-                AddSectionHeader("🪣 Scoop");
-                foreach (var (id, name) in scoop)
-                {
-                    var captureId = id;
-                    AddSuggestionRow(id, "", id,
-                        () => AddScoopSuggestion(captureId));
                 }
             }
         }
@@ -278,26 +265,6 @@ namespace Ven4Tools.Views.Tabs
                 AddUserAppToUI(app);
 
                 AddLog($"➕ Добавлено из Chocolatey: {id}");
-            }
-            catch (Exception ex)
-            {
-                AddLog($"❌ Ошибка добавления приложения: {ex.Message}");
-            }
-        }
-
-        private void AddScoopSuggestion(string id)
-        {
-            try
-            {
-                // Префикс User. отделяет пользовательский Id от каталожного —
-                // иначе совпадение Id перезаписывало бы чекбокс из каталога.
-                string userId = $"User.{id}";
-                if (appManager.GetAppById(userId) != null) { AddLog($"ℹ️ {id} уже есть в списке"); return; }
-                var app = new AppInfo { Id = userId, DisplayName = id, Category = AppCategory.Другое, ScoopId = id, InstallerUrls = new List<string>(), IsUserAdded = true };
-                appManager.AddUserApp(app);
-                AddUserAppToUI(app);
-
-                AddLog($"➕ Добавлено из Scoop: {id}");
             }
             catch (Exception ex)
             {

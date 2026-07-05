@@ -190,7 +190,7 @@ namespace Ven4Tools.Services
 
                 // ID может приходить из ручного ввода (пользовательские приложения,
                 // альтернативные источники) — проверяем всегда перед подстановкой в
-                // командную строку winget/choco/scoop, чтобы исключить внедрение аргументов.
+                // командную строку winget/choco, чтобы исключить внедрение аргументов.
                 if (!CommandLineGuard.ValidateId(primaryId))
                 {
                     appProgress.Status = "❌ Недопустимый идентификатор пакета";
@@ -260,32 +260,6 @@ namespace Ven4Tools.Services
                             break;
                         }
 
-                        // ── Scoop ───────────────────────────────────────────────
-                        case SourceOrderSettings.Scoop:
-                        {
-                            if (string.IsNullOrWhiteSpace(app.ScoopId)) break;
-                            appProgress.Status = "🪣 Scoop...";
-                            appProgress.Percentage = 18;
-                            progress.Report(appProgress);
-
-                            bool scoopOk = PackageManagerService.IsScoopInstalled()
-                                || (!token.IsCancellationRequested
-                                    && confirmPmInstall != null
-                                    && await confirmPmInstall("Scoop")
-                                    && await PackageManagerService.InstallScoopAsync(msg => Log(msg)));
-                            if (scoopOk && await PackageManagerService.RunScoopInstallAsync(app.ScoopId, token, msg => Log(msg)))
-                            {
-                                appProgress.Status = "✅ Установлено (Scoop)";
-                                appProgress.Percentage = 100;
-                                progress.Report(appProgress);
-                                Log($"✅ {app.DisplayName} — Scoop: {app.ScoopId}");
-                                if (ProfileService.Current.SaveInstallHistory)
-                                    await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "scoop", app.CategoryString);
-                                return (true, "Установлено через Scoop", appProgress);
-                            }
-                            break;
-                        }
-
                         // ── Direct download ─────────────────────────────────────
                         case SourceOrderSettings.Direct:
                         {
@@ -303,6 +277,9 @@ namespace Ven4Tools.Services
                                 break;
                             }
 
+                            // Несовпадение SHA256 у нескольких зеркал — одна запись
+                            // об ошибке после перебора всех ссылок, а не по одной на URL.
+                            int hashMismatchCount = 0;
                             foreach (var url in app.InstallerUrls)
                             {
                                 token.ThrowIfCancellationRequested();
@@ -368,10 +345,10 @@ namespace Ven4Tools.Services
                                     {
                                         Log($"❌ SHA256 mismatch: {app.DisplayName}");
                                         try { File.Delete(tempFile); } catch { }
-                                        appProgress.Status = "❌ Ошибка SHA256";
+                                        appProgress.Status = "⚠ SHA256 не совпал — пробуем следующий источник";
                                         progress.Report(appProgress);
-                                        InstallFailureService.Append(app.DisplayName, app.Id, "direct", "SHA256 mismatch");
-                                        return (false, "SHA256 mismatch", appProgress);
+                                        hashMismatchCount++;
+                                        continue;
                                     }
                                     Log($"✅ SHA256 OK: {app.DisplayName}");
 
@@ -443,6 +420,11 @@ namespace Ven4Tools.Services
                                     try { File.Delete(tempFile); } catch { }
                                 }
                             }
+                            if (hashMismatchCount > 0)
+                                InstallFailureService.Append(app.DisplayName, app.Id, "direct",
+                                    hashMismatchCount == 1
+                                        ? "SHA256 mismatch"
+                                        : $"SHA256 mismatch ({hashMismatchCount} зеркал)");
                             break;
                         }
                     }

@@ -97,7 +97,8 @@ namespace Ven4Tools.Views.Tabs
                     ? new List<string> { catalogApp.DownloadUrl }
                     : new(),
                 ChocoId = catalogApp.ChocoId,
-                ScoopId = catalogApp.ScoopId
+                // SHA256 обязателен для установки по прямой ссылке при переустановке.
+                Sha256 = catalogApp.Sha256
             };
 
             AppLogger.Write($"🔄 Переустановка: {entry.AppName}...");

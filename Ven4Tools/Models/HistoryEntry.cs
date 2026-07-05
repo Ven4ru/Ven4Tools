@@ -31,7 +31,6 @@ namespace Ven4Tools.Models
         {
             "winget" => "📦 Winget",
             "choco"  => "🍫 Chocolatey",
-            "scoop"  => "🪣 Scoop",
             "direct" => "🔗 Direct",
             "cache"  => "🔌 Кэш",
             _        => Source

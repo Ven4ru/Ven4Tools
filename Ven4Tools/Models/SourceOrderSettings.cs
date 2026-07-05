@@ -6,24 +6,22 @@ namespace Ven4Tools.Models
     {
         public const string Winget = "winget";
         public const string Choco  = "choco";
-        public const string Scoop  = "scoop";
         public const string Direct = "direct";
 
         public static readonly List<string> AllSources =
-            new() { Winget, Choco, Scoop, Direct };
+            new() { Winget, Direct, Choco };
 
         public static readonly Dictionary<string, string> Labels = new()
         {
             [Winget] = "📦 Winget",
             [Choco]  = "🍫 Chocolatey",
-            [Scoop]  = "🪣 Scoop",
             [Direct] = "🔗 Прямая ссылка"
         };
 
         // "global" or "per_category"
         public string Mode { get; set; } = "global";
 
-        // Ordered list of source IDs: ["winget","choco","scoop","direct"]
+        // Ordered list of source IDs: ["winget","direct","choco"]
         public List<string> GlobalOrder { get; set; } = new(AllSources);
 
         // Per-category primary source: "Браузеры" -> "winget"

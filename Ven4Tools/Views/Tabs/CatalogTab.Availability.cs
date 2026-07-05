@@ -104,7 +104,8 @@ namespace Ven4Tools.Views.Tabs
                         RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
                         IsUserAdded = false,
                         ChocoId = catalogApp.ChocoId,
-                        ScoopId = catalogApp.ScoopId
+                        // Копируем SHA256 для единообразия построения AppInfo из каталога.
+                        Sha256 = catalogApp.Sha256
                     };
                 }
 

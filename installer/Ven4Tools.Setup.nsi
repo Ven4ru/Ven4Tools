@@ -298,6 +298,11 @@ Section "Лаунчер Ven4Tools (обязательно)" SEC_MAIN
   SetOverwrite on
   File "${PUBLISH_DIR}\${EXE_NAME}"
 
+  ; Удаляем задания от предыдущей незавершённой установки. Выбранные ниже
+  ; опциональные секции создадут актуальные одноразовые маркеры заново.
+  Delete "$INSTDIR\install-winget.pending"
+  Delete "$INSTDIR\install-chocolatey.pending"
+
   ; Ярлыки: рабочий стол + меню «Пуск» (только при обычной установке —
   ; тихое самообновление не воссоздаёт удалённые пользователем ярлыки)
   CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}" "" "$INSTDIR\${EXE_NAME}" 0
@@ -317,13 +322,36 @@ Section /o "Автозапуск при входе в Windows" SEC_AUTORUN
   WriteRegStr HKCU "${RUN_KEY}" "${RUN_VALUE}" '"$INSTDIR\${EXE_NAME}"'
 SectionEnd
 
+Section "Установить Winget (рекомендуется)" SEC_WINGET
+  ; Компонент устанавливает launcher после первого запуска: Winget является
+  ; MSIX/App Installer и требует собственной логики регистрации.
+  StrCmp $UpdateMode "1" winget_section_done
+  FileOpen $0 "$INSTDIR\install-winget.pending" w
+  FileWrite $0 "1"
+  FileClose $0
+  winget_section_done:
+SectionEnd
+
+Section /o "Установить Chocolatey (опционально)" SEC_CHOCO
+  ; Launcher запросит UAC только для установки Chocolatey.
+  StrCmp $UpdateMode "1" choco_section_done
+  FileOpen $0 "$INSTDIR\install-chocolatey.pending" w
+  FileWrite $0 "1"
+  FileClose $0
+  choco_section_done:
+SectionEnd
+
 ; --- Описания секций на странице компонентов ---
 LangString DESC_SecMain    ${LANG_RUSSIAN} "Файлы лаунчера, ярлыки и регистрация в «Программы и компоненты». Обязательный компонент."
 LangString DESC_SecAutorun ${LANG_RUSSIAN} "Запускать лаунчер автоматически при входе в Windows (значок в трее). Можно изменить позже в настройках лаунчера."
+LangString DESC_SecWinget  ${LANG_RUSSIAN} "Установить Winget после первого запуска launcher. Если Winget уже установлен, действие будет безопасно пропущено."
+LangString DESC_SecChoco   ${LANG_RUSSIAN} "Установить Chocolatey как дополнительный источник программ. Потребуется отдельное подтверждение UAC."
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAIN}    $(DESC_SecMain)
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_AUTORUN} $(DESC_SecAutorun)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_WINGET}  $(DESC_SecWinget)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_CHOCO}   $(DESC_SecChoco)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ; ============================================================================
@@ -342,6 +370,8 @@ Section "Uninstall"
   Delete "$INSTDIR\${EXE_NAME}"
   Delete "$INSTDIR\${EXE_NAME}.bak"
   Delete "$INSTDIR\uninstall.exe"
+  Delete "$INSTDIR\install-winget.pending"
+  Delete "$INSTDIR\install-chocolatey.pending"
 
   ; Ярлыки
   Delete "$DESKTOP\${APP_NAME}.lnk"

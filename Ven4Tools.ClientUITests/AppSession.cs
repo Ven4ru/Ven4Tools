@@ -46,6 +46,21 @@ namespace Ven4Tools.ClientUITests
         /// </summary>
         public static AppSession Launch()
         {
+            // Клиент — single-instance (Mutex "Ven4Tools.Client.SingleInstance"):
+            // если предыдущий процесс (из другого тестового класса) не успел
+            // полностью завершиться до этого момента, новый экземпляр молча
+            // покажет "Уже запущено" и сам сразу завершится — тогда поиск окна
+            // ниже найдёт СТАРОЕ окно с чужими/устаревшими настройками, а не
+            // свежий процесс с только что записанными profile.json/source_order.json.
+            // Поэтому явно убиваем и ждём завершения всех оставшихся процессов
+            // перед стартом нового, вместо того чтобы полагаться только на
+            // Dispose() предыдущей сессии (Kill() там не дожидался выхода).
+            foreach (var stale in Process.GetProcessesByName("Ven4Tools"))
+            {
+                try { if (!stale.HasExited) { stale.Kill(); stale.WaitForExit(5000); } } catch { }
+                finally { stale.Dispose(); }
+            }
+
             string exePath = ResolveClientExePath();
 
             var automation = new UIA3Automation();
@@ -152,7 +167,7 @@ namespace Ven4Tools.ClientUITests
             {
                 foreach (var p in Process.GetProcessesByName("Ven4Tools"))
                 {
-                    try { if (!p.HasExited) p.Kill(); } catch { }
+                    try { if (!p.HasExited) { p.Kill(); p.WaitForExit(5000); } } catch { }
                     p.Dispose();
                 }
             }

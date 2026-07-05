@@ -163,6 +163,15 @@ namespace Ven4Tools.Launcher
             Show();
             WindowState = WindowState.Normal;
             Activate();
+
+            // Отложенная (при автозапуске в трее) установка компонентов из setup:
+            // окно теперь видимо, поэтому UAC-диалоги и прогресс увидит пользователь.
+            // Fire-and-forget — не блокируем показ окна; метод сам обрабатывает ошибки.
+            if (_pendingSetupComponents)
+            {
+                _pendingSetupComponents = false;
+                _ = ProcessSetupComponentRequestsAsync();
+            }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)

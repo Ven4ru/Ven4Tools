@@ -387,7 +387,9 @@ namespace Ven4Tools
                 AlternativeId = catalogApp.WingetId,
                 InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl)
                     ? new System.Collections.Generic.List<string> { catalogApp.DownloadUrl } : new(),
-                ChocoId = catalogApp.ChocoId, ScoopId = catalogApp.ScoopId
+                ChocoId = catalogApp.ChocoId,
+                // SHA256 обязателен для установки из пина по прямой ссылке.
+                Sha256 = catalogApp.Sha256
             };
             var prog = new Progress<Services.AppInstallProgress>(p => AppLogger.Write($"  {p.Status}"));
             async Task<bool> confirmPm(string pmName) =>

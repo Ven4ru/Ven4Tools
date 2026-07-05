@@ -38,6 +38,9 @@ namespace Ven4Tools.Launcher
         private bool                 _backgroundUpdates = true;
         private bool                 _autostart         = false;
         private bool                 _startMinimized    = false;
+        // Запросы на установку компонентов из setup отложены до первого видимого показа
+        // окна: при автозапуске в трее (скрытое окно) UAC/прогресс не должны всплывать незаметно
+        private bool                 _pendingSetupComponents = false;
         private readonly bool        _isUiTestMode;
         private string               _lastNotifiedLauncherVersion = "";
         private string               _lastNotifiedClientVersion   = "";
@@ -94,7 +97,18 @@ namespace Ven4Tools.Launcher
                     return;
                 }
 
-                if (_startMinimized) Hide();
+                if (_startMinimized)
+                {
+                    // Окно скрыто (автозапуск в трее) — не запускаем установку выбранных
+                    // в setup компонентов незаметно. Откладываем до первого показа окна
+                    // из трея, где UAC-диалоги и прогресс будут видны пользователю.
+                    Hide();
+                    _pendingSetupComponents = true;
+                }
+                else
+                {
+                    await ProcessSetupComponentRequestsAsync();
+                }
                 await LoadVersionsAsync();
                 await CheckComponentsAutoAsync();
 
