@@ -25,6 +25,11 @@ namespace Ven4Tools.Models
 
         public string? Sha256 { get; set; }
 
+        // Переопределение флага тихой установки для конкретного установщика (например,
+        // AutoHotkey v2 требует "/silent", а не общепринятый NSIS-флаг "/S"). Пусто —
+        // используется дефолт AppInfo.SilentArgs ("/S").
+        public string? SilentArgs { get; set; }
+
         [JsonIgnore]
         public bool IsSelected { get; set; }
 

@@ -6,14 +6,11 @@ namespace Ven4Tools.Launcher.Models
     public class UpdateInfo
     {
         public bool HasUpdate { get; set; }
-        public string? CurrentVersion { get; set; }      // ← ДОЛЖНО БЫТЬ
-        public string? LatestVersion { get; set; }       // ← ДОЛЖНО БЫТЬ
+        public string? CurrentVersion { get; set; }
+        public string? LatestVersion { get; set; }
         public string? DownloadUrl { get; set; }
         public string? ReleaseNotes { get; set; }
-        public string? Error { get; set; }
-        public long FileSize { get; set; }               // ← ДОЛЖНО БЫТЬ
-        public bool IsCritical { get; set; }
-        public bool IsInstalled { get; set; }
+        public long FileSize { get; set; }
     }
 
     public class GitHubRelease

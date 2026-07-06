@@ -214,12 +214,15 @@ namespace Ven4Tools.Launcher.Services
 
                 // FallbackDownloader: проверка доверенного хоста (включая редиректы),
                 // .partial-загрузка и обязательная сверка SHA256 до принятия файла.
+                // Таймаут на весь цикл скачивания (основной URL + фолбэк): без него
+                // зависший поток на ResponseHeadersRead блокирует обновление навсегда.
                 var downloader = new FallbackDownloader(_httpClient);
+                using var downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
                 await downloader.DownloadAsync(
                     updateInfo.DownloadUrl,
                     fallbackUrl,
                     setupPath,
-                    CancellationToken.None,
+                    downloadCts.Token,
                     expectedSha256);
                 Log("Целостность установщика подтверждена (SHA256).");
 
@@ -322,11 +325,12 @@ namespace Ven4Tools.Launcher.Services
                 string setupPath = Path.Combine(stagingDir, setupName);
 
                 var downloader = new FallbackDownloader(_httpClient);
+                using var downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
                 await downloader.DownloadAsync(
                     latest.DownloadUrl,
                     fallbackUrl,
                     setupPath,
-                    CancellationToken.None,
+                    downloadCts.Token,
                     expectedSha256);
                 Log("Целостность установщика подтверждена (SHA256).");
 
@@ -359,7 +363,7 @@ namespace Ven4Tools.Launcher.Services
         /// версия лаунчера на CDN совпадает с запрошенной. Любая ошибка → (null, null):
         /// вызывающий код обязан отменить установку (fail-closed).
         /// </summary>
-        private static async Task<(string? Sha256, string? FallbackUrl)> GetSetupHashFromCdnAsync(string version)
+        internal static async Task<(string? Sha256, string? FallbackUrl)> GetSetupHashFromCdnAsync(string version)
         {
             try
             {

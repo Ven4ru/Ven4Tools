@@ -46,13 +46,24 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        ReleaseSingleInstanceMutex();
+        base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Освобождает мьютекс единственного экземпляра до завершения процесса.
+    /// Нужно вызывать перед запуском повышенной копии лаунчера (RestartAsAdmin) —
+    /// иначе новый процесс может увидеть мьютекс ещё занятым и выйти как "уже запущен".
+    /// Идемпотентно: повторный вызов (например, из OnExit) безопасен.
+    /// </summary>
+    public static void ReleaseSingleInstanceMutex()
+    {
         if (_mutex != null)
         {
             _mutex.ReleaseMutex();
             _mutex.Dispose();
             _mutex = null;
         }
-        base.OnExit(e);
     }
 
     private static void OnDomainException(object sender, UnhandledExceptionEventArgs e)

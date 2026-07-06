@@ -40,8 +40,10 @@ internal sealed class FallbackDownloader
                 progress);
             return false;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            // Отмена именно вызывающей стороной (наш токен) — не пытаемся зеркало,
+            // операция в любом случае должна остановиться.
             throw;
         }
         catch when (

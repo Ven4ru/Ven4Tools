@@ -77,6 +77,8 @@ namespace Ven4Tools.Launcher
             _clientPath = Path.Combine(_installPath, "Ven4Tools_Client");
             Directory.CreateDirectory(_clientPath);
             txtInstallPath.Text = _isUiTestMode ? @"C:\Ven4Tools-Test\Client" : _clientPath;
+            if (!_isUiTestMode)
+                CleanupStaleInstallArtifacts(_clientPath);
 
             // Фоновый сервис запускается после установки _clientPath:
             // он читает путь клиента при первой проверке обновлений
