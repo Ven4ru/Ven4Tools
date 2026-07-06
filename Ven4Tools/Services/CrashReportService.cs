@@ -17,58 +17,6 @@ namespace Ven4Tools.Services
         public static readonly string SessionId =
             Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
 
-        // Случайный идентификатор устройства: генерируется один раз и хранится локально.
-        // Не выводится из имени машины/пользователя — восстановить по нему ничего нельзя.
-        private static readonly string DeviceIdPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Ven4Tools", "device_id.txt");
-
-        private static string? _deviceId;
-        private static readonly object _deviceIdLock = new();
-
-        /// <summary>
-        /// Возвращает случайный идентификатор устройства для группировки отчётов.
-        /// Генерируется один раз (Guid.NewGuid) и сохраняется в device_id.txt;
-        /// никакие характеристики машины или пользователя не используются.
-        /// </summary>
-        public static string GetDeviceId()
-        {
-            if (_deviceId != null) return _deviceId;
-            lock (_deviceIdLock)
-            {
-                _deviceId ??= LoadOrCreateDeviceId(DeviceIdPath);
-                return _deviceId;
-            }
-        }
-
-        /// <summary>
-        /// Читает идентификатор устройства из файла или создаёт новый случайный.
-        /// Повреждённое содержимое заменяется свежим Guid. При ошибке записи
-        /// идентификатор живёт до конца сеанса (в следующий раз будет новый —
-        /// в сторону меньшей связываемости отчётов, а не большей).
-        /// </summary>
-        public static string LoadOrCreateDeviceId(string path)
-        {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    var existing = File.ReadAllText(path).Trim();
-                    if (Guid.TryParse(existing, out var parsed))
-                        return parsed.ToString("N");
-                }
-                var id = Guid.NewGuid().ToString("N");
-                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-                File.WriteAllText(path, id);
-                return id;
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write($"[CrashReportService] device_id: {ex.Message}");
-                return Guid.NewGuid().ToString("N");
-            }
-        }
-
         public static void Write(Exception ex)
         {
             try
@@ -76,8 +24,6 @@ namespace Ven4Tools.Services
                 var report = new CrashReport
                 {
                     SessionId     = SessionId,
-                    // Случайный локальный идентификатор — не связан с именем машины
-                    DeviceId      = GetDeviceId(),
                     Version       = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "unknown",
                     Timestamp     = DateTime.UtcNow.ToString("O"),
                     OsVersion     = Environment.OSVersion.ToString(),
@@ -270,7 +216,6 @@ namespace Ven4Tools.Services
     public class CrashReport
     {
         public string  SessionId     { get; set; } = "";
-        public string  DeviceId      { get; set; } = "";
         public string  Version       { get; set; } = "";
         public string  Timestamp     { get; set; } = "";
         public string  OsVersion     { get; set; } = "";

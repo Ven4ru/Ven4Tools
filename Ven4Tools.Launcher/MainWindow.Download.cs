@@ -132,6 +132,10 @@ namespace Ven4Tools.Launcher
                     txtDownloadStatus.Text = "Проверка целостности...";
                     AddLog("🔒 Целостность подтверждена (SHA256)");
                 }
+                else
+                {
+                    AddLog("⚠️ Для этой версии нет SHA256 в манифесте — целостность архива не проверена");
+                }
 
                 txtDownloadStatus.Text = "Распаковка...";
                 await SafeZipExtractor.ExtractAsync(tempZip, extractPath, token);

@@ -59,11 +59,6 @@ internal sealed class TransactionalDirectoryInstaller
             cancellationToken.ThrowIfCancellationRequested();
             _directories.Move(staging, target);
             stagingCommitted = true;
-
-            if (previousVersionMoved && _directories.Exists(backup))
-            {
-                _directories.Delete(backup, recursive: true);
-            }
         }
         catch
         {
@@ -83,6 +78,21 @@ internal sealed class TransactionalDirectoryInstaller
             }
 
             throw;
+        }
+
+        // Удаление старой копии — вне транзакции: установка уже зафиксирована (stagingCommitted),
+        // и сбой очистки (например, залоченный файл) не повод откатывать удавшееся обновление.
+        // Осиротевший ".backup-*" подчистит CleanupStaleInstallArtifacts при следующем запуске.
+        if (previousVersionMoved && _directories.Exists(backup))
+        {
+            try
+            {
+                _directories.Delete(backup, recursive: true);
+            }
+            catch
+            {
+                // не критично — см. комментарий выше
+            }
         }
     }
 

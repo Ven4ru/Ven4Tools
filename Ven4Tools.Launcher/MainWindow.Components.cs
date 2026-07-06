@@ -56,7 +56,7 @@ namespace Ven4Tools.Launcher
                 AddLog("   ✅ WebView2 Runtime установлен");
             else
             {
-                AddLog("   ❌ WebView2 Runtime не установлен (нужен для Яндекс-авторизации)");
+                AddLog("   ❌ WebView2 Runtime не установлен");
                 hasIssues = true;
             }
 
@@ -186,7 +186,7 @@ namespace Ven4Tools.Launcher
             if (!IsWebView2Installed())
             {
                 var r = System.Windows.MessageBox.Show(
-                    "WebView2 Runtime не установлен!\n\nНеобходим для Яндекс-авторизации.\n\nУстановить сейчас?",
+                    "WebView2 Runtime не установлен!\n\nУстановить сейчас?",
                     "Требуется WebView2 Runtime", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (r == MessageBoxResult.Yes)
                 {

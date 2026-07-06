@@ -23,8 +23,6 @@ namespace Ven4Tools.Services
                 list.Add(new InstallFailure
                 {
                     SessionId   = CrashReportService.SessionId,
-                    // Случайный локальный идентификатор — не связан с именем машины
-                    DeviceId    = CrashReportService.GetDeviceId(),
                     AppName     = appName,
                     AppId       = appId,
                     Method      = method,
@@ -64,7 +62,6 @@ namespace Ven4Tools.Services
     public class InstallFailure
     {
         public string SessionId   { get; set; } = "";
-        public string DeviceId    { get; set; } = "";
         public string AppName     { get; set; } = "";
         public string AppId       { get; set; } = "";
         public string Method      { get; set; } = "";

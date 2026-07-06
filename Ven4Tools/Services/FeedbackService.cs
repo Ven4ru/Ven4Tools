@@ -19,8 +19,6 @@ namespace Ven4Tools.Services
                 var payload = new FeedbackRecord
                 {
                     SessionId   = CrashReportService.SessionId,
-                    // Случайный локальный идентификатор — не связан с именем машины
-                    DeviceId    = CrashReportService.GetDeviceId(),
                     Version     = ChannelService.InstalledVersion,
                     Channel     = "prerelease",
                     Rating      = rating,
@@ -99,7 +97,6 @@ namespace Ven4Tools.Services
     public class FeedbackRecord
     {
         public string SessionId   { get; set; } = "";
-        public string DeviceId    { get; set; } = "";
         public string Version     { get; set; } = "";
         public string Channel     { get; set; } = "";
         public int    Rating      { get; set; }
