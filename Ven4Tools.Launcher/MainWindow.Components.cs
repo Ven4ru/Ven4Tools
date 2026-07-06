@@ -278,6 +278,10 @@ namespace Ven4Tools.Launcher
             var exeName = Process.GetCurrentProcess().MainModule?.FileName;
             if (exeName != null)
             {
+                // Освобождаем мьютекс единственного экземпляра ДО запуска повышенной
+                // копии — иначе она может стартовать, пока текущий процесс ещё держит
+                // мьютекс (ожидание подтверждения UAC), и выйти как "уже запущен".
+                App.ReleaseSingleInstanceMutex();
                 var psi = new ProcessStartInfo { FileName = exeName, UseShellExecute = true, Verb = "runas" };
                 try { Process.Start(psi); } catch { }
             }

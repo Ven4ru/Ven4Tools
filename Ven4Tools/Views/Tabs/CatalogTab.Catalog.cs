@@ -159,6 +159,8 @@ namespace Ven4Tools.Views.Tabs
                         // без него InstallationService пропускает Direct-источник.
                         Sha256 = catalogApp.Sha256
                     };
+                    if (!string.IsNullOrEmpty(catalogApp.SilentArgs))
+                        appInfo.SilentArgs = catalogApp.SilentArgs;
                     appManager.AddCatalogApp(appInfo);
                 }
                 else if (!existing.IsUserAdded)
@@ -170,6 +172,9 @@ namespace Ven4Tools.Views.Tabs
                     // SHA256 может появиться/измениться при обновлении каталога —
                     // синхронизируем, иначе Direct-источник останется без верификации.
                     existing.Sha256 = catalogApp.Sha256;
+                    // Переопределение тихого флага (напр. AutoHotkey v2: "/silent" вместо "/S").
+                    if (!string.IsNullOrEmpty(catalogApp.SilentArgs))
+                        existing.SilentArgs = catalogApp.SilentArgs;
                 }
             }
         }

@@ -454,9 +454,18 @@ namespace Ven4Tools.Views.Tabs
             Log($"⬆ Обновление {app.Name}...");
             try
             {
-                // --locale en-US делает вывод английским. RunStreamingAsync: живой прогресс
-                // в лог + 45-минутный таймаут (RunAsync с 120с убивал winget на больших пакетах).
-                string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements --locale en-US";
+                // Усечённый в списке ID (winget list рисует "…" при узкой колонке) не пройдёт
+                // валидацию WingetRunner.ValidateArgs — не пытаемся, чтобы не ловить неясную ошибку.
+                if (string.IsNullOrWhiteSpace(app.WingetId) || app.WingetId.Contains('…'))
+                {
+                    Log($"⚠ {app.Name}: ID приложения усечён winget — обновление недоступно");
+                    return;
+                }
+
+                // RunStreamingAsync: живой прогресс в лог + 45-минутный таймаут
+                // (RunAsync с 120с убивал winget на больших пакетах).
+                // --locale en-US не используется — на части систем даёт пустой вывод (см. agent_context.md).
+                string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements";
                 int code = await WingetRunner.RunStreamingAsync(args, line => Log($"  {line}"),
                     TimeSpan.FromMinutes(15));
                 if (code == 0)

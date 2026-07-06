@@ -56,6 +56,8 @@ namespace Ven4Tools.Services
                     // при обновлении каталога эти поля терялись у уже добавленного приложения.
                     existing.Sha256 = app.Sha256;
                     existing.ChocoId = app.ChocoId;
+                    if (!string.IsNullOrEmpty(app.SilentArgs))
+                        existing.SilentArgs = app.SilentArgs;
                 }
             }
         }

@@ -171,7 +171,7 @@ namespace Ven4Tools.Launcher.Services
                 timeoutCts.CancelAfter(TimeSpan.FromSeconds(60));
 
                 var psi = new System.Diagnostics.ProcessStartInfo("winget",
-                    "upgrade --include-unknown --accept-source-agreements --disable-interactivity --locale en-US")
+                    "upgrade --include-unknown --accept-source-agreements --disable-interactivity")
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true,

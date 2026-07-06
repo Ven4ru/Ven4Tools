@@ -75,26 +75,14 @@ namespace Ven4Tools.Launcher
                 // SHA256 установщика берём из version.json CDN — но только если версия
                 // на CDN совпадает с устанавливаемой (иначе хеш относится к другому билду).
                 // Без подтверждённого хеша обновление не выполняется (fail-closed).
+                // Тот же хелпер, что использует OfferInstallationAsync — единая проверка
+                // строгости хеша (LauncherUpdateService.IsValidSha256), без дублирования.
                 string? expectedSha256 = null;
                 string? fallbackUrl = null;
                 if (updateInfo?.HasUpdate == true)
                 {
-                    try
-                    {
-                        using var cdnService = new CdnService();
-                        CdnVersionInfo? cdnInfo = await cdnService.GetVersionInfoAsync();
-                        if (cdnInfo?.Launcher != null &&
-                            !string.IsNullOrWhiteSpace(cdnInfo.Launcher.SetupSha256) &&
-                            string.Equals(cdnInfo.Launcher.Version, updateInfo.LatestVersion, StringComparison.OrdinalIgnoreCase))
-                        {
-                            expectedSha256 = cdnInfo.Launcher.SetupSha256;
-                            fallbackUrl    = cdnInfo.Launcher.SetupUrl;
-                        }
-                    }
-                    catch
-                    {
-                        // CDN недоступен — сервис откажет в обновлении и объяснит причину в логе.
-                    }
+                    (expectedSha256, fallbackUrl) =
+                        await LauncherUpdateService.GetSetupHashFromCdnAsync(updateInfo.LatestVersion!);
                 }
 
                 var result = await updateSvc.DownloadAndRunSetupUpdateAsync(updateInfo, expectedSha256, fallbackUrl);

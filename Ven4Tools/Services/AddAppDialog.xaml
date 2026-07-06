@@ -69,9 +69,14 @@
 
             <!-- ── URL ── -->
             <StackPanel x:Name="panelUrl" Visibility="Collapsed">
-                <TextBlock Text="Ссылка для скачивания (.exe / .msi):" FontWeight="Bold" Margin="0,0,0,5"/>
-                <TextBox x:Name="txtUrl" Margin="0,0,0,20" Padding="5"
+                <TextBlock Text="Ссылка для скачивания (.exe / .msi, только https://):" FontWeight="Bold" Margin="0,0,0,5"/>
+                <TextBox x:Name="txtUrl" Margin="0,0,0,12" Padding="5"
                          Background="#3d3d3d" Foreground="White"/>
+                <TextBlock Text="SHA256 файла (опционально — без него установка по ссылке будет недоступна):" FontWeight="Bold" Margin="0,0,0,5"/>
+                <TextBox x:Name="txtSha256" Margin="0,0,0,4" Padding="5"
+                         Background="#3d3d3d" Foreground="White" FontFamily="Consolas"/>
+                <TextBlock Text="64 hex-символа. Посчитать: certutil -hashfile файл SHA256"
+                           FontSize="11" Foreground="#888" Margin="0,0,0,20"/>
             </StackPanel>
 
             <!-- Название (всегда) -->
