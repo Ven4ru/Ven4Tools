@@ -68,9 +68,12 @@ namespace Ven4Tools.Services
             return result;
         }
 
-        // Публичный IP (два fallback)
+        // Публичный IP (два fallback). Единственный запрос в этом сервисе, который
+        // раскрывает идентифицирующие данные стороннему хосту — гейтится параноидальным режимом.
         public static async Task<string> GetPublicIpAsync()
         {
+            if (ProfileService.Current.ParanoidMode) return "отключено (параноидальный режим)";
+
             foreach (var url in new[] { "https://api.ipify.org", "https://checkip.amazonaws.com" })
             {
                 try
