@@ -169,6 +169,9 @@ namespace Ven4Tools.Views.Tabs
                         existing.InstallerUrls = new List<string> { catalogApp.DownloadUrl };
                     if (!string.IsNullOrEmpty(catalogApp.WingetId))
                         existing.AlternativeId = catalogApp.WingetId;
+                    // ChocoId может появиться/измениться при обновлении каталога —
+                    // без синхронизации источник Chocolatey не заработает до перезапуска.
+                    existing.ChocoId = catalogApp.ChocoId;
                     // SHA256 может появиться/измениться при обновлении каталога —
                     // синхронизируем, иначе Direct-источник останется без верификации.
                     existing.Sha256 = catalogApp.Sha256;
