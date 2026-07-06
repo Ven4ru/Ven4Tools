@@ -25,8 +25,10 @@ namespace Ven4Tools.Launcher
                     cdnInfo = await cdnService.GetVersionInfoAsync();
                     if (cdnInfo?.Client?.ZipUrl != null)
                         AddLog($"🌐 CDN доступен: клиент {cdnInfo.Client.Version}");
+                    else
+                        AddLog("⚠️ CDN недоступен, использую GitHub как основной источник");
                 }
-                catch { /* CDN недоступен — молча продолжаем через GitHub */ }
+                catch { AddLog("⚠️ CDN недоступен, использую GitHub как основной источник"); }
 
                 AddLog("🔍 Загрузка списка версий с GitHub...");
                 using var gitHubService = new GitHubService();
