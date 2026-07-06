@@ -1,7 +1,14 @@
 {
-  "version": 8,
-  "lastUpdated": "2026-07-04 23:59:00",
+  "version": 9,
+  "lastUpdated": "2026-07-06 03:40:00",
   "changelog": [
+    {
+      "version": 9,
+      "date": "2026-07-06",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "AutoHotkey: добавлен silentArgs=\"/silent\" — установщик v2 не принимает общий флаг /S (падал с «Invalid arg» и зависал при установке по прямой ссылке)."
+    },
     {
       "version": 8,
       "date": "2026-07-04",
@@ -1204,7 +1211,8 @@
       "profile": "full",
       "sha256": "2bf1b89b1047136490fc321d2fdc988b42dd86f693eea7872746ac6adf722bc3",
       "skipHash": false,
-      "chocoId": "autohotkey"
+      "chocoId": "autohotkey",
+      "silentArgs": "/silent"
     },
     {
       "id": "wiztree",

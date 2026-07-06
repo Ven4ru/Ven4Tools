@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
@@ -80,9 +81,8 @@ namespace Ven4Tools.Services
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(LocalPath)!);
-                File.WriteAllText(LocalPath,
-                    JsonConvert.SerializeObject(list, Formatting.Indented), Encoding.UTF8);
+                FileHelper.WriteAllTextAtomic(LocalPath,
+                    JsonConvert.SerializeObject(list, Formatting.Indented));
                 return true;
             }
             catch (Exception ex)

@@ -143,15 +143,35 @@ namespace Ven4Tools.Services
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+            string sha256 = "";
             if (!isWinget)
             {
                 string urlCandidate = txtUrl.Text.Trim();
-                if (!urlCandidate.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
-                    !urlCandidate.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                if (!urlCandidate.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 {
-                    MessageBox.Show("Ссылка должна начинаться с http:// или https://",
+                    MessageBox.Show("Ссылка должна начинаться с https:// — незащищённые ссылки не поддерживаются.",
                         "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
+                }
+
+                sha256 = txtSha256.Text.Trim().ToLowerInvariant();
+                if (sha256.Length > 0 && !HashHelper.HasExpectedHash(sha256))
+                {
+                    MessageBox.Show(
+                        "SHA256 указан в неверном формате (нужно 64 hex-символа).\n" +
+                        "Оставьте поле пустым, если хеш неизвестен.",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                if (sha256.Length == 0)
+                {
+                    var answer = MessageBox.Show(
+                        "SHA256 не указан — без него установка по прямой ссылке будет " +
+                        "пропущена как непроверенная (источник считается недоступным), " +
+                        "пока хеш не будет добавлен через редактирование.\n\n" +
+                        "Всё равно добавить приложение без хеша?",
+                        "Нет SHA256", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if (answer != MessageBoxResult.Yes) return;
                 }
             }
 
@@ -166,7 +186,10 @@ namespace Ven4Tools.Services
             if (isWinget)
                 app.AlternativeId = txtWingetId.Text.Trim();
             else
+            {
                 app.InstallerUrls.Add(txtUrl.Text.Trim());
+                app.Sha256 = sha256;
+            }
 
             Result = app;
 

@@ -40,6 +40,37 @@ namespace Ven4Tools.Launcher
             }
         }
 
+        // Осиротевшие ".Ven4Tools_Client.staging-*" / "Ven4Tools_Client.backup-*" — остаются
+        // рядом с папкой клиента, если процесс убит посреди DownloadVersionAsync/
+        // TransactionalDirectoryInstaller.Install. Однократная зачистка при старте:
+        // единственный экземпляр лаунчера (см. App.SingleInstance) гарантирует, что
+        // на момент запуска эти каталоги не могут принадлежать активной операции.
+        private static void CleanupStaleInstallArtifacts(string clientPath)
+        {
+            try
+            {
+                string fullClientPath = Path.GetFullPath(clientPath);
+                string? parent = Path.GetDirectoryName(fullClientPath);
+                if (parent == null || !Directory.Exists(parent)) return;
+
+                string clientName = Path.GetFileName(fullClientPath);
+                string stagingPrefix = $".{clientName}.staging-";
+                string backupPrefix = $"{clientName}.backup-";
+
+                foreach (string dir in Directory.EnumerateDirectories(parent))
+                {
+                    string name = Path.GetFileName(dir);
+                    bool isStaging = name.StartsWith(stagingPrefix, StringComparison.OrdinalIgnoreCase);
+                    bool isBackup = name.StartsWith(backupPrefix, StringComparison.OrdinalIgnoreCase);
+                    if (!isStaging && !isBackup) continue;
+
+                    try { Directory.Delete(dir, recursive: true); }
+                    catch { /* занято/уже удалено — не мешаем запуску лаунчера */ }
+                }
+            }
+            catch { /* зачистка необязательна для работы лаунчера */ }
+        }
+
         private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationToken token)
         {
             if (version == null) return;
