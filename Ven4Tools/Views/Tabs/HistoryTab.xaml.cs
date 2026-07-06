@@ -100,6 +100,10 @@ namespace Ven4Tools.Views.Tabs
                 // SHA256 обязателен для установки по прямой ссылке при переустановке.
                 Sha256 = catalogApp.Sha256
             };
+            // Переопределение тихого флага (напр. AutoHotkey v2: "/silent" вместо "/S") —
+            // без этого переустановка теряет override и падает на дефолтном "/S".
+            if (!string.IsNullOrEmpty(catalogApp.SilentArgs))
+                appInfo.SilentArgs = catalogApp.SilentArgs;
 
             AppLogger.Write($"🔄 Переустановка: {entry.AppName}...");
 
