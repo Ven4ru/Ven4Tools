@@ -167,9 +167,6 @@ namespace Ven4Tools.Services
                 {
                     new KeyValuePair<string, string>("action",     "crash_report"),
                     new KeyValuePair<string, string>("session_id", report.SessionId),
-                    // Ключ "machine" сохранён для совместимости с серверным API,
-                    // но содержит случайный идентификатор устройства, а не имя машины.
-                    new KeyValuePair<string, string>("machine",    report.DeviceId),
                     new KeyValuePair<string, string>("version",    report.Version),
                     new KeyValuePair<string, string>("timestamp",  report.Timestamp),
                     new KeyValuePair<string, string>("os",         report.OsVersion),
@@ -244,12 +241,26 @@ namespace Ven4Tools.Services
             if (!string.IsNullOrEmpty(profile))
                 text = text.Replace(profile, "%USERPROFILE%", StringComparison.OrdinalIgnoreCase);
 
-            // Убираем имя пользователя из непутевого контекста (SQL-ошибки, UNC-пути).
+            // Пути ЧУЖОГО профиля (например, в исключении фигурирует C:\Users\ИмяДругогоПользователя\...,
+            // а не текущего) — замены выше это не ловят, так как завязаны на Environment.UserName/*Profile
+            // текущего пользователя. Тот же regex, что в GitHubService.SanitizePersonalData (лаунчер).
+            text = System.Text.RegularExpressions.Regex.Replace(
+                text,
+                @"([A-Za-z]:\\Users\\)[^\\\r\n]+",
+                "$1<user>",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            // Убираем имя пользователя и имя машины из непутевого контекста (SQL-ошибки, UNC-пути).
             // Делаем это в конце — после замены путей на переменные окружения,
             // иначе имя внутри путей пропало бы и %LOCALAPPDATA%/%USERPROFILE% не сработали.
+            // Короткие значения (< 3 символов) не заменяем — слишком много ложных срабатываний.
             var userName = Environment.UserName;
-            if (!string.IsNullOrEmpty(userName))
+            if (!string.IsNullOrEmpty(userName) && userName.Length >= 3)
                 text = text.Replace(userName, "<user>", StringComparison.OrdinalIgnoreCase);
+
+            var machineName = Environment.MachineName;
+            if (!string.IsNullOrEmpty(machineName) && machineName.Length >= 3)
+                text = text.Replace(machineName, "<machine>", StringComparison.OrdinalIgnoreCase);
 
             return text;
         }
