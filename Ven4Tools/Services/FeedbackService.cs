@@ -76,9 +76,6 @@ namespace Ven4Tools.Services
                 {
                     new KeyValuePair<string, string>("action",     "submit_feedback"),
                     new KeyValuePair<string, string>("session_id", record.SessionId),
-                    // Ключ "machine" сохранён для совместимости с серверным API,
-                    // но содержит случайный идентификатор устройства, а не имя машины.
-                    new KeyValuePair<string, string>("machine",    record.DeviceId),
                     new KeyValuePair<string, string>("version",    record.Version),
                     new KeyValuePair<string, string>("channel",    record.Channel),
                     new KeyValuePair<string, string>("rating",     record.Rating.ToString()),
