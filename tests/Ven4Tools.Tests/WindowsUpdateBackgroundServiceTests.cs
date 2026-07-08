@@ -20,6 +20,8 @@ public sealed class WindowsUpdateBackgroundServiceTests
         // Поиск не должен был случиться — при NotSet просто нечего проверять.
         // (Косвенная проверка: счётчик не должен был обновиться до 1.)
         Assert.NotEqual(1, WindowsUpdateBackgroundService.AvailableCount);
+        // Прямая проверка: SearchAsync не вызывался вовсе.
+        Assert.Equal(0, fake.SearchCallCount);
     }
 
     [Fact]
@@ -51,6 +53,7 @@ public sealed class WindowsUpdateBackgroundServiceTests
         await bg.CheckOnceAsync(CancellationToken.None);
 
         Assert.Empty(fake.InstallCallsReceived); // sanity: точно не устанавливали
+        Assert.Equal(0, fake.SearchCallCount); // прямая проверка: поиск пропущен из-за ParanoidMode
         ProfileService.Current.ParanoidMode = false; // не оставлять состояние для других тестов
     }
 }

@@ -53,7 +53,7 @@ namespace Ven4Tools.Views.Tabs
             if (InstallationService.IsBusy)
             {
                 MessageBox.Show(
-                    "Дождитесь завершения установки обновлений Windows, затем повторите попытку.",
+                    "Дождитесь завершения текущей установки, затем повторите попытку.",
                     "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
