@@ -171,7 +171,50 @@ namespace Ven4Tools.Views.Tabs
         private static string FormatSize(long bytes) =>
             bytes <= 0 ? "0 МБ" : $"{bytes / 1024.0 / 1024.0:F1} МБ";
 
-        // Реализация BtnInstall_Click — Task 12.
-        private void BtnInstall_Click(object sender, RoutedEventArgs e) { }
+        private async void BtnInstall_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedIds = WindowsUpdateCategoryTreeBuilder.GetSelectedUpdateIds(_tree);
+            if (selectedIds.Count == 0) return;
+
+            var eulaItems = WindowsUpdateErrorMapper.GetItemsNeedingEula(_tree);
+            long totalBytes = WindowsUpdateCategoryTreeBuilder.GetSelectedTotalSizeBytes(_tree);
+
+            string confirmText = $"Установить {selectedIds.Count} патчей ({FormatSize(totalBytes)})?\n\n" +
+                                  "Может потребоваться перезагрузка после установки.";
+            if (eulaItems.Count > 0)
+            {
+                confirmText += "\n\nЛицензионные соглашения выбранных обновлений:\n\n" +
+                    string.Join("\n\n---\n\n", eulaItems.Select(i => $"{i.Title}:\n{i.EulaText}"));
+            }
+
+            var confirmed = MessageBox.Show(confirmText, "Подтверждение установки",
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (confirmed != MessageBoxResult.Yes) return;
+
+            btnInstall.IsEnabled = false;
+            btnCheck.IsEnabled = false;
+            var progress = new Progress<WindowsUpdateProgress>(p =>
+            {
+                txtStatus.Text = $"{p.Phase}: {p.CurrentTitle} ({p.CompletedCount}/{p.TotalCount}, {p.PercentComplete}%)";
+            });
+
+            var outcome = await _service.InstallSelectedAsync(selectedIds, progress, CancellationToken.None);
+
+            btnCheck.IsEnabled = true;
+            if (!outcome.Success && outcome.Items.Count == 0)
+            {
+                // Отказ ещё до старта (занято/reboot-pending/пусто) — есть только общее сообщение.
+                MessageBox.Show(outcome.ErrorMessage, "Установка не выполнена",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                UpdateSelectionSummary();
+                return;
+            }
+
+            var resultWindow = new WindowsUpdateResultWindow(outcome) { Owner = Window.GetWindow(this) };
+            resultWindow.ShowDialog();
+
+            // После установки — обновить список (успешно поставленные больше не должны показываться).
+            await RunSearchAsync();
+        }
     }
 }
