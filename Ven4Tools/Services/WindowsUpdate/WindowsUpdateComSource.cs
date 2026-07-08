@@ -173,11 +173,145 @@ namespace Ven4Tools.Services.WindowsUpdate
             return ex is System.Runtime.InteropServices.COMException;
         }
 
-        // Реализация Download/Install — Task 8.
         public Task<WindowsUpdateInstallOutcome> InstallAsync(
             IReadOnlyList<string> updateIds,
             IProgress<WindowsUpdateProgress> progress,
-            CancellationToken ct) =>
-            throw new NotImplementedException("Реализуется в Task 8");
+            CancellationToken ct)
+        {
+            return Task.Run(() =>
+            {
+                try
+                {
+                    dynamic session = CreateComObject("Microsoft.Update.Session");
+                    dynamic searcher = session.CreateUpdateSearcher();
+
+                    ct.ThrowIfCancellationRequested();
+                    // Повторный поиск — не доверяем списку ID вслепую (см. заметку безопасности выше).
+                    dynamic searchResult = searcher.Search(SearchCriteria);
+                    dynamic allFound = searchResult.Updates;
+                    int foundCount = (int)allFound.Count;
+
+                    dynamic updatesToInstall = Activator.CreateInstance(
+                        Type.GetTypeFromProgID("Microsoft.Update.UpdateColl")!)!;
+
+                    var matched = new List<dynamic>();
+                    for (int i = 0; i < foundCount; i++)
+                    {
+                        dynamic u = allFound.Item(i);
+                        string id = (string)u.Identity.UpdateID;
+                        if (!updateIds.Contains(id)) continue;
+
+                        // EULA принимается прямо перед добавлением в очередь на скачивание —
+                        // чекбокс в UI уже подразумевает согласие (текст лицензии был показан
+                        // в диалоге подтверждения перед стартом, см. Task 12).
+                        try { if (!(bool)u.EulaAccepted) u.AcceptEula(); }
+                        catch (Exception ex) { AppLogger.Write($"[WindowsUpdateComSource] AcceptEula({id}): {ex.Message}"); }
+
+                        matched.Add(u);
+                        updatesToInstall.Add(u);
+                    }
+
+                    if (matched.Count == 0)
+                        return new WindowsUpdateInstallOutcome
+                        {
+                            Success = false,
+                            ErrorMessage = "Выбранные патчи больше не предлагаются сервером обновлений — попробуйте обновить список."
+                        };
+
+                    // ── Проверка места на диске (перед стартом скачивания) ──
+                    long totalDownloadBytes = 0;
+                    foreach (var u in matched)
+                    {
+                        try { totalDownloadBytes += (long)u.MaxDownloadSize; } catch { /* поле не всегда доступно — тогда просто не учитываем в оценке */ }
+                    }
+                    if (totalDownloadBytes > 0)
+                    {
+                        string systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) ?? "C:\\";
+                        var drive = new DriveInfo(systemDrive);
+                        // Запас x2 сверх заявленного размера — распаковка/установка временно
+                        // занимает больше места, чем сам скачанный пакет.
+                        if (drive.AvailableFreeSpace < totalDownloadBytes * 2)
+                            return new WindowsUpdateInstallOutcome
+                            {
+                                Success = false,
+                                ErrorMessage = $"Недостаточно места на диске {systemDrive} — нужно ориентировочно {totalDownloadBytes * 2 / 1024 / 1024} МБ свободных, доступно {drive.AvailableFreeSpace / 1024 / 1024} МБ."
+                            };
+                    }
+
+                    // ── Скачивание ──
+                    dynamic downloader = session.CreateUpdateDownloader();
+                    downloader.Updates = updatesToInstall;
+
+                    progress.Report(new WindowsUpdateProgress
+                    {
+                        Phase = "Скачивание", CompletedCount = 0, TotalCount = matched.Count, PercentComplete = 0
+                    });
+                    dynamic downloadResult = downloader.Download();
+                    int downloadCode = (int)downloadResult.ResultCode;
+                    if (downloadCode is 4 or 5)
+                        return new WindowsUpdateInstallOutcome
+                        {
+                            Success = false,
+                            ErrorMessage = $"Скачивание обновлений завершилось неудачно (код {downloadCode})."
+                        };
+
+                    ct.ThrowIfCancellationRequested();
+
+                    // ── Установка ──
+                    dynamic installer = session.CreateUpdateInstaller();
+                    installer.Updates = updatesToInstall;
+
+                    progress.Report(new WindowsUpdateProgress
+                    {
+                        Phase = "Установка", CompletedCount = 0, TotalCount = matched.Count, PercentComplete = 0
+                    });
+                    dynamic installResult = installer.Install();
+
+                    var itemOutcomes = new List<WindowsUpdateItemOutcome>();
+                    for (int i = 0; i < matched.Count; i++)
+                    {
+                        dynamic u = matched[i];
+                        dynamic perUpdateResult = installResult.GetUpdateResult(i);
+                        int code = (int)perUpdateResult.ResultCode;
+                        bool ok = code == 2 || code == 3; // Succeeded или SucceededWithErrors
+                        itemOutcomes.Add(new WindowsUpdateItemOutcome
+                        {
+                            UpdateId = (string)u.Identity.UpdateID,
+                            Title = (string)u.Title,
+                            Success = ok,
+                            ErrorMessage = ok ? "" : WindowsUpdateErrorMapper.MapHResult((int)perUpdateResult.HResult)
+                        });
+                        progress.Report(new WindowsUpdateProgress
+                        {
+                            Phase = "Установка",
+                            CurrentTitle = (string)u.Title,
+                            CompletedCount = i + 1,
+                            TotalCount = matched.Count,
+                            PercentComplete = (int)((i + 1) * 100.0 / matched.Count)
+                        });
+                    }
+
+                    bool overallRebootRequired = false;
+                    try { overallRebootRequired = (bool)installResult.RebootRequired; } catch { }
+
+                    return new WindowsUpdateInstallOutcome
+                    {
+                        Success = itemOutcomes.All(o => o.Success),
+                        Items = itemOutcomes,
+                        RebootRequired = overallRebootRequired
+                    };
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex) when (TryGetHResult(ex, out int hr))
+                {
+                    return new WindowsUpdateInstallOutcome { Success = false, ErrorMessage = WindowsUpdateErrorMapper.MapHResult(hr) };
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Write($"[WindowsUpdateComSource] InstallAsync: {ex}");
+                    return new WindowsUpdateInstallOutcome { Success = false, ErrorMessage = $"Ошибка установки: {ex.Message}" };
+                }
+            }, ct);
+        }
     }
 }
