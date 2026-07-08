@@ -66,16 +66,30 @@ namespace Ven4Tools
                 // InstalledTab уже готов и откроется мгновенно
                 InstalledTab.StartPreload();
             };
+            Loaded += (s, e) =>
+            {
+                // Именованный обработчик — отписываемся в OnClosed, чтобы не было утечки
+                WindowsUpdateBackgroundService.CountChanged += OnWindowsUpdateCountChanged;
+                OnWindowsUpdateCountChanged();
+            };
         }
 
         private void OnConnectivityChanged(bool online) =>
             Dispatcher.Invoke(() => UpdateTabVisibility());
+
+        private void OnWindowsUpdateCountChanged() => Dispatcher.Invoke(() =>
+        {
+            int count = WindowsUpdateBackgroundService.AvailableCount;
+            txtWindowsUpdateBadge.Text = count > 99 ? "99+" : count.ToString();
+            badgeWindowsUpdateCount.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        });
 
         protected override void OnClosed(EventArgs e)
         {
             // Снимаем подписки на статические события, иначе окно не освобождается GC
             AppLogger.MessageReceived -= AddLog;
             ConnectivityMonitor.StatusChanged -= OnConnectivityChanged;
+            WindowsUpdateBackgroundService.CountChanged -= OnWindowsUpdateCountChanged;
             UpdateBackgroundService.UnregisterNotifier();
             base.OnClosed(e);
         }

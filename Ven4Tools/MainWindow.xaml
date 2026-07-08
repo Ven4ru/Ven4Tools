@@ -120,11 +120,22 @@
                                 Tag="⚙️"
                                 Content="Система"
                                 Click="NavigateToSystem"/>
-                        <Button x:Name="btnWindowsUpdateTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="🛡️"
-                                Content="Windows Update"
-                                Click="NavigateToWindowsUpdate"/>
+                        <Grid>
+                            <Button x:Name="btnWindowsUpdateTab"
+                                    Style="{StaticResource NavButtonStyle}"
+                                    Tag="🛡️"
+                                    Content="Windows Update"
+                                    Click="NavigateToWindowsUpdate"/>
+                            <Border x:Name="badgeWindowsUpdateCount"
+                                    Background="#E74C3C" CornerRadius="8"
+                                    Width="18" Height="16"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Margin="0,4,8,0" Visibility="Collapsed">
+                                <TextBlock x:Name="txtWindowsUpdateBadge" Text="0"
+                                           FontSize="10" FontWeight="Bold" Foreground="White"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
                         <Button x:Name="btnOfficeTab"
                                 Style="{StaticResource NavButtonStyle}"
                                 Tag="📁"
