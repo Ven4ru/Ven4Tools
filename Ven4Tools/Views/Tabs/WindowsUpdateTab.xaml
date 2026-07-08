@@ -1,0 +1,49 @@
+<UserControl x:Class="Ven4Tools.Views.Tabs.WindowsUpdateTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource ContentBackground}">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock Text="🛡️ Обновления Windows" FontSize="22" FontWeight="Bold"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <TextBlock x:Name="txtLastChecked" Text="Обновления ещё не проверялись"
+                           FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
+            </StackPanel>
+            <Button x:Name="btnCheck" Content="🔄 Проверить обновления" Height="34" Padding="16,0"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                    Click="BtnCheck_Click"/>
+        </Grid>
+
+        <TextBlock Grid.Row="1" x:Name="txtStatus" Text="" TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
+
+        <TreeView Grid.Row="2" x:Name="treeUpdates"
+                  Background="{DynamicResource CardBackground}"
+                  BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+
+        <!-- Footer: выбор + установка -->
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="txtSelectionSummary" Grid.Column="0" Text="Выбрано: 0 патчей, 0 МБ"
+                       VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
+            <Button x:Name="btnInstall" Grid.Column="1" Content="Установить выбранные" Height="38"
+                    Padding="24,0" IsEnabled="False"
+                    Background="{DynamicResource AccentColor}" Foreground="White" FontWeight="SemiBold"
+                    BorderThickness="0" Click="BtnInstall_Click"/>
+        </Grid>
+    </Grid>
+</UserControl>
