@@ -552,7 +552,7 @@ namespace Ven4Tools.Views.Tabs
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
                 @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
             };
-            var hives = new[] { Registry.LocalMachine, Registry.CurrentUser };
+            var hives = new[] { Registry.LocalMachine };
 
             foreach (var hive in hives)
             foreach (var keyPath in keys)
@@ -579,11 +579,21 @@ namespace Ven4Tools.Views.Tabs
             if (cmd.StartsWith("MsiExec", StringComparison.OrdinalIgnoreCase) ||
                 cmd.StartsWith("msiexec", StringComparison.OrdinalIgnoreCase))
             {
-                cmd = Regex.Replace(cmd, @"/I\{", "/X{", RegexOptions.IgnoreCase);
-                if (!cmd.Contains("/quiet", StringComparison.OrdinalIgnoreCase))
-                    cmd += " /quiet /norestart";
-                p = Process.Start(new ProcessStartInfo("cmd.exe", $"/c {cmd}")
-                    { UseShellExecute = true, Verb = "runas", CreateNoWindow = true });
+                var productCode = Regex.Match(cmd, @"\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\}");
+                if (!productCode.Success)
+                    return false;
+
+                var startInfo = new ProcessStartInfo("msiexec.exe")
+                {
+                    UseShellExecute = true,
+                    Verb            = "runas",
+                    CreateNoWindow  = true
+                };
+                startInfo.ArgumentList.Add("/x");
+                startInfo.ArgumentList.Add(productCode.Value);
+                startInfo.ArgumentList.Add("/quiet");
+                startInfo.ArgumentList.Add("/norestart");
+                p = Process.Start(startInfo);
             }
             else
             {
