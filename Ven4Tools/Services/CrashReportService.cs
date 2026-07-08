@@ -167,7 +167,7 @@ namespace Ven4Tools.Services
         /// Сначала заменяем более глубокие пути (LocalAppData/AppData),
         /// затем профиль целиком — иначе вложенные пути не совпадут.
         /// </summary>
-        private static string SanitizePath(string text)
+        internal static string SanitizePath(string text)
         {
             if (string.IsNullOrEmpty(text)) return text;
 

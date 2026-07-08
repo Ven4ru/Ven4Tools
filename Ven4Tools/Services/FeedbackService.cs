@@ -22,7 +22,7 @@ namespace Ven4Tools.Services
                     Version     = ChannelService.InstalledVersion,
                     Channel     = "prerelease",
                     Rating      = rating,
-                    Text        = text,
+                    Text        = CrashReportService.SanitizePath(text),
                     Timestamp   = DateTime.UtcNow.ToString("O"),
                     Reported    = false
                 };
