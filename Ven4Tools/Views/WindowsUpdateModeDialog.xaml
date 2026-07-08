@@ -28,13 +28,13 @@
             <RadioButton x:Name="rbNotifyAndDownload" GroupName="mode">
                 <StackPanel Margin="6,0,0,0">
                     <TextBlock Text="Уведомлять и скачивать в фоне" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-                    <TextBlock Text="То же самое, но патчи заранее тихо скачиваются в фоне — установка позже пройдёт быстрее. Установка всё равно запускается только вручную."
+                    <TextBlock Text="То же самое, но выбирается заранее — когда фоновая загрузка станет доступна, будет использоваться автоматически. Пока что поведение совпадает с «Только уведомлять». Установка всё равно запускается только вручную."
                                TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,2,0,0"/>
                 </StackPanel>
             </RadioButton>
         </StackPanel>
 
-        <TextBlock Grid.Row="3" Text="Выбор можно изменить позже во вкладке «Система»."
+        <TextBlock Grid.Row="3" Text="Этот выбор — на будущее: сейчас его можно сбросить только через сброс профиля."
                    FontSize="11" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
 
         <Button Grid.Row="4" x:Name="btnOk" Content="Готово" Height="36" HorizontalAlignment="Right"
