@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
 {
@@ -102,6 +103,12 @@ namespace Ven4Tools.Views.Tabs
                         ApplyIcon(image, bitmap);
                         return;
                     }
+                }
+
+                if (!DownloadValidator.ValidateUrl(url))
+                {
+                    lock (_iconCache) { _iconCache[url] = null; }
+                    return;
                 }
 
                 using var cts = new CancellationTokenSource(IconTimeout);

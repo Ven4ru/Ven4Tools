@@ -24,6 +24,12 @@ namespace Ven4Tools.Launcher.Services
         private readonly Timer   _timer;
         private bool _disposed;
 
+        // OnTick (таймер) и ReportKill (Process.Exited) могут сработать почти
+        // одновременно на один и тот же инцидент — без флага пользователь видит
+        // два окна отчёта подряд (freeze + kill) об одном и том же вылете.
+        // Interlocked гарантирует, что событие уйдёт только один раз.
+        private int _reported;
+
         // Клиент завис — лаунчер предлагает завершить
         public event Action<CrashReport>? ClientFrozen;
 
@@ -52,6 +58,8 @@ namespace Ven4Tools.Launcher.Services
                 double age = (DateTime.UtcNow - beat.Value.timestamp).TotalSeconds;
                 if (age < FreezeTimeoutSec) return;
 
+                if (Interlocked.CompareExchange(ref _reported, 1, 0) != 0) return;
+
                 // Клиент завис
                 Stop();
 
@@ -77,6 +85,7 @@ namespace Ven4Tools.Launcher.Services
         public void ReportKill(int exitCode)
         {
             if (_disposed) return;
+            if (Interlocked.CompareExchange(ref _reported, 1, 0) != 0) return;
             var report = new CrashReport
             {
                 SessionId     = ExtractSessionId(),

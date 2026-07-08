@@ -375,6 +375,21 @@ namespace Ven4Tools.Launcher
                     await fs.FlushAsync(ct);
                 }
 
+                // Целостность: скачаны с доверенных хостов по HTTPS, но перед elevated-
+                // установкой дополнительно проверяем, что файлы подписаны Microsoft —
+                // допускает штатные обновления содержимого по тем же URL, в отличие
+                // от жёсткого SHA256-пиннинга.
+                foreach (var (path, label) in new[] { (tempVcLibs, "VCLibs"), (tempUiXaml, "UI.Xaml"), (tempMsix, "winget") })
+                {
+                    if (!AuthenticodeVerifier.IsSignedByMicrosoft(path, out string sigError))
+                    {
+                        AddLog($"⛔ Подлинность пакета {label} не подтверждена ({sigError}) — установка отменена");
+                        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
+                        return;
+                    }
+                }
+                AddLog("✅ Подпись Microsoft подтверждена для всех пакетов");
+
                 AddLog("📦 Установка winget...");
                 Dispatcher.Invoke(() => txtDownloadStatus.Text = "Установка...");
 
@@ -456,19 +471,30 @@ namespace Ven4Tools.Launcher
             }
         }
 
-        private static async Task DownloadFileAsync(System.Net.Http.HttpClient http, string url, string dest, CancellationToken ct = default)
+        private async Task DownloadFileAsync(System.Net.Http.HttpClient http, string url, string dest, CancellationToken ct = default)
         {
             try
             {
                 // Качаем только с доверенных доменов, включая итоговый URL после редиректов
-                if (!DownloadValidator.IsAllowedDownloadHost(url)) return;
+                if (!DownloadValidator.IsAllowedDownloadHost(url))
+                {
+                    AddLog($"⛔ Недоверенный URL загрузки зависимости: {url}");
+                    return;
+                }
                 using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
                 resp.EnsureSuccessStatusCode();
-                if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(resp)) return;
+                if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(resp))
+                {
+                    AddLog($"⛔ Загрузка перенаправлена на недоверенный хост: {url}");
+                    return;
+                }
                 var data = await resp.Content.ReadAsByteArrayAsync(ct);
                 await File.WriteAllBytesAsync(dest, data, ct);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AddLog($"⚠ Ошибка скачивания зависимости {url}: {ex.Message}");
+            }
         }
 
         private bool IsRunAsAdmin()

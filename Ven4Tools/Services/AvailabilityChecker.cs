@@ -122,6 +122,9 @@ namespace Ven4Tools.Services
         {
             try
             {
+                if (!CommandLineGuard.ValidateId(appId))
+                    return (AvailabilityStatus.Unavailable, 0);
+
                 string args = $"show --id \"{appId}\" --exact --source winget --accept-source-agreements";
 
                 var psi = new ProcessStartInfo

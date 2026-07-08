@@ -200,7 +200,7 @@ namespace Ven4Tools.Views.Tabs
 
                 var allLines = File.ReadAllLines(logPath);
                 var lastLines = allLines.Skip(Math.Max(0, allLines.Length - lines)).Take(lines).ToArray();
-                return string.Join("\n", lastLines);
+                return CrashReportService.SanitizePath(string.Join("\n", lastLines));
             }
             catch
             {
