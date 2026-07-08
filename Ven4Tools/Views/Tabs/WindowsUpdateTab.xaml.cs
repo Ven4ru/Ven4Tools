@@ -97,11 +97,13 @@ namespace Ven4Tools.Views.Tabs
                 if (result.Items.Count == 0)
                 {
                     txtStatus.Text = "✅ Обновлений не найдено — система актуальна.";
+                    AppLogger.Write("🛡️ Windows Update: обновлений не найдено");
                     UpdateSelectionSummary();
                     return;
                 }
 
                 txtStatus.Text = $"Найдено патчей: {result.Items.Count}";
+                AppLogger.Write($"🛡️ Windows Update: найдено патчей — {result.Items.Count}");
                 _tree = WindowsUpdateCategoryTreeBuilder.Build(result.Items);
                 RenderTree();
             }
