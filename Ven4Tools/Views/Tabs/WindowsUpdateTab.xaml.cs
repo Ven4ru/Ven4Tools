@@ -80,28 +80,36 @@ namespace Ven4Tools.Views.Tabs
                 }
             }
 
-            var result = await _service.SearchAsync(ct);
-            if (ct.IsCancellationRequested) return;
-
-            btnCheck.IsEnabled = true;
-            txtLastChecked.Text = $"Последняя проверка: {DateTime.Now:dd.MM.yyyy HH:mm}";
-
-            if (!result.Success)
+            try
             {
-                txtStatus.Text = $"❌ {result.ErrorMessage}";
-                return;
-            }
+                var result = await _service.SearchAsync(ct);
+                if (ct.IsCancellationRequested) return;
 
-            if (result.Items.Count == 0)
+                btnCheck.IsEnabled = true;
+                txtLastChecked.Text = $"Последняя проверка: {DateTime.Now:dd.MM.yyyy HH:mm}";
+
+                if (!result.Success)
+                {
+                    txtStatus.Text = $"❌ {result.ErrorMessage}";
+                    return;
+                }
+
+                if (result.Items.Count == 0)
+                {
+                    txtStatus.Text = "✅ Обновлений не найдено — система актуальна.";
+                    UpdateSelectionSummary();
+                    return;
+                }
+
+                txtStatus.Text = $"Найдено патчей: {result.Items.Count}";
+                _tree = WindowsUpdateCategoryTreeBuilder.Build(result.Items);
+                RenderTree();
+            }
+            catch (OperationCanceledException)
             {
-                txtStatus.Text = "✅ Обновлений не найдено — система актуальна.";
-                UpdateSelectionSummary();
-                return;
+                // Поиск был вытеснен новым запросом — просто выходим,
+                // новый поиск позаботится об обновлении UI.
             }
-
-            txtStatus.Text = $"Найдено патчей: {result.Items.Count}";
-            _tree = WindowsUpdateCategoryTreeBuilder.Build(result.Items);
-            RenderTree();
         }
 
         private void RenderTree()
