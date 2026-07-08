@@ -2,6 +2,7 @@ using Ven4Tools.Services;
 
 namespace Ven4Tools.Tests;
 
+[Collection("InstallSemaphore")]
 public sealed class InstallationServiceBusyTests
 {
     [Fact]

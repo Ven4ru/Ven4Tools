@@ -4,19 +4,12 @@ using Ven4Tools.Tests.Fakes;
 
 namespace Ven4Tools.Tests;
 
-public sealed class WindowsUpdateServiceTests : IAsyncLifetime
-{
-    public Task InitializeAsync()
-    {
-        // Release the semaphore if held from previous test
-        while (InstallationService.InstallSemaphore.CurrentCount == 0)
-        {
-            InstallationService.InstallSemaphore.Release();
-        }
-        return Task.CompletedTask;
-    }
+[CollectionDefinition("InstallSemaphore")]
+public class InstallSemaphoreCollection { }
 
-    public Task DisposeAsync() => Task.CompletedTask;
+[Collection("InstallSemaphore")]
+public sealed class WindowsUpdateServiceTests
+{
     [Fact]
     public async Task InstallSelectedAsync_EmptyList_ReturnsFailureWithoutTouchingSource()
     {
