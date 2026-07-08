@@ -127,8 +127,15 @@ namespace Ven4Tools.Services
                 string? cachedPath = OfflineService.GetCachedInstallerPath(app.Id);
                 if (cachedPath != null)
                 {
-                    if (!string.IsNullOrWhiteSpace(app.Sha256) &&
-                        !await HashHelper.VerifyHashAsync(cachedPath, app.Sha256))
+                    // Fail-closed по аналогии с Direct-веткой: без SHA256 в каталоге
+                    // кэшированный файл нечем верифицировать — elevated-запуск такого
+                    // файла небезопасен, даже если он лежит в собственном кэше приложения.
+                    if (!HashHelper.HasExpectedHash(app.Sha256))
+                    {
+                        Log($"⚠ Нет SHA256 в каталоге для {app.DisplayName} — кэш пропущен, пробую следующий источник");
+                        cachedPath = null;
+                    }
+                    else if (!await HashHelper.VerifyHashAsync(cachedPath, app.Sha256!))
                     {
                         Log($"❌ SHA256 mismatch в кэше: {app.DisplayName}, удаляю");
                         try { File.Delete(cachedPath); } catch { }
