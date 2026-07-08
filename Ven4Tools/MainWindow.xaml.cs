@@ -24,6 +24,7 @@ namespace Ven4Tools
         private CatalogTab?    _catalogTab;
         private InstalledTab?  _installedTab;
         private SystemTab?     _systemTab;
+        private WindowsUpdateTab? _windowsUpdateTab;
         private OfficeTab?     _officeTab;
         private ActivationTab? _activationTab;
         private AboutTab?      _aboutTab;
@@ -122,6 +123,15 @@ namespace Ven4Tools
             if (_systemTab == null) _systemTab = new SystemTab();
             MainFrame.Content = (_systemTab);
             UpdateMascot("system");
+        }
+
+        private void NavigateToWindowsUpdate(object? sender, RoutedEventArgs? e)
+        {
+            SetActiveButton(btnWindowsUpdateTab);
+            AppLogger.Write("📂 Открыта вкладка: Windows Update");
+            if (_windowsUpdateTab == null) _windowsUpdateTab = new WindowsUpdateTab();
+            MainFrame.Content = (_windowsUpdateTab);
+            UpdateMascot("system"); // отдельного маскота для этой вкладки пока нет — используем нейтрального "system"
         }
 
         private void NavigateToOffice(object? sender, RoutedEventArgs? e)

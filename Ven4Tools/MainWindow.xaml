@@ -120,6 +120,11 @@
                                 Tag="⚙️"
                                 Content="Система"
                                 Click="NavigateToSystem"/>
+                        <Button x:Name="btnWindowsUpdateTab"
+                                Style="{StaticResource NavButtonStyle}"
+                                Tag="🛡️"
+                                Content="Windows Update"
+                                Click="NavigateToWindowsUpdate"/>
                         <Button x:Name="btnOfficeTab"
                                 Style="{StaticResource NavButtonStyle}"
                                 Tag="📁"
