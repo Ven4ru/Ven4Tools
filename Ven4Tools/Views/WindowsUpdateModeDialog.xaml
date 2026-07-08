@@ -1,0 +1,44 @@
+<Window x:Class="Ven4Tools.Views.WindowsUpdateModeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Windows Update" Height="260" Width="440"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{DynamicResource WindowBackground}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Как проверять обновления Windows?"
+                   FontSize="16" FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+
+        <StackPanel Grid.Row="2">
+            <RadioButton x:Name="rbNotifyOnly" GroupName="mode" IsChecked="True" Margin="0,0,0,12">
+                <StackPanel Margin="6,0,0,0">
+                    <TextBlock Text="Только уведомлять" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="Клиент периодически проверяет наличие патчей и показывает уведомление. Ничего не скачивается заранее."
+                               TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,2,0,0"/>
+                </StackPanel>
+            </RadioButton>
+            <RadioButton x:Name="rbNotifyAndDownload" GroupName="mode">
+                <StackPanel Margin="6,0,0,0">
+                    <TextBlock Text="Уведомлять и скачивать в фоне" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="То же самое, но патчи заранее тихо скачиваются в фоне — установка позже пройдёт быстрее. Установка всё равно запускается только вручную."
+                               TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,2,0,0"/>
+                </StackPanel>
+            </RadioButton>
+        </StackPanel>
+
+        <TextBlock Grid.Row="3" Text="Выбор можно изменить позже во вкладке «Система»."
+                   FontSize="11" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
+
+        <Button Grid.Row="4" x:Name="btnOk" Content="Готово" Height="36" HorizontalAlignment="Right"
+                Padding="24,0" Background="{DynamicResource AccentColor}" Foreground="White"
+                FontWeight="SemiBold" BorderThickness="0" Click="BtnOk_Click"/>
+    </Grid>
+</Window>
