@@ -16,6 +16,7 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
     public string SearchFailureMessage { get; set; } = "";
     public List<string> InstallCallsReceived { get; } = new();
     public HashSet<string> ItemIdsThatFailInstall { get; } = new();
+    public int SearchCallCount { get; private set; }
 
     public bool IsServiceRunning() => ServiceRunning;
     public bool TryStartService() { ServiceRunning = true; return true; }
@@ -23,6 +24,7 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
 
     public Task<WindowsUpdateSearchResult> SearchAsync(CancellationToken ct)
     {
+        SearchCallCount++;
         if (SearchShouldFail)
             return Task.FromResult(WindowsUpdateSearchResult.Failed(SearchFailureMessage));
         return Task.FromResult(WindowsUpdateSearchResult.Ok(Items));

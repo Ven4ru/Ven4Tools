@@ -141,7 +141,13 @@ namespace Ven4Tools.Services.WindowsUpdate
                 eulaAccepted = (bool)u.EulaAccepted;
                 eulaText = eulaAccepted ? "" : (string)u.EulaText;
             }
-            catch { /* не у всех патчей вообще есть EULA-поля */ }
+            catch
+            {
+                // Не удалось прочитать поля EULA — fail-safe: считаем лицензию непринятой,
+                // чтобы патч точно попал в диалог подтверждения, а не был случайно пропущен.
+                eulaAccepted = false;
+                eulaText = "Не удалось получить текст лицензионного соглашения для этого патча — проверьте вручную перед установкой.";
+            }
 
             string severity = "";
             try { severity = (string)u.MsrcSeverity ?? ""; } catch { }

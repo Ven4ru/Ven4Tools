@@ -90,7 +90,6 @@ public sealed class WindowsUpdateCategoryTreeBuilderTests
     {
         // Один и тот же патч в двух категориях (например, и Security, и Critical) —
         // не должен попасть в список выбранных дважды.
-        var item = MakeItem("1", "A", "Security Updates");
         var itemInTwoCategories = new WindowsUpdateItem
         {
             UpdateId = "1", Title = "A", CategoryNames = new[] { "Security Updates", "Critical Updates" }
