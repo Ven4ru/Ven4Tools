@@ -3,8 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ven4Tools.Services.WindowsUpdate;
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Ven4Tools.Tests")]
-
 namespace Ven4Tools.Services
 {
     /// <summary>
