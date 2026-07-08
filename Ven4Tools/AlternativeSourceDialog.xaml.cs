@@ -121,9 +121,9 @@ namespace Ven4Tools
             if (!string.IsNullOrWhiteSpace(txtUrl.Text))
             {
                 string url = txtUrl.Text.Trim();
-                if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+                if (!DownloadValidator.ValidateUrl(url))
                 {
-                    MessageBox.Show("Ссылка должна начинаться с http:// или https://",
+                    MessageBox.Show("Ссылка должна начинаться с https:// (незашифрованный http:// не поддерживается — установщик по нему нечем защитить от подмены)",
                         "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }

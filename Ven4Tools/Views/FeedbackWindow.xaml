@@ -66,6 +66,7 @@
                  x:Name="txtFeedback"
                  TextWrapping="Wrap" AcceptsReturn="True"
                  VerticalScrollBarVisibility="Auto"
+                 MaxLength="2000"
                  Padding="10,8" FontSize="13"
                  Background="{DynamicResource CardBackground}"
                  Foreground="{DynamicResource TextPrimary}"
