@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
+using Ven4Tools.Services;
 using Ven4Tools.Services.WindowsUpdate;
 
 namespace Ven4Tools.Views
@@ -33,6 +34,16 @@ namespace Ven4Tools.Views
                 txtSummary.Text += "\n\nТребуется перезагрузка для завершения установки.";
                 btnRestartNow.Visibility = Visibility.Visible;
             }
+            else
+            {
+                // Без ожидающей перезагрузки "Позже" звучит так, будто что-то ещё не сделано —
+                // это финальный экран, а не отложенное действие.
+                btnClose.Content = "Готово";
+            }
+
+            AppLogger.Write(outcome.Success
+                ? $"🛡️ Windows Update: установлено патчей — {success}"
+                : $"🛡️ Windows Update: установлено {success}, не удалось {failed}");
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
