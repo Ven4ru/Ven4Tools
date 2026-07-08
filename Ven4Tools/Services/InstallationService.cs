@@ -18,6 +18,11 @@ namespace Ven4Tools.Services
         // можно запустить параллельные msiexec, что вызывает ошибку Windows Installer 1618.
         public static readonly SemaphoreSlim InstallSemaphore = new SemaphoreSlim(1, 1);
 
+        // Используется для явной блокировки кнопок вместо тихого ожидания семафора —
+        // и каталогом/историей, и Windows Update (Task 8), т.к. оба используют
+        // общую MSI-подсистему и не должны ставить/удалять параллельно.
+        public static bool IsBusy => InstallSemaphore.CurrentCount == 0;
+
         // Один общий HttpClient на приложение: пересоздание на каждый инстанс
         // приводит к socket exhaustion (рекомендация MS).
         // Без глобального таймаута: HttpClient.Timeout ограничивает всё тело ответа,
