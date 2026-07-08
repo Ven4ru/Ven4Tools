@@ -11,6 +11,7 @@ namespace Ven4Tools
     {
         private static HeartbeatService? _heartbeat;
         private static UpdateBackgroundService? _updateBgService;
+        private static WindowsUpdateBackgroundService? _windowsUpdateBgService;
         private static Mutex? _instanceMutex;
 
         public App()
@@ -78,6 +79,13 @@ namespace Ven4Tools
                     _updateBgService.Start();
                 }
                 catch { }
+
+                try
+                {
+                    _windowsUpdateBgService = new WindowsUpdateBackgroundService();
+                    _windowsUpdateBgService.Start();
+                }
+                catch { }
             }
             catch (Exception ex)
             {
@@ -139,6 +147,7 @@ namespace Ven4Tools
         {
             _heartbeat?.Dispose();
             _updateBgService?.Dispose();
+            _windowsUpdateBgService?.Dispose();
             if (_instanceMutex != null)
             {
                 _instanceMutex.ReleaseMutex();
