@@ -198,11 +198,20 @@ namespace Ven4Tools.Launcher
             System.Windows.Application.Current.Shutdown();
         }
 
+        // Лаунчер может часами жить в трее (фоновая служба проверяет обновления
+        // раз в 3 часа) — без обрезки txtLog рос бы неограниченно на всю сессию.
+        private const int MaxLogLines = 1000;
+
         private void AddLog(string message)
         {
             Dispatcher.Invoke(() =>
             {
                 txtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
+                if (txtLog.LineCount > MaxLogLines)
+                {
+                    int cutIndex = txtLog.GetCharacterIndexFromLineIndex(txtLog.LineCount - MaxLogLines);
+                    txtLog.Text = txtLog.Text.Substring(cutIndex);
+                }
                 txtLog.ScrollToEnd();
             });
         }

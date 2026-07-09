@@ -76,20 +76,33 @@ namespace Ven4Tools.Views.Tabs
 
                 _searchDebounce = new CancellationTokenSource();
                 var token = _searchDebounce.Token;
-                _ = Task.Delay(600, token).ContinueWith(async t =>
-                {
-                    if (t.IsCanceled) return;
-                    var wingetTask = WingetService.SearchAsync(query, token);
-                    var chocoTask  = PackageManagerService.SearchChocoAsync(query, token);
-                    await Task.WhenAll(wingetTask, chocoTask);
-                    if (!token.IsCancellationRequested)
-                        await Dispatcher.InvokeAsync(() =>
-                            ShowAllSuggestions(query, wingetTask.Result, chocoTask.Result));
-                });
+                _ = RunSearchSuggestionsAsync(query, token);
             }
             else
             {
                 HideWingetSuggestions();
+            }
+        }
+
+        // Раньше это был Task.Delay(...).ContinueWith(async t => ...) — внешний
+        // ContinueWith возвращает Task<Task>, внутреннюю async-лямбду никто не
+        // await-ил, и отмена дебаунса (новый ввод) уходила в UnobservedTaskException.
+        // Один цельный async-метод с try/catch решает оба случая.
+        private async Task RunSearchSuggestionsAsync(string query, CancellationToken token)
+        {
+            try
+            {
+                await Task.Delay(600, token);
+                var wingetTask = WingetService.SearchAsync(query, token);
+                var chocoTask  = PackageManagerService.SearchChocoAsync(query, token);
+                await Task.WhenAll(wingetTask, chocoTask);
+                if (!token.IsCancellationRequested)
+                    await Dispatcher.InvokeAsync(() =>
+                        ShowAllSuggestions(query, wingetTask.Result, chocoTask.Result));
+            }
+            catch (OperationCanceledException)
+            {
+                // Дебаунс отменён новым вводом в поле поиска — ожидаемо.
             }
         }
 

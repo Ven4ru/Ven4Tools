@@ -26,6 +26,19 @@ namespace Ven4Tools.Launcher.Services
             return client;
         }
 
+        // Отдельный статический HttpClient для отправки краш-отчётов через прокси
+        // ven4tools.ru: без заголовка Authorization/Accept и с увеличенным таймаутом.
+        // Пересоздание экземпляра на каждый вызов CreateIssueAsync приводило бы к
+        // утечке сокетов (socket exhaustion); прокси-URL фиксирован на весь процесс.
+        private static readonly HttpClient _proxyClient = CreateProxyClient();
+
+        private static HttpClient CreateProxyClient()
+        {
+            var client = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
+            return client;
+        }
+
         // Кэш списка релизов: CheckLauncherUpdate, GetAvailableClientVersions и
         // OfferInstallationAsync дёргают один и тот же endpoint. Без кэша каждый
         // вызов — отдельный запрос к GitHub API (лимит 60/час с IP). Живёт 5 минут.
@@ -319,17 +332,14 @@ namespace Ven4Tools.Launcher.Services
                     labels = labels ?? new[] { "bug" }
                 };
 
-                // Отдельный HttpClient без заголовка Authorization — токен GitHub
-                // на сервер передавать не нужно (и нельзя).
-                using var proxyClient = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
-                proxyClient.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
-
+                // Статический HttpClient без заголовка Authorization — токен GitHub
+                // на сервер передавать не нужно (и нельзя). См. _proxyClient.
                 var content = new System.Net.Http.StringContent(
                     System.Text.Json.JsonSerializer.Serialize(payload),
                     System.Text.Encoding.UTF8,
                     "application/json");
 
-                using var response = await proxyClient.PostAsync(CrashProxyUrl, content);
+                using var response = await _proxyClient.PostAsync(CrashProxyUrl, content);
                 string json = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
