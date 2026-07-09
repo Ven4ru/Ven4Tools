@@ -253,8 +253,17 @@ namespace Ven4Tools.Launcher
                 if (process == null) return (false, null, false);
 
                 var stderrTask = process.StandardError.ReadToEndAsync();
-                string output  = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
+                var stdoutTask = process.StandardOutput.ReadToEndAsync();
+
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                try { await process.WaitForExitAsync(timeoutCts.Token); }
+                catch (OperationCanceledException)
+                {
+                    try { process.Kill(); } catch { }
+                    return (false, null, false);
+                }
+
+                string output = await stdoutTask;
                 await stderrTask;
 
                 if (process.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
@@ -276,15 +285,27 @@ namespace Ven4Tools.Launcher
         private void RestartAsAdmin()
         {
             var exeName = Process.GetCurrentProcess().MainModule?.FileName;
-            if (exeName != null)
+            if (exeName == null) return;
+
+            // Освобождаем мьютекс единственного экземпляра ДО запуска повышенной
+            // копии — иначе она может стартовать, пока текущий процесс ещё держит
+            // мьютекс (ожидание подтверждения UAC), и выйти как "уже запущен".
+            App.ReleaseSingleInstanceMutex();
+            var psi = new ProcessStartInfo { FileName = exeName, UseShellExecute = true, Verb = "runas" };
+            try
             {
-                // Освобождаем мьютекс единственного экземпляра ДО запуска повышенной
-                // копии — иначе она может стартовать, пока текущий процесс ещё держит
-                // мьютекс (ожидание подтверждения UAC), и выйти как "уже запущен".
-                App.ReleaseSingleInstanceMutex();
-                var psi = new ProcessStartInfo { FileName = exeName, UseShellExecute = true, Verb = "runas" };
-                try { Process.Start(psi); } catch { }
+                Process.Start(psi);
             }
+            catch
+            {
+                // Пользователь отклонил UAC (или иная ошибка запуска) — повышенная
+                // копия не стартовала. Продолжаем работать в текущем окне, а не
+                // закрываемся: без мьютекса лаунчер перестал бы быть единственным
+                // экземпляром, поэтому его нужно восстановить.
+                App.ReacquireSingleInstanceMutex();
+                return;
+            }
+
             _updateService?.Dispose();
             _notifyIcon?.Dispose();
             System.Windows.Application.Current.Shutdown();
@@ -512,16 +533,25 @@ namespace Ven4Tools.Launcher
             try
             {
                 string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
-                foreach (var proc in Process.GetProcessesByName("Ven4Tools"))
+                var processes = Process.GetProcessesByName("Ven4Tools");
+                try
                 {
-                    try
+                    foreach (var proc in processes)
                     {
-                        string? exePath = proc.MainModule?.FileName;
-                        if (string.IsNullOrEmpty(exePath)) { proc.Dispose(); return true; }
-                        if (string.Equals(exePath, clientExe, StringComparison.OrdinalIgnoreCase)) { proc.Dispose(); return true; }
+                        try
+                        {
+                            string? exePath = proc.MainModule?.FileName;
+                            if (string.IsNullOrEmpty(exePath)) return true;
+                            if (string.Equals(exePath, clientExe, StringComparison.OrdinalIgnoreCase)) return true;
+                        }
+                        catch { return true; }
                     }
-                    catch { proc.Dispose(); return true; }
-                    finally { proc.Dispose(); }
+                }
+                finally
+                {
+                    // Диспоузим все найденные процессы, а не только тот, на котором
+                    // остановился цикл — иначе хэндлы "хвоста" массива держатся до GC.
+                    foreach (var proc in processes) proc.Dispose();
                 }
             }
             catch { }

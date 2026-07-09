@@ -56,8 +56,6 @@ publish/
 # Temporary publish
 publish/
 
-Ven4Tools/Data/master.json
-
 # Admin tool lives in its own separate repository
 Ven4Admin/
 
