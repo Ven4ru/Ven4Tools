@@ -546,7 +546,7 @@ namespace Ven4Tools
 
         private void SetActiveButton(Button activeButton)
         {
-            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab };
+            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnWindowsUpdateTab };
             foreach (var btn in buttons)
             {
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");

@@ -294,7 +294,10 @@ namespace Ven4Tools.Launcher
             }
 
             AddLog($"📥 Загрузка клиента {_selectedVersion.Version}...");
-            _downloadCts = new CancellationTokenSource();
+            // Таймаут страхует от подвисшего (не оборванного) соединения: без него
+            // HttpClient с Timeout=Infinite может ждать байты бесконечно, и кнопка
+            // «Отмена» — единственный выход. См. тот же паттерн в LauncherUpdateService.
+            _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
             await DownloadVersionAsync(_selectedVersion, _downloadCts.Token);
         }
 

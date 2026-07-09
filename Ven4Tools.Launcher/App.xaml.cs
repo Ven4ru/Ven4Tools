@@ -66,6 +66,21 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    /// Восстанавливает мьютекс единственного экземпляра после неудачной попытки
+    /// перезапуска с правами администратора (пользователь отклонил UAC, exeName
+    /// не найден и т.п.) — вызывается, когда ReleaseSingleInstanceMutex() уже
+    /// сработал, но повышенная копия так и не стартовала, и текущий процесс
+    /// продолжает работать.
+    /// </summary>
+    public static void ReacquireSingleInstanceMutex()
+    {
+        if (_mutex == null)
+        {
+            _mutex = new Mutex(true, "Ven4Tools.Launcher.SingleInstance", out _);
+        }
+    }
+
     private static void OnDomainException(object sender, UnhandledExceptionEventArgs e)
     {
         var ex = e.ExceptionObject as Exception ?? new Exception(e.ExceptionObject?.ToString() ?? "Unknown");

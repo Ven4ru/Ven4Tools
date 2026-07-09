@@ -183,6 +183,8 @@ namespace Ven4Tools.Services
                             Log(reboot
                                 ? $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} (офлайн-кэш)"
                                 : $"✅ {app.DisplayName} установлено из офлайн-кэша");
+                            if (ProfileService.Current.SaveInstallHistory)
+                                await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "cache", app.CategoryString);
                             return (true, reboot ? "Установлено из кэша (требуется перезагрузка)" : "Установлено из офлайн-кэша", appProgress);
                         }
                     }
