@@ -44,4 +44,9 @@
     <Resource Include="Resources\Mascots\*.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Page Include="..\Shared\DesignTokens.xaml" Link="Resources\DesignTokens.xaml" />
+    <Compile Include="..\Shared\MotionService.cs" Link="Services\MotionService.cs" />
+  </ItemGroup>
+
 </Project>

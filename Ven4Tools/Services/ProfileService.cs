@@ -10,7 +10,9 @@ namespace Ven4Tools.Services
     {
         private static readonly string _path = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Ven4Tools", "profile.json");
+            "Ven4Tools", Environment.GetEnvironmentVariable("VEN4TOOLS_DESIGN_PREVIEW") == "1"
+                ? "design_preview_profile.json"
+                : "profile.json");
 
         public static UserProfile Current { get; private set; } = new();
         public static event Action? Changed;

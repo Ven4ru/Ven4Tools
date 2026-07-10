@@ -3,16 +3,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Startup="App_Startup">
     <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/DesignTokens.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
         <!-- Цвета для тёмной темы — Teal/Mascot palette -->
-        <SolidColorBrush x:Key="WindowBackground" Color="#0F2237"/>
-        <SolidColorBrush x:Key="SidebarBackground" Color="#102E4A"/>
-        <SolidColorBrush x:Key="ContentBackground" Color="#0D1B2A"/>
-        <SolidColorBrush x:Key="CardBackground" Color="#1F4D72"/>
-        <SolidColorBrush x:Key="AccentColor" Color="#00E5C8"/>
-        <SolidColorBrush x:Key="TextPrimary" Color="#E0F6F6"/>
-        <SolidColorBrush x:Key="TextSecondary" Color="#6DBCCE"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#2A6080"/>
-        <SolidColorBrush x:Key="HeaderForeground" Color="#E0F6F6"/>
+        <SolidColorBrush x:Key="WindowBackground" Color="#0A0A14"/>
+        <SolidColorBrush x:Key="SidebarBackground" Color="#0D1018"/>
+        <SolidColorBrush x:Key="ContentBackground" Color="#0A0A14"/>
+        <SolidColorBrush x:Key="CardBackground" Color="#11161F"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#4ADE80"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#AAB8CE"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#1E2A38"/>
+        <SolidColorBrush x:Key="HeaderForeground" Color="#E2E8F0"/>
 
         <!-- Стиль для GroupBox -->
         <Style TargetType="GroupBox">
@@ -55,6 +59,7 @@
         <!-- Стиль для TextBlock -->
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
         </Style>
 
         <!-- Стиль для ComboBox -->
@@ -204,7 +209,7 @@
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+            <Setter Property="Background" Value="{StaticResource SurfaceRaised}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -220,10 +225,10 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Foreground" Value="#06130D"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#00B89E"/>
+                                <Setter Property="Background" Value="#22C55E"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.5"/>
@@ -339,6 +344,24 @@
         <!-- Стиль для Slider -->
         <Style TargetType="Slider">
             <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
+            <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Height="22">
+                            <Border Height="4" VerticalAlignment="Center" Background="{TemplateBinding Background}" CornerRadius="2"/>
+                            <Track x:Name="PART_Track" VerticalAlignment="Center"
+                                   Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}"
+                                   Value="{TemplateBinding Value}" IsDirectionReversed="{TemplateBinding IsDirectionReversed}">
+                                <Track.DecreaseRepeatButton><RepeatButton Command="Slider.DecreaseLarge" Background="{StaticResource BrandGreen}" BorderThickness="0"/></Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton><RepeatButton Command="Slider.IncreaseLarge" Background="Transparent" BorderThickness="0"/></Track.IncreaseRepeatButton>
+                                <Track.Thumb><Thumb Width="14" Height="14" Background="{StaticResource BrandGreen}" BorderBrush="{StaticResource BrandGreen}"/></Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Стиль для ContextMenu и MenuItem -->
@@ -380,10 +403,39 @@
             <Setter Property="Background" Value="Transparent"/>
         </Style>
 
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="{DynamicResource ContentBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Margin" Value="0,0,3,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="4,4,0,0" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header" TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#244ADE80"/>
+                    <Setter Property="Foreground" Value="{StaticResource BrandGreen}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Стиль для ProgressBar -->
         <Style TargetType="ProgressBar">
             <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
         </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

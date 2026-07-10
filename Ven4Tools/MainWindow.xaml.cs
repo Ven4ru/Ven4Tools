@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
+using Ven4Tools.Shared;
 using Ven4Tools.Views;
 using Ven4Tools.Views.Tabs;
 
@@ -36,6 +37,8 @@ namespace Ven4Tools
         public MainWindow()
         {
             InitializeComponent();
+            MotionService.Enabled = Environment.GetEnvironmentVariable("VEN4TOOLS_REDUCE_MOTION") != "1";
+            Loaded += (_, _) => MotionService.FadeIn(this);
             lstGlobalLog.ItemsSource = _logEntries;
             AppLogger.MessageReceived += AddLog;
 
@@ -552,6 +555,9 @@ namespace Ven4Tools
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");
             }
             activeButton.Style = (Style)FindResource("ActiveNavButtonStyle");
+            MotionService.Pulse(activeButton, 1.02, 140);
+            Dispatcher.BeginInvoke(new Action(() => MotionService.SlideIn(MainFrame, 6, 160)),
+                System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
         private bool IsRunAsAdmin()

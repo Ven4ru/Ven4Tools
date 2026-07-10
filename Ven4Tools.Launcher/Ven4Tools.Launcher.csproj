@@ -32,6 +32,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Include="..\Shared\DesignTokens.xaml" Link="Resources\DesignTokens.xaml" />
+    <Compile Include="..\Shared\MotionService.cs" Link="Services\MotionService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Secrets.example.cs" />
     <None Include="Secrets.example.cs" />
   </ItemGroup>

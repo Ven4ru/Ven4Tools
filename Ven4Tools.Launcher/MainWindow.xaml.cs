@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Forms;
 using Ven4Tools.Launcher.Models;
 using Ven4Tools.Launcher.Services;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Launcher
 {
@@ -52,6 +53,13 @@ namespace Ven4Tools.Launcher
         public MainWindow()
         {
             InitializeComponent();
+            logExpander.Expanded += LogExpander_Expanded;
+            MotionService.Enabled = Environment.GetEnvironmentVariable("VEN4TOOLS_REDUCE_MOTION") != "1";
+            Loaded += (_, _) =>
+            {
+                MotionService.FadeIn(this);
+                MotionService.Pulse(btnLaunchApp, 1.025, 220);
+            };
             _isUiTestMode = Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1";
 
             string appData = _isUiTestMode
@@ -131,6 +139,9 @@ namespace Ven4Tools.Launcher
                 }
             };
         }
+
+        private void LogExpander_Expanded(object sender, RoutedEventArgs e) =>
+            MotionService.FadeIn(txtLog, 180);
 
         private sealed class LauncherSettings
         {

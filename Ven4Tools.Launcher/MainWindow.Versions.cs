@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Ven4Tools.Launcher.Models;
 using Ven4Tools.Launcher.Services;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Launcher
 {
@@ -199,6 +200,7 @@ namespace Ven4Tools.Launcher
             if (_detailsPanelOpen)
             {
                 colDetails.Width = new System.Windows.GridLength(300);
+                MotionService.SlideIn(fdvReleaseNotes, 12, 200);
                 if (_selectedVersion != null)
                     ShowReleaseNotes(_selectedVersion.ReleaseNotes);
             }

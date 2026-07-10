@@ -1,189 +1,237 @@
 <Window x:Class="Ven4Tools.Launcher.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ven4Tools Launcher" Height="650" Width="1000"
+        Title="Ven4Tools Launcher" Height="700" Width="1080" MinHeight="620" MinWidth="920"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize"
-        Background="{DynamicResource WindowBackground}"
-        Closing="Window_Closing">
+        Background="{DynamicResource WindowBackground}" Closing="Window_Closing"
+        FontFamily="Segoe UI Variable Text, Segoe UI" UseLayoutRounding="True" SnapsToDevicePixels="True">
+    <Window.Resources>
+        <Style x:Key="SideCommand" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Margin" Value="0,3"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style x:Key="StageDot" TargetType="Border">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Background" Value="{StaticResource SurfaceRaised}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+    </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="232"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- ========== ЛЕВАЯ ПАНЕЛЬ ========== -->
-        <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}">
-            <Grid>
+        <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
+            <Grid Margin="14,0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="82"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Заголовок -->
-                <Border Grid.Row="0" Height="72"
-                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                    <Grid>
-                        <Border Width="4" HorizontalAlignment="Left"
-                                Background="{DynamicResource AccentColor}" CornerRadius="0,2,2,0"/>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,16,0">
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Ven4Tools" FontSize="17" FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimary}"/>
-                                <TextBlock Text="Launcher" FontSize="10"
-                                           Foreground="{DynamicResource AccentColor}" Opacity="0.85"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                <Grid Grid.Row="0">
+                    <Border Width="3" Height="38" HorizontalAlignment="Left"
+                            Background="{StaticResource BrandGreen}" CornerRadius="2"
+                            Effect="{StaticResource BrandAuraEffect}"/>
+                    <StackPanel VerticalAlignment="Center" Margin="16,0,0,0">
+                        <TextBlock FontSize="19" FontWeight="Bold">
+                            <Run Text="Ven4"/><Run Text="Tools" Foreground="{StaticResource BrandGreen}"/>
+                        </TextBlock>
+                        <TextBlock Text="LAUNCHER  2.1" Style="{StaticResource EyebrowStyle}" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </Grid>
 
-                <!-- Основные кнопки -->
-                <StackPanel Grid.Row="1" Margin="10,10,10,0">
-                    <Button x:Name="btnSelectFolder" Content="📁 Выбрать папку"
-                            Height="40" Margin="0,3" Click="BtnSelectFolder_Click"/>
-                    <Button x:Name="btnFindClient" Content="🔍 Найти Ven4Tools на диске"
-                            Height="40" Margin="0,3" Click="BtnFindClient_Click"/>
-                    <Button x:Name="btnCheckUpdates" Content="🔄 Проверить обновления"
-                            Height="40" Margin="0,3" Click="BtnCheckUpdates_Click"/>
-                    <Button x:Name="btnLaunchApp" Content="📥 Загрузить Ven4Tools"
-                            Height="40" Margin="0,3" FontWeight="Bold"
-                            Background="{DynamicResource AccentColor}" Foreground="#0A1420"
+                <StackPanel Grid.Row="1">
+                    <TextBlock Text="БЫСТРЫЙ ЗАПУСК" Style="{StaticResource EyebrowStyle}" Margin="2,4,0,8"/>
+                    <Button x:Name="btnLaunchApp" Content="Установить Ven4Tools" Height="48" Margin="0,0,0,8"
+                            Background="{StaticResource BrandGreen}" Foreground="#06130D" FontSize="14"
+                            FontWeight="Bold" Effect="{StaticResource BrandAuraEffect}"
                             Click="BtnLaunchApp_Click"/>
-                    <Button x:Name="btnChangelog" Content="📋 История изменений"
-                            Height="40" Margin="0,3" Click="BtnChangelog_Click"/>
-                    <Button x:Name="btnDeleteClient" Content="🗑️ Удалить клиент"
-                            Height="40" Margin="0,3"
-                            Background="#B71C1C" Foreground="White"
-                            Click="BtnDeleteClient_Click"/>
-                    <Button x:Name="btnExit" Content="❌ Выход"
-                            Height="40" Margin="0,3" Click="BtnExit_Click"/>
+                    <Button x:Name="btnCheckUpdates" Content="Проверить обновления"
+                            Style="{StaticResource SideCommand}" Click="BtnCheckUpdates_Click"/>
+                    <Button x:Name="btnChangelog" Content="Что нового"
+                            Style="{StaticResource SideCommand}" Click="BtnChangelog_Click"/>
                 </StackPanel>
 
-                <!-- Настройки -->
-                <Border Grid.Row="2" VerticalAlignment="Bottom" Margin="10,0,10,0"
-                        Background="{DynamicResource CardBackground}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1" CornerRadius="8" Padding="12,10">
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,16,0,8">
                     <StackPanel>
-                        <TextBlock Text="⚙️ Настройки" FontWeight="Bold" Margin="0,0,0,8"/>
-                        <CheckBox x:Name="chkBackgroundUpdates"
-                                  Content="Проверять обновления в фоне"
-                                  Foreground="{DynamicResource TextSecondary}" Margin="0,3"
-                                  Click="ChkBackgroundUpdates_Click"/>
-                        <CheckBox x:Name="chkStartMinimized"
-                                  Content="Запускать свёрнутым в трей"
-                                  Foreground="{DynamicResource TextSecondary}" Margin="0,3"
-                                  Click="ChkStartMinimized_Click"/>
-                        <CheckBox x:Name="chkAutostart"
-                                  Content="Запускать при старте Windows"
-                                  Foreground="{DynamicResource TextSecondary}" Margin="0,3"
-                                  Click="ChkAutostart_Click"/>
-                    </StackPanel>
-                </Border>
+                        <Expander Header="Параметры установки" IsExpanded="True" Margin="0,0,0,8">
+                            <StackPanel Margin="0,8,0,4">
+                                <Button x:Name="btnSelectFolder" Content="Выбрать папку"
+                                        Style="{StaticResource SideCommand}" Click="BtnSelectFolder_Click"/>
+                                <Button x:Name="btnFindClient" Content="Найти клиент на диске"
+                                        Style="{StaticResource SideCommand}" Click="BtnFindClient_Click"/>
+                                <TextBlock Text="ВЕРСИЯ КЛИЕНТА" Style="{StaticResource EyebrowStyle}" Margin="2,12,0,5"/>
+                                <ComboBox x:Name="cmbVersions" Height="32"
+                                          SelectionChanged="CmbVersions_SelectionChanged">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate><TextBlock Text="{Binding Version}"/></DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock x:Name="txtVersionInfo" Text="Получение списка версий..."
+                                           Foreground="{DynamicResource TextSecondary}" FontSize="10"
+                                           TextWrapping="Wrap" Margin="3,5,3,0"/>
+                            </StackPanel>
+                        </Expander>
 
-                <!-- Выбор версии -->
-                <Border Grid.Row="3" Margin="10,8,10,0"
-                        Background="{DynamicResource CardBackground}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1" CornerRadius="8" Padding="12,10">
-                    <StackPanel>
-                        <TextBlock Text="📦 Выбор версии" FontWeight="Bold" Margin="0,0,0,8"/>
-                        <ComboBox x:Name="cmbVersions" Height="30" Margin="0,0,0,5"
-                                  SelectionChanged="CmbVersions_SelectionChanged">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Version}"/>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                        <TextBlock x:Name="txtVersionInfo" Text="Выберите версию"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   FontSize="10" TextWrapping="Wrap" Margin="0,5,0,0"/>
-                    </StackPanel>
-                </Border>
+                        <Expander Header="Поведение лаунчера" IsExpanded="True" Margin="0,0,0,8">
+                            <StackPanel Margin="2,8,0,4">
+                                <CheckBox x:Name="chkBackgroundUpdates" Margin="0,4" Click="ChkBackgroundUpdates_Click">
+                                    <TextBlock Text="Проверять обновления в фоне" TextWrapping="Wrap" MaxWidth="170"/>
+                                </CheckBox>
+                                <CheckBox x:Name="chkStartMinimized" Margin="0,4" Click="ChkStartMinimized_Click">
+                                    <TextBlock Text="Запускать свёрнутым в трей" TextWrapping="Wrap" MaxWidth="170"/>
+                                </CheckBox>
+                                <CheckBox x:Name="chkAutostart" Margin="0,4" Click="ChkAutostart_Click">
+                                    <TextBlock Text="Запускать при старте Windows" TextWrapping="Wrap" MaxWidth="170"/>
+                                </CheckBox>
+                            </StackPanel>
+                        </Expander>
 
-                <!-- Действия -->
-                <StackPanel Grid.Row="4" Margin="10,6,10,10">
-                    <Button x:Name="btnInstallUpdate" Content="📥 Обновить лаунчер"
-                            Height="40" Margin="0,3,0,0" Visibility="Collapsed"
-                            Background="#2E7D32" Foreground="White" FontWeight="SemiBold"
-                            Click="BtnInstallUpdate_Click"/>
-                    <Button x:Name="btnInstallMissing" Content="🔧 Установить компоненты"
-                            Height="40" Margin="0,3,0,0" Visibility="Collapsed"
-                            Background="#E65100" Foreground="White" FontWeight="SemiBold"
-                            Click="BtnInstallMissing_Click"/>
+                        <Button x:Name="btnInstallUpdate" Content="Обновить лаунчер" Height="38"
+                                Visibility="Collapsed" Background="#243FBA65" Foreground="{StaticResource StatusSuccess}"
+                                Click="BtnInstallUpdate_Click"/>
+                        <Button x:Name="btnInstallMissing" Content="Установить компоненты" Height="38"
+                                Visibility="Collapsed" Background="#24FBBF24" Foreground="{StaticResource StatusWarning}"
+                                Click="BtnInstallMissing_Click"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <StackPanel Grid.Row="3" Margin="0,0,0,12">
+                    <Separator Margin="0,0,0,8"/>
+                    <Button x:Name="btnDeleteClient" Content="Удалить клиент"
+                            Style="{StaticResource SideCommand}" Foreground="{StaticResource StatusDanger}"
+                            Background="Transparent" Click="BtnDeleteClient_Click"/>
+                    <Button x:Name="btnExit" Content="Закрыть лаунчер"
+                            Style="{StaticResource SideCommand}" Background="Transparent"
+                            Foreground="{DynamicResource TextSecondary}" Click="BtnExit_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- ========== ПРАВАЯ ПАНЕЛЬ ========== -->
         <Grid Grid.Column="1" Background="{DynamicResource ContentBackground}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="colMain" Width="*"/>
                 <ColumnDefinition x:Name="colDetails" Width="0"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Основная правая панель -->
-            <StackPanel Grid.Column="0" Margin="10">
-                <Image Source="pack://application:,,,/Resources/launcher.png"
-                       Height="180" Stretch="Uniform"
-                       HorizontalAlignment="Center" Margin="0,8,0,4"
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
+            <Grid Grid.Column="0" Margin="28,22,28,24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                <GroupBox Header="📁 Папка установки">
-                    <TextBlock x:Name="txtInstallPath" Text="Не выбрана"
-                               Foreground="{DynamicResource TextSecondary}"
-                               TextWrapping="Wrap" Margin="5"/>
-                </GroupBox>
-
-                <GroupBox Header="📊 Прогресс" Margin="0,10,0,0">
+                <Grid Grid.Row="0" Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <ProgressBar x:Name="progressDownload" Height="20" Minimum="0" Maximum="100" Value="0"/>
-                        <Grid Margin="0,5,0,0">
-                            <TextBlock x:Name="txtDownloadStatus" Text="Готов"
-                                       Foreground="{DynamicResource TextSecondary}" FontSize="11"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <Button x:Name="btnCancelDownload" Content="⏹ Отмена"
-                                    HorizontalAlignment="Right" Height="22" Padding="8,2"
-                                    Visibility="Collapsed" Click="BtnCancelDownload_Click"
-                                    Background="#C62828" Foreground="White" FontSize="11"/>
+                        <TextBlock Text="Центр управления" Style="{StaticResource PageTitleStyle}"/>
+                        <TextBlock Text="Установка, обновление и восстановление клиента"
+                                   Foreground="{DynamicResource TextSecondary}" FontSize="13" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" Style="{StaticResource PillStatusStyle}" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="7" Height="7" Fill="{StaticResource StatusSuccess}" Margin="0,0,7,0"
+                                     Effect="{StaticResource BrandAuraEffect}"/>
+                            <TextBlock Text="Система готова" Foreground="{StaticResource StatusSuccess}" FontSize="11"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="1" Background="{StaticResource SurfaceCard}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                        CornerRadius="8" Padding="18" Effect="{StaticResource PanelShadowEffect}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="250"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="КЛИЕНТ VEN4TOOLS" Style="{StaticResource EyebrowStyle}"/>
+                            <TextBlock Text="Готов к установке" FontSize="22" FontWeight="SemiBold" Margin="0,7,0,6"/>
+                            <TextBlock Text="Лаунчер автоматически выберет актуальную версию, проверит целостность и установит клиент без лишних шагов."
+                                       Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" MaxWidth="520"/>
+                            <Border Margin="0,14,0,0" Padding="10,7" Background="#660A0A14"
+                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5">
+                                <StackPanel>
+                                    <TextBlock Text="ПАПКА УСТАНОВКИ" FontSize="9" Foreground="{DynamicResource TextSecondary}"/>
+                                    <TextBlock x:Name="txtInstallPath" Text="Не выбрана" FontFamily="Cascadia Mono, Consolas"
+                                               FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        <Border Grid.Column="1" Height="130" Margin="18,0,0,0" CornerRadius="6"
+                                Background="#880A0A14" BorderBrush="#334ADE80" BorderThickness="1">
+                            <Image Source="pack://application:,,,/Resources/launcher.png" Stretch="Uniform"
+                                   Margin="8" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2" Margin="0,16,0,0" Background="{StaticResource SurfaceCard}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="Ход операции" FontWeight="SemiBold" FontSize="14"/>
+                            <TextBlock x:Name="txtDownloadStatus" Text="Готов" HorizontalAlignment="Right"
+                                       Foreground="{StaticResource BrandGreen}" FontSize="12"/>
+                        </Grid>
+                        <Grid Margin="0,16,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center"><Border x:Name="stageDownload" Style="{StaticResource StageDot}"><TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Загрузка" FontSize="10" Margin="0,5,0,0"/></StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center"><Border x:Name="stageVerify" Style="{StaticResource StageDot}"><TextBlock Text="2" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Проверка" FontSize="10" Margin="0,5,0,0"/></StackPanel>
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Center"><Border x:Name="stageExtract" Style="{StaticResource StageDot}"><TextBlock Text="3" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Распаковка" FontSize="10" Margin="0,5,0,0"/></StackPanel>
+                            <StackPanel Grid.Column="3" HorizontalAlignment="Center"><Border x:Name="stageInstall" Style="{StaticResource StageDot}"><TextBlock Text="4" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Установка" FontSize="10" Margin="0,5,0,0"/></StackPanel>
+                            <StackPanel Grid.Column="4" HorizontalAlignment="Center"><Border x:Name="stageDone" Style="{StaticResource StageDot}"><TextBlock Text="5" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Готово" FontSize="10" Margin="0,5,0,0"/></StackPanel>
+                        </Grid>
+                        <Grid>
+                            <ProgressBar x:Name="progressDownload" Height="7" Minimum="0" Maximum="100" Value="0"/>
+                            <Button x:Name="btnCancelDownload" Content="Отмена" HorizontalAlignment="Right"
+                                    Height="28" Padding="10,0" Margin="0,14,0,0" Visibility="Collapsed"
+                                    Foreground="{StaticResource StatusDanger}" Click="BtnCancelDownload_Click"/>
                         </Grid>
                     </StackPanel>
-                </GroupBox>
+                </Border>
 
-                <GroupBox Header="📋 Лог операций" Margin="0,10,0,0" Height="200">
-                    <TextBox x:Name="txtLog"
-                             IsReadOnly="True" TextWrapping="Wrap"
-                             FontFamily="Consolas" FontSize="10"
-                             Foreground="{DynamicResource AccentColor}"
-                             VerticalScrollBarVisibility="Auto"
-                             Margin="0,5,0,0"/>
-                </GroupBox>
-            </StackPanel>
+                <Expander x:Name="logExpander" Grid.Row="3" Header="Журнал и технические подробности" Margin="0,14,0,0"
+                          VerticalAlignment="Stretch" IsExpanded="True">
+                    <Border Margin="0,8,0,0" Background="#700A0A14" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1" CornerRadius="6" Padding="10">
+                        <TextBox x:Name="txtLog" IsReadOnly="True" TextWrapping="Wrap"
+                                 FontFamily="Cascadia Mono, Consolas" FontSize="10"
+                                 Foreground="{DynamicResource TextSecondary}" Background="Transparent"
+                                 BorderThickness="0" VerticalScrollBarVisibility="Auto"/>
+                    </Border>
+                </Expander>
+            </Grid>
 
-            <!-- Раздвижная панель "Что нового" -->
-            <Border Grid.Column="1"
-                    Background="{DynamicResource CardBackground}"
+            <Border Grid.Column="1" Background="{StaticResource SurfaceCard}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0">
                 <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Orientation="Horizontal" Margin="10" HorizontalAlignment="Stretch">
-                        <TextBlock Text="📝 Что нового" FontWeight="Bold" VerticalAlignment="Center"/>
-                        <Button x:Name="btnCloseDetails" Content="✕" Width="30" Height="30"
-                                HorizontalAlignment="Right" Margin="10,0,0,0"
-                                Click="BtnCloseDetails_Click"
-                                Background="Transparent" Foreground="{DynamicResource TextSecondary}"/>
-                    </StackPanel>
-
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <Grid Margin="14">
+                        <TextBlock Text="Что нового" FontWeight="SemiBold" FontSize="15"/>
+                        <Button x:Name="btnCloseDetails" Content="" Style="{StaticResource IconButtonStyle}"
+                                HorizontalAlignment="Right" Background="Transparent" Click="BtnCloseDetails_Click"/>
+                    </Grid>
                     <FlowDocumentScrollViewer x:Name="fdvReleaseNotes" Grid.Row="1"
-                                              VerticalScrollBarVisibility="Auto" Margin="10"
+                                              VerticalScrollBarVisibility="Auto" Margin="14"
                                               Background="Transparent" IsToolBarVisible="False"/>
                 </Grid>
             </Border>

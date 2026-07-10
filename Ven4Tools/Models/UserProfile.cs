@@ -11,6 +11,7 @@ namespace Ven4Tools.Models
         public string Theme { get; set; } = "teal";
         public string Language { get; set; } = "auto"; // "auto", "ru", "en"
         public bool CompactMode { get; set; } = false;
+        public bool ReduceMotion { get; set; } = false;
         public string AccentColorHex { get; set; } = ""; // "" = theme default
 
         // Install

@@ -13,6 +13,7 @@ using System.Windows.Media;
 using Microsoft.Win32;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Views.Tabs
 {
@@ -34,6 +35,7 @@ namespace Ven4Tools.Views.Tabs
         }
 
         private bool _initialized = false;
+        private bool _loadingAppearance = true;
         private bool _connSubscribed = false;
         private CancellationTokenSource? _cacheCts;
         private List<CacheAppItem> _cacheAppItems = new();
@@ -50,6 +52,13 @@ namespace Ven4Tools.Views.Tabs
         public SystemTab()
         {
             InitializeComponent();
+
+            SelectComboByTag(cmbTheme, ProfileService.Current.Theme);
+            SelectComboByTag(cmbLanguage, ProfileService.Current.Language);
+            chkCompactMode.IsChecked = ProfileService.Current.CompactMode;
+            chkReduceMotion.IsChecked = ProfileService.Current.ReduceMotion;
+            MotionService.Enabled = !ProfileService.Current.ReduceMotion;
+            _loadingAppearance = false;
 
             Loaded += SystemTab_Loaded;
 
@@ -79,6 +88,54 @@ namespace Ven4Tools.Views.Tabs
 
             LoadSettings();
             LoadOfflineSettings();
+        }
+
+        private static void SelectComboByTag(ComboBox combo, string value)
+        {
+            foreach (ComboBoxItem item in combo.Items)
+            {
+                if (string.Equals(item.Tag?.ToString(), value, StringComparison.OrdinalIgnoreCase))
+                {
+                    combo.SelectedItem = item;
+                    return;
+                }
+            }
+            combo.SelectedIndex = 0;
+        }
+
+        private void CmbTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loadingAppearance || cmbTheme.SelectedItem is not ComboBoxItem item) return;
+            ProfileService.Current.Theme = item.Tag?.ToString() ?? "web";
+            ProfileService.Save();
+            ThemeService.Apply(ProfileService.Current.Theme);
+            MotionService.CrossFade((UIElement?)Window.GetWindow(this) ?? this, 220);
+        }
+
+        private void CmbLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loadingAppearance || cmbLanguage.SelectedItem is not ComboBoxItem item) return;
+            ProfileService.Current.Language = item.Tag?.ToString() ?? "auto";
+            ProfileService.Save();
+            var language = ProfileService.Current.Language;
+            if (language == "auto")
+                language = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ru" ? "ru" : "en";
+            LocalizationService.Apply(language);
+        }
+
+        private void ChkCompactMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (_loadingAppearance) return;
+            ProfileService.Current.CompactMode = chkCompactMode.IsChecked == true;
+            ProfileService.Save();
+        }
+
+        private void ChkReduceMotion_Click(object sender, RoutedEventArgs e)
+        {
+            if (_loadingAppearance) return;
+            ProfileService.Current.ReduceMotion = chkReduceMotion.IsChecked == true;
+            MotionService.Enabled = !ProfileService.Current.ReduceMotion;
+            ProfileService.Save();
         }
 
         private void OnConnectivityChanged(bool online) => Dispatcher.Invoke(UpdateConnectivityStatus);
@@ -572,6 +629,7 @@ namespace Ven4Tools.Views.Tabs
                 txtConnStatus.Text = "Интернет доступен — все вкладки активны";
                 pnlConnStatus.Background = new SolidColorBrush(Color.FromRgb(15, 50, 20));
             }
+            MotionService.Pulse(pnlConnStatus, 1.015, 160);
         }
 
         private void UpdateCacheStats()

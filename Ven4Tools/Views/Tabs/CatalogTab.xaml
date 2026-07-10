@@ -3,13 +3,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource ContentBackground}">
     <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="300"/>
         </Grid.ColumnDefinitions>
 
         <!-- Левая панель: список приложений -->
-        <GroupBox Header="📦 Приложения" Grid.Column="0" Margin="0,0,10,0">
+        <GroupBox Header="Каталог приложений" Grid.Row="0" Grid.Column="0" Margin="0,0,12,0">
             <DockPanel>
                 <!-- Поиск -->
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,5">
@@ -23,11 +27,11 @@
                              Foreground="{DynamicResource TextPrimary}"
                              BorderBrush="{DynamicResource BorderBrush}"
                              VerticalContentAlignment="Center" Padding="5,0"
-                             Tag="🔍 Поиск приложений..."/>
-                    <Button x:Name="btnClearSearch" Grid.Column="1" Content="✕"
+                             Tag="Поиск по названию или категории"/>
+                    <Button x:Name="btnClearSearch" Grid.Column="1" Content="&#xE711;" FontFamily="Segoe Fluent Icons"
                             Width="28" Height="28" Margin="4,0,0,0"
                             Visibility="Collapsed"/>
-                    <Button x:Name="btnFavoritesOnly" Grid.Column="2" Content="★"
+                    <Button x:Name="btnFavoritesOnly" Grid.Column="2" Content="&#xE734;" FontFamily="Segoe Fluent Icons"
                             Width="28" Height="28" Margin="4,0,0,0"
                             FontSize="16" ToolTip="Только избранные"
                             Background="Transparent" BorderThickness="1"/>
@@ -120,21 +124,19 @@
         </GroupBox>
 
         <!-- Правая панель: управление -->
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto"
+        <ScrollViewer Grid.Row="0" Grid.Column="1" VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
-                <GroupBox Header="🚀 Действия">
+                <GroupBox Header="Инструменты каталога">
                     <StackPanel>
-                        <Button x:Name="btnInstall" Content="🚀 Установить выбранные" Height="35" Margin="3" IsEnabled="False"/>
-                        <Button x:Name="btnCancelInstall" Content="⏹️ Отмена" Height="35" Margin="3" IsEnabled="False"/>
-                        <Button x:Name="btnCheckUpdates" Content="🔔 Обновления" Height="35" Margin="3"/>
-                        <Button x:Name="btnClearAllUserApps" Content="🗑️ Очистить добавленные" Height="35" Margin="3"/>
-                        <Button x:Name="btnRefreshCatalog" Content="🔄 Обновить каталог" Height="35" Margin="3"/>
-                        <Button x:Name="btnRefreshAvailability" Content="🔍 Проверить доступность" Height="35" Margin="3"/>
+                        <Button x:Name="btnCheckUpdates" Content="Проверить обновления" Height="35" Margin="3"/>
+                        <Button x:Name="btnRefreshCatalog" Content="Обновить каталог" Height="35" Margin="3"/>
+                        <Button x:Name="btnRefreshAvailability" Content="Проверить доступность" Height="35" Margin="3"/>
+                        <Button x:Name="btnClearAllUserApps" Content="Очистить добавленные" Height="35" Margin="3" Foreground="{StaticResource StatusDanger}"/>
                         <Separator Margin="3,4"/>
-                        <Button x:Name="btnExportList" Content="📤 Экспорт списка" Height="32" Margin="3"
+                        <Button x:Name="btnExportList" Content="Экспорт списка" Height="32" Margin="3"
                                 ToolTip="Сохранить выбранные приложения в JSON" Click="BtnExportList_Click"/>
-                        <Button x:Name="btnImportList" Content="📥 Импорт списка" Height="32" Margin="3"
+                        <Button x:Name="btnImportList" Content="Импорт списка" Height="32" Margin="3"
                                 ToolTip="Загрузить список приложений из JSON" Click="BtnImportList_Click"/>
                     </StackPanel>
                 </GroupBox>
@@ -264,5 +266,23 @@
                 </GroupBox>
             </StackPanel>
         </ScrollViewer>
+
+        <Border Grid.Row="1" Grid.ColumnSpan="2" Margin="0,12,0,0" Padding="14,10"
+                Background="{StaticResource SurfaceCard}" BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1" CornerRadius="7" Effect="{StaticResource PanelShadowEffect}">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="ВЫБРАННЫЕ ПРИЛОЖЕНИЯ" Style="{StaticResource EyebrowStyle}"/>
+                    <TextBlock x:Name="txtSelectionBar" Text="Ничего не выбрано" FontSize="12" Margin="0,3,0,0"
+                               Foreground="{DynamicResource TextSecondary}"/>
+                </StackPanel>
+                <Button x:Name="btnCancelInstall" Grid.Column="1" Content="Отмена" Height="38" MinWidth="90"
+                        Margin="0,0,8,0" IsEnabled="False" Foreground="{StaticResource StatusDanger}"/>
+                <Button x:Name="btnInstall" Grid.Column="2" Content="Установить выбранные" Height="38" MinWidth="190"
+                        IsEnabled="False" Background="{StaticResource BrandGreen}" Foreground="#06130D"
+                        Effect="{StaticResource BrandAuraEffect}"/>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>
