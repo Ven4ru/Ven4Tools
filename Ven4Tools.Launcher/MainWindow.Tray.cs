@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Forms;
 using Ven4Tools.Launcher.Models;
 using Ven4Tools.Launcher.Services;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Launcher
 {
@@ -217,7 +218,32 @@ namespace Ven4Tools.Launcher
                     txtLog.Text = txtLog.Text.Substring(cutIndex);
                 }
                 txtLog.ScrollToEnd();
+                UpdateOperationStages(message);
             });
+        }
+
+        private void UpdateOperationStages(string message)
+        {
+            string value = message.ToLowerInvariant();
+            int stage = value.Contains("готов") || value.Contains("успеш") ? 5
+                : value.Contains("установ") || value.Contains("замен") ? 4
+                : value.Contains("распаков") || value.Contains("извлеч") ? 3
+                : value.Contains("sha") || value.Contains("подпис") || value.Contains("целост") || value.Contains("провер") ? 2
+                : value.Contains("скачив") || value.Contains("загруз") ? 1
+                : 0;
+            if (stage == 0) return;
+
+            var stages = new[] { stageDownload, stageVerify, stageExtract, stageInstall, stageDone };
+            var active = (System.Windows.Media.Brush)FindResource("BrandGreen");
+            var pending = (System.Windows.Media.Brush)FindResource("SurfaceRaised");
+            var border = (System.Windows.Media.Brush)FindResource("BorderBrush");
+            for (int i = 0; i < stages.Length; i++)
+            {
+                stages[i].Background = i < stage ? active : pending;
+                stages[i].BorderBrush = i < stage ? active : border;
+                stages[i].Opacity = i < stage ? 1 : 0.72;
+            }
+            MotionService.Pulse(stages[Math.Clamp(stage - 1, 0, stages.Length - 1)], 1.12, 180);
         }
 
         private void BtnExit_Click(object sender, RoutedEventArgs e)

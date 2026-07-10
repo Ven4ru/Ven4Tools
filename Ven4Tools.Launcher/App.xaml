@@ -3,19 +3,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/DesignTokens.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
         <!-- Teal palette -->
-        <SolidColorBrush x:Key="WindowBackground"  Color="#0A1420"/>
-        <SolidColorBrush x:Key="SidebarBackground" Color="#0A1C2D"/>
-        <SolidColorBrush x:Key="ContentBackground" Color="#0E2438"/>
-        <SolidColorBrush x:Key="CardBackground"    Color="#122E46"/>
-        <SolidColorBrush x:Key="AccentColor"       Color="#00C3AA"/>
-        <SolidColorBrush x:Key="TextPrimary"       Color="#DCF2F2"/>
-        <SolidColorBrush x:Key="TextSecondary"     Color="#5594AA"/>
-        <SolidColorBrush x:Key="BorderBrush"       Color="#1A3E58"/>
-        <SolidColorBrush x:Key="HeaderForeground"  Color="#DCF2F2"/>
+        <SolidColorBrush x:Key="WindowBackground"  Color="#0A0A14"/>
+        <SolidColorBrush x:Key="SidebarBackground" Color="#0D1018"/>
+        <SolidColorBrush x:Key="ContentBackground" Color="#0A0A14"/>
+        <SolidColorBrush x:Key="CardBackground"    Color="#11161F"/>
+        <SolidColorBrush x:Key="AccentColor"       Color="#4ADE80"/>
+        <SolidColorBrush x:Key="TextPrimary"       Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="TextSecondary"     Color="#AAB8CE"/>
+        <SolidColorBrush x:Key="BorderBrush"       Color="#1E2A38"/>
+        <SolidColorBrush x:Key="HeaderForeground"  Color="#E2E8F0"/>
 
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
         </Style>
 
         <Style TargetType="Label">
@@ -252,6 +257,33 @@
             <Setter Property="Background" Value="Transparent"/>
         </Style>
 
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="{DynamicResource ContentBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="4,4,0,0" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header" TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#244ADE80"/>
+                    <Setter Property="Foreground" Value="{StaticResource BrandGreen}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- ToolTip -->
         <Style TargetType="ToolTip">
             <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
@@ -302,5 +334,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

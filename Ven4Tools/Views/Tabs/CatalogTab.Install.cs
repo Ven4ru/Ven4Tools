@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Views.Tabs
 {
@@ -22,14 +23,22 @@ namespace Ven4Tools.Views.Tabs
                 .ToList();
         }
 
-        private void AppCheckBox_Changed(object sender, RoutedEventArgs e) => UpdateInstallButton();
+        private void AppCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateInstallButton();
+            if (sender is FrameworkElement element) MotionService.Pulse(element, 1.025, 120);
+        }
 
         private void UpdateInstallButton()
         {
             int count = GetSelectedApps().Count;
             btnInstall.Content = count > 0
-                ? $"🚀 Установить выбранные ({count})"
-                : "🚀 Установить выбранные";
+                ? $"Установить ({count})"
+                : "Установить выбранные";
+            txtSelectionBar.Text = count > 0
+                ? $"Выбрано приложений: {count}"
+                : "Ничего не выбрано";
+            if (count > 0) MotionService.SlideIn(txtSelectionBar, 4, 140);
             // Во время установки доступностью кнопок управляет процесс установки
             if (!_isInstalling)
             {
@@ -179,7 +188,11 @@ namespace Ven4Tools.Views.Tabs
                                 cb.ToolTip     = selectedVersion != null ? $"✅ Установлено ({selectedVersion})" : "✅ Установлено";
                             }
                         }
-                        else failed++;
+                        else
+                        {
+                            failed++;
+                            MotionService.Pulse(txtOverallStatus, 1.035, 180);
+                        }
                         txtOverallStatus.Text = $"⏳ Установка: {completed + failed}/{appsToInstall.Count} (✅ {completed} | ❌ {failed})";
                     });
                 }
@@ -190,6 +203,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 await Task.WhenAll(tasks);
                 txtOverallStatus.Text = $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed}";
+                MotionService.Pulse(txtOverallStatus, 1.04, 220);
                 appManager.SaveSelectedApps(GetSelectedApps());
                 _ = UpdateInstalledStatusAsync();
             }

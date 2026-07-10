@@ -2,10 +2,45 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource ContentBackground}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20">
-            <TextBlock Text="Системные настройки" FontSize="24" FontWeight="Bold" 
-                       Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20"/>
+    <Grid Margin="20">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <StackPanel Margin="0,0,0,16">
+            <TextBlock Text="Настройки" Style="{StaticResource PageTitleStyle}"/>
+            <TextBlock Text="Интерфейс, источники, автономная работа и конфигурация"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
+        </StackPanel>
+        <TabControl Grid.Row="1">
+            <TabItem Header="Общие">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8,12,8,8">
+            <GroupBox Header="Внешний вид" Margin="0,0,0,15">
+                <Grid Margin="8">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="230"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <TextBlock Text="Тема" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="cmbTheme" Grid.Column="1" SelectionChanged="CmbTheme_SelectionChanged">
+                        <ComboBoxItem Content="Как на ven4tools.ru" Tag="web"/>
+                        <ComboBoxItem Content="Бирюзовая" Tag="teal"/>
+                        <ComboBoxItem Content="Тёмная" Tag="dark"/>
+                        <ComboBoxItem Content="Светлая" Tag="light"/>
+                    </ComboBox>
+                    <TextBlock Grid.Row="1" Text="Язык интерфейса" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                    <ComboBox x:Name="cmbLanguage" Grid.Row="1" Grid.Column="1" Margin="3,10,3,3" SelectionChanged="CmbLanguage_SelectionChanged">
+                        <ComboBoxItem Content="Автоматически" Tag="auto"/>
+                        <ComboBoxItem Content="Русский" Tag="ru"/>
+                        <ComboBoxItem Content="English" Tag="en"/>
+                    </ComboBox>
+                    <TextBlock Grid.Row="2" Text="Плотность" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                    <CheckBox x:Name="chkCompactMode" Grid.Row="2" Grid.Column="1" Content="Компактные строки каталога"
+                              Margin="3,10,3,3" Click="ChkCompactMode_Click"/>
+                    <CheckBox x:Name="chkReduceMotion" Grid.Row="3" Grid.Column="1" Content="Уменьшить анимации"
+                              Margin="3,10,3,3" Click="ChkReduceMotion_Click"/>
+                    <StackPanel Grid.Column="2" Grid.RowSpan="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+                        <Ellipse Width="18" Height="18" Fill="#4ADE80" Margin="3"/><Ellipse Width="18" Height="18" Fill="#38BDF8" Margin="3"/>
+                        <Ellipse Width="18" Height="18" Fill="#FBBF24" Margin="3"/><Ellipse Width="18" Height="18" Fill="#F87171" Margin="3"/>
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
             
             <!-- Уведомления -->
             <GroupBox Header="🔔 Уведомления" Margin="0,0,0,15">
@@ -48,6 +83,12 @@
                 </Grid>
             </GroupBox>
             
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Источники">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8,12,8,8">
             <!-- Порядок источников -->
             <GroupBox Header="🔀 Порядок источников установки" Margin="0,0,0,15">
                 <StackPanel Margin="10">
@@ -123,6 +164,12 @@
                 </StackPanel>
             </GroupBox>
 
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Диагностика">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8,12,8,8">
             <!-- Информация о системе -->
             <GroupBox Header="💻 Информация о системе" Margin="0,0,0,15">
                 <StackPanel Margin="10">
@@ -195,6 +242,12 @@
                 </StackPanel>
             </GroupBox>
             
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Офлайн и приватность">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8,12,8,8">
             <!-- Офлайн режим -->
             <GroupBox Header="🔌 Офлайн режим" Margin="0,0,0,15">
                 <StackPanel Margin="10">
@@ -334,6 +387,12 @@
                 </StackPanel>
             </GroupBox>
 
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Профиль и снимки">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8,12,8,8">
             <!-- Поведение приложения -->
             <GroupBox Header="🖥️ Поведение приложения" Margin="0,0,0,15">
                 <StackPanel Margin="10">
@@ -452,6 +511,9 @@
                                Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
             </GroupBox>
-        </StackPanel>
-    </ScrollViewer>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
 </UserControl>
