@@ -68,6 +68,10 @@ namespace Ven4Tools.Services
         {
             if (string.IsNullOrWhiteSpace(path)) return true;
             if (path.StartsWith(@"\\")) return false;
+            // Кавычка/невалидные символы пути — защита в глубину: аргументы winget теперь
+            // строятся через ArgumentList (не подставляются в кавыченную строку), но
+            // валидатор не должен полагаться только на это.
+            if (path.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || path.Contains('"')) return false;
             return Path.IsPathRooted(path);
         }
     }

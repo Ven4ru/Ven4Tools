@@ -125,12 +125,9 @@ namespace Ven4Tools.Services
                 if (!CommandLineGuard.ValidateId(appId))
                     return (AvailabilityStatus.Unavailable, 0);
 
-                string args = $"show --id \"{appId}\" --exact --source winget --accept-source-agreements";
-
                 var psi = new ProcessStartInfo
                 {
                     FileName = "winget.exe",
-                    Arguments = args,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -138,6 +135,13 @@ namespace Ven4Tools.Services
                     StandardOutputEncoding = System.Text.Encoding.UTF8,
                     StandardErrorEncoding = System.Text.Encoding.UTF8
                 };
+                psi.ArgumentList.Add("show");
+                psi.ArgumentList.Add("--id");
+                psi.ArgumentList.Add(appId);
+                psi.ArgumentList.Add("--exact");
+                psi.ArgumentList.Add("--source");
+                psi.ArgumentList.Add("winget");
+                psi.ArgumentList.Add("--accept-source-agreements");
 
                 using var process = Process.Start(psi);
                 if (process == null)

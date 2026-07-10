@@ -16,13 +16,19 @@ namespace Ven4Tools.Services
                 var psi = new ProcessStartInfo
                 {
                     FileName = "winget",
-                    Arguments = $"show --id \"{wingetId}\" --versions -e --source winget",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     StandardOutputEncoding = System.Text.Encoding.UTF8
                 };
+                psi.ArgumentList.Add("show");
+                psi.ArgumentList.Add("--id");
+                psi.ArgumentList.Add(wingetId);
+                psi.ArgumentList.Add("--versions");
+                psi.ArgumentList.Add("-e");
+                psi.ArgumentList.Add("--source");
+                psi.ArgumentList.Add("winget");
 
                 using var process = Process.Start(psi);
                 if (process == null) return new List<string>();

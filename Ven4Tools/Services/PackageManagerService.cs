@@ -10,27 +10,38 @@ namespace Ven4Tools.Services
     {
         // ── Chocolatey ────────────────────────────────────────────────────────────
 
-        public static bool IsChocoInstalled()
+        // Кэш на сессию: IsChocoInstalledAsync дёргается на каждый ввод в поиске
+        // (SearchChocoAsync) — без кэша это блокирующий процесс на каждое нажатие клавиши.
+        // Сбрасывается после InstallChocoAsync, чтобы отразить свежую установку.
+        private static bool? _cachedChocoInstalled;
+
+        public static async Task<bool> IsChocoInstalledAsync()
         {
-            try
+            if (_cachedChocoInstalled.HasValue) return _cachedChocoInstalled.Value;
+            bool result = await Task.Run(() =>
             {
-                var psi = new ProcessStartInfo("choco.exe", "--version")
+                try
                 {
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                using var p = Process.Start(psi);
-                if (p == null) return false;
-                // Читаем потоки в фоне — иначе дедлок если буфер переполнится
-                var outTask = Task.Run(() => p.StandardOutput.ReadToEnd());
-                var errTask = Task.Run(() => p.StandardError.ReadToEnd());
-                bool exited = p.WaitForExit(5000);
-                if (!exited) { try { p.Kill(); } catch { } }
-                return exited && p.ExitCode == 0;
-            }
-            catch { return false; }
+                    var psi = new ProcessStartInfo("choco.exe", "--version")
+                    {
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var p = Process.Start(psi);
+                    if (p == null) return false;
+                    // Читаем потоки в фоне — иначе дедлок если буфер переполнится
+                    var outTask = Task.Run(() => p.StandardOutput.ReadToEnd());
+                    var errTask = Task.Run(() => p.StandardError.ReadToEnd());
+                    bool exited = p.WaitForExit(5000);
+                    if (!exited) { try { p.Kill(); } catch { } }
+                    return exited && p.ExitCode == 0;
+                }
+                catch { return false; }
+            });
+            _cachedChocoInstalled = result;
+            return result;
         }
 
         public static async Task<bool> InstallChocoAsync(Action<string>? log = null)
@@ -60,7 +71,8 @@ namespace Ven4Tools.Services
                     p.StandardOutput.ReadToEndAsync(),
                     p.StandardError.ReadToEndAsync());
                 await p.WaitForExitAsync();
-                bool ok = IsChocoInstalled();
+                _cachedChocoInstalled = null; // сброс кэша — версия могла измениться
+                bool ok = await IsChocoInstalledAsync();
                 log?.Invoke(ok ? "✅ Chocolatey установлен" : "⚠️ Chocolatey не найден после установки");
                 return ok;
             }
@@ -122,7 +134,7 @@ namespace Ven4Tools.Services
         {
             var results = new List<(string, string, string)>();
             query = CommandLineGuard.SanitizeQuery(query);
-            if (string.IsNullOrEmpty(query) || !IsChocoInstalled()) return results;
+            if (string.IsNullOrEmpty(query) || !await IsChocoInstalledAsync()) return results;
             try
             {
                 var psi = new ProcessStartInfo("choco.exe",
