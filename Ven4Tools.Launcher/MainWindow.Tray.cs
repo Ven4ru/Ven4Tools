@@ -89,7 +89,8 @@ namespace Ven4Tools.Launcher
             _updateService = new UpdateBackgroundService(launcherVersion, () => _clientPath, AddLog)
             {
                 LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
-                LastNotifiedClientVersion   = _lastNotifiedClientVersion
+                LastNotifiedClientVersion   = _lastNotifiedClientVersion,
+                LastNotifiedNotificationId  = _lastNotifiedNotificationId
             };
 
             _updateService.UpdateAvailable += OnUpdateAvailable;
@@ -109,6 +110,9 @@ namespace Ven4Tools.Launcher
             {
                 Dispatcher.Invoke(() =>
                 {
+                    _lastNotifiedNotificationId = notif.Id;
+                    SaveSettings();
+
                     _notifyIcon?.ShowBalloonTip(
                         8000,
                         "Ven4Tools",

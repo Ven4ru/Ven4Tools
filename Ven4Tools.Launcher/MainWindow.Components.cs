@@ -514,7 +514,13 @@ namespace Ven4Tools.Launcher
             }
             catch (Exception ex)
             {
+                // Пробрасываем дальше: раньше сбой здесь молча оставлял dest несозданным,
+                // а Task.WhenAll в InstallWingetAsync считался успешным — установка потом
+                // отменялась с вводящим в заблуждение "подлинность не подтверждена (файл
+                // не найден)" вместо честной причины сбоя. Внешний catch в InstallWingetAsync
+                // уже показывает ошибку пользователю — поведение остаётся fail-closed.
                 AddLog($"⚠ Ошибка скачивания зависимости {url}: {ex.Message}");
+                throw;
             }
         }
 
@@ -643,26 +649,32 @@ namespace Ven4Tools.Launcher
                 // Скачано с доверенного хоста Microsoft по HTTPS, но перед запуском с
                 // повышением прав дополнительно подтверждаем подпись Microsoft — как в
                 // InstallWingetAsync (допускает штатное обновление содержимого по URL).
-                if (!AuthenticodeVerifier.IsSignedByMicrosoft(tempFile, out string sigError))
+                // FileShare.Read держим открытым от проверки до запуска: запрещает
+                // подмену файла другим процессом того же пользователя в этом окне
+                // (запись/удаление заблокированы, чтение для CreateProcess разрешено).
+                using (new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    AddLog($"⛔ Подлинность установщика WebView2 не подтверждена ({sigError}) — установка отменена");
-                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
-                    return;
-                }
-                AddLog("✅ Подпись Microsoft подтверждена (WebView2)");
+                    if (!AuthenticodeVerifier.IsSignedByMicrosoft(tempFile, out string sigError))
+                    {
+                        AddLog($"⛔ Подлинность установщика WebView2 не подтверждена ({sigError}) — установка отменена");
+                        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
+                        return;
+                    }
+                    AddLog("✅ Подпись Microsoft подтверждена (WebView2)");
 
-                AddLog("📦 Установка WebView2 Runtime...");
-                Dispatcher.Invoke(() => txtDownloadStatus.Text = "WebView2: установка...");
-                // Без прав администратора — точечная элевация через UAC (Verb = runas)
-                bool needElevation = !IsRunAsAdmin();
-                var psi = new ProcessStartInfo
-                {
-                    FileName = tempFile, Arguments = "/silent /install",
-                    UseShellExecute = needElevation, CreateNoWindow = !needElevation
-                };
-                if (needElevation) psi.Verb = "runas";
-                using var proc = Process.Start(psi);
-                if (proc != null) await proc.WaitForExitAsync();
+                    AddLog("📦 Установка WebView2 Runtime...");
+                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "WebView2: установка...");
+                    // Без прав администратора — точечная элевация через UAC (Verb = runas)
+                    bool needElevation = !IsRunAsAdmin();
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = tempFile, Arguments = "/silent /install",
+                        UseShellExecute = needElevation, CreateNoWindow = !needElevation
+                    };
+                    if (needElevation) psi.Verb = "runas";
+                    using var proc = Process.Start(psi);
+                    if (proc != null) await proc.WaitForExitAsync();
+                }
                 Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = "WebView2: готово"; });
                 AddLog("✅ WebView2 Runtime установлен");
             }
@@ -728,26 +740,32 @@ namespace Ven4Tools.Launcher
                 // Скачано с доверенного хоста Microsoft по HTTPS, но перед запуском с
                 // повышением прав дополнительно подтверждаем подпись Microsoft — как в
                 // InstallWingetAsync (допускает штатное обновление содержимого по URL).
-                if (!AuthenticodeVerifier.IsSignedByMicrosoft(tempFile, out string sigError))
+                // FileShare.Read держим открытым от проверки до запуска: запрещает
+                // подмену файла другим процессом того же пользователя в этом окне
+                // (запись/удаление заблокированы, чтение для CreateProcess разрешено).
+                using (new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    AddLog($"⛔ Подлинность установщика VC++ не подтверждена ({sigError}) — установка отменена");
-                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
-                    return;
-                }
-                AddLog("✅ Подпись Microsoft подтверждена (VC++)");
+                    if (!AuthenticodeVerifier.IsSignedByMicrosoft(tempFile, out string sigError))
+                    {
+                        AddLog($"⛔ Подлинность установщика VC++ не подтверждена ({sigError}) — установка отменена");
+                        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
+                        return;
+                    }
+                    AddLog("✅ Подпись Microsoft подтверждена (VC++)");
 
-                AddLog("📦 Установка Visual C++ Redistributable...");
-                Dispatcher.Invoke(() => txtDownloadStatus.Text = "VC++: установка...");
-                // Без прав администратора — точечная элевация через UAC (Verb = runas)
-                bool needElevation = !IsRunAsAdmin();
-                var psi = new ProcessStartInfo
-                {
-                    FileName = tempFile, Arguments = "/install /quiet /norestart",
-                    UseShellExecute = needElevation, CreateNoWindow = !needElevation
-                };
-                if (needElevation) psi.Verb = "runas";
-                using var proc = Process.Start(psi);
-                if (proc != null) await proc.WaitForExitAsync();
+                    AddLog("📦 Установка Visual C++ Redistributable...");
+                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "VC++: установка...");
+                    // Без прав администратора — точечная элевация через UAC (Verb = runas)
+                    bool needElevation = !IsRunAsAdmin();
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = tempFile, Arguments = "/install /quiet /norestart",
+                        UseShellExecute = needElevation, CreateNoWindow = !needElevation
+                    };
+                    if (needElevation) psi.Verb = "runas";
+                    using var proc = Process.Start(psi);
+                    if (proc != null) await proc.WaitForExitAsync();
+                }
                 Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = "VC++: готово"; });
                 AddLog("✅ Visual C++ Redistributable установлен");
             }

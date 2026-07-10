@@ -45,7 +45,7 @@ namespace Ven4Tools.Launcher.Services
 #pragma warning disable SYSLIB0057
                 using var certificate = new X509Certificate2(X509Certificate.CreateFromSignedFile(filePath));
 #pragma warning restore SYSLIB0057
-                if (certificate.Subject.Contains("O=Microsoft Corporation", StringComparison.OrdinalIgnoreCase))
+                if (HasExactOrganization(certificate.SubjectName, "Microsoft Corporation"))
                 {
                     error = "";
                     return true;
@@ -59,6 +59,23 @@ namespace Ven4Tools.Launcher.Services
                 error = $"не удалось прочитать сертификат: {ex.Message}";
                 return false;
             }
+        }
+
+        // Сравнение по значению поля O= (Organization) через разбор RDN, а не подстрокой
+        // Subject целиком — Contains("O=Microsoft Corporation") пропустил бы издателя вида
+        // "O=Microsoft Corporation Something", у которого значение O на самом деле другое.
+        private static bool HasExactOrganization(X500DistinguishedName name, string expected)
+        {
+            foreach (string line in name.Format(true).Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                string trimmed = line.Trim().TrimEnd('\r');
+                if (trimmed.StartsWith("O=", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(trimmed[2..], expected, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static class NativeMethods

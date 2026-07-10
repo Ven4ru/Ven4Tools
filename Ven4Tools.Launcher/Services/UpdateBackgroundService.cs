@@ -21,10 +21,10 @@ namespace Ven4Tools.Launcher.Services
         private readonly Func<string> _getClientPath;
         private readonly Action<string>? _log;
         private readonly GitHubService _github = new GitHubService();
-        private string _lastNotificationId = "";
 
         public string LastNotifiedLauncherVersion { get; set; } = "";
         public string LastNotifiedClientVersion { get; set; } = "";
+        public string LastNotifiedNotificationId { get; set; } = "";
 
         // type: "launcher" or "client"
         public event Action<string, UpdateInfo>? UpdateAvailable;
@@ -99,9 +99,9 @@ namespace Ven4Tools.Launcher.Services
                 try
                 {
                     var notif = await NotificationService.GetLatestAsync();
-                    if (notif != null && notif.Id != _lastNotificationId && !string.IsNullOrEmpty(notif.Message))
+                    if (notif != null && notif.Id != LastNotifiedNotificationId && !string.IsNullOrEmpty(notif.Message))
                     {
-                        _lastNotificationId = notif.Id;
+                        LastNotifiedNotificationId = notif.Id;
                         NotificationAvailable?.Invoke(notif);
                     }
                 }

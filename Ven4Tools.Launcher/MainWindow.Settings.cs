@@ -24,6 +24,7 @@ namespace Ven4Tools.Launcher
                         _startMinimized              = settings.StartMinimized;
                         _lastNotifiedLauncherVersion = settings.LastNotifiedLauncherVersion ?? "";
                         _lastNotifiedClientVersion   = settings.LastNotifiedClientVersion   ?? "";
+                        _lastNotifiedNotificationId  = settings.LastNotifiedNotificationId  ?? "";
                     }
                 }
             }
@@ -42,7 +43,8 @@ namespace Ven4Tools.Launcher
                     Autostart                   = _autostart,
                     StartMinimized              = _startMinimized,
                     LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
-                    LastNotifiedClientVersion   = _lastNotifiedClientVersion
+                    LastNotifiedClientVersion   = _lastNotifiedClientVersion,
+                    LastNotifiedNotificationId  = _lastNotifiedNotificationId
                 };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented);
                 // Атомарная запись: сначала во временный файл, затем замена.

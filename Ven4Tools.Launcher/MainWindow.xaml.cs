@@ -44,6 +44,7 @@ namespace Ven4Tools.Launcher
         private readonly bool        _isUiTestMode;
         private string               _lastNotifiedLauncherVersion = "";
         private string               _lastNotifiedClientVersion   = "";
+        private string               _lastNotifiedNotificationId  = "";
         private ToolStripMenuItem?   _trayItemAutostart;
         private ToolStripMenuItem?   _trayItemBgUpdates;
         private WatchdogService?     _watchdog;
@@ -75,10 +76,12 @@ namespace Ven4Tools.Launcher
                     : AppDomain.CurrentDomain.BaseDirectory;
 
             _clientPath = Path.Combine(_installPath, "Ven4Tools_Client");
-            Directory.CreateDirectory(_clientPath);
-            txtInstallPath.Text = _isUiTestMode ? @"C:\Ven4Tools-Test\Client" : _clientPath;
+            // Cleanup — ДО CreateDirectory: иначе target уже существует (пустым) к моменту
+            // проверки, и восстановление .backup-* при прерванной установке никогда не сработает.
             if (!_isUiTestMode)
                 CleanupStaleInstallArtifacts(_clientPath);
+            Directory.CreateDirectory(_clientPath);
+            txtInstallPath.Text = _isUiTestMode ? @"C:\Ven4Tools-Test\Client" : _clientPath;
 
             // Фоновый сервис запускается после установки _clientPath:
             // он читает путь клиента при первой проверке обновлений
@@ -138,6 +141,7 @@ namespace Ven4Tools.Launcher
             public bool    StartMinimized              { get; set; }
             public string? LastNotifiedLauncherVersion { get; set; }
             public string? LastNotifiedClientVersion   { get; set; }
+            public string? LastNotifiedNotificationId  { get; set; }
         }
     }
 }
