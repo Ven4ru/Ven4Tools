@@ -640,6 +640,17 @@ namespace Ven4Tools.Launcher
                 var data = await resp.Content.ReadAsByteArrayAsync(ct);
                 await File.WriteAllBytesAsync(tempFile, data, ct);
 
+                // Скачано с доверенного хоста Microsoft по HTTPS, но перед запуском с
+                // повышением прав дополнительно подтверждаем подпись Microsoft — как в
+                // InstallWingetAsync (допускает штатное обновление содержимого по URL).
+                if (!AuthenticodeVerifier.IsSignedByMicrosoft(tempFile, out string sigError))
+                {
+                    AddLog($"⛔ Подлинность установщика WebView2 не подтверждена ({sigError}) — установка отменена");
+                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
+                    return;
+                }
+                AddLog("✅ Подпись Microsoft подтверждена (WebView2)");
+
                 AddLog("📦 Установка WebView2 Runtime...");
                 Dispatcher.Invoke(() => txtDownloadStatus.Text = "WebView2: установка...");
                 // Без прав администратора — точечная элевация через UAC (Verb = runas)
@@ -713,6 +724,17 @@ namespace Ven4Tools.Launcher
                     }
                     await fs.FlushAsync(ct);
                 }
+
+                // Скачано с доверенного хоста Microsoft по HTTPS, но перед запуском с
+                // повышением прав дополнительно подтверждаем подпись Microsoft — как в
+                // InstallWingetAsync (допускает штатное обновление содержимого по URL).
+                if (!AuthenticodeVerifier.IsSignedByMicrosoft(tempFile, out string sigError))
+                {
+                    AddLog($"⛔ Подлинность установщика VC++ не подтверждена ({sigError}) — установка отменена");
+                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
+                    return;
+                }
+                AddLog("✅ Подпись Microsoft подтверждена (VC++)");
 
                 AddLog("📦 Установка Visual C++ Redistributable...");
                 Dispatcher.Invoke(() => txtDownloadStatus.Text = "VC++: установка...");

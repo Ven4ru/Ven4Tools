@@ -12,6 +12,11 @@ namespace Ven4Tools.Services
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Ven4Tools", "pending_feedback.json");
 
+        // Единый переиспользуемый HttpClient на уровне класса, как во всех прочих
+        // сервисах проекта: пересоздание клиента на каждый вызов исчерпывает сокеты.
+        private static readonly System.Net.Http.HttpClient _http =
+            new() { Timeout = TimeSpan.FromSeconds(10) };
+
         public static void Write(int rating, string text)
         {
             try
@@ -69,7 +74,6 @@ namespace Ven4Tools.Services
                 var record = Read();
                 if (record == null || record.Reported) return;
 
-                using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) };
                 var payload = new System.Net.Http.FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("action",     "submit_feedback"),
@@ -81,7 +85,7 @@ namespace Ven4Tools.Services
                     new KeyValuePair<string, string>("timestamp",  record.Timestamp),
                 });
 
-                var response = await http.PostAsync(ApiConfig.DbApi, payload);
+                var response = await _http.PostAsync(ApiConfig.DbApi, payload);
 
                 // Сервер всегда отвечает HTTP 200 — успех определяем по телу ответа
                 if (!response.IsSuccessStatusCode) return;

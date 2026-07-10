@@ -26,13 +26,23 @@ namespace Ven4Tools.Services
                 var psi = new ProcessStartInfo
                 {
                     FileName = "winget.exe",
-                    Arguments = $"search --name \"{query}\" --source winget --accept-source-agreements",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     StandardOutputEncoding = System.Text.Encoding.UTF8
                 };
+                // Аргументы добавляем отдельными токенами через ArgumentList: .NET сам
+                // корректно экранирует каждый, поэтому пользовательский ввод не может
+                // «вырваться» из кавычек в посторонние winget-флаги — устойчиво даже при
+                // ослаблении набора символов в CommandLineGuard (тот же надёжный подход,
+                // что и в WingetRunner), в отличие от прямой строковой интерполяции.
+                psi.ArgumentList.Add("search");
+                psi.ArgumentList.Add("--name");
+                psi.ArgumentList.Add(query);
+                psi.ArgumentList.Add("--source");
+                psi.ArgumentList.Add("winget");
+                psi.ArgumentList.Add("--accept-source-agreements");
 
                 using var process = Process.Start(psi);
                 if (process == null) return results;
@@ -91,13 +101,24 @@ namespace Ven4Tools.Services
                 var psi = new ProcessStartInfo
                 {
                     FileName = "winget.exe",
-                    Arguments = $"show --id \"{id}\" -e --source winget --accept-source-agreements",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     StandardOutputEncoding = System.Text.Encoding.UTF8
                 };
+                // Аргументы добавляем отдельными токенами через ArgumentList: .NET сам
+                // корректно экранирует каждый, поэтому пользовательский ввод не может
+                // «вырваться» из кавычек в посторонние winget-флаги — устойчиво даже при
+                // ослаблении набора символов в CommandLineGuard (тот же надёжный подход,
+                // что и в WingetRunner), в отличие от прямой строковой интерполяции.
+                psi.ArgumentList.Add("show");
+                psi.ArgumentList.Add("--id");
+                psi.ArgumentList.Add(id);
+                psi.ArgumentList.Add("-e");
+                psi.ArgumentList.Add("--source");
+                psi.ArgumentList.Add("winget");
+                psi.ArgumentList.Add("--accept-source-agreements");
 
                 using var process = Process.Start(psi);
                 if (process == null) return (null, null);
