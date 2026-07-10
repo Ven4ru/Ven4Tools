@@ -57,13 +57,29 @@ namespace Ven4Tools.Launcher
                 string stagingPrefix = $".{clientName}.staging-";
                 string backupPrefix = $"{clientName}.backup-";
 
-                foreach (string dir in Directory.EnumerateDirectories(parent))
+                // Материализуем список: ниже возможно перемещение бэкапа обратно в
+                // папку клиента (внутри того же родителя), а менять каталог во время
+                // ленивого перечисления небезопасно.
+                foreach (string dir in Directory.EnumerateDirectories(parent).ToList())
                 {
                     string name = Path.GetFileName(dir);
                     bool isStaging = name.StartsWith(stagingPrefix, StringComparison.OrdinalIgnoreCase);
                     bool isBackup = name.StartsWith(backupPrefix, StringComparison.OrdinalIgnoreCase);
                     if (!isStaging && !isBackup) continue;
 
+                    // Есть бэкап предыдущей версии, а самой папки клиента нет — значит
+                    // установку прервали между Move(target→backup) и Move(staging→target).
+                    // Это не «мусор»: в бэкапе лежит единственная рабочая версия, поэтому
+                    // восстанавливаем её обратно в target, а не удаляем.
+                    if (isBackup && !Directory.Exists(fullClientPath))
+                    {
+                        try { Directory.Move(dir, fullClientPath); }
+                        catch { /* не удалось восстановить — оставляем бэкап на месте, не удаляя */ }
+                        continue;
+                    }
+
+                    // target на месте (установка завершилась) либо это staging —
+                    // такой каталог действительно осиротевший, его можно удалить.
                     try { Directory.Delete(dir, recursive: true); }
                     catch { /* занято/уже удалено — не мешаем запуску лаунчера */ }
                 }
