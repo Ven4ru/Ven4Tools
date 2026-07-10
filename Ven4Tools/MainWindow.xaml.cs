@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
 using Ven4Tools.Shared;
@@ -33,6 +34,8 @@ namespace Ven4Tools
         private HistoryTab?    _historyTab;
         private DebloaterTab?  _debloaterTab;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
+        private DispatcherTimer? _activeTasksTimer;
+        private bool? _lastActiveTasksBusy;
 
         public MainWindow()
         {
@@ -75,6 +78,30 @@ namespace Ven4Tools
                 WindowsUpdateBackgroundService.CountChanged += OnWindowsUpdateCountChanged;
                 OnWindowsUpdateCountChanged();
             };
+            Loaded += (_, _) =>
+            {
+                // Пилюля «Нет активных задач» отражает общий семафор установки
+                // (InstallationService.IsBusy) — тот же, что используют каталог,
+                // история, «Установленные» и Windows Update. Поллинг, а не событие:
+                // WaitAsync/Release разбросаны по многим местам, событие пришлось бы
+                // добавлять в каждое — таймер безопаснее и ничего не трогает.
+                _activeTasksTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+                _activeTasksTimer.Tick += (_, _) => UpdateActiveTasksIndicator();
+                _activeTasksTimer.Start();
+                UpdateActiveTasksIndicator();
+            };
+        }
+
+        private void UpdateActiveTasksIndicator()
+        {
+            bool busy = InstallationService.IsBusy;
+            if (_lastActiveTasksBusy == busy) return;
+            _lastActiveTasksBusy = busy;
+
+            txtActiveTasks.Text = busy ? "Выполняется установка" : "Нет активных задач";
+            var brush = busy ? (Brush)FindResource("BrandGreen") : (Brush)FindResource("TextSecondary");
+            txtActiveTasks.Foreground = brush;
+            dotActiveTasks.Fill = brush;
         }
 
         private void OnConnectivityChanged(bool online) =>
@@ -94,6 +121,7 @@ namespace Ven4Tools
             ConnectivityMonitor.StatusChanged -= OnConnectivityChanged;
             WindowsUpdateBackgroundService.CountChanged -= OnWindowsUpdateCountChanged;
             UpdateBackgroundService.UnregisterNotifier();
+            _activeTasksTimer?.Stop();
             base.OnClosed(e);
         }
 
