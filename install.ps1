@@ -9,43 +9,46 @@ Write-Host "  Ven4Tools  |  ven4tools.ru" -ForegroundColor Cyan
 Write-Host ""
 
 try {
-    Write-Host "  Fetching latest version..." -ForegroundColor Gray
+    Write-Host "  Получение последней версии..." -ForegroundColor Gray
     $api = Invoke-RestMethod 'https://ven4tools.ru/api/latest_version.php' -UseBasicParsing
     $url = $api.downloads.launcher
     $ver = $api.version
 
-    if (-not $url) { throw 'Failed to get installer URL' }
+    if (-not $url) { throw 'Не удалось получить ссылку на установщик' }
 
-    Write-Host "  Version: $ver" -ForegroundColor White
-    Write-Host "  Downloading..." -ForegroundColor Gray
+    Write-Host "  Версия: $ver" -ForegroundColor White
+    Write-Host "  Загрузка..." -ForegroundColor Gray
 
     $tmp = Join-Path $env:TEMP 'Ven4Tools.Setup.exe'
     Invoke-WebRequest $url -OutFile $tmp -UseBasicParsing
 
-    # Проверка целостности, если сервер отдаёт хеш. Пока launcher_sha256 не
-    # реализован в latest_version.php — блок условный и не ломает установку;
-    # включится автоматически, как только сервер начнёт отдавать хеш.
+    # Проверка целостности, если сервер отдаёт хеш. Блок условный — не ломает
+    # установку, если сервер вдруг перестанет отдавать хеш.
     if ($api.downloads.launcher_sha256) {
-        Write-Host "  Verifying..." -ForegroundColor Gray
+        Write-Host "  Проверка целостности..." -ForegroundColor Gray
         $actual = (Get-FileHash $tmp -Algorithm SHA256).Hash
         if ($actual -ne $api.downloads.launcher_sha256.ToUpper()) {
             Remove-Item $tmp -Force
-            throw "SHA256 mismatch — installation aborted"
+            throw "Несовпадение SHA256 — установка прервана"
         }
     }
 
-    Write-Host "  Installing..." -ForegroundColor Gray
+    Write-Host "  Установка..." -ForegroundColor Gray
     $proc = Start-Process $tmp -ArgumentList '/S' -PassThru -Wait
     if (Test-Path $tmp) { Remove-Item $tmp -Force }
 
+    if ($proc.ExitCode -ne 0) {
+        throw "Установщик завершился с кодом $($proc.ExitCode)"
+    }
+
     Write-Host ""
-    Write-Host "  Done! Ven4Tools installed." -ForegroundColor Green
-    Write-Host "  Launch from Start Menu or Desktop shortcut." -ForegroundColor DarkGray
+    Write-Host "  Готово! Ven4Tools установлен." -ForegroundColor Green
+    Write-Host "  Запустите из меню «Пуск» или с ярлыка на рабочем столе." -ForegroundColor DarkGray
     Write-Host ""
 }
 catch {
     Write-Host ""
-    Write-Host "  Error: $_" -ForegroundColor Red
+    Write-Host "  Ошибка: $_" -ForegroundColor Red
     Write-Host ""
     exit 1
 }
