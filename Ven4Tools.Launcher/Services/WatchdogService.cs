@@ -55,6 +55,11 @@ namespace Ven4Tools.Launcher.Services
                 var beat = ReadHeartbeat();
                 if (beat == null) return;
 
+                // heartbeat.json может остаться от прошлого запуска клиента и быть
+                // устаревшим уже на момент первого тика — сверяем PID, чтобы не поднять
+                // ложный "завис" по чужому (прошлому) процессу.
+                if (beat.Value.pid != _process.Id) return;
+
                 double age = (DateTime.UtcNow - beat.Value.timestamp).TotalSeconds;
                 if (age < FreezeTimeoutSec) return;
 
