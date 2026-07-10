@@ -1,322 +1,183 @@
 <Window x:Class="Ven4Tools.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:views="clr-namespace:Ven4Tools.Views.Tabs"
-        xmlns:local="clr-namespace:Ven4Tools.Views.Tabs"
-        Title="Ven4Tools" Height="900" Width="1280" MinHeight="620" MinWidth="960"
+        Title="Ven4Tools" Height="900" Width="1280" MinHeight="680" MinWidth="980"
         WindowStartupLocation="CenterScreen" Background="{DynamicResource WindowBackground}"
-        Closing="Window_Closing_Extended">
-    
+        Closing="Window_Closing_Extended" FontFamily="Segoe UI Variable Text, Segoe UI"
+        UseLayoutRounding="True" SnapsToDevicePixels="True">
     <Window.Resources>
-    <!-- Стиль для кнопок навигации -->
-    <Style x:Key="NavButtonStyle" TargetType="Button">
-        <Setter Property="Height" Value="48"/>
-        <Setter Property="HorizontalAlignment" Value="Stretch"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border Background="{TemplateBinding Background}" 
-                            BorderThickness="0,0,0,1" 
-                            BorderBrush="{DynamicResource BorderBrush}">
-                        <Grid Margin="16,0">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock x:Name="Icon" 
-                                           Text="{TemplateBinding Tag}" 
-                                           Margin="0,0,12,0"
-                                           FontSize="18"
-                                           VerticalAlignment="Center"
-                                           Foreground="{TemplateBinding Foreground}"/>
-                                <TextBlock x:Name="ContentText" 
-                                           Text="{TemplateBinding Content}" 
-                                           FontSize="14"
-                                           FontWeight="Medium"
-                                           VerticalAlignment="Center"
-                                           Foreground="{TemplateBinding Foreground}"/>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#0A3555"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="13,0"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="5">
+                            <Grid Margin="10,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{TemplateBinding Tag}" FontFamily="Segoe Fluent Icons"
+                                           FontSize="15" Foreground="{TemplateBinding Foreground}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"
+                                           VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#144ADE80"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ActiveNavButtonStyle" TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+            <Setter Property="Background" Value="#1E4ADE80"/>
+            <Setter Property="Foreground" Value="{StaticResource BrandGreen}"/>
+        </Style>
+        <Style x:Key="SectionLabel" TargetType="TextBlock" BasedOn="{StaticResource EyebrowStyle}">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="Margin" Value="12,12,0,5"/>
+        </Style>
+    </Window.Resources>
 
-
-
-    <!-- Стиль для активной кнопки навигации -->
-    <Style x:Key="ActiveNavButtonStyle" TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
-        <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
-        <Setter Property="BorderThickness" Value="0,0,3,0"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-        <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
-    </Style>
-</Window.Resources>
-    
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="260"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        
-        <!-- Левая панель навигации -->
-        <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                
-                <!-- Логотип и название -->
-                <Border Grid.Row="0" Height="80" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                    <Grid>
-                        <!-- Акцентная полоса слева -->
-                        <Border Width="4" HorizontalAlignment="Left" Background="{DynamicResource AccentColor}" CornerRadius="0,2,2,0"/>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,16,0">
-                            <Image Source="/icon.ico" Width="32" Height="32" Margin="0,0,12,0"/>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Ven4Tools" FontSize="18" FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimary}"/>
-                                <TextBlock Text="Setup Assistant" FontSize="10"
-                                           Foreground="{DynamicResource AccentColor}"
-                                           Opacity="0.85"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-                
-                <!-- Кнопки навигации + лог + маскот -->
-                <Grid Grid.Row="1">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="228"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Row="0" Margin="0,20,0,0">
-                        <Button x:Name="btnCatalogTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="📦"
-                                Content="Каталог"
-                                Click="NavigateToCatalog"/>
-                        <Button x:Name="btnInstalledTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="🖥️"
-                                Content="Установленные"
-                                Click="NavigateToInstalled"/>
-                        <Button x:Name="btnSystemTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="⚙️"
-                                Content="Система"
-                                Click="NavigateToSystem"/>
+        <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
+            <Grid Margin="12,0">
+                <Grid.RowDefinitions><RowDefinition Height="80"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Border Width="3" Height="40" HorizontalAlignment="Left" Background="{StaticResource BrandGreen}"
+                            CornerRadius="2" Effect="{StaticResource BrandAuraEffect}"/>
+                    <StackPanel VerticalAlignment="Center" Margin="15,0,0,0">
+                        <TextBlock FontSize="19" FontWeight="Bold"><Run Text="Ven4"/><Run Text="Tools" Foreground="{StaticResource BrandGreen}"/></TextBlock>
+                        <TextBlock Text="WINDOWS TOOLKIT" Style="{StaticResource EyebrowStyle}" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="ПРИЛОЖЕНИЯ" Style="{StaticResource SectionLabel}"/>
+                        <Button x:Name="btnCatalogTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE71D;" Content="Каталог" Click="NavigateToCatalog"/>
+                        <Button x:Name="btnInstalledTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE896;" Content="Установленные" Click="NavigateToInstalled"/>
+
+                        <TextBlock Text="WINDOWS И СИСТЕМА" Style="{StaticResource SectionLabel}"/>
+                        <Button x:Name="btnSystemTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE713;" Content="Настройки" Click="NavigateToSystem"/>
                         <Grid>
-                            <Button x:Name="btnWindowsUpdateTab"
-                                    Style="{StaticResource NavButtonStyle}"
-                                    Tag="🛡️"
-                                    Content="Windows Update"
-                                    Click="NavigateToWindowsUpdate"/>
-                            <Border x:Name="badgeWindowsUpdateCount"
-                                    Background="#E74C3C" CornerRadius="8"
-                                    Width="18" Height="16"
-                                    HorizontalAlignment="Right" VerticalAlignment="Top"
-                                    Margin="0,4,8,0" Visibility="Collapsed">
-                                <TextBlock x:Name="txtWindowsUpdateBadge" Text="0"
-                                           FontSize="10" FontWeight="Bold" Foreground="White"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Button x:Name="btnWindowsUpdateTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE72E;" Content="Windows Update" Click="NavigateToWindowsUpdate"/>
+                            <Border x:Name="badgeWindowsUpdateCount" Background="{StaticResource StatusDanger}" CornerRadius="7"
+                                    MinWidth="16" Height="15" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Margin="0,0,8,0" Visibility="Collapsed">
+                                <TextBlock x:Name="txtWindowsUpdateBadge" Text="0" FontSize="9" FontWeight="Bold" Foreground="White"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0"/>
                             </Border>
                         </Grid>
-                        <Button x:Name="btnOfficeTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="📁"
-                                Content="Office"
-                                Click="NavigateToOffice"/>
-                        <Button x:Name="btnActivationTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="🔑"
-                                Content="Активация"
-                                Click="NavigateToActivation"/>
-                        <Button x:Name="btnNetworkTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="🌐"
-                                Content="Сеть"
-                                Click="NavigateToNetwork"/>
-                        <Button x:Name="btnDebloaterTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="🧹"
-                                Content="Очистка"
-                                Click="NavigateToDebloater"/>
-                        <Button x:Name="btnHistoryTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="📋"
-                                Content="История"
-                                Click="NavigateToHistory"/>
-                        <Button x:Name="btnAboutTab"
-                                Style="{StaticResource NavButtonStyle}"
-                                Tag="ℹ️"
-                                Content="О программе"
-                                Click="NavigateToAbout"/>
-                    </StackPanel>
+                        <Button x:Name="btnOfficeTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE8A5;" Content="Office" Click="NavigateToOffice"/>
+                        <Button x:Name="btnActivationTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE8D7;" Content="Лицензия" Click="NavigateToActivation"/>
+                        <Button x:Name="btnDebloaterTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE74D;" Content="Очистка" Click="NavigateToDebloater"/>
 
-                    <!-- Лог активности в сайдбаре -->
-                    <Grid Grid.Row="1">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        <Border Grid.Row="0" Padding="10,5"
-                                Background="{DynamicResource CardBackground}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,1,0,1">
-                            <DockPanel>
-                                <Button x:Name="btnClearGlobalLog" Content="✕"
-                                        DockPanel.Dock="Right"
-                                        Width="20" Height="20" Padding="0"
-                                        FontSize="10"
-                                        Background="Transparent"
-                                        Foreground="{DynamicResource TextSecondary}"
-                                        BorderThickness="0"
-                                        Click="BtnClearGlobalLog_Click"/>
-                                <TextBlock Text="📋 Лог"
-                                           FontSize="11" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextSecondary}"
-                                           VerticalAlignment="Center"/>
-                            </DockPanel>
+                        <TextBlock Text="СЕРВИС" Style="{StaticResource SectionLabel}"/>
+                        <Button x:Name="btnNetworkTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE968;" Content="Сеть" Click="NavigateToNetwork"/>
+                        <Button x:Name="btnHistoryTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE81C;" Content="История" Click="NavigateToHistory"/>
+                        <Button x:Name="btnAboutTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE946;" Content="О программе" Click="NavigateToAbout"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <StackPanel Grid.Row="2" Margin="0,8,0,12">
+                    <Image x:Name="imgMascot" Visibility="Collapsed" MaxHeight="110" MaxWidth="150" Margin="10,0,10,8" Stretch="Uniform"/>
+                    <Border Style="{StaticResource PillStatusStyle}" Margin="0,0,0,6">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="7" Height="7" Fill="{StaticResource StatusSuccess}" Margin="0,0,7,0"/>
+                                <TextBlock Text="Интернет доступен" FontSize="10" Foreground="{StaticResource StatusSuccess}"/>
+                            </StackPanel>
+                            <TextBlock Text="3.6.1" HorizontalAlignment="Right" FontFamily="Cascadia Mono, Consolas" FontSize="9" Foreground="{DynamicResource TextSecondary}"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1" Background="{DynamicResource ContentBackground}" AllowDrop="True"
+              DragEnter="MainArea_DragEnter" DragOver="MainArea_DragOver" DragLeave="MainArea_DragLeave" Drop="MainArea_Drop">
+            <Grid.RowDefinitions><RowDefinition Height="58"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="#B80D1018" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,0">
+                <Grid>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Рабочее пространство" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBlock Text="Управление приложениями и Windows" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Border Style="{StaticResource PillStatusStyle}" Margin="0,0,8,0">
+                            <TextBlock Text="Нет активных задач" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
                         </Border>
-                        <ListBox x:Name="lstGlobalLog" Grid.Row="1"
-                                 Background="{DynamicResource SidebarBackground}"
-                                 BorderThickness="0"
-                                 SelectionMode="Extended"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                 VirtualizingPanel.IsVirtualizing="True"
-                                 VirtualizingPanel.ScrollUnit="Pixel"
-                                 HorizontalContentAlignment="Stretch">
+                        <Button Content="&#xE713;" Style="{StaticResource IconButtonStyle}" ToolTip="Настройки"
+                                Click="NavigateToSystem"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border x:Name="pnlPins" Grid.Row="1" Background="{DynamicResource SidebarBackground}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                    Padding="14,7" Visibility="Collapsed">
+                <DockPanel>
+                    <TextBlock Text="&#xE840;" FontFamily="Segoe Fluent Icons" Margin="0,0,8,0" Foreground="{StaticResource BrandGreen}"/>
+                    <WrapPanel x:Name="wrapPins"/>
+                </DockPanel>
+            </Border>
+
+            <ContentControl x:Name="MainFrame" Grid.Row="2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+
+            <Expander Grid.Row="3" Header="Центр активности" IsExpanded="False" Margin="16,8,16,12">
+                <Border Height="150" Margin="0,7,0,0" Background="{StaticResource SurfaceCard}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6">
+                    <Grid>
+                        <Button x:Name="btnClearGlobalLog" Content="&#xE74D;" Style="{StaticResource IconButtonStyle}"
+                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,5,5,0"
+                                Background="Transparent" Panel.ZIndex="2" ToolTip="Очистить журнал" Click="BtnClearGlobalLog_Click"/>
+                        <ListBox x:Name="lstGlobalLog" Margin="6" Background="Transparent" BorderThickness="0"
+                                 SelectionMode="Extended" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 VirtualizingPanel.IsVirtualizing="True" HorizontalContentAlignment="Stretch">
                             <ListBox.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="📋  Копировать" Click="CopyGlobalLog_Click"/>
-                                    <MenuItem Header="🗑️  Очистить" Click="BtnClearGlobalLog_Click"/>
-                                </ContextMenu>
+                                <ContextMenu><MenuItem Header="Копировать" Click="CopyGlobalLog_Click"/><MenuItem Header="Очистить" Click="BtnClearGlobalLog_Click"/></ContextMenu>
                             </ListBox.ContextMenu>
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                    <Setter Property="Padding" Value="0"/>
-                                    <Setter Property="Margin" Value="0"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="ListBoxItem">
-                                                <Border x:Name="Bd" Background="Transparent">
-                                                    <ContentPresenter/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsSelected" Value="True">
-                                                        <Setter TargetName="Bd" Property="Background" Value="#1A3A5A"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Border BorderThickness="2,0,0,0" BorderBrush="{Binding AccentBrush}"
-                                            Padding="6,2,4,2" Margin="0,1">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{Binding Time}"
-                                                       FontFamily="Consolas" FontSize="9"
-                                                       Foreground="#3A8AAA" VerticalAlignment="Center"
-                                                       Margin="0,0,5,0"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding Icon}"
-                                                       FontSize="11" Foreground="{Binding IconBrush}"
-                                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding Message}"
-                                                       FontSize="10" Foreground="{DynamicResource TextPrimary}"
-                                                       VerticalAlignment="Center" TextWrapping="Wrap"/>
-                                        </Grid>
-                                    </Border>
+                                    <Grid Margin="4,2,36,2">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="62"/><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Time}" FontFamily="Cascadia Mono, Consolas" FontSize="9" Foreground="{DynamicResource TextSecondary}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Icon}" FontSize="10" Foreground="{Binding IconBrush}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Message}" FontSize="10" TextWrapping="Wrap"/>
+                                    </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </Grid>
-
-                    <Image x:Name="imgMascot" Grid.Row="2"
-                           Visibility="Collapsed"
-                           MaxHeight="190" MaxWidth="190"
-                           Margin="20,0,20,16"
-                           Stretch="Uniform"
-                           VerticalAlignment="Bottom"
-                           HorizontalAlignment="Center"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
-                </Grid>
-                
-            </Grid>
-        </Border>
-        
-        <!-- Правая область контента -->
-        <Border Grid.Column="1" Background="{DynamicResource ContentBackground}"
-                AllowDrop="True"
-                DragEnter="MainArea_DragEnter"
-                DragOver="MainArea_DragOver"
-                DragLeave="MainArea_DragLeave"
-                Drop="MainArea_Drop">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <!-- Quick pins strip -->
-                <Border x:Name="pnlPins" Grid.Row="0"
-                        Background="{DynamicResource SidebarBackground}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="0,0,0,1"
-                        Padding="10,6"
-                        Visibility="Collapsed">
-                    <DockPanel>
-                        <TextBlock Text="📌" FontSize="13" VerticalAlignment="Center"
-                                   Margin="0,0,8,0"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   DockPanel.Dock="Left"/>
-                        <WrapPanel x:Name="wrapPins" VerticalAlignment="Center"/>
-                    </DockPanel>
                 </Border>
+            </Expander>
 
-                <!-- Drag overlay -->
-                <Border x:Name="pnlDropOverlay" Grid.Row="0" Grid.RowSpan="2"
-                        Visibility="Collapsed" Panel.ZIndex="99"
-                        Background="#AA0B1D2E"
-                        BorderBrush="{DynamicResource AccentColor}"
-                        BorderThickness="4" CornerRadius="8" Margin="8">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Отпустите для добавления установщика"
-                                   FontSize="18" FontWeight="Bold"
-                                   Foreground="White" HorizontalAlignment="Center"
-                                   Margin="0,12,0,0"/>
-                    </StackPanel>
-                </Border>
-
-                <ContentControl x:Name="MainFrame" Grid.Row="1"
-                                HorizontalContentAlignment="Stretch"
-                                VerticalContentAlignment="Stretch"/>
-
-            </Grid>
-        </Border>
+            <Border x:Name="pnlDropOverlay" Grid.Row="0" Grid.RowSpan="4" Visibility="Collapsed" Panel.ZIndex="99"
+                    Background="#E60A0A14" BorderBrush="{StaticResource BrandGreen}" BorderThickness="2" CornerRadius="8" Margin="12">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons" FontSize="44" Foreground="{StaticResource BrandGreen}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Добавить локальный установщик" FontSize="19" FontWeight="SemiBold" Margin="0,14,0,0"/>
+                    <TextBlock Text="Отпустите файл, чтобы продолжить" Foreground="{DynamicResource TextSecondary}" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
