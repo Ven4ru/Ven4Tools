@@ -17,6 +17,11 @@ namespace Ven4Tools.Services
         public static readonly string SessionId =
             Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
 
+        // Единый переиспользуемый HttpClient на уровне класса, как во всех прочих
+        // сервисах проекта: пересоздание клиента на каждый вызов исчерпывает сокеты.
+        private static readonly System.Net.Http.HttpClient _http =
+            new() { Timeout = TimeSpan.FromSeconds(10) };
+
         public static void Write(Exception ex)
         {
             try
@@ -108,7 +113,6 @@ namespace Ven4Tools.Services
                 var report = Read();
                 if (report == null || report.Reported || !report.SendApproved) return;
 
-                using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) };
                 var payload = new System.Net.Http.FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("action",     "crash_report"),
@@ -121,7 +125,7 @@ namespace Ven4Tools.Services
                     new KeyValuePair<string, string>("trace",      report.StackTrace ?? ""),
                 });
 
-                var response = await http.PostAsync(ApiConfig.DbApi, payload);
+                var response = await _http.PostAsync(ApiConfig.DbApi, payload);
 
                 // Сервер всегда отвечает HTTP 200 — даже при ошибке или
                 // несуществующем action. Поэтому проверяем не статус,
