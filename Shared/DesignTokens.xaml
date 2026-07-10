@@ -1,0 +1,53 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Shared desktop interpretation of the ven4tools.ru visual language. -->
+    <SolidColorBrush x:Key="SurfaceBase" Color="#0A0A14"/>
+    <SolidColorBrush x:Key="SurfaceScene" Color="#0D1018"/>
+    <SolidColorBrush x:Key="SurfaceCard" Color="#11161F"/>
+    <SolidColorBrush x:Key="SurfaceRaised" Color="#151C27"/>
+    <SolidColorBrush x:Key="BrandGreen" Color="#4ADE80"/>
+    <SolidColorBrush x:Key="BrandGreenDeep" Color="#0D4F3C"/>
+    <SolidColorBrush x:Key="TextStrong" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="TextSoft" Color="#AAB8CE"/>
+    <SolidColorBrush x:Key="TextMuted" Color="#7A8FA8"/>
+    <SolidColorBrush x:Key="StrokeSubtle" Color="#1E2A38"/>
+    <SolidColorBrush x:Key="StatusSuccess" Color="#4ADE80"/>
+    <SolidColorBrush x:Key="StatusWarning" Color="#FBBF24"/>
+    <SolidColorBrush x:Key="StatusDanger" Color="#F87171"/>
+    <SolidColorBrush x:Key="StatusInfo" Color="#38BDF8"/>
+
+    <DropShadowEffect x:Key="BrandAuraEffect"
+                      Color="#4ADE80" BlurRadius="24" ShadowDepth="0" Opacity="0.22"/>
+    <DropShadowEffect x:Key="PanelShadowEffect"
+                      Color="#000000" BlurRadius="20" ShadowDepth="4" Opacity="0.35"/>
+
+    <Style x:Key="PageTitleStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI"/>
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+
+    <Style x:Key="EyebrowStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource BrandGreen}"/>
+    </Style>
+
+    <Style x:Key="IconButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Width" Value="34"/>
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+        <Setter Property="FontSize" Value="15"/>
+    </Style>
+
+    <Style x:Key="PillStatusStyle" TargetType="Border">
+        <Setter Property="Background" Value="#164ADE80"/>
+        <Setter Property="BorderBrush" Value="#404ADE80"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+</ResourceDictionary>

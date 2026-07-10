@@ -13,12 +13,11 @@
         <!-- Header -->
         <Grid Grid.Row="0" Margin="0,0,0,12">
             <StackPanel>
-                <TextBlock Text="🛡️ Обновления Windows" FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource TextPrimary}"/>
+                <TextBlock Text="Обновления Windows" Style="{StaticResource PageTitleStyle}"/>
                 <TextBlock x:Name="txtLastChecked" Text="Обновления ещё не проверялись"
                            FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
             </StackPanel>
-            <Button x:Name="btnCheck" Content="🔄 Проверить обновления" Height="34" Padding="16,0"
+            <Button x:Name="btnCheck" Content="Проверить обновления" Height="34" Padding="16,0"
                     HorizontalAlignment="Right" VerticalAlignment="Top"
                     Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
@@ -33,7 +32,9 @@
                   BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
 
         <!-- Footer: выбор + установка -->
-        <Grid Grid.Row="3" Margin="0,12,0,0">
+        <Border Grid.Row="3" Margin="0,12,0,0" Padding="12,8" Background="{StaticResource SurfaceCard}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -42,8 +43,9 @@
                        VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
             <Button x:Name="btnInstall" Grid.Column="1" Content="Установить выбранные" Height="38"
                     Padding="24,0" IsEnabled="False"
-                    Background="{DynamicResource AccentColor}" Foreground="White" FontWeight="SemiBold"
+                    Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="SemiBold"
                     BorderThickness="0" Click="BtnInstall_Click"/>
         </Grid>
+        </Border>
     </Grid>
 </UserControl>

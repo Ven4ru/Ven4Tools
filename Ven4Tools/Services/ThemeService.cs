@@ -42,15 +42,15 @@ namespace Ven4Tools.Services
         public static void ApplyTeal()
         {
             var r = Application.Current.Resources;
-            r["WindowBackground"]  = Brush(10,  20,  32);
-            r["SidebarBackground"] = Brush(10,  28,  45);
-            r["ContentBackground"] = Brush(14,  36,  56);
-            r["CardBackground"]    = Brush(18,  46,  70);
-            r["TextPrimary"]       = Brush(220, 242, 242);
-            r["TextSecondary"]     = Brush(85,  148, 170);
-            r["BorderBrush"]       = Brush(26,  62,  88);
-            r["HeaderForeground"]  = Brush(220, 242, 242);
-            r["AccentColor"]       = Brush(0,   195, 170);
+            r["WindowBackground"]  = Brush(10,  10,  20);
+            r["SidebarBackground"] = Brush(13,  16,  24);
+            r["ContentBackground"] = Brush(10,  10,  20);
+            r["CardBackground"]    = Brush(17,  22,  31);
+            r["TextPrimary"]       = Brush(226, 232, 240);
+            r["TextSecondary"]     = Brush(170, 184, 206);
+            r["BorderBrush"]       = Brush(30,  42,  56);
+            r["HeaderForeground"]  = Brush(226, 232, 240);
+            r["AccentColor"]       = Brush(74,  222, 128);
         }
 
         public static void ApplyWeb()
