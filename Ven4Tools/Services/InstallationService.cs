@@ -68,6 +68,19 @@ namespace Ven4Tools.Services
                     progress.Report(appProgress);
                     Log($"📂 {app.DisplayName}: локальный файл {app.LocalInstallerPath}");
 
+                    // apps.json (LocalAppData) доступен на запись любому не-elevated процессу
+                    // пользователя — перед runas-запуском сверяем хеш, зафиксированный при
+                    // добавлении (LocalInstallerDialog), чтобы обнаружить подмену файла/пути.
+                    if (HashHelper.HasExpectedHash(app.Sha256) &&
+                        !await HashHelper.VerifyHashAsync(app.LocalInstallerPath, app.Sha256!))
+                    {
+                        appProgress.Status = "❌ Файл изменён с момента добавления";
+                        progress.Report(appProgress);
+                        Log($"❌ {app.DisplayName}: SHA256 локального файла не совпадает с зафиксированным при добавлении");
+                        InstallFailureService.Append(app.DisplayName, app.Id, "local", "SHA256 не совпадает — файл изменён с момента добавления");
+                        return (false, "Файл изменён с момента добавления", appProgress);
+                    }
+
                     bool isMsi = app.LocalInstallerPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
                     string locArgLocal = BuildInstallerLocationArg(isMsi, installDrive, app.DisplayName);
                     // SilentArgs может приходить извне (каталог, ручной ввод) — валидируем
@@ -256,7 +269,7 @@ namespace Ven4Tools.Services
                             appProgress.Percentage = 15;
                             progress.Report(appProgress);
 
-                            bool chocoOk = PackageManagerService.IsChocoInstalled()
+                            bool chocoOk = await PackageManagerService.IsChocoInstalledAsync()
                                 || (!token.IsCancellationRequested
                                     && confirmPmInstall != null
                                     && await confirmPmInstall("Chocolatey")
@@ -516,47 +529,40 @@ namespace Ven4Tools.Services
         private async Task<bool> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null)
         {
             var profile = ProfileService.Current;
-            string silent = profile.SilentInstall ? " --silent" : "";
 
             // Применяем выбранный диск установки. Для несистемного диска —
             // «{диск}:\Program Files»; иначе используем DefaultInstallFolder из профиля.
-            string location;
+            // Обе ветки теперь валидируются одинаково (раньше folderOnSameDrive
+            // подставлял DefaultInstallFolder без CommandLineGuard.ValidateInstallFolder).
+            string? location = null;
             if (IsNonSystemDrive(installDrive))
             {
                 string driveUpper = installDrive!.TrimEnd('\\', '/').ToUpperInvariant();
                 bool folderOnSameDrive = !string.IsNullOrWhiteSpace(profile.DefaultInstallFolder) &&
-                    profile.DefaultInstallFolder.TrimEnd('\\', '/').ToUpperInvariant().StartsWith(driveUpper);
+                    profile.DefaultInstallFolder.TrimEnd('\\', '/').ToUpperInvariant().StartsWith(driveUpper) &&
+                    CommandLineGuard.ValidateInstallFolder(profile.DefaultInstallFolder);
                 location = folderOnSameDrive
-                    ? $" --location \"{profile.DefaultInstallFolder}\""
-                    : $" --location \"{ProgramFilesOn(installDrive!)}\"";
+                    ? profile.DefaultInstallFolder
+                    : ProgramFilesOn(installDrive!);
             }
             else if (!string.IsNullOrWhiteSpace(profile.DefaultInstallFolder) && CommandLineGuard.ValidateInstallFolder(profile.DefaultInstallFolder))
-                location = $" --location \"{profile.DefaultInstallFolder}\"";
-            else
-                location = "";
+                location = profile.DefaultInstallFolder;
 
             // msstore/MSIX игнорируют --location или завершаются с ошибкой
             if (source.Equals("msstore", StringComparison.OrdinalIgnoreCase))
-                location = "";
+                location = null;
 
             // Версия приходит из внешнего каталога или выбора пользователя —
             // валидируем перед подстановкой в командную строку (паритет с appId).
-            string versionArg = "";
-            if (!string.IsNullOrEmpty(version))
+            if (!string.IsNullOrEmpty(version) && !CommandLineGuard.ValidateId(version))
             {
-                if (!CommandLineGuard.ValidateId(version))
-                {
-                    Log($"❌ Недопустимая версия «{version}» для {appId} — источник Winget пропущен");
-                    return false;
-                }
-                versionArg = $" --version \"{version}\"";
+                Log($"❌ Недопустимая версия «{version}» для {appId} — источник Winget пропущен");
+                return false;
             }
-            string args = $"install --id \"{appId}\" -e --source \"{source}\"{versionArg} --accept-package-agreements --accept-source-agreements --disable-interactivity{silent}{location}";
 
             var psi = new ProcessStartInfo
             {
                 FileName = "winget.exe",
-                Arguments = args,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -564,6 +570,29 @@ namespace Ven4Tools.Services
                 StandardOutputEncoding = System.Text.Encoding.UTF8,
                 StandardErrorEncoding = System.Text.Encoding.UTF8
             };
+            // Аргументы через ArgumentList — .NET сам экранирует каждый токен, устраняя
+            // саму поверхность инъекции (в т.ч. для DefaultInstallFolder из profile.json,
+            // который доступен на запись любому не-elevated процессу пользователя).
+            psi.ArgumentList.Add("install");
+            psi.ArgumentList.Add("--id");
+            psi.ArgumentList.Add(appId);
+            psi.ArgumentList.Add("-e");
+            psi.ArgumentList.Add("--source");
+            psi.ArgumentList.Add(source);
+            if (!string.IsNullOrEmpty(version))
+            {
+                psi.ArgumentList.Add("--version");
+                psi.ArgumentList.Add(version);
+            }
+            psi.ArgumentList.Add("--accept-package-agreements");
+            psi.ArgumentList.Add("--accept-source-agreements");
+            psi.ArgumentList.Add("--disable-interactivity");
+            if (profile.SilentInstall) psi.ArgumentList.Add("--silent");
+            if (location != null)
+            {
+                psi.ArgumentList.Add("--location");
+                psi.ArgumentList.Add(location);
+            }
 
             using (var process = new Process { StartInfo = psi, EnableRaisingEvents = true })
             {

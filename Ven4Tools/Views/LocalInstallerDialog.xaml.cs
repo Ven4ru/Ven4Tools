@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using Ven4Tools.Models;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.Views
 {
@@ -25,12 +26,29 @@ namespace Ven4Tools.Views
             txtName.SelectAll();
         }
 
-        private void BtnOk_Click(object sender, RoutedEventArgs e)
+        private async void BtnOk_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtName.Text))
             {
                 MessageBox.Show("Введите название.", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Хеш фиксируется в момент добавления: приложение устанавливается elevated
+            // (Verb=runas), а apps.json лежит в LocalAppData — доступен на запись любому
+            // не-elevated процессу пользователя. Без пиннинга подмена LocalInstallerPath/
+            // самого файла между добавлением и повторным запуском из списка привела бы
+            // к запуску произвольного exe с правами администратора.
+            string sha256;
+            try
+            {
+                sha256 = await HashHelper.ComputeSha256Async(_filePath);
+            }
+            catch (System.Exception ex)
+            {
+                MessageBox.Show($"Не удалось прочитать файл: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -42,6 +60,7 @@ namespace Ven4Tools.Views
                                          cmbCategory.SelectedItem?.ToString() ?? "",
                                          out var cat) ? cat : AppCategory.Другое,
                 LocalInstallerPath = _filePath,
+                Sha256             = sha256,
                 InstallerUrls      = new System.Collections.Generic.List<string>(),
                 IsUserAdded        = true
             };

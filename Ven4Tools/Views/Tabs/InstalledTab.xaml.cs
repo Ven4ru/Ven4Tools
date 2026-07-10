@@ -313,6 +313,17 @@ namespace Ven4Tools.Views.Tabs
 
         private async void BtnUpgradeAll_Click(object sender, RoutedEventArgs e)
         {
+            // Общий семафор с каталогом/историей/Windows Update — иначе winget
+            // upgrade --all может пойти параллельно с установкой из другой вкладки
+            // (конфликт msiexec, ошибка 1618).
+            if (InstallationService.IsBusy)
+            {
+                MessageBox.Show(
+                    "Дождитесь завершения текущей установки, затем повторите попытку.",
+                    "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             var res = MessageBox.Show(
                 "Обновить все приложения через winget?\n\nЭто может занять продолжительное время.",
                 "Обновить всё", MessageBoxButton.YesNo, MessageBoxImage.Question);
@@ -321,6 +332,7 @@ namespace Ven4Tools.Views.Tabs
             btnUpgradeAll.IsEnabled = false;
             btnRefresh.IsEnabled = false;
             Log("⬆ Запуск обновления всех приложений (winget upgrade --all)...");
+            await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
                 int code = await WingetRunner.RunStreamingAsync(
@@ -341,6 +353,7 @@ namespace Ven4Tools.Views.Tabs
             }
             finally
             {
+                InstallationService.InstallSemaphore.Release();
                 btnUpgradeAll.IsEnabled = true;
                 btnRefresh.IsEnabled = true;
                 // Обновляем список установленных приложений после завершения
@@ -391,6 +404,12 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 if (((Button)sender).Tag is not InstalledApp app) return;
+                if (InstallationService.IsBusy)
+                {
+                    MessageBox.Show("Дождитесь завершения текущей установки, затем повторите попытку.",
+                        "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
                 await UpdateAppAsync(app);
             }
             catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
@@ -401,6 +420,12 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 if (((Button)sender).Tag is not InstalledApp app) return;
+                if (InstallationService.IsBusy)
+                {
+                    MessageBox.Show("Дождитесь завершения текущей установки, затем повторите попытку.",
+                        "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
 
                 var res = MessageBox.Show(
                     $"Удалить «{app.Name}»?",
@@ -416,6 +441,13 @@ namespace Ven4Tools.Views.Tabs
         {
             try
             {
+                if (InstallationService.IsBusy)
+                {
+                    MessageBox.Show("Дождитесь завершения текущей установки, затем повторите попытку.",
+                        "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
                 var visible = (lstApps.ItemsSource as IEnumerable<InstalledApp>)
                     ?.Where(a => a.IsSelected && a.HasUpdate).ToList();
                 if (visible == null || visible.Count == 0) return;
@@ -452,6 +484,9 @@ namespace Ven4Tools.Views.Tabs
         {
             app.IsProcessing = true;
             Log($"⬆ Обновление {app.Name}...");
+            // Общий семафор с каталогом/историей/Windows Update — исключает параллельный
+            // msiexec (ошибка 1618) при обновлении одновременно с установкой из другой вкладки.
+            await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
                 // Усечённый в списке ID (winget list рисует "…" при узкой колонке) не пройдёт
@@ -499,13 +534,19 @@ namespace Ven4Tools.Views.Tabs
                 }
             }
             catch (Exception ex) { Log($"❌ {app.Name}: {ex.Message}"); }
-            finally { app.IsProcessing = false; }
+            finally
+            {
+                InstallationService.InstallSemaphore.Release();
+                app.IsProcessing = false;
+            }
         }
 
         private async Task UninstallAppAsync(InstalledApp app)
         {
             app.IsProcessing = true;
             Log($"🗑 Удаление {app.Name}...");
+            // Общий семафор — см. комментарий в UpdateAppAsync.
+            await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
                 bool ok = await TryUninstallAsync(app);
@@ -521,7 +562,11 @@ namespace Ven4Tools.Views.Tabs
                 }
             }
             catch (Exception ex) { Log($"❌ {app.Name}: {ex.Message}"); }
-            finally { app.IsProcessing = false; }
+            finally
+            {
+                InstallationService.InstallSemaphore.Release();
+                app.IsProcessing = false;
+            }
         }
 
         private static async Task<bool> TryUninstallAsync(InstalledApp app)
@@ -650,6 +695,13 @@ namespace Ven4Tools.Views.Tabs
         {
             try
             {
+                if (InstallationService.IsBusy)
+                {
+                    MessageBox.Show("Дождитесь завершения текущей установки, затем повторите попытку.",
+                        "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
                 var selected = (lstApps.ItemsSource as IEnumerable<InstalledApp>)
                     ?.Where(a => a.IsSelected && a.CanAct).ToList();
                 if (selected == null || selected.Count == 0) return;
