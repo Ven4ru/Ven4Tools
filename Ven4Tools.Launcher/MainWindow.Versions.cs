@@ -129,6 +129,7 @@ namespace Ven4Tools.Launcher
                     cmbVersions.IsEnabled    = true;
                     AddLog($"✅ Загружено {_availableVersions.Count} версий");
                     CheckExistingClient();
+                    CheckClientUpdateAvailable();
                 }
                 else
                 {
@@ -157,6 +158,31 @@ namespace Ven4Tools.Launcher
                 btnLaunchApp.Content    = "📥 Загрузить Ven4Tools";
                 btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 140, 0));
             }
+        }
+
+        // Сравнивает установленную версию клиента с последней доступной и переключает
+        // btnLaunchApp в состояние «Обновить», если найдена более новая версия.
+        // Вызывается после LoadVersionsAsync — общий путь и для ручной проверки
+        // («Проверить обновления»), и для авто-обновления (Task 6).
+        private void CheckClientUpdateAvailable()
+        {
+            string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
+            if (!File.Exists(clientExe)) { _clientUpdateAvailable = false; return; }
+
+            string installedVersion = FileVersionInfo.GetVersionInfo(clientExe).FileVersion ?? "0.0.0";
+            var latest = _availableVersions.FirstOrDefault(v => v.IsLatest);
+            if (latest == null || !VersionComparer.IsNewer(latest.Version, installedVersion))
+            {
+                _clientUpdateAvailable = false;
+                return;
+            }
+
+            _clientUpdateAvailable  = true;
+            _selectedVersion        = latest;
+            cmbVersions.SelectedItem = latest;
+            btnLaunchApp.Content    = "⬆ Обновить Ven4Tools";
+            btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(251, 191, 36));
+            AddLog($"📢 Доступно обновление клиента: {installedVersion} → {latest.Version}");
         }
 
         private void CmbVersions_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
