@@ -462,7 +462,8 @@ namespace Ven4Tools
             {
                 using var installer = new Services.InstallationService();
                 using var cts = new System.Threading.CancellationTokenSource();
-                var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, "C:\\", null, confirmPm);
+                string installDrive = _catalogTab?.SelectedInstallDrive ?? "C:\\";
+                var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, installDrive, null, confirmPm);
                 AppLogger.Write(r.Success ? $"✅ {catalogApp.Name}" : $"❌ {r.Message}");
             }
             finally
@@ -600,14 +601,25 @@ namespace Ven4Tools
             var exeName = Process.GetCurrentProcess().MainModule?.FileName;
             if (exeName != null)
             {
+                // Освобождаем мьютекс единственного экземпляра ДО запуска повышенной
+                // копии — иначе она может увидеть его ещё занятым и выйти как
+                // «уже запущено», и не останется ни одного рабочего экземпляра.
+                App.ReleaseSingleInstanceMutex();
                 try
                 {
                     Process.Start(new ProcessStartInfo { FileName = exeName, UseShellExecute = true, Verb = "runas" });
                 }
-                catch { /* пользователь отклонил UAC */ }
+                catch
+                {
+                    // Пользователь отклонил UAC — повышенная копия не стартовала.
+                    // Возвращаем мьютекс, чтобы состояние единственного экземпляра
+                    // оставалось согласованным до завершения процесса.
+                    App.ReacquireSingleInstanceMutex();
+                }
             }
             // Конструктор окна вышел до инициализации вкладок, а окно уже показано —
-            // без Shutdown на экране осталось бы пустое нерабочее окно.
+            // без прав администратора клиент неработоспособен, поэтому завершаемся
+            // в любом случае.
             Application.Current.Shutdown();
         }
 
