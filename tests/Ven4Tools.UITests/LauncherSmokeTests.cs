@@ -9,6 +9,7 @@ using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Xunit;
 
@@ -213,11 +214,9 @@ public sealed class LauncherSmokeTests : IDisposable
             "btnCheckUpdates",
             "btnLaunchApp",
             "btnChangelog",
+            "btnOpenSettings",
             "btnDeleteClient",
-            "btnExit",
-            "chkBackgroundUpdates",
-            "chkStartMinimized",
-            "chkAutostart"
+            "btnExit"
         ];
 
         foreach (string automationId in requiredEnabledControls)
@@ -264,6 +263,26 @@ public sealed class LauncherSmokeTests : IDisposable
             ?? throw new InvalidOperationException("Кнопка закрытия истории изменений не появилась.");
         closeDetails.Invoke();
 
+        ExerciseSettingsWindow();
+    }
+
+    private void ExerciseSettingsWindow()
+    {
+        _window.FindFirstDescendant(condition => condition.ByAutomationId("btnOpenSettings"))!
+            .AsButton()
+            .Invoke();
+
+        // Окно настроек создаётся с Owner = главное окно, поэтому UIA размещает его
+        // как потомка главного окна, а не как самостоятельное верхнеуровневое окно.
+        // Ищем его среди потомков-окон главного окна, а не через GetAllTopLevelWindows.
+        Window settingsWindow = Retry.WhileNull(
+            () => _window.FindAllDescendants(condition => condition.ByControlType(ControlType.Window))
+                .Select(element => element.AsWindow())
+                .FirstOrDefault(w => w.Title.Contains("Настройки", StringComparison.OrdinalIgnoreCase)),
+            timeout: TimeSpan.FromSeconds(10),
+            interval: TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new InvalidOperationException("Окно «Настройки» не открылось.");
+
         foreach (string automationId in new[]
         {
             "chkBackgroundUpdates",
@@ -271,7 +290,7 @@ public sealed class LauncherSmokeTests : IDisposable
             "chkAutostart"
         })
         {
-            CheckBox checkBox = _window.FindFirstDescendant(
+            CheckBox checkBox = settingsWindow.FindFirstDescendant(
                     condition => condition.ByAutomationId(automationId))!
                 .AsCheckBox();
             ToggleState initialState = checkBox.ToggleState;
@@ -279,6 +298,24 @@ public sealed class LauncherSmokeTests : IDisposable
             checkBox.Toggle();
             Assert.Equal(initialState, checkBox.ToggleState);
         }
+
+        // Переключатель режима обновления клиента переживает переключение туда-обратно.
+        RadioButton manual = settingsWindow.FindFirstDescendant(
+                condition => condition.ByAutomationId("rbAutoUpdateManual"))!
+            .AsRadioButton();
+        RadioButton auto = settingsWindow.FindFirstDescendant(
+                condition => condition.ByAutomationId("rbAutoUpdateAuto"))!
+            .AsRadioButton();
+        bool wasManual = manual.IsChecked == true;
+        auto.Click();
+        Assert.True(auto.IsChecked);
+        manual.Click();
+        Assert.True(manual.IsChecked);
+        if (!wasManual) auto.Click();
+
+        settingsWindow.FindFirstDescendant(condition => condition.ByAutomationId("btnCloseSettings"))!
+            .AsButton()
+            .Invoke();
     }
 
     private static string FindRepositoryRoot()
