@@ -19,6 +19,11 @@ namespace Ven4Tools.Services
         // Fires after Save() — CatalogTab subscribes to re-check availability
         public static event Action? Changed;
 
+        // Инкрементируется при каждом Save(). Позволяет CatalogTab понять, что
+        // порядок источников менялся, пока вкладка не была подписана на Changed
+        // (была выгружена/ни разу не открыта), и запустить перепроверку при открытии.
+        public static int Version { get; private set; }
+
         static SourceOrderService() => Load();
 
         public static void Load()
@@ -73,6 +78,7 @@ namespace Ven4Tools.Services
             try
             {
                 FileHelper.WriteAllTextAtomic(_path, JsonConvert.SerializeObject(Current, Formatting.Indented));
+                Version++;
                 Changed?.Invoke();
             }
             catch (Exception ex) { AppLogger.Write($"[SourceOrderService] Save: {ex.Message}"); }

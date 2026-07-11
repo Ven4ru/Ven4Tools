@@ -53,7 +53,14 @@ namespace Ven4Tools.Views.Tabs
 
         /// <summary>Идёт ли сейчас установка приложений (для предупреждения при закрытии окна).</summary>
         public bool IsInstalling => _isInstalling;
+
+        /// <summary>Выбранный пользователем диск установки (используется при установке из пина).</summary>
+        public string SelectedInstallDrive => selectedInstallDrive;
         private bool _eventsSubscribed = false;
+        // Версия порядка источников, отражённая в последней проверке доступности.
+        // Нужна, чтобы поймать изменение порядка, произошедшее пока вкладка была
+        // выгружена (не подписана на SourceOrderService.Changed) — см. Loaded.
+        private int _lastSourceOrderVersion = SourceOrderService.Version;
         private bool _showFavoritesOnly = false;
         private CancellationTokenSource? _searchDebounce;
         private Action? _profileChangedHandler;
@@ -108,6 +115,15 @@ namespace Ven4Tools.Views.Tabs
                 {
                     _initialized = true;
                     await LoadCatalogAndRefreshAsync();
+                    // Первичная загрузка уже отражает текущий порядок источников.
+                    _lastSourceOrderVersion = SourceOrderService.Version;
+                }
+                else if (_lastSourceOrderVersion != SourceOrderService.Version)
+                {
+                    // Порядок источников меняли (например, во вкладке «Система»), пока
+                    // «Каталог» был выгружен и не получал событие Changed — запускаем
+                    // обещанную перепроверку доступности сейчас, при открытии вкладки.
+                    OnSourceOrderChanged();
                 }
                 ApplyCategorySourceHeaders();
             };

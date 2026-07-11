@@ -131,6 +131,9 @@ namespace Ven4Tools.Views.Tabs
                     await UpdateInstalledStatusAsync();
                 }).Unwrap().ContinueWith(t =>
                 {
+                    // Семафор больше не нужен: все availabilityTasks завершены к этому
+                    // моменту (именно их завершение запустило продолжение).
+                    availabilitySem.Dispose();
                     if (t.IsFaulted)
                         AddLog($"⚠️ Ошибка фоновой задачи: {t.Exception?.InnerException?.Message}");
                 });

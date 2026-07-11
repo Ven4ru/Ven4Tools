@@ -76,8 +76,10 @@ namespace Ven4Tools.Views.Tabs
                     try
                     {
                         using (var searcher = new ManagementObjectSearcher("SELECT LicenseStatus, Name FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL"))
+                        using (var results = searcher.Get())
                         {
-                            foreach (var obj in searcher.Get())
+                            foreach (ManagementBaseObject obj in results)
+                            using (obj)
                             {
                                 int status = Convert.ToInt32(obj["LicenseStatus"]);
                                 string name = obj["Name"]?.ToString() ?? "";
@@ -184,7 +186,9 @@ namespace Ven4Tools.Views.Tabs
                 using var searcher = new ManagementObjectSearcher(
                     "SELECT LicenseStatus, Name FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL");
 
-                foreach (var obj in searcher.Get())
+                using var results = searcher.Get();
+                foreach (ManagementBaseObject obj in results)
+                using (obj)
                 {
                     string name = obj["Name"]?.ToString() ?? "";
                     if (name.Contains("Windows", StringComparison.OrdinalIgnoreCase))
