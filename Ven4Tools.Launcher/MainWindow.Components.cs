@@ -532,35 +532,79 @@ namespace Ven4Tools.Launcher
         }
 
         // Запущен ли клиент Ven4Tools из текущей папки установки.
-        // Если MainModule недоступен — считаем запущенным: безопаснее показать
-        // предупреждение лишний раз, чем оставить папку клиента в битом состоянии.
         private bool IsClientRunning()
         {
-            try
+            var proc = FindRunningClientProcess();
+            proc?.Dispose();
+            return proc != null;
+        }
+
+        // Находит процесс запущенного клиента из текущей папки установки и возвращает
+        // его НЕ освобождённым — вызывающий (TryCloseRunningClientAsync) сам вызывает
+        // Dispose(). Остальные (непарные) найденные процессы освобождаются здесь же.
+        // Если MainModule недоступен — считаем процесс совпадением: безопаснее показать
+        // предупреждение лишний раз, чем оставить папку клиента в битом состоянии.
+        private Process? FindRunningClientProcess()
+        {
+            string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
+            Process[] processes;
+            try { processes = Process.GetProcessesByName("Ven4Tools"); }
+            catch { return null; }
+
+            foreach (var proc in processes)
             {
-                string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
-                var processes = Process.GetProcessesByName("Ven4Tools");
+                bool isMatch;
                 try
                 {
-                    foreach (var proc in processes)
-                    {
-                        try
-                        {
-                            string? exePath = proc.MainModule?.FileName;
-                            if (string.IsNullOrEmpty(exePath)) return true;
-                            if (string.Equals(exePath, clientExe, StringComparison.OrdinalIgnoreCase)) return true;
-                        }
-                        catch { return true; }
-                    }
+                    string? exePath = proc.MainModule?.FileName;
+                    isMatch = string.IsNullOrEmpty(exePath) ||
+                              string.Equals(exePath, clientExe, StringComparison.OrdinalIgnoreCase);
                 }
-                finally
+                catch { isMatch = true; }
+
+                if (isMatch)
                 {
-                    // Диспоузим все найденные процессы, а не только тот, на котором
-                    // остановился цикл — иначе хэндлы "хвоста" массива держатся до GC.
-                    foreach (var proc in processes) proc.Dispose();
+                    foreach (var other in processes) if (other != proc) other.Dispose();
+                    return proc;
                 }
+                proc.Dispose();
             }
-            catch { }
+            return null;
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+        private const uint WM_CLOSE = 0x0010;
+
+        // Просит запущенный клиент закрыться штатно (WM_CLOSE — то же сообщение,
+        // что шлёт крестик окна) и ждёт до timeoutMs, пока процесс завершится.
+        // Клиент сам решает, закрываться ли (см. Window_Closing_Extended в
+        // Ven4Tools/MainWindow.xaml.cs — предупреждение при активной установке,
+        // либо сворачивание в трей вместо закрытия при включённой у клиента
+        // соответствующей настройке — тогда процесс не завершится, и этот метод
+        // вернёт false по таймауту; форсированный Process.Kill() не используется).
+        private async Task<bool> TryCloseRunningClientAsync(int timeoutMs = 10000)
+        {
+            var proc = FindRunningClientProcess();
+            if (proc == null) return true;
+
+            IntPtr handle = proc.MainWindowHandle;
+            proc.Dispose();
+
+            if (handle == IntPtr.Zero)
+            {
+                AddLog("⚠️ Не найдено окно клиента для закрытия (возможно, уже свёрнут в трей)");
+                return false;
+            }
+
+            PostMessage(handle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            while (sw.ElapsedMilliseconds < timeoutMs)
+            {
+                if (!IsClientRunning()) return true;
+                await Task.Delay(500);
+            }
             return false;
         }
 
