@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Capturing;
@@ -40,6 +41,28 @@ namespace Ven4Tools.ClientUITests
                     btn!.AsButton().Invoke();
                     Thread.Sleep(waitMs);
 
+                    // Первый заход на Windows Update показывает онбординг-диалог выбора
+                    // режима, а после его закрытия сам запускает проверку обновлений —
+                    // которая на машине с остановленной службой wuauserv упирается в
+                    // системный запрос "запустить службу?". Не даём его подтвердить:
+                    // для диалогов Да/Нет жмём "Нет" (не трогаем реальную службу),
+                    // для остальных (онбординг) — дефолтную кнопку OK/Готово.
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var modal = s.MainWindow.ModalWindows.Length > 0 ? s.MainWindow.ModalWindows[0] : null;
+                        if (modal == null) break;
+
+                        var noBtn = modal.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Button))
+                            .FirstOrDefault(b => (b.Name ?? "") == "Нет" || (b.Name ?? "") == "No");
+                        if (noBtn != null) { noBtn.Click(); Thread.Sleep(500); continue; }
+
+                        var okBtn = modal.FindFirstDescendant(cf => cf.ByAutomationId("btnOk"))
+                                    ?? modal.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Button)).FirstOrDefault();
+                        okBtn?.AsButton().Invoke();
+                        Thread.Sleep(500);
+                    }
+                    Thread.Sleep(500);
+
                     using var capture = s.MainWindow.Capture();
                     string path = Path.Combine(OutDir, fileName);
                     capture.Save(path);
@@ -49,6 +72,7 @@ namespace Ven4Tools.ClientUITests
                 Shot("btnCatalogTab", "catalog.png", 2500);
                 Shot("btnInstalledTab", "installed.png", 2000);
                 Shot("btnSystemTab", "system.png");
+                Shot("btnWindowsUpdateTab", "windowsupdate.png", 2000);
                 Shot("btnOfficeTab", "office.png");
                 Shot("btnDebloaterTab", "debloater.png");
                 Shot("btnAboutTab", "about.png");
