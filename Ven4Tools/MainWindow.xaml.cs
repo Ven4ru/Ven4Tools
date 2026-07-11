@@ -40,6 +40,7 @@ namespace Ven4Tools
         public MainWindow()
         {
             InitializeComponent();
+            txtSidebarVersion.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "—";
             MotionService.Enabled = Environment.GetEnvironmentVariable("VEN4TOOLS_REDUCE_MOTION") != "1";
             Loaded += (_, _) => MotionService.FadeIn(this);
             lstGlobalLog.ItemsSource = _logEntries;
