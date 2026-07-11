@@ -98,6 +98,17 @@ namespace Ven4Tools.ClientUITests
             Assert.IsNotNull(systemBtn, "Не найдена кнопка вкладки «Система».");
             systemBtn!.AsButton().Invoke();
 
+            // После редизайна SystemTab стала вложенным TabControl из 5 под-вкладок —
+            // lstSourceOrder находится в под-вкладке «Источники», не реализуется в дереве
+            // UIA пока она не выбрана явно (обнаружено 2026-07-11, тест был сломан молча,
+            // т.к. ui-tests.yml не гоняется на каждый PR).
+            var sourcesSubTab = Retry.WhileNull(
+                () => s.MainWindow.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.TabItem).And(cf.ByName("Источники"))),
+                timeout: ElementTimeout, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
+            Assert.IsNotNull(sourcesSubTab, "Не найдена под-вкладка «Источники» на вкладке «Система».");
+            sourcesSubTab!.Click();
+            System.Threading.Thread.Sleep(300);
+
             var sourceList = Retry.WhileNull(
                 () => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("lstSourceOrder")),
                 timeout: ElementTimeout,
