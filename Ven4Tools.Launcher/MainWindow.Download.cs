@@ -276,6 +276,15 @@ namespace Ven4Tools.Launcher
 
             string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
 
+            if (File.Exists(clientExe) && _clientUpdateAvailable)
+            {
+                AddLog($"⬆ Обновление клиента до {_selectedVersion.Version}...");
+                _clientUpdateAvailable = false;
+                _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
+                await DownloadVersionAsync(_selectedVersion, _downloadCts.Token);
+                return;
+            }
+
             if (File.Exists(clientExe))
             {
                 AddLog($"🚀 Запуск Ven4Tools {_selectedVersion.Version}...");

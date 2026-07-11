@@ -32,6 +32,7 @@ namespace Ven4Tools.Launcher
         private string               _clientPath  = "";
         private List<ClientVersionInfo> _availableVersions = new();
         private ClientVersionInfo?   _selectedVersion;
+        private bool                 _clientUpdateAvailable = false;
         private bool                 _detailsPanelOpen = false;
         private System.Diagnostics.Process? _clientProcess;
         private CancellationTokenSource? _downloadCts;
