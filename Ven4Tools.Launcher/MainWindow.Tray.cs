@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
@@ -158,9 +160,33 @@ namespace Ven4Tools.Launcher
 
                     if (type == "launcher")
                         btnInstallUpdate.Visibility = Visibility.Visible;
+                    else
+                        _ = TriggerAutoClientUpdateAsync(info.LatestVersion ?? "");
                 });
             }
             catch { } // Dispatcher может быть выключен при завершении приложения
+        }
+
+        // Тихое обновление клиента при включённом автоматическом режиме. Список версий
+        // на момент фонового обнаружения (UpdateBackgroundService.CheckClientAsync)
+        // мог не содержать CDN-подстановки — перезагружаем тем же путём, что и ручная
+        // проверка, чтобы получить актуальный ClientVersionInfo с FallbackUrl/ExpectedSha256.
+        private async Task TriggerAutoClientUpdateAsync(string latestVersion)
+        {
+            if (!_autoUpdateClient) return;
+            if (_downloadCts != null) return; // уже идёт другая загрузка — попробуем на следующем тике
+
+            await LoadVersionsAsync();
+            var match = _availableVersions.FirstOrDefault(v => v.Version == latestVersion);
+            if (match == null)
+            {
+                AddLog($"⚠️ Автообновление: версия {latestVersion} не найдена в свежем списке — пропуск");
+                return;
+            }
+
+            AddLog($"🤖 Автоматическое обновление клиента до {latestVersion}...");
+            _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
+            await DownloadVersionAsync(match, _downloadCts.Token, silent: true);
         }
 
         private void ShowWindow()
