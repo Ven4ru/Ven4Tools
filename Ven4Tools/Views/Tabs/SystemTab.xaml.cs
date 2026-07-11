@@ -19,7 +19,10 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class SystemTab : UserControl
     {
-        private const string TurboBoostRegPath = @"SYSTEM\ControlSet001\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7";
+        // CurrentControlSet — псевдоним активного набора, а не жёсткий ControlSet001:
+        // на системах, где активен ControlSet002 (после отказа предыдущей загрузки),
+        // жёсткий путь писал бы в неактивный набор и пункт не появлялся бы в Панели управления.
+        private const string TurboBoostRegPath = @"SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7";
         private const string TurboSubgroup = "54533251-82be-4824-96c1-47b60b740d00";
         private const string TurboSetting  = "be337238-0d82-4146-a960-4f3749d470c7";
 
@@ -478,10 +481,12 @@ namespace Ven4Tools.Views.Tabs
                 RedirectStandardError = true
             };
             using var process = Process.Start(psi) ?? throw new Exception("Не удалось запустить powercfg");
-            // Читаем stderr асинхронно — иначе WaitForExit зависнет если буфер stderr переполнится.
-            // WaitForExitAsync не блокирует UI-поток.
+            // Читаем stdout и stderr асинхронно — иначе WaitForExit зависнет, если буфер
+            // любого из них переполнится. WaitForExitAsync не блокирует UI-поток.
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
             var stderrTask = process.StandardError.ReadToEndAsync();
             await process.WaitForExitAsync();
+            await stdoutTask;
             string err = await stderrTask;
             if (process.ExitCode != 0)
                 throw new Exception($"powercfg завершился с ошибкой {process.ExitCode}: {err}");

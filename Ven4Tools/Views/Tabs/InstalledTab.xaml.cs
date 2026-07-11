@@ -774,6 +774,27 @@ namespace Ven4Tools.Views.Tabs
             };
             if (dlg.ShowDialog() != true) return;
 
+            var res = MessageBox.Show(
+                $"Будет запущена массовая установка всех пакетов из файла:\n\n{dlg.FileName}\n\nПродолжить?",
+                "Подтверждение импорта", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (res != MessageBoxResult.Yes) return;
+
+            if (!InstallationService.IsBusy)
+            {
+                var rpAnswer = MessageBox.Show(
+                    "Импорт может установить сразу много приложений.\n\nСоздать точку восстановления Windows перед импортом?",
+                    "Точка восстановления",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question);
+                if (rpAnswer == MessageBoxResult.Cancel) return;
+                if (rpAnswer == MessageBoxResult.Yes)
+                {
+                    Log("🛡️ Создаю точку восстановления...");
+                    bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед импортом списка");
+                    Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
+                }
+            }
+
             btnImport.IsEnabled = false;
             Log($"📥 Импорт из {System.IO.Path.GetFileName(dlg.FileName)}...");
             Log("⏳ Это может занять несколько минут...");
