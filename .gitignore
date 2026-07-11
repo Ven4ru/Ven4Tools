@@ -96,3 +96,9 @@ scripts/
 
 # Карты функциональности и внутренние справочники
 feature-map.md
+
+# Изолированные worktree для агентской разработки
+.worktrees/
+
+# Служебный journal subagent-driven-development (не для репо)
+.superpowers/
