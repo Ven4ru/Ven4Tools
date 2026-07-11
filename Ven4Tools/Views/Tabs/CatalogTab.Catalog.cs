@@ -284,6 +284,7 @@ namespace Ven4Tools.Views.Tabs
 
         private void OnSourceOrderChanged()
         {
+            _lastSourceOrderVersion = SourceOrderService.Version;
             Dispatcher.Invoke(() =>
             {
                 ApplyCategorySourceHeaders();

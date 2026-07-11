@@ -306,7 +306,7 @@ namespace Ven4Tools.Views.Tabs
                 { tb.Foreground = Brushes.Gray; cb.ToolTip = "⏳ Проверка..."; cb.IsEnabled = true; }
 
             // Throttle: max 5 concurrent winget show calls
-            var sem   = new SemaphoreSlim(5);
+            using var sem = new SemaphoreSlim(5);
             var tasks = new List<Task>();
 
             try
@@ -356,7 +356,7 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 var selected = GetSelectedApps();
-                var semaphore = new SemaphoreSlim(5);
+                using var semaphore = new SemaphoreSlim(5);
                 long totalRequired = 0;
                 var lockObj = new object();
 

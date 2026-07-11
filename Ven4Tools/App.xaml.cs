@@ -143,6 +143,34 @@ namespace Ven4Tools
             _ = CrashReportService.TrySendPendingAsync();
         }
 
+        /// <summary>
+        /// Освобождает мьютекс единственного экземпляра до завершения процесса.
+        /// Нужно вызывать перед запуском повышенной копии клиента (RestartAsAdmin):
+        /// иначе повышенная копия может увидеть мьютекс ещё занятым и выйти как
+        /// «уже запущено», и не останется ни одного рабочего экземпляра.
+        /// Идемпотентно.
+        /// </summary>
+        public static void ReleaseSingleInstanceMutex()
+        {
+            if (_instanceMutex != null)
+            {
+                _instanceMutex.ReleaseMutex();
+                _instanceMutex.Dispose();
+                _instanceMutex = null;
+            }
+        }
+
+        /// <summary>
+        /// Восстанавливает мьютекс единственного экземпляра, если повышенная копия
+        /// так и не стартовала (пользователь отклонил UAC) — чтобы состояние
+        /// единственного экземпляра оставалось согласованным.
+        /// </summary>
+        public static void ReacquireSingleInstanceMutex()
+        {
+            if (_instanceMutex == null)
+                _instanceMutex = new Mutex(true, "Ven4Tools.Client.SingleInstance", out _);
+        }
+
         protected override void OnExit(ExitEventArgs e)
         {
             _heartbeat?.Dispose();

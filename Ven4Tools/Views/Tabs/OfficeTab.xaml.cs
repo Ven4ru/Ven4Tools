@@ -470,7 +470,7 @@ namespace Ven4Tools.Views.Tabs
                 SetPhase("⚙️ Установка Office... не закрывайте приложение");
                 AddLog("⏳ Ожидаем запуск C2R-установщика...");
 
-                var installProc = await WaitForC2RProcess(existingPids, TimeSpan.FromMinutes(3), token);
+                using var installProc = await WaitForC2RProcess(existingPids, TimeSpan.FromMinutes(3), token);
 
                 if (installProc == null)
                 {
@@ -695,7 +695,7 @@ namespace Ven4Tools.Views.Tabs
             var pids  = new HashSet<int>();
             foreach (var name in names)
                 foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
-                    pids.Add(p.Id);
+                    using (p) pids.Add(p.Id);
             return pids;
         }
 
@@ -709,8 +709,13 @@ namespace Ven4Tools.Views.Tabs
             {
                 foreach (var name in names)
                     foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
+                    {
+                        // Найденный процесс возвращаем (его освобождает вызывающий),
+                        // остальные снимки процессов освобождаем сразу.
                         if (!existingPids.Contains(p.Id))
                             return p;
+                        p.Dispose();
+                    }
 
                 await Task.Delay(2000, token);
             }
