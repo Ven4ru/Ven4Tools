@@ -87,7 +87,7 @@ namespace Ven4Tools.Launcher
             catch { /* зачистка необязательна для работы лаунчера */ }
         }
 
-        private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationToken token)
+        private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationToken token, bool silent = false)
         {
             if (version == null) return;
 
@@ -159,14 +159,45 @@ namespace Ven4Tools.Launcher
 
                 token.ThrowIfCancellationRequested();
 
-                // Нельзя перезаписывать файлы запущенного клиента.
+                // Нельзя перезаписывать файлы запущенного клиента — спрашиваем и просим
+                // закрыться штатно. Диалог показывается всегда, даже в тихом
+                // автоматическом режиме — единственное исключение из «без вопросов».
                 if (IsClientRunning())
                 {
                     txtDownloadStatus.Text = "Клиент запущен";
-                    AddLog("⚠️ Ven4Tools запущен — закройте клиент перед обновлением");
-                    System.Windows.MessageBox.Show(
-                        "Ven4Tools сейчас запущен.\n\nЗакройте приложение и повторите установку обновления.",
-                        "Клиент запущен", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    var answer = System.Windows.MessageBox.Show(
+                        "Ven4Tools сейчас запущен.\n\nЗакрыть клиент сейчас, чтобы установить обновление?",
+                        "Клиент запущен", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                    if (answer != MessageBoxResult.Yes)
+                    {
+                        AddLog("⏹ Обновление отменено — клиент не закрыт");
+                        return;
+                    }
+
+                    AddLog("🔒 Закрываю клиент перед установкой обновления...");
+                    if (!await TryCloseRunningClientAsync())
+                    {
+                        txtDownloadStatus.Text = "Клиент запущен";
+                        AddLog("⚠️ Клиент не закрылся за отведённое время — обновление отменено");
+                        System.Windows.MessageBox.Show(
+                            "Не удалось закрыть клиент автоматически (возможно, он свёрнут в трей).\n\n" +
+                            "Закройте его вручную и повторите установку обновления.",
+                            "Клиент не закрылся", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                    AddLog("✅ Клиент закрыт, продолжаю установку");
+                }
+
+                if (!InstallPathGuard.IsClientPathSafe(_clientPath, _dataFolderPath))
+                {
+                    txtDownloadStatus.Text = "Ошибка пути";
+                    AddLog($"⛔ Папка установки клиента пересекается с папкой данных — обновление отменено: {_clientPath}");
+                    if (!silent)
+                        System.Windows.MessageBox.Show(
+                            $"Папка установки клиента:\n{_clientPath}\n\nсовпадает или вложена в папку данных Ven4Tools. " +
+                            "Обновление отменено во избежание потери настроек.\n\nВыберите другую папку установки.",
+                            "Небезопасный путь установки", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
@@ -182,9 +213,10 @@ namespace Ven4Tools.Launcher
                 btnLaunchApp.Content    = "🚀 Запустить Ven4Tools";
                 btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
 
-                System.Windows.MessageBox.Show(
-                    $"Клиент {version.Version} успешно установлен в:\n{_clientPath}",
-                    "Установка завершена", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (!silent)
+                    System.Windows.MessageBox.Show(
+                        $"Клиент {version.Version} успешно установлен в:\n{_clientPath}",
+                        "Установка завершена", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (OperationCanceledException)
             {
@@ -196,7 +228,8 @@ namespace Ven4Tools.Launcher
             {
                 txtDownloadStatus.Text = "Ошибка";
                 AddLog($"❌ Ошибка скачивания: {ex.Message}");
-                System.Windows.MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (!silent)
+                    System.Windows.MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
