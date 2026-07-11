@@ -177,6 +177,8 @@ namespace Ven4Tools.Launcher
             if (_downloadCts != null) return; // уже идёт другая загрузка — попробуем на следующем тике
 
             await LoadVersionsAsync();
+            if (_downloadCts != null) return; // за время перезагрузки списка мог стартовать ручной клик — не гоняем вторую параллельную установку
+
             var match = _availableVersions.FirstOrDefault(v => v.Version == latestVersion);
             if (match == null)
             {
