@@ -84,19 +84,8 @@
                             </StackPanel>
                         </Expander>
 
-                        <Expander Header="Поведение лаунчера" IsExpanded="True" Margin="0,0,0,8">
-                            <StackPanel Margin="2,8,0,4">
-                                <CheckBox x:Name="chkBackgroundUpdates" Margin="0,4" Click="ChkBackgroundUpdates_Click">
-                                    <TextBlock Text="Проверять обновления в фоне" TextWrapping="Wrap" MaxWidth="170"/>
-                                </CheckBox>
-                                <CheckBox x:Name="chkStartMinimized" Margin="0,4" Click="ChkStartMinimized_Click">
-                                    <TextBlock Text="Запускать свёрнутым в трей" TextWrapping="Wrap" MaxWidth="170"/>
-                                </CheckBox>
-                                <CheckBox x:Name="chkAutostart" Margin="0,4" Click="ChkAutostart_Click">
-                                    <TextBlock Text="Запускать при старте Windows" TextWrapping="Wrap" MaxWidth="170"/>
-                                </CheckBox>
-                            </StackPanel>
-                        </Expander>
+                        <Button x:Name="btnOpenSettings" Content="⚙ Настройки"
+                                Style="{StaticResource SideCommand}" Click="BtnOpenSettings_Click" Margin="0,0,0,8"/>
 
                         <Button x:Name="btnInstallUpdate" Content="Обновить лаунчер" Height="38"
                                 Visibility="Collapsed" Background="#243FBA65" Foreground="{StaticResource StatusSuccess}"

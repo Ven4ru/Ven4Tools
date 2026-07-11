@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace Ven4Tools.Launcher
 {
@@ -22,6 +21,7 @@ namespace Ven4Tools.Launcher
                         _backgroundUpdates           = settings.BackgroundUpdates;
                         _autostart                   = settings.Autostart;
                         _startMinimized              = settings.StartMinimized;
+                        _autoUpdateClient            = settings.AutoUpdateClient;
                         _lastNotifiedLauncherVersion = settings.LastNotifiedLauncherVersion ?? "";
                         _lastNotifiedClientVersion   = settings.LastNotifiedClientVersion   ?? "";
                         _lastNotifiedNotificationId  = settings.LastNotifiedNotificationId  ?? "";
@@ -42,6 +42,7 @@ namespace Ven4Tools.Launcher
                     BackgroundUpdates           = _backgroundUpdates,
                     Autostart                   = _autostart,
                     StartMinimized              = _startMinimized,
+                    AutoUpdateClient            = _autoUpdateClient,
                     LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
                     LastNotifiedClientVersion   = _lastNotifiedClientVersion,
                     LastNotifiedNotificationId  = _lastNotifiedNotificationId
@@ -59,16 +60,29 @@ namespace Ven4Tools.Launcher
             catch { }
         }
 
-        private void SyncCheckboxes()
+        private void BtnOpenSettings_Click(object sender, RoutedEventArgs e)
         {
-            chkBackgroundUpdates.IsChecked = _backgroundUpdates;
-            chkStartMinimized.IsChecked    = _startMinimized;
-            chkAutostart.IsChecked         = _autostart;
+            if (_settingsWindow == null || !_settingsWindow.IsLoaded)
+            {
+                _settingsWindow = new SettingsWindow(
+                    this, _backgroundUpdates, _startMinimized, _autostart, _autoUpdateClient)
+                {
+                    Owner = this
+                };
+                _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+            }
+            _settingsWindow.Show();
+            _settingsWindow.Activate();
         }
 
-        private void ChkBackgroundUpdates_Click(object sender, RoutedEventArgs e)
+        // Значения могут поменяться из контекстного меню трея, пока окно настроек
+        // открыто — держим его в курсе.
+        private void SyncSettingsWindow() =>
+            _settingsWindow?.Sync(_backgroundUpdates, _startMinimized, _autostart, _autoUpdateClient);
+
+        internal void OnBackgroundUpdatesChanged(bool isChecked)
         {
-            _backgroundUpdates = chkBackgroundUpdates.IsChecked == true;
+            _backgroundUpdates = isChecked;
             if (_trayItemBgUpdates != null) _trayItemBgUpdates.Checked = _backgroundUpdates;
             if (_backgroundUpdates)
                 _updateService?.Start();
@@ -77,18 +91,24 @@ namespace Ven4Tools.Launcher
             SaveSettings();
         }
 
-        private void ChkStartMinimized_Click(object sender, RoutedEventArgs e)
+        internal void OnStartMinimizedChanged(bool isChecked)
         {
-            _startMinimized = chkStartMinimized.IsChecked == true;
+            _startMinimized = isChecked;
             SaveSettings();
         }
 
-        private void ChkAutostart_Click(object sender, RoutedEventArgs e)
+        internal void OnAutostartChanged(bool isChecked)
         {
-            _autostart = chkAutostart.IsChecked == true;
+            _autostart = isChecked;
             if (_trayItemAutostart != null) _trayItemAutostart.Checked = _autostart;
             if (!_isUiTestMode)
                 SetAutostart(_autostart);
+            SaveSettings();
+        }
+
+        internal void OnAutoUpdateClientChanged(bool isChecked)
+        {
+            _autoUpdateClient = isChecked;
             SaveSettings();
         }
 

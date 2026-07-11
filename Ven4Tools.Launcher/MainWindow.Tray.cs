@@ -34,7 +34,7 @@ namespace Ven4Tools.Launcher
                     _autostart = _trayItemAutostart.Checked;
                     SetAutostart(_autostart);
                     SaveSettings();
-                    Dispatcher.Invoke(() => chkAutostart.IsChecked = _autostart);
+                    Dispatcher.Invoke(SyncSettingsWindow);
                 };
 
                 _trayItemBgUpdates = new ToolStripMenuItem("Проверять обновления в фоне")
@@ -50,7 +50,7 @@ namespace Ven4Tools.Launcher
                     else
                         _updateService?.Stop();
                     SaveSettings();
-                    Dispatcher.Invoke(() => chkBackgroundUpdates.IsChecked = _backgroundUpdates);
+                    Dispatcher.Invoke(SyncSettingsWindow);
                 };
 
                 var itemAutostart = _trayItemAutostart;
