@@ -212,6 +212,7 @@ namespace Ven4Tools.Launcher
 
                 btnLaunchApp.Content    = "🚀 Запустить Ven4Tools";
                 btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
+                _clientUpdateAvailable  = false; // клиент теперь актуален — иначе следующий клик по «Запустить» повторно переустановит ту же версию
 
                 if (!silent)
                     System.Windows.MessageBox.Show(
