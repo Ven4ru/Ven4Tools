@@ -261,7 +261,17 @@ namespace Ven4Tools.ClientUITests
             Assert.IsNotNull(reinstallBtn,
                 "Не найдена кнопка «Переустановить» (🔄) в истории — запись об установке AutoHotkey не появилась.");
 
-            var globalLog = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("lstGlobalLog"));
+            // «Центр активности» — Expander с IsExpanded="False" по умолчанию (добавлен
+            // вместе с пилюлей активных задач) — lstGlobalLog не реализуется в дереве UIA,
+            // пока Expander не раскрыт явно (обнаружено 2026-07-11).
+            var activityExpander = s.MainWindow.FindFirstDescendant(cf => cf.ByName("Центр активности"));
+            if (activityExpander != null && activityExpander.Patterns.ExpandCollapse.IsSupported)
+                activityExpander.Patterns.ExpandCollapse.Pattern.Expand();
+            System.Threading.Thread.Sleep(300);
+
+            var globalLog = Retry.WhileNull(
+                () => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("lstGlobalLog")),
+                timeout: ElementTimeout, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(globalLog, "Не найден глобальный лог (lstGlobalLog).");
 
             // ListBoxItem.Name по умолчанию — это ToString() привязанного LogEntry,

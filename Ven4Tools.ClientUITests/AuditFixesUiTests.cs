@@ -383,20 +383,15 @@ namespace Ven4Tools.ClientUITests
             systemBtn!.AsButton().Invoke(); // «Каталог» теперь Unloaded
             System.Threading.Thread.Sleep(500);
 
-            // Секция порядка источников может быть ниже видимой области System-вкладки
-            // (ScrollViewer) — докручиваем колесом мыши, иначе элемент не реализуется
-            // в дереве UIA вовсе (виртуализация).
-            try
-            {
-                var center = s.MainWindow.BoundingRectangle.Center();
-                FlaUI.Core.Input.Mouse.MoveTo(center);
-                for (int i = 0; i < 15; i++)
-                {
-                    FlaUI.Core.Input.Mouse.Scroll(-3);
-                    System.Threading.Thread.Sleep(100);
-                }
-            }
-            catch { }
+            // Реальная причина прошлой неудачи была не в виртуализации/скролле — SystemTab
+            // это вложенный TabControl из 5 под-вкладок («Общие»/«Источники»/«Диагностика»/
+            // «Офлайн и приватность»/«Профиль и снимки»), контент невыбранной под-вкладки
+            // не реализуется в дереве UIA вовсе. lstSourceOrder — в «Источники».
+            var sourcesSubTab = Retry.WhileNull(
+                () => s.MainWindow.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.TabItem).And(cf.ByName("Источники"))),
+                timeout: TimeSpan.FromSeconds(15), interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
+            Assert.IsNotNull(sourcesSubTab, "Не найдена под-вкладка «Источники» на вкладке «Система».");
+            sourcesSubTab!.Click();
             System.Threading.Thread.Sleep(300);
 
             var sourceList = Retry.WhileNull(
