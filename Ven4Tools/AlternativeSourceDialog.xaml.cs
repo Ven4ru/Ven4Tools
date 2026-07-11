@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -39,7 +41,9 @@ namespace Ven4Tools
                 if (results.Count > 0)
                 {
                     _hasWingetResults = true;
-                    cmbResults.ItemsSource = results;
+                    // ObservableCollection, а не сырой List: при ручном вводе ID пакет
+                    // вставляется в начало списка, и ComboBox должен это увидеть.
+                    cmbResults.ItemsSource = new ObservableCollection<WingetPackage>(results);
                     cmbResults.SelectedIndex = 0;
                     cmbResults.IsEnabled = true;
                     chkPriorityWinget.IsEnabled = true;
@@ -65,7 +69,11 @@ namespace Ven4Tools
 
         private void TxtManualId_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtManualId.Text)) return;
+            if (string.IsNullOrWhiteSpace(txtManualId.Text))
+            {
+                CheckCanSave();
+                return;
+            }
 
             var manualPackage = new WingetPackage
             {
@@ -75,19 +83,26 @@ namespace Ven4Tools
                 Source = "manual"
             };
 
-            var list = cmbResults.ItemsSource as List<WingetPackage>;
-            if (list != null && !list.Exists(p => p.Id == manualPackage.Id))
+            // ItemsSource может быть null (поиск ничего не вернул) — тогда создаём
+            // коллекцию и добавляем в неё ручной пакет, чтобы он реально попал в
+            // выпадающий список и его можно было выбрать/сохранить.
+            if (cmbResults.ItemsSource is not ObservableCollection<WingetPackage> list)
             {
-                list.Insert(0, manualPackage);
-                cmbResults.SelectedItem = manualPackage;
-            }
-            else
-            {
-                cmbResults.SelectedItem = cmbResults.Items.Count > 0 ? cmbResults.Items[0] : null;
+                list = new ObservableCollection<WingetPackage>();
+                cmbResults.ItemsSource = list;
             }
 
+            var existing = list.FirstOrDefault(p => p.Id == manualPackage.Id);
+            if (existing == null)
+            {
+                list.Insert(0, manualPackage);
+                existing = manualPackage;
+            }
+
+            cmbResults.SelectedItem = existing;
+            cmbResults.IsEnabled = true;
             _hasWingetResults = true;
-            btnOk.IsEnabled = true;
+            CheckCanSave();
         }
 
         private void CmbResults_SelectionChanged(object sender, SelectionChangedEventArgs e) => CheckCanSave();
@@ -118,6 +133,22 @@ namespace Ven4Tools
                 UseWingetFirst = chkPriorityWinget.IsChecked == true;
             }
 
+            // Ручной ввод ID: если из выпадающего списка ничего валидного не выбрано
+            // (например, поиск не дал результатов), но пользователь ввёл ID вручную —
+            // используем его как альтернативный источник. Проверка идёт ДО отказа
+            // «Выберите источник», иначе ручной ввод никогда не сохранялся бы.
+            if (SelectedPackage == null && !string.IsNullOrWhiteSpace(txtManualId?.Text))
+            {
+                SelectedPackage = new WingetPackage
+                {
+                    Name = "Ручной ввод",
+                    Id = txtManualId.Text.Trim(),
+                    Version = "manual",
+                    Source = "manual"
+                };
+                UseWingetFirst = chkPriorityWinget.IsChecked == true;
+            }
+
             if (!string.IsNullOrWhiteSpace(txtUrl.Text))
             {
                 string url = txtUrl.Text.Trim();
@@ -136,18 +167,6 @@ namespace Ven4Tools
                 MessageBox.Show("Выберите источник или укажите ссылку",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
-            }
-
-            if (!string.IsNullOrWhiteSpace(txtManualId?.Text) && SelectedPackage == null)
-            {
-                SelectedPackage = new WingetPackage
-                {
-                    Name = "Ручной ввод",
-                    Id = txtManualId.Text.Trim(),
-                    Version = "manual",
-                    Source = "manual"
-                };
-                UseWingetFirst = chkPriorityWinget.IsChecked == true;
             }
 
             // ID будет подставлен в командную строку winget — проверяем допустимость

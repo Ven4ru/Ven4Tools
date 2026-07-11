@@ -158,55 +158,63 @@ namespace Ven4Tools.Views.Tabs
             progressDebloat.Visibility = Visibility.Visible;
             progressDebloat.Value = 0;
 
-            // Точка восстановления перед удалением приложений и системными твиками,
-            // чтобы можно было откатить изменения при нежелательных последствиях.
-            txtDebloatStatus.Text = "🛡️ Создаю точку восстановления...";
-            AppLogger.Write("🛡️ Создаю точку восстановления перед дебло́тингом...");
-            bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед очисткой системы");
-            AppLogger.Write(rpOk
-                ? "✅ Точка восстановления создана"
-                : "⚠️ Точка восстановления не создана");
-
-            // Если точку восстановления создать не удалось — предупреждаем пользователя
-            // и даём возможность отказаться: без неё откат изменений штатными
-            // средствами Windows будет невозможен.
-            if (!rpOk)
+            // try/finally: любое исключение в процессе (зависший PowerShell, сбой
+            // сервиса и т.п.) не должно оставить кнопку и прогресс-бар навсегда
+            // заблокированными — состояние UI восстанавливается в любом случае.
+            try
             {
-                var proceed = MessageBox.Show(
-                    "Не удалось создать точку восстановления системы.\n\n" +
-                    "Без неё откатить изменения штатными средствами Windows будет нельзя.\n\n" +
-                    "Продолжить без точки восстановления?",
-                    "Debloater — нет точки восстановления",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-                if (proceed != MessageBoxResult.Yes)
+                // Точка восстановления перед удалением приложений и системными твиками,
+                // чтобы можно было откатить изменения при нежелательных последствиях.
+                txtDebloatStatus.Text = "🛡️ Создаю точку восстановления...";
+                AppLogger.Write("🛡️ Создаю точку восстановления перед дебло́тингом...");
+                bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед очисткой системы");
+                AppLogger.Write(rpOk
+                    ? "✅ Точка восстановления создана"
+                    : "⚠️ Точка восстановления не создана");
+
+                // Если точку восстановления создать не удалось — предупреждаем пользователя
+                // и даём возможность отказаться: без неё откат изменений штатными
+                // средствами Windows будет невозможен.
+                if (!rpOk)
                 {
-                    txtDebloatStatus.Text = "Отменено: точка восстановления не создана";
-                    progressDebloat.Visibility = Visibility.Collapsed;
-                    btnApplyDebloat.IsEnabled = true;
-                    return;
+                    var proceed = MessageBox.Show(
+                        "Не удалось создать точку восстановления системы.\n\n" +
+                        "Без неё откатить изменения штатными средствами Windows будет нельзя.\n\n" +
+                        "Продолжить без точки восстановления?",
+                        "Debloater — нет точки восстановления",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    if (proceed != MessageBoxResult.Yes)
+                    {
+                        txtDebloatStatus.Text = "Отменено: точка восстановления не создана";
+                        progressDebloat.Visibility = Visibility.Collapsed;
+                        return;
+                    }
                 }
+
+                _cts = new CancellationTokenSource();
+                int done = 0;
+                int succeeded = 0;
+
+                foreach (var item in selected)
+                {
+                    txtDebloatStatus.Text = $"⚙️ {item.Name}...";
+                    progressDebloat.Value = (double)done / selected.Count * 100;
+
+                    bool ok = await ApplyItemAsync(item, _cts.Token);
+                    AppLogger.Write($"{(ok ? "✅" : "❌")} {item.Name}");
+                    if (ok) succeeded++;
+                    done++;
+                }
+
+                progressDebloat.Value = 100;
+                txtDebloatStatus.Text = $"✅ Готово: применено {succeeded} из {selected.Count}";
             }
-
-            _cts = new CancellationTokenSource();
-            int done = 0;
-            int succeeded = 0;
-
-            foreach (var item in selected)
+            finally
             {
-                txtDebloatStatus.Text = $"⚙️ {item.Name}...";
-                progressDebloat.Value = (double)done / selected.Count * 100;
-
-                bool ok = await ApplyItemAsync(item, _cts.Token);
-                AppLogger.Write($"{(ok ? "✅" : "❌")} {item.Name}");
-                if (ok) succeeded++;
-                done++;
+                btnApplyDebloat.IsEnabled = true;
+                _cts?.Dispose(); _cts = null;
             }
-
-            progressDebloat.Value = 100;
-            txtDebloatStatus.Text = $"✅ Готово: применено {succeeded} из {selected.Count}";
-            btnApplyDebloat.IsEnabled = true;
-            _cts.Dispose(); _cts = null;
         }
 
         private async Task<bool> ApplyItemAsync(DebloatItem item, CancellationToken ct = default)
@@ -342,10 +350,28 @@ namespace Ven4Tools.Views.Tabs
                 };
                 using var p = Process.Start(psi);
                 if (p == null) return false;
-                await Task.WhenAll(
-                    p.StandardOutput.ReadToEndAsync(),
-                    p.StandardError.ReadToEndAsync());
-                await p.WaitForExitAsync(ct);
+
+                var outTask = p.StandardOutput.ReadToEndAsync();
+                var errTask = p.StandardError.ReadToEndAsync();
+
+                // Тайм-аут: Remove-AppxPackage/Remove-AppxProvisionedPackage и
+                // операции со службами умеют зависать. Без ограничения весь цикл
+                // «Применить» блокировался бы навсегда без обратной связи. По образцу
+                // SetReg, но с более щедрым лимитом под удаление Appx-пакетов.
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(120));
+                try
+                {
+                    await p.WaitForExitAsync(timeoutCts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    try { p.Kill(entireProcessTree: true); } catch { }
+                    AppLogger.Write("[Дебоатер] RunPSAsync: тайм-аут или отмена — процесс PowerShell завершён принудительно");
+                    return false;
+                }
+
+                await Task.WhenAll(outTask, errTask);
                 return p.ExitCode == 0;
             }
             catch (Exception ex)

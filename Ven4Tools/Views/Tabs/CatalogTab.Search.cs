@@ -278,6 +278,9 @@ namespace Ven4Tools.Views.Tabs
                 AddUserAppToUI(app);
 
                 AddLog($"➕ Добавлено из Chocolatey: {id}");
+
+                txtSearch.Text = (string)txtSearch.Tag;
+                HideWingetSuggestions();
             }
             catch (Exception ex)
             {

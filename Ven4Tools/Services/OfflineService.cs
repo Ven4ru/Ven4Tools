@@ -37,24 +37,34 @@ namespace Ven4Tools.Services
 
         public static bool HasCachedInstaller(string appId)
         {
-            try
-            {
-                var dir = CachePath;
-                if (!Directory.Exists(dir)) return false;
-                return Directory.GetFiles(dir, $"{SanitizeId(appId)}.*").Length > 0;
-            }
+            try { return ResolveCachedInstaller(appId) != null; }
             catch { return false; }
         }
 
         public static string? GetCachedInstallerPath(string appId)
         {
-            try
-            {
-                var dir = CachePath;
-                if (!Directory.Exists(dir)) return null;
-                return Directory.GetFiles(dir, $"{SanitizeId(appId)}.*").FirstOrDefault();
-            }
+            try { return ResolveCachedInstaller(appId); }
             catch { return null; }
+        }
+
+        // Точное сопоставление имени с перебором известных расширений вместо
+        // DOS-wildcard «{id}.*»: паттерн «Foo.*» совпадал бы и с «Foo.Bar.exe»,
+        // когда один Id — точечный префикс другого (Microsoft.Edge vs
+        // Microsoft.Edge.Dev), и мог привести к удалению чужого кэша при
+        // несовпадении хэша.
+        private static readonly string[] _installerExtensions = { ".exe", ".msi" };
+
+        private static string? ResolveCachedInstaller(string appId)
+        {
+            var dir = CachePath;
+            if (!Directory.Exists(dir)) return null;
+            string baseName = SanitizeId(appId);
+            foreach (var ext in _installerExtensions)
+            {
+                var path = Path.Combine(dir, baseName + ext);
+                if (File.Exists(path)) return path;
+            }
+            return null;
         }
 
         public static long GetCachedInstallerSizeMB(string appId)

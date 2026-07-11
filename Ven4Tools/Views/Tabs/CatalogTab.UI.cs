@@ -113,7 +113,7 @@ namespace Ven4Tools.Views.Tabs
             if (_catalog == null) return;
             AddLog("🔍 Загрузка доступных версий (Фаза 2)...");
 
-            var sem   = new SemaphoreSlim(3);
+            using var sem = new SemaphoreSlim(3);
             var tasks = new List<Task>();
 
             foreach (var app in _catalog.Apps)
