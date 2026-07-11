@@ -39,6 +39,9 @@ namespace Ven4Tools.Launcher
         private bool                 _backgroundUpdates = true;
         private bool                 _autostart         = false;
         private bool                 _startMinimized    = false;
+        private bool                 _autoUpdateClient  = false;
+        private SettingsWindow?      _settingsWindow;
+        private readonly string      _dataFolderPath;
         // Запросы на установку компонентов из setup отложены до первого видимого показа
         // окна: при автозапуске в трее (скрытое окно) UAC/прогресс не должны всплывать незаметно
         private bool                 _pendingSetupComponents = false;
@@ -69,14 +72,14 @@ namespace Ven4Tools.Launcher
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "Ven4Tools");
             Directory.CreateDirectory(appData);
-            _settingsPath = Path.Combine(appData, "launcher_settings.json");
+            _settingsPath   = Path.Combine(appData, "launcher_settings.json");
+            _dataFolderPath = appData;
 
             LoadSettings();
             if (_isUiTestMode)
                 _minimizeToTray = false;
             if (!_isUiTestMode)
                 CreateTrayIcon();
-            SyncCheckboxes();
 
             if (string.IsNullOrEmpty(_installPath))
                 _installPath = _isUiTestMode
@@ -150,6 +153,7 @@ namespace Ven4Tools.Launcher
             public bool    BackgroundUpdates           { get; set; } = true;
             public bool    Autostart                   { get; set; }
             public bool    StartMinimized              { get; set; }
+            public bool    AutoUpdateClient             { get; set; }
             public string? LastNotifiedLauncherVersion { get; set; }
             public string? LastNotifiedClientVersion   { get; set; }
             public string? LastNotifiedNotificationId  { get; set; }
