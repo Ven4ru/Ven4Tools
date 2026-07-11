@@ -202,6 +202,10 @@ namespace Ven4Tools.Launcher
                 string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
                 if (File.Exists(clientExe))
                 {
+                    // Ручной выбор версии возвращает кнопку в режим «Запустить»,
+                    // поэтому сбрасываем флаг обновления — иначе клик по кнопке
+                    // с надписью «Запустить» ушёл бы в ветку загрузки (Task 5).
+                    _clientUpdateAvailable  = false;
                     btnLaunchApp.Content    = "🚀 Запустить Ven4Tools";
                     btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
                 }
