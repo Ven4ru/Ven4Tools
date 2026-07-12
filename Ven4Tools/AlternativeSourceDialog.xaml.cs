@@ -58,6 +58,15 @@ namespace Ven4Tools
                 pbSearch.Visibility = Visibility.Collapsed;
                 CheckCanSave();
             }
+            catch (TimeoutException)
+            {
+                // winget завис и был завершён по таймауту — сообщаем немодально и
+                // оставляем доступными ручной ввод ID и поле ссылки.
+                pbSearch.Visibility = Visibility.Collapsed;
+                cmbResults.IsEnabled = false;
+                chkPriorityWinget.IsEnabled = false;
+                txtWingetLabel.Text = "⚠ Winget не ответил вовремя — введите ID вручную или укажите ссылку";
+            }
             catch (Exception ex)
             {
                 pbSearch.Visibility = Visibility.Collapsed;

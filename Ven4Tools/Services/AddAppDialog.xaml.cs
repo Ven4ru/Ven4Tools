@@ -115,6 +115,13 @@ namespace Ven4Tools.Services
                     txtValidateResult.Foreground = System.Windows.Media.Brushes.Tomato;
                 }
             }
+            catch (TimeoutException)
+            {
+                // winget завис и был принудительно завершён по таймауту — показываем
+                // это отдельно от «не найдено», чтобы пользователь понял, что можно повторить.
+                txtValidateResult.Text = "⚠️ Winget не ответил вовремя — попробуйте ещё раз";
+                txtValidateResult.Foreground = System.Windows.Media.Brushes.Tomato;
+            }
             finally
             {
                 btnValidateId.IsEnabled = true;
