@@ -19,6 +19,9 @@ namespace Ven4Tools
 
         private readonly string _appName;
         private bool _hasWingetResults = false;
+        // Счётчик поколений фоновых поисков: поздний ответ применяется только если
+        // остаётся последним запущенным, иначе он затирал бы более свежий результат.
+        private int _searchGeneration;
 
         public AlternativeSourceDialog(string appName)
         {
@@ -30,6 +33,7 @@ namespace Ven4Tools
 
         private async Task LoadWingetResultsAsync()
         {
+            int gen = ++_searchGeneration;
             pbSearch.Visibility = Visibility.Visible;
             cmbResults.IsEnabled = false;
             chkPriorityWinget.IsEnabled = false;
@@ -38,21 +42,34 @@ namespace Ven4Tools
             {
                 var results = await WingetService.SearchAsync(_appName);
 
-                if (results.Count > 0)
+                // Пока шёл фоновый поиск, мог стартовать более новый — применяем только
+                // результат последнего запроса.
+                if (gen != _searchGeneration) return;
+
+                // Пользователь мог начать вводить ID вручную, пока шёл поиск. Не затираем
+                // его ввод и, что важнее, не сбрасываем _hasWingetResults=false при нуле
+                // результатов — иначе валидный ручной ID становится несохраняемым, а
+                // выбранный вручную пакет молча подменяется первым результатом поиска.
+                bool manualEntered = !string.IsNullOrWhiteSpace(txtManualId.Text);
+
+                if (!manualEntered)
                 {
-                    _hasWingetResults = true;
-                    // ObservableCollection, а не сырой List: при ручном вводе ID пакет
-                    // вставляется в начало списка, и ComboBox должен это увидеть.
-                    cmbResults.ItemsSource = new ObservableCollection<WingetPackage>(results);
-                    cmbResults.SelectedIndex = 0;
-                    cmbResults.IsEnabled = true;
-                    chkPriorityWinget.IsEnabled = true;
-                }
-                else
-                {
-                    _hasWingetResults = false;
-                    cmbResults.IsEnabled = false;
-                    chkPriorityWinget.IsEnabled = false;
+                    if (results.Count > 0)
+                    {
+                        _hasWingetResults = true;
+                        // ObservableCollection, а не сырой List: при ручном вводе ID пакет
+                        // вставляется в начало списка, и ComboBox должен это увидеть.
+                        cmbResults.ItemsSource = new ObservableCollection<WingetPackage>(results);
+                        cmbResults.SelectedIndex = 0;
+                        cmbResults.IsEnabled = true;
+                        chkPriorityWinget.IsEnabled = true;
+                    }
+                    else
+                    {
+                        _hasWingetResults = false;
+                        cmbResults.IsEnabled = false;
+                        chkPriorityWinget.IsEnabled = false;
+                    }
                 }
 
                 pbSearch.Visibility = Visibility.Collapsed;
@@ -60,18 +77,26 @@ namespace Ven4Tools
             }
             catch (TimeoutException)
             {
+                if (gen != _searchGeneration) return;
                 // winget завис и был завершён по таймауту — сообщаем немодально и
                 // оставляем доступными ручной ввод ID и поле ссылки.
                 pbSearch.Visibility = Visibility.Collapsed;
-                cmbResults.IsEnabled = false;
-                chkPriorityWinget.IsEnabled = false;
+                if (string.IsNullOrWhiteSpace(txtManualId.Text))
+                {
+                    cmbResults.IsEnabled = false;
+                    chkPriorityWinget.IsEnabled = false;
+                }
                 txtWingetLabel.Text = "⚠ Winget не ответил вовремя — введите ID вручную или укажите ссылку";
             }
             catch (Exception ex)
             {
+                if (gen != _searchGeneration) return;
                 pbSearch.Visibility = Visibility.Collapsed;
-                cmbResults.IsEnabled = false;
-                chkPriorityWinget.IsEnabled = false;
+                if (string.IsNullOrWhiteSpace(txtManualId.Text))
+                {
+                    cmbResults.IsEnabled = false;
+                    chkPriorityWinget.IsEnabled = false;
+                }
                 System.Diagnostics.Debug.WriteLine($"Search error: {ex.Message}");
             }
         }
