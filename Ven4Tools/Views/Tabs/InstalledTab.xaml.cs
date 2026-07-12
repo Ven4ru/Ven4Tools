@@ -779,25 +779,34 @@ namespace Ven4Tools.Views.Tabs
                 "Подтверждение импорта", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (res != MessageBoxResult.Yes) return;
 
-            if (!InstallationService.IsBusy)
+            // Общий семафор с каталогом/историей/Windows Update — массовый winget import
+            // не должен идти параллельно с другой установкой (конфликт msiexec, ошибка 1618,
+            // частично применённый импорт). Ранний выход по IsBusy — до любых UI-мутаций.
+            if (InstallationService.IsBusy)
             {
-                var rpAnswer = MessageBox.Show(
-                    "Импорт может установить сразу много приложений.\n\nСоздать точку восстановления Windows перед импортом?",
-                    "Точка восстановления",
-                    MessageBoxButton.YesNoCancel,
-                    MessageBoxImage.Question);
-                if (rpAnswer == MessageBoxResult.Cancel) return;
-                if (rpAnswer == MessageBoxResult.Yes)
-                {
-                    Log("🛡️ Создаю точку восстановления...");
-                    bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед импортом списка");
-                    Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
-                }
+                MessageBox.Show(
+                    "Дождитесь завершения текущей установки, затем повторите попытку.",
+                    "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var rpAnswer = MessageBox.Show(
+                "Импорт может установить сразу много приложений.\n\nСоздать точку восстановления Windows перед импортом?",
+                "Точка восстановления",
+                MessageBoxButton.YesNoCancel,
+                MessageBoxImage.Question);
+            if (rpAnswer == MessageBoxResult.Cancel) return;
+            if (rpAnswer == MessageBoxResult.Yes)
+            {
+                Log("🛡️ Создаю точку восстановления...");
+                bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед импортом списка");
+                Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
             }
 
             btnImport.IsEnabled = false;
             Log($"📥 Импорт из {System.IO.Path.GetFileName(dlg.FileName)}...");
             Log("⏳ Это может занять несколько минут...");
+            await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
                 var (_, output) = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements");
@@ -807,7 +816,11 @@ namespace Ven4Tools.Views.Tabs
                 if (ok) await LoadAppsAsync();
             }
             catch (Exception ex) { Log($"❌ Ошибка импорта: {ex.Message}"); }
-            finally { btnImport.IsEnabled = true; }
+            finally
+            {
+                InstallationService.InstallSemaphore.Release();
+                btnImport.IsEnabled = true;
+            }
         }
 
         // ── Вспомогательные ───────────────────────────────────────────────────
