@@ -22,6 +22,10 @@ jobs:
       - name: Сборка
         run: dotnet build Ven4Tools.sln -c Release --nologo -v minimal -warnaserror
 
+      - name: Разрешение экрана раннера под окна лаунчера/клиента
+        shell: pwsh
+        run: ./tests/scripts/set_ci_display_resolution.ps1
+
       - name: UI smoke и snapshot (лаунчер)
         run: dotnet test tests/Ven4Tools.UITests/Ven4Tools.UITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
 
