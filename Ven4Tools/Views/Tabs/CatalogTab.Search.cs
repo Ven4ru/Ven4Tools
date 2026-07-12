@@ -104,6 +104,18 @@ namespace Ven4Tools.Views.Tabs
             {
                 // Дебаунс отменён новым вводом в поле поиска — ожидаемо.
             }
+            catch (TimeoutException)
+            {
+                // winget завис и был завершён по внутреннему таймауту — в живом поиске
+                // просто показываем нейтральный статус, чтобы исключение не осталось
+                // необработанным (Task.WhenAll пробросил бы его мимо catch выше).
+                if (!token.IsCancellationRequested)
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        txtWingetStatus.Text       = "⚠ Winget не ответил вовремя";
+                        txtWingetStatus.Visibility = Visibility.Visible;
+                    });
+            }
         }
 
         private void BtnFavoritesOnly_Click(object sender, RoutedEventArgs e)
