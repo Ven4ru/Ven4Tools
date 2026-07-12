@@ -13,19 +13,42 @@ namespace Ven4Tools.Views.Tabs
     public partial class HistoryTab : UserControl
     {
         private List<HistoryEntry> _allEntries = new();
+        private bool _historySubscribed;
 
         public HistoryTab()
         {
             InitializeComponent();
-            Loaded += async (_, _) => await RefreshAsync();
-            // Именованный обработчик + отписка в Unloaded — иначе подписка через
-            // анонимную лямбду удерживала вкладку в памяти (утечка).
-            InstallHistoryService.Instance.Changed += OnHistoryChanged;
-            Unloaded += (_, _) => InstallHistoryService.Instance.Changed -= OnHistoryChanged;
+            // Подписка на Changed — в Loaded с флагом, отписка в Unloaded: вкладка
+            // кэшируется в MainWindow и переиспользуется, поэтому после Unloaded нужно
+            // подписываться заново при каждом показе (иначе живое обновление истории
+            // пропадало после первого ухода с вкладки). Отписка снимает утечку.
+            Loaded += HistoryTab_Loaded;
+            Unloaded += HistoryTab_Unloaded;
 
             txtHistorySearch.GotFocus  += (_, _) => { if (txtHistorySearch.Text == (string)txtHistorySearch.Tag) txtHistorySearch.Text = ""; };
             txtHistorySearch.LostFocus += (_, _) => { if (string.IsNullOrWhiteSpace(txtHistorySearch.Text)) txtHistorySearch.Text = (string)txtHistorySearch.Tag; };
             txtHistorySearch.Text = (string)txtHistorySearch.Tag;
+        }
+
+        private async void HistoryTab_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Переподписка при каждом показе (после Unloaded подписка снимается).
+            // Флаг защищает от повторной подписки, если Loaded сработает дважды подряд.
+            if (!_historySubscribed)
+            {
+                InstallHistoryService.Instance.Changed += OnHistoryChanged;
+                _historySubscribed = true;
+            }
+            await RefreshAsync();
+        }
+
+        private void HistoryTab_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (_historySubscribed)
+            {
+                InstallHistoryService.Instance.Changed -= OnHistoryChanged;
+                _historySubscribed = false;
+            }
         }
 
         private void OnHistoryChanged() =>
