@@ -18,15 +18,24 @@ jobs:
   release:
     name: Сборка launcher release
     runs-on: windows-latest
+    env:
+      # Значения из inputs передаются только через env — НЕ подставлять их как
+      # `${{ inputs.* }}` напрямую в текст run:-скриптов ниже: текстовая подстановка
+      # происходит ДО того, как PowerShell что-либо парсит, поэтому валидация формата
+      # версии ниже не защищает от инъекции, если значение сначала склеивается в
+      # исходный код скрипта. Через env: значение приходит как обычная строka
+      # переменной окружения, а не как часть текста скрипта.
+      RELEASE_VERSION: ${{ inputs.version }}
+      RELEASE_LOCAL_CHECK: ${{ inputs.local_check }}
 
     steps:
       - name: Проверка release gate
         shell: pwsh
         run: |
-          if ("${{ inputs.local_check }}" -ne "RELEASE-APPROVED") {
+          if ($env:RELEASE_LOCAL_CHECK -ne "RELEASE-APPROVED") {
             throw "Релиз запрещён: полный локальный проход лаунчера не подтверждён."
           }
-          if ("${{ inputs.version }}" -notmatch '^\d+\.\d+\.\d+$') {
+          if ($env:RELEASE_VERSION -notmatch '^\d+\.\d+\.\d+$') {
             throw "Версия должна иметь формат X.Y.Z."
           }
 
@@ -53,7 +62,7 @@ jobs:
           # через единственный Ven4Tools.Setup-X.Y.Z.exe (см. build_installer.ps1).
           dotnet publish Ven4Tools.Launcher/Ven4Tools.Launcher.csproj `
             -c Release -r win-x64 --self-contained true `
-            -p:Version=${{ inputs.version }} `
+            -p:Version=$env:RELEASE_VERSION `
             -o _release/launcher_publish `
             --nologo
 
@@ -67,9 +76,9 @@ jobs:
           $makensis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
           & $makensis `
             /INPUTCHARSET UTF8 `
-            "/DVERSION=${{ inputs.version }}" `
+            "/DVERSION=$env:RELEASE_VERSION" `
             "/DPUBLISH_DIR=$pwd\_release\launcher_publish" `
-            "/DOUTFILE=$pwd\_release\Ven4Tools.Setup-${{ inputs.version }}.exe" `
+            "/DOUTFILE=$pwd\_release\Ven4Tools.Setup-${env:RELEASE_VERSION}.exe" `
             "installer\Ven4Tools.Setup.nsi"
           if ($LASTEXITCODE -ne 0) {
             throw "NSIS завершился с кодом $LASTEXITCODE."
@@ -78,7 +87,7 @@ jobs:
       - name: Тихая установка и проверка Setup
         shell: pwsh
         run: |
-          $setup = Resolve-Path "_release/Ven4Tools.Setup-${{ inputs.version }}.exe"
+          $setup = Resolve-Path "_release/Ven4Tools.Setup-${env:RELEASE_VERSION}.exe"
           $process = Start-Process `
             -FilePath $setup `
             -ArgumentList '/S' `
@@ -88,7 +97,7 @@ jobs:
           if ($process.ExitCode -ne 0) {
             throw "Setup завершился с кодом $($process.ExitCode)."
           }
-          ./tests/scripts/verify_launcher_install.ps1 -ExpectedVersion "${{ inputs.version }}"
+          ./tests/scripts/verify_launcher_install.ps1 -ExpectedVersion $env:RELEASE_VERSION
 
       - name: Разрешение экрана раннера под окно лаунчера
         shell: pwsh
@@ -106,8 +115,8 @@ jobs:
       - name: Контрольные суммы
         shell: pwsh
         run: |
-          Get-FileHash "_release/Ven4Tools.Setup-${{ inputs.version }}.exe" -Algorithm SHA256 |
-            ForEach-Object { "$($_.Hash.ToLower())  Ven4Tools.Setup-${{ inputs.version }}.exe" } |
+          Get-FileHash "_release/Ven4Tools.Setup-${env:RELEASE_VERSION}.exe" -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  Ven4Tools.Setup-${env:RELEASE_VERSION}.exe" } |
             Set-Content "_release/SHA256SUMS.txt" -Encoding ascii
 
       - name: Создание черновика отдельного launcher-релиза
@@ -115,9 +124,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "launcher-v${{ inputs.version }}" `
-            "_release/Ven4Tools.Setup-${{ inputs.version }}.exe" `
+          gh release create "launcher-v$env:RELEASE_VERSION" `
+            "_release/Ven4Tools.Setup-${env:RELEASE_VERSION}.exe" `
             "_release/SHA256SUMS.txt" `
-            --title "Ven4Tools Launcher ${{ inputs.version }}" `
+            --title "Ven4Tools Launcher $env:RELEASE_VERSION" `
             --generate-notes `
             --draft
