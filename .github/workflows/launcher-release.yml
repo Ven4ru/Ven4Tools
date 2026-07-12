@@ -90,6 +90,10 @@ jobs:
           }
           ./tests/scripts/verify_launcher_install.ps1 -ExpectedVersion "${{ inputs.version }}"
 
+      - name: Разрешение экрана раннера под окно лаунчера
+        shell: pwsh
+        run: ./tests/scripts/set_ci_display_resolution.ps1
+
       - name: UI smoke установленного launcher
         shell: pwsh
         run: |
