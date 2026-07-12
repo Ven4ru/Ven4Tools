@@ -3,6 +3,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using Ven4Tools.Services;
+using Ven4Tools.Shared;
 using Ven4Tools.Views;
 
 namespace Ven4Tools
@@ -12,6 +13,7 @@ namespace Ven4Tools
         private static HeartbeatService? _heartbeat;
         private static UpdateBackgroundService? _updateBgService;
         private static WindowsUpdateBackgroundService? _windowsUpdateBgService;
+        private static ClientControlServer? _clientControlServer;
         private static Mutex? _instanceMutex;
 
         public App()
@@ -70,6 +72,14 @@ namespace Ven4Tools
 
                 var main = new MainWindow();
                 main.Show();
+
+                // Launcher работает без повышения прав, а клиент — elevated, поэтому
+                // оконные сообщения от launcher блокируются UIPI. Именованный pipe,
+                // доступный только текущему пользователю, служит безопасным каналом
+                // запроса штатного закрытия между разными уровнями целостности.
+                _clientControlServer = new ClientControlServer(() =>
+                    Dispatcher.BeginInvoke(new Action(main.Close)));
+                _clientControlServer.Start();
 
                 // Фоновые уведомления об обновлениях/новых приложениях — после показа
                 // окна, чтобы трей-иконка успела зарегистрироваться. Старт не блокирует.
@@ -176,6 +186,8 @@ namespace Ven4Tools
             _heartbeat?.Dispose();
             _updateBgService?.Dispose();
             _windowsUpdateBgService?.Dispose();
+            _clientControlServer?.Dispose();
+            _clientControlServer = null;
             if (_instanceMutex != null)
             {
                 _instanceMutex.ReleaseMutex();

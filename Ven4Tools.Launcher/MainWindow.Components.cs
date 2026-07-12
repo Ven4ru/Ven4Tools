@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Ven4Tools.Launcher.Models;
 using Ven4Tools.Launcher.Services;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Launcher
 {
@@ -572,12 +573,9 @@ namespace Ven4Tools.Launcher
             return null;
         }
 
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-        private const uint WM_CLOSE = 0x0010;
-
-        // Просит запущенный клиент закрыться штатно (WM_CLOSE — то же сообщение,
-        // что шлёт крестик окна) и ждёт до timeoutMs, пока процесс завершится.
+        // Просит запущенный elevated-клиент закрыться через именованный pipe и ждёт
+        // до timeoutMs, пока процесс завершится. WM_CLOSE здесь неприменим: launcher
+        // работает asInvoker, и Windows UIPI блокирует его сообщения elevated-окну.
         // Клиент сам решает, закрываться ли (см. Window_Closing_Extended в
         // Ven4Tools/MainWindow.xaml.cs — предупреждение при активной установке,
         // либо сворачивание в трей вместо закрытия при включённой у клиента
@@ -588,16 +586,13 @@ namespace Ven4Tools.Launcher
             var proc = FindRunningClientProcess();
             if (proc == null) return true;
 
-            IntPtr handle = proc.MainWindowHandle;
             proc.Dispose();
 
-            if (handle == IntPtr.Zero)
+            if (!await ClientControlChannel.RequestShutdownAsync())
             {
-                AddLog("⚠️ Не найдено окно клиента для закрытия (возможно, уже свёрнут в трей)");
+                AddLog("⚠️ Клиент не принял запрос на штатное закрытие");
                 return false;
             }
-
-            PostMessage(handle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
             while (sw.ElapsedMilliseconds < timeoutMs)

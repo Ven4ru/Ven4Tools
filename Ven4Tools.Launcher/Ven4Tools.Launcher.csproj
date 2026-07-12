@@ -34,6 +34,7 @@
   <ItemGroup>
     <Page Include="..\Shared\DesignTokens.xaml" Link="Resources\DesignTokens.xaml" />
     <Compile Include="..\Shared\MotionService.cs" Link="Services\MotionService.cs" />
+    <Compile Include="..\Shared\ClientControlChannel.cs" Link="Services\ClientControlChannel.cs" />
   </ItemGroup>
 
   <ItemGroup>

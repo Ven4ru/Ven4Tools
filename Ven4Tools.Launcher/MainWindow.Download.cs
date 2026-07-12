@@ -280,7 +280,6 @@ namespace Ven4Tools.Launcher
             if (File.Exists(clientExe) && _clientUpdateAvailable)
             {
                 AddLog($"⬆ Обновление клиента до {_selectedVersion.Version}...");
-                _clientUpdateAvailable = false;
                 _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
                 await DownloadVersionAsync(_selectedVersion, _downloadCts.Token);
                 return;
