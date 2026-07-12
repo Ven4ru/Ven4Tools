@@ -35,7 +35,7 @@
                    HorizontalAlignment="Center" Margin="0,0,0,15"/>
 
         <!-- Результаты поиска в winget -->
-        <TextBlock Grid.Row="1" Text="Найденные варианты в winget:" 
+        <TextBlock x:Name="txtWingetLabel" Grid.Row="1" Text="Найденные варианты в winget:"
                    Foreground="#888" FontSize="11" Margin="0,0,0,3"/>
 
         <ProgressBar x:Name="pbSearch" Grid.Row="2" Height="3" IsIndeterminate="True" 

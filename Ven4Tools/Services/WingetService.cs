@@ -11,9 +11,16 @@ namespace Ven4Tools.Services
 {
     public static class WingetService
     {
+        // Верхняя граница ожидания интерактивных winget-вызовов (search/show) из диалогов.
+        // Хватает для медленного источника, но не даёт зависшему winget (сетевой столл,
+        // запрос соглашения источника) держать UI в состоянии «поиск…» и оставлять
+        // дочерний winget.exe живым до закрытия всего клиента.
+        private static readonly TimeSpan UiCallTimeout = TimeSpan.FromSeconds(60);
+
         /// <summary>
         /// Search winget for packages matching <paramref name="query"/>.
         /// Returns up to 15 deduplicated results (IDs must contain a dot).
+        /// Бросает <see cref="TimeoutException"/>, если winget не ответил за <see cref="UiCallTimeout"/>.
         /// </summary>
         public static async Task<List<WingetPackage>> SearchAsync(
             string query, CancellationToken token = default)
@@ -21,6 +28,11 @@ namespace Ven4Tools.Services
             var results = new List<WingetPackage>();
             query = CommandLineGuard.SanitizeQuery(query);
             if (string.IsNullOrEmpty(query)) return results;
+
+            // Внутренний таймаут поверх внешнего токена: даже без токена (диалоги
+            // передают default) зависший winget будет принудительно завершён.
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            timeoutCts.CancelAfter(UiCallTimeout);
             try
             {
                 var psi = new ProcessStartInfo
@@ -47,11 +59,14 @@ namespace Ven4Tools.Services
                 using var process = Process.Start(psi);
                 if (process == null) return results;
 
-                using var reg = token.Register(() => { try { process.Kill(); } catch { } });
+                // Kill(entireProcessTree) — по таймауту/отмене убиваем winget и всех его
+                // потомков, иначе пайп не закрывается и ReadToEndAsync зависает.
+                using var reg = timeoutCts.Token.Register(() =>
+                    { try { process.Kill(entireProcessTree: true); } catch { } });
 
                 var stderrTask = process.StandardError.ReadToEndAsync();
                 string output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync(token);
+                await process.WaitForExitAsync(timeoutCts.Token);
                 await stderrTask;
 
                 bool headerPassed = false;
@@ -80,6 +95,13 @@ namespace Ven4Tools.Services
                     });
                 }
             }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !token.IsCancellationRequested)
+            {
+                // Именно таймаут (а не отмена пользователем через внешний токен) —
+                // сообщаем вызывающему явным исключением, чтобы UI показал ошибку
+                // вместо «вечного поиска».
+                throw new TimeoutException("Превышено время ожидания ответа winget при поиске.");
+            }
             catch (OperationCanceledException) { }
             catch { }
 
@@ -92,10 +114,17 @@ namespace Ven4Tools.Services
 
         /// <summary>
         /// Validate a winget package by exact ID. Returns (Name, Version) or (null, null).
+        /// Бросает <see cref="TimeoutException"/>, если winget не ответил за <see cref="UiCallTimeout"/>.
         /// </summary>
-        public static async Task<(string? Name, string? Version)> ValidateIdAsync(string id)
+        public static async Task<(string? Name, string? Version)> ValidateIdAsync(
+            string id, CancellationToken token = default)
         {
             if (!CommandLineGuard.ValidateId(id)) return (null, null);
+
+            // Внутренний таймаут: раньше show/WaitForExitAsync был без ограничения —
+            // зависший winget держал диалог в «проверяем…» бесконечно.
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            timeoutCts.CancelAfter(UiCallTimeout);
             try
             {
                 var psi = new ProcessStartInfo
@@ -123,9 +152,13 @@ namespace Ven4Tools.Services
                 using var process = Process.Start(psi);
                 if (process == null) return (null, null);
 
+                // Kill(entireProcessTree) — по таймауту/отмене убиваем всё дерево winget.
+                using var reg = timeoutCts.Token.Register(() =>
+                    { try { process.Kill(entireProcessTree: true); } catch { } });
+
                 var stderrTask = process.StandardError.ReadToEndAsync();
                 string output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
+                await process.WaitForExitAsync(timeoutCts.Token);
                 await stderrTask;
                 if (process.ExitCode != 0) return (null, null);
 
@@ -146,6 +179,12 @@ namespace Ven4Tools.Services
                     }
                 }
                 return (name, version);
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !token.IsCancellationRequested)
+            {
+                // Таймаут (не отмена пользователем) — отличаем от «не найдено» (null,null),
+                // чтобы диалог показал понятное сообщение.
+                throw new TimeoutException("Превышено время ожидания ответа winget при проверке ID.");
             }
             catch { return (null, null); }
         }
