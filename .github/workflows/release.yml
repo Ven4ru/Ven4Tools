@@ -26,6 +26,34 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      # Публикация релиза раньше не имела собственного security/quality gate:
+      # job с contents: write мог опубликовать сборку по тегу без тестов и без
+      # проверки уязвимых зависимостей (MEDIUM-находка аудита безопасности
+      # 2026-07-13). build.yml гоняет это же на каждый push/PR в main, но тег
+      # может указывать на коммит, для которого тот прогон уже устарел или не
+      # проводился (например ручной workflow_dispatch на произвольном коммите).
+      - name: Восстановление зависимостей
+        run: dotnet restore Ven4Tools.sln --nologo
+
+      - name: Сборка solution
+        run: dotnet build Ven4Tools.sln -c Release --no-restore --nologo -v minimal -warnaserror
+
+      - name: Быстрые unit-тесты
+        run: dotnet test tests/Ven4Tools.Tests/Ven4Tools.Tests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo
+
+      - name: Проверка уязвимых NuGet-зависимостей
+        shell: pwsh
+        run: |
+          $json = dotnet list Ven4Tools.sln package --vulnerable --include-transitive --format json | Out-String | ConvertFrom-Json
+          $vulnerable = @(
+            $json.projects.frameworks.topLevelPackages
+            $json.projects.frameworks.transitivePackages
+          ) | Where-Object { $_.vulnerabilities.Count -gt 0 }
+          if ($vulnerable.Count -gt 0) {
+            $vulnerable | Format-Table id, resolvedVersion
+            throw "Обнаружены уязвимые NuGet-зависимости."
+          }
+
       - name: Получить версию
         id: ver
         shell: pwsh
