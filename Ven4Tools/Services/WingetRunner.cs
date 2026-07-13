@@ -110,7 +110,7 @@ namespace Ven4Tools.Services
             ValidateArgs(args);
             var psi = new ProcessStartInfo
             {
-                FileName               = "winget",
+                FileName               = TrustedExecutablePaths.ResolveWinget() ?? throw new InvalidOperationException("winget не найден"),
                 Arguments              = args,
                 UseShellExecute        = false,
                 RedirectStandardOutput = true,
@@ -146,7 +146,7 @@ namespace Ven4Tools.Services
             ValidateArgs(args);
             var psi = new ProcessStartInfo
             {
-                FileName               = "winget",
+                FileName               = TrustedExecutablePaths.ResolveWinget() ?? throw new InvalidOperationException("winget не найден"),
                 Arguments              = args,
                 UseShellExecute        = false,
                 RedirectStandardOutput = true,
