@@ -68,7 +68,13 @@ jobs:
 
       - name: Установка NSIS
         shell: pwsh
-        run: choco install nsis -y --no-progress
+        # Версия закреплена: этот шаг работает в job с contents: write (публикует
+        # релиз), незапиненная choco install nsis -y тянула бы любую версию,
+        # какая окажется текущей в фиде на момент запуска (MEDIUM-находка
+        # аудита безопасности 2026-07-13). Chocolatey сам проверяет контрольную
+        # сумму пакета при установке — пиннинг версии здесь фиксирует ещё и
+        # воспроизводимость сборки.
+        run: choco install nsis --version=3.12.0 -y --no-progress
 
       - name: Сборка Setup
         shell: pwsh
