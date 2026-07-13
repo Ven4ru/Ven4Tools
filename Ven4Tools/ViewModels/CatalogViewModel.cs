@@ -387,7 +387,9 @@ namespace Ven4Tools.ViewModels
                 ApplyProfileFilters();
 
                 StatusText = $"Загружено {Apps.Count} приложений";
-                _ = InitialLoadAvailabilityAsync();
+                _ = InitialLoadAvailabilityAsync().ContinueWith(
+                    t => Log($"❌ Ошибка фоновой загрузки каталога: {t.Exception?.GetBaseException().Message}"),
+                    TaskContinuationOptions.OnlyOnFaulted);
                 _ = RefreshPresetsAsync();
                 foreach (var row in Apps) _ = row.LoadIconAsync();
             }
@@ -427,7 +429,9 @@ namespace Ven4Tools.ViewModels
                 Log($"📦 Загружено приложений: {_catalog.Apps.Count}");
                 Log("✅ Каталог успешно обновлён");
 
-                _ = InitialLoadAvailabilityAsync();
+                _ = InitialLoadAvailabilityAsync().ContinueWith(
+                    t => Log($"❌ Ошибка фоновой загрузки каталога: {t.Exception?.GetBaseException().Message}"),
+                    TaskContinuationOptions.OnlyOnFaulted);
             }
             catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
         }
