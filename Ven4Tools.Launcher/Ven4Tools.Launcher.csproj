@@ -12,7 +12,7 @@
     <!-- AssemblyVersion/FileVersion намеренно не заданы отдельно: SDK выводит их из
          Version. CI (launcher-release.yml) передаёт -p:Version=X.Y.Z — раньше это не
          долетало до FileVersion/AssemblyVersion, т.к. литералы здесь их перебивали. -->
-    <Version>3.1.0</Version>
+    <Version>3.1.1</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     
     <!-- Self-contained single file -->
