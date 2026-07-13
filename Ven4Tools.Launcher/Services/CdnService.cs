@@ -12,6 +12,7 @@ namespace Ven4Tools.Launcher.Services
     public class CdnService : IDisposable
     {
         private const string VersionUrl = "https://cdn.ven4tools.ru/version.json";
+        private const string VersionSignatureUrl = "https://cdn.ven4tools.ru/version.json.sig";
 
         // Короткий таймаут: если CDN не ответил быстро — молча возвращаем null
         // и вызывающий код переключается на GitHub.
@@ -36,12 +37,23 @@ namespace Ven4Tools.Launcher.Services
         /// <summary>
         /// Запрашивает version.json с CDN. Возвращает null при любой ошибке
         /// (CDN недоступен, таймаут, битый JSON) — это сигнал для тихого fallback на GitHub.
+        ///
+        /// Fail-closed по подписи: version.json — единственный источник и для URL
+        /// загрузки, и для его же SHA256, поэтому компрометация CDN без проверки
+        /// подписи означала бы, что оба контроля целостности подделываются
+        /// одновременно (HIGH-находка аудита 2026-07-13). Манифест без валидной
+        /// ECDSA-подписи (version.json.sig) отклоняется так же, как недоступный
+        /// CDN — вызывающий код тихо переключается на GitHub, который не зависит
+        /// от возможно скомпрометированного CDN.
         /// </summary>
         public async Task<CdnVersionInfo?> GetVersionInfoAsync(CancellationToken token = default)
         {
             try
             {
                 string json = await _httpClient.GetStringAsync(VersionUrl, token);
+                string signature = await _httpClient.GetStringAsync(VersionSignatureUrl, token);
+                if (!UpdateManifestVerifier.Verify(json, signature))
+                    return null;
                 return JsonSerializer.Deserialize<CdnVersionInfo>(json);
             }
             catch
