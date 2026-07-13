@@ -271,8 +271,8 @@ namespace Ven4Tools.Launcher
             {
                 var latest = _availableVersions.FirstOrDefault(v => v.IsLatest);
                 if (latest == null) { AddLog("❌ Нет доступных версий"); return; }
-                _selectedVersion         = latest;
-                cmbVersions.SelectedItem = latest;
+                _selectedVersion = latest;
+                UpdateVersionDisplay(latest);
             }
 
             string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");

@@ -229,8 +229,8 @@ public sealed class LauncherSmokeTests : IDisposable
 
         Assert.True(
             _window.FindFirstDescendant(
-                condition => condition.ByAutomationId("cmbVersions")) is not null,
-            "Не найден обязательный контрол cmbVersions.");
+                condition => condition.ByAutomationId("txtClientVersion")) is not null,
+            "Не найден обязательный контрол txtClientVersion.");
     }
 
     private void ExercisePrimaryControlBindings()

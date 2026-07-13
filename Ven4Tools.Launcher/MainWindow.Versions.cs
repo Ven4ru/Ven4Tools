@@ -124,15 +124,14 @@ namespace Ven4Tools.Launcher
 
                 if (_availableVersions.Any())
                 {
-                    cmbVersions.ItemsSource  = _availableVersions;
-                    cmbVersions.SelectedItem = _availableVersions.FirstOrDefault(v => v.IsLatest);
-                    cmbVersions.IsEnabled    = true;
+                    UpdateVersionDisplay(_availableVersions.FirstOrDefault(v => v.IsLatest));
                     AddLog($"✅ Загружено {_availableVersions.Count} версий");
                     CheckExistingClient();
                     CheckClientUpdateAvailable();
                 }
                 else
                 {
+                    UpdateVersionDisplay(null);
                     AddLog("⚠️ Нет релизов с подходящим .zip-активом (см. детали выше)");
                 }
             }
@@ -178,45 +177,35 @@ namespace Ven4Tools.Launcher
             }
 
             _clientUpdateAvailable  = true;
-            _selectedVersion        = latest;
-            cmbVersions.SelectedItem = latest;
+            UpdateVersionDisplay(latest);
             btnLaunchApp.Content    = "⬆ Обновить Ven4Tools";
             btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(251, 191, 36));
             AddLog($"📢 Доступно обновление клиента: {installedVersion} → {latest.Version}");
         }
 
-        private void CmbVersions_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        // Единственная доступная версия клиента — старые релизы больше не выбираются
+        // вручную (у них нет zip-ассета, см. prune-old-client-assets.yml): версия и
+        // дата релиза показываются как статичная информация, а не как выбор из списка.
+        private void UpdateVersionDisplay(ClientVersionInfo? version)
         {
-            if (cmbVersions.SelectedItem is ClientVersionInfo version)
+            _selectedVersion = version;
+
+            if (version == null)
             {
-                _selectedVersion = version;
-
-                if (version.FileSize > 0)
-                    txtVersionInfo.Text = $"{version.ReleaseDate:dd.MM.yyyy}  ·  {version.FileSize / 1024 / 1024} МБ";
-                else
-                    txtVersionInfo.Text = version.ReleaseDate != default ? $"{version.ReleaseDate:dd.MM.yyyy}" : "Выберите версию";
-
-                if (_detailsPanelOpen)
-                    ShowReleaseNotes(version.ReleaseNotes);
-
-                string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
-                if (File.Exists(clientExe))
-                {
-                    // Ручной выбор версии возвращает кнопку в режим «Запустить»,
-                    // поэтому сбрасываем флаг обновления — иначе клик по кнопке
-                    // с надписью «Запустить» ушёл бы в ветку загрузки (Task 5).
-                    _clientUpdateAvailable  = false;
-                    btnLaunchApp.Content    = "🚀 Запустить Ven4Tools";
-                    btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
-                }
-                else
-                {
-                    btnLaunchApp.Content    = "📥 Загрузить Ven4Tools";
-                    btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 140, 0));
-                }
-
-                AddLog($"📌 Выбрана версия: {version.Version}");
+                txtClientVersion.Text = "Версия клиента: —";
+                txtVersionInfo.Text   = "Нет доступной версии";
+                return;
             }
+
+            txtClientVersion.Text = $"Версия клиента: {version.Version}";
+            txtVersionInfo.Text = version.FileSize > 0
+                ? $"Релиз от {version.ReleaseDate:dd.MM.yyyy}  ·  {version.FileSize / 1024 / 1024} МБ"
+                : version.ReleaseDate != default
+                    ? $"Релиз от {version.ReleaseDate:dd.MM.yyyy}"
+                    : "Информация о релизе недоступна";
+
+            if (_detailsPanelOpen)
+                ShowReleaseNotes(version.ReleaseNotes);
         }
 
         private void ShowReleaseNotes(string? notes)
