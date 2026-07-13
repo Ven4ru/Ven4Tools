@@ -8,7 +8,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <CoverletOutput>$(MSBuildProjectDirectory)\..\..\TestResults\Coverage\coverage</CoverletOutput>
     <CoverletOutputFormat>cobertura</CoverletOutputFormat>
-    <Include>[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.VersionComparer,[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.DownloadValidator,[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.SafeZipExtractor,[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.FallbackDownloader,[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.TransactionalDirectoryInstaller,[Ven4Tools]Ven4Tools.Services.HashHelper,[Ven4Tools]Ven4Tools.Services.CatalogSignatureVerifier,[Ven4Tools]Ven4Tools.Services.DownloadValidator,[Ven4Tools]Ven4Tools.Services.WindowsUpdate.WindowsUpdateCategoryTreeBuilder,[Ven4Tools]Ven4Tools.Services.WindowsUpdate.WindowsUpdateErrorMapper,[Ven4Tools]Ven4Tools.Services.WindowsUpdate.WindowsUpdateService,[Ven4Tools]Ven4Tools.Services.WindowsUpdateBackgroundService</Include>
+    <Include>[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.VersionComparer,[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.DownloadValidator,[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.SafeZipExtractor,[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.FallbackDownloader,[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.TransactionalDirectoryInstaller,[Ven4Tools.Launcher]Ven4Tools.Launcher.Services.UpdateManifestVerifier,[Ven4Tools]Ven4Tools.Services.HashHelper,[Ven4Tools]Ven4Tools.Services.CatalogSignatureVerifier,[Ven4Tools]Ven4Tools.Services.DownloadValidator,[Ven4Tools]Ven4Tools.Services.WindowsUpdate.WindowsUpdateCategoryTreeBuilder,[Ven4Tools]Ven4Tools.Services.WindowsUpdate.WindowsUpdateErrorMapper,[Ven4Tools]Ven4Tools.Services.WindowsUpdate.WindowsUpdateService,[Ven4Tools]Ven4Tools.Services.WindowsUpdateBackgroundService</Include>
     <Threshold>80</Threshold>
     <ThresholdType>line</ThresholdType>
     <ThresholdStat>total</ThresholdStat>
@@ -36,5 +36,7 @@
   <ItemGroup>
     <None Include="..\..\Catalog\master.json" Link="Fixtures\master.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Catalog\master.json.sig" Link="Fixtures\master.json.sig" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fixtures\version-manifest-sample.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fixtures\version-manifest-sample.json.sig" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
