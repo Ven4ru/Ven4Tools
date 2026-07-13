@@ -148,12 +148,14 @@ namespace Ven4Tools.Launcher
             {
                 var versionInfo    = FileVersionInfo.GetVersionInfo(clientExe);
                 string currentVersion = versionInfo.FileVersion ?? "unknown";
+                txtInstalledVersion.Text = $"Текущая версия: {currentVersion}";
                 btnLaunchApp.Content    = "🚀 Запустить Ven4Tools";
                 btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
                 AddLog($"✅ Найден клиент версии {currentVersion}");
             }
             else
             {
+                txtInstalledVersion.Text = "Текущая версия: не установлена";
                 btnLaunchApp.Content    = "📥 Загрузить Ven4Tools";
                 btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 140, 0));
             }
@@ -183,21 +185,23 @@ namespace Ven4Tools.Launcher
             AddLog($"📢 Доступно обновление клиента: {installedVersion} → {latest.Version}");
         }
 
-        // Единственная доступная версия клиента — старые релизы больше не выбираются
-        // вручную (у них нет zip-ассета, см. prune-old-client-assets.yml): версия и
-        // дата релиза показываются как статичная информация, а не как выбор из списка.
+        // Единственная доступная (актуальная) версия клиента — старые релизы больше
+        // не выбираются вручную (у них нет zip-ассета, см. prune-old-client-assets.yml):
+        // версия и дата релиза показываются как статичная информация, а не как выбор
+        // из списка. Не путать с txtInstalledVersion (CheckExistingClient) — это то,
+        // что реально стоит на диске у пользователя, а не то, что доступно на сервере.
         private void UpdateVersionDisplay(ClientVersionInfo? version)
         {
             _selectedVersion = version;
 
             if (version == null)
             {
-                txtClientVersion.Text = "Версия клиента: —";
+                txtClientVersion.Text = "Актуальная версия: —";
                 txtVersionInfo.Text   = "Нет доступной версии";
                 return;
             }
 
-            txtClientVersion.Text = $"Версия клиента: {version.Version}";
+            txtClientVersion.Text = $"Актуальная версия: {version.Version}";
             txtVersionInfo.Text = version.FileSize > 0
                 ? $"Релиз от {version.ReleaseDate:dd.MM.yyyy}  ·  {version.FileSize / 1024 / 1024} МБ"
                 : version.ReleaseDate != default

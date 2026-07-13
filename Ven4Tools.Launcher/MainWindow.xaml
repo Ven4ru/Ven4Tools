@@ -72,7 +72,9 @@
                                 <Button x:Name="btnFindClient" Content="Найти клиент на диске"
                                         Style="{StaticResource SideCommand}" Click="BtnFindClient_Click"/>
                                 <TextBlock Text="ВЕРСИЯ КЛИЕНТА" Style="{StaticResource EyebrowStyle}" Margin="2,12,0,5"/>
-                                <TextBlock x:Name="txtClientVersion" Text="Версия клиента: —"
+                                <TextBlock x:Name="txtInstalledVersion" Text="Текущая версия: —"
+                                           FontSize="12" Margin="3,0,3,2"/>
+                                <TextBlock x:Name="txtClientVersion" Text="Актуальная версия: —"
                                            FontSize="12" FontWeight="SemiBold" Margin="3,0,3,2"/>
                                 <TextBlock x:Name="txtVersionInfo" Text="Получение списка версий..."
                                            Foreground="{DynamicResource TextSecondary}" FontSize="10"

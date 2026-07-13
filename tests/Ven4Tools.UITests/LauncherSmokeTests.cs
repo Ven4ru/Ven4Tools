@@ -227,10 +227,13 @@ public sealed class LauncherSmokeTests : IDisposable
             Assert.True(element.IsEnabled, $"Контрол {automationId} недоступен.");
         }
 
-        Assert.True(
-            _window.FindFirstDescendant(
-                condition => condition.ByAutomationId("txtClientVersion")) is not null,
-            "Не найден обязательный контрол txtClientVersion.");
+        foreach (string automationId in new[] { "txtInstalledVersion", "txtClientVersion" })
+        {
+            Assert.True(
+                _window.FindFirstDescendant(
+                    condition => condition.ByAutomationId(automationId)) is not null,
+                $"Не найден обязательный контрол {automationId}.");
+        }
     }
 
     private void ExercisePrimaryControlBindings()
