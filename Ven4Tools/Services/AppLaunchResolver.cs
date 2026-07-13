@@ -147,9 +147,16 @@ namespace Ven4Tools.Services
             string root = Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu);
             if (!Directory.Exists(root)) return result;
 
-            IEnumerable<string> lnkFiles;
-            try { lnkFiles = Directory.EnumerateFiles(root, "*.lnk", SearchOption.AllDirectories); }
-            catch { return result; }
+            // Собственный обход вместо Directory.EnumerateFiles(..., AllDirectories):
+            // встроенный AllDirectories — ленивый (реальный рекурсивный обход идёт при
+            // итерации в foreach ниже, а не при вызове), поэтому try/catch вокруг вызова
+            // НЕ ловил бы исключение, вылетающее при обходе конкретной подпапки в глубине.
+            // Плюс AllDirectories не умеет пропускать недоступную подпапку — единственная
+            // папка, к которой на мгновение нет доступа (антивирус/установщик/синхронизатор
+            // заблокировал её ровно в момент скана), обрывала бы весь обход и вместе с ним
+            // весь UpdateInstalledStatusAsync. EnumerateLnkFilesSafe ловит недоступность на
+            // каждом уровне отдельно и просто пропускает проблемную папку, не роняя дерево.
+            var lnkFiles = EnumerateLnkFilesSafe(root);
 
             // Один WScript.Shell на весь проход индексации — раньше создавался заново
             // на каждый .lnk и никогда не освобождался (сотни висящих COM-объектов
@@ -177,6 +184,35 @@ namespace Ven4Tools.Services
             }
             finally { Marshal.FinalReleaseComObject(shell); }
 
+            return result;
+        }
+
+        // Рекурсивный обход .lnk-файлов, устойчивый к недоступным подпапкам. В отличие
+        // от Directory.EnumerateFiles(..., AllDirectories), здесь недоступность отдельной
+        // папки (постоянная или транзитивная) пропускается, а остальное дерево сканируется
+        // дальше. Directory.GetFiles/GetDirectories — НЕ ленивые: выполняются сразу и
+        // бросают исключение сразу же, поэтому try/catch вокруг них реально работает.
+        // Пропуск недоступной папки — штатная, ожидаемая ситуация (не ошибка уровня ❌),
+        // поэтому логировать её не нужно — молчаливый skip корректен.
+        private static IEnumerable<string> EnumerateLnkFilesSafe(string root)
+        {
+            var result = new List<string>();
+            var stack = new Stack<string>();
+            stack.Push(root);
+            while (stack.Count > 0)
+            {
+                string dir = stack.Pop();
+
+                string[] files;
+                try { files = Directory.GetFiles(dir, "*.lnk"); }
+                catch { continue; } // недоступна сама папка — пропускаем её файлы, не всё дерево
+                result.AddRange(files);
+
+                string[] subDirs;
+                try { subDirs = Directory.GetDirectories(dir); }
+                catch { continue; } // недоступен список подпапок — глубже не идём отсюда, но остальное дерево не страдает
+                foreach (var sub in subDirs) stack.Push(sub);
+            }
             return result;
         }
 
