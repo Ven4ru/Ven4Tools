@@ -427,7 +427,20 @@ namespace Ven4Tools.Launcher
                     if (result != MessageBoxResult.Yes) return;
                 }
 
-                _clientPath  = Path.GetDirectoryName(chosen)!;
+                string candidatePath = Path.GetDirectoryName(chosen)!;
+                if (!InstallPathGuard.IsClientPathSafe(candidatePath, _dataFolderPath))
+                {
+                    AddLog($"⛔ Найденный Ven4Tools.exe лежит прямо в защищённой папке ({candidatePath}) — путь не принят");
+                    System.Windows.MessageBox.Show(
+                        $"Ven4Tools.exe найден прямо в:\n{candidatePath}\n\n" +
+                        "Эта папка не может стать папкой установки клиента целиком — при обновлении " +
+                        "или удалении её содержимое было бы уничтожено.\n\n" +
+                        "Переместите клиент в отдельную подпапку или воспользуйтесь кнопкой «Выбрать папку».",
+                        "Небезопасный путь установки", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                _clientPath  = candidatePath;
                 _installPath = Path.GetDirectoryName(_clientPath) ?? _clientPath;
                 txtInstallPath.Text = _clientPath;
                 SaveSettings();
@@ -496,6 +509,17 @@ namespace Ven4Tools.Launcher
                 MessageBoxImage.Warning);
 
             if (answer != MessageBoxResult.Yes) return;
+
+            if (!InstallPathGuard.IsClientPathSafe(_clientPath, _dataFolderPath))
+            {
+                AddLog($"⛔ Удаление отменено: папка клиента указывает на защищённую папку ({_clientPath})");
+                System.Windows.MessageBox.Show(
+                    $"Папка клиента:\n{_clientPath}\n\n" +
+                    "совпадает с защищённой пользовательской папкой (Downloads/Документы/Рабочий стол " +
+                    "и т.п.) целиком. Удаление отменено во избежание потери данных.",
+                    "Небезопасный путь установки", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             btnDeleteClient.IsEnabled = false;
             AddLog("🗑️ Удаление клиента...");
