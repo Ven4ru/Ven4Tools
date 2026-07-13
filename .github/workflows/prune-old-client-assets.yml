@@ -1,0 +1,46 @@
+name: Очистка старых ассетов клиента
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  prune:
+    name: Удалить zip у предыдущих клиентских релизов
+    runs-on: ubuntu-latest
+    steps:
+      - name: Удалить устаревшие ассеты
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT_TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Публикация клиентского релиза (тег vX.Y.Z, не launcher-vX.Y.Z) — повод
+          # убрать zip у всех остальных клиентских релизов: скачивание версии без
+          # прикреплённого к ней SHA256 из version.json (хеш там есть только для
+          # текущей версии) было MEDIUM-находкой аудита безопасности 2026-07-13.
+          # Срабатывает на "published", а не на создание черновика в release.yml —
+          # иначе между удалением старого ассета и ручной публикацией нового
+          # релиза был бы момент, когда скачать клиент вообще нечем.
+          # Релизы лаунчера (launcher-vX.Y.Z) используют отдельный механизм
+          # самообновления через CDN + ECDSA-подпись и не затрагиваются.
+          if [[ ! "$CURRENT_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Тег $CURRENT_TAG — не клиентский релиз, пропуск."
+            exit 0
+          fi
+
+          tags=$(gh release list --repo "$REPO" --limit 100 --json tagName -q '.[].tagName' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v -x "$CURRENT_TAG" || true)
+
+          for tag in $tags; do
+            assets=$(gh release view "$tag" --repo "$REPO" --json assets -q '.assets[].name' || true)
+            for asset in $assets; do
+              [ -z "$asset" ] && continue
+              echo "Удаляю $asset из $tag"
+              gh release delete-asset "$tag" "$asset" --repo "$REPO" -y
+            done
+          done
