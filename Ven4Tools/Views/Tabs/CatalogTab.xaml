@@ -109,7 +109,11 @@
                 </Border>
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding AppsView}">
+                    <!-- IsSharedSizeScope + SharedSizeGroup на колонках строки ниже — имя
+                         каждого приложения выравнивается по самому длинному во всём списке,
+                         поэтому кнопки у всех строк (во всех категориях) начинаются с одного
+                         и того же места по X, как в таблице с двумя колонками. -->
+                    <ItemsControl Grid.IsSharedSizeScope="True" ItemsSource="{Binding AppsView}">
                         <ItemsControl.GroupStyle>
                             <GroupStyle>
                                 <GroupStyle.ContainerStyle>
@@ -151,61 +155,71 @@
                         </ItemsControl.GroupStyle>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:AppRowViewModel}">
-                                <Grid Margin="0,2" HorizontalAlignment="Left">
+                                <!-- Каждая строка — две выровненные по всему списку зоны:
+                                     слева иконка+чекбокс+имя (SharedSizeGroup — ширина по
+                                     самому длинному имени во всём каталоге), справа — все
+                                     действия этого же приложения (избранное/версия/Play/
+                                     альтернатива/удаление). Один DataTemplate на все строки —
+                                     кнопки автоматически появляются у любого нового
+                                     приложения (обновление каталога, добавленное вручную),
+                                     без правок кода. -->
+                                <Grid Margin="0,3" HorizontalAlignment="Left">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="CatalogRowName"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Image Grid.Column="0" Width="20" Height="20" Margin="0,0,6,0"
-                                           Stretch="Uniform" Source="{Binding Icon}" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <Image Width="20" Height="20" Margin="0,0,6,0"
+                                               Stretch="Uniform" Source="{Binding Icon}" VerticalAlignment="Center"/>
 
-                                    <CheckBox Grid.Column="1" IsChecked="{Binding IsSelected}" IsEnabled="{Binding IsSelectable}"
-                                              AutomationProperties.AutomationId="{Binding CheckBoxAutomationId}">
-                                        <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
-                                                   ToolTip="{Binding StatusTooltip}" Margin="0,0,5,0"/>
-                                    </CheckBox>
+                                        <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding IsSelectable}"
+                                                  AutomationProperties.AutomationId="{Binding CheckBoxAutomationId}"
+                                                  VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
+                                                       ToolTip="{Binding StatusTooltip}"/>
+                                        </CheckBox>
+                                    </StackPanel>
 
-                                    <Button Grid.Column="2" Content="{Binding FavoriteGlyph}" Width="20" Height="20" Margin="4,0,0,0"
-                                            Background="Transparent" BorderThickness="0" FontSize="14" Padding="0"
-                                            Foreground="Gold" Cursor="Hand"
-                                            ToolTip="{Binding FavoriteTooltip}"
-                                            Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="14,0,0,0">
+                                        <Button Content="{Binding FavoriteGlyph}" Width="20" Height="20"
+                                                Background="Transparent" BorderThickness="0" FontSize="14" Padding="0"
+                                                Foreground="Gold" Cursor="Hand"
+                                                ToolTip="{Binding FavoriteTooltip}"
+                                                Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"/>
 
-                                    <ComboBox Grid.Column="3" Width="95" Height="22" Margin="4,0,0,0" FontSize="10"
-                                              VerticalAlignment="Center"
-                                              Visibility="{Binding ShowVersionCombo, Converter={StaticResource BoolToVis}}"
-                                              IsEnabled="{Binding IsVersionComboEnabled}"
-                                              ItemsSource="{Binding VersionOptions}"
-                                              SelectedItem="{Binding SelectedVersionOption}"/>
+                                        <ComboBox Width="95" Height="22" Margin="4,0,0,0" FontSize="10"
+                                                  VerticalAlignment="Center"
+                                                  Visibility="{Binding ShowVersionCombo, Converter={StaticResource BoolToVis}}"
+                                                  IsEnabled="{Binding IsVersionComboEnabled}"
+                                                  ItemsSource="{Binding VersionOptions}"
+                                                  SelectedItem="{Binding SelectedVersionOption}"/>
 
-                                    <!-- ▶ Play — только когда приложение установлено И резолвер нашёл
-                                         exe (HKLM App Paths/системный Start Menu/InstallLocation), см.
-                                         Services/AppLaunchResolver.cs. Fail-closed: не нашли — не гадаем. -->
-                                    <Button Grid.Column="4" Content="▶" Width="22" Height="22" Margin="4,0,0,0"
-                                            Command="{Binding LaunchCommand}"
-                                            Visibility="{Binding CanLaunch, Converter={StaticResource BoolToVis}}"
-                                            Background="{StaticResource BrandGreen}" Foreground="#06130D"
-                                            ToolTip="Запустить"/>
+                                        <!-- ▶ Play — только когда приложение установлено И резолвер
+                                             нашёл exe (HKLM App Paths/системный Start Menu/
+                                             InstallLocation), см. Services/AppLaunchResolver.cs.
+                                             Fail-closed: не нашли — не гадаем. -->
+                                        <Button Content="▶" Width="22" Height="22" Margin="4,0,0,0"
+                                                Command="{Binding LaunchCommand}"
+                                                Visibility="{Binding CanLaunch, Converter={StaticResource BoolToVis}}"
+                                                Background="{StaticResource BrandGreen}" Foreground="#06130D"
+                                                ToolTip="Запустить"/>
 
-                                    <Button Grid.Column="5" Content="🔄" Width="24" Height="24" Margin="4,0,0,0"
-                                            Command="{Binding DataContext.SuggestAlternativeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}"
-                                            Visibility="{Binding ShowSuggestButton, Converter={StaticResource BoolToVis}}"
-                                            Background="#FF8C00" Foreground="White" FontSize="12"
-                                            ToolTip="Предложить альтернативный источник"/>
+                                        <Button Content="🔄" Width="24" Height="24" Margin="4,0,0,0"
+                                                Command="{Binding DataContext.SuggestAlternativeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding ShowSuggestButton, Converter={StaticResource BoolToVis}}"
+                                                Background="#FF8C00" Foreground="White" FontSize="12"
+                                                ToolTip="Предложить альтернативный источник"/>
 
-                                    <Button Grid.Column="5" Content="❌" Width="20" Height="20" Margin="4,0,0,0"
-                                            Command="{Binding DataContext.RemoveUserAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}"
-                                            Visibility="{Binding IsUserAdded, Converter={StaticResource BoolToVis}}"
-                                            Background="#640000" Foreground="White" FontSize="10" Padding="0"
-                                            ToolTip="Удалить из списка"/>
+                                        <Button Content="❌" Width="20" Height="20" Margin="4,0,0,0"
+                                                Command="{Binding DataContext.RemoveUserAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding IsUserAdded, Converter={StaticResource BoolToVis}}"
+                                                Background="#640000" Foreground="White" FontSize="10" Padding="0"
+                                                ToolTip="Удалить из списка"/>
+                                    </StackPanel>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
