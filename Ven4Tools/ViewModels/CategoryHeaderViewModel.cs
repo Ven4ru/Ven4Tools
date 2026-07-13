@@ -20,13 +20,21 @@ namespace Ven4Tools.ViewModels
     public sealed class CategoryHeaderViewModel : INotifyPropertyChanged
     {
         public string CategoryName { get; }
+        // Ключ для SourceOrderService.Get/SetCategoryPrimary — голое имя категории
+        // (как было до этого рефакторинга), НЕ трогать эмодзи-версией из HeaderText,
+        // иначе уже сохранённые пользователем настройки порядка источников по
+        // категориям перестанут находиться по ключу.
         public string Label { get; }
+        // Текст заголовка Expander'а — с эмодзи, как в оригинальном
+        // GetOriginalExpanderHeader (CatalogTab.UI.cs до MVVM-рефакторинга).
+        public string HeaderText { get; }
         public ObservableCollection<SourceOrderOption> Options { get; } = new();
 
-        public CategoryHeaderViewModel(string categoryName, string label)
+        public CategoryHeaderViewModel(string categoryName, string label, string headerText)
         {
             CategoryName = categoryName;
             Label = label;
+            HeaderText = headerText;
 
             Options.Add(new SourceOrderOption("🔀 Глобальный", ""));
             foreach (var srcId in SourceOrderSettings.AllSources)

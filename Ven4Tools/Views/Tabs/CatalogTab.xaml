@@ -6,6 +6,7 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <vm:CategoryNameToHeaderConverter x:Key="CategoryHeaderConverter"/>
+        <vm:StringToVisibilityConverter x:Key="StringToVis"/>
     </UserControl.Resources>
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -104,7 +105,7 @@
                         </ItemsControl>
                         <TextBlock Text="{Binding SuggestionsStatus}"
                                    Foreground="{DynamicResource TextSecondary}" FontSize="11"
-                                   Visibility="{Binding SuggestionsStatus, Converter={StaticResource BoolToVis}}"/>
+                                   Visibility="{Binding SuggestionsStatus, Converter={StaticResource StringToVis}}"/>
                     </StackPanel>
                 </Border>
 
@@ -135,7 +136,7 @@
                                                                         <ColumnDefinition Width="*"/>
                                                                         <ColumnDefinition Width="Auto"/>
                                                                     </Grid.ColumnDefinitions>
-                                                                    <TextBlock Text="{Binding Label}" FontWeight="SemiBold" FontSize="13"
+                                                                    <TextBlock Text="{Binding HeaderText}" FontWeight="SemiBold" FontSize="13"
                                                                                Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                                                                     <ComboBox Grid.Column="1" Width="160" Height="24" FontSize="11" Margin="8,0,4,0"
                                                                               Visibility="{Binding ShowCombo, Converter={StaticResource BoolToVis}}"
@@ -163,7 +164,7 @@
                                      кнопки автоматически появляются у любого нового
                                      приложения (обновление каталога, добавленное вручную),
                                      без правок кода. -->
-                                <Grid Margin="0,3" HorizontalAlignment="Left">
+                                <Grid Margin="{Binding RowMargin}" HorizontalAlignment="Left">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" SharedSizeGroup="CatalogRowName"/>
                                         <ColumnDefinition Width="Auto"/>
