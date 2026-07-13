@@ -107,7 +107,7 @@ namespace Ven4Tools.Services
                         silentArgsLocal = "/S";
                     var psiLocal = new ProcessStartInfo
                     {
-                        FileName        = isMsi ? "msiexec" : app.LocalInstallerPath,
+                        FileName        = isMsi ? TrustedExecutablePaths.MsiExec : app.LocalInstallerPath,
                         Arguments       = isMsi
                                           ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart{locArgLocal}"
                                           : silentArgsLocal + locArgLocal,
@@ -183,7 +183,7 @@ namespace Ven4Tools.Services
                     string locArgCache = BuildInstallerLocationArg(cacheIsMsi, installDrive, app.DisplayName);
                     var psiCache = new ProcessStartInfo
                     {
-                        FileName       = cacheIsMsi ? "msiexec" : cachedPath,
+                        FileName       = cacheIsMsi ? TrustedExecutablePaths.MsiExec : cachedPath,
                         Arguments      = cacheIsMsi
                                          ? $"/i \"{cachedPath}\" /quiet /norestart{locArgCache}"
                                          : "/S /silent /quiet" + locArgCache,
@@ -420,7 +420,7 @@ namespace Ven4Tools.Services
 
                                     var psi = new ProcessStartInfo
                                     {
-                                        FileName = tempIsMsi ? "msiexec" : tempFile,
+                                        FileName = tempIsMsi ? TrustedExecutablePaths.MsiExec : tempFile,
                                         Arguments = silentArgs,
                                         UseShellExecute = true, Verb = "runas",
                                         WindowStyle = ProcessWindowStyle.Hidden
@@ -572,9 +572,15 @@ namespace Ven4Tools.Services
                 return false;
             }
 
+            var wingetExe = TrustedExecutablePaths.ResolveWinget();
+            if (wingetExe == null)
+            {
+                Log($"❌ winget не найден по доверенному пути для {appId}");
+                return false;
+            }
             var psi = new ProcessStartInfo
             {
-                FileName = "winget.exe",
+                FileName = wingetExe,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,

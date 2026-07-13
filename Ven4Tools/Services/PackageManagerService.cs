@@ -22,7 +22,9 @@ namespace Ven4Tools.Services
             {
                 try
                 {
-                    var psi = new ProcessStartInfo("choco.exe", "--version")
+                    var chocoPath = TrustedExecutablePaths.ResolveChocolatey();
+                    if (chocoPath == null) return false;
+                    var psi = new ProcessStartInfo(chocoPath, "--version")
                     {
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
@@ -58,7 +60,7 @@ namespace Ven4Tools.Services
 
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "powershell.exe",
+                    FileName = TrustedExecutablePaths.PowerShellExe,
                     Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{cmd}\"",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
@@ -92,11 +94,17 @@ namespace Ven4Tools.Services
                 return false;
             }
             log?.Invoke($"🍫 Choco: установка {packageId}...");
+            var chocoExe = TrustedExecutablePaths.ResolveChocolatey();
+            if (chocoExe == null)
+            {
+                log?.Invoke("❌ Choco: исполняемый файл не найден по доверенному пути");
+                return false;
+            }
             try
             {
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "choco.exe",
+                    FileName = chocoExe,
                     Arguments = $"install \"{packageId}\" -y --no-progress --limit-output",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -135,9 +143,11 @@ namespace Ven4Tools.Services
             var results = new List<(string, string, string)>();
             query = CommandLineGuard.SanitizeQuery(query);
             if (string.IsNullOrEmpty(query) || !await IsChocoInstalledAsync()) return results;
+            var chocoExe = TrustedExecutablePaths.ResolveChocolatey();
+            if (chocoExe == null) return results;
             try
             {
-                var psi = new ProcessStartInfo("choco.exe",
+                var psi = new ProcessStartInfo(chocoExe,
                     $"search \"{query}\" --limit-output --page-size 8")
                 {
                     RedirectStandardOutput = true,
