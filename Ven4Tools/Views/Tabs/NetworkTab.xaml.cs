@@ -194,7 +194,7 @@ namespace Ven4Tools.Views.Tabs
                 // вывод команд в лог-панель вместо отдельного окна консоли.
                 var psi = new ProcessStartInfo
                 {
-                    FileName  = "cmd.exe",
+                    FileName  = TrustedExecutablePaths.CmdExe,
                     Arguments = "/c netsh winsock reset & netsh int ip reset & " +
                                 "ipconfig /release & ipconfig /renew",
                     UseShellExecute        = false,
