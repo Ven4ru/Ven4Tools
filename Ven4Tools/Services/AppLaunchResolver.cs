@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 
@@ -67,7 +68,28 @@ namespace Ven4Tools.Services
         // InvalidateCache иначе строит индекс синхронно (полное перечисление реестра +
         // .lnk-файлов Start Menu + COM на каждый ярлык) на том потоке, откуда его
         // позвали — если это UI-поток, интерфейс подвисает на время скана.
-        public static Task EnsureIndexBuiltAsync() => Task.Run(() => GetOrBuildIndex());
+        //
+        // ВАЖНО: строим индекс на выделенном потоке с ApartmentState.STA, а не через
+        // Task.Run. ScanStartMenuShortcuts создаёт COM-объект WScript.Shell, который
+        // рассчитан на STA-апартамент (как раньше, когда индекс строился прямо на
+        // UI-потоке WPF — тот всегда STA). Поток из пула .NET по умолчанию MTA:
+        // создание/использование этого COM-объекта из MTA-потока нестабильно — может
+        // кинуть COMException, а может тихо повиснуть на маршалинге через STA-прокси.
+        // Исключение из GetOrBuildIndex прокидываем в возвращаемый Task как Faulted,
+        // чтобы оно не потерялось (см. защитное логирование в CatalogViewModel).
+        public static Task EnsureIndexBuiltAsync()
+        {
+            var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var thread = new Thread(() =>
+            {
+                try { GetOrBuildIndex(); tcs.SetResult(); }
+                catch (Exception ex) { tcs.SetException(ex); }
+            });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.IsBackground = true;
+            thread.Start();
+            return tcs.Task;
+        }
 
         private static List<Candidate> GetOrBuildIndex()
         {
