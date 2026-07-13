@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Ven4Tools.Models;
@@ -23,6 +24,12 @@ namespace Ven4Tools.ViewModels
         public string CategoryString => App.CategoryString;
         public bool IsUserAdded => App.IsUserAdded;
 
+        // Порядок вывода категорий должен быть фиксированным (как раньше — Expander'ы
+        // в CatalogTab.xaml.cs шли в этом же порядке объявления), а не алфавитным.
+        // AppCategory объявлен ровно в этом порядке, поэтому голое приведение к int
+        // и есть нужный ранг сортировки групп.
+        public int CategorySortOrder => (int)App.Category;
+
         // AutomationId для FlaUI-тестов (chkApp_{id}) — раньше выставлялся
         // AutomationProperties.SetAutomationId в коде, здесь тот же формат через
         // биндинг с StringFormat в CatalogTab.xaml.
@@ -42,6 +49,24 @@ namespace Ven4Tools.ViewModels
             get => _matchesProfile;
             set => SetField(ref _matchesProfile, value);
         }
+
+        // Отступ строки — раньше ApplyProfileFilters выставлял его императивно на
+        // каждый child (Thickness(0) для CompactMode, иначе (0,2,0,2)). Значение по
+        // умолчанию читает текущий профиль сразу при создании строки, чтобы вновь
+        // добавленные приложения (поиск/локальный установщик) не ждали следующего
+        // ApplyProfileFilters — CatalogViewModel.ApplyProfileFilters всё равно
+        // обновляет его у всех строк при смене профиля.
+        private bool _isCompact = ProfileService.Current.CompactMode;
+        public bool IsCompact
+        {
+            get => _isCompact;
+            set
+            {
+                if (SetField(ref _isCompact, value)) OnPropertyChanged(nameof(RowMargin));
+            }
+        }
+
+        public Thickness RowMargin => IsCompact ? new Thickness(0) : new Thickness(0, 2, 0, 2);
 
         public AppRowViewModel(AppInfo app)
         {
@@ -109,7 +134,10 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        public bool IsSelectable => Availability != RowAvailability.Unavailable;
+        // JustInstalled блокирует чекбокс так же, как оригинал (IsEnabled=false после
+        // успешной установки в рамках текущей сессии) — раньше строка лишь тускнела
+        // (RowBrush), но оставалась выбираемой.
+        public bool IsSelectable => Availability != RowAvailability.Unavailable && !JustInstalled;
         public bool ShowSuggestButton => Availability == RowAvailability.Unavailable && !IsUserAdded;
 
         private bool _isInstalled;
@@ -153,7 +181,14 @@ namespace Ven4Tools.ViewModels
         public bool JustInstalled
         {
             get => _justInstalled;
-            set { if (SetField(ref _justInstalled, value)) OnPropertyChanged(nameof(RowBrush)); }
+            set
+            {
+                if (SetField(ref _justInstalled, value))
+                {
+                    OnPropertyChanged(nameof(RowBrush));
+                    OnPropertyChanged(nameof(IsSelectable));
+                }
+            }
         }
 
         // Тот же набор цветов, что в CatalogTab.Availability.cs/Install.cs — сведено

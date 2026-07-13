@@ -19,6 +19,7 @@ namespace Ven4Tools.Views.Tabs
         private bool _eventsSubscribed;
         private int _lastSourceOrderVersion = SourceOrderService.Version;
         private Action? _profileChangedHandler;
+        private bool _availabilityShutdownHooked;
 
         public event Action? SwitchToUpdatesRequested
         {
@@ -52,6 +53,17 @@ namespace Ven4Tools.Views.Tabs
                     AppSettings.Changed        += OnAppSettingsChanged;
                     SourceOrderService.Changed += _viewModel.OnSourceOrderChanged;
                     _eventsSubscribed = true;
+                }
+                // Отменяем ретраи доступности при закрытии окна (вкладка кэшируется и
+                // переиспользуется, поэтому привязываемся к закрытию окна, а не к Unloaded).
+                if (!_availabilityShutdownHooked)
+                {
+                    var window = Window.GetWindow(this);
+                    if (window != null)
+                    {
+                        window.Closed += (_, _) => _viewModel.CancelAvailabilityRetries();
+                        _availabilityShutdownHooked = true;
+                    }
                 }
                 if (!_initialized)
                 {

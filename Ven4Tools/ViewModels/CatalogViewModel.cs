@@ -97,8 +97,9 @@ namespace Ven4Tools.ViewModels
         {
             AppsView = CollectionViewSource.GetDefaultView(Apps);
             AppsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(AppRowViewModel.CategoryString)));
-            AppsView.SortDescriptions.Add(new SortDescription(nameof(AppRowViewModel.CategoryString), ListSortDirection.Ascending));
-            AppsView.SortDescriptions.Add(new SortDescription(nameof(AppRowViewModel.DisplayName), ListSortDirection.Ascending));
+            // Порядок категорий — фиксированный (как объявлен AppCategory), не алфавитный.
+            AppsView.SortDescriptions.Add(new SortDescription(nameof(AppRowViewModel.CategorySortOrder), ListSortDirection.Ascending));
+            ApplySortOrder();
             AppsView.Filter = RowFilter;
 
             ToggleFavoriteCommand = new RelayCommand(p =>
@@ -242,12 +243,28 @@ namespace Ven4Tools.ViewModels
         public void ApplyProfileFilters()
         {
             int modeLevel = ProfileService.Current.CatalogMode switch { "basic" => 0, "extended" => 1, _ => 2 };
+            bool compact = ProfileService.Current.CompactMode;
             foreach (var row in Apps)
             {
                 int appLevel = row.Profile switch { "extended" => 1, "full" => 2, _ => 0 };
                 row.MatchesProfile = appLevel <= modeLevel;
+                row.IsCompact = compact;
             }
+            ApplySortOrder();
             AppsView.Refresh();
+        }
+
+        // Первый SortDescription (CategorySortOrder) не трогаем — порядок категорий
+        // фиксированный всегда. Второй ключ (имя внутри категории) появляется только
+        // для DefaultSort "alpha"/"category" — иначе (см. оригинальный LoadApps())
+        // порядок внутри категории оставался таким же, как в самом каталоге (master.json).
+        private void ApplySortOrder()
+        {
+            while (AppsView.SortDescriptions.Count > 1)
+                AppsView.SortDescriptions.RemoveAt(1);
+
+            if (ProfileService.Current.DefaultSort is "alpha" or "category")
+                AppsView.SortDescriptions.Add(new SortDescription(nameof(AppRowViewModel.DisplayName), ListSortDirection.Ascending));
         }
 
         private async Task RunSearchSuggestionsAsync(string query, CancellationToken token)
@@ -503,9 +520,28 @@ namespace Ven4Tools.ViewModels
             foreach (var cat in Enum.GetValues<AppCategory>())
             {
                 string label = new AppInfo { Category = cat }.CategoryString;
-                CategoryHeaders[label] = new CategoryHeaderViewModel(cat.ToString(), label);
+                CategoryHeaders[label] = new CategoryHeaderViewModel(cat.ToString(), label, GetCategoryHeaderText(cat));
             }
         }
+
+        // Соответствует GetOriginalExpanderHeader (удалённый CatalogTab.UI.cs, до
+        // перехода на MVVM) — эмодзи в заголовке категории потерялись при переносе
+        // на голый CategoryString.
+        private static string GetCategoryHeaderText(AppCategory cat) => cat switch
+        {
+            AppCategory.Браузеры         => "🌐 Браузеры",
+            AppCategory.Офис             => "📁 Офис",
+            AppCategory.Графика          => "🎨 Графика",
+            AppCategory.Разработка       => "💻 Разработка",
+            AppCategory.Мессенджеры      => "💬 Мессенджеры",
+            AppCategory.Мультимедиа      => "🎵 Мультимедиа",
+            AppCategory.Системные        => "⚙️ Системные",
+            AppCategory.ИгровыеСервисы   => "🎮 Игровые сервисы",
+            AppCategory.Драйверпаки      => "🖨️ Драйверпаки",
+            AppCategory.Другое           => "📎 Другое",
+            AppCategory.Пользовательские => "👤 Пользовательские",
+            _                            => cat.ToString()
+        };
 
         public void ApplyCategorySourceHeaders()
         {
@@ -526,6 +562,10 @@ namespace Ven4Tools.ViewModels
         // (ровно это ловит AuditFixesCatalogFlowTests.Полный_Проход_Каталог).
         private async Task RefreshAvailabilityAsync()
         {
+            // Оригинальный RefreshAvailability_Click начинался с этого guard'а — без
+            // него InitialLoadAvailabilityAsync и OnSourceOrderChanged могли запустить
+            // проверку параллельно и затоптать друг другу _isCheckingAvailability.
+            if (_isCheckingAvailability) return;
             _isCheckingAvailability = true;
             // CommandManager.RequerySuggested (см. RelayCommand) перепроверяет CanExecute
             // только на стандартные UI-события (фокус, клавиатура/мышь) — простая смена
@@ -535,6 +575,12 @@ namespace Ven4Tools.ViewModels
             RefreshAvailabilityCommand.RaiseCanExecuteChanged();
             try
             {
+                // Без сброса кэша повторное нажатие кнопки в течение TTL (5 минут,
+                // см. AvailabilityChecker.cacheDuration) просто повторяло старые
+                // результаты — оригинальный RefreshAvailability_Click всегда чистил кэш.
+                _availabilityChecker.ClearCache();
+                Log("🔄 Запущена свежая проверка доступности...");
+
                 using var sem = new SemaphoreSlim(5);
                 var tasks = Apps.Select(row => CheckOneAvailabilityAsync(row, sem)).ToList();
                 await Task.WhenAll(tasks);
@@ -562,18 +608,40 @@ namespace Ven4Tools.ViewModels
 
         private async Task CheckOneAvailabilityAsync(AppRowViewModel row, SemaphoreSlim sem)
         {
+            var availability = await CheckAvailabilityOnceAsync(row, sem);
+
+            // Соответствует оригинальному CheckSingleAppAvailability: добавленные
+            // пользователем приложения (произвольный winget/choco ID) — единственные,
+            // для которых имеет смысл повторить проверку при первом Unavailable,
+            // прежде чем показать красный статус. Каталожные приложения не ретраятся —
+            // так же вело себя CheckAppAvailabilityFromCatalog в оригинале.
+            int attempt = 1;
+            while (availability == AppRowViewModel.RowAvailability.Unavailable && row.IsUserAdded && attempt < 3)
+            {
+                row.Availability = AppRowViewModel.RowAvailability.Checking;
+                try { await Task.Delay(2000, _availabilityCts.Token); }
+                catch (OperationCanceledException) { break; }
+                attempt++;
+                availability = await CheckAvailabilityOnceAsync(row, sem);
+            }
+
+            row.Availability = availability;
+        }
+
+        private async Task<AppRowViewModel.RowAvailability> CheckAvailabilityOnceAsync(AppRowViewModel row, SemaphoreSlim sem)
+        {
             await sem.WaitAsync();
             try
             {
                 var (status, _) = await _availabilityChecker.CheckAppAvailabilityWithSize(row.App);
-                row.Availability = status switch
+                return status switch
                 {
                     AvailabilityChecker.AvailabilityStatus.Available   => AppRowViewModel.RowAvailability.Available,
                     AvailabilityChecker.AvailabilityStatus.Unavailable => AppRowViewModel.RowAvailability.Unavailable,
                     _                                                  => AppRowViewModel.RowAvailability.Unknown
                 };
             }
-            catch { row.Availability = AppRowViewModel.RowAvailability.Unknown; }
+            catch { return AppRowViewModel.RowAvailability.Unknown; }
             finally { sem.Release(); }
         }
 
@@ -610,6 +678,10 @@ namespace Ven4Tools.ViewModels
         {
             await _installedAppsService.RefreshAsync();
             AppLaunchResolver.InvalidateCache();
+            // Первый TryResolve после InvalidateCache перестраивает весь индекс (реестр +
+            // .lnk Start Menu + COM на каждый ярлык) — синхронно это фризило бы UI-поток,
+            // поэтому строим индекс на фоне один раз, а сам цикл ниже — уже дешёвый lookup.
+            await AppLaunchResolver.EnsureIndexBuiltAsync();
 
             int installed = 0, outdated = 0, launchable = 0;
             foreach (var row in Apps)

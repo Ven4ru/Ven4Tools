@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Microsoft.Win32;
 
 namespace Ven4Tools.Services
@@ -60,6 +62,12 @@ namespace Ven4Tools.Services
         {
             lock (_lock) { _index = null; }
         }
+
+        // Прогревает индекс на фоновом потоке. Первый вызов TryResolve после
+        // InvalidateCache иначе строит индекс синхронно (полное перечисление реестра +
+        // .lnk-файлов Start Menu + COM на каждый ярлык) на том потоке, откуда его
+        // позвали — если это UI-поток, интерфейс подвисает на время скана.
+        public static Task EnsureIndexBuiltAsync() => Task.Run(() => GetOrBuildIndex());
 
         private static List<Candidate> GetOrBuildIndex()
         {
@@ -121,31 +129,40 @@ namespace Ven4Tools.Services
             try { lnkFiles = Directory.EnumerateFiles(root, "*.lnk", SearchOption.AllDirectories); }
             catch { return result; }
 
-            foreach (var lnk in lnkFiles)
-            {
-                try
-                {
-                    string? targetPath = ResolveShortcutTarget(lnk);
-                    if (string.IsNullOrWhiteSpace(targetPath) || !File.Exists(targetPath)) continue;
-                    if (!targetPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) continue;
+            // Один WScript.Shell на весь проход индексации — раньше создавался заново
+            // на каждый .lnk и никогда не освобождался (сотни висящих COM-объектов
+            // при большом системном Start Menu).
+            Type? shellType = Type.GetTypeFromProgID("WScript.Shell");
+            if (shellType == null) return result;
+            dynamic? shell = Activator.CreateInstance(shellType);
+            if (shell == null) return result;
 
-                    string nameHint = Path.GetFileNameWithoutExtension(lnk);
-                    result.Add(new Candidate(Normalize(nameHint), targetPath));
+            try
+            {
+                foreach (var lnk in lnkFiles)
+                {
+                    try
+                    {
+                        string? targetPath = ResolveShortcutTarget(shell, lnk);
+                        if (string.IsNullOrWhiteSpace(targetPath) || !File.Exists(targetPath)) continue;
+                        if (!targetPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        string nameHint = Path.GetFileNameWithoutExtension(lnk);
+                        result.Add(new Candidate(Normalize(nameHint), targetPath));
+                    }
+                    catch { }
                 }
-                catch { }
             }
+            finally { Marshal.FinalReleaseComObject(shell); }
+
             return result;
         }
 
         // COM-позднее связывание с WScript.Shell — без добавления COM-ссылки в csproj.
-        private static string? ResolveShortcutTarget(string lnkPath)
+        private static string? ResolveShortcutTarget(dynamic shell, string lnkPath)
         {
             try
             {
-                Type? shellType = Type.GetTypeFromProgID("WScript.Shell");
-                if (shellType == null) return null;
-                dynamic? shell = Activator.CreateInstance(shellType);
-                if (shell == null) return null;
                 dynamic shortcut = shell.CreateShortcut(lnkPath);
                 string target = shortcut.TargetPath;
                 return string.IsNullOrWhiteSpace(target) ? null : target;
