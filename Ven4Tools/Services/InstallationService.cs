@@ -71,8 +71,20 @@ namespace Ven4Tools.Services
                     // apps.json (LocalAppData) доступен на запись любому не-elevated процессу
                     // пользователя — перед runas-запуском сверяем хеш, зафиксированный при
                     // добавлении (LocalInstallerDialog), чтобы обнаружить подмену файла/пути.
-                    if (HashHelper.HasExpectedHash(app.Sha256) &&
-                        !await HashHelper.VerifyHashAsync(app.LocalInstallerPath, app.Sha256!))
+                    // Fail-closed: отсутствующий/невалидный Sha256 — это НЕ "проверка не нужна",
+                    // а сигнал, что запись могла быть подделана (LocalInstallerDialog всегда
+                    // считает и сохраняет хеш при легитимном добавлении). Раньше здесь была
+                    // конъюнкция "если хеш есть И не совпадает" — при пустом хеше она молча
+                    // пропускала проверку целиком (см. HIGH-находку аудита 2026-07-13).
+                    if (!HashHelper.HasExpectedHash(app.Sha256))
+                    {
+                        appProgress.Status = "❌ Нет SHA256 для локального установщика — запуск отклонён";
+                        progress.Report(appProgress);
+                        Log($"❌ {app.DisplayName}: локальный установщик без SHA256 — запуск отклонён (fail-closed)");
+                        InstallFailureService.Append(app.DisplayName, app.Id, "local", "Нет SHA256 — установка локального файла требует зафиксированного хеша");
+                        return (false, "Нет SHA256 для локального установщика", appProgress);
+                    }
+                    if (!await HashHelper.VerifyHashAsync(app.LocalInstallerPath, app.Sha256!))
                     {
                         appProgress.Status = "❌ Файл изменён с момента добавления";
                         progress.Report(appProgress);
