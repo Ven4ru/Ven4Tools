@@ -685,7 +685,21 @@ namespace Ven4Tools.ViewModels
             // Первый TryResolve после InvalidateCache перестраивает весь индекс (реестр +
             // .lnk Start Menu + COM на каждый ярлык) — синхронно это фризило бы UI-поток,
             // поэтому строим индекс на фоне один раз, а сам цикл ниже — уже дешёвый lookup.
-            await AppLaunchResolver.EnsureIndexBuiltAsync();
+            //
+            // Индекс нужен ТОЛЬКО для Play-кнопки (row.LaunchPath). Базовый статус
+            // «установлено»/«есть обновление» от него не зависит, поэтому сбой построения
+            // индекса не должен обрывать весь метод до цикла — иначе ни одна строка не
+            // получит IsInstalled/InstalledVersion/HasUpdate. Ловим здесь и продолжаем:
+            // при падении row.LaunchPath останется null у всех строк, кнопка «▶ Запустить»
+            // в этот раз просто не покажется (ShowPlayButton/CanLaunch завязаны на LaunchPath).
+            try
+            {
+                await AppLaunchResolver.EnsureIndexBuiltAsync();
+            }
+            catch (Exception ex)
+            {
+                Log($"⚠️ Не удалось построить индекс для кнопки запуска — сама проверка установленных приложений продолжится, но кнопка «▶ Запустить» в этот раз недоступна: {ex.Message}");
+            }
 
             int installed = 0, outdated = 0, launchable = 0;
             foreach (var row in Apps)
