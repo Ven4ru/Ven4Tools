@@ -384,12 +384,7 @@ namespace Ven4Tools.Launcher
                     foreach (var root in GetClientSearchRoots())
                     {
                         if (!Directory.Exists(root)) continue;
-                        try
-                        {
-                            foreach (var file in Directory.EnumerateFiles(root, "Ven4Tools.exe", SearchOption.AllDirectories))
-                                results.Add(file);
-                        }
-                        catch { }
+                        results.AddRange(EnumerateFilesSafe(root, "Ven4Tools.exe"));
                     }
                     return results;
                 });
@@ -455,6 +450,37 @@ namespace Ven4Tools.Launcher
             {
                 btnFindClient.IsEnabled = true;
             }
+        }
+
+        // Рекурсивный поиск файла по маске, устойчивый к недоступным подпапкам.
+        // Directory.EnumerateFiles(..., AllDirectories) — ленивый: реальный обход идёт
+        // при итерации, а не при вызове, поэтому недоступная подпапка где-то в глубине
+        // (например C:\Program Files\WindowsApps) молча обрывала бы обход всего корня, и
+        // реально существующий Ven4Tools.exe глубже проблемной точки не находился бы.
+        // Directory.GetFiles/GetDirectories — НЕ ленивые: бросают сразу, поэтому try/catch
+        // вокруг них ловит недоступность каждой папки отдельно, а остальное дерево
+        // продолжает сканироваться (тот же паттерн, что AppLaunchResolver.EnumerateLnkFilesSafe
+        // в клиенте). Пропуск недоступной папки — штатная ситуация, не логируется.
+        private static IEnumerable<string> EnumerateFilesSafe(string root, string searchPattern)
+        {
+            var result = new List<string>();
+            var stack = new Stack<string>();
+            stack.Push(root);
+            while (stack.Count > 0)
+            {
+                string dir = stack.Pop();
+
+                string[] files;
+                try { files = Directory.GetFiles(dir, searchPattern); }
+                catch { continue; } // недоступна сама папка — пропускаем её файлы, не всё дерево
+                result.AddRange(files);
+
+                string[] subDirs;
+                try { subDirs = Directory.GetDirectories(dir); }
+                catch { continue; } // недоступен список подпапок — глубже не идём, но остальное дерево не страдает
+                foreach (var sub in subDirs) stack.Push(sub);
+            }
+            return result;
         }
 
         private static IEnumerable<string> GetClientSearchRoots()
