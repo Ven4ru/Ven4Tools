@@ -223,12 +223,35 @@ namespace Ven4Tools.ViewModels
                 }
                 return Availability switch
                 {
-                    RowAvailability.Available   => "✅ Доступно для установки",
+                    RowAvailability.Available   => $"✅ Доступно для установки ({(AvailableSizeMB > 0 ? $"~{AvailableSizeMB} МБ" : "размер неизвестен")})",
                     RowAvailability.Unavailable => "❌ Недоступно",
-                    RowAvailability.Checking    => "⏳ Проверка доступности...",
+                    // Во время ретрая проверки (только пользовательские приложения) показываем
+                    // номер попытки — так же, как оригинальный CheckSingleAppAvailability.
+                    // При обычной первой проверке RetryAttempt == 0 → статичный текст.
+                    RowAvailability.Checking    => RetryAttempt > 0 ? $"⏳ Повторная проверка... ({RetryAttempt}/3)" : "⏳ Проверка доступности...",
                     _                           => "⚠️ Статус неизвестен"
                 };
             }
+        }
+
+        // Размер загрузки (МБ) доступного приложения — заполняется проверкой
+        // доступности (CheckAppAvailabilityWithSize) и подставляется в StatusTooltip,
+        // как раньше делал CatalogTab.Availability.cs. 0 → «размер неизвестен».
+        private long _availableSizeMB;
+        public long AvailableSizeMB
+        {
+            get => _availableSizeMB;
+            set { if (SetField(ref _availableSizeMB, value)) OnPropertyChanged(nameof(StatusTooltip)); }
+        }
+
+        // Номер текущей попытки повторной проверки доступности (1..2) — только для
+        // пользовательских приложений в ретрай-цикле CatalogViewModel. 0 — обычная
+        // первая проверка (без счётчика в тултипе).
+        private int _retryAttempt;
+        public int RetryAttempt
+        {
+            get => _retryAttempt;
+            set { if (SetField(ref _retryAttempt, value)) OnPropertyChanged(nameof(StatusTooltip)); }
         }
 
         // ── Версии (пин конкретной версии вместо "Последняя") ──────────────────

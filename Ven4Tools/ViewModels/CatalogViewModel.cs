@@ -246,8 +246,17 @@ namespace Ven4Tools.ViewModels
             bool compact = ProfileService.Current.CompactMode;
             foreach (var row in Apps)
             {
-                int appLevel = row.Profile switch { "extended" => 1, "full" => 2, _ => 0 };
-                row.MatchesProfile = appLevel <= modeLevel;
+                // Пользовательские приложения видимы в ЛЮБОМ режиме каталога (см.
+                // комментарий у AppRowViewModel.MatchesProfile) — как раньше вело себя
+                // вычисление profileOk=true при appId==null в исходном CatalogTab.Search.cs.
+                // Профильный фильтр применяем только к каталожным приложениям.
+                if (row.IsUserAdded)
+                    row.MatchesProfile = true;
+                else
+                {
+                    int appLevel = row.Profile switch { "extended" => 1, "full" => 2, _ => 0 };
+                    row.MatchesProfile = appLevel <= modeLevel;
+                }
                 row.IsCompact = compact;
             }
             ApplySortOrder();
@@ -612,6 +621,10 @@ namespace Ven4Tools.ViewModels
 
         private async Task CheckOneAvailabilityAsync(AppRowViewModel row, SemaphoreSlim sem)
         {
+            // Сбрасываем счётчик ретраев перед первой проверкой — иначе остаток от
+            // предыдущего прогона (RefreshAvailability) показал бы «Повторная
+            // проверка...» уже на первой обычной проверке.
+            row.RetryAttempt = 0;
             var availability = await CheckAvailabilityOnceAsync(row, sem);
 
             // Соответствует оригинальному CheckSingleAppAvailability: добавленные
@@ -622,6 +635,9 @@ namespace Ven4Tools.ViewModels
             int attempt = 1;
             while (availability == AppRowViewModel.RowAvailability.Unavailable && row.IsUserAdded && attempt < 3)
             {
+                // Номер попытки для тултипа «⏳ Повторная проверка... (attempt/3)» —
+                // выставляем до перехода в Checking, чтобы StatusTooltip уже знал счётчик.
+                row.RetryAttempt = attempt;
                 row.Availability = AppRowViewModel.RowAvailability.Checking;
                 try { await Task.Delay(2000, _availabilityCts.Token); }
                 catch (OperationCanceledException) { break; }
@@ -629,6 +645,7 @@ namespace Ven4Tools.ViewModels
                 availability = await CheckAvailabilityOnceAsync(row, sem);
             }
 
+            row.RetryAttempt = 0;
             row.Availability = availability;
         }
 
@@ -637,7 +654,9 @@ namespace Ven4Tools.ViewModels
             await sem.WaitAsync();
             try
             {
-                var (status, _) = await _availabilityChecker.CheckAppAvailabilityWithSize(row.App);
+                var (status, sizeMB) = await _availabilityChecker.CheckAppAvailabilityWithSize(row.App);
+                if (status == AvailabilityChecker.AvailabilityStatus.Available)
+                    row.AvailableSizeMB = sizeMB;
                 return status switch
                 {
                     AvailabilityChecker.AvailabilityStatus.Available   => AppRowViewModel.RowAvailability.Available,
