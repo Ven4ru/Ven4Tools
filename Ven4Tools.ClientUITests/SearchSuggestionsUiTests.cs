@@ -81,6 +81,12 @@ namespace Ven4Tools.ClientUITests
                 throwOnTimeout: false).Result;
             Assert.IsNotNull(search, "Не найдено поле поиска (txtSearch).");
 
+            // Сразу после открытия вкладки идёт собственная фоновая загрузка каталога
+            // (доступность/версии/статус установки, много реальных вызовов winget) —
+            // не даём поисковому запросу конкурировать с этим потоком за winget.exe
+            // прямо в первую секунду, иначе ответ может неоправданно затянуться.
+            System.Threading.Thread.Sleep(1000);
+
             // Запрос, которого точно нет в каталоге — тогда клиент опрашивает
             // Winget/Chocolatey напрямую и показывает результаты под строкой поиска.
             // Реальный клик + ввод с клавиатуры (Enter), а не прямая подстановка
@@ -93,14 +99,23 @@ namespace Ven4Tools.ClientUITests
             // pnlWingetResults/pnlWingetSuggestions — StackPanel/Border, без
             // собственного элемента в дереве UI Automation (как и карточки
             // онбординга): их содержимое ищем прямо в главном окне, без якоря.
-            var statusText = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtWingetStatus"));
-
+            //
+            // ВАЖНО: txtWingetStatus нельзя искать один раз ДО ожидания — панель
+            // подсказок скрыта (Collapsed) до истечения debounce (~600мс) внутри
+            // RunSearchSuggestionsAsync, элемента ещё нет в дереве UIA сразу после
+            // ввода. Запрос нужно повторять на каждой итерации ретрая, иначе
+            // захваченная один раз ссылка навсегда остаётся null.
+            AutomationElement? statusText = null;
             var settled = Retry.WhileFalse(
-                () => (statusText != null && !string.IsNullOrEmpty(statusText.Name)) ||
-                      s.MainWindow.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Text)
-                                                              .And(cf.ByName("📦 Winget"))).Length > 0 ||
-                      s.MainWindow.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Text)
-                                                              .And(cf.ByName("🍫 Chocolatey"))).Length > 0,
+                () =>
+                {
+                    statusText = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtWingetStatus"));
+                    return (statusText != null && !string.IsNullOrEmpty(statusText.Name)) ||
+                           s.MainWindow.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Text)
+                                                                   .And(cf.ByName("📦 Winget"))).Length > 0 ||
+                           s.MainWindow.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Text)
+                                                                   .And(cf.ByName("🍫 Chocolatey"))).Length > 0;
+                },
                 timeout: TimeSpan.FromSeconds(20),
                 interval: TimeSpan.FromMilliseconds(500),
                 throwOnTimeout: false).Success;

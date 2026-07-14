@@ -668,11 +668,11 @@ namespace Ven4Tools.ViewModels
             finally { sem.Release(); }
         }
 
-        private async Task FetchVersionsForRowAsync(AppRowViewModel row)
+        private async Task<bool> FetchVersionsForRowAsync(AppRowViewModel row)
         {
-            if (string.IsNullOrEmpty(row.App.AlternativeId)) return;
+            if (string.IsNullOrEmpty(row.App.AlternativeId)) return false;
             var versions = await WingetVersionsService.FetchVersionsAsync(row.App.AlternativeId);
-            if (versions.Count == 0) return;
+            if (versions.Count == 0) return false;
             Application.Current?.Dispatcher.Invoke(() =>
             {
                 row.VersionOptions.Clear();
@@ -681,6 +681,7 @@ namespace Ven4Tools.ViewModels
                 row.SelectedVersionOption = "Последняя";
                 row.IsVersionComboEnabled = true;
             });
+            return true;
         }
 
         private async Task FetchVersionsPhase2Async()
@@ -691,10 +692,15 @@ namespace Ven4Tools.ViewModels
                 .Select(row => Task.Run(async () =>
                 {
                     await sem.WaitAsync();
-                    try { await FetchVersionsForRowAsync(row); }
+                    try { return await FetchVersionsForRowAsync(row); }
                     finally { sem.Release(); }
                 }));
-            await Task.WhenAll(tasks);
+            var results = await Task.WhenAll(tasks);
+            // Соответствует оригинальному AddLog($"✅ Версии загружены для {loaded}
+            // приложений") из удалённого при MVVM-переносе CatalogTab.Availability.cs —
+            // потерялась при рефакторинге, её ждёт AuditFixesUiTests (первичная загрузка
+            // каталога считается завершённой только по этой строке).
+            Log($"✅ Версии загружены для {results.Count(ok => ok)} приложений");
         }
 
         private async Task UpdateInstalledStatusAsync()

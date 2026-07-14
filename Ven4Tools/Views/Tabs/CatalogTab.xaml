@@ -103,7 +103,7 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Text="{Binding SuggestionsStatus}"
+                        <TextBlock x:Name="txtWingetStatus" Text="{Binding SuggestionsStatus}"
                                    Foreground="{DynamicResource TextSecondary}" FontSize="11"
                                    Visibility="{Binding SuggestionsStatus, Converter={StaticResource StringToVis}}"/>
                     </StackPanel>
