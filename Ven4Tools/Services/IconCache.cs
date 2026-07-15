@@ -29,6 +29,13 @@ namespace Ven4Tools.Services
         {
             if (string.IsNullOrWhiteSpace(url)) return null;
 
+            // Параноидальный режим: иконки каталога грузятся со сторонних CDN-хостов
+            // (не только с доверенного источника каталога) — раскрывают IP third-party
+            // серверам, чего пользователь в этом режиме не ожидает. Офлайн-режим:
+            // сетевой запрос бессмысленен, каталог и так берётся из кэша.
+            if (ProfileService.Current.ParanoidMode || ProfileService.Current.OfflineMode)
+                return null;
+
             lock (_cache)
             {
                 if (_cache.TryGetValue(url, out var cached)) return cached;
