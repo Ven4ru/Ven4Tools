@@ -154,7 +154,6 @@ namespace Ven4Tools.Launcher.Services
                 DownloadUrl  = clientAsset.browser_download_url ?? "",
                 ReleaseDate  = release.published_at,
                 ReleaseNotes = release.body,
-                IsPreRelease = release.prerelease,
                 IsLatest     = release == firstStable,
                 FileSize     = clientAsset.size
             };

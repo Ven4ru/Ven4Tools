@@ -42,9 +42,6 @@ namespace Ven4Tools.Launcher.Models
         [JsonPropertyName("setup_url")]
         public string? SetupUrl { get; set; }
 
-        [JsonPropertyName("setup_fallback")]
-        public string? SetupFallback { get; set; }
-
         // SHA256 установщика лаунчера для проверки целостности после скачивания.
         [JsonPropertyName("setup_sha256")]
         public string? SetupSha256 { get; set; }

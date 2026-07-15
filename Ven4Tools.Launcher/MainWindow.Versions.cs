@@ -118,23 +118,47 @@ namespace Ven4Tools.Launcher
             }
         }
 
+        // Три состояния кнопки запуска/загрузки клиента с фиксированными текстом и
+        // цветом — единый источник вместо повторяющихся хардкод-RGB в четырёх местах.
+        private enum LaunchButtonState { Launch, Download, Update }
+
+        private static readonly System.Windows.Media.Brush LaunchBrush   = CreateFrozenBrush(0, 120, 212);   // синий
+        private static readonly System.Windows.Media.Brush DownloadBrush = CreateFrozenBrush(255, 140, 0);   // оранжевый
+        private static readonly System.Windows.Media.Brush UpdateBrush   = CreateFrozenBrush(251, 191, 36);  // янтарный
+
+        private static System.Windows.Media.Brush CreateFrozenBrush(byte r, byte g, byte b)
+        {
+            var brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
+            brush.Freeze(); // общая иммутабельная кисть, безопасна для повторного использования
+            return brush;
+        }
+
+        private void SetLaunchButtonState(LaunchButtonState state)
+        {
+            (btnLaunchApp.Content, btnLaunchApp.Background) = state switch
+            {
+                LaunchButtonState.Launch   => ("🚀 Запустить Ven4Tools", LaunchBrush),
+                LaunchButtonState.Download => ("📥 Загрузить Ven4Tools", DownloadBrush),
+                LaunchButtonState.Update   => ("⬆ Обновить Ven4Tools",   UpdateBrush),
+                _                          => (btnLaunchApp.Content, btnLaunchApp.Background)
+            };
+        }
+
         private void CheckExistingClient()
         {
-            string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
+            string clientExe = Path.Combine(_clientPath, LauncherPaths.ClientExeName);
             if (File.Exists(clientExe))
             {
                 var versionInfo    = FileVersionInfo.GetVersionInfo(clientExe);
                 string currentVersion = versionInfo.FileVersion ?? "unknown";
                 txtInstalledVersion.Text = $"Текущая версия: {currentVersion}";
-                btnLaunchApp.Content    = "🚀 Запустить Ven4Tools";
-                btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
+                SetLaunchButtonState(LaunchButtonState.Launch);
                 AddLog($"✅ Найден клиент версии {currentVersion}");
             }
             else
             {
                 txtInstalledVersion.Text = "Текущая версия: не установлена";
-                btnLaunchApp.Content    = "📥 Загрузить Ven4Tools";
-                btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 140, 0));
+                SetLaunchButtonState(LaunchButtonState.Download);
             }
         }
 
@@ -144,7 +168,7 @@ namespace Ven4Tools.Launcher
         // («Проверить обновления»), и для авто-обновления (Task 6).
         private void CheckClientUpdateAvailable()
         {
-            string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
+            string clientExe = Path.Combine(_clientPath, LauncherPaths.ClientExeName);
             if (!File.Exists(clientExe)) { _clientUpdateAvailable = false; return; }
 
             string installedVersion = FileVersionInfo.GetVersionInfo(clientExe).FileVersion ?? "0.0.0";
@@ -157,8 +181,7 @@ namespace Ven4Tools.Launcher
 
             _clientUpdateAvailable  = true;
             UpdateVersionDisplay(latest);
-            btnLaunchApp.Content    = "⬆ Обновить Ven4Tools";
-            btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(251, 191, 36));
+            SetLaunchButtonState(LaunchButtonState.Update);
             AddLog($"📢 Доступно обновление клиента: {installedVersion} → {latest.Version}");
         }
 

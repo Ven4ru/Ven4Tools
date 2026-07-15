@@ -223,10 +223,8 @@ namespace Ven4Tools.Launcher
                 txtDownloadStatus.Text = "Готово";
                 progressDownload.Value = 100;
                 AddLog($"✅ Клиент {version.Version} скачан и распакован");
-                version.IsInstalled = true;
 
-                btnLaunchApp.Content    = "🚀 Запустить Ven4Tools";
-                btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
+                SetLaunchButtonState(LaunchButtonState.Launch);
                 _clientUpdateAvailable  = false; // клиент теперь актуален — иначе следующий клик по «Запустить» повторно переустановит ту же версию
 
                 if (!silent)
@@ -290,7 +288,7 @@ namespace Ven4Tools.Launcher
                 UpdateVersionDisplay(latest);
             }
 
-            string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
+            string clientExe = Path.Combine(_clientPath, LauncherPaths.ClientExeName);
 
             if (File.Exists(clientExe) && _clientUpdateAvailable)
             {
@@ -336,9 +334,7 @@ namespace Ven4Tools.Launcher
                             var wd     = _watchdog;
                             _watchdog  = null;
 
-                            var crashPath = System.IO.Path.Combine(
-                                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                "Ven4Tools", "crash_last.json");
+                            var crashPath = LauncherPaths.CrashReportPath;
                             bool hasFreshCrash = System.IO.File.Exists(crashPath) &&
                                 (DateTime.UtcNow - System.IO.File.GetLastWriteTimeUtc(crashPath)).TotalSeconds < 15;
 
@@ -399,7 +395,7 @@ namespace Ven4Tools.Launcher
                     foreach (var root in GetClientSearchRoots())
                     {
                         if (!Directory.Exists(root)) continue;
-                        results.AddRange(EnumerateFilesSafe(root, "Ven4Tools.exe"));
+                        results.AddRange(EnumerateFilesSafe(root, LauncherPaths.ClientExeName));
                     }
                     return results;
                 });
@@ -606,9 +602,7 @@ namespace Ven4Tools.Launcher
 
             Dispatcher.Invoke(() =>
             {
-                btnLaunchApp.Content    = "📥 Загрузить Ven4Tools";
-                btnLaunchApp.Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(255, 140, 0));
+                SetLaunchButtonState(LaunchButtonState.Download);
                 btnDeleteClient.IsEnabled = true;
             });
 

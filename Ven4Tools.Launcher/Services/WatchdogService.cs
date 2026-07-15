@@ -13,9 +13,7 @@ namespace Ven4Tools.Launcher.Services
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Ven4Tools", "heartbeat.json");
 
-        private static readonly string CrashPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Ven4Tools", "crash_last.json");
+        private static readonly string CrashPath = LauncherPaths.CrashReportPath;
 
         private const int CheckIntervalSec  = 10;
         private const int FreezeTimeoutSec  = 20;

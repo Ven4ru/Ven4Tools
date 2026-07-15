@@ -127,7 +127,7 @@ namespace Ven4Tools.Launcher.Services
 
         private async Task CheckClientAsync()
         {
-            string clientExe = Path.Combine(_getClientPath(), "Ven4Tools.exe");
+            string clientExe = Path.Combine(_getClientPath(), LauncherPaths.ClientExeName);
             if (!File.Exists(clientExe)) return;
 
             var versionInfo = FileVersionInfo.GetVersionInfo(clientExe);

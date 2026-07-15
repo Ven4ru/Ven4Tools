@@ -89,9 +89,7 @@ namespace Ven4Tools.Launcher
             {
                 _report.Reported = true;
                 System.IO.File.WriteAllText(
-                    System.IO.Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "Ven4Tools", "crash_last.json"),
+                    LauncherPaths.CrashReportPath,
                     JsonConvert.SerializeObject(_report, Formatting.Indented));
             }
             catch { }
