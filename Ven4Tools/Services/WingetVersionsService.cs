@@ -13,33 +13,10 @@ namespace Ven4Tools.Services
             if (!CommandLineGuard.ValidateId(wingetId)) return new List<string>();
             try
             {
-                var wingetPath = TrustedExecutablePaths.ResolveWinget();
-                if (wingetPath == null) return new List<string>();
-
-                var psi = new ProcessStartInfo
+                var (_, output) = await WingetRunner.RunAsync(new[]
                 {
-                    FileName = wingetPath,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
-                psi.ArgumentList.Add("show");
-                psi.ArgumentList.Add("--id");
-                psi.ArgumentList.Add(wingetId);
-                psi.ArgumentList.Add("--versions");
-                psi.ArgumentList.Add("-e");
-                psi.ArgumentList.Add("--source");
-                psi.ArgumentList.Add("winget");
-
-                using var process = Process.Start(psi);
-                if (process == null) return new List<string>();
-
-                var stderrTask = process.StandardError.ReadToEndAsync();
-                string output = await process.StandardOutput.ReadToEndAsync(token);
-                await process.WaitForExitAsync(token);
-                await stderrTask;
+                    "show", "--id", wingetId, "--versions", "-e", "--source", "winget"
+                }, token: token);
 
                 return ParseVersions(output);
             }
@@ -61,7 +38,7 @@ namespace Ven4Tools.Services
                 var trimmed = line.Trim();
                 if (!pastSeparator)
                 {
-                    if (trimmed.StartsWith("---")) pastSeparator = true;
+                    if (WingetRunner.IsTableSeparator(line)) pastSeparator = true;
                     continue;
                 }
                 if (!string.IsNullOrWhiteSpace(trimmed))

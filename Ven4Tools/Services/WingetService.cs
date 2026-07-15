@@ -35,29 +35,16 @@ namespace Ven4Tools.Services
             timeoutCts.CancelAfter(UiCallTimeout);
             try
             {
-                var wingetPath = TrustedExecutablePaths.ResolveWinget();
-                if (wingetPath == null) return results;
-
-                var psi = new ProcessStartInfo
+                // ProcessStartInfo собираем общей фабрикой WingetRunner: аргументы идут
+                // отдельными токенами через ArgumentList (.NET экранирует каждый), поэтому
+                // пользовательский ввод не может «вырваться» из кавычек в посторонние
+                // winget-флаги — устойчиво даже при ослаблении набора символов в
+                // CommandLineGuard, в отличие от прямой строковой интерполяции.
+                var psi = WingetRunner.CreateStartInfo(new[]
                 {
-                    FileName = wingetPath,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
-                // Аргументы добавляем отдельными токенами через ArgumentList: .NET сам
-                // корректно экранирует каждый, поэтому пользовательский ввод не может
-                // «вырваться» из кавычек в посторонние winget-флаги — устойчиво даже при
-                // ослаблении набора символов в CommandLineGuard (тот же надёжный подход,
-                // что и в WingetRunner), в отличие от прямой строковой интерполяции.
-                psi.ArgumentList.Add("search");
-                psi.ArgumentList.Add("--name");
-                psi.ArgumentList.Add(query);
-                psi.ArgumentList.Add("--source");
-                psi.ArgumentList.Add("winget");
-                psi.ArgumentList.Add("--accept-source-agreements");
+                    "search", "--name", query, "--source", "winget", "--accept-source-agreements"
+                });
+                if (psi == null) return results;
 
                 using var process = Process.Start(psi);
                 if (process == null) return results;
@@ -78,7 +65,7 @@ namespace Ven4Tools.Services
                 {
                     if (!headerPassed)
                     {
-                        if (line.Contains("--")) headerPassed = true;
+                        if (WingetRunner.IsTableSeparator(line)) headerPassed = true;
                         continue;
                     }
                     if (string.IsNullOrWhiteSpace(line)) continue;
@@ -130,30 +117,16 @@ namespace Ven4Tools.Services
             timeoutCts.CancelAfter(UiCallTimeout);
             try
             {
-                var wingetPath = TrustedExecutablePaths.ResolveWinget();
-                if (wingetPath == null) return (null, null);
-
-                var psi = new ProcessStartInfo
+                // ProcessStartInfo собираем общей фабрикой WingetRunner: аргументы идут
+                // отдельными токенами через ArgumentList (.NET экранирует каждый), поэтому
+                // пользовательский ввод не может «вырваться» из кавычек в посторонние
+                // winget-флаги — устойчиво даже при ослаблении набора символов в
+                // CommandLineGuard, в отличие от прямой строковой интерполяции.
+                var psi = WingetRunner.CreateStartInfo(new[]
                 {
-                    FileName = wingetPath,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
-                // Аргументы добавляем отдельными токенами через ArgumentList: .NET сам
-                // корректно экранирует каждый, поэтому пользовательский ввод не может
-                // «вырваться» из кавычек в посторонние winget-флаги — устойчиво даже при
-                // ослаблении набора символов в CommandLineGuard (тот же надёжный подход,
-                // что и в WingetRunner), в отличие от прямой строковой интерполяции.
-                psi.ArgumentList.Add("show");
-                psi.ArgumentList.Add("--id");
-                psi.ArgumentList.Add(id);
-                psi.ArgumentList.Add("-e");
-                psi.ArgumentList.Add("--source");
-                psi.ArgumentList.Add("winget");
-                psi.ArgumentList.Add("--accept-source-agreements");
+                    "show", "--id", id, "-e", "--source", "winget", "--accept-source-agreements"
+                });
+                if (psi == null) return (null, null);
 
                 using var process = Process.Start(psi);
                 if (process == null) return (null, null);

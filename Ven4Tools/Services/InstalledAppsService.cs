@@ -14,32 +14,11 @@ namespace Ven4Tools.Services
         {
             try
             {
-                var wingetPath = TrustedExecutablePaths.ResolveWinget();
-                if (wingetPath == null)
+                var (_, output) = await WingetRunner.RunAsync(new[]
                 {
-                    _rawOutput = string.Empty;
-                    return;
-                }
-
-                var psi = new ProcessStartInfo
-                {
-                    FileName = wingetPath,
-                    Arguments = "list --accept-source-agreements --disable-interactivity",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8,
-                    StandardErrorEncoding = System.Text.Encoding.UTF8
-                };
-
-                using var process = Process.Start(psi);
-                if (process == null) return;
-
-                var stderrTask = process.StandardError.ReadToEndAsync();
-                _rawOutput = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
-                await stderrTask;
+                    "list", "--accept-source-agreements", "--disable-interactivity"
+                });
+                _rawOutput = output;
             }
             catch (Exception ex)
             {
@@ -67,7 +46,7 @@ namespace Ven4Tools.Services
             var lines = _rawOutput.Replace("\r\n", "\n").Split('\n');
 
             // Строка-разделитель ("-----") идёт сразу после заголовка с именами колонок.
-            int sepIndex = Array.FindIndex(lines, IsSeparatorLine);
+            int sepIndex = Array.FindIndex(lines, WingetRunner.IsTableSeparator);
             if (sepIndex <= 0) return string.Empty;
 
             int versionColumn = FindVersionColumn(lines[sepIndex - 1]);
@@ -91,13 +70,6 @@ namespace Ven4Tools.Services
             }
 
             return string.Empty;
-        }
-
-        // Строка из одних дефисов (с возможными пробелами) — разделитель под заголовком.
-        private static bool IsSeparatorLine(string line)
-        {
-            string t = line.Trim();
-            return t.Length > 0 && t.IndexOf('-') >= 0 && t.All(c => c == '-' || c == ' ');
         }
 
         // Позиция начала колонки Version в строке заголовка (по символу 'V' слова "Version").

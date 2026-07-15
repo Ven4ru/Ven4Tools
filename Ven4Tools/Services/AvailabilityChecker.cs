@@ -125,38 +125,13 @@ namespace Ven4Tools.Services
                 if (!CommandLineGuard.ValidateId(appId))
                     return (AvailabilityStatus.Unavailable, 0);
 
-                var wingetPath = TrustedExecutablePaths.ResolveWinget();
-                if (wingetPath == null)
-                    return (AvailabilityStatus.Unavailable, 0);
-
-                var psi = new ProcessStartInfo
+                var (exitCode, output) = await WingetRunner.RunAsync(new[]
                 {
-                    FileName = wingetPath,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8,
-                    StandardErrorEncoding = System.Text.Encoding.UTF8
-                };
-                psi.ArgumentList.Add("show");
-                psi.ArgumentList.Add("--id");
-                psi.ArgumentList.Add(appId);
-                psi.ArgumentList.Add("--exact");
-                psi.ArgumentList.Add("--source");
-                psi.ArgumentList.Add("winget");
-                psi.ArgumentList.Add("--accept-source-agreements");
+                    "show", "--id", appId, "--exact",
+                    "--source", "winget", "--accept-source-agreements"
+                });
 
-                using var process = Process.Start(psi);
-                if (process == null)
-                    return (AvailabilityStatus.Unavailable, 0);
-
-                var stderrTask = process.StandardError.ReadToEndAsync();
-                string output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
-                await stderrTask;
-
-                bool success = process.ExitCode == 0 &&
+                bool success = exitCode == 0 &&
                                (output.Contains("Version", StringComparison.OrdinalIgnoreCase) ||
                                 output.Contains("Found", StringComparison.OrdinalIgnoreCase) ||
                                 output.Contains("Версия", StringComparison.OrdinalIgnoreCase) ||
