@@ -403,7 +403,14 @@ namespace Ven4Tools.Launcher
                 // Целостность: скачаны с доверенных хостов по HTTPS, но перед elevated-
                 // установкой дополнительно проверяем, что файлы подписаны Microsoft —
                 // допускает штатные обновления содержимого по тем же URL, в отличие
-                // от жёсткого SHA256-пиннинга.
+                // от жёсткого SHA256-пиннинга. FileShare.Read держим открытым от
+                // проверки до завершения Add-AppxPackage (как в InstallWebView2Async/
+                // InstallVcRedistAsync) — запрещает подмену файла другим процессом
+                // того же пользователя в этом окне (TOCTOU).
+                using var vcLibsHandle = new FileStream(tempVcLibs, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using var uiXamlHandle = new FileStream(tempUiXaml, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using var msixHandle   = new FileStream(tempMsix,   FileMode.Open, FileAccess.Read, FileShare.Read);
+
                 foreach (var (path, label) in new[] { (tempVcLibs, "VCLibs"), (tempUiXaml, "UI.Xaml"), (tempMsix, "winget") })
                 {
                     if (!AuthenticodeVerifier.IsSignedByMicrosoft(path, out string sigError))

@@ -9,6 +9,11 @@ namespace Ven4Tools.Launcher.Services;
 
 internal static class SafeZipExtractor
 {
+    // Self-contained клиент-zip сейчас в районе сотен МБ; лимит с большим запасом
+    // на будущий рост, но конечный — защита от zip-бомбы (архив с маленьким
+    // сжатым размером и огромным разжатым, способный исчерпать диск).
+    private const long MaxTotalUncompressedBytes = 4L * 1024 * 1024 * 1024; // 4 ГБ
+
     public static async Task ExtractAsync(
         string archivePath,
         string destinationPath,
@@ -20,6 +25,19 @@ internal static class SafeZipExtractor
             + Path.DirectorySeparatorChar;
 
         using var archive = ZipFile.OpenRead(archivePath);
+
+        // Метаданные центрального каталога ZIP декларируют разжатый размер каждой
+        // записи — проверяем декларацию заранее (дёшево), но не доверяем ей слепо:
+        // ниже при копировании отдельно считаем реально записанные байты.
+        long declaredTotal = 0;
+        foreach (ZipArchiveEntry declared in archive.Entries)
+        {
+            declaredTotal += declared.Length;
+            if (declaredTotal > MaxTotalUncompressedBytes)
+                throw new InvalidDataException("Архив превышает допустимый разжатый размер (заявленный в метаданных).");
+        }
+
+        long actualTotal = 0;
         foreach (ZipArchiveEntry entry in archive.Entries)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -41,7 +59,16 @@ internal static class SafeZipExtractor
                 FileShare.None,
                 bufferSize: 81920,
                 useAsync: true);
-            await source.CopyToAsync(destination, cancellationToken);
+
+            var buffer = new byte[81920];
+            int read;
+            while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
+            {
+                actualTotal += read;
+                if (actualTotal > MaxTotalUncompressedBytes)
+                    throw new InvalidDataException("Архив превышает допустимый разжатый размер (фактический при распаковке).");
+                await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+            }
         }
     }
 
