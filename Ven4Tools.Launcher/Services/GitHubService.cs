@@ -109,48 +109,75 @@ namespace Ven4Tools.Launcher.Services
         }
 
         /// <summary>
-        /// Получение списка доступных версий клиента
+        /// Клиентский zip-ассет релиза: имя содержит «Client» или «Ven4Tools»,
+        /// оканчивается на «.zip» и не относится к лаунчеру. Единый предикат для
+        /// GetAvailableClientVersions (автообновление) и MainWindow.LoadVersionsAsync
+        /// (ручной список версий) — раньше он дублировался в обоих местах и разошёлся.
+        /// </summary>
+        internal static bool IsClientZipAsset(GitHubAsset? asset)
+        {
+            return asset?.name != null &&
+                   (asset.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
+                    asset.name.Contains("Ven4Tools", StringComparison.OrdinalIgnoreCase)) &&
+                   asset.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                   !asset.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Первый стабильный релиз с клиентским zip-архивом («latest»):
+        /// launcher-only релизы (без zip) не должны помечаться как latest.
+        /// </summary>
+        internal static GitHubRelease? FindFirstStableClientRelease(List<GitHubRelease> releases) =>
+            releases.FirstOrDefault(r => !r.prerelease && r.assets?.Any(IsClientZipAsset) == true);
+
+        /// <summary>Клиентский zip-ассет данного релиза (или null, если его нет).</summary>
+        internal static GitHubAsset? FindClientZipAsset(GitHubRelease release) =>
+            release.assets?.FirstOrDefault(IsClientZipAsset);
+
+        /// <summary>
+        /// Базовое отображение релиза в ClientVersionInfo с GitHub-ссылкой.
+        /// Возвращает null, если у релиза нет тега или клиентского zip-ассета.
+        /// CDN-подстановка (ZipUrl/FallbackUrl/ExpectedSha256) и проверка
+        /// доверенности хоста применяются поверх, в MainWindow.LoadVersionsAsync.
+        /// </summary>
+        internal static ClientVersionInfo? MapRelease(GitHubRelease release, GitHubRelease? firstStable)
+        {
+            var version = release.tag_name?.TrimStart('v');
+            if (string.IsNullOrEmpty(version)) return null;
+
+            var clientAsset = FindClientZipAsset(release);
+            if (clientAsset == null) return null;
+
+            return new ClientVersionInfo
+            {
+                Version      = version,
+                DownloadUrl  = clientAsset.browser_download_url ?? "",
+                ReleaseDate  = release.published_at,
+                ReleaseNotes = release.body,
+                IsPreRelease = release.prerelease,
+                IsLatest     = release == firstStable,
+                FileSize     = clientAsset.size
+            };
+        }
+
+        /// <summary>
+        /// Получение списка доступных версий клиента.
+        /// Используется автообновлением (UpdateBackgroundService.CheckClientAsync)
+        /// только для обнаружения новой версии и текста уведомления — фактическая
+        /// загрузка идёт через MainWindow.LoadVersionsAsync с проверкой хоста, CDN
+        /// и SHA256 (см. TriggerAutoClientUpdateAsync), поэтому здесь эти шаги
+        /// намеренно не повторяются: DownloadUrl этого списка для скачивания не берётся.
         /// </summary>
         public async Task<List<ClientVersionInfo>> GetAvailableClientVersions()
         {
-            var versions = new List<ClientVersionInfo>();
             var releases = await GetAllReleases();
+            var firstStable = FindFirstStableClientRelease(releases);
 
-            // Ищем первый стабильный релиз с клиентским zip-архивом:
-            // launcher-only релизы (без zip) не должны попадать в «latest».
-            var firstStable = releases.FirstOrDefault(r =>
-                !r.prerelease &&
-                r.assets?.Any(a =>
-                    a.name != null &&
-                    (a.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
-                     a.name.Contains("Ven4Tools", StringComparison.OrdinalIgnoreCase)) &&
-                    a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
-                    !a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase)) == true);
+            var versions = new List<ClientVersionInfo>();
             foreach (var release in releases)
             {
-                var version = release.tag_name?.TrimStart('v');
-                if (string.IsNullOrEmpty(version)) continue;
-
-                var clientAsset = release.assets?.FirstOrDefault(a =>
-                    a.name != null &&
-                    (a.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
-                     a.name.Contains("Ven4Tools", StringComparison.OrdinalIgnoreCase)) &&
-                    a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
-                    !a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase));
-
-                if (clientAsset != null)
-                {
-                    versions.Add(new ClientVersionInfo
-                    {
-                        Version      = version,
-                        DownloadUrl  = clientAsset.browser_download_url ?? "",
-                        ReleaseDate  = release.published_at,
-                        ReleaseNotes = release.body,
-                        IsPreRelease = release.prerelease,
-                        IsLatest     = release == firstStable,
-                        FileSize     = clientAsset.size
-                    });
-                }
+                var info = MapRelease(release, firstStable);
+                if (info != null) versions.Add(info);
             }
 
             versions.Sort((a, b) => VersionComparer.Compare(b.Version, a.Version));
