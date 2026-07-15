@@ -317,13 +317,7 @@ namespace Ven4Tools.Views.Tabs
             // Общий семафор с каталогом/историей/Windows Update — иначе winget
             // upgrade --all может пойти параллельно с установкой из другой вкладки
             // (конфликт msiexec, ошибка 1618).
-            if (InstallationService.IsBusy)
-            {
-                MessageBox.Show(
-                    "Дождитесь завершения текущей установки, затем повторите попытку.",
-                    "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            if (UiGuards.WarnIfInstallBusy()) return;
 
             var res = MessageBox.Show(
                 "Обновить все приложения через winget?\n\nЭто может занять продолжительное время.",
@@ -405,12 +399,7 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 if (((Button)sender).Tag is not InstalledApp app) return;
-                if (InstallationService.IsBusy)
-                {
-                    MessageBox.Show("Дождитесь завершения текущей установки, затем повторите попытку.",
-                        "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
+                if (UiGuards.WarnIfInstallBusy()) return;
                 await UpdateAppAsync(app);
             }
             catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
@@ -421,12 +410,7 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 if (((Button)sender).Tag is not InstalledApp app) return;
-                if (InstallationService.IsBusy)
-                {
-                    MessageBox.Show("Дождитесь завершения текущей установки, затем повторите попытку.",
-                        "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
+                if (UiGuards.WarnIfInstallBusy()) return;
 
                 var res = MessageBox.Show(
                     $"Удалить «{app.Name}»?",
@@ -442,12 +426,7 @@ namespace Ven4Tools.Views.Tabs
         {
             try
             {
-                if (InstallationService.IsBusy)
-                {
-                    MessageBox.Show("Дождитесь завершения текущей установки, затем повторите попытку.",
-                        "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
+                if (UiGuards.WarnIfInstallBusy()) return;
 
                 var visible = (lstApps.ItemsSource as IEnumerable<InstalledApp>)
                     ?.Where(a => a.IsSelected && a.HasUpdate).ToList();
@@ -455,20 +434,10 @@ namespace Ven4Tools.Views.Tabs
 
                 if (visible.Count >= 2)
                 {
-                    var rpAnswer = MessageBox.Show(
+                    var rpOutcome = await UiGuards.ConfirmAndCreateRestorePointAsync(
                         $"Будет обновлено {visible.Count} приложений.\n\nСоздать точку восстановления Windows перед обновлением?",
-                        "Точка восстановления",
-                        MessageBoxButton.YesNoCancel,
-                        MessageBoxImage.Question);
-
-                    if (rpAnswer == MessageBoxResult.Cancel) return;
-
-                    if (rpAnswer == MessageBoxResult.Yes)
-                    {
-                        Log("🛡️ Создаю точку восстановления...");
-                        bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед массовым обновлением");
-                        Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
-                    }
+                        "Ven4Tools — перед массовым обновлением");
+                    if (rpOutcome == RestorePointOutcome.Cancelled) return;
                 }
 
                 btnUpdateSelected.IsEnabled = false;
@@ -733,12 +702,7 @@ namespace Ven4Tools.Views.Tabs
         {
             try
             {
-                if (InstallationService.IsBusy)
-                {
-                    MessageBox.Show("Дождитесь завершения текущей установки, затем повторите попытку.",
-                        "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
+                if (UiGuards.WarnIfInstallBusy()) return;
 
                 var selected = (lstApps.ItemsSource as IEnumerable<InstalledApp>)
                     ?.Where(a => a.IsSelected && a.CanAct).ToList();
@@ -754,18 +718,10 @@ namespace Ven4Tools.Views.Tabs
 
                 if (selected.Count >= 2)
                 {
-                    var rpAnswer = MessageBox.Show(
+                    var rpOutcome = await UiGuards.ConfirmAndCreateRestorePointAsync(
                         $"Будет удалено {selected.Count} приложений.\n\nСоздать точку восстановления Windows перед удалением?",
-                        "Точка восстановления",
-                        MessageBoxButton.YesNoCancel,
-                        MessageBoxImage.Question);
-                    if (rpAnswer == MessageBoxResult.Cancel) return;
-                    if (rpAnswer == MessageBoxResult.Yes)
-                    {
-                        Log("🛡️ Создаю точку восстановления...");
-                        bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед групповым удалением");
-                        Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
-                    }
+                        "Ven4Tools — перед групповым удалением");
+                    if (rpOutcome == RestorePointOutcome.Cancelled) return;
                 }
 
                 btnUninstallSelected.IsEnabled = false;
@@ -820,26 +776,12 @@ namespace Ven4Tools.Views.Tabs
             // Общий семафор с каталогом/историей/Windows Update — массовый winget import
             // не должен идти параллельно с другой установкой (конфликт msiexec, ошибка 1618,
             // частично применённый импорт). Ранний выход по IsBusy — до любых UI-мутаций.
-            if (InstallationService.IsBusy)
-            {
-                MessageBox.Show(
-                    "Дождитесь завершения текущей установки, затем повторите попытку.",
-                    "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            if (UiGuards.WarnIfInstallBusy()) return;
 
-            var rpAnswer = MessageBox.Show(
+            var rpOutcome = await UiGuards.ConfirmAndCreateRestorePointAsync(
                 "Импорт может установить сразу много приложений.\n\nСоздать точку восстановления Windows перед импортом?",
-                "Точка восстановления",
-                MessageBoxButton.YesNoCancel,
-                MessageBoxImage.Question);
-            if (rpAnswer == MessageBoxResult.Cancel) return;
-            if (rpAnswer == MessageBoxResult.Yes)
-            {
-                Log("🛡️ Создаю точку восстановления...");
-                bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед импортом списка");
-                Log(rpOk ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
-            }
+                "Ven4Tools — перед импортом списка");
+            if (rpOutcome == RestorePointOutcome.Cancelled) return;
 
             btnImport.IsEnabled = false;
             Log($"📥 Импорт из {System.IO.Path.GetFileName(dlg.FileName)}...");
