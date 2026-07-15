@@ -53,18 +53,6 @@ namespace Ven4Tools.Services
             };
             Save();
         }
-
-        public void RemoveTracking(string appId)
-        {
-            _data.Remove(appId);
-            Save();
-        }
-
-        public TrackedInstall? Get(string appId) =>
-            _data.TryGetValue(appId, out var t) ? t : null;
-
-        public bool IsTrackingNonLatest(string appId) =>
-            _data.TryGetValue(appId, out var t) && t.InstalledVersion != t.LatestVersionAtInstall;
     }
 
     public class TrackedInstall
