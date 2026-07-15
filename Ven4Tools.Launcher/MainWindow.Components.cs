@@ -340,127 +340,13 @@ namespace Ven4Tools.Launcher
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
                 var ct = timeoutCts.Token;
 
-                var json    = await _httpClient.GetStringAsync("https://api.github.com/repos/microsoft/winget-cli/releases/latest", ct);
-                var release = Newtonsoft.Json.Linq.JObject.Parse(json);
+                string? msixUrl = await ResolveWingetMsixUrlAsync(ct);
+                if (msixUrl == null) return;
 
-                string? msixUrl = release["assets"]?
-                    .FirstOrDefault(a => a["name"]?.ToString().EndsWith(".msixbundle") == true &&
-                                         a["name"]?.ToString().Contains("DesktopAppInstaller") == true)?
-                    ["browser_download_url"]?.ToString();
+                await DownloadWingetPackagesAsync(msixUrl, tempVcLibs, tempUiXaml, tempMsix, ct);
 
-                if (msixUrl == null) { AddLog("❌ Не удалось найти файл установки winget в последнем релизе"); return; }
-
-                // Защита от подмены: качаем только с доверенных доменов по HTTPS
-                if (!DownloadValidator.IsAllowedDownloadHost(msixUrl))
-                {
-                    AddLog($"⛔ Недоверенный URL загрузки winget — скачивание отменено: {msixUrl}");
+                if (!await RunWingetInstallScriptAsync(tempVcLibs, tempUiXaml, tempMsix))
                     return;
-                }
-
-                AddLog("⬇️ Скачивание зависимостей...");
-                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Скачивание зависимостей...");
-
-                var vcLibsTask = DownloadFileAsync(_httpClient,
-                    "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx", tempVcLibs, ct);
-                var uiXamlTask = DownloadFileAsync(_httpClient,
-                    "https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx",
-                    tempUiXaml, ct);
-
-                await Task.WhenAll(vcLibsTask, uiXamlTask);
-
-                AddLog($"⬇️ Скачивание winget ({msixUrl.Split('/').Last()})...");
-                using var resp = await _httpClient.GetAsync(msixUrl, HttpCompletionOption.ResponseHeadersRead, ct);
-                resp.EnsureSuccessStatusCode();
-
-                // После редиректов хост мог измениться — проверяем итоговый URL
-                if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(resp))
-                {
-                    AddLog("⛔ Загрузка winget перенаправлена на недоверенный хост — скачивание отменено");
-                    return;
-                }
-
-                var total = resp.Content.Headers.ContentLength ?? -1L;
-                var read  = 0L;
-                var buf   = new byte[81920];
-
-                using (var fs = new FileStream(tempMsix, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
-                using (var stream = await resp.Content.ReadAsStreamAsync(ct))
-                {
-                    int bytes;
-                    while ((bytes = await stream.ReadAsync(buf.AsMemory(), ct)) > 0)
-                    {
-                        await fs.WriteAsync(buf.AsMemory(0, bytes), ct);
-                        read += bytes;
-                        if (total > 0)
-                        {
-                            var pct = (int)((double)read / total * 100);
-                            Dispatcher.Invoke(() => { progressDownload.Value = pct; txtDownloadStatus.Text = $"Winget: {pct}%"; });
-                        }
-                    }
-                    await fs.FlushAsync(ct);
-                }
-
-                // Целостность: скачаны с доверенных хостов по HTTPS, но перед elevated-
-                // установкой дополнительно проверяем, что файлы подписаны Microsoft —
-                // допускает штатные обновления содержимого по тем же URL, в отличие
-                // от жёсткого SHA256-пиннинга. FileShare.Read держим открытым от
-                // проверки до завершения Add-AppxPackage (как в InstallWebView2Async/
-                // InstallVcRedistAsync) — запрещает подмену файла другим процессом
-                // того же пользователя в этом окне (TOCTOU).
-                using var vcLibsHandle = new FileStream(tempVcLibs, FileMode.Open, FileAccess.Read, FileShare.Read);
-                using var uiXamlHandle = new FileStream(tempUiXaml, FileMode.Open, FileAccess.Read, FileShare.Read);
-                using var msixHandle   = new FileStream(tempMsix,   FileMode.Open, FileAccess.Read, FileShare.Read);
-
-                foreach (var (path, label) in new[] { (tempVcLibs, "VCLibs"), (tempUiXaml, "UI.Xaml"), (tempMsix, "winget") })
-                {
-                    if (!AuthenticodeVerifier.IsSignedByMicrosoft(path, out string sigError))
-                    {
-                        AddLog($"⛔ Подлинность пакета {label} не подтверждена ({sigError}) — установка отменена");
-                        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
-                        return;
-                    }
-                }
-                AddLog("✅ Подпись Microsoft подтверждена для всех пакетов");
-
-                AddLog("📦 Установка winget...");
-                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Установка...");
-
-                string tempScript = Path.Combine(Path.GetTempPath(), $"winget_install_{Guid.NewGuid():N}.ps1");
-                try
-                {
-                    // Одинарные кавычки в PowerShell отключают подстановку $-переменных в путях
-                    File.WriteAllText(tempScript,
-                        $"$ErrorActionPreference = 'Stop'\r\n" +
-                        $"try {{ Add-AppxPackage -Path '{tempVcLibs.Replace("'", "''")}' }} catch {{}}\r\n" +
-                        $"try {{ Add-AppxPackage -Path '{tempUiXaml.Replace("'", "''")}' }} catch {{}}\r\n" +
-                        $"Add-AppxPackage -Path '{tempMsix.Replace("'", "''")}' -ForceApplicationShutdown\r\n",
-                        Encoding.UTF8);
-
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName               = Services.TrustedExecutablePaths.PowerShellExe,
-                        Arguments              = $"-NoProfile -ExecutionPolicy Bypass -File \"{tempScript}\"",
-                        UseShellExecute        = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError  = true,
-                        CreateNoWindow         = true
-                    };
-
-                    using var proc = Process.Start(psi);
-                    if (proc != null)
-                    {
-                        var stdoutTask = proc.StandardOutput.ReadToEndAsync();
-                        string stderr  = await proc.StandardError.ReadToEndAsync();
-                        await proc.WaitForExitAsync();
-                        await stdoutTask;
-                        if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
-                            AddLog($"⚠️ PowerShell: {stderr.Trim()}");
-                    }
-                }
-                finally
-                {
-                    try { File.Delete(tempScript); } catch { }
-                }
 
                 var result = await CheckWingetWithVersionAsync();
                 if (result.IsInstalled)
@@ -503,35 +389,196 @@ namespace Ven4Tools.Launcher
             }
         }
 
-        private async Task DownloadFileAsync(System.Net.Http.HttpClient http, string url, string dest, CancellationToken ct = default)
+        // Поиск URL основного msixbundle winget (DesktopAppInstaller) в последнем
+        // релизе microsoft/winget-cli с проверкой доверенности хоста. null —
+        // ассет не найден или хост недоверенный (сообщение уже записано в лог).
+        private async Task<string?> ResolveWingetMsixUrlAsync(CancellationToken ct)
         {
+            var json    = await _httpClient.GetStringAsync("https://api.github.com/repos/microsoft/winget-cli/releases/latest", ct);
+            var release = Newtonsoft.Json.Linq.JObject.Parse(json);
+
+            string? msixUrl = release["assets"]?
+                .FirstOrDefault(a => a["name"]?.ToString().EndsWith(".msixbundle") == true &&
+                                     a["name"]?.ToString().Contains("DesktopAppInstaller") == true)?
+                ["browser_download_url"]?.ToString();
+
+            if (msixUrl == null) { AddLog("❌ Не удалось найти файл установки winget в последнем релизе"); return null; }
+
+            // Защита от подмены: качаем только с доверенных доменов по HTTPS
+            if (!DownloadValidator.IsAllowedDownloadHost(msixUrl))
+            {
+                AddLog($"⛔ Недоверенный URL загрузки winget — скачивание отменено: {msixUrl}");
+                return null;
+            }
+            return msixUrl;
+        }
+
+        // Скачивание трёх пакетов winget: зависимости (VCLibs + UI.Xaml) параллельно
+        // и без индивидуального прогресса (иначе две загрузки перебивали бы полосу
+        // друг у друга), затем основной msixbundle — с прогрессом.
+        private async Task DownloadWingetPackagesAsync(
+            string msixUrl, string tempVcLibs, string tempUiXaml, string tempMsix, CancellationToken ct)
+        {
+            AddLog("⬇️ Скачивание зависимостей...");
+            Dispatcher.Invoke(() => txtDownloadStatus.Text = "Скачивание зависимостей...");
+
+            var vcLibsTask = DownloadTrustedFileAsync(
+                "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx", tempVcLibs, "VCLibs", reportProgress: false, ct);
+            var uiXamlTask = DownloadTrustedFileAsync(
+                "https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx",
+                tempUiXaml, "UI.Xaml", reportProgress: false, ct);
+
+            await Task.WhenAll(vcLibsTask, uiXamlTask);
+
+            AddLog($"⬇️ Скачивание winget ({msixUrl.Split('/').Last()})...");
+            await DownloadTrustedFileAsync(msixUrl, tempMsix, "Winget", reportProgress: true, ct);
+        }
+
+        // Проверка подписи Microsoft у всех трёх пакетов и их установка одним
+        // PowerShell-скриптом (Add-AppxPackage). Возвращает false, если хоть один
+        // пакет не подписан Microsoft (установка отменена). FileShare.Read держим
+        // открытым от проверки подписи до завершения Add-AppxPackage — запрещает
+        // подмену файла другим процессом того же пользователя в этом окне (TOCTOU).
+        private async Task<bool> RunWingetInstallScriptAsync(string tempVcLibs, string tempUiXaml, string tempMsix)
+        {
+            using var vcLibsHandle = new FileStream(tempVcLibs, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var uiXamlHandle = new FileStream(tempUiXaml, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var msixHandle   = new FileStream(tempMsix,   FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            foreach (var (path, label) in new[] { (tempVcLibs, "VCLibs"), (tempUiXaml, "UI.Xaml"), (tempMsix, "winget") })
+            {
+                if (!AuthenticodeVerifier.IsSignedByMicrosoft(path, out string sigError))
+                {
+                    AddLog($"⛔ Подлинность пакета {label} не подтверждена ({sigError}) — установка отменена");
+                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
+                    return false;
+                }
+            }
+            AddLog("✅ Подпись Microsoft подтверждена для всех пакетов");
+
+            AddLog("📦 Установка winget...");
+            Dispatcher.Invoke(() => txtDownloadStatus.Text = "Установка...");
+
+            string tempScript = Path.Combine(Path.GetTempPath(), $"winget_install_{Guid.NewGuid():N}.ps1");
             try
             {
-                // Качаем только с доверенных доменов, включая итоговый URL после редиректов
-                if (!DownloadValidator.IsAllowedDownloadHost(url))
+                // Одинарные кавычки в PowerShell отключают подстановку $-переменных в путях
+                File.WriteAllText(tempScript,
+                    $"$ErrorActionPreference = 'Stop'\r\n" +
+                    $"try {{ Add-AppxPackage -Path '{tempVcLibs.Replace("'", "''")}' }} catch {{}}\r\n" +
+                    $"try {{ Add-AppxPackage -Path '{tempUiXaml.Replace("'", "''")}' }} catch {{}}\r\n" +
+                    $"Add-AppxPackage -Path '{tempMsix.Replace("'", "''")}' -ForceApplicationShutdown\r\n",
+                    Encoding.UTF8);
+
+                var psi = new ProcessStartInfo
                 {
-                    AddLog($"⛔ Недоверенный URL загрузки зависимости: {url}");
-                    return;
-                }
-                using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
-                resp.EnsureSuccessStatusCode();
-                if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(resp))
+                    FileName               = Services.TrustedExecutablePaths.PowerShellExe,
+                    Arguments              = $"-NoProfile -ExecutionPolicy Bypass -File \"{tempScript}\"",
+                    UseShellExecute        = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true,
+                    CreateNoWindow         = true
+                };
+
+                using var proc = Process.Start(psi);
+                if (proc != null)
                 {
-                    AddLog($"⛔ Загрузка перенаправлена на недоверенный хост: {url}");
-                    return;
+                    var stdoutTask = proc.StandardOutput.ReadToEndAsync();
+                    string stderr  = await proc.StandardError.ReadToEndAsync();
+                    await proc.WaitForExitAsync();
+                    await stdoutTask;
+                    if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
+                        AddLog($"⚠️ PowerShell: {stderr.Trim()}");
                 }
-                var data = await resp.Content.ReadAsByteArrayAsync(ct);
-                await File.WriteAllBytesAsync(dest, data, ct);
+            }
+            finally
+            {
+                try { File.Delete(tempScript); } catch { }
+            }
+            return true;
+        }
+
+        // Единая загрузка файла с доверенного хоста: потоковое скачивание с проверкой
+        // хоста (в т.ч. после редиректов) через FallbackDownloader — одиночный URL
+        // без резервного зеркала. reportProgress включает обновление полосы прогресса
+        // (для параллельных загрузок его отключаем, чтобы они не перебивали значение
+        // друг у друга). Ошибка загрузки/недоверенный хост пробрасываются исключением —
+        // вызывающий код (InstallWingetAsync/DownloadVerifyAndRunElevatedAsync) сам
+        // сообщает пользователю, поведение остаётся fail-closed.
+        private async Task DownloadTrustedFileAsync(
+            string url, string destPath, string label, bool reportProgress, CancellationToken ct)
+        {
+            Action<long, long?>? progress = null;
+            if (reportProgress)
+                progress = (received, total) =>
+                {
+                    if (total is > 0)
+                    {
+                        int pct = (int)((double)received / total.Value * 100);
+                        Dispatcher.Invoke(() => { progressDownload.Value = pct; txtDownloadStatus.Text = $"{label}: {pct}%"; });
+                    }
+                };
+
+            var downloader = new FallbackDownloader(_httpClient);
+            await downloader.DownloadAsync(url, fallbackUrl: null, destPath, ct, expectedSha256: null, progress: progress);
+        }
+
+        // Единый сценарий для установщиков-одиночек Microsoft (WebView2, VC++):
+        // потоковое скачивание с доверенного хоста → проверка подписи Microsoft под
+        // удерживаемым FileShare.Read-хендлом (защита от TOCTOU) → запуск с точечной
+        // элевацией через UAC при отсутствии прав администратора. Winget использует
+        // те же строительные блоки (DownloadTrustedFileAsync), но ставится отдельным
+        // multi-package PowerShell-скриптом, поэтому идёт своим путём.
+        private async Task DownloadVerifyAndRunElevatedAsync(
+            string url, string fileName, string args, string label, CancellationToken ct)
+        {
+            string tempFile = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_{fileName}");
+            AddLog($"⬇️ Скачивание {label}...");
+            Dispatcher.Invoke(() => { progressDownload.Value = 0; txtDownloadStatus.Text = $"{label}: скачивание..."; btnLaunchApp.IsEnabled = false; });
+            try
+            {
+                await DownloadTrustedFileAsync(url, tempFile, label, reportProgress: true, ct);
+
+                // Скачано с доверенного хоста Microsoft по HTTPS, но перед запуском с
+                // повышением прав дополнительно подтверждаем подпись Microsoft
+                // (допускает штатное обновление содержимого по URL). FileShare.Read
+                // держим открытым от проверки до запуска: запрещает подмену файла
+                // другим процессом того же пользователя в этом окне.
+                using (new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    if (!AuthenticodeVerifier.IsSignedByMicrosoft(tempFile, out string sigError))
+                    {
+                        AddLog($"⛔ Подлинность установщика {label} не подтверждена ({sigError}) — установка отменена");
+                        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
+                        return;
+                    }
+                    AddLog($"✅ Подпись Microsoft подтверждена ({label})");
+
+                    AddLog($"📦 Установка {label}...");
+                    Dispatcher.Invoke(() => txtDownloadStatus.Text = $"{label}: установка...");
+                    // Без прав администратора — точечная элевация через UAC (Verb = runas)
+                    bool needElevation = !IsRunAsAdmin();
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = tempFile, Arguments = args,
+                        UseShellExecute = needElevation, CreateNoWindow = !needElevation
+                    };
+                    if (needElevation) psi.Verb = "runas";
+                    using var proc = Process.Start(psi);
+                    if (proc != null) await proc.WaitForExitAsync();
+                }
+                Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = $"{label}: готово"; });
+                AddLog($"✅ {label} установлен");
             }
             catch (Exception ex)
             {
-                // Пробрасываем дальше: раньше сбой здесь молча оставлял dest несозданным,
-                // а Task.WhenAll в InstallWingetAsync считался успешным — установка потом
-                // отменялась с вводящим в заблуждение "подлинность не подтверждена (файл
-                // не найден)" вместо честной причины сбоя. Внешний catch в InstallWingetAsync
-                // уже показывает ошибку пользователю — поведение остаётся fail-closed.
-                AddLog($"⚠ Ошибка скачивания зависимости {url}: {ex.Message}");
-                throw;
+                AddLog($"❌ Ошибка установки {label}: {ex.Message}");
+                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Ошибка");
+            }
+            finally
+            {
+                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+                Dispatcher.Invoke(() => { progressDownload.Value = 0; btnLaunchApp.IsEnabled = true; });
             }
         }
 
@@ -669,165 +716,24 @@ namespace Ven4Tools.Launcher
 
         private async Task InstallWebView2Async()
         {
-            string tempFile = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_MicrosoftEdgeWebview2Setup.exe");
-            const string webView2Url = "https://go.microsoft.com/fwlink/p/?LinkId=2124703";
-            AddLog("⬇️ Скачивание WebView2 Runtime...");
-            Dispatcher.Invoke(() => { progressDownload.Value = 0; txtDownloadStatus.Text = "WebView2: скачивание..."; btnLaunchApp.IsEnabled = false; });
-            try
-            {
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-                var ct = timeoutCts.Token;
-
-                // Защита от подмены: качаем только с доверенных доменов по HTTPS
-                if (!DownloadValidator.IsAllowedDownloadHost(webView2Url))
-                {
-                    AddLog("⛔ Недоверенный URL загрузки WebView2 — скачивание отменено");
-                    return;
-                }
-
-                using var resp = await _httpClient.GetAsync(webView2Url, HttpCompletionOption.ResponseHeadersRead, ct);
-                resp.EnsureSuccessStatusCode();
-                if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(resp))
-                {
-                    AddLog("⛔ Загрузка WebView2 перенаправлена на недоверенный хост — скачивание отменено");
-                    return;
-                }
-                var data = await resp.Content.ReadAsByteArrayAsync(ct);
-                await File.WriteAllBytesAsync(tempFile, data, ct);
-
-                // Скачано с доверенного хоста Microsoft по HTTPS, но перед запуском с
-                // повышением прав дополнительно подтверждаем подпись Microsoft — как в
-                // InstallWingetAsync (допускает штатное обновление содержимого по URL).
-                // FileShare.Read держим открытым от проверки до запуска: запрещает
-                // подмену файла другим процессом того же пользователя в этом окне
-                // (запись/удаление заблокированы, чтение для CreateProcess разрешено).
-                using (new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    if (!AuthenticodeVerifier.IsSignedByMicrosoft(tempFile, out string sigError))
-                    {
-                        AddLog($"⛔ Подлинность установщика WebView2 не подтверждена ({sigError}) — установка отменена");
-                        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
-                        return;
-                    }
-                    AddLog("✅ Подпись Microsoft подтверждена (WebView2)");
-
-                    AddLog("📦 Установка WebView2 Runtime...");
-                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "WebView2: установка...");
-                    // Без прав администратора — точечная элевация через UAC (Verb = runas)
-                    bool needElevation = !IsRunAsAdmin();
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = tempFile, Arguments = "/silent /install",
-                        UseShellExecute = needElevation, CreateNoWindow = !needElevation
-                    };
-                    if (needElevation) psi.Verb = "runas";
-                    using var proc = Process.Start(psi);
-                    if (proc != null) await proc.WaitForExitAsync();
-                }
-                Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = "WebView2: готово"; });
-                AddLog("✅ WebView2 Runtime установлен");
-            }
-            catch (Exception ex)
-            {
-                AddLog($"❌ Ошибка установки WebView2: {ex.Message}");
-                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Ошибка");
-            }
-            finally
-            {
-                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
-                Dispatcher.Invoke(() => { progressDownload.Value = 0; btnLaunchApp.IsEnabled = true; });
-            }
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+            await DownloadVerifyAndRunElevatedAsync(
+                "https://go.microsoft.com/fwlink/p/?LinkId=2124703",
+                "MicrosoftEdgeWebview2Setup.exe",
+                "/silent /install",
+                "WebView2",
+                timeoutCts.Token);
         }
 
         private async Task InstallVcRedistAsync()
         {
-            string tempFile = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_vc_redist.x64.exe");
-            const string vcRedistUrl = "https://aka.ms/vs/17/release/vc_redist.x64.exe";
-            AddLog("⬇️ Скачивание Visual C++ Redistributable 2015-2022 x64...");
-            Dispatcher.Invoke(() => { progressDownload.Value = 0; txtDownloadStatus.Text = "VC++: скачивание..."; btnLaunchApp.IsEnabled = false; });
-            try
-            {
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-                var ct = timeoutCts.Token;
-
-                // Защита от подмены: качаем только с доверенных доменов по HTTPS
-                if (!DownloadValidator.IsAllowedDownloadHost(vcRedistUrl))
-                {
-                    AddLog("⛔ Недоверенный URL загрузки VC++ — скачивание отменено");
-                    return;
-                }
-
-                using var resp = await _httpClient.GetAsync(vcRedistUrl,
-                    HttpCompletionOption.ResponseHeadersRead, ct);
-                resp.EnsureSuccessStatusCode();
-                if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(resp))
-                {
-                    AddLog("⛔ Загрузка VC++ перенаправлена на недоверенный хост — скачивание отменено");
-                    return;
-                }
-
-                var total = resp.Content.Headers.ContentLength ?? -1L;
-                var read  = 0L;
-                var buf   = new byte[81920];
-                using (var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
-                using (var stream = await resp.Content.ReadAsStreamAsync(ct))
-                {
-                    int bytes;
-                    while ((bytes = await stream.ReadAsync(buf.AsMemory(), ct)) > 0)
-                    {
-                        await fs.WriteAsync(buf.AsMemory(0, bytes), ct);
-                        read += bytes;
-                        if (total > 0)
-                        {
-                            var pct = (int)((double)read / total * 100);
-                            Dispatcher.Invoke(() => { progressDownload.Value = pct; txtDownloadStatus.Text = $"VC++: {pct}%"; });
-                        }
-                    }
-                    await fs.FlushAsync(ct);
-                }
-
-                // Скачано с доверенного хоста Microsoft по HTTPS, но перед запуском с
-                // повышением прав дополнительно подтверждаем подпись Microsoft — как в
-                // InstallWingetAsync (допускает штатное обновление содержимого по URL).
-                // FileShare.Read держим открытым от проверки до запуска: запрещает
-                // подмену файла другим процессом того же пользователя в этом окне
-                // (запись/удаление заблокированы, чтение для CreateProcess разрешено).
-                using (new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    if (!AuthenticodeVerifier.IsSignedByMicrosoft(tempFile, out string sigError))
-                    {
-                        AddLog($"⛔ Подлинность установщика VC++ не подтверждена ({sigError}) — установка отменена");
-                        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Подлинность не подтверждена");
-                        return;
-                    }
-                    AddLog("✅ Подпись Microsoft подтверждена (VC++)");
-
-                    AddLog("📦 Установка Visual C++ Redistributable...");
-                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "VC++: установка...");
-                    // Без прав администратора — точечная элевация через UAC (Verb = runas)
-                    bool needElevation = !IsRunAsAdmin();
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = tempFile, Arguments = "/install /quiet /norestart",
-                        UseShellExecute = needElevation, CreateNoWindow = !needElevation
-                    };
-                    if (needElevation) psi.Verb = "runas";
-                    using var proc = Process.Start(psi);
-                    if (proc != null) await proc.WaitForExitAsync();
-                }
-                Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = "VC++: готово"; });
-                AddLog("✅ Visual C++ Redistributable установлен");
-            }
-            catch (Exception ex)
-            {
-                AddLog($"❌ Ошибка установки VC++: {ex.Message}");
-                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Ошибка");
-            }
-            finally
-            {
-                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
-                Dispatcher.Invoke(() => { progressDownload.Value = 0; btnLaunchApp.IsEnabled = true; });
-            }
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+            await DownloadVerifyAndRunElevatedAsync(
+                "https://aka.ms/vs/17/release/vc_redist.x64.exe",
+                "vc_redist.x64.exe",
+                "/install /quiet /norestart",
+                "VC++",
+                timeoutCts.Token);
         }
 
         private static CrashReport? ReadCrashReport()
