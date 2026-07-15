@@ -165,31 +165,14 @@ namespace Ven4Tools.Views.Tabs
             {
                 // Точка восстановления перед удалением приложений и системными твиками,
                 // чтобы можно было откатить изменения при нежелательных последствиях.
-                txtDebloatStatus.Text = "🛡️ Создаю точку восстановления...";
-                AppLogger.Write("🛡️ Создаю точку восстановления перед дебло́тингом...");
-                bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед очисткой системы");
-                AppLogger.Write(rpOk
-                    ? "✅ Точка восстановления создана"
-                    : "⚠️ Точка восстановления не создана");
-
-                // Если точку восстановления создать не удалось — предупреждаем пользователя
-                // и даём возможность отказаться: без неё откат изменений штатными
-                // средствами Windows будет невозможен.
-                if (!rpOk)
+                var rpOutcome = await UiGuards.ConfirmAndCreateRestorePointAsync(
+                    $"Будет применено {selected.Count} действий.\n\nСоздать точку восстановления Windows перед очисткой?",
+                    "Ven4Tools — перед очисткой системы");
+                if (rpOutcome == RestorePointOutcome.Cancelled)
                 {
-                    var proceed = MessageBox.Show(
-                        "Не удалось создать точку восстановления системы.\n\n" +
-                        "Без неё откатить изменения штатными средствами Windows будет нельзя.\n\n" +
-                        "Продолжить без точки восстановления?",
-                        "Debloater — нет точки восстановления",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Warning);
-                    if (proceed != MessageBoxResult.Yes)
-                    {
-                        txtDebloatStatus.Text = "Отменено: точка восстановления не создана";
-                        progressDebloat.Visibility = Visibility.Collapsed;
-                        return;
-                    }
+                    txtDebloatStatus.Text = "Отменено";
+                    progressDebloat.Visibility = Visibility.Collapsed;
+                    return;
                 }
 
                 _cts = new CancellationTokenSource();

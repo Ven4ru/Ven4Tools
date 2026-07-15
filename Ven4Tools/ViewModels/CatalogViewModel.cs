@@ -797,12 +797,7 @@ namespace Ven4Tools.ViewModels
                 MessageBox.Show("Выберите хотя бы одну программу!", "Ven4Tools", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            if (InstallationService.IsBusy)
-            {
-                MessageBox.Show("Дождитесь завершения текущей установки, затем повторите попытку.",
-                    "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            if (Views.UiGuards.WarnIfInstallBusy()) return;
 
             InstallProgress.Clear();
             OverallProgressPercentage = 0;
@@ -810,19 +805,13 @@ namespace Ven4Tools.ViewModels
 
             if (selected.Count >= 2)
             {
-                var rpAnswer = MessageBox.Show(
+                var rpOutcome = await Views.UiGuards.ConfirmAndCreateRestorePointAsync(
                     $"Будет установлено {selected.Count} приложений.\n\nСоздать точку восстановления Windows перед установкой?",
-                    "Точка восстановления", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
-                if (rpAnswer == MessageBoxResult.Cancel)
+                    "Ven4Tools — перед установкой", Log);
+                if (rpOutcome == Views.RestorePointOutcome.Cancelled)
                 {
                     IsInstalling = false;
                     return;
-                }
-                if (rpAnswer == MessageBoxResult.Yes)
-                {
-                    Log("🛡️ Создаю точку восстановления...");
-                    bool ok = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед установкой");
-                    Log(ok ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
                 }
             }
 
