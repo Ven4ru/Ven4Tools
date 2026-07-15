@@ -35,9 +35,12 @@ namespace Ven4Tools.Services
             timeoutCts.CancelAfter(UiCallTimeout);
             try
             {
+                var wingetPath = TrustedExecutablePaths.ResolveWinget();
+                if (wingetPath == null) return results;
+
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "winget.exe",
+                    FileName = wingetPath,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -127,9 +130,12 @@ namespace Ven4Tools.Services
             timeoutCts.CancelAfter(UiCallTimeout);
             try
             {
+                var wingetPath = TrustedExecutablePaths.ResolveWinget();
+                if (wingetPath == null) return (null, null);
+
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "winget.exe",
+                    FileName = wingetPath,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

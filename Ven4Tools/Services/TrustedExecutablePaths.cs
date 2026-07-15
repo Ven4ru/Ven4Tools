@@ -18,6 +18,8 @@ namespace Ven4Tools.Services
     {
         private static readonly string SystemDir =
             Environment.GetFolderPath(Environment.SpecialFolder.System);
+        private static readonly string WindowsDir =
+            Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         private static readonly string LocalAppDataDir =
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         private static readonly string CommonAppDataDir =
@@ -32,6 +34,24 @@ namespace Ven4Tools.Services
         /// <summary>%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe — путь фиксирован.</summary>
         public static string PowerShellExe { get; } =
             Path.Combine(SystemDir, "WindowsPowerShell", "v1.0", "powershell.exe");
+
+        /// <summary>%SystemRoot%\System32\powercfg.exe — часть базовой ОС, путь фиксирован.</summary>
+        public static string PowerCfgExe { get; } = Path.Combine(SystemDir, "powercfg.exe");
+
+        /// <summary>%SystemRoot%\System32\shutdown.exe — часть базовой ОС, путь фиксирован.</summary>
+        public static string ShutdownExe { get; } = Path.Combine(SystemDir, "shutdown.exe");
+
+        /// <summary>%SystemRoot%\System32\notepad.exe — часть базовой ОС, путь фиксирован.</summary>
+        public static string NotepadExe { get; } = Path.Combine(SystemDir, "notepad.exe");
+
+        /// <summary>%SystemRoot%\System32\cscript.exe — часть базовой ОС, путь фиксирован.</summary>
+        public static string CScriptExe { get; } = Path.Combine(SystemDir, "cscript.exe");
+
+        /// <summary>
+        /// %SystemRoot%\explorer.exe — исторически лежит НЕ в System32, а в
+        /// корне каталога Windows. Путь фиксирован, часть базовой ОС.
+        /// </summary>
+        public static string ExplorerExe { get; } = Path.Combine(WindowsDir, "explorer.exe");
 
         /// <summary>
         /// winget — App Execution Alias в %LocalAppData%\Microsoft\WindowsApps.

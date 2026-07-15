@@ -902,7 +902,7 @@ namespace Ven4Tools.ViewModels
         {
             try
             {
-                var psi = new System.Diagnostics.ProcessStartInfo("powershell.exe",
+                var psi = new System.Diagnostics.ProcessStartInfo(Services.TrustedExecutablePaths.PowerShellExe,
                     "-NoProfile -ExecutionPolicy Bypass -Command \"Checkpoint-Computer -Description 'Ven4Tools — перед установкой' -RestorePointType MODIFY_SETTINGS\"")
                 { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
                 using var p = System.Diagnostics.Process.Start(psi);

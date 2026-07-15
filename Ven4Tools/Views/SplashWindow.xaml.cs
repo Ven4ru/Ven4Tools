@@ -130,7 +130,10 @@ namespace Ven4Tools.Views
         /// </summary>
         private static async Task<bool> CheckWingetAsync(CancellationToken ct)
         {
-            var psi = new System.Diagnostics.ProcessStartInfo("winget", "--version")
+            var wingetPath = Ven4Tools.Services.TrustedExecutablePaths.ResolveWinget();
+            if (wingetPath == null) return false;
+
+            var psi = new System.Diagnostics.ProcessStartInfo(wingetPath, "--version")
             {
                 CreateNoWindow = true,
                 UseShellExecute = false,

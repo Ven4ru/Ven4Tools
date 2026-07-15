@@ -302,7 +302,7 @@ namespace Ven4Tools.Views.Tabs
         {
             try
             {
-                var psi = new ProcessStartInfo("powershell.exe",
+                var psi = new ProcessStartInfo(Ven4Tools.Services.TrustedExecutablePaths.PowerShellExe,
                     $"-NoProfile -ExecutionPolicy Bypass -Command \"If (!(Test-Path '{path}')) {{ New-Item -Path '{path}' -Force | Out-Null }}; Set-ItemProperty -Path '{path}' -Name '{name}' -Value {value}\"")
                 {
                     UseShellExecute = false, CreateNoWindow = true,
@@ -342,7 +342,7 @@ namespace Ven4Tools.Views.Tabs
         {
             try
             {
-                var psi = new ProcessStartInfo("powershell.exe",
+                var psi = new ProcessStartInfo(Ven4Tools.Services.TrustedExecutablePaths.PowerShellExe,
                     $"-NoProfile -ExecutionPolicy Bypass -Command \"{script.Replace("\"", "\\\"")}\"")
                 {
                     UseShellExecute = false, CreateNoWindow = true,

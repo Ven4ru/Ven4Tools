@@ -24,7 +24,7 @@ namespace Ven4Tools.Views
         {
             try
             {
-                Process.Start(new ProcessStartInfo("powershell.exe") { UseShellExecute = true });
+                Process.Start(new ProcessStartInfo(Ven4Tools.Services.TrustedExecutablePaths.PowerShellExe) { UseShellExecute = true });
             }
             catch (Exception ex)
             {

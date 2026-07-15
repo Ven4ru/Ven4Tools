@@ -170,7 +170,10 @@ namespace Ven4Tools.Launcher.Services
                 using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(token);
                 timeoutCts.CancelAfter(TimeSpan.FromSeconds(60));
 
-                var psi = new System.Diagnostics.ProcessStartInfo("winget",
+                var wingetPath = TrustedExecutablePaths.ResolveWinget();
+                if (wingetPath == null) return 0;
+
+                var psi = new System.Diagnostics.ProcessStartInfo(wingetPath,
                     "upgrade --include-unknown --accept-source-agreements --disable-interactivity")
                 {
                     RedirectStandardOutput = true,

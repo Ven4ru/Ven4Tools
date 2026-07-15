@@ -58,9 +58,12 @@ namespace Ven4Tools.Launcher
         {
             try
             {
+                var chocoPath = Services.TrustedExecutablePaths.ResolveChocolatey();
+                if (chocoPath == null) return (false, null);
+
                 var psi = new ProcessStartInfo
                 {
-                    FileName               = "choco.exe",
+                    FileName               = chocoPath,
                     Arguments              = "--version",
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true,
@@ -122,7 +125,7 @@ namespace Ven4Tools.Launcher
                 bool needElevation = !IsRunAsAdmin();
                 var psi = new ProcessStartInfo
                 {
-                    FileName               = "powershell.exe",
+                    FileName               = Services.TrustedExecutablePaths.PowerShellExe,
                     Arguments              = $"-NoProfile -ExecutionPolicy Bypass -EncodedCommand {encodedCommand}",
                     UseShellExecute        = needElevation,
                     RedirectStandardOutput = !needElevation,

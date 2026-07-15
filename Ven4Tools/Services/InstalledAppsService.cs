@@ -14,9 +14,16 @@ namespace Ven4Tools.Services
         {
             try
             {
+                var wingetPath = TrustedExecutablePaths.ResolveWinget();
+                if (wingetPath == null)
+                {
+                    _rawOutput = string.Empty;
+                    return;
+                }
+
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "winget.exe",
+                    FileName = wingetPath,
                     Arguments = "list --accept-source-agreements --disable-interactivity",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
