@@ -41,8 +41,6 @@ namespace Ven4Tools.Launcher.Models
         public DateTime ReleaseDate { get; set; }
         public string? ReleaseNotes { get; set; }
         public bool IsLatest { get; set; }
-        public bool IsPreRelease { get; set; }
-        public bool IsInstalled { get; set; }
         public long FileSize { get; set; }
     }
 }
