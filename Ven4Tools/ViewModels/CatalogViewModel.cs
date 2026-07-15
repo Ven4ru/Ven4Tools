@@ -399,8 +399,13 @@ namespace Ven4Tools.ViewModels
                 _ = InitialLoadAvailabilityAsync().ContinueWith(
                     t => Log($"❌ Ошибка фоновой загрузки каталога: {t.Exception?.GetBaseException().Message}"),
                     TaskContinuationOptions.OnlyOnFaulted);
-                _ = RefreshPresetsAsync();
-                foreach (var row in Apps) _ = row.LoadIconAsync();
+                _ = RefreshPresetsAsync().ContinueWith(
+                    t => AppLogger.Write(t.Exception!, "Ошибка фоновой загрузки пресетов"),
+                    TaskContinuationOptions.OnlyOnFaulted);
+                foreach (var row in Apps)
+                    _ = row.LoadIconAsync().ContinueWith(
+                        t => AppLogger.Write(t.Exception!, "Ошибка загрузки иконки приложения"),
+                        TaskContinuationOptions.OnlyOnFaulted);
             }
             catch (Exception ex)
             {
@@ -523,7 +528,9 @@ namespace Ven4Tools.ViewModels
                 row.SelectionChanged += () => OnPropertyChanged(nameof(SelectedCount));
                 Apps.Add(row);
                 if (!string.IsNullOrEmpty(appInfo.AlternativeId))
-                    _ = FetchVersionsForRowAsync(row);
+                    _ = FetchVersionsForRowAsync(row).ContinueWith(
+                        t => AppLogger.Write(t.Exception!, "Ошибка загрузки версий приложения"),
+                        TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 
@@ -883,7 +890,7 @@ namespace Ven4Tools.ViewModels
                 IsInstalling = false;
                 _installCts?.Dispose();
                 _installCts = null;
-                UpdateSpaceStatus();
+                _ = UpdateSpaceStatusAsync();
             }
         }
 
@@ -902,7 +909,10 @@ namespace Ven4Tools.ViewModels
             var row = new AppRowViewModel(app) { IsFavorite = _favoritesService.IsFavorite(app.Id) };
             row.SelectionChanged += () => OnPropertyChanged(nameof(SelectedCount));
             Apps.Add(row);
-            if (!string.IsNullOrEmpty(app.AlternativeId)) _ = FetchVersionsForRowAsync(row);
+            if (!string.IsNullOrEmpty(app.AlternativeId))
+                _ = FetchVersionsForRowAsync(row).ContinueWith(
+                    t => AppLogger.Write(t.Exception!, "Ошибка загрузки версий приложения"),
+                    TaskContinuationOptions.OnlyOnFaulted);
         }
 
         private void RemoveUserApp(AppRowViewModel row)
@@ -929,7 +939,7 @@ namespace Ven4Tools.ViewModels
                 {
                     SelectedInstallDrive = value.Name + "\\";
                     UpdateDiskSpaceInfo();
-                    UpdateSpaceStatus();
+                    _ = UpdateSpaceStatusAsync();
                 }
             }
         }
@@ -967,7 +977,7 @@ namespace Ven4Tools.ViewModels
             catch (Exception ex) { Log($"⚠️ Ошибка обновления информации о диске: {ex.Message}"); }
         }
 
-        private async void UpdateSpaceStatus()
+        private async Task UpdateSpaceStatusAsync()
         {
             try
             {

@@ -306,7 +306,7 @@ namespace Ven4Tools.Views.Tabs
                 }
                 await LoadAppsAsync();
             }
-            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
             finally { btnRefresh.IsEnabled = true; }
         }
 
@@ -326,24 +326,24 @@ namespace Ven4Tools.Views.Tabs
 
             btnUpgradeAll.IsEnabled = false;
             btnRefresh.IsEnabled = false;
-            Log("⬆ Запуск обновления всех приложений (winget upgrade --all)...");
+            AppLogger.Write("⬆ Запуск обновления всех приложений (winget upgrade --all)...");
             await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
                 int code = await WingetRunner.RunStreamingAsync(
                     "upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements",
-                    msg => Log(msg));
+                    msg => AppLogger.Write(msg));
                 var upgrade = DescribeWingetExitCode(code);
                 if (upgrade.Success)
-                    Log(upgrade.Reboot
+                    AppLogger.Write(upgrade.Reboot
                         ? "✅ Обновление завершено. Для применения некоторых обновлений требуется перезагрузка."
                         : "✅ Обновление всех приложений завершено");
                 else
-                    Log($"⚠ {upgrade.Reason}");
+                    AppLogger.Write($"⚠ {upgrade.Reason}");
             }
             catch (Exception ex)
             {
-                Log($"❌ Ошибка обновления: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка обновления: {ex.Message}");
             }
             finally
             {
@@ -401,7 +401,7 @@ namespace Ven4Tools.Views.Tabs
                 if (UiGuards.WarnIfInstallBusy()) return;
                 await UpdateAppAsync(app);
             }
-            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
         }
 
         private async void BtnUninstall_Click(object sender, RoutedEventArgs e)
@@ -418,7 +418,7 @@ namespace Ven4Tools.Views.Tabs
 
                 await UninstallAppAsync(app);
             }
-            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
         }
 
         private async void BtnUpdateSelected_Click(object sender, RoutedEventArgs e)
@@ -443,7 +443,7 @@ namespace Ven4Tools.Views.Tabs
                 foreach (var app in visible)
                     await UpdateAppAsync(app);
             }
-            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
             finally { btnUpdateSelected.IsEnabled = true; }
         }
 
@@ -452,7 +452,7 @@ namespace Ven4Tools.Views.Tabs
         private async Task UpdateAppAsync(InstalledApp app)
         {
             app.IsProcessing = true;
-            Log($"⬆ Обновление {app.Name}...");
+            AppLogger.Write($"⬆ Обновление {app.Name}...");
             // Общий семафор с каталогом/историей/Windows Update — исключает параллельный
             // msiexec (ошибка 1618) при обновлении одновременно с установкой из другой вкладки.
             await InstallationService.InstallSemaphore.WaitAsync();
@@ -462,7 +462,7 @@ namespace Ven4Tools.Views.Tabs
                 // валидацию WingetRunner.ValidateArgs — не пытаемся, чтобы не ловить неясную ошибку.
                 if (string.IsNullOrWhiteSpace(app.WingetId) || app.WingetId.Contains('…'))
                 {
-                    Log($"⚠ {app.Name}: ID приложения усечён winget — обновление недоступно");
+                    AppLogger.Write($"⚠ {app.Name}: ID приложения усечён winget — обновление недоступно");
                     return;
                 }
 
@@ -470,7 +470,7 @@ namespace Ven4Tools.Views.Tabs
                 // (RunAsync с 120с убивал winget на больших пакетах).
                 // --locale en-US не используется — на части систем даёт пустой вывод (см. agent_context.md).
                 string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements";
-                int code = await WingetRunner.RunStreamingAsync(args, line => Log($"  {line}"),
+                int code = await WingetRunner.RunStreamingAsync(args, line => AppLogger.Write($"  {line}"),
                     TimeSpan.FromMinutes(15));
                 var exit = DescribeWingetExitCode(code);
                 if (exit.Success)
@@ -478,17 +478,17 @@ namespace Ven4Tools.Views.Tabs
                     // Успех, в т.ч. коды «требуется перезагрузка» (3010 / 0x8A15002C)
                     app.Available = "";
                     Dispatcher.Invoke(() => { ApplyFilter(); UpdateStats(); });
-                    Log(exit.Reboot
+                    AppLogger.Write(exit.Reboot
                         ? $"✅ {app.Name} обновлён (требуется перезагрузка для завершения)"
                         : $"✅ {app.Name} обновлён");
                 }
                 // code == -1 (таймаут/принудительно завершён) не логируем здесь — обрабатывается отдельно
                 else if (code != -1)
                 {
-                    Log($"⚠ {app.Name}: {exit.Reason}");
+                    AppLogger.Write($"⚠ {app.Name}: {exit.Reason}");
                 }
             }
-            catch (Exception ex) { Log($"❌ {app.Name}: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ {app.Name}: {ex.Message}"); }
             finally
             {
                 InstallationService.InstallSemaphore.Release();
@@ -499,7 +499,7 @@ namespace Ven4Tools.Views.Tabs
         private async Task UninstallAppAsync(InstalledApp app)
         {
             app.IsProcessing = true;
-            Log($"🗑 Удаление {app.Name}...");
+            AppLogger.Write($"🗑 Удаление {app.Name}...");
             // Общий семафор — см. комментарий в UpdateAppAsync.
             await InstallationService.InstallSemaphore.WaitAsync();
             try
@@ -509,14 +509,14 @@ namespace Ven4Tools.Views.Tabs
                 {
                     _allApps.Remove(app);
                     ApplyFilter();
-                    Log($"✅ {app.Name} удалён");
+                    AppLogger.Write($"✅ {app.Name} удалён");
                 }
                 else
                 {
-                    Log($"⚠ {app.Name}: деинсталлятор не найден");
+                    AppLogger.Write($"⚠ {app.Name}: деинсталлятор не найден");
                 }
             }
-            catch (Exception ex) { Log($"❌ {app.Name}: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ {app.Name}: {ex.Message}"); }
             finally
             {
                 InstallationService.InstallSemaphore.Release();
@@ -679,8 +679,6 @@ namespace Ven4Tools.Views.Tabs
             });
         }
 
-        private static void Log(string msg) => AppLogger.Write(msg);
-
         // Расшифровка кода выхода winget/COM в единый результат: успех операции,
         // требуется ли перезагрузка и причина неуспеха. Централизует разбор hex-кодов,
         // ранее продублированный в BtnUpgradeAll_Click и UpdateAppAsync.
@@ -733,7 +731,7 @@ namespace Ven4Tools.Views.Tabs
 
                 btnUninstallSelected.IsEnabled = selected.Any(a => a.CanAct);
             }
-            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); btnUninstallSelected.IsEnabled = true; }
+            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); btnUninstallSelected.IsEnabled = true; }
         }
 
         // ── Экспорт / Импорт ─────────────────────────────────────────────────
@@ -749,15 +747,15 @@ namespace Ven4Tools.Views.Tabs
             if (dlg.ShowDialog() != true) return;
 
             btnExport.IsEnabled = false;
-            Log($"📤 Экспорт в {System.IO.Path.GetFileName(dlg.FileName)}...");
+            AppLogger.Write($"📤 Экспорт в {System.IO.Path.GetFileName(dlg.FileName)}...");
             try
             {
                 var (_, output) = await WingetRunner.RunAsync($"export -o \"{dlg.FileName}\" --accept-source-agreements");
                 bool ok = System.IO.File.Exists(dlg.FileName);
-                Log(ok ? $"✅ Экспортировано → {dlg.FileName}"
+                AppLogger.Write(ok ? $"✅ Экспортировано → {dlg.FileName}"
                        : $"⚠ winget: {output.Trim().Split('\n').LastOrDefault()}");
             }
-            catch (Exception ex) { Log($"❌ Ошибка экспорта: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ Ошибка экспорта: {ex.Message}"); }
             finally { btnExport.IsEnabled = true; }
         }
 
@@ -786,18 +784,18 @@ namespace Ven4Tools.Views.Tabs
             if (rpOutcome == RestorePointOutcome.Cancelled) return;
 
             btnImport.IsEnabled = false;
-            Log($"📥 Импорт из {System.IO.Path.GetFileName(dlg.FileName)}...");
-            Log("⏳ Это может занять несколько минут...");
+            AppLogger.Write($"📥 Импорт из {System.IO.Path.GetFileName(dlg.FileName)}...");
+            AppLogger.Write("⏳ Это может занять несколько минут...");
             await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
                 var (_, output) = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements");
                 bool ok = output.Contains("успешно") || output.Contains("successfully") || output.Contains("All packages");
-                Log(ok ? "✅ Импорт завершён"
+                AppLogger.Write(ok ? "✅ Импорт завершён"
                        : $"⚠ {output.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l))}");
                 if (ok) await LoadAppsAsync();
             }
-            catch (Exception ex) { Log($"❌ Ошибка импорта: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ Ошибка импорта: {ex.Message}"); }
             finally
             {
                 InstallationService.InstallSemaphore.Release();

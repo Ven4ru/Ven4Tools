@@ -63,7 +63,7 @@ namespace Ven4Tools.Views.Tabs
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка загрузки информации о системе: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка загрузки информации о системе: {ex.Message}");
             }
         }
 
@@ -77,11 +77,11 @@ namespace Ven4Tools.Views.Tabs
                               $"Ven4Tools: {txtAppVersion.Text}";
                 
                 Clipboard.SetText(info);
-                AddLog("📋 Информация о системе скопирована в буфер обмена");
+                AppLogger.Write("📋 Информация о системе скопирована в буфер обмена");
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка копирования: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка копирования: {ex.Message}");
             }
         }
 
@@ -92,11 +92,11 @@ namespace Ven4Tools.Views.Tabs
                 string logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "logs");
                 Directory.CreateDirectory(logsPath);
                 Process.Start(Ven4Tools.Services.TrustedExecutablePaths.ExplorerExe, logsPath);
-                AddLog($"📁 Открыта папка логов: {logsPath}");
+                AppLogger.Write($"📁 Открыта папка логов: {logsPath}");
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка открытия папки логов: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка открытия папки логов: {ex.Message}");
             }
         }
 
@@ -105,24 +105,24 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 string logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "logs");
-                if (!Directory.Exists(logsPath)) { AddLog("📋 Логов нет"); return; }
+                if (!Directory.Exists(logsPath)) { AppLogger.Write("📋 Логов нет"); return; }
 
                 var latestLog = Directory.GetFiles(logsPath, "install_*.log")
                     .OrderByDescending(f => f)
                     .FirstOrDefault();
 
-                if (latestLog == null) { AddLog("📋 Файлы логов не найдены"); return; }
+                if (latestLog == null) { AppLogger.Write("📋 Файлы логов не найдены"); return; }
 
                 var lines = File.ReadAllLines(latestLog);
                 var preview = string.Join("\n", lines.Skip(Math.Max(0, lines.Length - 50)));
                 txtLatestLog.Text = preview;
 
                 Process.Start(new ProcessStartInfo { FileName = Ven4Tools.Services.TrustedExecutablePaths.NotepadExe, Arguments = latestLog, UseShellExecute = true });
-                AddLog($"📄 Открыт лог: {Path.GetFileName(latestLog)}");
+                AppLogger.Write($"📄 Открыт лог: {Path.GetFileName(latestLog)}");
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка: {ex.Message}");
             }
         }
 
@@ -148,18 +148,18 @@ namespace Ven4Tools.Views.Tabs
                 if (upgradable.Count > 0)
                 {
                     txtUpdatesLog.Text = $"🔔 Доступно обновлений: {upgradable.Count}\n\n" + string.Join("\n", upgradable);
-                    AddLog($"🔔 Доступно обновлений winget: {upgradable.Count}");
+                    AppLogger.Write($"🔔 Доступно обновлений winget: {upgradable.Count}");
                 }
                 else
                 {
                     txtUpdatesLog.Text = "✅ Все установленные приложения актуальны";
-                    AddLog("✅ Обновлений winget не найдено");
+                    AppLogger.Write("✅ Обновлений winget не найдено");
                 }
             }
             catch (Exception ex)
             {
                 txtUpdatesLog.Text = $"❌ Ошибка: {ex.Message}";
-                AddLog($"❌ Ошибка проверки обновлений: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка проверки обновлений: {ex.Message}");
             }
             finally
             {
@@ -183,12 +183,12 @@ namespace Ven4Tools.Views.Tabs
                         {
                             File.Delete(file);
                         }
-                        AddLog("🗑️ Логи очищены");
+                        AppLogger.Write("🗑️ Логи очищены");
                     }
                 }
                 catch (Exception ex)
                 {
-                    AddLog($"❌ Ошибка очистки логов: {ex.Message}");
+                    AppLogger.Write($"❌ Ошибка очистки логов: {ex.Message}");
                 }
             }
         }
