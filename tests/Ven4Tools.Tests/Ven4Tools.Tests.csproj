@@ -38,5 +38,7 @@
     <None Include="..\..\Catalog\master.json.sig" Link="Fixtures\master.json.sig" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Fixtures\version-manifest-sample.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Fixtures\version-manifest-sample.json.sig" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Catalog\notifications.json" Link="Fixtures\notifications.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Catalog\notifications.json.sig" Link="Fixtures\notifications.json.sig" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
