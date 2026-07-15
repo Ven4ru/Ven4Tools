@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ven4Tools.Services
@@ -86,6 +87,76 @@ namespace Ven4Tools.Services
                 RegexOptions.Compiled);
 
         public static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
+
+        // Строка-разделитель таблицы winget: под строкой заголовка колонок winget
+        // печатает строку из дефисов (с пробелами между колонками). Единый строгий
+        // критерий для всех парсеров вывода winget: непустая строка только из дефисов
+        // и пробелов, минимум с одним дефисом. Стро́же прежнего line.Contains("--"),
+        // который ложно срабатывал на строках данных с двойным дефисом.
+        public static bool IsTableSeparator(string line)
+        {
+            string t = line.Trim();
+            return t.Length > 0 && t.Contains('-') && t.All(c => c == '-' || c == ' ');
+        }
+
+        // Фабрика ProcessStartInfo для winget с аргументами через ArgumentList: .NET
+        // сам экранирует каждый токен, поэтому пользовательский ввод не может «вырваться»
+        // из кавычек в посторонние winget-флаги (в отличие от строковой интерполяции).
+        // Возвращает null, если winget не найден по доверенному пути — вызывающий код
+        // деградирует штатно, а не падает исключением.
+        public static ProcessStartInfo? CreateStartInfo(IEnumerable<string> arguments)
+        {
+            var wingetPath = TrustedExecutablePaths.ResolveWinget();
+            if (wingetPath == null) return null;
+
+            var psi = new ProcessStartInfo
+            {
+                FileName               = wingetPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError  = true,
+                UseShellExecute        = false,
+                CreateNoWindow         = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding  = Encoding.UTF8
+            };
+            foreach (var arg in arguments)
+                psi.ArgumentList.Add(arg);
+            return psi;
+        }
+
+        // Запуск winget с аргументами-токенами через ArgumentList, захват stdout целиком.
+        // Возвращает (ExitCode, Output); ExitCode = -1, если winget не найден, не
+        // запустился или убит по таймауту/отмене. Таймаут по умолчанию — 120 с; при
+        // срабатывании внешнего токена или таймаута всё дерево процессов завершается.
+        public static async Task<(int ExitCode, string Output)> RunAsync(
+            IReadOnlyList<string> arguments, TimeSpan? timeout = null, CancellationToken token = default)
+        {
+            var psi = CreateStartInfo(arguments);
+            if (psi == null) return (-1, string.Empty);
+
+            using var p = Process.Start(psi);
+            if (p == null) return (-1, string.Empty);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            cts.CancelAfter(timeout ?? TimeSpan.FromSeconds(120));
+
+            var outputTask = p.StandardOutput.ReadToEndAsync();
+            var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
+            int exitCode = -1;
+            try
+            {
+                await p.WaitForExitAsync(cts.Token);
+                exitCode = p.ExitCode;
+            }
+            catch (OperationCanceledException)
+            {
+                // Kill(true) завершает всё дерево процессов: winget порождает дочерние
+                // процессы, без них пайп не закрывается и ReadToEndAsync зависает.
+                try { p.Kill(true); } catch { }
+            }
+            string output = await outputTask;
+            await stderrTask;
+            return (exitCode, output);
+        }
 
         // Некоторые версии winget на русской Windows двойно кодируют сообщения из WinHTTP:
         // байты UTF-8 кириллицы трактуются как Latin-1 и снова кодируются в UTF-8, давая "ÐÑÐµÐ²Ð¼Ñ…"

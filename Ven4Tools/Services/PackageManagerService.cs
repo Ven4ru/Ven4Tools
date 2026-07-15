@@ -105,7 +105,6 @@ namespace Ven4Tools.Services
                 var psi = new ProcessStartInfo
                 {
                     FileName = chocoExe,
-                    Arguments = $"install \"{packageId}\" -y --no-progress --limit-output",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -113,6 +112,13 @@ namespace Ven4Tools.Services
                     StandardOutputEncoding = System.Text.Encoding.UTF8,
                     StandardErrorEncoding = System.Text.Encoding.UTF8
                 };
+                // ArgumentList вместо интерполяции: .NET экранирует каждый токен —
+                // единый с остальным кодом паттерн (packageId уже прошёл ValidateId).
+                psi.ArgumentList.Add("install");
+                psi.ArgumentList.Add(packageId);
+                psi.ArgumentList.Add("-y");
+                psi.ArgumentList.Add("--no-progress");
+                psi.ArgumentList.Add("--limit-output");
                 using var p = new Process { StartInfo = psi, EnableRaisingEvents = true };
                 p.OutputDataReceived += (_, e) => { if (!string.IsNullOrEmpty(e.Data)) log?.Invoke($"  choco: {e.Data}"); };
                 p.ErrorDataReceived  += (_, e) => { if (!string.IsNullOrEmpty(e.Data)) log?.Invoke($"  choco: {e.Data}"); };
@@ -147,8 +153,7 @@ namespace Ven4Tools.Services
             if (chocoExe == null) return results;
             try
             {
-                var psi = new ProcessStartInfo(chocoExe,
-                    $"search \"{query}\" --limit-output --page-size 8")
+                var psi = new ProcessStartInfo(chocoExe)
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true,
@@ -156,6 +161,13 @@ namespace Ven4Tools.Services
                     StandardOutputEncoding = System.Text.Encoding.UTF8,
                     StandardErrorEncoding  = System.Text.Encoding.UTF8
                 };
+                // ArgumentList вместо интерполяции: .NET экранирует каждый токен —
+                // единый с остальным кодом паттерн (query уже прошёл SanitizeQuery).
+                psi.ArgumentList.Add("search");
+                psi.ArgumentList.Add(query);
+                psi.ArgumentList.Add("--limit-output");
+                psi.ArgumentList.Add("--page-size");
+                psi.ArgumentList.Add("8");
                 using var p = Process.Start(psi);
                 if (p == null) return results;
                 var errTask = p.StandardError.ReadToEndAsync();
