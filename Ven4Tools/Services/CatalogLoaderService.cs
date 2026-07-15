@@ -156,6 +156,12 @@ namespace Ven4Tools.Services
         /// Возвращает null при любой сетевой ошибке/таймауте источника — чтобы
         /// вызывающий код продолжил цепочку (CDN → GitHub). Внешняя отмена пробрасывается.
         /// </summary>
+        // Каталог реально весит десятки-сотни КБ; лимит с большим запасом, но
+        // конечный — без него ответ буферизуется в память целиком ДО проверки
+        // ECDSA-подписи (GetStringAsync не ограничен), что даёт скомпрометированному
+        // или MITM-источнику устроить OOM ещё до того, как подпись успеет отклонить подделку.
+        private const long MaxCatalogResponseBytes = 16 * 1024 * 1024; // 16 МБ
+
         private async Task<string?> TryDownloadAsync(string url, int timeoutSeconds, CancellationToken ct)
         {
             try
@@ -163,7 +169,27 @@ namespace Ven4Tools.Services
                 // Таймаут per-request: связываем с внешним токеном отмены
                 using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 timeoutCts.CancelAfter(TimeSpan.FromSeconds(Math.Max(1, timeoutSeconds)));
-                return await _httpClient.GetStringAsync(url, timeoutCts.Token);
+
+                using var response = await _httpClient.GetAsync(
+                    url, HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
+                response.EnsureSuccessStatusCode();
+
+                if (response.Content.Headers.ContentLength is { } declared &&
+                    declared > MaxCatalogResponseBytes)
+                    return null;
+
+                await using var stream = await response.Content.ReadAsStreamAsync(timeoutCts.Token);
+                using var ms = new System.IO.MemoryStream();
+                var buffer = new byte[81920];
+                int read;
+                long total = 0;
+                while ((read = await stream.ReadAsync(buffer, timeoutCts.Token)) > 0)
+                {
+                    total += read;
+                    if (total > MaxCatalogResponseBytes) return null;
+                    await ms.WriteAsync(buffer.AsMemory(0, read), timeoutCts.Token);
+                }
+                return System.Text.Encoding.UTF8.GetString(ms.ToArray());
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {

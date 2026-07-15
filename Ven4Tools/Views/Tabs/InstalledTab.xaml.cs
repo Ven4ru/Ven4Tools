@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -651,28 +652,65 @@ namespace Ven4Tools.Views.Tabs
                 }
                 else
                 {
-                    int sp = cmd.IndexOf(' ');
-                    if (sp > 0) { exe = cmd.Substring(0, sp); args = cmd.Substring(sp + 1).Trim(); }
+                    // Непокавыченный путь может содержать пробелы
+                    // ("C:\Program Files\App\uninst.exe /S") — наивное разбиение по
+                    // первому пробелу давало бы "C:\Program" вместо реального exe.
+                    // Перебираем все границы пробелов и берём САМЫЙ ДЛИННЫЙ префикс,
+                    // который реально существует как файл (тот же подход, которым
+                    // сама Windows разрешает классическую неоднозначность unquoted
+                    // path в путях служб).
+                    int searchFrom = 0;
+                    int bestSplit = -1;
+                    while (true)
+                    {
+                        int sp = cmd.IndexOf(' ', searchFrom);
+                        if (sp < 0) break;
+                        string candidate = cmd.Substring(0, sp);
+                        if (File.Exists(candidate)) bestSplit = sp;
+                        searchFrom = sp + 1;
+                    }
+
+                    if (bestSplit > 0)
+                    {
+                        exe = cmd.Substring(0, bestSplit);
+                        args = cmd.Substring(bestSplit + 1).Trim();
+                    }
+                    else if (!File.Exists(cmd))
+                    {
+                        // Ни один префикс, ни всё целиком не существуют как файл —
+                        // fallback на старое поведение (первый пробел), чтобы не
+                        // менять исход для уже работавших случаев без пробелов в пути.
+                        int sp = cmd.IndexOf(' ');
+                        if (sp > 0) { exe = cmd.Substring(0, sp); args = cmd.Substring(sp + 1).Trim(); }
+                    }
                 }
                 if (!args.Contains("/S") && !args.Contains("/SILENT") && !args.Contains("/silent"))
                     args = "/S " + args;
+
+                // Fail-closed: не нашли реально существующий exe — не запускаем
+                // произвольную первую половину строки с повышением прав.
+                if (!File.Exists(exe)) return false;
+
                 p = Process.Start(new ProcessStartInfo(exe, args)
                     { UseShellExecute = true, Verb = "runas" });
             }
             if (p == null) return false;
-            // Асинхронное ожидание с таймаутом 120 секунд — UI-поток не блокируется
-            try
+            using (p)
             {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
-                await p.WaitForExitAsync(cts.Token);
+                // Асинхронное ожидание с таймаутом 120 секунд — UI-поток не блокируется
+                try
+                {
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+                    await p.WaitForExitAsync(cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    try { p.Kill(); } catch { }
+                    return false;
+                }
+                // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — удаление прошло успешно
+                return p.ExitCode == 0 || p.ExitCode == 3010;
             }
-            catch (OperationCanceledException)
-            {
-                try { p.Kill(); } catch { }
-                return false;
-            }
-            // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — удаление прошло успешно
-            return p.ExitCode == 0 || p.ExitCode == 3010;
         }
 
         // ── Вспомогательные ───────────────────────────────────────────────────
