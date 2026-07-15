@@ -10,6 +10,7 @@ namespace Ven4Tools.Launcher.Services
     {
         private const string Url =
             "https://raw.githubusercontent.com/Ven4ru/Ven4Tools/main/Catalog/notifications.json";
+        private const string SignatureUrl = Url + ".sig";
 
         // Один HttpClient на всё время жизни процесса: создание нового клиента
         // на каждый вызов исчерпывает сокеты (socket exhaustion)
@@ -26,8 +27,16 @@ namespace Ven4Tools.Launcher.Services
         {
             try
             {
-                var url  = $"{Url}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
-                var json = await _http.GetStringAsync(url);
+                var cacheBust = $"?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+                var json      = await _http.GetStringAsync(Url + cacheBust);
+                var signature = await _http.GetStringAsync(SignatureUrl + cacheBust);
+
+                // Fail-closed: без валидной ECDSA-подписи уведомление не показываем —
+                // компрометация только хостинга (без приватного ключа, который
+                // никогда не покидает офлайн-машину) не даёт подделать текст.
+                if (!NotificationsVerifier.Verify(json, signature))
+                    return null;
+
                 var root = JObject.Parse(json);
                 var first = (root["notifications"] as JArray)?.First as JObject;
                 if (first == null) return null;
