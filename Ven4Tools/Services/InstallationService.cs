@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -47,6 +47,10 @@ namespace Ven4Tools.Services
             _logPath = Path.Combine(logsFolder, $"install_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
         }
 
+        // Диспетчер установки: последовательно пробует стратегии в порядке приоритета
+        // (локальный файл → офлайн-кэш → строгий офлайн-abort → цепочка источников
+        // winget/choco/direct). Сама логика каждой стратегии вынесена в отдельные
+        // приватные методы; поведение идентично прежней монолитной версии.
         public async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallAppAsync(
             AppInfo app, string[] wingetSources, CancellationToken token,
             IProgress<AppInstallProgress> progress, string installDrive, string? version = null,
@@ -64,160 +68,13 @@ namespace Ven4Tools.Services
 
                 // ── Local installer (drag-drop) ────────────────────────────────
                 if (!string.IsNullOrEmpty(app.LocalInstallerPath) && File.Exists(app.LocalInstallerPath))
-                {
-                    appProgress.Status = "📂 Локальный установщик...";
-                    appProgress.Percentage = 30;
-                    progress.Report(appProgress);
-                    Log($"📂 {app.DisplayName}: локальный файл {app.LocalInstallerPath}");
+                    return await InstallFromLocalAsync(app, appProgress, progress, installDrive, token);
 
-                    // apps.json (LocalAppData) доступен на запись любому не-elevated процессу
-                    // пользователя — перед runas-запуском сверяем хеш, зафиксированный при
-                    // добавлении (LocalInstallerDialog), чтобы обнаружить подмену файла/пути.
-                    // Fail-closed: отсутствующий/невалидный Sha256 — это НЕ "проверка не нужна",
-                    // а сигнал, что запись могла быть подделана (LocalInstallerDialog всегда
-                    // считает и сохраняет хеш при легитимном добавлении). Раньше здесь была
-                    // конъюнкция "если хеш есть И не совпадает" — при пустом хеше она молча
-                    // пропускала проверку целиком (см. HIGH-находку аудита 2026-07-13).
-                    if (!HashHelper.HasExpectedHash(app.Sha256))
-                    {
-                        appProgress.Status = "❌ Нет SHA256 для локального установщика — запуск отклонён";
-                        progress.Report(appProgress);
-                        Log($"❌ {app.DisplayName}: локальный установщик без SHA256 — запуск отклонён (fail-closed)");
-                        InstallFailureService.Append(app.DisplayName, app.Id, "local", "Нет SHA256 — установка локального файла требует зафиксированного хеша");
-                        return (false, "Нет SHA256 для локального установщика", appProgress);
-                    }
-                    if (!await HashHelper.VerifyHashAsync(app.LocalInstallerPath, app.Sha256!))
-                    {
-                        appProgress.Status = "❌ Файл изменён с момента добавления";
-                        progress.Report(appProgress);
-                        Log($"❌ {app.DisplayName}: SHA256 локального файла не совпадает с зафиксированным при добавлении");
-                        InstallFailureService.Append(app.DisplayName, app.Id, "local", "SHA256 не совпадает — файл изменён с момента добавления");
-                        return (false, "Файл изменён с момента добавления", appProgress);
-                    }
+                // ── Offline cache ──────────────────────────────────────────────
+                var cacheResult = await InstallFromCacheAsync(app, appProgress, progress, installDrive, token);
+                if (cacheResult != null) return cacheResult.Value;
 
-                    bool isMsi = app.LocalInstallerPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
-                    string locArgLocal = BuildInstallerLocationArg(isMsi, installDrive, app.DisplayName);
-                    // SilentArgs может приходить извне (каталог, ручной ввод) — валидируем
-                    // перед подстановкой в elevated-процесс, как в ветке прямой загрузки.
-                    string silentArgsLocal = app.SilentArgs;
-                    if (!CommandLineGuard.ValidateSilentArgs(silentArgsLocal))
-                    {
-                        AppLogger.Write($"[InstallationService] ⚠ SilentArgs содержит недопустимые символы для {app.DisplayName} — использую /S");
-                        silentArgsLocal = "/S";
-                    }
-                    if (string.IsNullOrWhiteSpace(silentArgsLocal))
-                        silentArgsLocal = "/S";
-                    var psiLocal = new ProcessStartInfo
-                    {
-                        FileName        = isMsi ? TrustedExecutablePaths.MsiExec : app.LocalInstallerPath,
-                        Arguments       = isMsi
-                                          ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart{locArgLocal}"
-                                          : silentArgsLocal + locArgLocal,
-                        UseShellExecute = true,
-                        Verb            = "runas",
-                        WindowStyle     = ProcessWindowStyle.Hidden
-                    };
-                    using var localProc = Process.Start(psiLocal);
-                    if (localProc == null)
-                    {
-                        appProgress.Status = "❌ Не удалось запустить установщик";
-                        progress.Report(appProgress);
-                        Log($"❌ {app.DisplayName}: Process.Start вернул null");
-                        InstallFailureService.Append(app.DisplayName, app.Id, "local", "Process.Start вернул null");
-                        return (false, "Не удалось запустить установщик", appProgress);
-                    }
-
-                    while (!localProc.HasExited)
-                    {
-                        if (token.IsCancellationRequested) { try { localProc.Kill(entireProcessTree: true); } catch { } token.ThrowIfCancellationRequested(); }
-                        await Task.Delay(100, token);
-                    }
-
-                    // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
-                    if (localProc.ExitCode == 0 || localProc.ExitCode == 3010)
-                    {
-                        bool reboot = localProc.ExitCode == 3010;
-                        appProgress.Status = reboot ? "⚠ Установлено. Требуется перезагрузка." : "✅ Установлено (локальный файл)";
-                        appProgress.Percentage = 100;
-                        progress.Report(appProgress);
-                        Log(reboot
-                            ? $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — локальный установщик"
-                            : $"✅ {app.DisplayName} — локальный установщик");
-                        if (ProfileService.Current.SaveInstallHistory)
-                            await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "local", app.CategoryString);
-                        return (true, reboot ? "Установлено (требуется перезагрузка)" : "Установлено из локального файла", appProgress);
-                    }
-
-                    appProgress.Status = "❌ Ошибка локального установщика";
-                    progress.Report(appProgress);
-                    Log($"❌ {app.DisplayName}: локальный установщик завершился с кодом {localProc.ExitCode}");
-                    InstallFailureService.Append(app.DisplayName, app.Id, "local", $"Код выхода {localProc.ExitCode}");
-                    return (false, "Ошибка локального установщика", appProgress);
-                }
-
-                // Offline cache — try local installer first
-                string? cachedPath = OfflineService.GetCachedInstallerPath(app.Id);
-                if (cachedPath != null)
-                {
-                    // Fail-closed по аналогии с Direct-веткой: без SHA256 в каталоге
-                    // кэшированный файл нечем верифицировать — elevated-запуск такого
-                    // файла небезопасен, даже если он лежит в собственном кэше приложения.
-                    if (!HashHelper.HasExpectedHash(app.Sha256))
-                    {
-                        Log($"⚠ Нет SHA256 в каталоге для {app.DisplayName} — кэш пропущен, пробую следующий источник");
-                        cachedPath = null;
-                    }
-                    else if (!await HashHelper.VerifyHashAsync(cachedPath, app.Sha256!))
-                    {
-                        Log($"❌ SHA256 mismatch в кэше: {app.DisplayName}, удаляю");
-                        try { File.Delete(cachedPath); } catch { }
-                        cachedPath = null;
-                    }
-                }
-
-                if (cachedPath != null)
-                {
-                    appProgress.Status = "🔌 Из кэша...";
-                    appProgress.Percentage = 50;
-                    progress.Report(appProgress);
-
-                    bool cacheIsMsi = cachedPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
-                    string locArgCache = BuildInstallerLocationArg(cacheIsMsi, installDrive, app.DisplayName);
-                    var psiCache = new ProcessStartInfo
-                    {
-                        FileName       = cacheIsMsi ? TrustedExecutablePaths.MsiExec : cachedPath,
-                        Arguments      = cacheIsMsi
-                                         ? $"/i \"{cachedPath}\" /quiet /norestart{locArgCache}"
-                                         : "/S /silent /quiet" + locArgCache,
-                        UseShellExecute = true, Verb = "runas",
-                        WindowStyle     = ProcessWindowStyle.Hidden
-                    };
-                    using var cacheProc = Process.Start(psiCache);
-                    if (cacheProc != null)
-                    {
-                        while (!cacheProc.HasExited)
-                        {
-                            if (token.IsCancellationRequested) { try { cacheProc.Kill(entireProcessTree: true); } catch { } token.ThrowIfCancellationRequested(); }
-                            await Task.Delay(100, token);
-                        }
-                        // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
-                        if (cacheProc.ExitCode == 0 || cacheProc.ExitCode == 3010)
-                        {
-                            bool reboot = cacheProc.ExitCode == 3010;
-                            appProgress.Status = reboot ? "⚠ Установлено. Требуется перезагрузка." : "✅ Установлено (кэш)";
-                            appProgress.Percentage = 100;
-                            progress.Report(appProgress);
-                            Log(reboot
-                                ? $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} (офлайн-кэш)"
-                                : $"✅ {app.DisplayName} установлено из офлайн-кэша");
-                            if (ProfileService.Current.SaveInstallHistory)
-                                await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "cache", app.CategoryString);
-                            return (true, reboot ? "Установлено из кэша (требуется перезагрузка)" : "Установлено из офлайн-кэша", appProgress);
-                        }
-                    }
-                }
-
-                // In strict offline mode with no cache — abort
+                // ── Строгий офлайн без кэша — прекращаем ────────────────────────
                 if (OfflineService.IsOffline)
                 {
                     appProgress.Status = "❌ Нет в кэше (офлайн режим)";
@@ -226,260 +83,9 @@ namespace Ven4Tools.Services
                     return (false, "Офлайн режим — нет кэша", appProgress);
                 }
 
-                // ── Source-ordered install loop ────────────────────────────────
-                string primaryId = !string.IsNullOrEmpty(app.AlternativeId) ? app.AlternativeId : app.Id;
-
-                // ID может приходить из ручного ввода (пользовательские приложения,
-                // альтернативные источники) — проверяем всегда перед подстановкой в
-                // командную строку winget/choco, чтобы исключить внедрение аргументов.
-                if (!CommandLineGuard.ValidateId(primaryId))
-                {
-                    appProgress.Status = "❌ Недопустимый идентификатор пакета";
-                    progress.Report(appProgress);
-                    Log($"❌ {app.DisplayName}: недопустимый ID «{primaryId}» — установка отменена");
-                    InstallFailureService.Append(app.DisplayName, app.Id, "validation", $"Недопустимый ID «{primaryId}»");
-                    return (false, "Недопустимый идентификатор пакета", appProgress);
-                }
-
-                var sourceOrder  = SourceOrderService.GetOrderForCategory(app.CategoryString);
-                Log($"🔀 Порядок источников для «{app.DisplayName}»: {string.Join(" → ", sourceOrder)}");
-
-                foreach (var srcId in sourceOrder)
-                {
-                    token.ThrowIfCancellationRequested();
-
-                    switch (srcId)
-                    {
-                        // ── Winget ──────────────────────────────────────────────
-                        case SourceOrderSettings.Winget:
-                        {
-                            if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) break;
-                            foreach (var wsrc in wingetSources)
-                            {
-                                token.ThrowIfCancellationRequested();
-                                appProgress.Status = $"📦 Winget ({wsrc})...";
-                                appProgress.Percentage = 10;
-                                progress.Report(appProgress);
-
-                                if (await RunWingetAsync(primaryId, wsrc, token, version, installDrive))
-                                {
-                                    appProgress.Status = "✅ Установлено (Winget)";
-                                    appProgress.Percentage = 100;
-                                    progress.Report(appProgress);
-                                    Log($"✅ {app.DisplayName} — Winget ({wsrc}): {primaryId}");
-                                    if (ProfileService.Current.SaveInstallHistory)
-                                        await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "winget", app.CategoryString);
-                                    return (true, "Установлено через Winget", appProgress);
-                                }
-                            }
-                            break;
-                        }
-
-                        // ── Chocolatey ──────────────────────────────────────────
-                        case SourceOrderSettings.Choco:
-                        {
-                            if (string.IsNullOrWhiteSpace(app.ChocoId)) break;
-                            appProgress.Status = "🍫 Chocolatey...";
-                            appProgress.Percentage = 15;
-                            progress.Report(appProgress);
-
-                            bool chocoOk = await PackageManagerService.IsChocoInstalledAsync()
-                                || (!token.IsCancellationRequested
-                                    && confirmPmInstall != null
-                                    && await confirmPmInstall("Chocolatey")
-                                    && await PackageManagerService.InstallChocoAsync(msg => Log(msg)));
-                            if (chocoOk && await PackageManagerService.RunChocoInstallAsync(app.ChocoId, token, msg => Log(msg)))
-                            {
-                                appProgress.Status = "✅ Установлено (Chocolatey)";
-                                appProgress.Percentage = 100;
-                                progress.Report(appProgress);
-                                Log($"✅ {app.DisplayName} — Chocolatey: {app.ChocoId}");
-                                if (ProfileService.Current.SaveInstallHistory)
-                                    await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "choco", app.CategoryString);
-                                return (true, "Установлено через Chocolatey", appProgress);
-                            }
-                            break;
-                        }
-
-                        // ── Direct download ─────────────────────────────────────
-                        case SourceOrderSettings.Direct:
-                        {
-                            if (!app.InstallerUrls.Any()) break;
-
-                            // Прямые ссылки без SHA256 в каталоге не выполняем:
-                            // скачанный установщик нечем верифицировать, запускать его небезопасно.
-                            if (!HashHelper.HasExpectedHash(app.Sha256))
-                            {
-                                appProgress.Status = "⚠ Нет SHA256 в каталоге — прямая ссылка пропущена";
-                                progress.Report(appProgress);
-                                Log($"⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, пробую следующий");
-                                AppLogger.Write($"[InstallationService] ⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, продолжаю через winget");
-                                InstallFailureService.Append(app.DisplayName, app.Id, "direct", "В каталоге не указан SHA256");
-                                break;
-                            }
-
-                            // Несовпадение SHA256 у нескольких зеркал — одна запись
-                            // об ошибке после перебора всех ссылок, а не по одной на URL.
-                            int hashMismatchCount = 0;
-                            foreach (var url in app.InstallerUrls)
-                            {
-                                token.ThrowIfCancellationRequested();
-
-                                if (!DownloadValidator.ValidateUrl(url))
-                                {
-                                    AppLogger.Write($"[InstallationService] ⚠ Пропущен небезопасный URL (не HTTPS): {url}");
-                                    continue;
-                                }
-
-                                appProgress.Status = "📥 Скачивание...";
-                                appProgress.Percentage = 20;
-                                progress.Report(appProgress);
-
-                                string urlExt = Path.GetExtension(new Uri(url).LocalPath).ToLowerInvariant();
-                                if (string.IsNullOrEmpty(urlExt) || (urlExt != ".exe" && urlExt != ".msi")) urlExt = ".exe";
-                                // primaryId (AlternativeId ?? app.Id) уже провалидирован выше (строка 235),
-                                // но в ветке с AlternativeId сам app.Id остаётся непроверенным — а именно
-                                // он идёт в имя временного файла. Тот же ValidateId, иначе безопасный плейсхолдер.
-                                string idForTempFile = CommandLineGuard.ValidateId(app.Id) ? app.Id : "app";
-                                string tempFile = Path.Combine(Path.GetTempPath(), $"{idForTempFile}_{Guid.NewGuid()}{urlExt}");
-                                try
-                                {
-                                    // Таймаут 30 секунд только на установление соединения и заголовки;
-                                    // скачивание тела ограничено лишь токеном отмены пользователя.
-                                    using var headersCts = CancellationTokenSource.CreateLinkedTokenSource(token);
-                                    headersCts.CancelAfter(TimeSpan.FromSeconds(30));
-                                    long totalRead = 0;
-                                    using (var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, headersCts.Token))
-                                    {
-                                        response.EnsureSuccessStatusCode();
-
-                                        if (!DownloadValidator.ValidateAfterRedirect(response))
-                                        {
-                                            AppLogger.Write($"[InstallationService] ⚠ Редирект на небезопасный хост: {response.RequestMessage?.RequestUri?.Host}");
-                                            throw new InvalidOperationException($"Редирект на небезопасный хост: {response.RequestMessage?.RequestUri?.Host}");
-                                        }
-
-                                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                                        using var contentStream = await response.Content.ReadAsStreamAsync();
-                                        using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
-                                        var buf = new byte[8192];
-                                        int bytesRead;
-                                        while ((bytesRead = await contentStream.ReadAsync(buf, token)) > 0)
-                                        {
-                                            token.ThrowIfCancellationRequested();
-                                            await fileStream.WriteAsync(buf, 0, bytesRead, token);
-                                            totalRead += bytesRead;
-                                            if (totalBytes > 0)
-                                            {
-                                                appProgress.Percentage = 20 + (int)((double)totalRead / totalBytes * 30);
-                                                progress.Report(appProgress);
-                                            }
-                                        }
-                                    }
-
-                                    double downloadedMb = Math.Round(totalRead / 1_048_576.0, 1);
-                                    AppLogger.Write($"📥 Загружен установщик — {downloadedMb} МБ: {Path.GetFileName(tempFile)}");
-
-                                    appProgress.Status = "🔐 Проверка SHA256...";
-                                    appProgress.Percentage = 55;
-                                    progress.Report(appProgress);
-
-                                    // SHA256 гарантированно указан (проверено перед циклом) —
-                                    // верификация выполняется всегда, без исключений.
-                                    if (!await HashHelper.VerifyHashAsync(tempFile, app.Sha256!))
-                                    {
-                                        Log($"❌ SHA256 mismatch: {app.DisplayName}");
-                                        try { File.Delete(tempFile); } catch { }
-                                        appProgress.Status = "⚠ SHA256 не совпал — пробуем следующий источник";
-                                        progress.Report(appProgress);
-                                        hashMismatchCount++;
-                                        continue;
-                                    }
-                                    Log($"✅ SHA256 OK: {app.DisplayName}");
-
-                                    token.ThrowIfCancellationRequested();
-                                    appProgress.Status = "⚙️ Установка...";
-                                    appProgress.Percentage = 60;
-                                    progress.Report(appProgress);
-
-                                    bool tempIsMsi = tempFile.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
-                                    string silentArgs;
-                                    if (tempIsMsi)
-                                    {
-                                        // MSI запускаем через msiexec в тихом режиме
-                                        silentArgs = $"/i \"{tempFile}\" /quiet /norestart"
-                                                     + BuildInstallerLocationArg(true, installDrive, app.DisplayName);
-                                    }
-                                    else
-                                    {
-                                        silentArgs = app.SilentArgs;
-                                        if (!CommandLineGuard.ValidateSilentArgs(silentArgs))
-                                        {
-                                            AppLogger.Write($"[InstallationService] ⚠ SilentArgs содержит недопустимые символы для {app.DisplayName} — использую /S");
-                                            silentArgs = "/S";
-                                        }
-                                        if (string.IsNullOrWhiteSpace(silentArgs) && ProfileService.Current.SilentInstall)
-                                            silentArgs = "/S";
-                                        // Best-effort путь установки для прямого EXE
-                                        silentArgs += BuildInstallerLocationArg(false, installDrive, app.DisplayName);
-                                    }
-
-                                    var psi = new ProcessStartInfo
-                                    {
-                                        FileName = tempIsMsi ? TrustedExecutablePaths.MsiExec : tempFile,
-                                        Arguments = silentArgs,
-                                        UseShellExecute = true, Verb = "runas",
-                                        WindowStyle = ProcessWindowStyle.Hidden
-                                    };
-                                    using var proc = Process.Start(psi);
-                                    if (proc != null)
-                                    {
-                                        AppLogger.Write($"▶ Запущен процесс установки PID {proc.Id}: {Path.GetFileName(psi.FileName)}");
-                                        while (!proc.HasExited)
-                                        {
-                                            if (token.IsCancellationRequested) { try { proc.Kill(entireProcessTree: true); } catch { } token.ThrowIfCancellationRequested(); }
-                                            await Task.Delay(100, token);
-                                        }
-                                        try { File.Delete(tempFile); } catch { }
-                                        // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
-                                        if (proc.ExitCode == 0 || proc.ExitCode == 3010)
-                                        {
-                                            bool reboot = proc.ExitCode == 3010;
-                                            appProgress.Status = reboot ? "⚠ Установлено. Требуется перезагрузка." : "✅ Установлено (прямая ссылка)";
-                                            appProgress.Percentage = 100;
-                                            progress.Report(appProgress);
-                                            Log(reboot
-                                                ? $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — прямая ссылка: {url}"
-                                                : $"✅ {app.DisplayName} — прямая ссылка: {url}");
-                                            if (ProfileService.Current.SaveInstallHistory)
-                                                await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "direct", app.CategoryString);
-                                            return (true, reboot ? "Установлено (требуется перезагрузка)" : "Установлено", appProgress);
-                                        }
-                                    }
-                                }
-                                // Отмена пользователем — пробрасываем; таймаут заголовков — пробуем следующий источник
-                                catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
-                                catch (Exception ex)
-                                {
-                                    Log($"❌ Прямая ссылка {url}: {ex.Message}");
-                                    try { File.Delete(tempFile); } catch { }
-                                }
-                            }
-                            if (hashMismatchCount > 0)
-                                InstallFailureService.Append(app.DisplayName, app.Id, "direct",
-                                    hashMismatchCount == 1
-                                        ? "SHA256 mismatch"
-                                        : $"SHA256 mismatch ({hashMismatchCount} зеркал)");
-                            break;
-                        }
-                    }
-                }
-
-                appProgress.Status = "❌ Ошибка";
-                progress.Report(appProgress);
-                Log($"❌ {app.DisplayName} — все источники исчерпаны");
-                InstallFailureService.Append(app.DisplayName, app.Id, "all-sources", "Все источники исчерпаны");
-                return (false, "Не удалось установить", appProgress);
+                // ── Цепочка источников (winget/choco/direct) ───────────────────
+                return await InstallFromSourcesAsync(
+                    app, wingetSources, appProgress, progress, installDrive, version, confirmPmInstall, token);
             }
             catch (OperationCanceledException)
             {
@@ -495,6 +101,443 @@ namespace Ven4Tools.Services
                 Log($"❌ {app.DisplayName}: {ex.Message}");
                 return (false, ex.Message, appProgress);
             }
+        }
+
+        // ── Стратегия 1: локальный установщик (drag-drop) ──────────────────────
+        private async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallFromLocalAsync(
+            AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
+            string installDrive, CancellationToken token)
+        {
+            appProgress.Status = "📂 Локальный установщик...";
+            appProgress.Percentage = 30;
+            progress.Report(appProgress);
+            Log($"📂 {app.DisplayName}: локальный файл {app.LocalInstallerPath}");
+
+            // apps.json (LocalAppData) доступен на запись любому не-elevated процессу
+            // пользователя — перед runas-запуском сверяем хеш, зафиксированный при
+            // добавлении (LocalInstallerDialog), чтобы обнаружить подмену файла/пути.
+            // Fail-closed: отсутствующий/невалидный Sha256 — это НЕ "проверка не нужна",
+            // а сигнал, что запись могла быть подделана (LocalInstallerDialog всегда
+            // считает и сохраняет хеш при легитимном добавлении). Раньше здесь была
+            // конъюнкция "если хеш есть И не совпадает" — при пустом хеше она молча
+            // пропускала проверку целиком (см. HIGH-находку аудита 2026-07-13).
+            if (!HashHelper.HasExpectedHash(app.Sha256))
+            {
+                appProgress.Status = "❌ Нет SHA256 для локального установщика — запуск отклонён";
+                progress.Report(appProgress);
+                Log($"❌ {app.DisplayName}: локальный установщик без SHA256 — запуск отклонён (fail-closed)");
+                InstallFailureService.Append(app.DisplayName, app.Id, "local", "Нет SHA256 — установка локального файла требует зафиксированного хеша");
+                return (false, "Нет SHA256 для локального установщика", appProgress);
+            }
+            if (!await HashHelper.VerifyHashAsync(app.LocalInstallerPath!, app.Sha256!))
+            {
+                appProgress.Status = "❌ Файл изменён с момента добавления";
+                progress.Report(appProgress);
+                Log($"❌ {app.DisplayName}: SHA256 локального файла не совпадает с зафиксированным при добавлении");
+                InstallFailureService.Append(app.DisplayName, app.Id, "local", "SHA256 не совпадает — файл изменён с момента добавления");
+                return (false, "Файл изменён с момента добавления", appProgress);
+            }
+
+            bool isMsi = app.LocalInstallerPath!.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
+            string locArgLocal = BuildInstallerLocationArg(isMsi, installDrive, app.DisplayName);
+            // SilentArgs может приходить извне (каталог, ручной ввод) — валидируем
+            // перед подстановкой в elevated-процесс, как в ветке прямой загрузки.
+            string silentArgsLocal = app.SilentArgs;
+            if (!CommandLineGuard.ValidateSilentArgs(silentArgsLocal))
+            {
+                AppLogger.Write($"[InstallationService] ⚠ SilentArgs содержит недопустимые символы для {app.DisplayName} — использую /S");
+                silentArgsLocal = "/S";
+            }
+            if (string.IsNullOrWhiteSpace(silentArgsLocal))
+                silentArgsLocal = "/S";
+            var psiLocal = new ProcessStartInfo
+            {
+                FileName        = isMsi ? TrustedExecutablePaths.MsiExec : app.LocalInstallerPath!,
+                Arguments       = isMsi
+                                  ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart{locArgLocal}"
+                                  : silentArgsLocal + locArgLocal,
+                UseShellExecute = true,
+                Verb            = "runas",
+                WindowStyle     = ProcessWindowStyle.Hidden
+            };
+
+            var run = await RunElevatedInstallerAsync(psiLocal, token);
+            if (run == null)
+            {
+                appProgress.Status = "❌ Не удалось запустить установщик";
+                progress.Report(appProgress);
+                Log($"❌ {app.DisplayName}: Process.Start вернул null");
+                InstallFailureService.Append(app.DisplayName, app.Id, "local", "Process.Start вернул null");
+                return (false, "Не удалось запустить установщик", appProgress);
+            }
+
+            if (run.Value.Ok)
+                return await ReportInstallSuccessAsync(app, appProgress, progress, run.Value.Reboot, "local",
+                    "✅ Установлено (локальный файл)",
+                    $"✅ {app.DisplayName} — локальный установщик",
+                    $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — локальный установщик",
+                    "Установлено из локального файла",
+                    "Установлено (требуется перезагрузка)");
+
+            appProgress.Status = "❌ Ошибка локального установщика";
+            progress.Report(appProgress);
+            Log($"❌ {app.DisplayName}: локальный установщик завершился с кодом {run.Value.ExitCode}");
+            InstallFailureService.Append(app.DisplayName, app.Id, "local", $"Код выхода {run.Value.ExitCode}");
+            return (false, "Ошибка локального установщика", appProgress);
+        }
+
+        // ── Стратегия 2: офлайн-кэш ────────────────────────────────────────────
+        // Возвращает null, если кэша нет / хеш не сошёлся / установка из кэша не
+        // удалась — в этих случаях диспетчер продолжает следующими стратегиями.
+        private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromCacheAsync(
+            AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
+            string installDrive, CancellationToken token)
+        {
+            string? cachedPath = OfflineService.GetCachedInstallerPath(app.Id);
+            if (cachedPath == null) return null;
+
+            // Fail-closed по аналогии с Direct-веткой: без SHA256 в каталоге
+            // кэшированный файл нечем верифицировать — elevated-запуск такого
+            // файла небезопасен, даже если он лежит в собственном кэше приложения.
+            if (!HashHelper.HasExpectedHash(app.Sha256))
+            {
+                Log($"⚠ Нет SHA256 в каталоге для {app.DisplayName} — кэш пропущен, пробую следующий источник");
+                return null;
+            }
+            if (!await HashHelper.VerifyHashAsync(cachedPath, app.Sha256!))
+            {
+                Log($"❌ SHA256 mismatch в кэше: {app.DisplayName}, удаляю");
+                try { File.Delete(cachedPath); } catch { }
+                return null;
+            }
+
+            appProgress.Status = "🔌 Из кэша...";
+            appProgress.Percentage = 50;
+            progress.Report(appProgress);
+
+            bool cacheIsMsi = cachedPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
+            string locArgCache = BuildInstallerLocationArg(cacheIsMsi, installDrive, app.DisplayName);
+            var psiCache = new ProcessStartInfo
+            {
+                FileName       = cacheIsMsi ? TrustedExecutablePaths.MsiExec : cachedPath,
+                Arguments      = cacheIsMsi
+                                 ? $"/i \"{cachedPath}\" /quiet /norestart{locArgCache}"
+                                 : "/S /silent /quiet" + locArgCache,
+                UseShellExecute = true, Verb = "runas",
+                WindowStyle     = ProcessWindowStyle.Hidden
+            };
+
+            var run = await RunElevatedInstallerAsync(psiCache, token);
+            if (run is { Ok: true })
+                return await ReportInstallSuccessAsync(app, appProgress, progress, run.Value.Reboot, "cache",
+                    "✅ Установлено (кэш)",
+                    $"✅ {app.DisplayName} установлено из офлайн-кэша",
+                    $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} (офлайн-кэш)",
+                    "Установлено из офлайн-кэша",
+                    "Установлено из кэша (требуется перезагрузка)");
+
+            return null;
+        }
+
+        // ── Стратегия 3: цепочка источников (winget → choco → direct) ──────────
+        private async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallFromSourcesAsync(
+            AppInfo app, string[] wingetSources, AppInstallProgress appProgress,
+            IProgress<AppInstallProgress> progress, string installDrive, string? version,
+            Func<string, Task<bool>>? confirmPmInstall, CancellationToken token)
+        {
+            string primaryId = !string.IsNullOrEmpty(app.AlternativeId) ? app.AlternativeId : app.Id;
+
+            // ID может приходить из ручного ввода (пользовательские приложения,
+            // альтернативные источники) — проверяем всегда перед подстановкой в
+            // командную строку winget/choco, чтобы исключить внедрение аргументов.
+            if (!CommandLineGuard.ValidateId(primaryId))
+            {
+                appProgress.Status = "❌ Недопустимый идентификатор пакета";
+                progress.Report(appProgress);
+                Log($"❌ {app.DisplayName}: недопустимый ID «{primaryId}» — установка отменена");
+                InstallFailureService.Append(app.DisplayName, app.Id, "validation", $"Недопустимый ID «{primaryId}»");
+                return (false, "Недопустимый идентификатор пакета", appProgress);
+            }
+
+            var sourceOrder  = SourceOrderService.GetOrderForCategory(app.CategoryString);
+            Log($"🔀 Порядок источников для «{app.DisplayName}»: {string.Join(" → ", sourceOrder)}");
+
+            foreach (var srcId in sourceOrder)
+            {
+                token.ThrowIfCancellationRequested();
+
+                var result = srcId switch
+                {
+                    SourceOrderSettings.Winget => await InstallFromWingetAsync(
+                        app, primaryId, wingetSources, appProgress, progress, installDrive, version, token),
+                    SourceOrderSettings.Choco => await InstallFromChocoAsync(
+                        app, appProgress, progress, confirmPmInstall, token),
+                    SourceOrderSettings.Direct => await InstallFromDirectDownloadAsync(
+                        app, primaryId, appProgress, progress, installDrive, token),
+                    _ => null
+                };
+                if (result != null) return result.Value;
+            }
+
+            appProgress.Status = "❌ Ошибка";
+            progress.Report(appProgress);
+            Log($"❌ {app.DisplayName} — все источники исчерпаны");
+            InstallFailureService.Append(app.DisplayName, app.Id, "all-sources", "Все источники исчерпаны");
+            return (false, "Не удалось установить", appProgress);
+        }
+
+        // ── Источник: Winget ───────────────────────────────────────────────────
+        private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromWingetAsync(
+            AppInfo app, string primaryId, string[] wingetSources, AppInstallProgress appProgress,
+            IProgress<AppInstallProgress> progress, string installDrive, string? version, CancellationToken token)
+        {
+            if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) return null;
+            foreach (var wsrc in wingetSources)
+            {
+                token.ThrowIfCancellationRequested();
+                appProgress.Status = $"📦 Winget ({wsrc})...";
+                appProgress.Percentage = 10;
+                progress.Report(appProgress);
+
+                if (await RunWingetAsync(primaryId, wsrc, token, version, installDrive))
+                {
+                    appProgress.Status = "✅ Установлено (Winget)";
+                    appProgress.Percentage = 100;
+                    progress.Report(appProgress);
+                    Log($"✅ {app.DisplayName} — Winget ({wsrc}): {primaryId}");
+                    if (ProfileService.Current.SaveInstallHistory)
+                        await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "winget", app.CategoryString);
+                    return (true, "Установлено через Winget", appProgress);
+                }
+            }
+            return null;
+        }
+
+        // ── Источник: Chocolatey ───────────────────────────────────────────────
+        private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromChocoAsync(
+            AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
+            Func<string, Task<bool>>? confirmPmInstall, CancellationToken token)
+        {
+            if (string.IsNullOrWhiteSpace(app.ChocoId)) return null;
+            appProgress.Status = "🍫 Chocolatey...";
+            appProgress.Percentage = 15;
+            progress.Report(appProgress);
+
+            bool chocoOk = await PackageManagerService.IsChocoInstalledAsync()
+                || (!token.IsCancellationRequested
+                    && confirmPmInstall != null
+                    && await confirmPmInstall("Chocolatey")
+                    && await PackageManagerService.InstallChocoAsync(msg => Log(msg)));
+            if (chocoOk && await PackageManagerService.RunChocoInstallAsync(app.ChocoId, token, msg => Log(msg)))
+            {
+                appProgress.Status = "✅ Установлено (Chocolatey)";
+                appProgress.Percentage = 100;
+                progress.Report(appProgress);
+                Log($"✅ {app.DisplayName} — Chocolatey: {app.ChocoId}");
+                if (ProfileService.Current.SaveInstallHistory)
+                    await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "choco", app.CategoryString);
+                return (true, "Установлено через Chocolatey", appProgress);
+            }
+            return null;
+        }
+
+        // ── Источник: прямая загрузка ──────────────────────────────────────────
+        private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromDirectDownloadAsync(
+            AppInfo app, string primaryId, AppInstallProgress appProgress,
+            IProgress<AppInstallProgress> progress, string installDrive, CancellationToken token)
+        {
+            if (!app.InstallerUrls.Any()) return null;
+
+            // Прямые ссылки без SHA256 в каталоге не выполняем:
+            // скачанный установщик нечем верифицировать, запускать его небезопасно.
+            if (!HashHelper.HasExpectedHash(app.Sha256))
+            {
+                appProgress.Status = "⚠ Нет SHA256 в каталоге — прямая ссылка пропущена";
+                progress.Report(appProgress);
+                Log($"⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, пробую следующий");
+                AppLogger.Write($"[InstallationService] ⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, продолжаю через winget");
+                InstallFailureService.Append(app.DisplayName, app.Id, "direct", "В каталоге не указан SHA256");
+                return null;
+            }
+
+            // Несовпадение SHA256 у нескольких зеркал — одна запись
+            // об ошибке после перебора всех ссылок, а не по одной на URL.
+            int hashMismatchCount = 0;
+            foreach (var url in app.InstallerUrls)
+            {
+                token.ThrowIfCancellationRequested();
+
+                if (!DownloadValidator.ValidateUrl(url))
+                {
+                    AppLogger.Write($"[InstallationService] ⚠ Пропущен небезопасный URL (не HTTPS): {url}");
+                    continue;
+                }
+
+                appProgress.Status = "📥 Скачивание...";
+                appProgress.Percentage = 20;
+                progress.Report(appProgress);
+
+                string urlExt = Path.GetExtension(new Uri(url).LocalPath).ToLowerInvariant();
+                if (string.IsNullOrEmpty(urlExt) || (urlExt != ".exe" && urlExt != ".msi")) urlExt = ".exe";
+                // primaryId (AlternativeId ?? app.Id) уже провалидирован выше,
+                // но в ветке с AlternativeId сам app.Id остаётся непроверенным — а именно
+                // он идёт в имя временного файла. Тот же ValidateId, иначе безопасный плейсхолдер.
+                string idForTempFile = CommandLineGuard.ValidateId(app.Id) ? app.Id : "app";
+                string tempFile = Path.Combine(Path.GetTempPath(), $"{idForTempFile}_{Guid.NewGuid()}{urlExt}");
+                try
+                {
+                    // Таймаут 30 секунд только на установление соединения и заголовки;
+                    // скачивание тела ограничено лишь токеном отмены пользователя.
+                    using var headersCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                    headersCts.CancelAfter(TimeSpan.FromSeconds(30));
+                    long totalRead = 0;
+                    using (var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, headersCts.Token))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        if (!DownloadValidator.ValidateAfterRedirect(response))
+                        {
+                            AppLogger.Write($"[InstallationService] ⚠ Редирект на небезопасный хост: {response.RequestMessage?.RequestUri?.Host}");
+                            throw new InvalidOperationException($"Редирект на небезопасный хост: {response.RequestMessage?.RequestUri?.Host}");
+                        }
+
+                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                        using var contentStream = await response.Content.ReadAsStreamAsync();
+                        using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
+                        var buf = new byte[8192];
+                        int bytesRead;
+                        while ((bytesRead = await contentStream.ReadAsync(buf, token)) > 0)
+                        {
+                            token.ThrowIfCancellationRequested();
+                            await fileStream.WriteAsync(buf, 0, bytesRead, token);
+                            totalRead += bytesRead;
+                            if (totalBytes > 0)
+                            {
+                                appProgress.Percentage = 20 + (int)((double)totalRead / totalBytes * 30);
+                                progress.Report(appProgress);
+                            }
+                        }
+                    }
+
+                    double downloadedMb = Math.Round(totalRead / 1_048_576.0, 1);
+                    AppLogger.Write($"📥 Загружен установщик — {downloadedMb} МБ: {Path.GetFileName(tempFile)}");
+
+                    appProgress.Status = "🔐 Проверка SHA256...";
+                    appProgress.Percentage = 55;
+                    progress.Report(appProgress);
+
+                    // SHA256 гарантированно указан (проверено перед циклом) —
+                    // верификация выполняется всегда, без исключений.
+                    if (!await HashHelper.VerifyHashAsync(tempFile, app.Sha256!))
+                    {
+                        Log($"❌ SHA256 mismatch: {app.DisplayName}");
+                        try { File.Delete(tempFile); } catch { }
+                        appProgress.Status = "⚠ SHA256 не совпал — пробуем следующий источник";
+                        progress.Report(appProgress);
+                        hashMismatchCount++;
+                        continue;
+                    }
+                    Log($"✅ SHA256 OK: {app.DisplayName}");
+
+                    token.ThrowIfCancellationRequested();
+                    appProgress.Status = "⚙️ Установка...";
+                    appProgress.Percentage = 60;
+                    progress.Report(appProgress);
+
+                    bool tempIsMsi = tempFile.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
+                    string silentArgs;
+                    if (tempIsMsi)
+                    {
+                        // MSI запускаем через msiexec в тихом режиме
+                        silentArgs = $"/i \"{tempFile}\" /quiet /norestart"
+                                     + BuildInstallerLocationArg(true, installDrive, app.DisplayName);
+                    }
+                    else
+                    {
+                        silentArgs = app.SilentArgs;
+                        if (!CommandLineGuard.ValidateSilentArgs(silentArgs))
+                        {
+                            AppLogger.Write($"[InstallationService] ⚠ SilentArgs содержит недопустимые символы для {app.DisplayName} — использую /S");
+                            silentArgs = "/S";
+                        }
+                        if (string.IsNullOrWhiteSpace(silentArgs) && ProfileService.Current.SilentInstall)
+                            silentArgs = "/S";
+                        // Best-effort путь установки для прямого EXE
+                        silentArgs += BuildInstallerLocationArg(false, installDrive, app.DisplayName);
+                    }
+
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = tempIsMsi ? TrustedExecutablePaths.MsiExec : tempFile,
+                        Arguments = silentArgs,
+                        UseShellExecute = true, Verb = "runas",
+                        WindowStyle = ProcessWindowStyle.Hidden
+                    };
+
+                    var run = await RunElevatedInstallerAsync(psi, token,
+                        pid => AppLogger.Write($"▶ Запущен процесс установки PID {pid}: {Path.GetFileName(psi.FileName)}"));
+                    if (run != null)
+                    {
+                        try { File.Delete(tempFile); } catch { }
+                        if (run.Value.Ok)
+                            return await ReportInstallSuccessAsync(app, appProgress, progress, run.Value.Reboot, "direct",
+                                "✅ Установлено (прямая ссылка)",
+                                $"✅ {app.DisplayName} — прямая ссылка: {url}",
+                                $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — прямая ссылка: {url}",
+                                "Установлено",
+                                "Установлено (требуется перезагрузка)");
+                    }
+                }
+                // Отмена пользователем — пробрасываем; таймаут заголовков — пробуем следующий источник
+                catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
+                catch (Exception ex)
+                {
+                    Log($"❌ Прямая ссылка {url}: {ex.Message}");
+                    try { File.Delete(tempFile); } catch { }
+                }
+            }
+            if (hashMismatchCount > 0)
+                InstallFailureService.Append(app.DisplayName, app.Id, "direct",
+                    hashMismatchCount == 1
+                        ? "SHA256 mismatch"
+                        : $"SHA256 mismatch ({hashMismatchCount} зеркал)");
+            return null;
+        }
+
+        // ── Общий запуск elevated-установщика ──────────────────────────────────
+        // Стартует процесс с Verb=runas, ждёт завершения (убивая всё дерево при отмене)
+        // и интерпретирует код выхода. Возвращает null, если процесс не запустился;
+        // иначе Ok (0 или 3010) и Reboot (3010 = требуется перезагрузка) плюс код выхода.
+        private static async Task<(bool Ok, bool Reboot, int ExitCode)?> RunElevatedInstallerAsync(
+            ProcessStartInfo psi, CancellationToken token, Action<int>? onStarted = null)
+        {
+            using var proc = Process.Start(psi);
+            if (proc == null) return null;
+            onStarted?.Invoke(proc.Id);
+
+            while (!proc.HasExited)
+            {
+                if (token.IsCancellationRequested) { try { proc.Kill(entireProcessTree: true); } catch { } token.ThrowIfCancellationRequested(); }
+                await Task.Delay(100, token);
+            }
+
+            // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
+            return (proc.ExitCode == 0 || proc.ExitCode == 3010, proc.ExitCode == 3010, proc.ExitCode);
+        }
+
+        // ── Общий репорт успешной установки: прогресс + лог + история ───────────
+        private async Task<(bool Success, string Message, AppInstallProgress Progress)> ReportInstallSuccessAsync(
+            AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
+            bool reboot, string source, string statusOk, string logOk, string logReboot,
+            string messageOk, string messageReboot)
+        {
+            appProgress.Status = reboot ? "⚠ Установлено. Требуется перезагрузка." : statusOk;
+            appProgress.Percentage = 100;
+            progress.Report(appProgress);
+            Log(reboot ? logReboot : logOk);
+            if (ProfileService.Current.SaveInstallHistory)
+                await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, source, app.CategoryString);
+            return (true, reboot ? messageReboot : messageOk, appProgress);
         }
 
         // ── Помощники для выбора диска установки ───────────────────────────────

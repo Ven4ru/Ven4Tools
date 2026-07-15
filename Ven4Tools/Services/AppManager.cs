@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.Json;
+using Newtonsoft.Json;
 using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 using System.Diagnostics;
@@ -125,7 +125,7 @@ namespace Ven4Tools.Services
                 if (File.Exists(hiddenAppsPath))
                 {
                     var json = File.ReadAllText(hiddenAppsPath);
-                    var loaded = JsonSerializer.Deserialize<HashSet<string>>(json) ?? new HashSet<string>();
+                    var loaded = JsonConvert.DeserializeObject<HashSet<string>>(json) ?? new HashSet<string>();
                     lock (lockObj) { hiddenApps = loaded; }
                 }
             }
@@ -137,7 +137,7 @@ namespace Ven4Tools.Services
             try
             {
                 string json;
-                lock (lockObj) { json = JsonSerializer.Serialize(hiddenApps, new JsonSerializerOptions { WriteIndented = true }); }
+                lock (lockObj) { json = JsonConvert.SerializeObject(hiddenApps, Formatting.Indented); }
                 FileHelper.WriteAllTextAtomic(hiddenAppsPath, json);
             }
             catch (Exception ex) { AppLogger.Write($"[AppManager] SaveHiddenApps: {ex.Message}"); }
@@ -152,7 +152,7 @@ namespace Ven4Tools.Services
                 if (File.Exists(alternativesPath))
                 {
                     var json = File.ReadAllText(alternativesPath);
-                    var loaded = JsonSerializer.Deserialize<Dictionary<string, AlternativeSource>>(json)
+                    var loaded = JsonConvert.DeserializeObject<Dictionary<string, AlternativeSource>>(json)
                         ?? new Dictionary<string, AlternativeSource>();
 
                     lock (lockObj)
@@ -252,7 +252,7 @@ namespace Ven4Tools.Services
             try
             {
                 string json;
-                lock (lockObj) { json = JsonSerializer.Serialize(alternatives, new JsonSerializerOptions { WriteIndented = true }); }
+                lock (lockObj) { json = JsonConvert.SerializeObject(alternatives, Formatting.Indented); }
                 FileHelper.WriteAllTextAtomic(alternativesPath, json);
             }
             catch (Exception ex) { AppLogger.Write($"[AppManager] SaveAlternatives: {ex.Message}"); }
@@ -280,22 +280,6 @@ namespace Ven4Tools.Services
             {
                 return apps.FirstOrDefault(a => a.Id == appId);
             }
-        }
-
-        public void SaveSelectedApps(List<string> selectedIds)
-        {
-            try
-            {
-                var settings = new Dictionary<string, object>
-                {
-                    { "SelectedApps", selectedIds },
-                    { "LastUpdated", DateTime.Now }
-                };
-                
-                string selectionPath = configPath + ".selection";
-                FileHelper.WriteAllTextAtomic(selectionPath, JsonSerializer.Serialize(settings));
-            }
-            catch (Exception ex) { AppLogger.Write($"[AppManager] SaveSelectedApps: {ex.Message}"); }
         }
 
         public void AddUserApp(AppInfo app)
@@ -338,7 +322,7 @@ namespace Ven4Tools.Services
                 if (File.Exists(configPath))
                 {
                     var json = File.ReadAllText(configPath);
-                    var userApps = JsonSerializer.Deserialize<List<AppInfo>>(json);
+                    var userApps = JsonConvert.DeserializeObject<List<AppInfo>>(json);
                     if (userApps != null)
                     {
                         apps.AddRange(userApps);
@@ -353,7 +337,7 @@ namespace Ven4Tools.Services
             try
             {
                 var userApps = apps.Where(a => a.IsUserAdded).ToList();
-                FileHelper.WriteAllTextAtomic(configPath, JsonSerializer.Serialize(userApps, new JsonSerializerOptions { WriteIndented = true }));
+                FileHelper.WriteAllTextAtomic(configPath, JsonConvert.SerializeObject(userApps, Formatting.Indented));
             }
             catch (Exception ex) { AppLogger.Write($"[AppManager] SaveUserApps: {ex.Message}"); }
         }

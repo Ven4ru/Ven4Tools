@@ -140,11 +140,7 @@ namespace Ven4Tools.Services
                 ct.ThrowIfCancellationRequested();
 
                 var lines = WingetRunner.StripAnsi(output).Replace("\r", "").Split('\n');
-                int sepIdx = Array.FindIndex(lines, l =>
-                {
-                    string t = l.Trim();
-                    return t.Length >= 5 && t.Contains('-') && t.All(c => c == '-' || c == ' ');
-                });
+                int sepIdx = Array.FindIndex(lines, WingetRunner.IsTableSeparator);
                 if (sepIdx < 0) return 0;
 
                 int count = 0;
@@ -153,7 +149,7 @@ namespace Ven4Tools.Services
                     string line = lines[i];
                     if (string.IsNullOrWhiteSpace(line)) break; // начался футер
                     string t = line.Trim();
-                    if (t.All(c => c == '-' || c == ' ')) continue;
+                    if (WingetRunner.IsTableSeparator(line)) continue;
                     // Строки-суммарники футера winget («N upgrades available» и т.п.)
                     if (Regex.IsMatch(t, @"^\d+\b.*(package|upgrade)", RegexOptions.IgnoreCase)) break;
                     count++;
