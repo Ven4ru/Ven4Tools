@@ -977,27 +977,13 @@ namespace Ven4Tools.Views.Tabs
                     // (реестр/службы/удаление Appx), что и кнопка «Применить» на вкладке
                     // «Очистка» — там перед этим создаётся точка восстановления, здесь она
                     // нужна ровно по той же причине.
-                    txtSnapshotStatus.Text = "🛡️ Создаю точку восстановления...";
-                    AppLogger.Write("🛡️ Создаю точку восстановления перед восстановлением снапшота...");
-                    bool rpOk = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед восстановлением снапшота");
-                    AppLogger.Write(rpOk
-                        ? "✅ Точка восстановления создана"
-                        : "⚠️ Точка восстановления не создана");
-
-                    if (!rpOk)
+                    var rpOutcome = await UiGuards.ConfirmAndCreateRestorePointAsync(
+                        $"Будет применено твиков: {snapshot.DebloatTweakIds.Count}.\n\nСоздать точку восстановления Windows перед восстановлением снапшота?",
+                        "Ven4Tools — перед восстановлением снапшота");
+                    if (rpOutcome == RestorePointOutcome.Cancelled)
                     {
-                        var proceed = MessageBox.Show(
-                            "Не удалось создать точку восстановления системы.\n\n" +
-                            "Без неё откатить изменения штатными средствами Windows будет нельзя.\n\n" +
-                            "Продолжить восстановление снапшота без точки восстановления?",
-                            "Снапшоты — нет точки восстановления",
-                            MessageBoxButton.YesNo,
-                            MessageBoxImage.Warning);
-                        if (proceed != MessageBoxResult.Yes)
-                        {
-                            txtSnapshotStatus.Text = "Отменено: точка восстановления не создана";
-                            return;
-                        }
+                        txtSnapshotStatus.Text = "Отменено";
+                        return;
                     }
 
                     var progress = new Progress<string>(name => txtSnapshotStatus.Text = $"⚙️ {name}...");

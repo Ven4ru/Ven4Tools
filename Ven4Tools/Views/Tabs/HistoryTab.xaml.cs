@@ -104,13 +104,7 @@ namespace Ven4Tools.Views.Tabs
             // Проверяем занятость общего семафора установки ДО любых UI-мутаций
             // (лог "Переустановка...", блокировка кнопки) — семафор общий с
             // каталогом и Windows Update (Task 8).
-            if (InstallationService.IsBusy)
-            {
-                MessageBox.Show(
-                    "Дождитесь завершения текущей установки, затем повторите попытку.",
-                    "Установка занята", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            if (UiGuards.WarnIfInstallBusy()) return;
 
             var catalog = CatalogLoaderService.LoadedCatalog;
             var catalogApp = catalog?.Apps.FirstOrDefault(a => a.Id == entry.AppId);
