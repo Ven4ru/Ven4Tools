@@ -28,7 +28,6 @@ namespace Ven4Tools.Services
         public string Name { get; set; } = "";
         public string Type { get; set; } = "";
         public string Ip { get; set; } = "";
-        public bool IsUp { get; set; }
     }
 
     public static class DiagnosticsService
@@ -104,8 +103,7 @@ namespace Ven4Tools.Services
                         {
                             Name  = nic.Name,
                             Type  = nic.NetworkInterfaceType.ToString(),
-                            Ip    = ipv4?.Address.ToString() ?? "—",
-                            IsUp  = true
+                            Ip    = ipv4?.Address.ToString() ?? "—"
                         });
                     }
                 }
