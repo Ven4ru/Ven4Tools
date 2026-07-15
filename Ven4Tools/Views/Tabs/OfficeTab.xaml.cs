@@ -423,8 +423,18 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 SetPhase("🔐 Проверка подлинности установщика...");
+
+                // FileShare.Read держим открытым от проверки подписи до запуска
+                // установщика — запрещает подмену файла другим процессом того же
+                // пользователя в этом окне (TOCTOU), как в MainWindow.Components.cs
+                // (InstallWebView2Async/InstallVcRedistAsync лаунчера). Хендл
+                // закрывается явно (не using var на весь блок), чтобы не держать
+                // файл заблокированным для удаления в ветке отказа проверки ниже.
+                var installerHandle = new FileStream(installerPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
                 if (!VerifyMicrosoftInstallerSignature(installerPath, out string signatureError))
                 {
+                    installerHandle.Dispose();
                     AddLog("❌ Не удалось подтвердить подлинность установщика Microsoft — скачайте заново");
                     AddLog($"   Причина: {signatureError}");
                     TryDeleteDownloadedInstaller();
@@ -450,6 +460,9 @@ namespace Ven4Tools.Views.Tabs
                         UseShellExecute = true,
                         Verb            = "runas"
                     });
+                // ShellExecuteEx уже открыл/запустил файл к моменту возврата
+                // из Process.Start — хендл-защита от подмены больше не нужна.
+                installerHandle.Dispose();
 
                 if (bootstrapper != null)
                 {
