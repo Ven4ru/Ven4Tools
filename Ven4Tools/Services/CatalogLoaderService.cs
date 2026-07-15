@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Newtonsoft.Json;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
@@ -304,12 +304,9 @@ namespace Ven4Tools.Services
 
         private MasterCatalog Deserialize(string json)
         {
-            return JsonSerializer.Deserialize<MasterCatalog>(
-                       json,
-                       new JsonSerializerOptions
-                       {
-                           PropertyNameCaseInsensitive = true
-                       })
+            // Newtonsoft сопоставляет имена свойств без учёта регистра по умолчанию —
+            // прежний PropertyNameCaseInsensitive из System.Text.Json не нужен.
+            return JsonConvert.DeserializeObject<MasterCatalog>(json)
                    ?? new MasterCatalog();
         }
         // HttpClient общий (static) — живёт всё время работы приложения, не освобождается здесь.
