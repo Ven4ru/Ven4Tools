@@ -177,10 +177,6 @@ namespace Ven4Tools.Views.Tabs
                 AddLog(turbo.Value ? "⚡ Турбобуст: включён" : "⚡ Турбобуст: отключён");
         }
         
-        private static string SettingsPath => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Ven4Tools", "settings.json");
-
         private void LoadSettings()
         {
             // AppSettings is already loaded from the same file at startup
@@ -194,20 +190,11 @@ namespace Ven4Tools.Views.Tabs
 
         private void SaveSettings()
         {
-            try
-            {
-                var settings = new
-                {
-                    Notifications = chkNotifications.IsChecked ?? true,
-                    UpdateNotifications = chkUpdateNotifications.IsChecked ?? true,
-                    CatalogTimeout = (int)sliderCatalogTimeout.Value,
-                    CheckTimeout = (int)sliderCheckTimeout.Value
-                };
-                Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
-                File.WriteAllText(SettingsPath, Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented));
-                AppSettings.NotifyChanged();
-            }
-            catch (Exception ex) { AppLogger.Write($"[SystemTab] SaveSettings: {ex.Message}"); }
+            AppSettings.Save(
+                catalogTimeout:      (int)sliderCatalogTimeout.Value,
+                checkTimeout:        (int)sliderCheckTimeout.Value,
+                notifications:       chkNotifications.IsChecked ?? true,
+                updateNotifications: chkUpdateNotifications.IsChecked ?? true);
         }
         
         private async Task LoadSystemInfoAsync()
