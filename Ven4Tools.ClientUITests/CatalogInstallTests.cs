@@ -35,6 +35,13 @@ namespace Ven4Tools.ClientUITests
         private static AppSession? _session;
         private static string? _launchError;
 
+        // UI Automation (FlaUI/UIA3) требует STA-потока с насосом сообщений —
+        // VSTest по умолчанию гоняет тестовые методы на MTA, что на этом
+        // тесте (самое большое дерево каталога — 71 приложение) давало
+        // недетерминированный частичный/пустой результат FindAllDescendants.
+        // См. StaThreadPump.cs.
+        private static StaThreadPump? _staPump;
+
         private static readonly TimeSpan ElementTimeout = TimeSpan.FromSeconds(10);
         private static readonly TimeSpan InstallTimeout = TimeSpan.FromMinutes(3);
 
@@ -50,9 +57,10 @@ namespace Ven4Tools.ClientUITests
                 "{\"Mode\":\"per_category\",\"GlobalOrder\":[\"winget\",\"direct\",\"choco\"]," +
                 "\"CategoryPrimary\":{\"Другое\":\"direct\"}}");
 
+            _staPump = new StaThreadPump();
             try
             {
-                _session = AppSession.Launch();
+                _session = _staPump.Invoke(() => AppSession.Launch());
             }
             catch (Exception ex)
             {
@@ -64,8 +72,10 @@ namespace Ven4Tools.ClientUITests
         [ClassCleanup]
         public static void ClassCleanup()
         {
-            _session?.Dispose();
+            try { _staPump?.Invoke(() => _session?.Dispose()); } catch { }
             _session = null;
+            _staPump?.Dispose();
+            _staPump = null;
 
             try
             {
@@ -105,7 +115,13 @@ namespace Ven4Tools.ClientUITests
         public void Установка_ЧерезПрямуюСсылку_AutoHotkey_БезОшибкиSHA256_ИПереустановкаИзИстории()
         {
             var s = Require();
+            _staPump!.Invoke(() => RunInstallScenario(s));
+        }
 
+        // Вся FlaUI-логика — на STA-потоке пула (см. StaThreadPump.cs), не на
+        // MTA-потоке VSTest.
+        private static void RunInstallScenario(AppSession s)
+        {
             // Первый запуск показывает модальный мастер выбора режима каталога
             // (Ven4Tools.Views.CategorySelectionWindow) — это ОТДЕЛЬНОЕ окно (не
             // потомок MainWindow в дереве автоматизации, хотя у обоих одинаковый
@@ -151,9 +167,14 @@ namespace Ven4Tools.ClientUITests
             Assert.IsNotNull(catalogBtn, "Не найдена кнопка вкладки «Каталог».");
             catalogBtn!.AsButton().Invoke();
 
+            // Каталог грузится по цепочке хостинг(3с)→CDN(4с)→GitHub(таймаут из
+            // настроек, обычно 10с); при живом наблюдении реальная сетевая
+            // задержка иногда доходила до ~190с (единичная аномалия конкретного
+            // запроса, не воспроизводится через curl к тем же URL). Таймаут
+            // увеличен с большим запасом против прежних 30с, но не бесконечный.
             var checkBox = Retry.WhileNull(
                 () => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("chkApp_autohotkey")),
-                timeout: TimeSpan.FromSeconds(30),
+                timeout: TimeSpan.FromMinutes(3),
                 interval: TimeSpan.FromMilliseconds(300),
                 throwOnTimeout: false).Result;
 
