@@ -150,7 +150,7 @@ namespace Ven4Tools.Views.Tabs
                 {
                     var psi = new ProcessStartInfo
                     {
-                        FileName = "cscript.exe",
+                        FileName = Ven4Tools.Services.TrustedExecutablePaths.CScriptExe,
                         Arguments = $"//NoLogo \"{osppPath}\" /dstatus",
                         RedirectStandardOutput = true,
                         UseShellExecute = false,

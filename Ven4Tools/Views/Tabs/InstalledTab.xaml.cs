@@ -628,7 +628,7 @@ namespace Ven4Tools.Views.Tabs
                 if (!productCode.Success)
                     return false;
 
-                var startInfo = new ProcessStartInfo("msiexec.exe")
+                var startInfo = new ProcessStartInfo(Ven4Tools.Services.TrustedExecutablePaths.MsiExec)
                 {
                     UseShellExecute = true,
                     Verb            = "runas",

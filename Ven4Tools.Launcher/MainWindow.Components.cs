@@ -241,9 +241,12 @@ namespace Ven4Tools.Launcher
         {
             try
             {
+                var wingetPath = Services.TrustedExecutablePaths.ResolveWinget();
+                if (wingetPath == null) return (false, null, false);
+
                 var psi = new ProcessStartInfo
                 {
-                    FileName               = "winget.exe",
+                    FileName               = wingetPath,
                     Arguments              = "--version",
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true,
@@ -428,7 +431,7 @@ namespace Ven4Tools.Launcher
 
                     var psi = new ProcessStartInfo
                     {
-                        FileName               = "powershell.exe",
+                        FileName               = Services.TrustedExecutablePaths.PowerShellExe,
                         Arguments              = $"-NoProfile -ExecutionPolicy Bypass -File \"{tempScript}\"",
                         UseShellExecute        = false,
                         RedirectStandardOutput = true,
@@ -469,7 +472,7 @@ namespace Ven4Tools.Launcher
                             "Winget не обнаружен после установки.\n\nПерезагрузить компьютер сейчас?",
                             "Требуется перезагрузка", MessageBoxButton.YesNo, MessageBoxImage.Question);
                         if (reboot == MessageBoxResult.Yes)
-                            Process.Start(new ProcessStartInfo("shutdown", "/r /t 10") { UseShellExecute = true });
+                            Process.Start(new ProcessStartInfo(Services.TrustedExecutablePaths.ShutdownExe, "/r /t 10") { UseShellExecute = true });
                     }
                     else
                     {
