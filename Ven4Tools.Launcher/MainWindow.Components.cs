@@ -604,7 +604,7 @@ namespace Ven4Tools.Launcher
         // предупреждение лишний раз, чем оставить папку клиента в битом состоянии.
         private Process? FindRunningClientProcess()
         {
-            string clientExe = Path.Combine(_clientPath, "Ven4Tools.exe");
+            string clientExe = Path.Combine(_clientPath, LauncherPaths.ClientExeName);
             Process[] processes;
             try { processes = Process.GetProcessesByName("Ven4Tools"); }
             catch { return null; }
@@ -740,9 +740,7 @@ namespace Ven4Tools.Launcher
         {
             try
             {
-                string path = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Ven4Tools", "crash_last.json");
+                string path = LauncherPaths.CrashReportPath;
                 if (!System.IO.File.Exists(path)) return null;
                 return Newtonsoft.Json.JsonConvert.DeserializeObject<CrashReport>(
                     System.IO.File.ReadAllText(path));
