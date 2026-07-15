@@ -200,6 +200,19 @@ namespace Ven4Tools.Services
                 "$1<user>",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
+            // Тот же путь, но с forward-slash (встречается в URI/некоторых стектрейсах
+            // сторонних библиотек) и UNC-путь без буквы диска (\\server\Users\Имя\...).
+            text = System.Text.RegularExpressions.Regex.Replace(
+                text,
+                @"([A-Za-z]:/Users/)[^/\r\n]+",
+                "$1<user>",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            text = System.Text.RegularExpressions.Regex.Replace(
+                text,
+                @"(\\\\[^\\\r\n]+\\Users\\)[^\\\r\n]+",
+                "$1<user>",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
             // Убираем имя пользователя и имя машины из непутевого контекста (SQL-ошибки, UNC-пути).
             // Делаем это в конце — после замены путей на переменные окружения,
             // иначе имя внутри путей пропало бы и %LOCALAPPDATA%/%USERPROFILE% не сработали.

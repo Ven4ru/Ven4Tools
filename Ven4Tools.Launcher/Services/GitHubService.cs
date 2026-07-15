@@ -289,6 +289,20 @@ namespace Ven4Tools.Launcher.Services
                 "$1<пользователь>",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
+            // Тот же путь с forward-slash и UNC-путь без буквы диска — тот же класс,
+            // что и в клиентском CrashReportService.SanitizePath (кросс-модульная
+            // согласованность).
+            text = System.Text.RegularExpressions.Regex.Replace(
+                text,
+                @"([A-Za-z]:/Users/)[^/\r\n]+",
+                "$1<пользователь>",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            text = System.Text.RegularExpressions.Regex.Replace(
+                text,
+                @"(\\\\[^\\\r\n]+\\Users\\)[^\\\r\n]+",
+                "$1<пользователь>",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
             // Имя пользователя и имя машины в произвольных местах текста.
             // Короткие значения (< 3 символов) не заменяем — слишком много ложных срабатываний.
             string user = Environment.UserName;

@@ -337,7 +337,11 @@ namespace Ven4Tools.Services
 
                                 string urlExt = Path.GetExtension(new Uri(url).LocalPath).ToLowerInvariant();
                                 if (string.IsNullOrEmpty(urlExt) || (urlExt != ".exe" && urlExt != ".msi")) urlExt = ".exe";
-                                string tempFile = Path.Combine(Path.GetTempPath(), $"{app.Id}_{Guid.NewGuid()}{urlExt}");
+                                // primaryId (AlternativeId ?? app.Id) уже провалидирован выше (строка 235),
+                                // но в ветке с AlternativeId сам app.Id остаётся непроверенным — а именно
+                                // он идёт в имя временного файла. Тот же ValidateId, иначе безопасный плейсхолдер.
+                                string idForTempFile = CommandLineGuard.ValidateId(app.Id) ? app.Id : "app";
+                                string tempFile = Path.Combine(Path.GetTempPath(), $"{idForTempFile}_{Guid.NewGuid()}{urlExt}");
                                 try
                                 {
                                     // Таймаут 30 секунд только на установление соединения и заголовки;

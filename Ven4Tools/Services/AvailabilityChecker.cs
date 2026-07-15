@@ -206,6 +206,10 @@ namespace Ven4Tools.Services
 
         private async Task<(AvailabilityStatus Status, long SizeMB)> GetUrlInfo(string url)
         {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var parsed) ||
+                parsed.Scheme != Uri.UriSchemeHttps)
+                return (AvailabilityStatus.Unavailable, 0);
+
             try
             {
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
