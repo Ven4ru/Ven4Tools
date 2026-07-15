@@ -287,7 +287,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 string logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "logs");
                 Directory.CreateDirectory(logsPath);
-                Process.Start("explorer.exe", logsPath);
+                Process.Start(Ven4Tools.Services.TrustedExecutablePaths.ExplorerExe, logsPath);
                 AddLog($"📁 Открыта папка логов: {logsPath}");
             }
             catch (Exception ex)
@@ -313,7 +313,7 @@ namespace Ven4Tools.Views.Tabs
                 var preview = string.Join("\n", lines.Skip(Math.Max(0, lines.Length - 50)));
                 txtLatestLog.Text = preview;
 
-                Process.Start(new ProcessStartInfo { FileName = "notepad.exe", Arguments = latestLog, UseShellExecute = true });
+                Process.Start(new ProcessStartInfo { FileName = Ven4Tools.Services.TrustedExecutablePaths.NotepadExe, Arguments = latestLog, UseShellExecute = true });
                 AddLog($"📄 Открыт лог: {Path.GetFileName(latestLog)}");
             }
             catch (Exception ex)
@@ -444,7 +444,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "powercfg",
+                    FileName = Ven4Tools.Services.TrustedExecutablePaths.PowerCfgExe,
                     Arguments = $"/query SCHEME_CURRENT {TurboSubgroup} {TurboSetting}",
                     UseShellExecute = false,
                     CreateNoWindow = true,
@@ -473,7 +473,7 @@ namespace Ven4Tools.Views.Tabs
         {
             var psi = new ProcessStartInfo
             {
-                FileName = "powercfg",
+                FileName = Ven4Tools.Services.TrustedExecutablePaths.PowerCfgExe,
                 Arguments = args,
                 UseShellExecute = false,
                 CreateNoWindow = true,

@@ -50,7 +50,7 @@ namespace Ven4Tools.Views
 
         private void BtnRestartNow_Click(object sender, RoutedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo("shutdown", "/r /t 5") { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(Ven4Tools.Services.TrustedExecutablePaths.ShutdownExe, "/r /t 5") { UseShellExecute = true });
             Close();
         }
     }

@@ -13,9 +13,12 @@ namespace Ven4Tools.Services
             if (!CommandLineGuard.ValidateId(wingetId)) return new List<string>();
             try
             {
+                var wingetPath = TrustedExecutablePaths.ResolveWinget();
+                if (wingetPath == null) return new List<string>();
+
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "winget",
+                    FileName = wingetPath,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
