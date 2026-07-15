@@ -333,14 +333,13 @@ namespace Ven4Tools.Views.Tabs
                 int code = await WingetRunner.RunStreamingAsync(
                     "upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements",
                     msg => Log(msg));
-                if (code == 0)
-                    Log("✅ Обновление всех приложений завершено");
-                else if (code == 3010 || code == unchecked((int)0x8A15002C))
-                    Log("✅ Обновление завершено. Для применения некоторых обновлений требуется перезагрузка.");
-                else if (code == unchecked((int)0x8A15002B) || code == unchecked((int)0x8A150014))
-                    Log("⚠ Некоторые обновления недоступны — версии в источнике не подходят для данной системы.");
+                var upgrade = DescribeWingetExitCode(code);
+                if (upgrade.Success)
+                    Log(upgrade.Reboot
+                        ? "✅ Обновление завершено. Для применения некоторых обновлений требуется перезагрузка."
+                        : "✅ Обновление всех приложений завершено");
                 else
-                    Log($"⚠ winget завершился с кодом {code}");
+                    Log($"⚠ {upgrade.Reason}");
             }
             catch (Exception ex)
             {
@@ -473,34 +472,20 @@ namespace Ven4Tools.Views.Tabs
                 string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements";
                 int code = await WingetRunner.RunStreamingAsync(args, line => Log($"  {line}"),
                     TimeSpan.FromMinutes(15));
-                if (code == 0)
+                var exit = DescribeWingetExitCode(code);
+                if (exit.Success)
                 {
+                    // Успех, в т.ч. коды «требуется перезагрузка» (3010 / 0x8A15002C)
                     app.Available = "";
                     Dispatcher.Invoke(() => { ApplyFilter(); UpdateStats(); });
-                    Log($"✅ {app.Name} обновлён");
+                    Log(exit.Reboot
+                        ? $"✅ {app.Name} обновлён (требуется перезагрузка для завершения)"
+                        : $"✅ {app.Name} обновлён");
                 }
-                else if (code == 3010 || code == unchecked((int)0x8A15002C))
-                {
-                    // 3010 = Windows installer reboot required; 0x8A15002C = winget reboot required to finish
-                    app.Available = "";
-                    Dispatcher.Invoke(() => { ApplyFilter(); UpdateStats(); });
-                    Log($"✅ {app.Name} обновлён (требуется перезагрузка для завершения)");
-                }
-                else if (code == unchecked((int)0x8A15002B) || code == unchecked((int)0x8A150014))
-                {
-                    // 0x8A15002B / 0x8A150014 = No applicable upgrade found:
-                    // доступная версия в источнике не подходит для данной системы (архитектура, требования и т.п.)
-                    Log($"⚠ {app.Name}: обновление недоступно — версия {app.Available} не применима к данной системе");
-                }
-                else if (code == unchecked((int)0x80072EE2) || code == unchecked((int)0x80072EFE))
-                {
-                    // 0x80072EE2 = WININET_E_TIMEOUT / 0x80072EFE = WININET_E_CONNECTION_ABORTED —
-                    // источник (msstore и др.) недоступен по сети, обновление не применено
-                    Log($"⚠ {app.Name}: ошибка сети — источник недоступен, попробуйте позже");
-                }
+                // code == -1 (таймаут/принудительно завершён) не логируем здесь — обрабатывается отдельно
                 else if (code != -1)
                 {
-                    Log($"⚠ {app.Name}: winget завершился с кодом {code}");
+                    Log($"⚠ {app.Name}: {exit.Reason}");
                 }
             }
             catch (Exception ex) { Log($"❌ {app.Name}: {ex.Message}"); }
@@ -695,6 +680,23 @@ namespace Ven4Tools.Views.Tabs
         }
 
         private static void Log(string msg) => AppLogger.Write(msg);
+
+        // Расшифровка кода выхода winget/COM в единый результат: успех операции,
+        // требуется ли перезагрузка и причина неуспеха. Централизует разбор hex-кодов,
+        // ранее продублированный в BtnUpgradeAll_Click и UpdateAppAsync.
+        // Примечание: деинсталляция (TryUninstallAsync) трактует 0x8A150014 как «пакет
+        // не установлен» = успех — иная семантика, поэтому сюда намеренно не сведена.
+        private static (bool Success, bool Reboot, string Reason) DescribeWingetExitCode(int code) => code switch
+        {
+            0                          => (true,  false, ""),
+            3010                       => (true,  true,  ""),
+            unchecked((int)0x8A15002C) => (true,  true,  ""),
+            unchecked((int)0x8A15002B) => (false, false, "обновление недоступно — версия в источнике не подходит для данной системы"),
+            unchecked((int)0x8A150014) => (false, false, "обновление недоступно — версия в источнике не подходит для данной системы"),
+            unchecked((int)0x80072EE2) => (false, false, "ошибка сети — источник недоступен, попробуйте позже"),
+            unchecked((int)0x80072EFE) => (false, false, "ошибка сети — источник недоступен, попробуйте позже"),
+            _                          => (false, false, $"winget завершился с кодом {code}")
+        };
 
         // ── Групповое удаление ────────────────────────────────────────────────
 
