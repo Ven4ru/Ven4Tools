@@ -19,7 +19,7 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class SystemTab : UserControl
     {
-        
+
         // ── Source order ──────────────────────────────────────────────────────────
 
         private sealed class SourceItem
