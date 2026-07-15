@@ -115,12 +115,12 @@ namespace Ven4Tools.Views.Tabs
                 txtSnapshotStatus.Text =
                     $"✅ Восстановлено {DateTime.Now:HH:mm:ss}: твиков {succeeded}/{total}" +
                     (presetsOk ? $", пресетов {snapshot.Presets.Count}" : ", ошибка восстановления пресетов");
-                AddLog($"📸 Снапшот «{snapshot.Name}» восстановлен: твиков {succeeded}/{total}, пресетов {snapshot.Presets.Count}");
+                AppLogger.Write($"📸 Снапшот «{snapshot.Name}» восстановлен: твиков {succeeded}/{total}, пресетов {snapshot.Presets.Count}");
             }
             catch (Exception ex)
             {
                 txtSnapshotStatus.Text = $"❌ Ошибка восстановления: {ex.Message}";
-                AddLog($"[Снапшоты] Ошибка восстановления: {ex.Message}");
+                AppLogger.Write($"[Снапшоты] Ошибка восстановления: {ex.Message}");
             }
             finally { btn.IsEnabled = true; }
         }
@@ -137,7 +137,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 _snapshots.Remove(info);
                 txtSnapshotsEmpty.Visibility = _snapshots.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-                AddLog($"🗑️ Снапшот «{info.Name}» удалён");
+                AppLogger.Write($"🗑️ Снапшот «{info.Name}» удалён");
             }
         }
     }

@@ -56,14 +56,14 @@ namespace Ven4Tools.Views.Tabs
 
                 var result = ProfileExportService.Export(dlg.FileName);
                 txtTransferStatus.Text = result.Message;
-                AddLog(result.Success ? $"📤 {result.Message}" : $"❌ {result.Message}");
+                AppLogger.Write(result.Success ? $"📤 {result.Message}" : $"❌ {result.Message}");
                 if (!result.Success)
                     MessageBox.Show(result.Message, "Экспорт настроек",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка экспорта настроек: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка экспорта настроек: {ex.Message}");
                 MessageBox.Show($"Не удалось экспортировать настройки: {ex.Message}",
                     "Экспорт настроек", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -87,7 +87,7 @@ namespace Ven4Tools.Views.Tabs
 
                 var result = ProfileExportService.Import(dlg.FileName);
                 txtTransferStatus.Text = result.Message;
-                AddLog(result.Success ? $"📥 {result.Message}" : $"❌ {result.Message}");
+                AppLogger.Write(result.Success ? $"📥 {result.Message}" : $"❌ {result.Message}");
 
                 if (!result.Success)
                 {
@@ -110,7 +110,7 @@ namespace Ven4Tools.Views.Tabs
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка импорта настроек: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка импорта настроек: {ex.Message}");
                 MessageBox.Show($"Не удалось импортировать настройки: {ex.Message}",
                     "Импорт настроек", MessageBoxButton.OK, MessageBoxImage.Error);
             }

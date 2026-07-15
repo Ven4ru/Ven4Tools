@@ -96,9 +96,8 @@ namespace Ven4Tools.Views.Tabs
 
             bool? turbo = await GetTurboBoostStateAsync();
             if (turbo.HasValue)
-                AddLog(turbo.Value ? "⚡ Турбобуст: включён" : "⚡ Турбобуст: отключён");
+                AppLogger.Write(turbo.Value ? "⚡ Турбобуст: включён" : "⚡ Турбобуст: отключён");
         }
 
-        private static void AddLog(string message) => AppLogger.Write(message);
     }
 }

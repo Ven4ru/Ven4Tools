@@ -122,7 +122,7 @@ namespace Ven4Tools.Views.Tabs
                 OfflineService.EnsureCacheDir();
                 Process.Start(new ProcessStartInfo(OfflineService.CachePath) { UseShellExecute = true });
             }
-            catch (Exception ex) { AddLog($"❌ {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ {ex.Message}"); }
         }
 
         private void BtnClearCache_Click(object sender, RoutedEventArgs e)
@@ -133,7 +133,7 @@ namespace Ven4Tools.Views.Tabs
             OfflineService.ClearCache();
             UpdateCacheStats();
             LoadCacheAppsList();
-            AddLog("✅ Кэш очищен");
+            AppLogger.Write("✅ Кэш очищен");
         }
 
         private async void BtnDownloadToCache_Click(object sender, RoutedEventArgs e)
@@ -207,12 +207,12 @@ namespace Ven4Tools.Views.Tabs
                     : $"✅ Готово: {done}/{total}{(errors > 0 ? $", ошибок: {errors}" : "")}";
                 txtCacheLog.AppendText($"\n{summary}\n");
                 txtCacheLog.ScrollToEnd();
-                AddLog(summary);
+                AppLogger.Write(summary);
             }
             catch (Exception ex)
             {
                 txtCacheLog.AppendText($"❌ Ошибка: {ex.Message}\n");
-                AddLog($"❌ Ошибка кэширования: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка кэширования: {ex.Message}");
             }
             finally
             {
