@@ -19,7 +19,7 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class SystemTab : UserControl
     {
-        
+
         private void LoadSettings()
         {
             // AppSettings is already loaded from the same file at startup
