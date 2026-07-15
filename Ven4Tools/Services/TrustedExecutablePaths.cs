@@ -138,7 +138,12 @@ namespace Ven4Tools.Services
         private static readonly System.Collections.Generic.Dictionary<string, bool> _compromisedCache = new();
         private static readonly object _compromisedCacheLock = new();
 
-        private static bool IsDirectoryAclCompromised(string dirPath)
+        /// <summary>
+        /// Внутри сборки используется также AppLaunchResolver — Play-кнопка резолвит
+        /// exe из InstallLocation HKLM-приложений, каталог которых может оказаться
+        /// со слабой ACL (не только App Execution Alias/Chocolatey из этого класса).
+        /// </summary>
+        internal static bool IsDirectoryAclCompromised(string dirPath)
         {
             lock (_compromisedCacheLock)
             {

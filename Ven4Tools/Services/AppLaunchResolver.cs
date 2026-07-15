@@ -258,6 +258,16 @@ namespace Ven4Tools.Services
                                 continue;
                             if (!Directory.Exists(installLocation)) continue;
 
+                            // InstallLocation приходит из HKLM (сам ключ Uninstall защищён),
+                            // но каталог, на который он указывает, не обязан быть Program
+                            // Files — некоторые инсталляторы кладут его в ProgramData или
+                            // иной путь со слабой ACL. Play-кнопка запускает найденный exe
+                            // в elevated-клиенте — тот же класс риска, что и у System32-
+                            // бинарников в TrustedExecutablePaths: fail-closed, если каталог
+                            // разрешает запись кому-то, кроме SYSTEM/Administrators/TrustedInstaller.
+                            if (TrustedExecutablePaths.IsDirectoryAclCompromised(installLocation))
+                                continue;
+
                             string? exe = FindBestExeInDirectory(installLocation, displayName);
                             if (exe != null)
                                 result.Add(new Candidate(Normalize(displayName), exe));
