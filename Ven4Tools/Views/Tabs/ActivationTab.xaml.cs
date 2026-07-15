@@ -44,11 +44,11 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 Process.Start(new ProcessStartInfo("https://massgrave.dev") { UseShellExecute = true });
-                AddLog("🌐 Открыт сайт для управления лицензией Windows");
+                AppLogger.Write("🌐 Открыт сайт для управления лицензией Windows");
                 var guide = new MasGuideWindow("Windows") { Owner = Window.GetWindow(this) };
                 guide.Show();
             }
-            catch (Exception ex) { AddLog($"❌ Ошибка: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
         }
 
         // Открывает сайт и окно-помощник для активации Office
@@ -57,11 +57,11 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 Process.Start(new ProcessStartInfo("https://massgrave.dev") { UseShellExecute = true });
-                AddLog("🌐 Открыт сайт для управления лицензией Office");
+                AppLogger.Write("🌐 Открыт сайт для управления лицензией Office");
                 var guide = new MasGuideWindow("Office") { Owner = Window.GetWindow(this) };
                 guide.Show();
             }
-            catch (Exception ex) { AddLog($"❌ Ошибка: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
         }
 
         private async Task CheckActivationStatusAsync()
@@ -75,7 +75,7 @@ namespace Ven4Tools.Views.Tabs
                 {
                     try
                     {
-                        using (var searcher = new ManagementObjectSearcher("SELECT LicenseStatus, Name FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL"))
+                        using (var searcher = CreateLicensingSearcher())
                         using (var results = searcher.Get())
                         {
                             foreach (ManagementBaseObject obj in results)
@@ -114,7 +114,7 @@ namespace Ven4Tools.Views.Tabs
                         {
                             txtWindowsStatus.Text = "⚠️ Ошибка";
                             txtWindowsStatus.Foreground = new SolidColorBrush(Colors.Orange);
-                            AddLog($"❌ Ошибка проверки Windows: {ex.Message}");
+                            AppLogger.Write($"❌ Ошибка проверки Windows: {ex.Message}");
                         });
                     }
                 });
@@ -123,7 +123,7 @@ namespace Ven4Tools.Views.Tabs
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка проверки статуса: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка проверки статуса: {ex.Message}");
             }
         }
 
@@ -183,9 +183,7 @@ namespace Ven4Tools.Views.Tabs
                 }
 
                 // Запасной вариант: WMI SoftwareLicensingProduct
-                using var searcher = new ManagementObjectSearcher(
-                    "SELECT LicenseStatus, Name FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL");
-
+                using var searcher = CreateLicensingSearcher();
                 using var results = searcher.Get();
                 foreach (ManagementBaseObject obj in results)
                 using (obj)
@@ -225,7 +223,7 @@ namespace Ven4Tools.Views.Tabs
                 {
                     txtOfficeStatus.Text = "⚠️ Ошибка";
                     txtOfficeStatus.Foreground = new SolidColorBrush(Colors.Orange);
-                    AddLog($"❌ Ошибка проверки Office: {ex.Message}");
+                    AppLogger.Write($"❌ Ошибка проверки Office: {ex.Message}");
                 });
             }
         }
@@ -250,11 +248,11 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 await CheckActivationStatusAsync();
-                AddLog("🔄 Статус активации обновлён");
+                AppLogger.Write("🔄 Статус активации обновлён");
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка: {ex.Message}");
             }
             finally
             {
@@ -262,6 +260,9 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private static void AddLog(string message) => AppLogger.Write(message);
+        // Единый WMI-запрос лицензий (Windows и Office) — используется при проверке
+        // статуса активации и в запасном варианте для Office.
+        private static ManagementObjectSearcher CreateLicensingSearcher() =>
+            new("SELECT LicenseStatus, Name FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL");
     }
 }

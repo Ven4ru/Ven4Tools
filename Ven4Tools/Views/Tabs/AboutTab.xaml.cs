@@ -105,11 +105,11 @@ namespace Ven4Tools.Views.Tabs
                     FileName = "https://github.com/Ven4ru/Ven4Tools",
                     UseShellExecute = true
                 });
-                AddLog("🌐 Открыт GitHub репозиторий");
+                AppLogger.Write("🌐 Открыт GitHub репозиторий");
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка: {ex.Message}");
             }
         }
         
@@ -134,11 +134,11 @@ namespace Ven4Tools.Views.Tabs
                     UseShellExecute = true
                 });
                 
-                AddLog("📧 Открыта форма обратной связи");
+                AppLogger.Write("📧 Открыта форма обратной связи");
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка открытия обратной связи: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка открытия обратной связи: {ex.Message}");
                 MessageBox.Show("Не удалось открыть форму обратной связи.\n" +
                                 "Пожалуйста, напишите на GitHub вручную:\n" +
                                 "https://github.com/Ven4ru/Ven4Tools/issues",
@@ -174,11 +174,11 @@ namespace Ven4Tools.Views.Tabs
                     UseShellExecute = true
                 });
                 
-                AddLog("🐛 Открыта форма сообщения о проблеме");
+                AppLogger.Write("🐛 Открыта форма сообщения о проблеме");
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка: {ex.Message}");
             }
         }
         
@@ -207,7 +207,5 @@ namespace Ven4Tools.Views.Tabs
                 return "Не удалось прочитать лог";
             }
         }
-        
-        private static void AddLog(string message) => AppLogger.Write(message);
     }
 }

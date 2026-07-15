@@ -63,7 +63,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 _cancellationTokenSource?.Cancel();
                 btnCancelOffice.IsEnabled = false;
-                AddLog("⏹️ Запрос отмены...");
+                AppLogger.Write("⏹️ Запрос отмены...");
             };
             btnGoActivation.Click += (_, _) => GoToActivation?.Invoke();
 
@@ -140,7 +140,7 @@ namespace Ven4Tools.Views.Tabs
                 };
                 File.WriteAllText(_regionBackupPath, JsonConvert.SerializeObject(backup));
             }
-            catch (Exception ex) { AddLog($"⚠️ Сохранение маркера региона: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"⚠️ Сохранение маркера региона: {ex.Message}"); }
         }
 
         // Восстановление региона из persistent-маркера при старте (после hard-kill).
@@ -205,9 +205,9 @@ namespace Ven4Tools.Views.Tabs
                 catch { /* игнорируем */ }
 
                 try { File.Delete(_regionBackupPath); } catch { }
-                AddLog("🔁 Регион восстановлен после аварийного завершения предыдущей установки Office");
+                AppLogger.Write("🔁 Регион восстановлен после аварийного завершения предыдущей установки Office");
             }
-            catch (Exception ex) { AddLog($"⚠️ Восстановление региона из маркера: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"⚠️ Восстановление региона из маркера: {ex.Message}"); }
         }
 
         // Валидация значений региона из region_backup.json перед записью в реестр.
@@ -237,7 +237,7 @@ namespace Ven4Tools.Views.Tabs
                     @"Software\Microsoft\Office\16.0\Common\ExperimentConfigs\Ecs");
                 key?.SetValue("CountryCode", "std::wstring|US", RegistryValueKind.String);
             }
-            catch (Exception ex) { AddLog($"⚠️ Office CountryCode: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"⚠️ Office CountryCode: {ex.Message}"); }
 
             // Windows GeoID (Name = код ISO-3166 alpha-2, Nation = числовой GeoID)
             try
@@ -249,9 +249,9 @@ namespace Ven4Tools.Views.Tabs
                     geo.SetValue("Nation", "244", RegistryValueKind.String);
                 }
                 else
-                    AddLog("⚠️ Control Panel\\International\\Geo — ключ не найден");
+                    AppLogger.Write("⚠️ Control Panel\\International\\Geo — ключ не найден");
             }
-            catch (Exception ex) { AddLog($"⚠️ Windows GeoID: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"⚠️ Windows GeoID: {ex.Message}"); }
 
             UpdateRegionDisplay();
         }
@@ -271,7 +271,7 @@ namespace Ven4Tools.Views.Tabs
                         key.DeleteValue("CountryCode", throwOnMissingValue: false);
                 }
             }
-            catch (Exception ex) { AddLog($"⚠️ Восстановление Office CC: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"⚠️ Восстановление Office CC: {ex.Message}"); }
 
             // Windows GeoID
             try
@@ -288,7 +288,7 @@ namespace Ven4Tools.Views.Tabs
                         geo.DeleteValue("Nation", throwOnMissingValue: false);
                 }
             }
-            catch (Exception ex) { AddLog($"⚠️ Восстановление Windows GeoID: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"⚠️ Восстановление Windows GeoID: {ex.Message}"); }
 
             // Регистр восстановлен — удаляем persistent-маркер, он больше не нужен.
             try { if (File.Exists(_regionBackupPath)) File.Delete(_regionBackupPath); } catch { }
@@ -320,7 +320,7 @@ namespace Ven4Tools.Views.Tabs
             var token = _cancellationTokenSource.Token;
 
             SetProgress(true, "⏳ Подготовка...", 0, "");
-            AddLog($"\n📥 Скачивание {displayName} ({lang})...");
+            AppLogger.Write($"\n📥 Скачивание {displayName} ({lang})...");
 
             string tempFile = Path.Combine(Path.GetTempPath(), $"OfficeSetup_{Guid.NewGuid():N}.exe");
 
@@ -362,7 +362,7 @@ namespace Ven4Tools.Views.Tabs
                 }
 
                 var fi = new FileInfo(tempFile);
-                AddLog($"✅ Скачано: {fi.Length / 1_048_576.0:F1} МБ");
+                AppLogger.Write($"✅ Скачано: {fi.Length / 1_048_576.0:F1} МБ");
                 SetProgress(true, "✅ Скачано! Нажмите «Установить»", 100,
                     $"{fi.Length / 1_048_576.0:F1} МБ");
 
@@ -371,13 +371,13 @@ namespace Ven4Tools.Views.Tabs
             }
             catch (OperationCanceledException)
             {
-                AddLog("⏹️ Скачивание отменено");
+                AppLogger.Write("⏹️ Скачивание отменено");
                 SetProgress(true, "⏹️ Отменено", 0, "");
                 try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка скачивания: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка скачивания: {ex.Message}");
                 SetProgress(true, "❌ Ошибка", 0, "");
                 try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
                 MessageBox.Show("Не удалось скачать Office. Проверьте подключение к интернету и попробуйте ещё раз.",
@@ -401,7 +401,7 @@ namespace Ven4Tools.Views.Tabs
         {
             if (_downloadedFilePath == null || !File.Exists(_downloadedFilePath))
             {
-                AddLog("⚠️ Файл установщика не найден — скачайте снова.");
+                AppLogger.Write("⚠️ Файл установщика не найден — скачайте снова.");
                 btnInstallOffice.IsEnabled = false;
                 return;
             }
@@ -418,7 +418,7 @@ namespace Ven4Tools.Views.Tabs
             bool regionChanged = false;
 
             SetProgress(true, "⏳ Подготовка установки...", 0, "");
-            AddLog($"\n🚀 Установка {displayName}...");
+            AppLogger.Write($"\n🚀 Установка {displayName}...");
 
             try
             {
@@ -435,20 +435,20 @@ namespace Ven4Tools.Views.Tabs
                 if (!VerifyMicrosoftInstallerSignature(installerPath, out string signatureError))
                 {
                     installerHandle.Dispose();
-                    AddLog("❌ Не удалось подтвердить подлинность установщика Microsoft — скачайте заново");
-                    AddLog($"   Причина: {signatureError}");
+                    AppLogger.Write("❌ Не удалось подтвердить подлинность установщика Microsoft — скачайте заново");
+                    AppLogger.Write($"   Причина: {signatureError}");
                     TryDeleteDownloadedInstaller();
                     SetProgress(true, "❌ Подлинность не подтверждена", 0, "Скачайте установщик заново.");
                     MessageBox.Show("Не удалось подтвердить подлинность установщика Microsoft — скачайте заново.",
                         "Проверка установщика", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
-                AddLog("✅ Подпись установщика Microsoft подтверждена");
+                AppLogger.Write("✅ Подпись установщика Microsoft подтверждена");
 
                 SaveRegion();
                 regionChanged = true; // до SetRegionUS — чтобы finally откатил даже при исключении внутри
                 SetRegionUS();
-                AddLog("🌎 Регион переключён на US (GeoID: 244, CountryCode: US)");
+                AppLogger.Write("🌎 Регион переключён на US (GeoID: 244, CountryCode: US)");
 
                 SetPhase("🚀 Запуск установщика...");
                 var existingPids = GetC2RProcessPids();
@@ -469,9 +469,9 @@ namespace Ven4Tools.Views.Tabs
                     await bootstrapper.WaitForExitAsync(token);
                     if (bootstrapper.ExitCode != 0)
                     {
-                        AddLog($"❌ Установщик завершился с кодом {bootstrapper.ExitCode}");
-                        AddLog("   Вероятная причина: CDN Microsoft заблокирован в вашем регионе.");
-                        AddLog("   Попробуйте использовать VPN и повторить установку.");
+                        AppLogger.Write($"❌ Установщик завершился с кодом {bootstrapper.ExitCode}");
+                        AppLogger.Write("   Вероятная причина: CDN Microsoft заблокирован в вашем регионе.");
+                        AppLogger.Write("   Попробуйте использовать VPN и повторить установку.");
                         SetProgress(true, $"❌ Сбой установки (код {bootstrapper.ExitCode})", 0,
                             "CDN Microsoft может быть недоступен. Попробуйте VPN.");
                         return;
@@ -481,17 +481,17 @@ namespace Ven4Tools.Views.Tabs
                 token.ThrowIfCancellationRequested();
 
                 SetPhase("⚙️ Установка Office... не закрывайте приложение");
-                AddLog("⏳ Ожидаем запуск C2R-установщика...");
+                AppLogger.Write("⏳ Ожидаем запуск C2R-установщика...");
 
                 using var installProc = await WaitForC2RProcess(existingPids, TimeSpan.FromMinutes(3), token);
 
                 if (installProc == null)
                 {
-                    AddLog("⚠️ Процесс установки не обнаружен — возможно Office уже установлен или завершился мгновенно");
+                    AppLogger.Write("⚠️ Процесс установки не обнаружен — возможно Office уже установлен или завершился мгновенно");
                 }
                 else
                 {
-                    AddLog($"🔍 Мониторинг: {installProc.ProcessName} (PID {installProc.Id})");
+                    AppLogger.Write($"🔍 Мониторинг: {installProc.ProcessName} (PID {installProc.Id})");
                     SetProgress(true, "⚙️ Установка Office...", 0, "Идёт установка, пожалуйста подождите...");
                     progressOffice.IsIndeterminate = true;
                     await MonitorInstallation(installProc, token);
@@ -502,7 +502,7 @@ namespace Ven4Tools.Views.Tabs
 
                 RestoreRegion();
                 regionChanged = false;
-                AddLog("✅ Установка завершена — регион восстановлен");
+                AppLogger.Write("✅ Установка завершена — регион восстановлен");
                 SetProgress(true, "✅ Офис установлен!", 100, "Регион восстановлен");
 
                 if (chkSaveInstaller.IsChecked != true)
@@ -512,12 +512,12 @@ namespace Ven4Tools.Views.Tabs
             }
             catch (OperationCanceledException)
             {
-                AddLog("⏹️ Установка отменена");
+                AppLogger.Write("⏹️ Установка отменена");
                 SetProgress(true, "⏹️ Отменено", 0, "");
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка установки: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка установки: {ex.Message}");
                 SetProgress(true, "❌ Ошибка установки", 0, "");
                 MessageBox.Show("Не удалось установить Office. Попробуйте ещё раз или установите вручную.",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -527,7 +527,7 @@ namespace Ven4Tools.Views.Tabs
                 if (regionChanged)
                 {
                     RestoreRegion();
-                    AddLog("🔁 Регион восстановлен (аварийный сброс)");
+                    AppLogger.Write("🔁 Регион восстановлен (аварийный сброс)");
                 }
                 _cancellationTokenSource?.Dispose();
                 _cancellationTokenSource = null;
@@ -747,7 +747,7 @@ namespace Ven4Tools.Views.Tabs
             }
 
             if (!proc.HasExited)
-                AddLog("⚠️ Таймаут ожидания — продолжаем без подтверждения");
+                AppLogger.Write("⚠️ Таймаут ожидания — продолжаем без подтверждения");
         }
 
         // ── Вспомогательные методы ────────────────────────────────────────────
@@ -802,6 +802,5 @@ namespace Ven4Tools.Views.Tabs
         private void SetDetail(string text) =>
             Dispatcher.Invoke(() => txtInstallDetail.Text = text);
 
-        private static void AddLog(string message) => AppLogger.Write(message);
     }
 }

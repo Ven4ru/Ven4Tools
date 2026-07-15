@@ -33,13 +33,13 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 await ApplyTurboBoostAsync(false);
-                AddLog("⚡ Турбобуст отключён");
+                AppLogger.Write("⚡ Турбобуст отключён");
                 MessageBox.Show("✅ Турбобуст отключён.\nИзменение применено немедленно — перезагрузка не требуется.",
                     "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка при отключении турбобуста: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка при отключении турбобуста: {ex.Message}");
                 MessageBox.Show("Не удалось отключить турбобуст. Запустите приложение от имени администратора и попробуйте ещё раз.",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -50,13 +50,13 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 await ApplyTurboBoostAsync(true);
-                AddLog("⚡ Турбобуст включён");
+                AppLogger.Write("⚡ Турбобуст включён");
                 MessageBox.Show("✅ Турбобуст включён.\nИзменение применено немедленно — перезагрузка не требуется.",
                     "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                AddLog($"❌ Ошибка при включении турбобуста: {ex.Message}");
+                AppLogger.Write($"❌ Ошибка при включении турбобуста: {ex.Message}");
                 MessageBox.Show("Не удалось включить турбобуст. Запустите приложение от имени администратора и попробуйте ещё раз.",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
