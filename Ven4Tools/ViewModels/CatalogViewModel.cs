@@ -821,7 +821,7 @@ namespace Ven4Tools.ViewModels
                 if (rpAnswer == MessageBoxResult.Yes)
                 {
                     Log("🛡️ Создаю точку восстановления...");
-                    bool ok = await CreateRestorePointAsync();
+                    bool ok = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед установкой");
                     Log(ok ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (можно продолжать)");
                 }
             }
@@ -896,22 +896,6 @@ namespace Ven4Tools.ViewModels
                 _installCts = null;
                 UpdateSpaceStatus();
             }
-        }
-
-        private static async Task<bool> CreateRestorePointAsync()
-        {
-            try
-            {
-                var psi = new System.Diagnostics.ProcessStartInfo(Services.TrustedExecutablePaths.PowerShellExe,
-                    "-NoProfile -ExecutionPolicy Bypass -Command \"Checkpoint-Computer -Description 'Ven4Tools — перед установкой' -RestorePointType MODIFY_SETTINGS\"")
-                { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
-                using var p = System.Diagnostics.Process.Start(psi);
-                if (p == null) return false;
-                await Task.WhenAll(p.StandardOutput.ReadToEndAsync(), p.StandardError.ReadToEndAsync());
-                await p.WaitForExitAsync();
-                return p.ExitCode == 0;
-            }
-            catch { return false; }
         }
 
         // ── Пользовательские приложения ─────────────────────────────────────────
