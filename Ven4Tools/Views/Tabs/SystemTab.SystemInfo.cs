@@ -19,7 +19,7 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class SystemTab : UserControl
     {
-        
+
         private async Task LoadSystemInfoAsync()
         {
             try
@@ -75,7 +75,7 @@ namespace Ven4Tools.Views.Tabs
                               $"Процессор: {txtProcessor.Text}\n" +
                               $"ОЗУ: {txtRAM.Text}\n" +
                               $"Ven4Tools: {txtAppVersion.Text}";
-                
+
                 Clipboard.SetText(info);
                 AppLogger.Write("📋 Информация о системе скопирована в буфер обмена");
             }
@@ -169,9 +169,9 @@ namespace Ven4Tools.Views.Tabs
 
         private void BtnClearLogs_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show("Удалить все файлы логов?", "Подтверждение", 
+            var result = MessageBox.Show("Удалить все файлы логов?", "Подтверждение",
                 MessageBoxButton.YesNo, MessageBoxImage.Question);
-            
+
             if (result == MessageBoxResult.Yes)
             {
                 try
