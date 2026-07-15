@@ -14,16 +14,16 @@ namespace Ven4Tools.Services
     public static class IconCache
     {
         private static readonly Dictionary<string, BitmapImage?> _cache = new();
-        private static readonly HttpClient _httpClient = CreateHttpClient();
+        // Единый с остальными сервисами стиль: static readonly + инициализатор.
+        // Timeout бесконечный — фактический предел задаётся per-request через
+        // CancellationTokenSource(IconTimeout), как и раньше при factory-варианте.
+        private static readonly HttpClient _httpClient = new HttpClient
+        {
+            Timeout = Timeout.InfiniteTimeSpan,
+            DefaultRequestHeaders = { { "User-Agent", "Ven4Tools" } }
+        };
         private const int IconSize = 20;
         private static readonly TimeSpan IconTimeout = TimeSpan.FromSeconds(3);
-
-        private static HttpClient CreateHttpClient()
-        {
-            var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools");
-            return client;
-        }
 
         public static async Task<BitmapImage?> GetIconAsync(string url)
         {

@@ -33,7 +33,7 @@ namespace Ven4Tools.Services
             }
             catch (Exception ex)
             {
-                AppLogger.Write(ex, "Ошибка сохранения настроек");
+                AppLogger.Write(ex, "Ошибка загрузки настроек");
             }
         }
 

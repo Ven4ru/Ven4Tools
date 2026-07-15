@@ -22,6 +22,11 @@ namespace Ven4Tools.Services
         };
         private readonly ConcurrentDictionary<string, CachedAvailability> cache = new();
         private readonly TimeSpan cacheDuration = TimeSpan.FromMinutes(5);
+
+        // Размер-заглушка, когда приложение доступно, но фактический размер установщика
+        // получить не удалось (winget не сообщил размер, у HEAD/GET нет Content-Length).
+        // Значение чисто индикативное для UI каталога — точным быть не обязано.
+        private const long DefaultUnknownSizeMB = 100;
         // Таймаут хранится отдельно и применяется per-request через CancellationTokenSource:
         // менять HttpClient.Timeout после первого запроса нельзя (InvalidOperationException)
         private volatile int _timeoutSeconds;
@@ -140,7 +145,7 @@ namespace Ven4Tools.Services
                 if (success)
                 {
                     long size = ParseWingetSize(output);
-                    return (AvailabilityStatus.Available, size > 0 ? size : 120);
+                    return (AvailabilityStatus.Available, size > 0 ? size : DefaultUnknownSizeMB);
                 }
             }
             catch (Exception ex) { AppLogger.Write($"[AvailabilityChecker] winget show ошибка для {appId}: {ex.Message}"); }
@@ -176,7 +181,7 @@ namespace Ven4Tools.Services
             }
             catch { }
 
-            return 100;
+            return DefaultUnknownSizeMB;
         }
 
         private async Task<(AvailabilityStatus Status, long SizeMB)> GetUrlInfo(string url)
@@ -196,7 +201,7 @@ namespace Ven4Tools.Services
                         long size = 0;
                         if (response.Content.Headers.ContentLength.HasValue)
                             size = response.Content.Headers.ContentLength.Value / 1024 / 1024;
-                        return (AvailabilityStatus.Available, size > 0 ? size : 100);
+                        return (AvailabilityStatus.Available, size > 0 ? size : DefaultUnknownSizeMB);
                     }
 
                     if (response.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed)
@@ -212,7 +217,7 @@ namespace Ven4Tools.Services
                                     long size = 0;
                                     if (getResponse.Content.Headers.ContentLength.HasValue)
                                         size = getResponse.Content.Headers.ContentLength.Value / 1024 / 1024;
-                                    return (AvailabilityStatus.Available, size > 0 ? size : 100);
+                                    return (AvailabilityStatus.Available, size > 0 ? size : DefaultUnknownSizeMB);
                                 }
                             }
                         }
