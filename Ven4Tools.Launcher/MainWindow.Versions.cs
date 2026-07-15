@@ -47,26 +47,14 @@ namespace Ven4Tools.Launcher
                 _availableVersions = new System.Collections.Generic.List<ClientVersionInfo>();
                 // «latest» — первый стабильный релиз именно с клиентским zip-архивом;
                 // launcher-only релизы (без Client-*.zip) не должны помечаться как latest.
-                var firstStable = releases.FirstOrDefault(r =>
-                    !r.prerelease &&
-                    r.assets?.Any(a =>
-                        a.name != null &&
-                        (a.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
-                         a.name.Contains("Ven4Tools", StringComparison.OrdinalIgnoreCase)) &&
-                        a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
-                        !a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase)) == true);
+                // Предикат/маппинг общие с GitHubService — см. IsClientZipAsset/MapRelease.
+                var firstStable = GitHubService.FindFirstStableClientRelease(releases);
                 foreach (var release in releases)
                 {
                     var version = release.tag_name?.TrimStart('v');
                     if (string.IsNullOrEmpty(version)) continue;
 
-                    var clientAsset = release.assets?.FirstOrDefault(a =>
-                        a.name != null &&
-                        (a.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
-                         a.name.Contains("Ven4Tools", StringComparison.OrdinalIgnoreCase)) &&
-                        a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
-                        !a.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase));
-
+                    var clientAsset = GitHubService.FindClientZipAsset(release);
                     if (clientAsset != null)
                     {
                         // Качаем только с доверенных доменов GitHub по HTTPS
@@ -76,10 +64,10 @@ namespace Ven4Tools.Launcher
                             continue;
                         }
 
-                        string githubUrl   = clientAsset.browser_download_url ?? "";
-                        string downloadUrl = githubUrl;
-                        string? fallbackUrl = null;
-                        string? expectedSha256 = null;
+                        // Базовый маппинг (GitHub-ссылка) — общий с автообновлением;
+                        // CDN-подстановку накладываем поверх только в этом ручном пути.
+                        var info = GitHubService.MapRelease(release, firstStable)!;
+                        string githubUrl = clientAsset.browser_download_url ?? "";
 
                         // Если CDN знает эту версию — качаем с CDN (быстрее),
                         // GitHub оставляем как резерв на случай недоступности CDN.
@@ -88,28 +76,17 @@ namespace Ven4Tools.Launcher
                             !string.IsNullOrWhiteSpace(cdnInfo.Client.ZipUrl) &&
                             DownloadValidator.IsAllowedDownloadHost(cdnInfo.Client.ZipUrl))
                         {
-                            downloadUrl = cdnInfo.Client.ZipUrl!;
-                            fallbackUrl = cdnInfo.Client.ZipFallback ?? githubUrl;
+                            info.DownloadUrl = cdnInfo.Client.ZipUrl!;
+                            info.FallbackUrl = cdnInfo.Client.ZipFallback ?? githubUrl;
                             // Хеш из version.json относится к одному и тому же zip
                             // (CDN и GitHub отдают идентичный архив), поэтому годится
                             // и для основной, и для резервной ссылки.
-                            expectedSha256 = cdnInfo.Client.ZipSha256;
+                            info.ExpectedSha256 = cdnInfo.Client.ZipSha256;
                             AddLog($"   ⚡ {version} → CDN (резерв: GitHub)");
                         }
 
                         AddLog($"   ✅ {version}{(release.prerelease ? " [PRE]" : "")} → {clientAsset.name}");
-                        _availableVersions.Add(new ClientVersionInfo
-                        {
-                            Version      = version,
-                            DownloadUrl  = downloadUrl,
-                            FallbackUrl  = fallbackUrl,
-                            ExpectedSha256 = expectedSha256,
-                            ReleaseDate  = release.published_at,
-                            ReleaseNotes = release.body,
-                            IsPreRelease = release.prerelease,
-                            IsLatest     = release == firstStable,
-                            FileSize     = clientAsset.size
-                        });
+                        _availableVersions.Add(info);
                     }
                     else
                     {
