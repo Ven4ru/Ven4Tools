@@ -178,18 +178,30 @@ namespace Ven4Tools.Launcher
 
                 token.ThrowIfCancellationRequested();
 
-                // Нельзя перезаписывать файлы запущенного клиента — спрашиваем и просим
-                // закрыться штатно. Диалог показывается всегда, даже в тихом
-                // автоматическом режиме — единственное исключение из «без вопросов».
+                // Нельзя перезаписывать файлы запущенного клиента — просим закрыться
+                // штатно. В тихом (фоновом) автообновлении блокирующий диалог
+                // «ниоткуда» при свёрнутом в трей лаунчере недопустим (плохой UX):
+                // просто откладываем установку до следующего тика фоновой проверки
+                // или до ручного запуска пользователем. Вопрос с диалогом оставлен
+                // только для явного ручного пути (silent == false).
                 if (IsClientRunning())
                 {
                     txtDownloadStatus.Text = "Клиент запущен";
+
+                    if (silent)
+                    {
+                        SetOperationStage(0);
+                        AddLog("⏸ Автообновление отложено: клиент запущен (обновим, когда он будет закрыт)");
+                        return;
+                    }
+
                     var answer = System.Windows.MessageBox.Show(
                         "Ven4Tools сейчас запущен.\n\nЗакрыть клиент сейчас, чтобы установить обновление?",
                         "Клиент запущен", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
                     if (answer != MessageBoxResult.Yes)
                     {
+                        SetOperationStage(0);
                         AddLog("⏹ Обновление отменено — клиент не закрыт");
                         return;
                     }
@@ -198,6 +210,7 @@ namespace Ven4Tools.Launcher
                     if (!await TryCloseRunningClientAsync())
                     {
                         txtDownloadStatus.Text = "Клиент запущен";
+                        SetOperationStage(0);
                         AddLog("⚠️ Клиент не закрылся за отведённое время — обновление отменено");
                         System.Windows.MessageBox.Show(
                             "Не удалось закрыть клиент автоматически (возможно, он свёрнут в трей).\n\n" +
