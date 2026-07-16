@@ -1,5 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Ven4Tools.Services
@@ -30,7 +29,27 @@ namespace Ven4Tools.Services
             if (string.IsNullOrEmpty(wingetId) || string.IsNullOrEmpty(_rawOutput))
                 return false;
 
-            return Regex.IsMatch(_rawOutput, $@"(?<!\S){Regex.Escape(wingetId)}(?!\S)", RegexOptions.IgnoreCase);
+            return ContainsWhitespaceBoundedToken(_rawOutput, wingetId);
+        }
+
+        // Раньше здесь на каждый вызов собирался Regex вида (?<!\S){id}(?!\S): так как
+        // паттерн зависит от wingetId (динамический), кэш Regex не помогал и каждая
+        // проверка перекомпилировала выражение. IsInstalled/GetInstalledVersion
+        // вызываются в цикле по всем приложениям каталога (сотни), поэтому заменено
+        // на прямой поиск подстроки, ограниченной пробельными символами с обеих сторон
+        // — семантически эквивалентно исходному regex, но без компиляции на каждый вызов.
+        private static bool ContainsWhitespaceBoundedToken(string haystack, string token)
+        {
+            int idx = 0;
+            while ((idx = haystack.IndexOf(token, idx, StringComparison.OrdinalIgnoreCase)) >= 0)
+            {
+                bool leftBoundary = idx == 0 || char.IsWhiteSpace(haystack[idx - 1]);
+                int end = idx + token.Length;
+                bool rightBoundary = end >= haystack.Length || char.IsWhiteSpace(haystack[end]);
+                if (leftBoundary && rightBoundary) return true;
+                idx++;
+            }
+            return false;
         }
 
         public string GetInstalledVersion(string wingetId)
@@ -50,11 +69,10 @@ namespace Ven4Tools.Services
             int versionColumn = FindVersionColumn(lines[sepIndex - 1]);
             if (versionColumn < 0) return string.Empty;
 
-            var pattern = $@"(?<!\S){Regex.Escape(wingetId)}(?!\S)";
             for (int i = sepIndex + 1; i < lines.Length; i++)
             {
                 string line = lines[i];
-                if (!Regex.IsMatch(line, pattern, RegexOptions.IgnoreCase))
+                if (!ContainsWhitespaceBoundedToken(line, wingetId))
                     continue;
 
                 // Строка приложения короче позиции колонки Version — версии нет.
