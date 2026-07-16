@@ -80,6 +80,19 @@ namespace Ven4Tools.Views.Tabs
         private async Task RunPingAsync()
         {
             btnPing.IsEnabled = false;
+            // Параноидальный режим обещает блокировать ВСЕ исходящие запросы, кроме
+            // загрузки каталога и установки. Пинг сторонних хостов раскрывает IP —
+            // пропускаем, чтобы не нарушать это обещание (внешний IP тут уже гейтится).
+            if (ProfileService.Current.ParanoidMode)
+            {
+                SetPingRow(txtPing1, txtPingIcon1, "отключено", null);
+                SetPingRow(txtPing2, txtPingIcon2, "отключено", null);
+                SetPingRow(txtPing3, txtPingIcon3, "отключено", null);
+                SetPingRow(txtPing4, txtPingIcon4, "отключено", null);
+                AppLogger.Write("[Сеть] Пинг пропущен: параноидальный режим");
+                if (!_busy) btnPing.IsEnabled = true;
+                return;
+            }
             SetPingRow(txtPing1, txtPingIcon1, "...", null);
             SetPingRow(txtPing2, txtPingIcon2, "...", null);
             SetPingRow(txtPing3, txtPingIcon3, "...", null);
@@ -123,6 +136,19 @@ namespace Ven4Tools.Views.Tabs
             btnCheckServices.IsEnabled = false;
             var icons = new[] { txtSvc1, txtSvc2, txtSvc3, txtSvc4, txtSvc5 };
             var mstxts = new[] { txtSvcMs1, txtSvcMs2, txtSvcMs3, txtSvcMs4, txtSvcMs5 };
+            // Параноидальный режим: HEAD-запросы к сторонним сервисам раскрывают IP —
+            // пропускаем ради соблюдения обещания режима (см. RunPingAsync).
+            if (ProfileService.Current.ParanoidMode)
+            {
+                for (int i = 0; i < icons.Length; i++)
+                {
+                    icons[i].Text = "🚫"; icons[i].Foreground = Brushes.Gray;
+                    mstxts[i].Text = "отключено";
+                }
+                AppLogger.Write("[Сеть] Проверка сервисов пропущена: параноидальный режим");
+                if (!_busy) btnCheckServices.IsEnabled = true;
+                return;
+            }
             foreach (var i in icons) { i.Text = "⏳"; i.Foreground = Brushes.Gray; }
 
             var checks = new[]
@@ -178,6 +204,15 @@ namespace Ven4Tools.Views.Tabs
         {
             btnCheckDns.IsEnabled = false;
             txtDnsResult.Visibility = Visibility.Visible;
+            // Параноидальный режим: DNS-резолюция через внешний резолвер тоже сетевой
+            // запрос вне разрешённых исключений — пропускаем (см. RunPingAsync).
+            if (ProfileService.Current.ParanoidMode)
+            {
+                txtDnsResult.Text = "Отключено (параноидальный режим)";
+                AppLogger.Write("[Сеть] DNS-проверка пропущена: параноидальный режим");
+                if (!_busy) btnCheckDns.IsEnabled = true;
+                return;
+            }
             txtDnsResult.Text = "Проверка DNS...";
             try
             {
