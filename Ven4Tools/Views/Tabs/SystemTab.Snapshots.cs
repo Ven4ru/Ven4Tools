@@ -71,15 +71,6 @@ namespace Ven4Tools.Views.Tabs
                 return;
             }
 
-            var confirm = MessageBox.Show(
-                $"Восстановить состояние из снапшота «{snapshot.Name}»?\n\n" +
-                $"Будет применено твиков: {snapshot.DebloatTweakIds.Count}\n" +
-                $"Локальные пресеты будут заменены содержимым снапшота ({snapshot.Presets.Count} шт.)\n\n" +
-                "Применение твиков Debloater (реестр/службы/удаление приложений) выполняется тем же способом, что и на вкладке «Очистка».",
-                "Снапшоты — подтверждение восстановления",
-                MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (confirm != MessageBoxResult.Yes) return;
-
             var btn = (Button)sender;
             btn.IsEnabled = false;
             try
@@ -88,12 +79,17 @@ namespace Ven4Tools.Views.Tabs
                 int succeeded = 0, total = 0;
                 if (debloaterTab != null && snapshot.DebloatTweakIds.Count > 0)
                 {
-                    // Восстановление твиков делает те же необратимые системные изменения
-                    // (реестр/службы/удаление Appx), что и кнопка «Применить» на вкладке
-                    // «Очистка» — там перед этим создаётся точка восстановления, здесь она
-                    // нужна ровно по той же причине.
+                    // Единый диалог: подтверждение восстановления (Отмена = прервать) +
+                    // предложение точки восстановления. Восстановление твиков делает те же
+                    // необратимые системные изменения (реестр/службы/удаление Appx), что и
+                    // «Применить» на вкладке «Очистка», поэтому точка восстановления нужна
+                    // здесь по той же причине. Раньше показывались два диалога подряд с
+                    // одинаковым текстом «Будет применено твиков: N».
                     var rpOutcome = await UiGuards.ConfirmAndCreateRestorePointAsync(
-                        $"Будет применено твиков: {snapshot.DebloatTweakIds.Count}.\n\nСоздать точку восстановления Windows перед восстановлением снапшота?",
+                        $"Восстановить состояние из снапшота «{snapshot.Name}»?\n\n" +
+                        $"Будет применено твиков: {snapshot.DebloatTweakIds.Count} (реестр/службы/удаление приложений, как на вкладке «Очистка»).\n" +
+                        $"Локальные пресеты будут заменены содержимым снапшота ({snapshot.Presets.Count} шт.).\n\n" +
+                        "Создать точку восстановления Windows перед восстановлением снапшота?",
                         "Ven4Tools — перед восстановлением снапшота");
                     if (rpOutcome == RestorePointOutcome.Cancelled)
                     {
@@ -107,6 +103,15 @@ namespace Ven4Tools.Views.Tabs
                 }
                 else
                 {
+                    // Твиков нет — меняются только локальные пресеты, точка восстановления
+                    // не относится к делу. Одно подтверждение действия.
+                    var confirm = MessageBox.Show(
+                        $"Восстановить состояние из снапшота «{snapshot.Name}»?\n\n" +
+                        $"Локальные пресеты будут заменены содержимым снапшота ({snapshot.Presets.Count} шт.).",
+                        "Снапшоты — подтверждение восстановления",
+                        MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if (confirm != MessageBoxResult.Yes) return;
+
                     txtSnapshotStatus.Text = "⏳ Восстанавливаю снапшот...";
                 }
 
