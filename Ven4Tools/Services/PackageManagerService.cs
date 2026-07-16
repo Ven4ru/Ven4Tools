@@ -51,12 +51,18 @@ namespace Ven4Tools.Services
             log?.Invoke("📦 Установка Chocolatey...");
             try
             {
-                // Official Chocolatey install script
+                // Официальный установочный скрипт Chocolatey. URL — HTTPS-литерал на
+                // конкретный домен (нет пользовательского ввода — валидировать нечего),
+                // TLS 1.2 включается принудительно. Хеш скрипта намеренно НЕ пиннится:
+                // это upstream-механизм, скрипт регулярно меняется на стороне Chocolatey.
+                // Логируем источник ради прозрачности того, что будет исполнено через iex.
+                const string chocoInstallScriptUrl = "https://community.chocolatey.org/install.ps1";
+                log?.Invoke($"⤓ Источник (iex): {chocoInstallScriptUrl}");
                 string cmd =
                     "Set-ExecutionPolicy Bypass -Scope Process -Force; " +
                     "[System.Net.ServicePointManager]::SecurityProtocol = " +
                     "[System.Net.ServicePointManager]::SecurityProtocol -bor 3072; " +
-                    "iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))";
+                    $"iex ((New-Object System.Net.WebClient).DownloadString('{chocoInstallScriptUrl}'))";
 
                 var psi = new ProcessStartInfo
                 {
