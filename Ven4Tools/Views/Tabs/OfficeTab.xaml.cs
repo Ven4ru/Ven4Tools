@@ -67,8 +67,32 @@ namespace Ven4Tools.Views.Tabs
             };
             btnGoActivation.Click += (_, _) => GoToActivation?.Invoke();
 
+            // M2: смена версии/языка после скачивания должна сбрасывать уже скачанный
+            // установщик — иначе «Установить» тихо поставит старую версию/язык, тогда как
+            // лог/UI показывают новое выбранное значение. Подписки — после FillComboBoxes,
+            // чтобы начальный SelectedIndex=0 не срабатывал как «смена».
+            rdbO365.Checked  += OnOfficeSelectionChanged;
+            rdbO2024.Checked += OnOfficeSelectionChanged;
+            rdbO2021.Checked += OnOfficeSelectionChanged;
+            rdbO2019.Checked += OnOfficeSelectionChanged;
+            rdbO2016.Checked += OnOfficeSelectionChanged;
+            cmbOfficeLanguage.SelectionChanged += OnOfficeSelectionChanged;
+
             pnlActivationHint.Visibility = Visibility.Visible;
             UpdateRegionDisplay();
+        }
+
+        // M2: при смене версии/языка удаляем ранее скачанный установщик и блокируем
+        // «Установить», чтобы нельзя было поставить не то, что показано в UI.
+        private void OnOfficeSelectionChanged(object sender, RoutedEventArgs e)
+        {
+            if (_downloadedFilePath == null) return;
+
+            try { if (File.Exists(_downloadedFilePath)) File.Delete(_downloadedFilePath); } catch { }
+            _downloadedFilePath = null;
+            btnInstallOffice.IsEnabled = false;
+            AppLogger.Write("ℹ️ Версия/язык изменены — скачайте установщик заново");
+            SetProgress(true, "ℹ️ Версия/язык изменены — скачайте установщик заново", 0, "");
         }
 
         // ── Отображение региона (читаем реестр напрямую — изменения видны сразу) ──
@@ -315,6 +339,7 @@ namespace Ven4Tools.Views.Tabs
             btnDownloadOffice.IsEnabled = false;
             btnInstallOffice.IsEnabled  = false;
             btnCancelOffice.IsEnabled   = true;
+            btnCancelOffice.Visibility  = Visibility.Visible;
 
             _cancellationTokenSource = new CancellationTokenSource();
             var token = _cancellationTokenSource.Token;
@@ -412,6 +437,7 @@ namespace Ven4Tools.Views.Tabs
             btnInstallOffice.IsEnabled  = false;
             btnDownloadOffice.IsEnabled = false;
             btnCancelOffice.IsEnabled   = true;
+            btnCancelOffice.Visibility  = Visibility.Visible;
 
             _cancellationTokenSource = new CancellationTokenSource();
             var token = _cancellationTokenSource.Token;
@@ -453,6 +479,11 @@ namespace Ven4Tools.Views.Tabs
                 SetPhase("🚀 Запуск установщика...");
                 var existingPids = GetC2RProcessPids();
 
+                // Последняя точка, где отмена ещё безопасна: если пользователь нажал
+                // «Отмена» на этапе проверки подписи — прерываемся ДО запуска установщика
+                // (регион восстановит finally). После Process.Start отмена уже недоступна.
+                token.ThrowIfCancellationRequested();
+
                 using var bootstrapper = System.Diagnostics.Process.Start(
                     new System.Diagnostics.ProcessStartInfo
                     {
@@ -466,6 +497,16 @@ namespace Ven4Tools.Views.Tabs
 
                 if (bootstrapper != null)
                 {
+                    // M3: elevated-процесс установщика уже запущен — реальную установку
+                    // отменить нельзя (регион будет восстановлен только после её завершения).
+                    // Прячем «Отмена», чтобы UI не обещал невозможного.
+                    Dispatcher.Invoke(() =>
+                    {
+                        btnCancelOffice.IsEnabled  = false;
+                        btnCancelOffice.Visibility = Visibility.Collapsed;
+                    });
+                    SetPhase("⚙️ Установка Office запущена — отменить нельзя, дождитесь завершения");
+
                     await bootstrapper.WaitForExitAsync(token);
                     if (bootstrapper.ExitCode != 0)
                     {
