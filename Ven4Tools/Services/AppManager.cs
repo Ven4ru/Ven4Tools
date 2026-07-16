@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using Newtonsoft.Json;
 using Ven4Tools.Helpers;
 using Ven4Tools.Models;
@@ -315,21 +317,84 @@ namespace Ven4Tools.Services
             }
         }
 
+        // apps.json защищается через DPAPI (привязка к учётной записи Windows) только
+        // в обычном режиме — файл в user-writable %LocalAppData% иначе можно подменить
+        // другим процессом/пользователем, а клиент прочитал бы подделанные URL/аргументы
+        // установки без проверки целостности. В переносимом режиме файл лежит рядом с exe
+        // и обязан переноситься между машинами/учётками — DPAPI это сломало бы, поэтому
+        // там сохраняется обычный JSON (модель угроз переносимого носителя иная).
+        private bool ProtectUserApps => !isPortable;
+
+        // Дополнительная энтропия DPAPI: привязывает защищённый blob именно к этому
+        // назначению, а не к любому DPAPI-контейнеру той же учётной записи.
+        private static readonly byte[] AppsEntropy = Encoding.UTF8.GetBytes("Ven4Tools.apps.v1");
+
         private void LoadUserApps()
         {
             try
             {
-                if (File.Exists(configPath))
+                if (!File.Exists(configPath)) return;
+                var raw = File.ReadAllText(configPath);
+                if (string.IsNullOrWhiteSpace(raw)) return;
+
+                List<AppInfo>? userApps;
+                bool needsUpgrade = false;
+
+                if (ProtectUserApps)
                 {
-                    var json = File.ReadAllText(configPath);
-                    var userApps = JsonConvert.DeserializeObject<List<AppInfo>>(json);
-                    if (userApps != null)
+                    // Сначала пробуем снять DPAPI-защиту. Неудача означает legacy-формат
+                    // (голый JSON от прежних версий): принимаем его и помечаем на миграцию —
+                    // при следующей записи файл будет пересохранён уже защищённым.
+                    userApps = TryUnprotectUserApps(raw);
+                    if (userApps == null)
                     {
-                        apps.AddRange(userApps);
+                        userApps = TryParsePlainUserApps(raw);
+                        if (userApps != null) needsUpgrade = true;
+                    }
+                }
+                else
+                {
+                    userApps = TryParsePlainUserApps(raw);
+                }
+
+                if (userApps != null)
+                {
+                    apps.AddRange(userApps);
+                    if (needsUpgrade)
+                    {
+                        AppLogger.Write("[AppManager] apps.json в старом незащищённом формате — миграция в DPAPI");
+                        SaveUserApps();
                     }
                 }
             }
             catch (Exception ex) { AppLogger.Write($"[AppManager] LoadUserApps: {ex.Message}"); }
+        }
+
+        private static List<AppInfo>? TryUnprotectUserApps(string raw)
+        {
+            try
+            {
+                var protectedBytes = Convert.FromBase64String(raw.Trim());
+                var plainBytes = ProtectedData.Unprotect(
+                    protectedBytes, AppsEntropy, DataProtectionScope.CurrentUser);
+                return JsonConvert.DeserializeObject<List<AppInfo>>(Encoding.UTF8.GetString(plainBytes));
+            }
+            catch { return null; }
+        }
+
+        private static List<AppInfo>? TryParsePlainUserApps(string raw)
+        {
+            try { return JsonConvert.DeserializeObject<List<AppInfo>>(raw); }
+            catch { return null; }
+        }
+
+        private string SerializeUserApps(List<AppInfo> userApps)
+        {
+            var json = JsonConvert.SerializeObject(userApps, Formatting.Indented);
+            if (!ProtectUserApps) return json;
+            var protectedBytes = ProtectedData.Protect(
+                Encoding.UTF8.GetBytes(json), AppsEntropy, DataProtectionScope.CurrentUser);
+            return Convert.ToBase64String(protectedBytes);
         }
 
         private void SaveUserApps()
@@ -337,7 +402,7 @@ namespace Ven4Tools.Services
             try
             {
                 var userApps = apps.Where(a => a.IsUserAdded).ToList();
-                FileHelper.WriteAllTextAtomic(configPath, JsonConvert.SerializeObject(userApps, Formatting.Indented));
+                FileHelper.WriteAllTextAtomic(configPath, SerializeUserApps(userApps));
             }
             catch (Exception ex) { AppLogger.Write($"[AppManager] SaveUserApps: {ex.Message}"); }
         }
