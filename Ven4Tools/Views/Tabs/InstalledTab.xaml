@@ -308,12 +308,16 @@
                                     <!-- Версия -->
                                     <TextBlock Grid.Column="2" Text="{Binding Version}"
                                                Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="12" VerticalAlignment="Center"/>
+                                               FontSize="12" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
 
-                                    <!-- Доступна -->
+                                    <!-- Доступна: колонка фиксированной ширины (95px) — без
+                                         TextTrimming длинная версия обрезается границей колонки
+                                         без многоточия, наезжая на соседнюю "Источник". -->
                                     <TextBlock Grid.Column="3"
                                                FontSize="12" VerticalAlignment="Center"
-                                               FontWeight="SemiBold">
+                                               FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Text" Value="—"/>

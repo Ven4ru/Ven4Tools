@@ -23,7 +23,10 @@ namespace Ven4Tools.Services
             r["TextSecondary"]     = Brush(170, 184, 206);
             r["BorderBrush"]       = Brush(30,  42,  56);
             r["HeaderForeground"]  = Brush(226, 232, 240);
-            r["AccentColor"]       = Brush(74,  222, 128);
+            // Тема называется "Бирюзовая" (SystemTab.xaml, Tag="teal") — акцент должен
+            // быть бирюзовым/тил, а не тем же зелёным, что у остальных тем. Тот же оттенок,
+            // что был у пункта "Бирюзовый" в удалённой палитре акцентов (Gap Analysis).
+            r["AccentColor"]       = Brush(0, 188, 212);
         }
 
         public static void ApplyWeb()
