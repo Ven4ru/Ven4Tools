@@ -61,6 +61,14 @@ namespace Ven4Tools.Launcher
         public MainWindow()
         {
             InitializeComponent();
+
+            // Метка версии в сайдбаре — раньше был захардкожен литерал "LAUNCHER  2.1",
+            // расходившийся с реальной версией сборки (Gap Analysis).
+            var assemblyVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            txtLauncherVersionLabel.Text = assemblyVersion != null
+                ? $"LAUNCHER  {assemblyVersion.Major}.{assemblyVersion.Minor}"
+                : "LAUNCHER";
+
             logExpander.Expanded += LogExpander_Expanded;
             MotionService.Enabled = Environment.GetEnvironmentVariable("VEN4TOOLS_REDUCE_MOTION") != "1";
             Loaded += (_, _) =>

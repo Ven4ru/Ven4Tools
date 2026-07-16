@@ -14,8 +14,8 @@ namespace Ven4Tools.Launcher.Services
         // volatile: поле переприсваивается из UI-потока (Start), а читается
         // из ThreadPool-потока таймера — гарантируем видимость актуальной ссылки
         private volatile CancellationTokenSource _cts = new CancellationTokenSource();
-        // Защита от параллельного запуска CheckAllAsync: таймер и ручной вызов
-        // (CheckNowAsync) могут наложиться. Повторный запуск пропускается, не ждёт.
+        // Защита от параллельного запуска CheckAllAsync: несколько срабатываний таймера
+        // могут наложиться друг на друга. Повторный запуск пропускается, не ждёт.
         private readonly SemaphoreSlim _checkGate = new SemaphoreSlim(1, 1);
         private readonly string _launcherVersion;
         private readonly Func<string> _getClientPath;
@@ -64,8 +64,6 @@ namespace Ven4Tools.Launcher.Services
             _cts.Cancel();
             _timer?.Change(Timeout.Infinite, Timeout.Infinite);
         }
-
-        public async Task CheckNowAsync() => await CheckAllAsync();
 
         private async Task CheckAllAsync()
         {
