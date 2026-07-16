@@ -324,6 +324,13 @@ namespace Ven4Tools.Views.Tabs
                 "Обновить всё", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (res != MessageBoxResult.Yes) return;
 
+            // Массовое обновление — как и остальные массовые операции вкладки
+            // (обновление выбранных/групповое удаление/импорт) предлагаем точку восстановления.
+            var rpOutcome = await UiGuards.ConfirmAndCreateRestorePointAsync(
+                "Будут обновлены все приложения через winget.\n\nСоздать точку восстановления Windows перед обновлением?",
+                "Ven4Tools — перед обновлением всех приложений");
+            if (rpOutcome == RestorePointOutcome.Cancelled) return;
+
             btnUpgradeAll.IsEnabled = false;
             btnRefresh.IsEnabled = false;
             AppLogger.Write("⬆ Запуск обновления всех приложений (winget upgrade --all)...");
