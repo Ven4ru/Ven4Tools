@@ -113,6 +113,7 @@ namespace Ven4Tools.Launcher
             txtDownloadStatus.Text    = "Скачивание: 0%";
             btnCancelDownload.Visibility = Visibility.Visible;
             btnLaunchApp.IsEnabled    = false;
+            SetOperationStage(1); // Загрузка
 
             try
             {
@@ -150,6 +151,7 @@ namespace Ven4Tools.Launcher
                 // fail-open. Самообновление лаунчера (LauncherUpdateService) в тех
                 // же условиях строго отказывает; здесь приводим клиентский путь
                 // к той же fail-closed политике.
+                SetOperationStage(2); // Проверка целостности
                 if (!string.IsNullOrEmpty(version.ExpectedSha256))
                 {
                     txtDownloadStatus.Text = "Проверка целостности...";
@@ -158,6 +160,7 @@ namespace Ven4Tools.Launcher
                 else
                 {
                     txtDownloadStatus.Text = "Целостность не подтверждена";
+                    SetOperationStage(0);
                     AddLog($"⛔ Для версии {version.Version} нет подтверждённого SHA256 (CDN недоступен или ещё не знает эту версию) — установка отменена");
                     if (!silent)
                         System.Windows.MessageBox.Show(
@@ -168,24 +171,37 @@ namespace Ven4Tools.Launcher
                     return;
                 }
 
+                SetOperationStage(3); // Распаковка
                 txtDownloadStatus.Text = "Распаковка...";
                 await SafeZipExtractor.ExtractAsync(tempZip, extractPath, token);
                 AddLog("✅ Архив безопасно распакован");
 
                 token.ThrowIfCancellationRequested();
 
-                // Нельзя перезаписывать файлы запущенного клиента — спрашиваем и просим
-                // закрыться штатно. Диалог показывается всегда, даже в тихом
-                // автоматическом режиме — единственное исключение из «без вопросов».
+                // Нельзя перезаписывать файлы запущенного клиента — просим закрыться
+                // штатно. В тихом (фоновом) автообновлении блокирующий диалог
+                // «ниоткуда» при свёрнутом в трей лаунчере недопустим (плохой UX):
+                // просто откладываем установку до следующего тика фоновой проверки
+                // или до ручного запуска пользователем. Вопрос с диалогом оставлен
+                // только для явного ручного пути (silent == false).
                 if (IsClientRunning())
                 {
                     txtDownloadStatus.Text = "Клиент запущен";
+
+                    if (silent)
+                    {
+                        SetOperationStage(0);
+                        AddLog("⏸ Автообновление отложено: клиент запущен (обновим, когда он будет закрыт)");
+                        return;
+                    }
+
                     var answer = System.Windows.MessageBox.Show(
                         "Ven4Tools сейчас запущен.\n\nЗакрыть клиент сейчас, чтобы установить обновление?",
                         "Клиент запущен", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
                     if (answer != MessageBoxResult.Yes)
                     {
+                        SetOperationStage(0);
                         AddLog("⏹ Обновление отменено — клиент не закрыт");
                         return;
                     }
@@ -194,6 +210,7 @@ namespace Ven4Tools.Launcher
                     if (!await TryCloseRunningClientAsync())
                     {
                         txtDownloadStatus.Text = "Клиент запущен";
+                        SetOperationStage(0);
                         AddLog("⚠️ Клиент не закрылся за отведённое время — обновление отменено");
                         System.Windows.MessageBox.Show(
                             "Не удалось закрыть клиент автоматически (возможно, он свёрнут в трей).\n\n" +
@@ -207,6 +224,7 @@ namespace Ven4Tools.Launcher
                 if (!InstallPathGuard.IsClientPathSafe(_clientPath, _dataFolderPath))
                 {
                     txtDownloadStatus.Text = "Ошибка пути";
+                    SetOperationStage(0);
                     AddLog($"⛔ Папка установки клиента пересекается с папкой данных — обновление отменено: {_clientPath}");
                     if (!silent)
                         System.Windows.MessageBox.Show(
@@ -216,10 +234,12 @@ namespace Ven4Tools.Launcher
                     return;
                 }
 
+                SetOperationStage(4); // Установка файлов
                 txtDownloadStatus.Text = "Установка файлов...";
                 var installer = new TransactionalDirectoryInstaller();
                 installer.Install(extractPath, _clientPath, token);
 
+                SetOperationStage(5); // Готово
                 txtDownloadStatus.Text = "Готово";
                 progressDownload.Value = 100;
                 AddLog($"✅ Клиент {version.Version} скачан и распакован");
@@ -236,11 +256,13 @@ namespace Ven4Tools.Launcher
             {
                 txtDownloadStatus.Text = "Отменено";
                 progressDownload.Value = 0;
+                SetOperationStage(0);
                 AddLog("⏹ Загрузка отменена");
             }
             catch (Exception ex)
             {
                 txtDownloadStatus.Text = "Ошибка";
+                SetOperationStage(0);
                 AddLog($"❌ Ошибка скачивания: {ex.Message}");
                 if (!silent)
                     System.Windows.MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -280,6 +302,35 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
+            string clientExe = Path.Combine(_clientPath, LauncherPaths.ClientExeName);
+            bool clientInstalled = File.Exists(clientExe);
+
+            // Обновление клиента: только когда он установлен, найдено более новое
+            // и есть список версий (нужен URL для скачивания). Список версий может
+            // отсутствовать офлайн/при GitHub rate-limit — тогда обновление невозможно,
+            // но это не должно мешать запуску уже установленного клиента (ниже).
+            if (clientInstalled && _clientUpdateAvailable)
+            {
+                _selectedVersion ??= _availableVersions.FirstOrDefault(v => v.IsLatest);
+                if (_selectedVersion != null)
+                {
+                    AddLog($"⬆ Обновление клиента до {_selectedVersion.Version}...");
+                    _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
+                    await DownloadVersionAsync(_selectedVersion, _downloadCts.Token);
+                    return;
+                }
+                AddLog("⚠️ Обновление недоступно (нет списка версий) — запускаю установленный клиент");
+            }
+
+            // Уже установленный клиент запускаем всегда — независимо от доступности сети
+            // и наличия списка версий. Список нужен только для скачивания/обновления.
+            if (clientInstalled)
+            {
+                LaunchExistingClient(clientExe);
+                return;
+            }
+
+            // Клиента на диске нет — для скачивания нужен список версий.
             if (_selectedVersion == null)
             {
                 var latest = _availableVersions.FirstOrDefault(v => v.IsLatest);
@@ -288,86 +339,78 @@ namespace Ven4Tools.Launcher
                 UpdateVersionDisplay(latest);
             }
 
-            string clientExe = Path.Combine(_clientPath, LauncherPaths.ClientExeName);
-
-            if (File.Exists(clientExe) && _clientUpdateAvailable)
-            {
-                AddLog($"⬆ Обновление клиента до {_selectedVersion.Version}...");
-                _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
-                await DownloadVersionAsync(_selectedVersion, _downloadCts.Token);
-                return;
-            }
-
-            if (File.Exists(clientExe))
-            {
-                AddLog($"🚀 Запуск Ven4Tools {_selectedVersion.Version}...");
-
-                var psi = new ProcessStartInfo { FileName = clientExe, UseShellExecute = true };
-                try
-                {
-                    // Освобождаем объект предыдущего запуска: EnableRaisingEvents + Exited
-                    // держат ссылку на Process, без Dispose это утечка
-                    _clientProcess?.Dispose();
-                    _clientProcess = null;
-
-                    var clientProcess = Process.Start(psi);
-                    AddLog("✅ Клиент запущен");
-
-                    if (clientProcess != null)
-                    {
-                        _clientProcess = clientProcess;
-                        _watchdog?.Dispose();
-                        _watchdog = new WatchdogService(clientProcess);
-                        _watchdog.ClientFrozen += report => Dispatcher.Invoke(() =>
-                        {
-                            var win = new CrashReportWindow(report) { Owner = this };
-                            win.ShowDialog();
-                        });
-                        _watchdog.ClientKilledWithoutCrash += report => Dispatcher.Invoke(() =>
-                        {
-                            var win = new CrashReportWindow(report) { Owner = this };
-                            win.ShowDialog();
-                        });
-                        clientProcess.EnableRaisingEvents = true;
-                        clientProcess.Exited += (_, _) =>
-                        {
-                            var wd     = _watchdog;
-                            _watchdog  = null;
-
-                            var crashPath = LauncherPaths.CrashReportPath;
-                            bool hasFreshCrash = System.IO.File.Exists(crashPath) &&
-                                (DateTime.UtcNow - System.IO.File.GetLastWriteTimeUtc(crashPath)).TotalSeconds < 15;
-
-                            // Код 0 — штатное закрытие клиента пользователем, это не «убийство» процесса
-                            int exitCode = 0;
-                            try { exitCode = clientProcess.ExitCode; } catch { }
-                            if (!hasFreshCrash && wd != null && exitCode != 0)
-                                wd.ReportKill(exitCode);
-
-                            wd?.Dispose();
-
-                            // Освобождаем объект процесса и очищаем поле,
-                            // если за это время не был запущен новый экземпляр
-                            if (ReferenceEquals(_clientProcess, clientProcess))
-                                _clientProcess = null;
-                            clientProcess.Dispose();
-                        };
-                    }
-                }
-                catch (Exception ex)
-                {
-                    AddLog($"❌ Ошибка запуска: {ex.Message}");
-                    System.Windows.MessageBox.Show($"Не удалось запустить клиент: {ex.Message}", "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                return;
-            }
-
             AddLog($"📥 Загрузка клиента {_selectedVersion.Version}...");
             // Таймаут страхует от подвисшего (не оборванного) соединения: без него
             // HttpClient с Timeout=Infinite может ждать байты бесконечно, и кнопка
             // «Отмена» — единственный выход. См. тот же паттерн в LauncherUpdateService.
             _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
             await DownloadVersionAsync(_selectedVersion, _downloadCts.Token);
+        }
+
+        // Запуск установленного на диске клиента с подключением watchdog-а.
+        // Вынесено из BtnLaunchApp_Click, чтобы запускать клиент из нескольких веток
+        // (в т.ч. когда список версий недоступен) без дублирования логики.
+        private void LaunchExistingClient(string clientExe)
+        {
+            AddLog("🚀 Запуск Ven4Tools...");
+
+            var psi = new ProcessStartInfo { FileName = clientExe, UseShellExecute = true };
+            try
+            {
+                // Освобождаем объект предыдущего запуска: EnableRaisingEvents + Exited
+                // держат ссылку на Process, без Dispose это утечка
+                _clientProcess?.Dispose();
+                _clientProcess = null;
+
+                var clientProcess = Process.Start(psi);
+                AddLog("✅ Клиент запущен");
+
+                if (clientProcess != null)
+                {
+                    _clientProcess = clientProcess;
+                    _watchdog?.Dispose();
+                    _watchdog = new WatchdogService(clientProcess);
+                    _watchdog.ClientFrozen += report => Dispatcher.Invoke(() =>
+                    {
+                        var win = new CrashReportWindow(report) { Owner = this };
+                        win.ShowDialog();
+                    });
+                    _watchdog.ClientKilledWithoutCrash += report => Dispatcher.Invoke(() =>
+                    {
+                        var win = new CrashReportWindow(report) { Owner = this };
+                        win.ShowDialog();
+                    });
+                    clientProcess.EnableRaisingEvents = true;
+                    clientProcess.Exited += (_, _) =>
+                    {
+                        var wd     = _watchdog;
+                        _watchdog  = null;
+
+                        var crashPath = LauncherPaths.CrashReportPath;
+                        bool hasFreshCrash = System.IO.File.Exists(crashPath) &&
+                            (DateTime.UtcNow - System.IO.File.GetLastWriteTimeUtc(crashPath)).TotalSeconds < 15;
+
+                        // Код 0 — штатное закрытие клиента пользователем, это не «убийство» процесса
+                        int exitCode = 0;
+                        try { exitCode = clientProcess.ExitCode; } catch { }
+                        if (!hasFreshCrash && wd != null && exitCode != 0)
+                            wd.ReportKill(exitCode);
+
+                        wd?.Dispose();
+
+                        // Освобождаем объект процесса и очищаем поле,
+                        // если за это время не был запущен новый экземпляр
+                        if (ReferenceEquals(_clientProcess, clientProcess))
+                            _clientProcess = null;
+                        clientProcess.Dispose();
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog($"❌ Ошибка запуска: {ex.Message}");
+                System.Windows.MessageBox.Show($"Не удалось запустить клиент: {ex.Message}", "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void BtnCancelDownload_Click(object sender, RoutedEventArgs e)
