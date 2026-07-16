@@ -12,7 +12,6 @@ namespace Ven4Tools.Models
         public string Language { get; set; } = "auto"; // "auto", "ru", "en"
         public bool CompactMode { get; set; } = false;
         public bool ReduceMotion { get; set; } = false;
-        public string AccentColorHex { get; set; } = ""; // "" = theme default
 
         // Install
         public bool SilentInstall { get; set; } = false;
