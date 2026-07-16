@@ -12,7 +12,13 @@ public sealed class VersionComparerTests
     [InlineData("3.10.0", "3.9.99", 1)]
     [InlineData("3.4.14", "3.4.14-pre", 1)]
     [InlineData("3.4.14-beta", "3.4.14", -1)]
-    public void Compare_ReturnsExpectedOrder(string left, string right, int expectedSign)
+    // Пустая/отсутствующая версия трактуется как «0» (самая старая) и не роняет
+    // сравнение — версии приходят из внешних источников (теги релизов, CDN, exe).
+    [InlineData(null, "1.0.0", -1)]
+    [InlineData("1.0.0", null, 1)]
+    [InlineData(null, null, 0)]
+    [InlineData("", "0.0.0", 0)]
+    public void Compare_ReturnsExpectedOrder(string? left, string? right, int expectedSign)
     {
         Assert.Equal(expectedSign, Math.Sign(VersionComparer.Compare(left, right)));
     }

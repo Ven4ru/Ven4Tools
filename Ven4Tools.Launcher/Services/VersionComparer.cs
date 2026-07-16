@@ -6,8 +6,15 @@ namespace Ven4Tools.Launcher.Services
         /// Returns positive if v1 > v2, negative if v1 < v2, 0 if equal.
         /// Stable version ranks higher than same-number pre-release: "3.1.0" > "3.1.0-pre".
         /// </summary>
-        public static int Compare(string v1, string v2)
+        public static int Compare(string? v1, string? v2)
         {
+            // Целостность входных данных: версии приходят из внешних источников
+            // (теги GitHub-релизов, version.json CDN, метаданные exe). null/пустая
+            // строка не должна ронять сравнение через NullReferenceException —
+            // трактуем её как «0» (отсутствие версии = самая старая), чтобы
+            // некорректная версия-кандидат никогда не считалась «новее» реальной.
+            v1 ??= "";
+            v2 ??= "";
             var parts1 = v1.Split('.');
             var parts2 = v2.Split('.');
             for (int i = 0; i < System.Math.Max(parts1.Length, parts2.Length); i++)
@@ -24,6 +31,6 @@ namespace Ven4Tools.Launcher.Services
             return 0;
         }
 
-        public static bool IsNewer(string candidate, string current) => Compare(candidate, current) > 0;
+        public static bool IsNewer(string? candidate, string? current) => Compare(candidate, current) > 0;
     }
 }
