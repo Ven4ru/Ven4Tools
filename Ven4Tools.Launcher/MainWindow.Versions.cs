@@ -39,6 +39,10 @@ namespace Ven4Tools.Launcher
                 if (error != null)
                 {
                     AddLog($"❌ {error}");
+                    // Список версий не получен (офлайн/GitHub rate-limit 403 и т.п.),
+                    // но уже установленный на диске клиент должен оставаться запускаемым:
+                    // отражаем его в панели версии и в состоянии кнопки независимо от сети.
+                    CheckExistingClient();
                     return;
                 }
 
@@ -144,7 +148,10 @@ namespace Ven4Tools.Launcher
             };
         }
 
-        private void CheckExistingClient()
+        // quiet=true — вызов на этапе инициализации окна: состояние кнопки и панель
+        // версии выставляются синхронно (без ожидания сети), но без записи в журнал,
+        // чтобы не дублировать строку при последующем вызове из LoadVersionsAsync.
+        private void CheckExistingClient(bool quiet = false)
         {
             string clientExe = Path.Combine(_clientPath, LauncherPaths.ClientExeName);
             if (File.Exists(clientExe))
@@ -153,7 +160,8 @@ namespace Ven4Tools.Launcher
                 string currentVersion = versionInfo.FileVersion ?? "unknown";
                 txtInstalledVersion.Text = $"Текущая версия: {currentVersion}";
                 SetLaunchButtonState(LaunchButtonState.Launch);
-                AddLog($"✅ Найден клиент версии {currentVersion}");
+                if (!quiet)
+                    AddLog($"✅ Найден клиент версии {currentVersion}");
             }
             else
             {
