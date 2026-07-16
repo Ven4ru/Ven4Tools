@@ -182,7 +182,7 @@ namespace Ven4Tools.Views.Tabs
             }
         }
         
-        private string GetLastLogLines(int lines = 30)
+        private string GetLastLogLines(int lines = 15)
         {
             try
             {
@@ -198,9 +198,23 @@ namespace Ven4Tools.Views.Tabs
 
                 if (logPath == null) return "Лог не найден";
 
+                // L11: лог кодируется в URL GitHub issue — ограничиваем и число строк, и общий
+                // объём символов, чтобы не превысить лимит URL и не обрезаться молча. Факт
+                // обрезки явно помечаем в тексте.
                 var allLines = File.ReadAllLines(logPath);
+                bool truncated = allLines.Length > lines;
                 var lastLines = allLines.Skip(Math.Max(0, allLines.Length - lines)).Take(lines).ToArray();
-                return CrashReportService.SanitizePath(string.Join("\n", lastLines));
+                string body = CrashReportService.SanitizePath(string.Join("\n", lastLines));
+
+                const int maxChars = 3000;
+                if (body.Length > maxChars)
+                {
+                    body = body.Substring(body.Length - maxChars);
+                    truncated = true;
+                }
+                if (truncated)
+                    body = "… (лог обрезан, показаны только последние строки) …\n" + body;
+                return body;
             }
             catch
             {
