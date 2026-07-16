@@ -122,11 +122,17 @@ namespace Ven4Tools.Launcher
                     _lastNotifiedNotificationId = notif.Id;
                     SaveSettings();
 
-                    _notifyIcon?.ShowBalloonTip(
-                        8000,
-                        "Ven4Tools",
-                        notif.Message,
-                        ToolTipIcon.Info);
+                    // Заголовок/тип уведомления подписаны в notifications.json (ECDSA), но
+                    // раньше игнорировались — балон всегда показывал "Ven4Tools"/Info,
+                    // хотя содержимое уже несёт нужные данные (Gap Analysis).
+                    string title = string.IsNullOrWhiteSpace(notif.Title) ? "Ven4Tools" : notif.Title;
+                    ToolTipIcon icon = notif.Type?.ToLowerInvariant() switch
+                    {
+                        "warning" => ToolTipIcon.Warning,
+                        "error"   => ToolTipIcon.Error,
+                        _         => ToolTipIcon.Info
+                    };
+                    _notifyIcon?.ShowBalloonTip(8000, title, notif.Message, icon);
                     AddLog($"📢 Уведомление: {notif.Message}");
                 });
             };

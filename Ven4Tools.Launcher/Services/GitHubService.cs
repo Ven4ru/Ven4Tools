@@ -222,7 +222,6 @@ namespace Ven4Tools.Launcher.Services
         {
             string? latestVersion = null;
             string? downloadUrl = null;
-            long fileSize = 0;
             string? releaseNotes = null;
 
             foreach (var release in releases)
@@ -237,7 +236,6 @@ namespace Ven4Tools.Launcher.Services
                 {
                     latestVersion = ver;
                     downloadUrl = asset.browser_download_url;
-                    fileSize = asset.size;
                     releaseNotes = release.body;
                 }
             }
@@ -250,8 +248,7 @@ namespace Ven4Tools.Launcher.Services
                 CurrentVersion = currentVersion,
                 LatestVersion = latestVersion,
                 DownloadUrl = downloadUrl,
-                ReleaseNotes = releaseNotes,
-                FileSize = fileSize
+                ReleaseNotes = releaseNotes
             };
         }
 
