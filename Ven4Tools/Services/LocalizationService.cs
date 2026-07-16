@@ -56,11 +56,5 @@ namespace Ven4Tools.Services
                 AppLogger.Write($"[LocalizationService] Не удалось загрузить словарь '{lang}': {ex.Message}");
             }
         }
-
-        public static string T(string key)
-        {
-            try { return Application.Current.FindResource(key)?.ToString() ?? key; }
-            catch { return key; }
-        }
     }
 }
