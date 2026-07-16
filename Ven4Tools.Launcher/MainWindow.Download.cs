@@ -113,6 +113,7 @@ namespace Ven4Tools.Launcher
             txtDownloadStatus.Text    = "Скачивание: 0%";
             btnCancelDownload.Visibility = Visibility.Visible;
             btnLaunchApp.IsEnabled    = false;
+            SetOperationStage(1); // Загрузка
 
             try
             {
@@ -150,6 +151,7 @@ namespace Ven4Tools.Launcher
                 // fail-open. Самообновление лаунчера (LauncherUpdateService) в тех
                 // же условиях строго отказывает; здесь приводим клиентский путь
                 // к той же fail-closed политике.
+                SetOperationStage(2); // Проверка целостности
                 if (!string.IsNullOrEmpty(version.ExpectedSha256))
                 {
                     txtDownloadStatus.Text = "Проверка целостности...";
@@ -158,6 +160,7 @@ namespace Ven4Tools.Launcher
                 else
                 {
                     txtDownloadStatus.Text = "Целостность не подтверждена";
+                    SetOperationStage(0);
                     AddLog($"⛔ Для версии {version.Version} нет подтверждённого SHA256 (CDN недоступен или ещё не знает эту версию) — установка отменена");
                     if (!silent)
                         System.Windows.MessageBox.Show(
@@ -168,6 +171,7 @@ namespace Ven4Tools.Launcher
                     return;
                 }
 
+                SetOperationStage(3); // Распаковка
                 txtDownloadStatus.Text = "Распаковка...";
                 await SafeZipExtractor.ExtractAsync(tempZip, extractPath, token);
                 AddLog("✅ Архив безопасно распакован");
@@ -207,6 +211,7 @@ namespace Ven4Tools.Launcher
                 if (!InstallPathGuard.IsClientPathSafe(_clientPath, _dataFolderPath))
                 {
                     txtDownloadStatus.Text = "Ошибка пути";
+                    SetOperationStage(0);
                     AddLog($"⛔ Папка установки клиента пересекается с папкой данных — обновление отменено: {_clientPath}");
                     if (!silent)
                         System.Windows.MessageBox.Show(
@@ -216,10 +221,12 @@ namespace Ven4Tools.Launcher
                     return;
                 }
 
+                SetOperationStage(4); // Установка файлов
                 txtDownloadStatus.Text = "Установка файлов...";
                 var installer = new TransactionalDirectoryInstaller();
                 installer.Install(extractPath, _clientPath, token);
 
+                SetOperationStage(5); // Готово
                 txtDownloadStatus.Text = "Готово";
                 progressDownload.Value = 100;
                 AddLog($"✅ Клиент {version.Version} скачан и распакован");
@@ -236,11 +243,13 @@ namespace Ven4Tools.Launcher
             {
                 txtDownloadStatus.Text = "Отменено";
                 progressDownload.Value = 0;
+                SetOperationStage(0);
                 AddLog("⏹ Загрузка отменена");
             }
             catch (Exception ex)
             {
                 txtDownloadStatus.Text = "Ошибка";
+                SetOperationStage(0);
                 AddLog($"❌ Ошибка скачивания: {ex.Message}");
                 if (!silent)
                     System.Windows.MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
