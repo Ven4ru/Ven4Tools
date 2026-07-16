@@ -246,32 +246,31 @@ namespace Ven4Tools.Launcher
                     txtLog.Text = txtLog.Text.Substring(cutIndex);
                 }
                 txtLog.ScrollToEnd();
-                UpdateOperationStages(message);
             });
         }
 
-        private void UpdateOperationStages(string message)
+        // Явное управление индикатором «Ход операции». Раньше стадии определялись по
+        // ключевым словам в произвольном тексте лога (AddLog), из-за чего обычные
+        // сообщения старта («🔧 Проверка компонентов…», «⚠️ Найдены проблемы…»)
+        // ложно зажигали стадии 2-4 без единой реальной загрузки. Теперь стадии
+        // выставляются напрямую из конвейера скачивания клиента (DownloadVersionAsync).
+        // stage: 0 — сброс (все стадии неактивны), 1..5 — сколько шагов подсвечено
+        // (1 Загрузка, 2 +Проверка, 3 +Распаковка, 4 +Установка, 5 Готово).
+        private void SetOperationStage(int stage)
         {
-            string value = message.ToLowerInvariant();
-            int stage = value.Contains("готов") || value.Contains("успеш") ? 5
-                : value.Contains("установ") || value.Contains("замен") ? 4
-                : value.Contains("распаков") || value.Contains("извлеч") ? 3
-                : value.Contains("sha") || value.Contains("подпис") || value.Contains("целост") || value.Contains("провер") ? 2
-                : value.Contains("скачив") || value.Contains("загруз") ? 1
-                : 0;
-            if (stage == 0) return;
-
             var stages = new[] { stageDownload, stageVerify, stageExtract, stageInstall, stageDone };
             var active = (System.Windows.Media.Brush)FindResource("BrandGreen");
             var pending = (System.Windows.Media.Brush)FindResource("SurfaceRaised");
             var border = (System.Windows.Media.Brush)FindResource("BorderBrush");
             for (int i = 0; i < stages.Length; i++)
             {
-                stages[i].Background = i < stage ? active : pending;
-                stages[i].BorderBrush = i < stage ? active : border;
-                stages[i].Opacity = i < stage ? 1 : 0.72;
+                bool lit = i < stage;
+                stages[i].Background = lit ? active : pending;
+                stages[i].BorderBrush = lit ? active : border;
+                stages[i].Opacity = lit ? 1 : 0.72;
             }
-            MotionService.Pulse(stages[Math.Clamp(stage - 1, 0, stages.Length - 1)], 1.12, 180);
+            if (stage >= 1 && stage <= stages.Length)
+                MotionService.Pulse(stages[Math.Clamp(stage - 1, 0, stages.Length - 1)], 1.12, 180);
         }
 
         private void BtnExit_Click(object sender, RoutedEventArgs e)
