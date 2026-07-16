@@ -99,11 +99,17 @@ namespace Ven4Tools.Launcher
         private async Task InstallChocoAsync()
         {
             AddLog("📦 Установка Chocolatey...");
+            // L4: как и для winget/WebView2/VC++, даём возможность прервать зависшую
+            // установку — переиспользуем ту же кнопку и CTS-поле.
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
+            _downloadCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token);
+            var ct = _downloadCts.Token;
             Dispatcher.Invoke(() =>
             {
                 progressDownload.Value = 0;
                 txtDownloadStatus.Text = "Chocolatey: установка...";
                 btnLaunchApp.IsEnabled = false;
+                btnCancelDownload.Visibility = Visibility.Visible;
             });
 
             // Официальный установочный скрипт Chocolatey (community.chocolatey.org).
@@ -141,13 +147,13 @@ namespace Ven4Tools.Launcher
                     {
                         var stdoutTask = proc.StandardOutput.ReadToEndAsync();
                         string stderr  = await proc.StandardError.ReadToEndAsync();
-                        await proc.WaitForExitAsync();
+                        await proc.WaitForExitAsync(ct);
                         await stdoutTask;
                         if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
                             AddLog($"⚠️ PowerShell: {stderr.Trim()}");
                     }
                     else
-                        await proc.WaitForExitAsync();
+                        await proc.WaitForExitAsync(ct);
                 }
 
                 var result = await CheckChocoInstalledAsync();
@@ -162,6 +168,11 @@ namespace Ven4Tools.Launcher
                     Dispatcher.Invoke(() => txtDownloadStatus.Text = "Chocolatey: не найден после установки");
                 }
             }
+            catch (OperationCanceledException)
+            {
+                AddLog("⏹ Установка Chocolatey отменена");
+                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Отменено");
+            }
             catch (Exception ex)
             {
                 // Сюда попадает и отказ в запросе UAC — это не критично,
@@ -171,7 +182,14 @@ namespace Ven4Tools.Launcher
             }
             finally
             {
-                Dispatcher.Invoke(() => { progressDownload.Value = 0; btnLaunchApp.IsEnabled = true; });
+                _downloadCts?.Dispose();
+                _downloadCts = null;
+                Dispatcher.Invoke(() =>
+                {
+                    progressDownload.Value = 0;
+                    btnLaunchApp.IsEnabled = true;
+                    btnCancelDownload.Visibility = Visibility.Collapsed;
+                });
             }
         }
 
