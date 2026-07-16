@@ -384,11 +384,15 @@
                         Margin="0,0,8,0" Foreground="{StaticResource StatusDanger}"
                         Command="{Binding CancelInstallCommand}"/>
                 <Button x:Name="btnInstall" Grid.Column="2"
-                        Content="{Binding SelectedCount, StringFormat='Установить ({0})'}"
                         Height="38" MinWidth="190"
                         Background="{StaticResource BrandGreen}" Foreground="#06130D"
                         Effect="{StaticResource BrandAuraEffect}"
-                        Command="{Binding InstallSelectedCommand}"/>
+                        Command="{Binding InstallSelectedCommand}">
+                    <!-- StringFormat молча игнорируется, когда целевое свойство биндинга —
+                         object (Button.Content), а не string: показывало голое число вместо
+                         "Установить (N)". Вложенный TextBlock.Text (string) форматирует верно. -->
+                    <TextBlock Text="{Binding SelectedCount, StringFormat='Установить ({0})'}"/>
+                </Button>
             </Grid>
         </Border>
     </Grid>
