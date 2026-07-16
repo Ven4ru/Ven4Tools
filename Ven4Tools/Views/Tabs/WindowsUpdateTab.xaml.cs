@@ -181,17 +181,26 @@ namespace Ven4Tools.Views.Tabs
             var eulaItems = WindowsUpdateErrorMapper.GetItemsNeedingEula(_tree);
             long totalBytes = WindowsUpdateCategoryTreeBuilder.GetSelectedTotalSizeBytes(_tree);
 
-            string confirmText = $"Установить {selectedIds.Count} патчей ({FormatSize(totalBytes)})?\n\n" +
-                                  "Может потребоваться перезагрузка после установки.";
+            bool confirmed;
             if (eulaItems.Count > 0)
             {
-                confirmText += "\n\nЛицензионные соглашения выбранных обновлений:\n\n" +
-                    string.Join("\n\n---\n\n", eulaItems.Select(i => $"{i.Title}:\n{i.EulaText}"));
+                // EULA нескольких патчей может быть длинным — показываем в отдельном окне
+                // с прокруткой (раньше склеивалось в один MessageBox и обрезалось по высоте).
+                string header = $"Установить {selectedIds.Count} патчей ({FormatSize(totalBytes)})?\n" +
+                                "Может потребоваться перезагрузка после установки.";
+                string eulaText = string.Join("\n\n----------------------------------------\n\n",
+                    eulaItems.Select(i => $"{i.Title}:\n\n{i.EulaText}"));
+                var dialog = new EulaConfirmWindow(header, eulaText) { Owner = Window.GetWindow(this) };
+                confirmed = dialog.ShowDialog() == true;
             }
-
-            var confirmed = MessageBox.Show(confirmText, "Подтверждение установки",
-                MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (confirmed != MessageBoxResult.Yes) return;
+            else
+            {
+                string confirmText = $"Установить {selectedIds.Count} патчей ({FormatSize(totalBytes)})?\n\n" +
+                                      "Может потребоваться перезагрузка после установки.";
+                confirmed = MessageBox.Show(confirmText, "Подтверждение установки",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+            }
+            if (!confirmed) return;
 
             btnInstall.IsEnabled = false;
             btnCheck.IsEnabled = false;
