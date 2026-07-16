@@ -203,12 +203,14 @@ namespace Ven4Tools.Views.Tabs
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true
                 };
+                int exitCode = -1;
                 using var p = Process.Start(psi);
                 if (p != null)
                 {
                     var stdoutTask = p.StandardOutput.ReadToEndAsync();
                     var stderrTask = p.StandardError.ReadToEndAsync();
                     await p.WaitForExitAsync();
+                    exitCode = p.ExitCode;
 
                     // Выводим результат команд в лог-панель построчно
                     foreach (var line in (await stdoutTask).Split('\n'))
@@ -219,9 +221,23 @@ namespace Ven4Tools.Views.Tabs
                     var err = (await stderrTask).Trim();
                     if (!string.IsNullOrWhiteSpace(err)) AppLogger.Write($"[Сеть] ⚠ {err}");
                 }
-                AppLogger.Write("[Сеть] Сброс завершён");
-                MessageBox.Show("Перезагрузите компьютер для применения изменений.",
-                    "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Проверяем код выхода: цепочка команд через «&» возвращает код последней,
+                // ненулевой код означает, что часть сброса не удалась (нет прав, DHCP и т.п.).
+                if (exitCode == 0)
+                {
+                    AppLogger.Write("[Сеть] Сброс завершён");
+                    MessageBox.Show("Перезагрузите компьютер для применения изменений.",
+                        "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    AppLogger.Write($"[Сеть] ⚠ Сброс завершился с кодом {exitCode} — часть команд могла не выполниться");
+                    MessageBox.Show(
+                        $"Сброс сетевых настроек завершился с ошибкой (код {exitCode}). Часть команд могла не выполниться.\n\n" +
+                        "Запустите приложение от имени администратора и попробуйте ещё раз. Подробности — в логах.",
+                        "Сброс не завершён", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
             catch (Exception ex)
             {
