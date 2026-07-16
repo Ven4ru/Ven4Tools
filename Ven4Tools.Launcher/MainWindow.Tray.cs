@@ -60,11 +60,15 @@ namespace Ven4Tools.Launcher
 
                 var contextMenu = new ContextMenuStrip();
                 contextMenu.Items.Add("Показать окно", null, (s, e) => Dispatcher.Invoke(ShowWindow));
-                contextMenu.Items.Add("Проверить обновления", null, async (s, e) =>
+                contextMenu.Items.Add("Проверить обновления", null, (s, e) =>
                 {
-                    await (_updateService?.CheckNowAsync() ?? Task.CompletedTask);
-                    // InvokeAsync<Task> возвращает DispatcherOperation<Task> — .Task.Unwrap() даёт inner Task
-                    await Dispatcher.InvokeAsync(async () => await CheckForUpdatesAsync()).Task.Unwrap();
+                    // Единый путь ручной проверки — тот же, что кнопка «Проверить
+                    // обновления» в окне (BtnCheckUpdates_Click → CheckForUpdatesAsync):
+                    // перезагрузка списка версий клиента + проверка обновления лаунчера.
+                    // Раньше здесь дополнительно вызывался _updateService.CheckNowAsync() —
+                    // второй независимый механизм проверки того же обновления лаунчера,
+                    // из-за чего уведомление могло показаться дважды / рассинхронизироваться (L6).
+                    _ = Dispatcher.InvokeAsync(async () => await CheckForUpdatesAsync());
                 });
                 contextMenu.Items.Add("-");
                 contextMenu.Items.Add(itemAutostart);
@@ -102,8 +106,10 @@ namespace Ven4Tools.Launcher
             {
                 Dispatcher.Invoke(() =>
                 {
+                    // Счётчик относится к обновлениям winget-пакетов в целом, а не к
+                    // самому Ven4Tools — уточняем текст, чтобы не вводить в заблуждение (L5).
                     if (_notifyIcon != null && count > 0)
-                        _notifyIcon.Text = $"Ven4Tools [{count} обновл.]";
+                        _notifyIcon.Text = $"Ven4Tools · winget: {count} обновл.";
                     else if (_notifyIcon != null)
                         _notifyIcon.Text = "Ven4Tools Launcher";
                 });
@@ -216,6 +222,14 @@ namespace Ven4Tools.Launcher
             {
                 _pendingSetupComponents = false;
                 _ = ProcessSetupComponentRequestsAsync();
+            }
+
+            // Отложенные (при автозапуске в трее) модальные отчёты о крэше/неуспешных
+            // установках: окно теперь видимо — показываем их поверх видимого владельца.
+            if (_pendingStartupReports)
+            {
+                _pendingStartupReports = false;
+                ShowStartupReports();
             }
         }
 

@@ -108,13 +108,25 @@ namespace Ven4Tools.Launcher
             if (hasIssues)
             {
                 AddLog("⚠️ Найдены проблемы. Нажмите «Установить компоненты».");
-                Dispatcher.Invoke(() => btnInstallMissing.Visibility = Visibility.Visible);
+                Dispatcher.Invoke(() =>
+                {
+                    // Кнопка переиспользуется — возвращаем обязательный текст на случай,
+                    // если ранее показывался опциональный вариант.
+                    btnInstallMissing.Content    = "Установить компоненты";
+                    btnInstallMissing.Visibility = Visibility.Visible;
+                });
             }
             else if (hasOptionalMissing)
             {
                 AddLog("✅ Все обязательные компоненты в порядке.");
-                AddLog("ℹ️ Доступен опциональный источник (Chocolatey) — при желании нажмите «Установить компоненты».");
-                Dispatcher.Invoke(() => btnInstallMissing.Visibility = Visibility.Visible);
+                AddLog("ℹ️ Доступен опциональный источник (Chocolatey) — при желании нажмите «Установить Chocolatey».");
+                Dispatcher.Invoke(() =>
+                {
+                    // Не хватает только опционального Chocolatey — кнопка не должна
+                    // выглядеть так же призывно, как при реальных проблемах (L2).
+                    btnInstallMissing.Content    = "Установить Chocolatey (опционально)";
+                    btnInstallMissing.Visibility = Visibility.Visible;
+                });
             }
             else
             {
