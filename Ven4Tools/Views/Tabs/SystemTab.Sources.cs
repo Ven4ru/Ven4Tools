@@ -75,7 +75,7 @@ namespace Ven4Tools.Views.Tabs
             SourceOrderService.Current.GlobalOrder = _sourceItems.Select(i => i.Id).ToList();
             SourceOrderService.Save();
 
-            txtSourceOrderStatus.Text = $"✅ Сохранено {DateTime.Now:HH:mm:ss} · Запуск проверки доступности...";
+            txtSourceOrderStatus.Text = $"✅ Сохранено {DateTime.Now:HH:mm:ss} — изменится при следующем открытии каталога";
             AppLogger.Write("🔀 Порядок источников сохранён");
         }
     }

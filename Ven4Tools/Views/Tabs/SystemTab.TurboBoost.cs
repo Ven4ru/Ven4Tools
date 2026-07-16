@@ -28,11 +28,25 @@ namespace Ven4Tools.Views.Tabs
 
         private const string TurboSetting  = "be337238-0d82-4146-a960-4f3749d470c7";
 
+        // L8: обновляет текстовый статус текущего состояния Turbo Boost в UI.
+        // Вызывается при загрузке вкладки и после включения/отключения.
+        private async Task RefreshTurboBoostStatusAsync()
+        {
+            bool? state = await GetTurboBoostStateAsync();
+            txtTurboBoostStatus.Text = state switch
+            {
+                true  => "Текущее состояние: ⚡ включён",
+                false => "Текущее состояние: ❌ отключён",
+                _     => "Текущее состояние: неизвестно"
+            };
+        }
+
         private async void BtnDisableTurboBoost_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 await ApplyTurboBoostAsync(false);
+                await RefreshTurboBoostStatusAsync();
                 AppLogger.Write("⚡ Турбобуст отключён");
                 MessageBox.Show("✅ Турбобуст отключён.\nИзменение применено немедленно — перезагрузка не требуется.",
                     "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -50,6 +64,7 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 await ApplyTurboBoostAsync(true);
+                await RefreshTurboBoostStatusAsync();
                 AppLogger.Write("⚡ Турбобуст включён");
                 MessageBox.Show("✅ Турбобуст включён.\nИзменение применено немедленно — перезагрузка не требуется.",
                     "Успех", MessageBoxButton.OK, MessageBoxImage.Information);

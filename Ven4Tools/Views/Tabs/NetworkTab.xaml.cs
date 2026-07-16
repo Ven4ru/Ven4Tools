@@ -34,7 +34,9 @@ namespace Ven4Tools.Views.Tabs
         {
             if (_busy) return;
             _busy = true;
-            btnRunAll.IsEnabled = false;
+            // L13: на время полной диагностики блокируем все диагностические кнопки, а не
+            // только btnRunAll — иначе можно запустить пинг/сброс параллельно с прогоном.
+            SetDiagnosticButtonsEnabled(false);
             btnRunAll.Content = "⏳ Диагностика...";
             try
             {
@@ -42,13 +44,25 @@ namespace Ven4Tools.Views.Tabs
                 await RunPingAsync();
                 await RunServicesAsync();
                 await RunGetIpAsync();
+                await RunDnsAsync();   // L13: DNS теперь входит в полную диагностику
             }
             finally
             {
                 _busy = false;
-                btnRunAll.IsEnabled = true;
+                SetDiagnosticButtonsEnabled(true);
                 btnRunAll.Content = "🔍 Запустить полную диагностику";
             }
+        }
+
+        private void SetDiagnosticButtonsEnabled(bool enabled)
+        {
+            btnRunAll.IsEnabled          = enabled;
+            btnRefreshAdapters.IsEnabled = enabled;
+            btnPing.IsEnabled            = enabled;
+            btnCheckServices.IsEnabled   = enabled;
+            btnGetIp.IsEnabled           = enabled;
+            btnCheckDns.IsEnabled        = enabled;
+            btnResetNetwork.IsEnabled    = enabled;
         }
 
         // ── Адаптеры ─────────────────────────────────────────────────────────
@@ -90,7 +104,8 @@ namespace Ven4Tools.Views.Tabs
                 }));
             }
             await Task.WhenAll(tasks);
-            btnPing.IsEnabled = true;
+            // Во время полной диагностики кнопки разблокирует RunAllAsync в finally.
+            if (!_busy) btnPing.IsEnabled = true;
         }
 
         private static void SetPingRow(TextBlock txt, TextBlock icon, string ms, bool? ok)
@@ -139,7 +154,7 @@ namespace Ven4Tools.Views.Tabs
                 }));
             }
             await Task.WhenAll(tasks);
-            btnCheckServices.IsEnabled = true;
+            if (!_busy) btnCheckServices.IsEnabled = true;
         }
 
         // ── Внешний IP ───────────────────────────────────────────────────────
@@ -154,7 +169,7 @@ namespace Ven4Tools.Views.Tabs
                 txtPublicIp.Text = ip;
                 AppLogger.Write($"[Сеть] Внешний IP: {ip}");
             }
-            finally { btnGetIp.IsEnabled = true; }
+            finally { if (!_busy) btnGetIp.IsEnabled = true; }
         }
 
         // ── DNS ──────────────────────────────────────────────────────────────
@@ -171,7 +186,7 @@ namespace Ven4Tools.Views.Tabs
                 AppLogger.Write("[Сеть] DNS проверка завершена");
             }
             catch (Exception ex) { txtDnsResult.Text = $"Ошибка: {ex.Message}"; }
-            finally { btnCheckDns.IsEnabled = true; }
+            finally { if (!_busy) btnCheckDns.IsEnabled = true; }
         }
 
         // ── Сброс сети ───────────────────────────────────────────────────────
