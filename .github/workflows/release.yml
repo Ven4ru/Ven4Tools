@@ -79,8 +79,15 @@ jobs:
       - name: Публикация
         shell: pwsh
         run: |
+          # -p:Version делает тег единственным источником версии бинарника —
+          # иначе версия берётся из литерала <Version> в csproj и может
+          # разойтись с тегом (реальный билд показывал/отправлял версию,
+          # отличную от тега). AssemblyVersion/FileVersion SDK выводит из
+          # Version, т.к. отдельных литералов в csproj больше нет.
+          # То же делает launcher-release.yml (-p:Version=$env:RELEASE_VERSION).
           dotnet publish Ven4Tools/Ven4Tools.csproj `
             -c Release -r win-x64 --self-contained true `
+            -p:Version=${{ steps.ver.outputs.VERSION }} `
             -o _release/client_${{ steps.ver.outputs.VERSION }} `
             --nologo
 
