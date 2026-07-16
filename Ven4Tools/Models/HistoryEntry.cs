@@ -17,9 +17,6 @@ namespace Ven4Tools.Models
         [JsonProperty("category")]
         public string Category { get; set; } = "";
 
-        [JsonProperty("machineName")]
-        public string MachineName { get; set; } = "";
-
         [JsonProperty("installedAt")]
         public DateTime InstalledAt { get; set; } = DateTime.Now;
 
@@ -44,10 +41,5 @@ namespace Ven4Tools.Models
 
         [JsonIgnore]
         public string ActionVerb => (Success ? "install " : "failed  ");
-
-        // "PC-Name : install AppName [dd.MM.yyyy HH:mm]"
-        [JsonIgnore]
-        public string ActionLine =>
-            $"{MachineName} : {(Success ? "install" : "failed")} {AppName}  [{DateLabel}]";
     }
 }
