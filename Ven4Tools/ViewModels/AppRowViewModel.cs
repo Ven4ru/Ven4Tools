@@ -191,6 +191,22 @@ namespace Ven4Tools.ViewModels
             }
         }
 
+        // Замороженные кисти для трёх фирменных цветов строки: свойство RowBrush
+        // перечитывается биндингом при каждой смене статуса (доступность/установлено/
+        // обновление) для сотен строк при массовой проверке — общие Freeze()-кисти
+        // избавляют от аллокации нового SolidColorBrush на каждый вызов и рендерятся
+        // быстрее. Brushes.LightGreen/LightCoral/Gray уже статические и замороженные.
+        private static readonly Brush _justInstalledBrush = CreateFrozen(Color.FromRgb(136, 136, 136));
+        private static readonly Brush _hasUpdateBrush = CreateFrozen(Color.FromRgb(255, 165, 0));
+        private static readonly Brush _installedBrush = CreateFrozen(Color.FromRgb(100, 149, 237));
+
+        private static Brush CreateFrozen(Color color)
+        {
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+            return brush;
+        }
+
         // Тот же набор цветов, что в CatalogTab.Availability.cs/Install.cs — сведено
         // в одно вычисляемое свойство вместо императивной установки Foreground
         // в десятке разных мест.
@@ -198,11 +214,9 @@ namespace Ven4Tools.ViewModels
         {
             get
             {
-                if (JustInstalled) return new SolidColorBrush(Color.FromRgb(136, 136, 136));
+                if (JustInstalled) return _justInstalledBrush;
                 if (IsInstalled)
-                    return HasUpdate
-                        ? new SolidColorBrush(Color.FromRgb(255, 165, 0))
-                        : new SolidColorBrush(Color.FromRgb(100, 149, 237));
+                    return HasUpdate ? _hasUpdateBrush : _installedBrush;
                 return Availability switch
                 {
                     RowAvailability.Available   => Brushes.LightGreen,

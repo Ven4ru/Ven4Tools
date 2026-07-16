@@ -30,6 +30,14 @@ namespace Ven4Tools.Services
         // менять HttpClient.Timeout после первого запроса нельзя (InvalidOperationException)
         private volatile int _timeoutSeconds;
 
+        // Разбор строки размера из вывода winget show. Паттерн статический, а метод
+        // вызывается для каждой строки вывода по каждому проверяемому приложению
+        // (сотни приложений при проверке доступности), поэтому компилируем один раз,
+        // а не пересобираем Regex на каждый вызов.
+        private static readonly System.Text.RegularExpressions.Regex _wingetSizeRegex =
+            new(@"(\d+[,.]?\d*)\s*(MB|KB|GB)",
+                System.Text.RegularExpressions.RegexOptions.Compiled);
+
         public AvailabilityChecker()
         {
             _timeoutSeconds = Math.Max(5, AppSettings.CheckTimeout);
@@ -161,7 +169,7 @@ namespace Ven4Tools.Services
                 {
                     if (line.Contains("Installer Size") || line.Contains("Size"))
                     {
-                        var match = System.Text.RegularExpressions.Regex.Match(line, @"(\d+[,.]?\d*)\s*(MB|KB|GB)");
+                        var match = _wingetSizeRegex.Match(line);
                         if (match.Success)
                         {
                             double value = double.Parse(match.Groups[1].Value.Replace(',', '.'));
