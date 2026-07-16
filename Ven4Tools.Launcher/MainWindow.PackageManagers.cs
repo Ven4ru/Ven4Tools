@@ -112,16 +112,24 @@ namespace Ven4Tools.Launcher
                 btnCancelDownload.Visibility = Visibility.Visible;
             });
 
-            // Официальный установочный скрипт Chocolatey (community.chocolatey.org).
+            // Официальный установочный скрипт Chocolatey. URL захардкожен как
+            // HTTPS-литерал на конкретный домен community.chocolatey.org (нет
+            // пользовательского ввода — валидировать хост/схему нечего), TLS 1.2
+            // принудительно включён ниже (SecurityProtocol -bor 3072). Хеш скрипта
+            // намеренно НЕ пиннится: это официальный upstream-механизм, скрипт на
+            // стороне Chocolatey регулярно меняется, пиннинг сломал бы установку.
+            // Ради прозрачности логируем ровно то, что будет скачано и исполнено.
+            const string ChocoInstallScriptUrl = "https://community.chocolatey.org/install.ps1";
+            AddLog($"⤓ Источник (iex): {ChocoInstallScriptUrl}");
             // Команда передаётся напрямую через -EncodedCommand (Base64 UTF-16LE),
             // без временного .ps1-файла: у файла в %TEMP% между записью и
             // elevated-запуском есть окно подмены содержимого (TOCTOU), а аргумент
             // командной строки фиксируется в момент старта процесса.
-            const string installCommand =
+            string installCommand =
                 "Set-ExecutionPolicy Bypass -Scope Process -Force\r\n" +
                 "[System.Net.ServicePointManager]::SecurityProtocol = " +
                 "[System.Net.ServicePointManager]::SecurityProtocol -bor 3072\r\n" +
-                "iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))\r\n";
+                $"iex ((New-Object System.Net.WebClient).DownloadString('{ChocoInstallScriptUrl}'))\r\n";
             string encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(installCommand));
 
             try

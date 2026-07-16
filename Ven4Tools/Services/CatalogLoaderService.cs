@@ -87,32 +87,25 @@ namespace Ven4Tools.Services
             // валидной подписи пропускается, каталог без подписи не принимается.
             try
             {
-                var verified = await TryDownloadVerifiedAsync(HostingCatalogUrl, HostingTimeoutSeconds, ct);
-                string source = "hosting";
+                // Каждый источник проверяется целиком: подпись + защита от отката версии.
+                // Источник с валидной подписью, но версией ниже последней применённой
+                // (downgrade-атака) отвергается так же, как источник без подписи — и
+                // цепочка продолжается на следующий источник (fail-closed).
+                var loaded =
+                    await TryLoadFromSourceAsync(HostingCatalogUrl, HostingTimeoutSeconds, "hosting", ct)
+                    ?? await TryLoadFromSourceAsync(CdnCatalogUrl, CdnTimeoutSeconds, "cdn", ct)
+                    ?? await TryLoadFromSourceAsync(RemoteCatalogUrl, _timeoutSeconds, "online", ct);
 
-                if (verified == null)
-                {
-                    verified = await TryDownloadVerifiedAsync(CdnCatalogUrl, CdnTimeoutSeconds, ct);
-                    source = "cdn";
-                }
-
-                if (verified == null)
-                {
-                    verified = await TryDownloadVerifiedAsync(RemoteCatalogUrl, _timeoutSeconds, ct);
-                    source = "online";
-                }
-
-                if (verified == null)
+                if (loaded == null)
                     throw new HttpRequestException("Каталог недоступен ни с хостинга, ни с CDN, ни с GitHub");
 
-                var (remoteJson, remoteSignature) = verified.Value;
+                var (catalog, remoteJson, remoteSignature) = loaded.Value;
 
                 // Присваиваем результат до записи на диск: ошибка кэширования
                 // (например, Program Files без прав на запись) не должна обнулять каталог.
-                var catalog = Deserialize(remoteJson);
-                catalog.Source = source;
                 LoadedCatalog = catalog;
                 CatalogReady?.Invoke(catalog);
+                RememberCatalogVersion(catalog.Version);
 
                 try
                 {
@@ -223,6 +216,78 @@ namespace Ven4Tools.Services
         }
 
         /// <summary>
+        /// Полная загрузка каталога из одного источника: скачивание + проверка подписи
+        /// (fail-closed) + защита от отката версии. Возвращает готовый каталог вместе с
+        /// проверенной парой json+sig (для кэша) либо null, если источник недоступен,
+        /// подпись невалидна или версия ниже последней применённой (downgrade).
+        /// </summary>
+        private async Task<(MasterCatalog Catalog, string Json, string Signature)?> TryLoadFromSourceAsync(
+            string url, int timeoutSeconds, string source, CancellationToken ct)
+        {
+            var verified = await TryDownloadVerifiedAsync(url, timeoutSeconds, ct);
+            if (verified == null) return null;
+
+            var (json, signature) = verified.Value;
+            var catalog = Deserialize(json);
+
+            if (!IsCatalogVersionAcceptable(catalog.Version, source))
+                return null;
+
+            catalog.Source = source;
+            return (catalog, json, signature);
+        }
+
+        /// <summary>
+        /// Проверка защиты от отката: версия каталога не должна быть СТРОГО меньше
+        /// последней успешно применённой (запомненной в профиле). Равная версия
+        /// принимается (переустановка той же версии), 0 в памяти означает первый
+        /// запуск — принимается любая версия.
+        /// </summary>
+        private static bool IsCatalogVersionAcceptable(int candidateVersion, string source)
+        {
+            int lastSeen = ProfileService.Current.LastCatalogVersion;
+            bool acceptable = IsVersionAcceptable(candidateVersion, lastSeen);
+            if (!acceptable)
+            {
+                AppLogger.Write(
+                    $"[CatalogLoaderService] Отклонён каталог версии {candidateVersion} < последней применённой {lastSeen} " +
+                    $"(защита от отката), источник: {source}");
+            }
+            return acceptable;
+        }
+
+        /// <summary>
+        /// Чистое правило защиты от отката (без побочных эффектов, для тестов):
+        /// версия приемлема, если памяти о версии ещё нет (lastSeen ≤ 0, первый запуск)
+        /// либо версия не меньше последней применённой.
+        /// </summary>
+        internal static bool IsVersionAcceptable(int candidateVersion, int lastSeenVersion)
+        {
+            if (lastSeenVersion <= 0) return true;
+            return candidateVersion >= lastSeenVersion;
+        }
+
+        /// <summary>
+        /// Запоминает версию успешно применённого каталога, если она выше запомненной.
+        /// Best-effort: сбой записи профиля не должен ломать загрузку каталога.
+        /// </summary>
+        private static void RememberCatalogVersion(int version)
+        {
+            try
+            {
+                if (version > ProfileService.Current.LastCatalogVersion)
+                {
+                    ProfileService.Current.LastCatalogVersion = version;
+                    ProfileService.Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[CatalogLoaderService] Не удалось запомнить версию каталога: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Читает кэш каталога с диска. Кэш тоже строго fail-closed: без файла
         /// подписи или с невалидной подписью возвращается null. При повреждённом
         /// JSON удаляет битый файл, чтобы цепочка загрузки продолжилась на embedded.
@@ -237,6 +302,9 @@ namespace Ven4Tools.Services
                 var signature = await File.ReadAllTextAsync(LocalSignaturePath, ct);
                 if (!CatalogSignatureVerifier.Verify(json, signature)) return null;
                 var catalog = Deserialize(json);
+                // Кэш в переносимом/непривилегированном режиме лежит в user-writable
+                // папке — применяем ту же защиту от отката, что и к сетевым источникам.
+                if (!IsCatalogVersionAcceptable(catalog.Version, "cache")) return null;
                 catalog.Source = "cache";
                 return catalog;
             }
