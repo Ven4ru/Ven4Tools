@@ -567,8 +567,13 @@ namespace Ven4Tools.Launcher
                     using var proc = Process.Start(psi);
                     if (proc != null) await proc.WaitForExitAsync();
                 }
-                Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = $"{label}: готово"; });
-                AddLog($"✅ {label} установлен");
+                // Завершение процесса установщика ≠ успех: exit code Microsoft-установщиков
+                // ненадёжен, а WebView2/VC++ могут «встать» только после перезагрузки.
+                // Единственный источник правды об успехе — перепроверка через
+                // IsWebView2Installed()/IsVcRedistInstalled() у вызывающего кода
+                // (CheckComponentsInteractiveAsync), поэтому здесь успех НЕ логируем,
+                // чтобы не было противоречия «✅ установлен» + «⚠️ не обнаружен».
+                Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = $"{label}: установка завершена"; });
             }
             catch (Exception ex)
             {
