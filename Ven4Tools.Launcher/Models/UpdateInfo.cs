@@ -10,13 +10,11 @@ namespace Ven4Tools.Launcher.Models
         public string? LatestVersion { get; set; }
         public string? DownloadUrl { get; set; }
         public string? ReleaseNotes { get; set; }
-        public long FileSize { get; set; }
     }
 
     public class GitHubRelease
     {
         public string? tag_name { get; set; }
-        public string? name { get; set; }
         public string? body { get; set; }
         public DateTime published_at { get; set; }
         public bool prerelease { get; set; }

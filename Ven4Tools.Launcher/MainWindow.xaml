@@ -47,7 +47,7 @@
                         <TextBlock FontSize="19" FontWeight="Bold">
                             <Run Text="Ven4"/><Run Text="Tools" Foreground="{StaticResource BrandGreen}"/>
                         </TextBlock>
-                        <TextBlock Text="LAUNCHER  2.1" Style="{StaticResource EyebrowStyle}" Margin="0,3,0,0"/>
+                        <TextBlock x:Name="txtLauncherVersionLabel" Text="LAUNCHER" Style="{StaticResource EyebrowStyle}" Margin="0,3,0,0"/>
                     </StackPanel>
                 </Grid>
 
