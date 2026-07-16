@@ -46,6 +46,10 @@ namespace Ven4Tools.Launcher
         // Запросы на установку компонентов из setup отложены до первого видимого показа
         // окна: при автозапуске в трее (скрытое окно) UAC/прогресс не должны всплывать незаметно
         private bool                 _pendingSetupComponents = false;
+        // Окна отчётов (крэш клиента / неуспешные установки) при старте показываются
+        // модально; при автозапуске в трее (скрытое окно) — откладываются до первого
+        // показа окна, чтобы модальный диалог не всплывал поверх скрытого владельца.
+        private bool                 _pendingStartupReports = false;
         private readonly bool        _isUiTestMode;
         private string               _lastNotifiedLauncherVersion = "";
         private string               _lastNotifiedClientVersion   = "";
@@ -95,6 +99,13 @@ namespace Ven4Tools.Launcher
             Directory.CreateDirectory(_clientPath);
             txtInstallPath.Text = _isUiTestMode ? @"C:\Ven4Tools-Test\Client" : _clientPath;
 
+            // Начальное состояние главной кнопки выставляем синхронно по наличию клиента
+            // на диске — ещё до сетевых проверок, чтобы не было заметного мигания
+            // зелёной «Установить Ven4Tools» → «Загрузить/Запустить» (L3). quiet — без
+            // записи в журнал, строку добавит последующий LoadVersionsAsync.
+            if (!_isUiTestMode)
+                CheckExistingClient(quiet: true);
+
             // Фоновый сервис запускается после установки _clientPath:
             // он читает путь клиента при первой проверке обновлений
             if (!_isUiTestMode)
@@ -129,19 +140,32 @@ namespace Ven4Tools.Launcher
                 await LoadVersionsAsync();
                 await CheckComponentsAutoAsync();
 
-                var crash = ReadCrashReport();
-                if (crash != null && !crash.Reported)
-                {
-                    var win = new CrashReportWindow(crash) { Owner = this };
-                    win.ShowDialog();
-                }
-                var failures = ReadInstallFailures();
-                if (failures.Count > 0)
-                {
-                    var win = new InstallReportWindow(failures) { Owner = this };
-                    win.ShowDialog();
-                }
+                // Модальные отчёты не показываем поверх скрытого окна (автозапуск в
+                // трее) — откладываем до первого показа из трея (см. ShowWindow).
+                if (_startMinimized)
+                    _pendingStartupReports = true;
+                else
+                    ShowStartupReports();
             };
+        }
+
+        // Показ отложенных модальных отчётов при старте: крэш клиента и неуспешные
+        // установки. Вызывается сразу (окно видимо) либо из ShowWindow при первом
+        // раскрытии окна из трея (окно было скрыто при автозапуске).
+        private void ShowStartupReports()
+        {
+            var crash = ReadCrashReport();
+            if (crash != null && !crash.Reported)
+            {
+                var win = new CrashReportWindow(crash) { Owner = this };
+                win.ShowDialog();
+            }
+            var failures = ReadInstallFailures();
+            if (failures.Count > 0)
+            {
+                var win = new InstallReportWindow(failures) { Owner = this };
+                win.ShowDialog();
+            }
         }
 
         private void LogExpander_Expanded(object sender, RoutedEventArgs e) =>

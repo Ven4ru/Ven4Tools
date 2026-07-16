@@ -60,11 +60,15 @@ namespace Ven4Tools.Launcher
 
                 var contextMenu = new ContextMenuStrip();
                 contextMenu.Items.Add("Показать окно", null, (s, e) => Dispatcher.Invoke(ShowWindow));
-                contextMenu.Items.Add("Проверить обновления", null, async (s, e) =>
+                contextMenu.Items.Add("Проверить обновления", null, (s, e) =>
                 {
-                    await (_updateService?.CheckNowAsync() ?? Task.CompletedTask);
-                    // InvokeAsync<Task> возвращает DispatcherOperation<Task> — .Task.Unwrap() даёт inner Task
-                    await Dispatcher.InvokeAsync(async () => await CheckForUpdatesAsync()).Task.Unwrap();
+                    // Единый путь ручной проверки — тот же, что кнопка «Проверить
+                    // обновления» в окне (BtnCheckUpdates_Click → CheckForUpdatesAsync):
+                    // перезагрузка списка версий клиента + проверка обновления лаунчера.
+                    // Раньше здесь дополнительно вызывался _updateService.CheckNowAsync() —
+                    // второй независимый механизм проверки того же обновления лаунчера,
+                    // из-за чего уведомление могло показаться дважды / рассинхронизироваться (L6).
+                    _ = Dispatcher.InvokeAsync(async () => await CheckForUpdatesAsync());
                 });
                 contextMenu.Items.Add("-");
                 contextMenu.Items.Add(itemAutostart);
@@ -102,8 +106,10 @@ namespace Ven4Tools.Launcher
             {
                 Dispatcher.Invoke(() =>
                 {
+                    // Счётчик относится к обновлениям winget-пакетов в целом, а не к
+                    // самому Ven4Tools — уточняем текст, чтобы не вводить в заблуждение (L5).
                     if (_notifyIcon != null && count > 0)
-                        _notifyIcon.Text = $"Ven4Tools [{count} обновл.]";
+                        _notifyIcon.Text = $"Ven4Tools · winget: {count} обновл.";
                     else if (_notifyIcon != null)
                         _notifyIcon.Text = "Ven4Tools Launcher";
                 });
@@ -176,6 +182,18 @@ namespace Ven4Tools.Launcher
             if (!_autoUpdateClient) return;
             if (_downloadCts != null) return; // уже идёт другая загрузка — попробуем на следующем тике
 
+            // Тихое автообновление не должно показывать модальные диалоги «ниоткуда»,
+            // пока лаунчер свёрнут в трей. Если клиент запущен — переустановить его
+            // файлы нельзя, а спрашивать разрешение закрыть его блокирующим окном в
+            // фоне — плохой UX. Откладываем до следующего тика фоновой проверки или до
+            // ручного запуска пользователем (DownloadVersionAsync тоже страхует от
+            // гонки: клиент мог запуститься между этой проверкой и установкой).
+            if (IsClientRunning())
+            {
+                AddLog($"ℹ️ Автообновление клиента до {latestVersion} отложено: клиент запущен");
+                return;
+            }
+
             await LoadVersionsAsync();
             if (_downloadCts != null) return; // за время перезагрузки списка мог стартовать ручной клик — не гоняем вторую параллельную установку
 
@@ -204,6 +222,14 @@ namespace Ven4Tools.Launcher
             {
                 _pendingSetupComponents = false;
                 _ = ProcessSetupComponentRequestsAsync();
+            }
+
+            // Отложенные (при автозапуске в трее) модальные отчёты о крэше/неуспешных
+            // установках: окно теперь видимо — показываем их поверх видимого владельца.
+            if (_pendingStartupReports)
+            {
+                _pendingStartupReports = false;
+                ShowStartupReports();
             }
         }
 
@@ -246,32 +272,31 @@ namespace Ven4Tools.Launcher
                     txtLog.Text = txtLog.Text.Substring(cutIndex);
                 }
                 txtLog.ScrollToEnd();
-                UpdateOperationStages(message);
             });
         }
 
-        private void UpdateOperationStages(string message)
+        // Явное управление индикатором «Ход операции». Раньше стадии определялись по
+        // ключевым словам в произвольном тексте лога (AddLog), из-за чего обычные
+        // сообщения старта («🔧 Проверка компонентов…», «⚠️ Найдены проблемы…»)
+        // ложно зажигали стадии 2-4 без единой реальной загрузки. Теперь стадии
+        // выставляются напрямую из конвейера скачивания клиента (DownloadVersionAsync).
+        // stage: 0 — сброс (все стадии неактивны), 1..5 — сколько шагов подсвечено
+        // (1 Загрузка, 2 +Проверка, 3 +Распаковка, 4 +Установка, 5 Готово).
+        private void SetOperationStage(int stage)
         {
-            string value = message.ToLowerInvariant();
-            int stage = value.Contains("готов") || value.Contains("успеш") ? 5
-                : value.Contains("установ") || value.Contains("замен") ? 4
-                : value.Contains("распаков") || value.Contains("извлеч") ? 3
-                : value.Contains("sha") || value.Contains("подпис") || value.Contains("целост") || value.Contains("провер") ? 2
-                : value.Contains("скачив") || value.Contains("загруз") ? 1
-                : 0;
-            if (stage == 0) return;
-
             var stages = new[] { stageDownload, stageVerify, stageExtract, stageInstall, stageDone };
             var active = (System.Windows.Media.Brush)FindResource("BrandGreen");
             var pending = (System.Windows.Media.Brush)FindResource("SurfaceRaised");
             var border = (System.Windows.Media.Brush)FindResource("BorderBrush");
             for (int i = 0; i < stages.Length; i++)
             {
-                stages[i].Background = i < stage ? active : pending;
-                stages[i].BorderBrush = i < stage ? active : border;
-                stages[i].Opacity = i < stage ? 1 : 0.72;
+                bool lit = i < stage;
+                stages[i].Background = lit ? active : pending;
+                stages[i].BorderBrush = lit ? active : border;
+                stages[i].Opacity = lit ? 1 : 0.72;
             }
-            MotionService.Pulse(stages[Math.Clamp(stage - 1, 0, stages.Length - 1)], 1.12, 180);
+            if (stage >= 1 && stage <= stages.Length)
+                MotionService.Pulse(stages[Math.Clamp(stage - 1, 0, stages.Length - 1)], 1.12, 180);
         }
 
         private void BtnExit_Click(object sender, RoutedEventArgs e)

@@ -108,13 +108,25 @@ namespace Ven4Tools.Launcher
             if (hasIssues)
             {
                 AddLog("⚠️ Найдены проблемы. Нажмите «Установить компоненты».");
-                Dispatcher.Invoke(() => btnInstallMissing.Visibility = Visibility.Visible);
+                Dispatcher.Invoke(() =>
+                {
+                    // Кнопка переиспользуется — возвращаем обязательный текст на случай,
+                    // если ранее показывался опциональный вариант.
+                    btnInstallMissing.Content    = "Установить компоненты";
+                    btnInstallMissing.Visibility = Visibility.Visible;
+                });
             }
             else if (hasOptionalMissing)
             {
                 AddLog("✅ Все обязательные компоненты в порядке.");
-                AddLog("ℹ️ Доступен опциональный источник (Chocolatey) — при желании нажмите «Установить компоненты».");
-                Dispatcher.Invoke(() => btnInstallMissing.Visibility = Visibility.Visible);
+                AddLog("ℹ️ Доступен опциональный источник (Chocolatey) — при желании нажмите «Установить Chocolatey».");
+                Dispatcher.Invoke(() =>
+                {
+                    // Не хватает только опционального Chocolatey — кнопка не должна
+                    // выглядеть так же призывно, как при реальных проблемах (L2).
+                    btnInstallMissing.Content    = "Установить Chocolatey (опционально)";
+                    btnInstallMissing.Visibility = Visibility.Visible;
+                });
             }
             else
             {
@@ -331,14 +343,20 @@ namespace Ven4Tools.Launcher
             {
                 progressDownload.Value    = 0;
                 txtDownloadStatus.Text    = "Подготовка...";
-                btnCancelDownload.Visibility = Visibility.Collapsed;
+                // L4: пользователь мог отменять только скачивание клиента — установка
+                // компонентов (winget/WebView2/VC++) не давала прервать зависшую
+                // загрузку/установку. Переиспользуем ту же кнопку и CTS-поле.
+                btnCancelDownload.Visibility = interactive ? Visibility.Visible : Visibility.Collapsed;
                 btnLaunchApp.IsEnabled    = false;
             });
 
             try
             {
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-                var ct = timeoutCts.Token;
+                _downloadCts = interactive
+                    ? CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token)
+                    : null;
+                var ct = interactive ? _downloadCts!.Token : timeoutCts.Token;
 
                 string? msixUrl = await ResolveWingetMsixUrlAsync(ct);
                 if (msixUrl == null) return;
@@ -375,6 +393,11 @@ namespace Ven4Tools.Launcher
                     }
                 }
             }
+            catch (OperationCanceledException)
+            {
+                AddLog("⏹ Установка winget отменена");
+                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Отменено");
+            }
             catch (Exception ex)
             {
                 AddLog($"❌ Ошибка установки winget: {ex.Message}");
@@ -385,7 +408,14 @@ namespace Ven4Tools.Launcher
                 try { if (File.Exists(tempMsix))   File.Delete(tempMsix);   } catch { }
                 try { if (File.Exists(tempVcLibs)) File.Delete(tempVcLibs); } catch { }
                 try { if (File.Exists(tempUiXaml)) File.Delete(tempUiXaml); } catch { }
-                Dispatcher.Invoke(() => { progressDownload.Value = 0; btnLaunchApp.IsEnabled = true; });
+                _downloadCts?.Dispose();
+                _downloadCts = null;
+                Dispatcher.Invoke(() =>
+                {
+                    progressDownload.Value = 0;
+                    btnLaunchApp.IsEnabled = true;
+                    btnCancelDownload.Visibility = Visibility.Collapsed;
+                });
             }
         }
 
@@ -534,7 +564,18 @@ namespace Ven4Tools.Launcher
         {
             string tempFile = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_{fileName}");
             AddLog($"⬇️ Скачивание {label}...");
-            Dispatcher.Invoke(() => { progressDownload.Value = 0; txtDownloadStatus.Text = $"{label}: скачивание..."; btnLaunchApp.IsEnabled = false; });
+            // L4: раньше отменить зависшую загрузку/установку WebView2/VC++ было нечем —
+            // кнопка «Отмена» показывалась только для скачивания клиента. Переиспользуем
+            // ту же кнопку и CTS-поле, связав его с переданным таймаут-токеном.
+            _downloadCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            ct = _downloadCts.Token;
+            Dispatcher.Invoke(() =>
+            {
+                progressDownload.Value = 0;
+                txtDownloadStatus.Text = $"{label}: скачивание...";
+                btnLaunchApp.IsEnabled = false;
+                btnCancelDownload.Visibility = Visibility.Visible;
+            });
             try
             {
                 await DownloadTrustedFileAsync(url, tempFile, label, reportProgress: true, ct);
@@ -567,8 +608,18 @@ namespace Ven4Tools.Launcher
                     using var proc = Process.Start(psi);
                     if (proc != null) await proc.WaitForExitAsync();
                 }
-                Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = $"{label}: готово"; });
-                AddLog($"✅ {label} установлен");
+                // Завершение процесса установщика ≠ успех: exit code Microsoft-установщиков
+                // ненадёжен, а WebView2/VC++ могут «встать» только после перезагрузки.
+                // Единственный источник правды об успехе — перепроверка через
+                // IsWebView2Installed()/IsVcRedistInstalled() у вызывающего кода
+                // (CheckComponentsInteractiveAsync), поэтому здесь успех НЕ логируем,
+                // чтобы не было противоречия «✅ установлен» + «⚠️ не обнаружен».
+                Dispatcher.Invoke(() => { progressDownload.Value = 100; txtDownloadStatus.Text = $"{label}: установка завершена"; });
+            }
+            catch (OperationCanceledException)
+            {
+                AddLog($"⏹ Установка {label} отменена");
+                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Отменено");
             }
             catch (Exception ex)
             {
@@ -578,7 +629,14 @@ namespace Ven4Tools.Launcher
             finally
             {
                 try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
-                Dispatcher.Invoke(() => { progressDownload.Value = 0; btnLaunchApp.IsEnabled = true; });
+                _downloadCts?.Dispose();
+                _downloadCts = null;
+                Dispatcher.Invoke(() =>
+                {
+                    progressDownload.Value = 0;
+                    btnLaunchApp.IsEnabled = true;
+                    btnCancelDownload.Visibility = Visibility.Collapsed;
+                });
             }
         }
 
