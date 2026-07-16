@@ -178,7 +178,10 @@ namespace Ven4Tools.ViewModels
                     OnPropertyChanged(nameof(HasSearchText));
                     AppsView.Refresh();
                     _searchDebounce?.Cancel();
-                    if (value.Length >= 2 && AppsView.Cast<object>().Count() == 0)
+                    // AppsView.IsEmpty учитывает текущий фильтр без полного перечисления
+                    // представления (сеттер срабатывает на каждое нажатие клавиши в поиске),
+                    // в отличие от прежнего Cast<object>().Count() == 0.
+                    if (value.Length >= 2 && AppsView.IsEmpty)
                     {
                         _searchDebounce = new CancellationTokenSource();
                         _ = RunSearchSuggestionsAsync(value, _searchDebounce.Token);
@@ -485,12 +488,17 @@ namespace Ven4Tools.ViewModels
             }
         }
 
+        // Паттерн статический, а метод вызывается для каждого приложения при синхронизации
+        // каталога — компилируем один раз вместо пересборки Regex на каждый вызов.
+        private static readonly System.Text.RegularExpressions.Regex _sizeNumberRegex =
+            new(@"(\d+(?:\.\d+)?)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
         private static int ParseSizeToMB(string size)
         {
             if (string.IsNullOrEmpty(size)) return 100;
             try
             {
-                var match = System.Text.RegularExpressions.Regex.Match(size, @"(\d+(?:\.\d+)?)");
+                var match = _sizeNumberRegex.Match(size);
                 if (match.Success && double.TryParse(match.Value, out double value))
                     return size.Contains("GB", StringComparison.OrdinalIgnoreCase) ? (int)(value * 1024) : (int)value;
             }
