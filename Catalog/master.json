@@ -1,7 +1,14 @@
 {
-  "version": 9,
-  "lastUpdated": "2026-07-06 03:40:00",
+  "version": 10,
+  "lastUpdated": "2026-07-17 00:00:00",
   "changelog": [
+    {
+      "version": 10,
+      "date": "2026-07-17",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "Убрано поле skipHash — нигде не читалось в коде клиента (проверка SHA256 никогда не пропускалась на самом деле), вводило в заблуждение при составлении каталога."
+    },
     {
       "version": 9,
       "date": "2026-07-06",
@@ -122,7 +129,6 @@
       "description": "Быстрый, безопасный и приватный браузер с открытым исходным кодом.",
       "profile": "basic",
       "sha256": "abed062a0a9a9c9de56ef994e77c6db06baba2180c3c49979922b7084bbbca6a",
-      "skipHash": false,
       "chocoId": "firefox"
     },
     {
@@ -138,7 +144,6 @@
       "description": "Самый популярный браузер с интеграцией сервисов Google.",
       "profile": "basic",
       "sha256": "005e7cd27b4b44cb88152ae9da126f94ed5cf81cbfb2cb4c213214d80b0d5abd",
-      "skipHash": false,
       "chocoId": "googlechrome"
     },
     {
@@ -154,7 +159,6 @@
       "description": "Современный браузер от Microsoft на базе Chromium.",
       "profile": "basic",
       "sha256": "94a406cdc1ab9c1c8ac8aa48b42d89e4e35cee68622cda718b301e5e3ed93b49",
-      "skipHash": false,
       "chocoId": "microsoft-edge"
     },
     {
@@ -170,7 +174,6 @@
       "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
       "profile": "basic",
       "sha256": "eddd5dd8298c489fe7d0c27ce434620fab4af94626d880ba19c31dc102d24162",
-      "skipHash": false,
       "chocoId": "opera"
     },
     {
@@ -186,7 +189,6 @@
       "description": "Браузер с фокусом на приватность и встроенным блокировщиком рекламы.",
       "profile": "extended",
       "sha256": "4726e28a23da1b0b253efb63736efc9b20a580f26017f93f72ebdacf471c657a",
-      "skipHash": false,
       "chocoId": "brave"
     },
     {
@@ -202,7 +204,6 @@
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
       "profile": "basic",
       "sha256": "d718a564d52559232a8b5532fa13684338d7d5d4bd777969d6418726f4e4d858",
-      "skipHash": false,
       "chocoId": "yandex-browser"
     },
     {
@@ -218,7 +219,6 @@
       "description": "Firefox-форк с максимальной приватностью и без телеметрии.",
       "profile": "full",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "librewolf"
     },
     {
@@ -234,7 +234,6 @@
       "description": "Совместимый с MS Office редактор с облачной интеграцией.",
       "profile": "basic",
       "sha256": "a3b4a7353946a2d836eadfb8f59799f98b906ab961421c05c0bee00be9307a9f",
-      "skipHash": false,
       "chocoId": "onlyoffice"
     },
     {
@@ -250,7 +249,6 @@
       "description": "Стандарт для работы с PDF-документами от Adobe.",
       "profile": "basic",
       "sha256": "",
-      "skipHash": false,
       "chocoId": "adobereader"
     },
     {
@@ -266,7 +264,6 @@
       "description": "Минималистичный и быстрый просмотрщик PDF, EPUB, MOBI.",
       "profile": "basic",
       "sha256": "1eee71cccd2ea6e94d5bcea54ee2f759844da3e1a0ee2f6045035b1d17b94381",
-      "skipHash": false,
       "chocoId": "sumatrapdf"
     },
     {
@@ -282,7 +279,6 @@
       "description": "Создание диаграмм, схем и визуализаций.",
       "profile": "extended",
       "sha256": "3888e64403569f778bcf44752921790010b9de308d524c5855c5bff29df59b0e",
-      "skipHash": false,
       "chocoId": "drawio"
     },
     {
@@ -298,7 +294,6 @@
       "description": "Мощная программа для чтения PDF.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": false,
       "chocoId": "foxitreader"
     },
     {
@@ -314,7 +309,6 @@
       "description": "Бесплатный офисный пакет с полным аналогом Word, Excel, PowerPoint.",
       "profile": "basic",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "libreoffice-fresh"
     },
     {
@@ -330,7 +324,6 @@
       "description": "База знаний и заметки в Markdown с двусвязными ссылками.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "obsidian"
     },
     {
@@ -346,7 +339,6 @@
       "description": "Всё-в-одном: заметки, задачи, базы данных и вики.",
       "profile": "extended",
       "sha256": "33793d645f7b63d54327551e0bd2e34d37577c34e97c7bdc7226312b7836083d",
-      "skipHash": true,
       "chocoId": "notion"
     },
     {
@@ -362,7 +354,6 @@
       "description": "Мощный бесплатный редактор изображений, альтернатива Photoshop.",
       "profile": "extended",
       "sha256": "ec31d757dd82831d201ffcf47ffeac4175df739e0c02d5122e89aeeadfb988cc",
-      "skipHash": false,
       "chocoId": "gimp"
     },
     {
@@ -378,7 +369,6 @@
       "description": "Цифровая живопись и иллюстрации. Поддержка графических планшетов.",
       "profile": "extended",
       "sha256": "b68c3c1000a0660c79ccb82f7a85e9ede0b9dde055561ceacd0ff2a147040fb8",
-      "skipHash": false,
       "chocoId": "krita"
     },
     {
@@ -394,7 +384,6 @@
       "description": "Полноценный 3D-пакет: моделирование, анимация, рендеринг.",
       "profile": "full",
       "sha256": "7d1bb468057a3ac8fd19809e90544f6064cc215053b7732cc8a1ccc83b651ab5",
-      "skipHash": false,
       "chocoId": "blender"
     },
     {
@@ -410,7 +399,6 @@
       "description": "Профессиональный редактор векторной графики SVG.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "inkscape"
     },
     {
@@ -426,7 +414,6 @@
       "description": "Простой и мощный редактор изображений с поддержкой плагинов.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "paint.net"
     },
     {
@@ -442,7 +429,6 @@
       "description": "Российский аналог Figma от Icons8. Дизайн интерфейсов, прототипирование, работает офлайн.",
       "profile": "full",
       "sha256": "115550663360ace09d4ee5a149ea245a6a483fc74a9c4ad93ab6696e0a741ab7",
-      "skipHash": true,
       "chocoId": "lunacy"
     },
     {
@@ -458,7 +444,6 @@
       "description": "Просмотрщик и конвертер изображений с поддержкой 500+ форматов.",
       "profile": "extended",
       "sha256": "4ebdcb6d87f5bfc21ed31e70f88515701fe8e489148555c36c6bd4e4ea2ec5f7",
-      "skipHash": true,
       "chocoId": "xnviewmp"
     },
     {
@@ -474,7 +459,6 @@
       "description": "Легкий, но мощный редактор кода от Microsoft.",
       "profile": "extended",
       "sha256": "95dc8c776f5aaf619e88e40b767995c56b948f2555fc0d00f13c730dd7d2ae98",
-      "skipHash": false,
       "chocoId": "vscode"
     },
     {
@@ -490,7 +474,6 @@
       "description": "Полноценная IDE для .NET, C++, Python и других языков.",
       "profile": "full",
       "sha256": "8e02d19620a1d1affe5b226bcc7a764404df0cf089317d7d01459ad030eabc3c",
-      "skipHash": false,
       "chocoId": "visualstudio2022community"
     },
     {
@@ -506,7 +489,6 @@
       "description": "Интерпретатор Python с установщиком и добавлением в PATH.",
       "profile": "extended",
       "sha256": "c54d9b9bbb8a36e6489363ddd01139707fd781d72f1f9e90c7ec65d0061368e0",
-      "skipHash": false,
       "chocoId": "python3"
     },
     {
@@ -522,7 +504,6 @@
       "description": "JavaScript-среда для разработки серверных приложений.",
       "profile": "extended",
       "sha256": "c9df873c4cf0463c63b79774d96b2e126ca6ba9d9f86529846864d41775101d6",
-      "skipHash": false,
       "chocoId": "nodejs"
     },
     {
@@ -538,7 +519,6 @@
       "description": "Система контроля версий с Bash-эмулятором.",
       "profile": "extended",
       "sha256": "0c66e4a5875da5a74f9754386de7555ba301503b03bbdcdbafa69dc6464e548d",
-      "skipHash": false,
       "chocoId": "git"
     },
     {
@@ -554,7 +534,6 @@
       "description": "Контейнеризация приложений для разработки и тестирования.",
       "profile": "full",
       "sha256": "c77ea75f0a5b6a41e0871f195592fd656efea6587b68e21508e2e40ba406ca60",
-      "skipHash": false,
       "chocoId": "docker-desktop"
     },
     {
@@ -570,7 +549,6 @@
       "description": "Платформа для тестирования API и работы с запросами.",
       "profile": "full",
       "sha256": "450c4c646574322936f943252c44e8f2c5a237952dcd7bcfc23c9f0c72bf119a",
-      "skipHash": false,
       "chocoId": "postman"
     },
     {
@@ -586,7 +564,6 @@
       "description": "Мощный текстовый редактор с подсветкой синтаксиса.",
       "profile": "extended",
       "sha256": "cb902f8a9628324dbe5233b5202e716ea469720c9a1ac968007df2288e4ed2ea",
-      "skipHash": false,
       "chocoId": "notepadplusplus"
     },
     {
@@ -602,7 +579,6 @@
       "description": "Официальный клиент GitHub для работы с репозиториями.",
       "profile": "full",
       "sha256": "deac92b3ad54074d02bf8d9b94681b00d52b981605d448068f21d8a8be962880",
-      "skipHash": false,
       "chocoId": "github-desktop"
     },
     {
@@ -618,7 +594,6 @@
       "description": "SSH и Telnet клиент для подключения к серверам.",
       "profile": "full",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "putty"
     },
     {
@@ -634,7 +609,6 @@
       "description": "Быстрый и безопасный мессенджер с облачными хранилищами.",
       "profile": "basic",
       "sha256": "45aa94a591763118c5d3ba9481d3f97c0b95b5e56dc33c9b39311f7c46ee72c9",
-      "skipHash": false,
       "chocoId": "telegram"
     },
     {
@@ -650,7 +624,6 @@
       "description": "Голосовой и текстовый чат для геймеров и сообществ.",
       "profile": "basic",
       "sha256": "7872a4f9fba2483fbfe0e2e08ee23f03558a7c45fed26e077429363e83176ff9",
-      "skipHash": false,
       "chocoId": "discord"
     },
     {
@@ -666,7 +639,6 @@
       "description": "Корпоративный мессенджер с интеграциями.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": false,
       "chocoId": "slack"
     },
     {
@@ -682,7 +654,6 @@
       "description": "Видеоконференции, вебинары и командная работа.",
       "profile": "basic",
       "sha256": "e0b18dc33c828a0606d6678f6d511ef66e133d900a512bed31798b4e7c24b093",
-      "skipHash": false,
       "chocoId": "zoom"
     },
     {
@@ -698,7 +669,6 @@
       "description": "Платформа для совместной работы и видеозвонков.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": false,
       "chocoId": "microsoft-teams"
     },
     {
@@ -714,7 +684,6 @@
       "description": "Децентрализованный мессенджер на базе Matrix.",
       "profile": "full",
       "sha256": "06d7ce9433068fbc7c0b74f896d071816619f95f4058373e22740f11d4200cdd",
-      "skipHash": false,
       "chocoId": "element-desktop"
     },
     {
@@ -730,7 +699,6 @@
       "description": "Официальный клиент WhatsApp для Windows.",
       "profile": "basic",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "whatsapp"
     },
     {
@@ -746,7 +714,6 @@
       "description": "Универсальный плеер, воспроизводящий все форматы.",
       "profile": "basic",
       "sha256": "20ad191348684b470ddc4e05204316f3d8e39655f412b3e392a0eef97639daaf",
-      "skipHash": false,
       "chocoId": "vlc"
     },
     {
@@ -762,7 +729,6 @@
       "description": "Стриминговый музыкальный сервис с огромной библиотекой. Работает в России без ограничений.",
       "profile": "basic",
       "sha256": "",
-      "skipHash": true,
       "chocoId": ""
     },
     {
@@ -778,7 +744,6 @@
       "description": "Запись видео и стриминг с профессиональными настройками.",
       "profile": "extended",
       "sha256": "94d180c1fc481ccc307b95513f795d088d63ac4f61ad3253c2ac0d94d0844110",
-      "skipHash": false,
       "chocoId": "obs-studio"
     },
     {
@@ -794,7 +759,6 @@
       "description": "Конвертер видео с поддержкой большинства форматов.",
       "profile": "extended",
       "sha256": "6becb8e5a041941d5f2fd6fe83c66fc15b2b16190e2e79f5ad47eb4cd18df8cd",
-      "skipHash": false,
       "chocoId": "handbrake"
     },
     {
@@ -810,7 +774,6 @@
       "description": "Бесплатный редактор аудио для записи и обработки звука.",
       "profile": "extended",
       "sha256": "4a6d77f023c0209a396fcf2f3c7c04e240b6ba9897b3231a6ed18e14c10caa16",
-      "skipHash": true,
       "chocoId": "audacity"
     },
     {
@@ -826,7 +789,6 @@
       "description": "Мощный аудиоплеер для требовательных меломанов.",
       "profile": "full",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "foobar2000"
     },
     {
@@ -842,7 +804,6 @@
       "description": "Лёгкий медиаплеер на базе Media Player Classic с современными кодеками.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "mpc-be"
     },
     {
@@ -858,7 +819,6 @@
       "description": "Архиватор с высокой степенью сжатия. Поддерживает множество форматов.",
       "profile": "basic",
       "sha256": "6745fa76dc2ea031596d8678f6f6b99c3c1b435b4164a63485adbbc7b8d82ef0",
-      "skipHash": false,
       "chocoId": "7zip"
     },
     {
@@ -874,7 +834,6 @@
       "description": "Популярный архиватор с поддержкой RAR и ZIP.",
       "profile": "basic",
       "sha256": "b76813600ecf38a6b0d9af92d3daf3dd8a4a1830d45f5bdf863d1d533b7e8a33",
-      "skipHash": false,
       "chocoId": "winrar"
     },
     {
@@ -890,7 +849,6 @@
       "description": "Мгновенный поиск файлов по имени.",
       "profile": "basic",
       "sha256": "4e7a80885aab8566b750c56a2a2b3e7c3c1f4920bcc53777e07f5eeb9e1f7485",
-      "skipHash": false,
       "chocoId": "everything"
     },
     {
@@ -906,7 +864,6 @@
       "description": "Мониторинг состояния жёстких дисков и SSD.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "crystaldiskinfo"
     },
     {
@@ -922,7 +879,6 @@
       "description": "Тестирование производительности накопителей.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "crystaldiskmark"
     },
     {
@@ -938,7 +894,6 @@
       "description": "Мощный инструмент для создания скриншотов.",
       "profile": "basic",
       "sha256": "9bb4971e729a2ad1612e8aa2fa490b69c33af7f42515f9b642c7d0f80f8c0fd3",
-      "skipHash": false,
       "chocoId": "greenshot"
     },
     {
@@ -954,7 +909,6 @@
       "description": "Скриншоты, запись экрана, загрузка файлов.",
       "profile": "extended",
       "sha256": "7c0dcaa05806de80cfb5829d243a62496d64bf2ed5cecc10185d9e769f365621",
-      "skipHash": false,
       "chocoId": "sharex"
     },
     {
@@ -970,7 +924,6 @@
       "description": "Облачное хранилище с синхронизацией файлов.",
       "profile": "basic",
       "sha256": "1b0889a804870ec7f0fd9fd0290ed60942b42e7160d1dae3f456fa090bf20257",
-      "skipHash": false,
       "chocoId": "yandexdisk"
     },
     {
@@ -986,7 +939,6 @@
       "description": "Набор утилит для повышения производительности Windows.",
       "profile": "extended",
       "sha256": "945fdf327e4d38e4ced61b0727b7ab8a1222958782982052989ddf7cb7096f62",
-      "skipHash": false,
       "chocoId": "powertoys"
     },
     {
@@ -1002,7 +954,6 @@
       "description": "Создание загрузочных USB-флешек из ISO-образов.",
       "profile": "extended",
       "sha256": "84c8a437f8af89257524478489e5c85f1edf25f761d299e2bcde46ac0afbe106",
-      "skipHash": true,
       "chocoId": "rufus"
     },
     {
@@ -1018,7 +969,6 @@
       "description": "Крупнейший игровой магазин и платформа для игр.",
       "profile": "basic",
       "sha256": "7d3654531c32d941b8cae81c4137fc542172bfa9635f169cb392f245a0a12bcb",
-      "skipHash": false,
       "chocoId": "steam"
     },
     {
@@ -1034,7 +984,6 @@
       "description": "Платформа инди-игр. Тысячи бесплатных и платных игр без региональных ограничений.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "itch"
     },
     {
@@ -1050,7 +999,6 @@
       "description": "Менеджер игровых библиотек. Объединяет Steam, GOG, itch.io и другие платформы в одном интерфейсе.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "playnite"
     },
     {
@@ -1066,7 +1014,6 @@
       "description": "Лаунчер без DRM и агрегатор библиотек из других платформ.",
       "profile": "extended",
       "sha256": "d04645ef5e4ada875f48d74828edd62222b2787eff09cb6e1c48e591949fd8f6",
-      "skipHash": false,
       "chocoId": "goggalaxy"
     },
     {
@@ -1082,7 +1029,6 @@
       "description": "Мощный офлайн-инсталлятор драйверов с огромной базой.",
       "profile": "full",
       "sha256": "",
-      "skipHash": false,
       "chocoId": "snappy-driver-installer"
     },
     {
@@ -1098,7 +1044,6 @@
       "description": "Полное удаление драйверов видеокарты без остатков.",
       "profile": "full",
       "sha256": "",
-      "skipHash": true,
       "chocoId": "ddu"
     },
     {
@@ -1114,7 +1059,6 @@
       "description": "Установка чистых драйверов NVIDIA без телеметрии, GeForce Experience и лишних компонентов.",
       "profile": "full",
       "sha256": "",
-      "skipHash": true,
       "chocoId": ""
     },
     {
@@ -1130,7 +1074,6 @@
       "description": "Антивирус для защиты от вредоносного ПО.",
       "profile": "basic",
       "sha256": "0385b06957b7f5b2c3c7132f8ebd8414f64f00407ea2baf07acbffa8d6eca334",
-      "skipHash": false,
       "chocoId": "malwarebytes"
     },
     {
@@ -1146,7 +1089,6 @@
       "description": "Диагностика и тестирование компонентов компьютера.",
       "profile": "extended",
       "sha256": "3d65d00033551745e567c3d8e0764b44b060e20bd07f76626b22e93573d860fd",
-      "skipHash": false,
       "chocoId": "aida64"
     },
     {
@@ -1162,7 +1104,6 @@
       "description": "Мониторинг температуры, напряжений и частот.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": false,
       "chocoId": "hwmonitor"
     },
     {
@@ -1178,7 +1119,6 @@
       "description": "Консольный клиент для облачных хранилищ.",
       "profile": "full",
       "sha256": "",
-      "skipHash": false,
       "chocoId": "rclone"
     },
     {
@@ -1194,7 +1134,6 @@
       "description": "Автоматическая настройка цветовой температуры экрана.",
       "profile": "basic",
       "sha256": "f035d1c4cd78468d76407afbb90ce4b73b2d04b7647c0d6143969a1823cff1ae",
-      "skipHash": false,
       "chocoId": "f.lux"
     },
     {
@@ -1210,7 +1149,6 @@
       "description": "Скриптовый язык для автоматизации действий.",
       "profile": "full",
       "sha256": "2bf1b89b1047136490fc321d2fdc988b42dd86f693eea7872746ac6adf722bc3",
-      "skipHash": false,
       "chocoId": "autohotkey",
       "silentArgs": "/silent"
     },
@@ -1227,7 +1165,6 @@
       "description": "Самый быстрый анализатор дискового пространства.",
       "profile": "extended",
       "sha256": "4a9da8c34a038cdd51f103be3edc09a9643ed42358ea4a01a2a30e0817714b4b",
-      "skipHash": false,
       "chocoId": "wiztree"
     },
     {
@@ -1243,7 +1180,6 @@
       "description": "Детальная информация о процессоре, памяти и материнской плате.",
       "profile": "extended",
       "sha256": "",
-      "skipHash": false,
       "chocoId": "cpu-z"
     }
   ]
