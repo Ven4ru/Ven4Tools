@@ -33,6 +33,7 @@ ghp_*
 
 # Backup files
 *.backup
+*.bak
 *.old
 
 # Runtime data
@@ -49,13 +50,6 @@ packages/
 # Publish output
 publish/
 
-# Backup files
-*.bak
-*.old
-
-# Temporary publish
-publish/
-
 # Admin tool lives in its own separate repository
 Ven4Admin/
 
@@ -66,7 +60,8 @@ Ven4Admin/
 _publish*/
 _publish_*/
 
-# Local backups (symlink to OneDrive, not for git)
+# Local backups (symlink to OneDrive, not for git — trailing-slash form won't
+# match a symlink, non-slash form is needed to actually ignore it)
 _backups
 _backups/
 _backup_*/
