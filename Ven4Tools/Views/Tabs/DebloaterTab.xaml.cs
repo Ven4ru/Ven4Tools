@@ -146,14 +146,6 @@ namespace Ven4Tools.Views.Tabs
                 return;
             }
 
-            var hasRisky = selected.Any(i => i.Risk is "caution" or "moderate");
-            var confirm = MessageBox.Show(
-                $"Будет применено {selected.Count} действий.{(hasRisky ? "\n\n⚠️ Среди них есть умеренные/опасные операции." : "")}\n\nПродолжить?",
-                "Debloater — подтверждение",
-                MessageBoxButton.YesNo,
-                hasRisky ? MessageBoxImage.Warning : MessageBoxImage.Question);
-            if (confirm != MessageBoxResult.Yes) return;
-
             btnApplyDebloat.IsEnabled = false;
             progressDebloat.Visibility = Visibility.Visible;
             progressDebloat.Value = 0;
@@ -163,10 +155,13 @@ namespace Ven4Tools.Views.Tabs
             // заблокированными — состояние UI восстанавливается в любом случае.
             try
             {
-                // Точка восстановления перед удалением приложений и системными твиками,
-                // чтобы можно было откатить изменения при нежелательных последствиях.
+                // Единый диалог: подтверждение действия (Отмена = прервать) + предложение
+                // точки восстановления. Раньше здесь было два подряд диалога с одинаковым
+                // текстом «Будет применено N действий» — предупреждение о рисках свёрнуто
+                // в этот же вопрос.
+                var hasRisky = selected.Any(i => i.Risk is "caution" or "moderate");
                 var rpOutcome = await UiGuards.ConfirmAndCreateRestorePointAsync(
-                    $"Будет применено {selected.Count} действий.\n\nСоздать точку восстановления Windows перед очисткой?",
+                    $"Будет применено {selected.Count} действий.{(hasRisky ? "\n\n⚠️ Среди них есть умеренные/опасные операции." : "")}\n\nСоздать точку восстановления Windows перед очисткой?",
                     "Ven4Tools — перед очисткой системы");
                 if (rpOutcome == RestorePointOutcome.Cancelled)
                 {
