@@ -17,8 +17,10 @@
     <!-- Application settings -->
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>Ven4Tools</AssemblyName>
+    <!-- AssemblyVersion/FileVersion намеренно не заданы отдельно: SDK выводит их из
+         Version. Иначе литерал AssemblyVersion перебивает Version и рассинхронизируется
+         при релизе (реальный билд показывал/отправлял версию отличную от Version). -->
     <Version>4.1.6</Version>
-    <AssemblyVersion>4.1.4</AssemblyVersion>
     
     <!-- Явная точка входа -->
     <StartupObject>Ven4Tools.App</StartupObject>
