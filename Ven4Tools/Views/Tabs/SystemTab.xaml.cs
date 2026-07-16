@@ -48,7 +48,8 @@ namespace Ven4Tools.Views.Tabs
             btnCheckUpdates.Click += BtnCheckUpdates_Click;
             btnDisableTurboBoost.Click += BtnDisableTurboBoost_Click;
             btnEnableTurboBoost.Click += BtnEnableTurboBoost_Click;
-            btnSaveSnapshot.Click += BtnSaveSnapshot_Click;
+            // Подписка на btnSaveSnapshot задаётся в XAML (Click="BtnSaveSnapshot_Click"),
+            // повторная подписка в code-behind вызывала двойной вызов обработчика.
 
             // Offline mode
             chkOfflineMode.Click      += ChkOfflineMode_Click;
