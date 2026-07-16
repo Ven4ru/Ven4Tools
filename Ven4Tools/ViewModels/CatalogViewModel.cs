@@ -513,8 +513,18 @@ namespace Ven4Tools.ViewModels
 
             if (_catalog != null)
             {
+                // Целостность каталога: каталог подписан и курируется, но повреждённая
+                // (хоть и валидно подписанная) запись не должна портить UI.
+                //  • запись без Id или имени дала бы пустую строку-«призрак» в списке;
+                //  • дублирующийся Id спроецировался бы в две одинаковые строки поверх
+                //    одного и того же AppInfo (GetAppById вернул бы тот же объект).
+                var seenCatalogIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var catalogApp in _catalog.Apps)
                 {
+                    if (string.IsNullOrWhiteSpace(catalogApp.Id) || string.IsNullOrWhiteSpace(catalogApp.Name))
+                        continue;
+                    if (!seenCatalogIds.Add(catalogApp.Id))
+                        continue;
                     var appInfo = _appManager.GetAppById(catalogApp.Id);
                     if (appInfo == null) continue;
                     var row = new AppRowViewModel(appInfo)
