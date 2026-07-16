@@ -41,7 +41,6 @@ namespace Ven4Tools.Services
                     AppName     = appName,
                     Source      = source,
                     Category    = category,
-                    MachineName = Environment.MachineName,
                     InstalledAt = DateTime.Now,
                     Success     = success
                 });

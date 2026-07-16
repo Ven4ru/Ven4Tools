@@ -75,15 +75,10 @@
                                        FontSize="16" VerticalAlignment="Center"
                                        Margin="0,0,10,0"/>
 
-                            <!-- PC-Name : install App [date] -->
+                            <!-- install App [date] -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <!-- Main action line: "PC-ALEX : install Firefox  [28.05.2026 23:45]" -->
+                                <!-- Main action line: "install Firefox  [28.05.2026 23:45]" -->
                                 <TextBlock FontFamily="Consolas" FontSize="13">
-                                    <Run Text="{Binding MachineName, Mode=OneWay}"
-                                         Foreground="{DynamicResource AccentColor}"
-                                         FontWeight="Bold"/>
-                                    <Run Text=" : "
-                                         Foreground="{DynamicResource TextSecondary}"/>
                                     <Run Text="{Binding ActionVerb, Mode=OneWay}"
                                          Foreground="{DynamicResource TextSecondary}"/>
                                     <Run Text="{Binding AppName, Mode=OneWay}"

@@ -28,7 +28,9 @@ namespace Ven4Tools.Services
                     Channel     = "prerelease",
                     Rating      = rating,
                     Text        = CrashReportService.SanitizePath(text),
-                    Timestamp   = DateTime.UtcNow.ToString("O"),
+                    // Точность до секунд (не до 100 нс) — метка времени не должна служить
+                    // дополнительным fingerprint-вектором. Валидный ISO 8601 с суффиксом Z.
+                    Timestamp   = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss'Z'"),
                     Reported    = false
                 };
                 Directory.CreateDirectory(Path.GetDirectoryName(FeedbackPath)!);
@@ -48,14 +50,15 @@ namespace Ven4Tools.Services
             catch (Exception ex) { AppLogger.Write($"[FeedbackService] {ex.Message}"); return null; }
         }
 
-        public static void MarkReported()
+        /// <summary>
+        /// Удаляет файл отложенного отзыва после успешной отправки: локальный файл
+        /// больше не нужен и не должен оставаться на диске.
+        /// </summary>
+        public static void DeletePending()
         {
             try
             {
-                var record = Read();
-                if (record == null) return;
-                record.Reported = true;
-                File.WriteAllText(FeedbackPath, JsonConvert.SerializeObject(record, Formatting.Indented));
+                if (File.Exists(FeedbackPath)) File.Delete(FeedbackPath);
             }
             catch (Exception ex) { AppLogger.Write($"[FeedbackService] {ex.Message}"); }
         }
@@ -92,7 +95,7 @@ namespace Ven4Tools.Services
 
                 var bodyText = await response.Content.ReadAsStringAsync();
                 if (CrashReportService.IsSuccessBody(bodyText))
-                    MarkReported();
+                    DeletePending();
             }
             catch (Exception ex) { AppLogger.Write($"[FeedbackService] TrySendPending: {ex.Message}"); }
         }

@@ -30,7 +30,10 @@ namespace Ven4Tools.Services
                 {
                     SessionId     = SessionId,
                     Version       = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "unknown",
-                    Timestamp     = DateTime.UtcNow.ToString("O"),
+                    // Точность до секунд (не до 100 нс, как формат "O") — чтобы метка
+                    // времени не служила дополнительным fingerprint-вектором. Формат
+                    // остаётся валидным ISO 8601 с суффиксом Z и парсится стандартно.
+                    Timestamp     = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss'Z'"),
                     OsVersion     = Environment.OSVersion.ToString(),
                     ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
                     Message       = SanitizePath(ex.Message),
@@ -57,18 +60,6 @@ namespace Ven4Tools.Services
             catch (Exception ex) { AppLogger.Write($"[CrashReportService] {ex.Message}"); return null; }
         }
 
-        public static void MarkReported()
-        {
-            try
-            {
-                var report = Read();
-                if (report == null) return;
-                report.Reported = true;
-                File.WriteAllText(CrashFilePath, JsonConvert.SerializeObject(report, Formatting.Indented));
-            }
-            catch (Exception ex) { AppLogger.Write($"[CrashReportService] {ex.Message}"); }
-        }
-
         /// <summary>
         /// Помечает отложенный отчёт как одобренный пользователем к отправке.
         /// Если отправка сорвётся (нет сети), при следующем старте отчёт уйдёт
@@ -87,8 +78,9 @@ namespace Ven4Tools.Services
         }
 
         /// <summary>
-        /// Удаляет отложенный отчёт о сбое (пользователь отказался от отправки).
-        /// Повторно этот отчёт предлагаться не будет.
+        /// Удаляет файл отложенного отчёта о сбое. Вызывается в двух случаях:
+        /// пользователь отказался от отправки либо отчёт успешно отправлен —
+        /// в обоих локальный файл больше не нужен и не должен оставаться на диске.
         /// </summary>
         public static void DeletePending()
         {
@@ -134,7 +126,7 @@ namespace Ven4Tools.Services
 
                 var bodyText = await response.Content.ReadAsStringAsync();
                 if (IsSuccessBody(bodyText))
-                    MarkReported();
+                    DeletePending();
             }
             catch (Exception ex) { AppLogger.Write($"[CrashReportService] TrySendPending: {ex.Message}"); }
         }
