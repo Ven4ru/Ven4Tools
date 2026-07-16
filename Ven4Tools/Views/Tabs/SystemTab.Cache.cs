@@ -89,7 +89,11 @@ namespace Ven4Tools.Views.Tabs
 
         private void BtnCacheSelectAll_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var item in _cacheAppItems) item.IsSelected = true;
+            // L12: выбираем только видимые (не отфильтрованные поиском) элементы, а не весь
+            // список — иначе «Выбрать все» тихо отмечало бы и скрытые фильтром приложения.
+            var visible = listCacheApps.ItemsSource as IEnumerable<CacheAppItem>;
+            if (visible == null) return;
+            foreach (var item in visible) item.IsSelected = true;
             listCacheApps.Items.Refresh();
         }
 

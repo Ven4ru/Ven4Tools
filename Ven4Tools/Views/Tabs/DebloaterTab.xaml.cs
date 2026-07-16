@@ -171,11 +171,16 @@ namespace Ven4Tools.Views.Tabs
                 }
 
                 _cts = new CancellationTokenSource();
+                // L10: показываем кнопку отмены на время длинной операции.
+                btnCancelDebloat.Visibility = Visibility.Visible;
+                btnCancelDebloat.IsEnabled = true;
                 int done = 0;
                 int succeeded = 0;
 
                 foreach (var item in selected)
                 {
+                    if (_cts.Token.IsCancellationRequested) break;
+
                     txtDebloatStatus.Text = $"⚙️ {item.Name}...";
                     progressDebloat.Value = (double)done / selected.Count * 100;
 
@@ -185,14 +190,30 @@ namespace Ven4Tools.Views.Tabs
                     done++;
                 }
 
-                progressDebloat.Value = 100;
-                txtDebloatStatus.Text = $"✅ Готово: применено {succeeded} из {selected.Count}";
+                if (_cts.Token.IsCancellationRequested)
+                {
+                    txtDebloatStatus.Text = $"⏹ Остановлено: применено {succeeded} из {selected.Count}";
+                }
+                else
+                {
+                    progressDebloat.Value = 100;
+                    txtDebloatStatus.Text = $"✅ Готово: применено {succeeded} из {selected.Count}";
+                }
             }
             finally
             {
                 btnApplyDebloat.IsEnabled = true;
+                btnCancelDebloat.Visibility = Visibility.Collapsed;
                 _cts?.Dispose(); _cts = null;
             }
+        }
+
+        // L10: отмена применения твиков — прерывает цикл после текущего элемента.
+        private void BtnCancelDebloat_Click(object sender, RoutedEventArgs e)
+        {
+            _cts?.Cancel();
+            btnCancelDebloat.IsEnabled = false;
+            txtDebloatStatus.Text = "⏹ Останавливаю...";
         }
 
         private async Task<bool> ApplyItemAsync(DebloatItem item, CancellationToken ct = default)

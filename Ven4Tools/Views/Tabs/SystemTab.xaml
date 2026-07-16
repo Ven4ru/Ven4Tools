@@ -215,6 +215,9 @@
                 <StackPanel>
                     <TextBlock Text="Управление технологией Intel Turbo Boost"
                                Foreground="{DynamicResource TextSecondary}" Margin="10,5,10,0"/>
+                    <TextBlock x:Name="txtTurboBoostStatus" Text="Текущее состояние: определяется..."
+                               Foreground="{DynamicResource TextPrimary}" FontWeight="SemiBold"
+                               Margin="10,8,10,0"/>
                     <StackPanel Orientation="Horizontal" Margin="10,10">
                         <Button x:Name="btnDisableTurboBoost" Content="❌ Отключить Turbo Boost"
                                 Height="35" Width="180" Margin="0,0,10,0"/>
