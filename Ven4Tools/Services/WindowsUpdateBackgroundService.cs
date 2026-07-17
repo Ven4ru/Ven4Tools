@@ -10,7 +10,9 @@ namespace Ven4Tools.Services
     /// (приложения из winget). Режим поведения — из ProfileService.Current.WindowsUpdateMode:
     ///   "NotSet"            — проверка не выполняется вообще (первый вход ещё не пройден).
     ///   "NotifyOnly"        — только уведомление + бейдж-счётчик.
-    ///   "NotifyAndDownload" — то же + тихое скачивание в фоне (без установки).
+    ///   "NotifyAndDownload" — зарезервировано на будущее (тихое скачивание в фоне);
+    ///                         пока полностью эквивалентно "NotifyOnly", т.к.
+    ///                         IWindowsUpdateSource.DownloadOnlyAsync не реализован.
     /// Никогда не устанавливает патчи автоматически — это всегда явный клик пользователя.
     /// </summary>
     public sealed class WindowsUpdateBackgroundService : IDisposable
