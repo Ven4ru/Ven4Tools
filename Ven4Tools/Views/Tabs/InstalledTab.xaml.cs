@@ -2,16 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.Win32;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
 
@@ -511,7 +508,7 @@ namespace Ven4Tools.Views.Tabs
             await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
-                bool ok = await TryUninstallAsync(app);
+                bool ok = await AppUninstallService.TryUninstallAsync(app.WingetId, app.Name);
                 if (ok)
                 {
                     _allApps.Remove(app);
@@ -528,149 +525,6 @@ namespace Ven4Tools.Views.Tabs
             {
                 InstallationService.InstallSemaphore.Release();
                 app.IsProcessing = false;
-            }
-        }
-
-        private static async Task<bool> TryUninstallAsync(InstalledApp app)
-        {
-            // Попытка 1: winget uninstall по ID (работает для пакетов с непустым Source)
-            if (!string.IsNullOrWhiteSpace(app.WingetId) && !app.WingetId.Contains('…'))
-            {
-                string args = $"uninstall --id \"{app.WingetId}\" --silent --accept-source-agreements";
-                var (exitCode, _) = await WingetRunner.RunAsync(args);
-                // Проверяем код выхода, а не локализованный текст вывода winget.
-                // 0 = успех, 0x8A150014 = пакет не установлен (нечего удалять — считаем успехом).
-                if (exitCode == 0 || exitCode == unchecked((int)0x8A150014))
-                    return true;
-            }
-
-            // Попытка 2: найти строку UninstallString в реестре по DisplayName.
-            // Скан реестра — в Task.Run, чтобы не блокировать UI-поток.
-            string? uninstallString = await Task.Run(() => FindUninstallString(app.Name));
-            if (uninstallString != null)
-                return await RunUninstallStringAsync(uninstallString);
-
-            return false;
-        }
-
-        private static string? FindUninstallString(string displayName)
-        {
-            string[] keys = {
-                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
-                @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
-            };
-            var hives = new[] { Registry.LocalMachine };
-
-            foreach (var hive in hives)
-            foreach (var keyPath in keys)
-            {
-                using var root = hive.OpenSubKey(keyPath);
-                if (root == null) continue;
-                foreach (var sub in root.GetSubKeyNames())
-                {
-                    using var entry = root.OpenSubKey(sub);
-                    if (entry == null) continue;
-                    var name = entry.GetValue("DisplayName")?.ToString();
-                    if (name != null && name.Equals(displayName, StringComparison.OrdinalIgnoreCase))
-                        return entry.GetValue("UninstallString")?.ToString();
-                }
-            }
-            return null;
-        }
-
-        private static async Task<bool> RunUninstallStringAsync(string uninstallString)
-        {
-            // Тихий режим: msiexec /x ... /quiet, NSIS /S, Inno /SILENT
-            string cmd = uninstallString.Trim();
-            Process? p;
-            if (cmd.StartsWith("MsiExec", StringComparison.OrdinalIgnoreCase) ||
-                cmd.StartsWith("msiexec", StringComparison.OrdinalIgnoreCase))
-            {
-                var productCode = Regex.Match(cmd, @"\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\}");
-                if (!productCode.Success)
-                    return false;
-
-                var startInfo = new ProcessStartInfo(Ven4Tools.Services.TrustedExecutablePaths.MsiExec)
-                {
-                    UseShellExecute = true,
-                    Verb            = "runas",
-                    CreateNoWindow  = true
-                };
-                startInfo.ArgumentList.Add("/x");
-                startInfo.ArgumentList.Add(productCode.Value);
-                startInfo.ArgumentList.Add("/quiet");
-                startInfo.ArgumentList.Add("/norestart");
-                p = Process.Start(startInfo);
-            }
-            else
-            {
-                // NSIS / Inno / другие — пробуем добавить /S или /SILENT
-                string exe = cmd, args = "";
-                if (cmd.StartsWith("\""))
-                {
-                    int end = cmd.IndexOf('"', 1);
-                    if (end > 0) { exe = cmd.Substring(1, end - 1); args = cmd.Substring(end + 1).Trim(); }
-                }
-                else
-                {
-                    // Непокавыченный путь может содержать пробелы
-                    // ("C:\Program Files\App\uninst.exe /S") — наивное разбиение по
-                    // первому пробелу давало бы "C:\Program" вместо реального exe.
-                    // Перебираем все границы пробелов и берём САМЫЙ ДЛИННЫЙ префикс,
-                    // который реально существует как файл (тот же подход, которым
-                    // сама Windows разрешает классическую неоднозначность unquoted
-                    // path в путях служб).
-                    int searchFrom = 0;
-                    int bestSplit = -1;
-                    while (true)
-                    {
-                        int sp = cmd.IndexOf(' ', searchFrom);
-                        if (sp < 0) break;
-                        string candidate = cmd.Substring(0, sp);
-                        if (File.Exists(candidate)) bestSplit = sp;
-                        searchFrom = sp + 1;
-                    }
-
-                    if (bestSplit > 0)
-                    {
-                        exe = cmd.Substring(0, bestSplit);
-                        args = cmd.Substring(bestSplit + 1).Trim();
-                    }
-                    else if (!File.Exists(cmd))
-                    {
-                        // Ни один префикс, ни всё целиком не существуют как файл —
-                        // fallback на старое поведение (первый пробел), чтобы не
-                        // менять исход для уже работавших случаев без пробелов в пути.
-                        int sp = cmd.IndexOf(' ');
-                        if (sp > 0) { exe = cmd.Substring(0, sp); args = cmd.Substring(sp + 1).Trim(); }
-                    }
-                }
-                if (!args.Contains("/S") && !args.Contains("/SILENT") && !args.Contains("/silent"))
-                    args = "/S " + args;
-
-                // Fail-closed: не нашли реально существующий exe — не запускаем
-                // произвольную первую половину строки с повышением прав.
-                if (!File.Exists(exe)) return false;
-
-                p = Process.Start(new ProcessStartInfo(exe, args)
-                    { UseShellExecute = true, Verb = "runas" });
-            }
-            if (p == null) return false;
-            using (p)
-            {
-                // Асинхронное ожидание с таймаутом 120 секунд — UI-поток не блокируется
-                try
-                {
-                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
-                    await p.WaitForExitAsync(cts.Token);
-                }
-                catch (OperationCanceledException)
-                {
-                    try { p.Kill(); } catch { }
-                    return false;
-                }
-                // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — удаление прошло успешно
-                return p.ExitCode == 0 || p.ExitCode == 3010;
             }
         }
 
