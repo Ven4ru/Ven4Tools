@@ -174,9 +174,13 @@
                                         <Image Width="20" Height="20" Margin="0,0,6,0"
                                                Stretch="Uniform" Source="{Binding Icon}" VerticalAlignment="Center"/>
 
-                                        <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding IsSelectable}"
-                                                  AutomationProperties.AutomationId="{Binding CheckBoxAutomationId}"
-                                                  VerticalAlignment="Center"/>
+                                        <!-- Viewbox даёт чекбоксу точный кликабельный размер 20×20 (как у
+                                             иконки рядом), не завися от того, каким рисует его тема/DPI —
+                                             обычный CheckBox без него даёт хитбокс лишь ~13px. -->
+                                        <Viewbox Width="20" Height="20" Margin="0,0,2,0" VerticalAlignment="Center">
+                                            <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding IsSelectable}"
+                                                      AutomationProperties.AutomationId="{Binding CheckBoxAutomationId}"/>
+                                        </Viewbox>
 
                                         <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
                                                    ToolTip="{Binding StatusTooltip}" VerticalAlignment="Center"

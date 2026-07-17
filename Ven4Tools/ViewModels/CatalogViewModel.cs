@@ -822,7 +822,7 @@ namespace Ven4Tools.ViewModels
                     $"Разрешить автоматическую установку {pmName}?", $"Установка {pmName}",
                     MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes);
 
-            var cardVm = new AppCardViewModel(row, ConfirmPmInstall);
+            var cardVm = new AppCardViewModel(row, ConfirmPmInstall, SelectedInstallDrive);
             var window = new Views.AppCardWindow(cardVm) { Owner = owner };
             window.ShowDialog();
         }

@@ -17,18 +17,31 @@ namespace Ven4Tools.ViewModels
     {
         public AppRowViewModel Row { get; }
         private readonly Func<string, Task<bool>> _confirmPmInstall;
+        private readonly string _installDrive;
 
         public event Action? RequestClose;
 
-        public AppCardViewModel(AppRowViewModel row, Func<string, Task<bool>> confirmPmInstall)
+        public AppCardViewModel(AppRowViewModel row, Func<string, Task<bool>> confirmPmInstall, string installDrive)
         {
             Row = row;
             _confirmPmInstall = confirmPmInstall;
+            _installDrive = installDrive;
 
             LaunchCommand = new RelayCommand(_ =>
             {
                 Row.LaunchCommand.Execute(null);
-                RequestClose?.Invoke();
+                // Row.Launch() сбрасывает LaunchPath в null при неудаче (см.
+                // AppRowViewModel.Launch) — на этом различаем успех/провал без
+                // отдельного возвращаемого значения у команды.
+                if (Row.LaunchPath != null)
+                {
+                    RequestClose?.Invoke();
+                }
+                else
+                {
+                    StatusText = "❌ Не удалось запустить приложение";
+                    OnPropertyChanged(nameof(CanLaunch));
+                }
             }, _ => Row.CanLaunch);
 
             InstallCommand   = new RelayCommand(async _ => await InstallAsync(),   _ => !IsInstalled && !IsBusy);
@@ -96,32 +109,41 @@ namespace Ven4Tools.ViewModels
         private async Task InstallAsync()
         {
             IsBusy = true;
-            StatusText = "Установка...";
-            using var installService = new InstallationService();
-            var progress = new Progress<AppInstallProgress>(p => StatusText = p.Status);
-            await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
-                var result = await installService.InstallAppAsync(
-                    Row.App, new[] { "winget", "msstore" }, CancellationToken.None, progress,
-                    "C:\\", Row.PinnedVersion, _confirmPmInstall);
-                if (result.Success)
+                StatusText = "Установка...";
+                using var installService = new InstallationService();
+                var progress = new Progress<AppInstallProgress>(p => StatusText = p.Status);
+                await InstallationService.InstallSemaphore.WaitAsync();
+                try
                 {
-                    Row.IsInstalled = true;
-                    StatusText = "✅ Установлено";
+                    var result = await installService.InstallAppAsync(
+                        Row.App, new[] { "winget", "msstore" }, CancellationToken.None, progress,
+                        _installDrive, Row.PinnedVersion, _confirmPmInstall);
+                    if (result.Success)
+                    {
+                        Row.IsInstalled = true;
+                        StatusText = "✅ Установлено";
+                    }
+                    else
+                    {
+                        StatusText = $"❌ {result.Message}";
+                    }
                 }
-                else
+                finally
                 {
-                    StatusText = $"❌ {result.Message}";
+                    InstallationService.InstallSemaphore.Release();
                 }
             }
             catch (Exception ex)
             {
+                // Ловит и исключения из конструктора InstallationService/WaitAsync
+                // ДО захвата семафора — без внешнего try/finally IsBusy остался бы
+                // true навсегда, а кнопки карточки — залипшими.
                 StatusText = $"❌ {ex.Message}";
             }
             finally
             {
-                InstallationService.InstallSemaphore.Release();
                 IsBusy = false;
                 RaiseInstallStateChanged();
             }
@@ -130,20 +152,27 @@ namespace Ven4Tools.ViewModels
         private async Task UninstallAsync()
         {
             IsBusy = true;
-            StatusText = "Удаление...";
-            await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
-                bool ok = await AppUninstallService.TryUninstallAsync(Row.App.AlternativeId, Row.DisplayName);
-                if (ok)
+                StatusText = "Удаление...";
+                await InstallationService.InstallSemaphore.WaitAsync();
+                try
                 {
-                    Row.IsInstalled = false;
-                    Row.LaunchPath = null;
-                    StatusText = "✅ Удалено";
+                    bool ok = await AppUninstallService.TryUninstallAsync(Row.App.AlternativeId, Row.DisplayName);
+                    if (ok)
+                    {
+                        Row.IsInstalled = false;
+                        Row.LaunchPath = null;
+                        StatusText = "✅ Удалено";
+                    }
+                    else
+                    {
+                        StatusText = "⚠ Деинсталлятор не найден";
+                    }
                 }
-                else
+                finally
                 {
-                    StatusText = "⚠ Деинсталлятор не найден";
+                    InstallationService.InstallSemaphore.Release();
                 }
             }
             catch (Exception ex)
@@ -152,7 +181,6 @@ namespace Ven4Tools.ViewModels
             }
             finally
             {
-                InstallationService.InstallSemaphore.Release();
                 IsBusy = false;
                 RaiseInstallStateChanged();
             }
