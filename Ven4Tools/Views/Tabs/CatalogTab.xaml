@@ -176,10 +176,17 @@
 
                                         <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding IsSelectable}"
                                                   AutomationProperties.AutomationId="{Binding CheckBoxAutomationId}"
-                                                  VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
-                                                       ToolTip="{Binding StatusTooltip}"/>
-                                        </CheckBox>
+                                                  VerticalAlignment="Center"/>
+
+                                        <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
+                                                   ToolTip="{Binding StatusTooltip}" VerticalAlignment="Center"
+                                                   Margin="4,0,0,0" Cursor="Hand">
+                                            <TextBlock.InputBindings>
+                                                <MouseBinding MouseAction="LeftClick"
+                                                              Command="{Binding DataContext.OpenCardCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                              CommandParameter="{Binding}"/>
+                                            </TextBlock.InputBindings>
+                                        </TextBlock>
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="14,0,0,0">
