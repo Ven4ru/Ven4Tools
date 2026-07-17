@@ -9,6 +9,7 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <vm:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
+        <vm:StringToVisibilityConverter x:Key="StringToVis"/>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -34,7 +35,7 @@
             </TextBlock>
             <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
                        Foreground="{DynamicResource TextPrimary}" FontSize="12" Margin="0,0,0,10"/>
-            <TextBlock Margin="0,0,0,6">
+            <TextBlock Margin="0,0,0,6" Visibility="{Binding OfficialSiteUrl, Converter={StaticResource StringToVis}}">
                 <Hyperlink NavigateUri="{Binding OfficialSiteUrl}" RequestNavigate="Hyperlink_RequestNavigate">
                     <Run Text="🔗 "/>
                     <Run Text="{Binding OfficialSiteUrl, Mode=OneWay}"/>
