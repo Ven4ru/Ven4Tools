@@ -530,7 +530,10 @@ namespace Ven4Tools.ViewModels
                     var row = new AppRowViewModel(appInfo)
                     {
                         IconUrl = catalogApp.IconUrl,
-                        Profile = catalogApp.Profile
+                        Profile = catalogApp.Profile,
+                        Description = catalogApp.Description,
+                        CatalogVersion = catalogApp.Version,
+                        CatalogSizeText = catalogApp.Size
                     };
                     row.IsFavorite = _favoritesService.IsFavorite(row.AppId);
                     row.SelectionChanged += () => OnPropertyChanged(nameof(SelectedCount));

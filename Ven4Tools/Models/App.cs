@@ -19,6 +19,10 @@ namespace Ven4Tools.Models
 
         public string IconUrl { get; set; } = string.Empty;
 
+        public string Description { get; set; } = string.Empty;
+
+        public string Version { get; set; } = string.Empty;
+
         public string Profile { get; set; } = "full";
 
         public string ChocoId { get; set; } = string.Empty;
