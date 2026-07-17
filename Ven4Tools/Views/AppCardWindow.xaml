@@ -8,7 +8,6 @@
         Background="{DynamicResource WindowBackground}">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <vm:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
         <vm:StringToVisibilityConverter x:Key="StringToVis"/>
     </Window.Resources>
     <Grid>
