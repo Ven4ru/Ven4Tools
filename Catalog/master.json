@@ -1,7 +1,14 @@
 {
-  "version": 10,
-  "lastUpdated": "2026-07-17 00:00:00",
+  "version": 11,
+  "lastUpdated": "2026-07-17 07:30:00",
   "changelog": [
+    {
+      "version": 11,
+      "date": "2026-07-17",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "У winget-only записей без downloadUrl (snappy-driver, hwmonitor, cpu-z) поле size приведено к \"\" вместо вводящего в заблуждение \"0.0 MB\" — единообразно с остальными такими записями."
+    },
     {
       "version": 10,
       "date": "2026-07-17",
@@ -1023,7 +1030,7 @@
       "wingetId": "samlab-ws.SnappyDriverInstaller",
       "downloadUrl": "",
       "version": "1.23.9 (R2309)",
-      "size": "0.0 MB",
+      "size": "",
       "official": true,
       "iconUrl": "https://www.google.com/s2/favicons?domain=sdi-tool.org&sz=64",
       "description": "Мощный офлайн-инсталлятор драйверов с огромной базой.",
@@ -1098,7 +1105,7 @@
       "wingetId": "CPUID.HWMonitor",
       "downloadUrl": "",
       "version": "1.64",
-      "size": "0.0 MB",
+      "size": "",
       "official": true,
       "iconUrl": "https://www.google.com/s2/favicons?domain=cpuid.com&sz=64",
       "description": "Мониторинг температуры, напряжений и частот.",
@@ -1174,7 +1181,7 @@
       "wingetId": "CPUID.CPU-Z",
       "downloadUrl": "",
       "version": "2.20",
-      "size": "0.0 MB",
+      "size": "",
       "official": true,
       "iconUrl": "https://www.google.com/s2/favicons?domain=cpuid.com&sz=64",
       "description": "Детальная информация о процессоре, памяти и материнской плате.",
