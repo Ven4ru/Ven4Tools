@@ -129,6 +129,18 @@ namespace Ven4Tools.Services
                             string? path = sub?.GetValue(null) as string; // (Default) значение
                             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) continue;
 
+                            // Тот же fail-closed ACL-контроль, что и в
+                            // ScanUninstallInstallLocations: App Paths регистрируется
+                            // админом, но указывает на произвольный каталог, который может
+                            // иметь слабую ACL. Play-кнопка запускает exe в elevated-клиенте —
+                            // если каталог с exe доступен на запись непривилегированному
+                            // пользователю, бинарник можно подменить. Проверяем каталог exe
+                            // ДО принятия пути; каталог не определить — тоже отклоняем.
+                            string? appPathDir = Path.GetDirectoryName(path);
+                            if (string.IsNullOrEmpty(appPathDir) ||
+                                TrustedExecutablePaths.IsDirectoryAclCompromised(appPathDir))
+                                continue;
+
                             string nameHint = GetExeNameHint(path) ?? Path.GetFileNameWithoutExtension(path);
                             result.Add(new Candidate(Normalize(nameHint), path));
                         }
@@ -175,6 +187,15 @@ namespace Ven4Tools.Services
                         string? targetPath = ResolveShortcutTarget(shell, lnk);
                         if (string.IsNullOrWhiteSpace(targetPath) || !File.Exists(targetPath)) continue;
                         if (!targetPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        // Тот же fail-closed ACL-контроль, что и у двух других источников:
+                        // системный .lnk создаётся админом, но его цель может лежать в
+                        // каталоге со слабой ACL; иначе exe в нём можно подменить перед
+                        // запуском в elevated-клиенте. Проверяем каталог цели до принятия.
+                        string? targetDir = Path.GetDirectoryName(targetPath);
+                        if (string.IsNullOrEmpty(targetDir) ||
+                            TrustedExecutablePaths.IsDirectoryAclCompromised(targetDir))
+                            continue;
 
                         string nameHint = Path.GetFileNameWithoutExtension(lnk);
                         result.Add(new Candidate(Normalize(nameHint), targetPath));

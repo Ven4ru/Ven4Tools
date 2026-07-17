@@ -41,8 +41,9 @@ namespace Ven4Tools.ViewModels
                 {
                     StatusText = "❌ Не удалось запустить приложение";
                     OnPropertyChanged(nameof(CanLaunch));
+                    OnPropertyChanged(nameof(ShowLaunchButton));
                 }
-            }, _ => Row.CanLaunch);
+            }, _ => Row.CanLaunch && !IsBusy);
 
             InstallCommand   = new RelayCommand(async _ => await InstallAsync(),   _ => !IsInstalled && !IsBusy);
             ReinstallCommand = new RelayCommand(async _ => await ReinstallAsync(), _ => IsInstalled && !IsBusy);
@@ -72,11 +73,34 @@ namespace Ven4Tools.ViewModels
         public bool IsInstalled => Row.IsInstalled;
         public bool CanLaunch => Row.CanLaunch;
 
+        // Видимость кнопок карточки. Вынесено в вычисляемые свойства, чтобы во
+        // время «Переустановить» (Uninstall→Install) набор кнопок не мигал:
+        // фаза удаления кратковременно делает IsInstalled=false, что иначе
+        // показало бы кнопку «Установить» между фазами. Пока IsReinstalling=true
+        // все кнопки действий скрыты — виден только StatusText.
+        public bool ShowLaunchButton => Row.CanLaunch && !IsReinstalling;
+        public bool ShowInstallButton => !IsInstalled && !IsReinstalling;
+        public bool ShowInstalledActions => IsInstalled && !IsReinstalling;
+
         private bool _isBusy;
         public bool IsBusy
         {
             get => _isBusy;
             private set { _isBusy = value; OnPropertyChanged(); RefreshCommands(); }
+        }
+
+        private bool _isReinstalling;
+        public bool IsReinstalling
+        {
+            get => _isReinstalling;
+            private set
+            {
+                _isReinstalling = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ShowLaunchButton));
+                OnPropertyChanged(nameof(ShowInstallButton));
+                OnPropertyChanged(nameof(ShowInstalledActions));
+            }
         }
 
         private string _statusText = "";
@@ -93,6 +117,7 @@ namespace Ven4Tools.ViewModels
 
         private void RefreshCommands()
         {
+            LaunchCommand.RaiseCanExecuteChanged();
             InstallCommand.RaiseCanExecuteChanged();
             ReinstallCommand.RaiseCanExecuteChanged();
             UninstallCommand.RaiseCanExecuteChanged();
@@ -103,6 +128,9 @@ namespace Ven4Tools.ViewModels
             OnPropertyChanged(nameof(IsInstalled));
             OnPropertyChanged(nameof(CanLaunch));
             OnPropertyChanged(nameof(VersionText));
+            OnPropertyChanged(nameof(ShowLaunchButton));
+            OnPropertyChanged(nameof(ShowInstallButton));
+            OnPropertyChanged(nameof(ShowInstalledActions));
             RefreshCommands();
         }
 
@@ -188,8 +216,17 @@ namespace Ven4Tools.ViewModels
 
         private async Task ReinstallAsync()
         {
-            await UninstallAsync();
-            if (!IsInstalled) await InstallAsync();
+            IsReinstalling = true;
+            try
+            {
+                await UninstallAsync();
+                if (!IsInstalled) await InstallAsync();
+            }
+            finally
+            {
+                IsReinstalling = false;
+                RaiseInstallStateChanged();
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

@@ -448,13 +448,6 @@ namespace Ven4Tools
                 Sha256 = catalogApp.Sha256
             };
             var prog = new Progress<Services.AppInstallProgress>(p => AppLogger.Write($"  {p.Status}"));
-            async Task<bool> confirmPm(string pmName) =>
-                await Dispatcher.InvokeAsync(() =>
-                    System.Windows.MessageBox.Show(
-                        $"Для установки требуется {pmName}, который не установлен.\n\nРазрешить установку {pmName}?",
-                        $"Установка {pmName}",
-                        System.Windows.MessageBoxButton.YesNo,
-                        System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes);
 
             // Общий семафор: не даём пину запустить установку параллельно с каталогом/историей.
             if (btn != null) btn.IsEnabled = false;
@@ -464,7 +457,7 @@ namespace Ven4Tools
                 using var installer = new Services.InstallationService();
                 using var cts = new System.Threading.CancellationTokenSource();
                 string installDrive = _catalogTab?.SelectedInstallDrive ?? "C:\\";
-                var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, installDrive, null, confirmPm);
+                var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, installDrive, null, Views.UiGuards.ConfirmPackageManagerInstallAsync);
                 AppLogger.Write(r.Success ? $"✅ {catalogApp.Name}" : $"❌ {r.Message}");
             }
             finally
