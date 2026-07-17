@@ -37,6 +37,18 @@ namespace Ven4Tools.ViewModels
 
         public string? IconUrl { get; set; }
 
+        // Описание/версия/размер из каталога (master.json) — раньше эти поля
+        // JSON молча игнорировались (AppInfo их не содержит), для карточки
+        // приложения нужны отдельно от IconUrl тем же способом.
+        public string? Description { get; set; }
+
+        // Версия из каталога (последняя доступная) — отличается от InstalledVersion
+        // (реально установленной), нужна для карточки, когда приложение ещё не
+        // установлено.
+        public string? CatalogVersion { get; set; }
+
+        public string? CatalogSizeText { get; set; }
+
         // Из каталога (Models.App.Profile) — "basic"/"extended"/"full", для фильтра
         // ApplyProfileFilters. У пользовательских приложений всегда "full" (видимы
         // в любом режиме — так же вело себя вычисление profileOk=true при appId==null
