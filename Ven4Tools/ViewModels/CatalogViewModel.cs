@@ -49,6 +49,7 @@ namespace Ven4Tools.ViewModels
 
         public RelayCommand ToggleFavoriteCommand { get; }
         public RelayCommand SuggestAlternativeCommand { get; }
+        public RelayCommand OpenCardCommand { get; }
         public RelayCommand RemoveUserAppCommand { get; }
         public RelayCommand InstallSelectedCommand { get; }
         public RelayCommand CancelInstallCommand { get; }
@@ -113,6 +114,11 @@ namespace Ven4Tools.ViewModels
             SuggestAlternativeCommand = new RelayCommand(async p =>
             {
                 if (p is AppRowViewModel row) await SuggestAlternativeAsync(row);
+            });
+
+            OpenCardCommand = new RelayCommand(p =>
+            {
+                if (p is AppRowViewModel row) OpenCard(row);
             });
 
             RemoveUserAppCommand = new RelayCommand(p =>
@@ -804,6 +810,21 @@ namespace Ven4Tools.ViewModels
             await Task.Delay(500);
             using var sem = new SemaphoreSlim(1);
             await CheckOneAvailabilityAsync(row, sem);
+        }
+
+        private void OpenCard(AppRowViewModel row)
+        {
+            var owner = OwnerWindowProvider?.Invoke();
+
+            Task<bool> ConfirmPmInstall(string pmName) =>
+                Task.FromResult(MessageBox.Show(
+                    $"Для установки приложения требуется {pmName}, который сейчас не установлен.\n\n" +
+                    $"Разрешить автоматическую установку {pmName}?", $"Установка {pmName}",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes);
+
+            var cardVm = new AppCardViewModel(row, ConfirmPmInstall);
+            var window = new Views.AppCardWindow(cardVm) { Owner = owner };
+            window.ShowDialog();
         }
 
         // ── Установка ────────────────────────────────────────────────────────────
