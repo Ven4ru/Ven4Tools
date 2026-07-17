@@ -115,6 +115,10 @@ namespace Ven4Tools.ViewModels
                     StatusText = $"❌ {result.Message}";
                 }
             }
+            catch (Exception ex)
+            {
+                StatusText = $"❌ {ex.Message}";
+            }
             finally
             {
                 InstallationService.InstallSemaphore.Release();
@@ -127,6 +131,7 @@ namespace Ven4Tools.ViewModels
         {
             IsBusy = true;
             StatusText = "Удаление...";
+            await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
                 bool ok = await AppUninstallService.TryUninstallAsync(Row.App.AlternativeId, Row.DisplayName);
@@ -141,8 +146,13 @@ namespace Ven4Tools.ViewModels
                     StatusText = "⚠ Деинсталлятор не найден";
                 }
             }
+            catch (Exception ex)
+            {
+                StatusText = $"❌ {ex.Message}";
+            }
             finally
             {
+                InstallationService.InstallSemaphore.Release();
                 IsBusy = false;
                 RaiseInstallStateChanged();
             }
