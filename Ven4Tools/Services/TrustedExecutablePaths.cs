@@ -54,35 +54,119 @@ namespace Ven4Tools.Services
         public static string ExplorerExe { get; } = Path.Combine(WindowsDir, "explorer.exe");
 
         /// <summary>
-        /// winget — App Execution Alias в %LocalAppData%\Microsoft\WindowsApps.
-        /// По дизайну Windows эта папка защищена ACL, запрещающим запись даже
-        /// владельцу-пользователю (только TrustedInstaller/System/Administrators
-        /// могут туда писать) — именно поэтому Windows использует её для alias'ов
-        /// исполняемых файлов. Не искать winget нигде за пределами этого пути:
-        /// поиск по PATH/App Paths вернул бы нас к исходной уязвимости.
+        /// winget — сначала ищем сам пакет App Installer под Program Files\WindowsApps
+        /// (см. ResolveWingetFromPackageFolder), и только если не нашли — старый путь
+        /// через App Execution Alias в %LocalAppData%\Microsoft\WindowsApps.
         ///
-        /// Это предположение НЕ принимается на веру: пентест 2026-07-14 живьём
-        /// показал, что на реальной машине ACL этой папки может оказаться слабее
-        /// ожидаемой (сторонний sandbox-инструмент, повреждённый профиль, более
-        /// ранняя компрометация и т.п.) — обычный пользователь получал Full
-        /// Control и мог подменить winget.exe без единого запроса UAC. Поэтому
-        /// перед доверием пути DACL проверяется явно (см. IsDirectoryAclCompromised).
+        /// История: раньше здесь резолвился только alias, с доверием по ACL папки
+        /// (пентест 2026-07-14 живьём показал, что ACL этой ПЕРсональной папки может
+        /// оказаться слабее ожидаемой — обычный пользователь получал Full Control и
+        /// мог подменить winget.exe без единого запроса UAC). Аудит 2026-07-17 нашёл,
+        /// что сама эвристика ACL недостаточно надёжна В ДРУГУЮ сторону: на живых
+        /// машинах (включая как минимум одну без стороннего sandbox-инструмента) эта
+        /// папка регулярно оказывается шире узкого предположения "только
+        /// SYSTEM/Administrators/TrustedInstaller" без какой-либо реальной
+        /// компрометации — резолвинг ложно отказывал для ВСЕГО каталога (любая
+        /// запись без прямой ссылки на установщик показывалась "недоступна").
         ///
-        /// Важно: проверка читает DACL, а НЕ пробует реально записать файл —
-        /// живая проба записи бесполезна именно здесь, потому что сам клиент
-        /// всегда elevated (requireAdministrator), и Administrators ЗАКОННО
-        /// имеют право записи в эту папку. Проба «могу ли я, elevated-процесс,
-        /// сюда писать» всегда была бы true и перманентно ломала бы резолвинг
-        /// winget на КАЖДОЙ машине независимо от реального состояния ACL —
-        /// эта ошибка была найдена и исправлена в тот же день, при повторном
-        /// тестировании фикса из по-настоящему де-элевированного процесса.
+        /// Попытка спасти alias-путь Authenticode-проверкой самого файла не сработала:
+        /// App Execution Alias — не обычный файл, а reparse point (IO_REPARSE_TAG_
+        /// APPEXECLINK, 0 байт), и WinVerifyTrust/чтение сертификата с него всегда
+        /// падает с CRYPT_E_FILE_ERROR независимо от того, легитимный он или нет —
+        /// проверено живьём на этой машине при разработке фикса.
+        ///
+        /// Правильное решение — резолвить РЕАЛЬНЫЙ файл пакета в Program Files\
+        /// WindowsApps\Microsoft.DesktopAppInstaller_*_{arch}__8wekyb3d8bbwe\winget.exe.
+        /// Эта папка в принципе не бывает "шире ожидаемого" ни на одной машине — она
+        /// заблокирована TrustedInstaller на уровне ОС и не зависит от состояния
+        /// конкретного профиля/машины, в отличие от персонального alias. Сам файл там
+        /// не reparse point, поэтому Authenticode-проверка на нём работает штатно —
+        /// это и есть основной источник доверия для этого пути (см.
+        /// ResolveWingetFromPackageFolder), а не ACL.
         /// </summary>
         public static string? ResolveWinget()
         {
+            var fromPackage = ResolveWingetFromPackageFolder();
+            if (fromPackage != null) return fromPackage;
+
             var dir = Path.Combine(LocalAppDataDir, "Microsoft", "WindowsApps");
             var alias = Path.Combine(dir, "winget.exe");
             if (!File.Exists(alias)) return null;
             return IsDirectoryAclCompromised(dir) ? null : alias;
+        }
+
+        private static readonly string ProgramFilesDir =
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+
+        private static readonly System.Collections.Generic.Dictionary<string, string?> _packageWingetCache = new();
+        private static readonly object _packageWingetCacheLock = new();
+
+        /// <summary>
+        /// Находит winget.exe внутри пакета Microsoft.DesktopAppInstaller под
+        /// Program Files\WindowsApps и проверяет его Authenticode-подпись
+        /// (Microsoft Corporation) — это НЕ reparse point, а настоящий PE-файл,
+        /// в отличие от alias'а в профиле пользователя. Возвращает null при любой
+        /// проблеме (пакет не найден, доступ к папке ограничен на конкретной
+        /// сборке Windows, подпись не подтверждена) — вызывающий код тогда падает
+        /// на старый alias-путь. WinVerifyTrust недёшев (проверка отзыва по сети),
+        /// поэтому результат кэшируется на процесс: для конкретной версии пакета
+        /// содержимое файла не меняется на лету.
+        /// </summary>
+        private static string? ResolveWingetFromPackageFolder()
+        {
+            string arch = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture switch
+            {
+                System.Runtime.InteropServices.Architecture.X64   => "x64",
+                System.Runtime.InteropServices.Architecture.Arm64 => "arm64",
+                System.Runtime.InteropServices.Architecture.X86   => "x86",
+                _ => ""
+            };
+            if (arch.Length == 0) return null;
+
+            string windowsAppsRoot = Path.Combine(ProgramFilesDir, "WindowsApps");
+
+            lock (_packageWingetCacheLock)
+            {
+                if (_packageWingetCache.TryGetValue(arch, out var cached)) return cached;
+
+                string? result = null;
+                try
+                {
+                    // Публикатор "8wekyb3d8bbwe" — фиксированный хеш издателя Microsoft
+                    // для App Installer, одинаков на всех машинах и версиях пакета.
+                    var candidates = Directory.GetDirectories(
+                        windowsAppsRoot, $"Microsoft.DesktopAppInstaller_*_{arch}__8wekyb3d8bbwe");
+                    // Может встретиться больше одной версии пакета (например, в окне
+                    // между авто-обновлением из Store и очисткой старой) — берём
+                    // самую свежую по имени папки (версия — часть имени, сортировка
+                    // строкой достаточно точна для этого формата "X.Y.Z.W").
+                    Array.Sort(candidates, StringComparer.OrdinalIgnoreCase);
+                    Array.Reverse(candidates);
+
+                    foreach (var dir in candidates)
+                    {
+                        var exePath = Path.Combine(dir, "winget.exe");
+                        if (!File.Exists(exePath)) continue;
+
+                        if (AuthenticodeVerifier.IsSignedByMicrosoft(exePath, out string error))
+                        {
+                            result = exePath;
+                            break;
+                        }
+                        AppLogger.Write($"[TrustedExecutablePaths] ⚠ {exePath}: подпись не подтверждена ({error}) — пропускаю эту версию пакета");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Доступ к Program Files\WindowsApps ограничен на этой сборке
+                    // Windows, пакет не найден и т.п. — не фатально, вызывающий
+                    // код перейдёт на alias-путь.
+                    AppLogger.Write($"[TrustedExecutablePaths] ⚠ Program Files\\WindowsApps недоступен ({ex.GetType().Name}) — резолвинг через пакет пропущен, пробую alias");
+                }
+
+                _packageWingetCache[arch] = result;
+                return result;
+            }
         }
 
         /// <summary>

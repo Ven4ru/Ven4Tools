@@ -22,6 +22,7 @@ param(
     [string]$VersionJsonPath,
 
     [string]$PrivateKeyPath = "$env:USERPROFILE\.ven4tools\update-manifest-signing-private.pem",
+    [string]$PublicKeyPath = "$env:USERPROFILE\.ven4tools\update-manifest-signing-public.pem",
     [string]$SignerDll = "$PSScriptRoot\UpdateManifestSigner\bin\Release\net8.0\UpdateManifestSigner.dll"
 )
 
@@ -44,6 +45,12 @@ Write-Host "Подписываю $VersionJsonPath..."
 dotnet $SignerDll $VersionJsonPath $PrivateKeyPath
 if (-not (Test-Path $sigPath)) { throw "Подпись не создана — проверь вывод UpdateManifestSigner выше." }
 
+# Самопроверка локально созданной пары до заливки на CDN — ловит баги самого
+# signer'а или неверный ключ ещё до того, как что-либо уйдёт в прод.
+Write-Host "Проверяю подпись локально..."
+dotnet $SignerDll verify $VersionJsonPath $sigPath $PublicKeyPath
+if ($LASTEXITCODE -ne 0) { throw "Локальная подпись не прошла проверку — заливка на CDN отменена." }
+
 Write-Host "Заливаю на CDN (jump:/var/www/cdn/)..."
 scp $VersionJsonPath "jump:/tmp/version.json.new"
 scp $sigPath "jump:/tmp/version.json.sig.new"
@@ -56,9 +63,33 @@ $remoteCmd = "mv /tmp/version.json.new /var/www/cdn/version.json && mv /tmp/vers
 ssh jump $remoteCmd
 
 Write-Host "Проверка публичной доступности..."
-$remoteJson = Invoke-RestMethod "https://cdn.ven4tools.ru/version.json"
 # -UseBasicParsing: без него Invoke-WebRequest в Windows PowerShell 5.1
 # пытается использовать IE DOM-парсер, что в неинтерактивном режиме
 # (CI, автоматизация) падает с "NonInteractive mode" вместо реального запроса.
-$remoteSigResp = Invoke-WebRequest "https://cdn.ven4tools.ru/version.json.sig" -UseBasicParsing
-Write-Host "OK: client=$($remoteJson.client.version) launcher=$($remoteJson.launcher.version), sig HTTP $($remoteSigResp.StatusCode)"
+#
+# Сверяем то, что реально отдаёт CDN (а не локальные файлы) — единственный
+# способ поймать порчу байтов при заливке/на стороне CDN. Качаем -OutFile
+# напрямую в бинарном виде: Invoke-WebRequest .Content — это .NET string,
+# и любой последующий Set-Content/[IO.File]::WriteAllText неизбежно
+# перекодирует её (в Windows PowerShell 5.1 -Encoding utf8 добавляет BOM),
+# что ломает побайтовое сравнение подписи независимо от того, реально ли
+# CDN отдал корректную пару.
+$remoteCheckDir = Join-Path ([System.IO.Path]::GetTempPath()) ("ven4tools-manifest-check-" + [Guid]::NewGuid())
+New-Item -ItemType Directory -Path $remoteCheckDir | Out-Null
+try {
+    $remoteJsonFile = Join-Path $remoteCheckDir "version.json"
+    $remoteSigFile = Join-Path $remoteCheckDir "version.json.sig"
+    Invoke-WebRequest "https://cdn.ven4tools.ru/version.json" -OutFile $remoteJsonFile -UseBasicParsing
+    $remoteSigResp = Invoke-WebRequest "https://cdn.ven4tools.ru/version.json.sig" -OutFile $remoteSigFile -UseBasicParsing -PassThru
+
+    dotnet $SignerDll verify $remoteJsonFile $remoteSigFile $PublicKeyPath
+    if ($LASTEXITCODE -ne 0) {
+        throw "КРИТИЧНО: подпись на CDN не соответствует залитому version.json — пользователи получат отказ в установке. Проверь /var/www/cdn/ на jump-хосте немедленно."
+    }
+
+    $remoteJson = Get-Content $remoteJsonFile -Raw | ConvertFrom-Json
+    Write-Host "OK: client=$($remoteJson.client.version) launcher=$($remoteJson.launcher.version), sig HTTP $($remoteSigResp.StatusCode), подпись подтверждена по данным с CDN"
+}
+finally {
+    Remove-Item $remoteCheckDir -Recurse -Force -ErrorAction SilentlyContinue
+}
