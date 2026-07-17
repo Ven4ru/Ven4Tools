@@ -138,14 +138,6 @@ namespace Ven4Tools.Views.Tabs
             var progress = new Progress<AppInstallProgress>(p =>
                 AppLogger.Write($"  {p.Status}"));
 
-            async Task<bool> confirmPm(string pmName) =>
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                    System.Windows.MessageBox.Show(
-                        $"Для переустановки требуется {pmName}, который не установлен.\n\nРазрешить установку {pmName}?",
-                        $"Установка {pmName}",
-                        System.Windows.MessageBoxButton.YesNo,
-                        System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes);
-
             // Общий семафор: переустановка из истории не должна идти параллельно
             // с установкой из каталога или пина (конфликт msiexec, ошибка 1618).
             var btn = sender as Button;
@@ -156,7 +148,7 @@ namespace Ven4Tools.Views.Tabs
                 using var installer = new InstallationService();
                 using var cts = new CancellationTokenSource();
                 var result = await installer.InstallAppAsync(
-                    appInfo, new[] { "winget", "msstore" }, cts.Token, progress, "C:\\", null, confirmPm);
+                    appInfo, new[] { "winget", "msstore" }, cts.Token, progress, "C:\\", null, UiGuards.ConfirmPackageManagerInstallAsync);
 
                 AppLogger.Write(result.Success
                     ? $"✅ {entry.AppName} переустановлен"

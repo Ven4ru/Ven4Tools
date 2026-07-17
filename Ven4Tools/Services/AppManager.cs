@@ -329,6 +329,22 @@ namespace Ven4Tools.Services
         // назначению, а не к любому DPAPI-контейнеру той же учётной записи.
         private static readonly byte[] AppsEntropy = Encoding.UTF8.GetBytes("Ven4Tools.apps.v1");
 
+        // Маркер факта миграции apps.json на DPAPI. Существование = защищённый файл
+        // сохранялся на этой машине хотя бы раз. После этого приём legacy-plaintext при
+        // загрузке закрывается (см. LoadUserApps): иначе локальный процесс мог бы вечно
+        // обходить DPAPI, подсовывая plaintext вместо защищённого файла.
+        private string MigrationMarkerPath => configPath + ".dpapi";
+
+        private void EnsureMigrationMarker()
+        {
+            try
+            {
+                if (!File.Exists(MigrationMarkerPath))
+                    FileHelper.WriteAllTextAtomic(MigrationMarkerPath, "1");
+            }
+            catch (Exception ex) { AppLogger.Write($"[AppManager] EnsureMigrationMarker: {ex.Message}"); }
+        }
+
         private void LoadUserApps()
         {
             try
@@ -342,12 +358,26 @@ namespace Ven4Tools.Services
 
                 if (ProtectUserApps)
                 {
-                    // Сначала пробуем снять DPAPI-защиту. Неудача означает legacy-формат
-                    // (голый JSON от прежних версий): принимаем его и помечаем на миграцию —
-                    // при следующей записи файл будет пересохранён уже защищённым.
+                    // Сначала пробуем снять DPAPI-защиту.
                     userApps = TryUnprotectUserApps(raw);
-                    if (userApps == null)
+                    if (userApps != null)
                     {
+                        // Файл действительно защищён — фиксируем факт миграции (восстанавливаем
+                        // маркер, если его удалили), чтобы дальше действовал fail-closed.
+                        EnsureMigrationMarker();
+                    }
+                    else
+                    {
+                        // Снятие DPAPI не удалось. Голый JSON (legacy-формат прежних версий)
+                        // принимаем ТОЛЬКО пока миграция ещё не состоялась — разовое окно
+                        // апгрейда. Если маркер уже есть, защищённый файл сохранялся хотя бы
+                        // раз, и plaintext на его месте — подмена: отклоняем fail-closed
+                        // (пустой список user apps, приложение не падает).
+                        if (File.Exists(MigrationMarkerPath))
+                        {
+                            AppLogger.Write("[AppManager] apps.json не расшифровывается DPAPI, но миграция уже выполнена — незащищённый ввод отклонён (fail-closed)");
+                            return;
+                        }
                         userApps = TryParsePlainUserApps(raw);
                         if (userApps != null) needsUpgrade = true;
                     }
@@ -403,6 +433,9 @@ namespace Ven4Tools.Services
             {
                 var userApps = apps.Where(a => a.IsUserAdded).ToList();
                 FileHelper.WriteAllTextAtomic(configPath, SerializeUserApps(userApps));
+                // Защищённый файл записан — фиксируем миграцию, чтобы при следующей
+                // загрузке plaintext на его месте больше не принимался автоматически.
+                if (ProtectUserApps) EnsureMigrationMarker();
             }
             catch (Exception ex) { AppLogger.Write($"[AppManager] SaveUserApps: {ex.Message}"); }
         }

@@ -185,6 +185,17 @@
                                         <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
                                                    ToolTip="{Binding StatusTooltip}" VerticalAlignment="Center"
                                                    Margin="4,0,0,0" Cursor="Hand">
+                                            <!-- Подчёркивание при наведении подсказывает, что имя кликабельно
+                                                 (открывает карточку). Кликабельная область и логика не меняются. -->
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="TextDecorations" Value="Underline"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
                                             <TextBlock.InputBindings>
                                                 <MouseBinding MouseAction="LeftClick"
                                                               Command="{Binding DataContext.OpenCardCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"

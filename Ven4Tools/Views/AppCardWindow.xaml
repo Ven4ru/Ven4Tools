@@ -24,50 +24,60 @@
                    Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
 
-        <!-- Основной контент -->
-        <StackPanel Grid.Column="1" Margin="16,14,14,14">
-            <TextBlock Text="{Binding DisplayName}" FontSize="18" FontWeight="Bold"
-                       Foreground="{DynamicResource TextPrimary}"/>
-            <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,2,0,10">
-                <Run Text="{Binding CategoryString, Mode=OneWay}"/>
-                <Run Text=" · "/>
-                <Run Text="{Binding VersionText, Mode=OneWay}"/>
-            </TextBlock>
-            <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
-                       Foreground="{DynamicResource TextPrimary}" FontSize="12" Margin="0,0,0,10"/>
-            <TextBlock Margin="0,0,0,6" Visibility="{Binding OfficialSiteUrl, Converter={StaticResource StringToVis}}">
-                <Hyperlink NavigateUri="{Binding OfficialSiteUrl}" RequestNavigate="Hyperlink_RequestNavigate">
-                    <Run Text="🔗 "/>
-                    <Run Text="{Binding OfficialSiteUrl, Mode=OneWay}"/>
-                </Hyperlink>
-            </TextBlock>
-            <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="10" Margin="0,4,0,0">
-                <Run Text="ID: "/>
-                <Run Text="{Binding PackageIdText, Mode=OneWay}"/>
-                <Run Text="  ·  Размер: "/>
-                <Run Text="{Binding SizeText, Mode=OneWay}"/>
-            </TextBlock>
-            <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource TextSecondary}"
-                       FontSize="11" Margin="0,10,0,0"/>
-        </StackPanel>
+        <!-- Основной контент. Высота окна фиксирована (NoResize) — при длинном
+             описании оборачиваем в ScrollViewer, чтобы строка статуса внизу
+             никогда не уходила за пределы окна. -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="16,14,14,14">
+                <TextBlock Text="{Binding DisplayName}" FontSize="18" FontWeight="Bold"
+                           Foreground="{DynamicResource TextPrimary}"/>
+                <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,2,0,10">
+                    <Run Text="{Binding CategoryString, Mode=OneWay}"/>
+                    <Run Text=" · "/>
+                    <Run Text="{Binding VersionText, Mode=OneWay}"/>
+                </TextBlock>
+                <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextPrimary}" FontSize="12" Margin="0,0,0,10"/>
+                <!-- Ссылка извлекается из адреса установщика (scheme://host), это не
+                     гарантированно официальный сайт продукта — подпись нейтральная,
+                     реальный адрес показываем в подсказке. -->
+                <TextBlock Margin="0,0,0,6" Visibility="{Binding OfficialSiteUrl, Converter={StaticResource StringToVis}}">
+                    <Hyperlink NavigateUri="{Binding OfficialSiteUrl}" RequestNavigate="Hyperlink_RequestNavigate"
+                               ToolTip="{Binding OfficialSiteUrl}">
+                        <Run Text="🔗 Сайт-источник"/>
+                    </Hyperlink>
+                </TextBlock>
+                <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="10" Margin="0,4,0,0">
+                    <Run Text="ID: "/>
+                    <Run Text="{Binding PackageIdText, Mode=OneWay}"/>
+                    <Run Text="  ·  Размер: "/>
+                    <Run Text="{Binding SizeText, Mode=OneWay}"/>
+                </TextBlock>
+                <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource TextSecondary}"
+                           FontSize="11" Margin="0,10,0,0"/>
+            </StackPanel>
+        </ScrollViewer>
 
         <!-- Панель действий справа -->
         <StackPanel Grid.Column="2" Background="{DynamicResource CardBackground}"
                     Margin="10" VerticalAlignment="Center">
+            <!-- Кнопка запуска скрыта, если exe не резолвится (как в строке каталога:
+                 fail-closed, не гадаем) — единообразно с CatalogTab. -->
             <Button Content="▶ Запустить" Height="34" Margin="0,0,0,6"
                     Command="{Binding LaunchCommand}"
-                    Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"
+                    Visibility="{Binding ShowLaunchButton, Converter={StaticResource BoolToVis}}"
                     Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="Bold"/>
             <Button Content="Установить" Height="34" Margin="0,0,0,6"
                     Command="{Binding InstallCommand}"
-                    Visibility="{Binding IsInstalled, Converter={StaticResource InverseBoolToVis}}"
+                    Visibility="{Binding ShowInstallButton, Converter={StaticResource BoolToVis}}"
                     Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="Bold"/>
             <Button Content="🔄 Переустановить" Height="30" Margin="0,0,0,6"
                     Command="{Binding ReinstallCommand}"
-                    Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"/>
+                    Visibility="{Binding ShowInstalledActions, Converter={StaticResource BoolToVis}}"/>
             <Button Content="🗑 Удалить" Height="30"
                     Command="{Binding UninstallCommand}"
-                    Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"
+                    Visibility="{Binding ShowInstalledActions, Converter={StaticResource BoolToVis}}"
                     Background="#5a1414" Foreground="#ffb4b4"/>
         </StackPanel>
     </Grid>

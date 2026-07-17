@@ -75,5 +75,28 @@ namespace Ven4Tools.Views
 
             return ok ? RestorePointOutcome.Created : RestorePointOutcome.Skipped;
         }
+
+        /// <summary>
+        /// Единый диалог согласия (Да/Нет) на автоматическую установку пакетного
+        /// менеджера (winget/Chocolatey), которого ещё нет в системе. Возвращает
+        /// true, если пользователь разрешил установку. Раньше этот диалог дублировался
+        /// в CatalogViewModel/MainWindow/HistoryTab с расходящимися формулировками.
+        /// <para>Показ маршалится в UI-поток, поэтому метод безопасно вызывать из
+        /// фонового потока установки (сигнатура совместима с параметром
+        /// <c>confirmPmInstall</c> у <see cref="InstallationService.InstallAppAsync"/>).</para>
+        /// </summary>
+        public static async Task<bool> ConfirmPackageManagerInstallAsync(string pmName)
+        {
+            bool Ask() => MessageBox.Show(
+                $"Для установки приложения требуется {pmName}, который сейчас не установлен.\n\n" +
+                $"Разрешить автоматическую установку {pmName}?",
+                $"Установка {pmName}",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.CheckAccess())
+                return Ask();
+            return await dispatcher.InvokeAsync(Ask);
+        }
     }
 }

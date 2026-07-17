@@ -21,6 +21,10 @@ namespace Ven4Tools.ViewModels
     // отрисовать через DataTemplate/GroupStyle. Реализация проверена прототипом
     // (scratch-проект вне репозитория) перед переносом сюда, включая новую
     // Play-кнопку (см. AppRowViewModel.LaunchCommand + Services/AppLaunchResolver).
+    //
+    // Файл крупный (~40 членов) и в будущем — кандидат на разбиение на partial-классы
+    // по секциям ниже (── Поиск ──, ── Установка ──, ── Пресеты ── и т.д.); пока
+    // навигация обеспечивается этими секциями-разделителями.
     public sealed class CatalogViewModel : INotifyPropertyChanged
     {
         private readonly AppManager _appManager = new();
@@ -299,8 +303,8 @@ namespace Ven4Tools.ViewModels
                 await Task.WhenAll(wingetTask, chocoTask);
                 if (token.IsCancellationRequested) return;
 
-                var winget = wingetTask.Result;
-                var choco = chocoTask.Result;
+                var winget = await wingetTask;
+                var choco = await chocoTask;
                 if (winget.Count == 0 && choco.Count == 0)
                 {
                     SuggestionsStatus = $"😕 Ничего не найдено по запросу «{query}» ни в одном источнике";
@@ -816,13 +820,7 @@ namespace Ven4Tools.ViewModels
         {
             var owner = OwnerWindowProvider?.Invoke();
 
-            Task<bool> ConfirmPmInstall(string pmName) =>
-                Task.FromResult(MessageBox.Show(
-                    $"Для установки приложения требуется {pmName}, который сейчас не установлен.\n\n" +
-                    $"Разрешить автоматическую установку {pmName}?", $"Установка {pmName}",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes);
-
-            var cardVm = new AppCardViewModel(row, ConfirmPmInstall, SelectedInstallDrive);
+            var cardVm = new AppCardViewModel(row, Views.UiGuards.ConfirmPackageManagerInstallAsync, SelectedInstallDrive);
             var window = new Views.AppCardWindow(cardVm) { Owner = owner };
             window.ShowDialog();
         }
@@ -888,10 +886,7 @@ namespace Ven4Tools.ViewModels
                 try
                 {
                     if (pmConsentCache.TryGetValue(pmName, out bool cached)) return cached;
-                    bool consented = MessageBox.Show(
-                        $"Для установки приложения требуется {pmName}, который сейчас не установлен.\n\n" +
-                        $"Разрешить автоматическую установку {pmName}?", $"Установка {pmName}",
-                        MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+                    bool consented = await Views.UiGuards.ConfirmPackageManagerInstallAsync(pmName);
                     pmConsentCache[pmName] = consented;
                     return consented;
                 }

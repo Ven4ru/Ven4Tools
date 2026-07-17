@@ -245,7 +245,7 @@ namespace Ven4Tools.Services
         /// </summary>
         private static bool IsCatalogVersionAcceptable(int candidateVersion, string source)
         {
-            int lastSeen = ProfileService.Current.LastCatalogVersion;
+            int lastSeen = CatalogVersionGuard.Load();
             bool acceptable = IsVersionAcceptable(candidateVersion, lastSeen);
             if (!acceptable)
             {
@@ -269,17 +269,16 @@ namespace Ven4Tools.Services
 
         /// <summary>
         /// Запоминает версию успешно применённого каталога, если она выше запомненной.
-        /// Best-effort: сбой записи профиля не должен ломать загрузку каталога.
+        /// Значение хранится в DPAPI-защищённом CatalogVersionGuard (а не в plaintext
+        /// profile.json), чтобы счётчик anti-rollback нельзя было сбросить правкой файла.
+        /// Best-effort: сбой записи не должен ломать загрузку каталога (Save сам no-op,
+        /// если версия не выше сохранённой).
         /// </summary>
         private static void RememberCatalogVersion(int version)
         {
             try
             {
-                if (version > ProfileService.Current.LastCatalogVersion)
-                {
-                    ProfileService.Current.LastCatalogVersion = version;
-                    ProfileService.Save();
-                }
+                CatalogVersionGuard.Save(version);
             }
             catch (Exception ex)
             {
