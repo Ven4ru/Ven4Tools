@@ -10,6 +10,10 @@ namespace Ven4Tools.Services
         {
             if (string.IsNullOrWhiteSpace(downloadUrl)) return null;
             if (!Uri.TryCreate(downloadUrl, UriKind.Absolute, out var uri)) return null;
+            // Каталог подписан ECDSA, но карточка передаёт результат прямо в
+            // Process.Start(UseShellExecute=true) по клику — на всякий случай не
+            // доверяем схемам вроде file:/javascript:, только обычные веб-ссылки.
+            if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) return null;
             return $"{uri.Scheme}://{uri.Host}";
         }
     }

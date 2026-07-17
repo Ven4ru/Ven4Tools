@@ -10,6 +10,9 @@ public sealed class HomepageUrlHelperTests
     [InlineData("", null)]
     [InlineData(null, null)]
     [InlineData("not a url", null)]
+    [InlineData("file:///C:/evil.exe", null)]
+    [InlineData("javascript:alert(1)", null)]
+    [InlineData("ftp://mirror.example.com/app.zip", null)]
     public void ExtractHomepage_ReturnsSchemeAndHost(string? downloadUrl, string? expected)
     {
         Assert.Equal(expected, HomepageUrlHelper.ExtractHomepage(downloadUrl));
