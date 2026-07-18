@@ -1,6 +1,9 @@
+using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Navigation;
+using Ven4Tools.Services;
 using Ven4Tools.ViewModels;
 
 namespace Ven4Tools.Views
@@ -28,7 +31,11 @@ namespace Ven4Tools.Views
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+            try
+            {
+                Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+            }
+            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
             e.Handled = true;
         }
     }
