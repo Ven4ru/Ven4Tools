@@ -93,7 +93,10 @@ namespace Ven4Tools.Services
                 throw new TimeoutException("Превышено время ожидания ответа winget при поиске.");
             }
             catch (OperationCanceledException) { }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[WingetService] SearchAsync: {ex.Message}");
+            }
 
             return results
                 .GroupBy(p => p.Id)
