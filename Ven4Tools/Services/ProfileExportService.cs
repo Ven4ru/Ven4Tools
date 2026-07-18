@@ -18,7 +18,7 @@ namespace Ven4Tools.Services
 
         // Белый список файлов конфигурации. При импорте принимаются только записи
         // архива с этими именами в корне — защита от path traversal и от подмены
-        // служебных файлов (логи, device_id и т.п. не переносятся).
+        // служебных файлов (логи, app.log и т.п. не переносятся).
         private static readonly string[] AllowedFiles =
         {
             "profile.json",      // ProfileService: тема, язык, режим каталога, закреплённые

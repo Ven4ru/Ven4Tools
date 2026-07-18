@@ -19,7 +19,6 @@ namespace Ven4Tools.Models
 
         // Notifications
         public bool NotifyAppUpdates { get; set; } = true;
-        public bool NotifyNewApps { get; set; } = false;
 
         // Windows Update: "NotSet" (первый вход ещё не пройден), "NotifyOnly", "NotifyAndDownload".
         public string WindowsUpdateMode { get; set; } = "NotSet";
