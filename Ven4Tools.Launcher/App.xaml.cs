@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Launcher;
 
@@ -18,6 +19,10 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Тёмный системный заголовок на всех окнах — иначе native title bar
+        // остаётся светлым поверх тёмной темы приложения даже при тёмной теме Windows.
+        try { WindowChromeHelper.RegisterGlobalDarkTitleBar(); } catch { }
+
         if (Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1")
         {
             base.OnStartup(e);
