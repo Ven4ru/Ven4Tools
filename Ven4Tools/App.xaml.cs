@@ -24,6 +24,10 @@ namespace Ven4Tools
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            // Тёмный системный заголовок на всех окнах — иначе native title bar
+            // остаётся светлым поверх тёмной темы приложения даже при тёмной теме Windows.
+            try { WindowChromeHelper.RegisterGlobalDarkTitleBar(); } catch { }
+
             // Единственный экземпляр клиента: два процесса гонялись бы за файлами
             // (profile.json, apps.json) и могли запустить параллельные установки.
             _instanceMutex = new Mutex(true, "Ven4Tools.Client.SingleInstance", out bool createdNew);
