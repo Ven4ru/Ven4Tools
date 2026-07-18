@@ -23,7 +23,10 @@ namespace Ven4Tools.Services
             {
                 var payload = new FeedbackRecord
                 {
-                    SessionId   = CrashReportService.SessionId,
+                    // Идентификатор сеанса хешируется перед сохранением и отправкой:
+                    // на сервер уходит обезличенный хеш, а не сырой SessionId (см.
+                    // privacy.html — «обезличенный идентификатор сеанса (хеш)»).
+                    SessionId   = HashSessionId(CrashReportService.SessionId),
                     Version     = ChannelService.InstalledVersion,
                     Channel     = "prerelease",
                     Rating      = rating,
@@ -38,6 +41,18 @@ namespace Ven4Tools.Services
                     JsonConvert.SerializeObject(payload, Formatting.Indented));
             }
             catch (Exception ex) { AppLogger.Write($"[FeedbackService] Сохранение отзыва: {ex.Message}"); }
+        }
+
+        /// <summary>
+        /// Короткий хеш идентификатора сеанса: обезличивает SessionId перед отправкой
+        /// на сервер, оставаясь достаточным для группировки отзывов одного сеанса.
+        /// </summary>
+        private static string HashSessionId(string? sessionId)
+        {
+            if (string.IsNullOrEmpty(sessionId)) return "";
+            byte[] hash = System.Security.Cryptography.SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(sessionId));
+            return Convert.ToHexString(hash)[..8].ToLowerInvariant();
         }
 
         public static FeedbackRecord? Read()
