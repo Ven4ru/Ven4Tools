@@ -363,10 +363,9 @@
                                                 Tag="{Binding}"
                                                 Click="BtnUpdate_Click"/>
                                         <Button Content="Удалить"
+                                                Style="{StaticResource DangerButtonStyle}"
                                                 IsEnabled="{Binding CanAct}"
                                                 Height="26" Padding="10,0"
-                                                Background="#C42B2B" Foreground="White"
-                                                FontSize="12" FontWeight="Bold"
                                                 Tag="{Binding}"
                                                 Click="BtnUninstall_Click"/>
                                     </StackPanel>
