@@ -188,6 +188,17 @@ namespace Ven4Tools.Views.Tabs
         private async Task RunGetIpAsync()
         {
             btnGetIp.IsEnabled = false;
+            // Параноидальный режим: сам смысл этого запроса — раскрыть внешний IP
+            // стороннему echo-сервису, единственная функция которого — раскрыть его.
+            // Остальные проверки этой вкладки уже гейтятся тем же режимом (см. RunPingAsync) —
+            // этот вызов пропустили при добавлении гейта, хотя раскрывает IP сильнее всех.
+            if (ProfileService.Current.ParanoidMode)
+            {
+                txtPublicIp.Text = "отключено (параноидальный режим)";
+                AppLogger.Write("[Сеть] Запрос внешнего IP пропущен: параноидальный режим");
+                if (!_busy) btnGetIp.IsEnabled = true;
+                return;
+            }
             txtPublicIp.Text = "определяется...";
             try
             {

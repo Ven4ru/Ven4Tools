@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Windows;
+using Ven4Tools.Launcher.Helpers;
 
 namespace Ven4Tools.Launcher
 {
@@ -48,14 +49,7 @@ namespace Ven4Tools.Launcher
                     LastNotifiedNotificationId  = _lastNotifiedNotificationId
                 };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented);
-                // Атомарная запись: сначала во временный файл, затем замена.
-                // Так настройки не побьются при сбое в момент записи.
-                string tmp = _settingsPath + ".tmp";
-                File.WriteAllText(tmp, json);
-                if (File.Exists(_settingsPath))
-                    File.Replace(tmp, _settingsPath, null);
-                else
-                    File.Move(tmp, _settingsPath);
+                FileHelper.WriteAllTextAtomic(_settingsPath, json);
             }
             catch { }
         }

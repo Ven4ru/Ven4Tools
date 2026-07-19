@@ -57,6 +57,12 @@ namespace Ven4Tools.Launcher
 
         private async void BtnInstallUpdate_Click(object sender, RoutedEventArgs e)
         {
+            if (_isUiTestMode)
+            {
+                AddLog("UI test: установка обновления лаунчера");
+                return;
+            }
+
             await InstallUpdateCoreAsync();
         }
 
