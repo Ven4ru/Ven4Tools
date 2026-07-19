@@ -11,9 +11,13 @@ namespace Ven4Tools.Services
     {
         public static async Task<string> ComputeSha256Async(string filePath)
         {
-            using var sha256 = SHA256.Create();
-
             await using var stream = File.OpenRead(filePath);
+            return await ComputeSha256Async(stream);
+        }
+
+        public static async Task<string> ComputeSha256Async(Stream stream)
+        {
+            using var sha256 = SHA256.Create();
 
             var hashBytes = await sha256.ComputeHashAsync(stream);
 
@@ -47,6 +51,30 @@ namespace Ven4Tools.Services
             }
 
             string computedHash = await ComputeSha256Async(filePath);
+
+            return computedHash.Equals(
+                expectedHash,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Проверяет SHA256 уже открытого потока. Используется там, где хендл файла
+        /// нужно держать открытым непрерывно от верификации до запуска elevated-процесса
+        /// (TOCTOU-защита) — в отличие от <see cref="VerifyHashAsync(string, string)"/>,
+        /// который открывает и закрывает свой временный хендл, оставляя окно между
+        /// проверкой и последующим открытием защитного хендла.
+        /// </summary>
+        public static async Task<bool> VerifyHashAsync(
+            Stream stream,
+            string expectedHash)
+        {
+            if (string.IsNullOrWhiteSpace(expectedHash))
+            {
+                Debug.WriteLine($"[HashHelper] SHA256 не указан для файла — проверка не пройдена");
+                return false;
+            }
+
+            string computedHash = await ComputeSha256Async(stream);
 
             return computedHash.Equals(
                 expectedHash,

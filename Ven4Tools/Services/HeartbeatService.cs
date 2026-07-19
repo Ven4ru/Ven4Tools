@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 
 namespace Ven4Tools.Services
 {
@@ -48,8 +49,10 @@ namespace Ven4Tools.Services
                     Version   = _version,
                     Timestamp = DateTime.UtcNow.ToString("O")
                 };
-                Directory.CreateDirectory(Path.GetDirectoryName(HeartbeatPath)!);
-                File.WriteAllText(HeartbeatPath,
+                // Атомарная запись (temp+rename): heartbeat.json читается из другого
+                // процесса (WatchdogService лаунчера) — голый WriteAllText мог отдать
+                // torn read при чтении ровно в момент записи.
+                FileHelper.WriteAllTextAtomic(HeartbeatPath,
                     JsonConvert.SerializeObject(payload, Formatting.Indented));
             }
             catch { }

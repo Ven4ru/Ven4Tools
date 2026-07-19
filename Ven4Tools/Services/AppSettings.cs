@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 
 namespace Ven4Tools.Services
 {
@@ -60,7 +61,7 @@ namespace Ven4Tools.Services
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
-                File.WriteAllText(SettingsPath, JsonConvert.SerializeObject(_data, Formatting.Indented));
+                FileHelper.WriteAllTextAtomic(SettingsPath, JsonConvert.SerializeObject(_data, Formatting.Indented));
             }
             catch (Exception ex)
             {

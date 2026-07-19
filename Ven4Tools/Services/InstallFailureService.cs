@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 
 namespace Ven4Tools.Services
 {
@@ -54,7 +55,7 @@ namespace Ven4Tools.Services
         private static void Save(List<InstallFailure> list)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(FailuresPath)!);
-            File.WriteAllText(FailuresPath,
+            FileHelper.WriteAllTextAtomic(FailuresPath,
                 JsonConvert.SerializeObject(list, Formatting.Indented));
         }
     }
