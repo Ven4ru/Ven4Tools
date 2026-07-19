@@ -136,6 +136,12 @@ namespace Ven4Tools.ViewModels
 
         private async Task InstallAsync()
         {
+            // Тот же гейт занятости общего семафора, что перед установкой из каталога/
+            // истории/пина (см. CatalogViewModel.InstallSelectedAsync, HistoryTab,
+            // MainWindow.PinInstallBtn_Click) — раньше карточка молча ждала семафор
+            // без явного предупреждения пользователю.
+            if (Views.UiGuards.WarnIfInstallBusy()) return;
+
             IsBusy = true;
             try
             {

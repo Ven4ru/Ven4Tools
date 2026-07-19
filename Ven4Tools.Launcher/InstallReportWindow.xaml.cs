@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Ven4Tools.Launcher.Helpers;
 using Ven4Tools.Launcher.Services;
 
 namespace Ven4Tools.Launcher
@@ -147,7 +148,7 @@ namespace Ven4Tools.Launcher
                 foreach (var a in all)
                     if (_failures.Any(f => f.Timestamp == a.Timestamp && f.AppId == a.AppId))
                         a.Reported = true;
-                System.IO.File.WriteAllText(InstallFailure.FailuresPath,
+                FileHelper.WriteAllTextAtomic(InstallFailure.FailuresPath,
                     Newtonsoft.Json.JsonConvert.SerializeObject(all, Newtonsoft.Json.Formatting.Indented));
             }
             catch { }

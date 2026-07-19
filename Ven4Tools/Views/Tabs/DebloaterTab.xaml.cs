@@ -233,7 +233,7 @@ namespace Ven4Tools.Views.Tabs
             }
             catch (Exception ex)
             {
-                AppLogger.Write($"[Дебоатер] Ошибка в ApplyItemAsync [{item.Name}]: {ex.Message}");
+                AppLogger.Write($"[Деблоатер] Ошибка в ApplyItemAsync [{item.Name}]: {ex.Message}");
                 return false;
             }
         }
@@ -291,7 +291,7 @@ namespace Ven4Tools.Views.Tabs
             };
             if (svcName == null)
             {
-                AppLogger.Write($"[Дебоатер] Неизвестный tweakId: {tweakId}");
+                AppLogger.Write($"[Деблоатер] Неизвестный tweakId: {tweakId}");
                 return false;
             }
             return await RunPSAsync($"Stop-Service {svcName} -Force -ErrorAction SilentlyContinue; Set-Service {svcName} -StartupType Disabled -ErrorAction SilentlyContinue", ct);
@@ -323,7 +323,7 @@ namespace Ven4Tools.Views.Tabs
                 catch (OperationCanceledException)
                 {
                     try { p.Kill(true); } catch { }
-                    AppLogger.Write($"[Дебоатер] SetReg: тайм-аут или отмена [{path}\\{name}]");
+                    AppLogger.Write($"[Деблоатер] SetReg: тайм-аут или отмена [{path}\\{name}]");
                     return false;
                 }
 
@@ -332,7 +332,7 @@ namespace Ven4Tools.Views.Tabs
             }
             catch (Exception ex)
             {
-                AppLogger.Write($"[Дебоатер] Ошибка SetReg [{path}\\{name}]: {ex.Message}");
+                AppLogger.Write($"[Деблоатер] Ошибка SetReg [{path}\\{name}]: {ex.Message}");
                 return false;
             }
         }
@@ -366,7 +366,7 @@ namespace Ven4Tools.Views.Tabs
                 catch (OperationCanceledException)
                 {
                     try { p.Kill(entireProcessTree: true); } catch { }
-                    AppLogger.Write("[Дебоатер] RunPSAsync: тайм-аут или отмена — процесс PowerShell завершён принудительно");
+                    AppLogger.Write("[Деблоатер] RunPSAsync: тайм-аут или отмена — процесс PowerShell завершён принудительно");
                     return false;
                 }
 
@@ -375,7 +375,7 @@ namespace Ven4Tools.Views.Tabs
             }
             catch (Exception ex)
             {
-                AppLogger.Write($"[Дебоатер] Ошибка RunPSAsync: {ex.Message}");
+                AppLogger.Write($"[Деблоатер] Ошибка RunPSAsync: {ex.Message}");
                 return false;
             }
         }

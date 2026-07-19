@@ -137,6 +137,12 @@ namespace Ven4Tools.Launcher
 
         private async void BtnInstallMissing_Click(object sender, RoutedEventArgs e)
         {
+            if (_isUiTestMode)
+            {
+                AddLog("UI test: установка недостающих компонентов");
+                return;
+            }
+
             btnInstallMissing.Visibility = Visibility.Collapsed;
             await CheckComponentsInteractiveAsync();
         }
@@ -415,6 +421,7 @@ namespace Ven4Tools.Launcher
                     progressDownload.Value = 0;
                     btnLaunchApp.IsEnabled = true;
                     btnCancelDownload.Visibility = Visibility.Collapsed;
+                    btnCancelDownload.IsEnabled = true;
                 });
             }
         }
@@ -636,6 +643,7 @@ namespace Ven4Tools.Launcher
                     progressDownload.Value = 0;
                     btnLaunchApp.IsEnabled = true;
                     btnCancelDownload.Visibility = Visibility.Collapsed;
+                    btnCancelDownload.IsEnabled = true;
                 });
             }
         }

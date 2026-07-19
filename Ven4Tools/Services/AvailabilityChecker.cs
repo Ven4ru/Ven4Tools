@@ -193,8 +193,10 @@ namespace Ven4Tools.Services
 
         private async Task<(AvailabilityStatus Status, long SizeMB)> GetUrlInfo(string url)
         {
-            if (!Uri.TryCreate(url, UriKind.Absolute, out var parsed) ||
-                parsed.Scheme != Uri.UriSchemeHttps)
+            // Тот же паритет с InstallationService/OfflineService: HTTPS-only через общий
+            // DownloadValidator (не собственная копия проверки), плюс ValidateAfterRedirect —
+            // редирект на небезопасный хост не должен считаться "доступно".
+            if (!DownloadValidator.ValidateUrl(url))
                 return (AvailabilityStatus.Unavailable, 0);
 
             try
@@ -203,7 +205,7 @@ namespace Ven4Tools.Services
                 using (var request = new HttpRequestMessage(HttpMethod.Head, url))
                 using (var response = await httpClient.SendAsync(request, timeoutCts.Token))
                 {
-                    if (response.IsSuccessStatusCode)
+                    if (response.IsSuccessStatusCode && DownloadValidator.ValidateAfterRedirect(response))
                     {
                         long size = 0;
                         if (response.Content.Headers.ContentLength.HasValue)
@@ -219,7 +221,8 @@ namespace Ven4Tools.Services
                             getRequest.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 0);
                             using (var getResponse = await httpClient.SendAsync(getRequest, getCts.Token))
                             {
-                                if (getResponse.IsSuccessStatusCode || getResponse.StatusCode == System.Net.HttpStatusCode.PartialContent)
+                                if ((getResponse.IsSuccessStatusCode || getResponse.StatusCode == System.Net.HttpStatusCode.PartialContent)
+                                    && DownloadValidator.ValidateAfterRedirect(getResponse))
                                 {
                                     long size = 0;
                                     if (getResponse.Content.Headers.ContentLength.HasValue)

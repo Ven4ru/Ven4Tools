@@ -54,7 +54,6 @@ namespace Ven4Tools.Services
 
         private static void Save(List<InstallFailure> list)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(FailuresPath)!);
             FileHelper.WriteAllTextAtomic(FailuresPath,
                 JsonConvert.SerializeObject(list, Formatting.Indented));
         }
