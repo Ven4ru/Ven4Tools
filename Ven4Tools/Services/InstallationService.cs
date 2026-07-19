@@ -129,15 +129,6 @@ namespace Ven4Tools.Services
                 InstallFailureService.Append(app.DisplayName, app.Id, "local", "Нет SHA256 — установка локального файла требует зафиксированного хеша");
                 return (false, "Нет SHA256 для локального установщика", appProgress);
             }
-            if (!await HashHelper.VerifyHashAsync(app.LocalInstallerPath!, app.Sha256!))
-            {
-                appProgress.Status = "❌ Файл изменён с момента добавления";
-                progress.Report(appProgress);
-                Log($"❌ {app.DisplayName}: SHA256 локального файла не совпадает с зафиксированным при добавлении");
-                InstallFailureService.Append(app.DisplayName, app.Id, "local", "SHA256 не совпадает — файл изменён с момента добавления");
-                return (false, "Файл изменён с момента добавления", appProgress);
-            }
-
             bool isMsi = app.LocalInstallerPath!.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
             string locArgLocal = BuildInstallerLocationArg(isMsi, installDrive, app.DisplayName);
             // SilentArgs может приходить извне (каталог, ручной ввод) — валидируем
@@ -150,18 +141,38 @@ namespace Ven4Tools.Services
             }
             if (string.IsNullOrWhiteSpace(silentArgsLocal))
                 silentArgsLocal = "/S";
-            var psiLocal = new ProcessStartInfo
+            // Держим файл открытым с FileShare.Read НЕПРЕРЫВНО от проверки хеша до
+            // завершения установки — верификация читает из уже открытого хендла, а не
+            // из отдельного временного, который закрывался бы до открытия защитного
+            // (иначе между закрытием проверочного хендла и открытием защитного остаётся
+            // окно для подмены файла — TOCTOU). FileShare.Read позволяет самому
+            // установщику/msiexec читать файл на исполнение, но блокирует запись.
+            // Зеркалирует защиту лаунчера (DownloadVerifyAndRunElevatedAsync).
+            (bool Ok, bool Reboot, int ExitCode)? run;
+            using (var verifiedStream = new FileStream(app.LocalInstallerPath!, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                FileName        = isMsi ? TrustedExecutablePaths.MsiExec : app.LocalInstallerPath!,
-                Arguments       = isMsi
-                                  ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart{locArgLocal}"
-                                  : silentArgsLocal + locArgLocal,
-                UseShellExecute = true,
-                Verb            = "runas",
-                WindowStyle     = ProcessWindowStyle.Hidden
-            };
+                if (!await HashHelper.VerifyHashAsync(verifiedStream, app.Sha256!))
+                {
+                    appProgress.Status = "❌ Файл изменён с момента добавления";
+                    progress.Report(appProgress);
+                    Log($"❌ {app.DisplayName}: SHA256 локального файла не совпадает с зафиксированным при добавлении");
+                    InstallFailureService.Append(app.DisplayName, app.Id, "local", "SHA256 не совпадает — файл изменён с момента добавления");
+                    return (false, "Файл изменён с момента добавления", appProgress);
+                }
 
-            var run = await RunElevatedInstallerAsync(psiLocal, token);
+                var psiLocal = new ProcessStartInfo
+                {
+                    FileName        = isMsi ? TrustedExecutablePaths.MsiExec : app.LocalInstallerPath!,
+                    Arguments       = isMsi
+                                      ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart{locArgLocal}"
+                                      : silentArgsLocal + locArgLocal,
+                    UseShellExecute = true,
+                    Verb            = "runas",
+                    WindowStyle     = ProcessWindowStyle.Hidden
+                };
+
+                run = await RunElevatedInstallerAsync(psiLocal, token);
+            }
             if (run == null)
             {
                 appProgress.Status = "❌ Не удалось запустить установщик";
@@ -204,30 +215,44 @@ namespace Ven4Tools.Services
                 Log($"⚠ Нет SHA256 в каталоге для {app.DisplayName} — кэш пропущен, пробую следующий источник");
                 return null;
             }
-            if (!await HashHelper.VerifyHashAsync(cachedPath, app.Sha256!))
-            {
-                Log($"❌ SHA256 mismatch в кэше: {app.DisplayName}, удаляю");
-                try { File.Delete(cachedPath); } catch { }
-                return null;
-            }
-
             appProgress.Status = "🔌 Из кэша...";
             appProgress.Percentage = 50;
             progress.Report(appProgress);
 
             bool cacheIsMsi = cachedPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
             string locArgCache = BuildInstallerLocationArg(cacheIsMsi, installDrive, app.DisplayName);
-            var psiCache = new ProcessStartInfo
+            // Держим кэшированный файл открытым с FileShare.Read НЕПРЕРЫВНО от
+            // проверки хеша до завершения установки — верификация читает из уже
+            // открытого хендла, а не из отдельного временного (иначе между закрытием
+            // проверочного хендла и открытием защитного остаётся окно для подмены —
+            // TOCTOU). Зеркалирует защиту лаунчера. Хендл закрывается до File.Delete
+            // ниже (using завершается раньше) — на удаление это не влияет.
+            bool hashOk;
+            (bool Ok, bool Reboot, int ExitCode)? run = null;
+            using (var verifiedStream = new FileStream(cachedPath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                FileName       = cacheIsMsi ? TrustedExecutablePaths.MsiExec : cachedPath,
-                Arguments      = cacheIsMsi
-                                 ? $"/i \"{cachedPath}\" /quiet /norestart{locArgCache}"
-                                 : "/S /silent /quiet" + locArgCache,
-                UseShellExecute = true, Verb = "runas",
-                WindowStyle     = ProcessWindowStyle.Hidden
-            };
+                hashOk = await HashHelper.VerifyHashAsync(verifiedStream, app.Sha256!);
+                if (hashOk)
+                {
+                    var psiCache = new ProcessStartInfo
+                    {
+                        FileName       = cacheIsMsi ? TrustedExecutablePaths.MsiExec : cachedPath,
+                        Arguments      = cacheIsMsi
+                                         ? $"/i \"{cachedPath}\" /quiet /norestart{locArgCache}"
+                                         : "/S /silent /quiet" + locArgCache,
+                        UseShellExecute = true, Verb = "runas",
+                        WindowStyle     = ProcessWindowStyle.Hidden
+                    };
 
-            var run = await RunElevatedInstallerAsync(psiCache, token);
+                    run = await RunElevatedInstallerAsync(psiCache, token);
+                }
+            }
+            if (!hashOk)
+            {
+                Log($"❌ SHA256 mismatch в кэше: {app.DisplayName}, удаляю");
+                try { File.Delete(cachedPath); } catch { }
+                return null;
+            }
             if (run is { Ok: true })
                 return await ReportInstallSuccessAsync(app, appProgress, progress, run.Value.Reboot, "cache",
                     "✅ Установлено (кэш)",
@@ -426,24 +451,6 @@ namespace Ven4Tools.Services
                     appProgress.Percentage = 55;
                     progress.Report(appProgress);
 
-                    // SHA256 гарантированно указан (проверено перед циклом) —
-                    // верификация выполняется всегда, без исключений.
-                    if (!await HashHelper.VerifyHashAsync(tempFile, app.Sha256!))
-                    {
-                        Log($"❌ SHA256 mismatch: {app.DisplayName}");
-                        try { File.Delete(tempFile); } catch { }
-                        appProgress.Status = "⚠ SHA256 не совпал — пробуем следующий источник";
-                        progress.Report(appProgress);
-                        hashMismatchCount++;
-                        continue;
-                    }
-                    Log($"✅ SHA256 OK: {app.DisplayName}");
-
-                    token.ThrowIfCancellationRequested();
-                    appProgress.Status = "⚙️ Установка...";
-                    appProgress.Percentage = 60;
-                    progress.Report(appProgress);
-
                     bool tempIsMsi = tempFile.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
                     string silentArgs;
                     if (tempIsMsi)
@@ -466,16 +473,47 @@ namespace Ven4Tools.Services
                         silentArgs += BuildInstallerLocationArg(false, installDrive, app.DisplayName);
                     }
 
-                    var psi = new ProcessStartInfo
+                    // Держим temp-файл открытым с FileShare.Read НЕПРЕРЫВНО от проверки
+                    // хеша до завершения установки — верификация читает из уже открытого
+                    // хендла, а не из отдельного временного (иначе между закрытием
+                    // проверочного хендла и открытием защитного остаётся окно для подмены —
+                    // TOCTOU). File.Delete ниже вынесен за using: к моменту удаления хендл
+                    // уже освобождён. Зеркалирует защиту лаунчера. SHA256 гарантированно
+                    // указан (проверено перед циклом) — верификация выполняется всегда.
+                    bool hashOk;
+                    (bool Ok, bool Reboot, int ExitCode)? run = null;
+                    using (var verifiedStream = new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        FileName = tempIsMsi ? TrustedExecutablePaths.MsiExec : tempFile,
-                        Arguments = silentArgs,
-                        UseShellExecute = true, Verb = "runas",
-                        WindowStyle = ProcessWindowStyle.Hidden
-                    };
+                        hashOk = await HashHelper.VerifyHashAsync(verifiedStream, app.Sha256!);
+                        if (hashOk)
+                        {
+                            Log($"✅ SHA256 OK: {app.DisplayName}");
+                            token.ThrowIfCancellationRequested();
+                            appProgress.Status = "⚙️ Установка...";
+                            appProgress.Percentage = 60;
+                            progress.Report(appProgress);
 
-                    var run = await RunElevatedInstallerAsync(psi, token,
-                        pid => AppLogger.Write($"▶ Запущен процесс установки PID {pid}: {Path.GetFileName(psi.FileName)}"));
+                            var psi = new ProcessStartInfo
+                            {
+                                FileName = tempIsMsi ? TrustedExecutablePaths.MsiExec : tempFile,
+                                Arguments = silentArgs,
+                                UseShellExecute = true, Verb = "runas",
+                                WindowStyle = ProcessWindowStyle.Hidden
+                            };
+
+                            run = await RunElevatedInstallerAsync(psi, token,
+                                pid => AppLogger.Write($"▶ Запущен процесс установки PID {pid}: {Path.GetFileName(psi.FileName)}"));
+                        }
+                    }
+                    if (!hashOk)
+                    {
+                        Log($"❌ SHA256 mismatch: {app.DisplayName}");
+                        try { File.Delete(tempFile); } catch { }
+                        appProgress.Status = "⚠ SHA256 не совпал — пробуем следующий источник";
+                        progress.Report(appProgress);
+                        hashMismatchCount++;
+                        continue;
+                    }
                     if (run != null)
                     {
                         try { File.Delete(tempFile); } catch { }
