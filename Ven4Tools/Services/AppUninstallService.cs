@@ -40,7 +40,10 @@ namespace Ven4Tools.Services
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
                 @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
             };
-            var hives = new[] { Registry.LocalMachine };
+            // HKCU покрывает user-scope установки (Chrome/Discord/VS Code и т.п.
+            // при выборе "только для меня"), которых нет в HKLM — до этого сканировался
+            // только HKLM, откат деинсталляции для таких приложений молча проваливался.
+            var hives = new[] { Registry.LocalMachine, Registry.CurrentUser };
 
             foreach (var hive in hives)
             foreach (var keyPath in keys)

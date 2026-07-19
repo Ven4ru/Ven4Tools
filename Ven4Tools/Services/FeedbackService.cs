@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 
 namespace Ven4Tools.Services
 {
@@ -37,7 +38,7 @@ namespace Ven4Tools.Services
                     Reported    = false
                 };
                 Directory.CreateDirectory(Path.GetDirectoryName(FeedbackPath)!);
-                File.WriteAllText(FeedbackPath,
+                FileHelper.WriteAllTextAtomic(FeedbackPath,
                     JsonConvert.SerializeObject(payload, Formatting.Indented));
             }
             catch (Exception ex) { AppLogger.Write($"[FeedbackService] Сохранение отзыва: {ex.Message}"); }

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
@@ -113,9 +114,13 @@ namespace Ven4Tools.Services
                     // Повторное скачивание подписи создавало гонку версий: каталог на
                     // сервере мог обновиться между запросами, свежая подпись не совпадала
                     // с уже скачанным json — и кэш оставался без валидной подписи.
+                    // Каждый файл пишется атомарно (temp+rename) — обрыв посреди записи
+                    // не оставляет битый/усечённый json или sig на диске. Окно рассинхрона
+                    // между json и sig (если процесс убьют между двумя rename) остаётся, но
+                    // fail-closed проверка подписи при чтении кэша отклонит несовпавшую пару.
                     Directory.CreateDirectory(Path.GetDirectoryName(_localCatalogPath)!);
-                    await File.WriteAllTextAsync(_localCatalogPath, remoteJson, ct);
-                    await File.WriteAllTextAsync(LocalSignaturePath, remoteSignature, ct);
+                    await FileHelper.WriteAllTextAtomicAsync(_localCatalogPath, remoteJson);
+                    await FileHelper.WriteAllTextAtomicAsync(LocalSignaturePath, remoteSignature);
                 }
                 catch { /* кэш — best-effort; каталог уже загружен */ }
 

@@ -12,6 +12,8 @@ namespace Ven4Tools.Views.Tabs
 {
     public partial class AboutTab : UserControl
     {
+        private bool _catalogReadySubscribed;
+
         public AboutTab()
         {
             InitializeComponent();
@@ -27,7 +29,13 @@ namespace Ven4Tools.Views.Tabs
 
             Loaded += (_, _) =>
             {
-                CatalogLoaderService.CatalogReady += OnCatalogReady;
+                // Loaded может срабатывать многократно (переключение вкладок) —
+                // подписываемся только один раз, иначе обработчики дублируются.
+                if (!_catalogReadySubscribed)
+                {
+                    CatalogLoaderService.CatalogReady += OnCatalogReady;
+                    _catalogReadySubscribed = true;
+                }
                 // Обновляем changelog если каталог уже был загружен до открытия вкладки
                 if (CatalogLoaderService.LoadedCatalog != null)
                 {
@@ -35,7 +43,14 @@ namespace Ven4Tools.Views.Tabs
                     PopulateChangelog();
                 }
             };
-            Unloaded += (_, _) => CatalogLoaderService.CatalogReady -= OnCatalogReady;
+            Unloaded += (_, _) =>
+            {
+                if (_catalogReadySubscribed)
+                {
+                    CatalogLoaderService.CatalogReady -= OnCatalogReady;
+                    _catalogReadySubscribed = false;
+                }
+            };
         }
 
         private void OnCatalogReady(Models.MasterCatalog _)
