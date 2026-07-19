@@ -44,7 +44,6 @@ namespace Ven4Tools.Services
                     SendApproved  = false
                 };
 
-                Directory.CreateDirectory(Path.GetDirectoryName(CrashFilePath)!);
                 FileHelper.WriteAllTextAtomic(CrashFilePath, JsonConvert.SerializeObject(report, Formatting.Indented));
             }
             catch (Exception logEx) { AppLogger.Write($"[CrashReportService] {logEx.Message}"); }
@@ -113,7 +112,7 @@ namespace Ven4Tools.Services
                     // тот же паттерн, что GitHubService.HashSessionId в лаунчере. Иначе
                     // сырой SessionId в crash_reports позволял бы связать отзыв (хешируется
                     // в FeedbackService) с крашем той же сессии по совпадающему значению.
-                    new KeyValuePair<string, string>("session_id", HashSessionId(report.SessionId)),
+                    new KeyValuePair<string, string>("session_id", HashHelper.HashSessionId(report.SessionId)),
                     new KeyValuePair<string, string>("version",    report.Version),
                     new KeyValuePair<string, string>("timestamp",  report.Timestamp),
                     new KeyValuePair<string, string>("os",         report.OsVersion),
@@ -160,18 +159,6 @@ namespace Ven4Tools.Services
             {
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Короткий хеш идентификатора сеанса для отправки на сервер: та же логика,
-        /// что FeedbackService.HashSessionId и GitHubService.HashSessionId (лаунчер).
-        /// </summary>
-        private static string HashSessionId(string? sessionId)
-        {
-            if (string.IsNullOrEmpty(sessionId)) return "";
-            byte[] hash = System.Security.Cryptography.SHA256.HashData(
-                System.Text.Encoding.UTF8.GetBytes(sessionId));
-            return Convert.ToHexString(hash)[..8].ToLowerInvariant();
         }
 
         /// <summary>

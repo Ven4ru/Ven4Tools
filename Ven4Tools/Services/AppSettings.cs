@@ -60,7 +60,6 @@ namespace Ven4Tools.Services
 
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
                 FileHelper.WriteAllTextAtomic(SettingsPath, JsonConvert.SerializeObject(_data, Formatting.Indented));
             }
             catch (Exception ex)

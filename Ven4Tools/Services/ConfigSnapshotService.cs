@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
@@ -49,12 +50,11 @@ namespace Ven4Tools.Services
                     }).ToList()
                 };
 
-                Directory.CreateDirectory(SnapshotsDir);
                 string fileName = $"{SanitizeFileName(snapshot.Name)}_{snapshot.CreatedAt:yyyyMMdd_HHmmss}.json";
                 string filePath = Path.Combine(SnapshotsDir, fileName);
 
-                await File.WriteAllTextAsync(filePath,
-                    JsonConvert.SerializeObject(snapshot, Formatting.Indented), Encoding.UTF8);
+                await FileHelper.WriteAllTextAtomicAsync(filePath,
+                    JsonConvert.SerializeObject(snapshot, Formatting.Indented));
 
                 TrimOldSnapshots();
                 AppLogger.Write($"📸 Снапшот «{snapshot.Name}» сохранён: {fileName}");
@@ -210,12 +210,7 @@ namespace Ven4Tools.Services
         /// <summary>Приводит имя снапшота к безопасному имени файла.</summary>
         private static string SanitizeFileName(string name)
         {
-            var invalid = Path.GetInvalidFileNameChars();
-            var sb = new StringBuilder(name.Length);
-            foreach (var ch in name)
-                sb.Append(invalid.Contains(ch) ? '_' : ch);
-
-            string safe = sb.ToString().Trim().TrimEnd('.');
+            string safe = PathHelper.SanitizeFileNameComponent(name).Trim().TrimEnd('.');
             if (safe.Length == 0)  safe = "снапшот";
             if (safe.Length > 40)  safe = safe.Substring(0, 40).Trim();
             return safe;

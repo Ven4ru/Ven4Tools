@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
 using Newtonsoft.Json;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
 
@@ -152,14 +153,16 @@ namespace Ven4Tools.Views.Tabs
             // чтобы при аварийном завершении его можно было восстановить при следующем запуске.
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(_regionBackupPath)!);
                 var backup = new RegionBackup
                 {
                     OfficeCC   = _originalOfficeCC,
                     GeoName    = _originalGeoName,
                     GeoNation  = _originalGeoNation
                 };
-                File.WriteAllText(_regionBackupPath, JsonConvert.SerializeObject(backup));
+                // Атомарная запись (temp+rename): именно этот маркер должен пережить
+                // hard-kill/обрыв питания — обрыв посреди голого WriteAllText оставил бы
+                // битый файл и лишил бы RecoverRegionFromBackup возможности восстановить регион.
+                FileHelper.WriteAllTextAtomic(_regionBackupPath, JsonConvert.SerializeObject(backup));
             }
             catch (Exception ex) { AppLogger.Write($"⚠️ Сохранение маркера региона: {ex.Message}"); }
         }

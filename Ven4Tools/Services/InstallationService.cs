@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
 
@@ -606,8 +607,10 @@ namespace Ven4Tools.Services
         /// <summary>Целевая папка установки для конкретного приложения (best-effort).</summary>
         private static string TargetFolderFor(string installDrive, string appName)
         {
-            string safe = string.Concat((appName ?? "App")
-                .Split(Path.GetInvalidFileNameChars()));
+            // Замена недопустимых символов (не удаление) — иначе два разных
+            // названия приложений могут схлопнуться в одну и ту же папку
+            // (например "A/B" и "AB" раньше давали одинаковый результат "AB").
+            string safe = PathHelper.SanitizeFileNameComponent(appName ?? "App");
             if (string.IsNullOrWhiteSpace(safe)) safe = "App";
             return Path.Combine(ProgramFilesOn(installDrive), safe);
         }

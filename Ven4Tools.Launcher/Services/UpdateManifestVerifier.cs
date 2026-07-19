@@ -1,7 +1,3 @@
-using System;
-using System.Security.Cryptography;
-using System.Text;
-
 namespace Ven4Tools.Launcher.Services;
 
 /// <summary>
@@ -31,18 +27,6 @@ internal static class UpdateManifestVerifier
         -----END PUBLIC KEY-----
         """;
 
-    public static bool Verify(string json, string? signature)
-    {
-        if (string.IsNullOrWhiteSpace(signature)) return false;
-        try
-        {
-            using var key = ECDsa.Create();
-            key.ImportFromPem(PublicKey);
-            return key.VerifyData(
-                Encoding.UTF8.GetBytes(DomainSeparator + json),
-                Convert.FromBase64String(signature.Trim()),
-                HashAlgorithmName.SHA256);
-        }
-        catch { return false; }
-    }
+    public static bool Verify(string json, string? signature) =>
+        EcdsaManifestVerifier.Verify(PublicKey, DomainSeparator, json, signature);
 }

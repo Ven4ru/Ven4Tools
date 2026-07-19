@@ -84,7 +84,8 @@ namespace Ven4Tools.Launcher.Services
             catch { }
         }
 
-        // Вызывается из OnClientProcessExited если crash_last.json не найден
+        // Вызывается из обработчика Process.Exited клиента (LaunchExistingClient),
+        // если свежего crash_last.json не найдено
         public void ReportKill(int exitCode)
         {
             if (_disposed) return;

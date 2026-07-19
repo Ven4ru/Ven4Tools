@@ -197,6 +197,7 @@ namespace Ven4Tools.Launcher
                     progressDownload.Value = 0;
                     btnLaunchApp.IsEnabled = true;
                     btnCancelDownload.Visibility = Visibility.Collapsed;
+                    btnCancelDownload.IsEnabled = true;
                 });
             }
         }

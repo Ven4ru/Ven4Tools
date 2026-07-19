@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 using CatalogApp = Ven4Tools.Models.App;
 
@@ -182,9 +183,6 @@ namespace Ven4Tools.Services
             }
         }
 
-        private static readonly HashSet<char> _invalidChars =
-            new(Path.GetInvalidFileNameChars());
-
         private static bool HasValidMarker(string dir)
         {
             try
@@ -208,7 +206,6 @@ namespace Ven4Tools.Services
                 })
                 .ToArray();
 
-        private static string SanitizeId(string id) =>
-            string.Concat(id.Select(c => _invalidChars.Contains(c) ? '_' : c));
+        private static string SanitizeId(string id) => PathHelper.SanitizeFileNameComponent(id);
     }
 }

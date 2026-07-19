@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using Newtonsoft.Json;
+using Ven4Tools.Launcher.Helpers;
 using Ven4Tools.Launcher.Services;
 
 namespace Ven4Tools.Launcher
@@ -88,7 +89,7 @@ namespace Ven4Tools.Launcher
             try
             {
                 _report.Reported = true;
-                System.IO.File.WriteAllText(
+                FileHelper.WriteAllTextAtomic(
                     LauncherPaths.CrashReportPath,
                     JsonConvert.SerializeObject(_report, Formatting.Indented));
             }

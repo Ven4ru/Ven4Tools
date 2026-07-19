@@ -35,7 +35,6 @@ namespace Ven4Tools.Services
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
                 FileHelper.WriteAllTextAtomic(_path, JsonConvert.SerializeObject(_data, Formatting.Indented));
             }
             catch (Exception ex)

@@ -118,7 +118,6 @@ namespace Ven4Tools.Services
                     // не оставляет битый/усечённый json или sig на диске. Окно рассинхрона
                     // между json и sig (если процесс убьют между двумя rename) остаётся, но
                     // fail-closed проверка подписи при чтении кэша отклонит несовпавшую пару.
-                    Directory.CreateDirectory(Path.GetDirectoryName(_localCatalogPath)!);
                     await FileHelper.WriteAllTextAtomicAsync(_localCatalogPath, remoteJson);
                     await FileHelper.WriteAllTextAtomicAsync(LocalSignaturePath, remoteSignature);
                 }

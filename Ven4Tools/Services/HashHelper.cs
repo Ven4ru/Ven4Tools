@@ -80,5 +80,18 @@ namespace Ven4Tools.Services
                 expectedHash,
                 StringComparison.OrdinalIgnoreCase);
         }
+
+        /// <summary>
+        /// Короткий хеш идентификатора сеанса для отправки на сервер: обезличивает
+        /// SessionId, оставаясь достаточным для группировки отзывов/крашей одного
+        /// сеанса. Общая реализация для FeedbackService и CrashReportService (клиент) —
+        /// та же логика, что GitHubService.HashSessionId в лаунчере (отдельная сборка).
+        /// </summary>
+        public static string HashSessionId(string? sessionId)
+        {
+            if (string.IsNullOrEmpty(sessionId)) return "";
+            byte[] hash = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(sessionId));
+            return Convert.ToHexString(hash)[..8].ToLowerInvariant();
+        }
     }
 }

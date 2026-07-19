@@ -16,11 +16,18 @@ namespace Ven4Tools.Services
     {
         public static async Task<bool> TryUninstallAsync(string? wingetId, string displayName)
         {
-            // Попытка 1: winget uninstall по ID (работает для пакетов с непустым Source)
-            if (!string.IsNullOrWhiteSpace(wingetId) && !wingetId.Contains('…'))
+            // Попытка 1: winget uninstall по ID (работает для пакетов с непустым Source).
+            // Аргументы через ArgumentList (как везде в кодовой базе), не строковую
+            // интерполяцию — .NET сам экранирует каждый токен, устраняя поверхность
+            // инъекции. ValidateId — та же defense-in-depth проверка id, что перед
+            // winget show в AvailabilityChecker.
+            if (!string.IsNullOrWhiteSpace(wingetId) && !wingetId.Contains('…') &&
+                CommandLineGuard.ValidateId(wingetId))
             {
-                string args = $"uninstall --id \"{wingetId}\" --silent --accept-source-agreements";
-                var (exitCode, _) = await WingetRunner.RunAsync(args);
+                var (exitCode, _) = await WingetRunner.RunAsync(new[]
+                {
+                    "uninstall", "--id", wingetId, "--silent", "--accept-source-agreements"
+                });
                 // 0 = успех, 0x8A150014 = пакет не установлен (нечего удалять — считаем успехом).
                 if (exitCode == 0 || exitCode == unchecked((int)0x8A150014))
                     return true;
@@ -135,7 +142,9 @@ namespace Ven4Tools.Services
                 }
                 catch (OperationCanceledException)
                 {
-                    try { p.Kill(); } catch { }
+                    // entireProcessTree: деинсталляторы (msiexec /x, NSIS/Inno /S) порождают
+                    // дочерние процессы — как и везде в кодовой базе при таймауте/отмене.
+                    try { p.Kill(entireProcessTree: true); } catch { }
                     return false;
                 }
                 // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — удаление прошло успешно

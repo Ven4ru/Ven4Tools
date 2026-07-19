@@ -470,7 +470,7 @@ namespace Ven4Tools.Views.Tabs
                     return;
                 }
 
-                // RunStreamingAsync: живой прогресс в лог + 45-минутный таймаут
+                // RunStreamingAsync: живой прогресс в лог + 15-минутный таймаут
                 // (RunAsync с 120с убивал winget на больших пакетах).
                 // --locale en-US не используется — на части систем даёт пустой вывод (см. agent_context.md).
                 string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements";

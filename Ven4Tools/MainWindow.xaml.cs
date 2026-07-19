@@ -430,6 +430,8 @@ namespace Ven4Tools
         private async void PinInstallBtn_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.Tag is not string id) return;
+            if (Views.UiGuards.WarnIfInstallBusy()) return;
+
             var catalog = Services.CatalogLoaderService.LoadedCatalog;
             var catalogApp = catalog?.Apps.FirstOrDefault(a => a.Id == id);
             if (catalogApp == null) { AppLogger.Write($"❌ Приложение {id} не найдено в каталоге"); return; }
@@ -447,6 +449,11 @@ namespace Ven4Tools
                 // SHA256 обязателен для установки из пина по прямой ссылке.
                 Sha256 = catalogApp.Sha256
             };
+            // Переопределение тихого флага (напр. AutoHotkey v2: "/silent" вместо "/S") —
+            // без этого установка из пина теряет override и падает на дефолтном "/S"
+            // (тот же фикс, что уже применён к переустановке из истории — HistoryTab).
+            if (!string.IsNullOrEmpty(catalogApp.SilentArgs))
+                appInfo.SilentArgs = catalogApp.SilentArgs;
             var prog = new Progress<Services.AppInstallProgress>(p => AppLogger.Write($"  {p.Status}"));
 
             // Общий семафор: не даём пину запустить установку параллельно с каталогом/историей.

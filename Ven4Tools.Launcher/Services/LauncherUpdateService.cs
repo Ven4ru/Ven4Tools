@@ -263,6 +263,7 @@ namespace Ven4Tools.Launcher.Services
         /// </summary>
         public async Task<bool> OfferInstallationAsync()
         {
+            string? stagingDir = null;
             try
             {
                 if (IsRunningFromInstallDir()) return false;
@@ -320,7 +321,7 @@ namespace Ven4Tools.Launcher.Services
 
                 // Уникальная папка: файл нельзя подменить между проверкой и запуском
                 // по заранее известному пути.
-                string stagingDir = Path.Combine(Path.GetTempPath(), $"ven4tools_setup_{Guid.NewGuid():N}");
+                stagingDir = Path.Combine(Path.GetTempPath(), $"ven4tools_setup_{Guid.NewGuid():N}");
                 Directory.CreateDirectory(stagingDir);
                 string setupPath = Path.Combine(stagingDir, setupName);
 
@@ -339,7 +340,8 @@ namespace Ven4Tools.Launcher.Services
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = setupPath,
-                    UseShellExecute = true
+                    UseShellExecute = true,
+                    WorkingDirectory = stagingDir
                 });
 
                 Log("Установщик запущен. Завершаем текущий процесс.");
@@ -354,6 +356,9 @@ namespace Ven4Tools.Launcher.Services
                     "Ven4Tools Launcher",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
+                // Обрыв посреди скачивания оставляет staging-папку в %TEMP% — та же
+                // очистка, что уже применяется в DownloadAndRunSetupUpdateAsync.
+                TryDeleteDirectory(stagingDir);
                 return false;
             }
         }
