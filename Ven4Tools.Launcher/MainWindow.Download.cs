@@ -87,14 +87,35 @@ namespace Ven4Tools.Launcher
             catch { /* зачистка необязательна для работы лаунчера */ }
         }
 
+        // Строит цепочку источников для скачивания клиента: CDN-домен → CDN прямой IP →
+        // хостинг-зеркало → GitHub, с учётом выбранного пользователем предпочтения.
+        // Если CDN не знал версию (только GithubUrl) — цепочка вырождается в один GitHub.
+        private List<DownloadCandidate> BuildClientCandidates(ClientVersionInfo version)
+        {
+            string ip = CdnService.LastKnownCdnIp ?? IpPinnedHttpClientFactory.FallbackCdnIp;
+            // Для клиентских загрузок клиент с бесконечным таймаутом (как _httpClient):
+            // длительность ограничивается CancellationToken на месте вызова.
+            HttpClient ipPinned = IpPinnedHttpClientFactory.GetOrCreate(ip, Timeout.InfiniteTimeSpan);
+            return FallbackDownloader.BuildCandidates(
+                _downloadSource,
+                version.CdnUrl,
+                version.MirrorHostingUrl,
+                version.GithubUrl ?? version.DownloadUrl,
+                _httpClient,
+                ipPinned);
+        }
+
         private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationToken token, bool silent = false)
         {
             if (version == null) return;
 
-            // Защита от подмены: качаем только с доверенных доменов GitHub по HTTPS
-            if (!DownloadValidator.IsAllowedDownloadHost(version.DownloadUrl))
+            // Цепочка источников (CDN-домен → CDN прямой IP → хостинг-зеркало → GitHub)
+            // с учётом выбранного предпочтения. Защита от подмены (только доверенные
+            // хосты по HTTPS) выполняется внутри FallbackDownloader для каждого кандидата.
+            var candidates = BuildClientCandidates(version);
+            if (candidates.Count == 0)
             {
-                AddLog($"⛔ Недоверенный URL загрузки — скачивание отменено: {version.DownloadUrl}");
+                AddLog($"⛔ Нет доверенных источников загрузки — скачивание отменено: {version.DownloadUrl}");
                 return;
             }
 
@@ -117,10 +138,9 @@ namespace Ven4Tools.Launcher
 
             try
             {
-                var downloader = new FallbackDownloader(_httpClient);
-                await downloader.DownloadAsync(
-                    version.DownloadUrl,
-                    version.FallbackUrl,
+                var downloader = new FallbackDownloader();
+                string usedSource = await downloader.DownloadAsync(
+                    candidates,
                     tempZip,
                     token,
                     version.ExpectedSha256,
@@ -133,12 +153,13 @@ namespace Ven4Tools.Launcher
                             txtDownloadStatus.Text = $"Скачивание: {percent}%";
                         }
                     },
-                    switchingToFallback: () =>
+                    switchingTo: label =>
                     {
-                        AddLog("⚠️ Основной источник недоступен, переключаюсь на резервный...");
+                        AddLog($"⚠️ Предыдущий источник недоступен, переключаюсь: {label}...");
                         progressDownload.Value = 0;
                         txtDownloadStatus.Text = "Скачивание: 0%";
                     });
+                AddLog($"📥 Источник загрузки: {usedSource}");
 
                 token.ThrowIfCancellationRequested();
 
