@@ -1,6 +1,17 @@
-# Ven4Tools -- installer script
-# Usage: irm ven4tools.ru/install.ps1 | iex
+﻿# Ven4Tools -- installer script
+#
+# Usage: $t="$env:TEMP\v4t.ps1";irm ven4tools.ru/install.ps1 -OutFile $t;&$t
 #   alt: irm raw.githubusercontent.com/Ven4ru/Ven4Tools/main/install.ps1 | iex
+#
+# ven4tools.ru отдаёт этот файл без charset в Content-Type (нет доступа к
+# nginx-конфигу на шаред-хостинге, чтобы это исправить), из-за чего
+# Invoke-RestMethod при прямом "irm | iex" декодирует UTF-8 как Latin-1 и
+# кириллица в Write-Host превращается в кракозябры (сама установка при этом
+# отрабатывает нормально — ломается только текст). Скачивание во временный
+# файл с последующим запуском (`-OutFile` + `&`) заставляет PowerShell читать
+# файл через его собственную BOM-детекцию вместо HTTP-декодера ответа — этот
+# файл сохранён с UTF-8 BOM специально для этого. raw.githubusercontent.com
+# отдаёт правильный charset сам, там "irm | iex" не ломается.
 
 $ErrorActionPreference = 'Stop'
 
