@@ -137,8 +137,10 @@ namespace Ven4Tools.ClientUITests
             // Заодно проверяем сам текст из embedded_catalog.json (не статичные
             // заголовки Expander'ов из XAML — те захардкожены и мойибаке не ловят):
             // названия приложений в чекбоксах реально приходят из JSON-каталога.
+            // Имя приложения — TextBlock-СОСЕД чекбокса в той же StackPanel (колонка 0
+            // строки), а не потомок самого чекбокса — искать нужно от родителя.
             var appNames = checkBoxes!
-                .Select(cb => cb.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Text))?.Name ?? "")
+                .Select(cb => cb.Parent?.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Text))?.Name ?? "")
                 .Where(t => !string.IsNullOrEmpty(t))
                 .ToList();
             Assert.IsTrue(appNames.Any(t => t.Contains("AIDA64") || t.Contains("AutoHotkey") || t.Contains("Firefox")),

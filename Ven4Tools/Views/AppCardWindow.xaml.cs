@@ -15,6 +15,7 @@ namespace Ven4Tools.Views
             InitializeComponent();
             DataContext = viewModel;
             viewModel.RequestClose += Close;
+            Closed += (_, _) => viewModel.Detach();
         }
 
         // Esc закрывает модальную карточку — стандартное ожидание для модалок,
