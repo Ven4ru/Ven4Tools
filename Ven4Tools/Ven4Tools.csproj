@@ -20,7 +20,7 @@
     <!-- AssemblyVersion/FileVersion намеренно не заданы отдельно: SDK выводит их из
          Version. Иначе литерал AssemblyVersion перебивает Version и рассинхронизируется
          при релизе (реальный билд показывал/отправлял версию отличную от Version). -->
-    <Version>4.1.8</Version>
+    <Version>4.1.9</Version>
     
     <!-- Явная точка входа -->
     <StartupObject>Ven4Tools.App</StartupObject>
