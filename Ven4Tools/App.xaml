@@ -188,7 +188,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Background=Transparent + без VerticalAlignment (растягивается по
+                             высоте control'а вместо центрирования по контенту) — иначе зона
+                             хит-теста ограничена фактическим 15×15 бордером (Border ниже) и
+                             не растёт вместе с явным Width/Height, заданным на конкретном
+                             экземпляре CheckBox (пример — чекбокс строки каталога 20×20:
+                             без этого клик рядом с краем увеличенной области проваливался
+                             мимо, реальный CanExecute-хендлер не получал событие). -->
+                        <StackPanel Orientation="Horizontal" Background="Transparent">
                             <Border x:Name="CheckBorder"
                                     Width="15" Height="15"
                                     Background="{DynamicResource CardBackground}"

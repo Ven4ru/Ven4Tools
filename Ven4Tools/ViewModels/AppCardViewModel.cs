@@ -26,6 +26,16 @@ namespace Ven4Tools.ViewModels
             Row = row;
             _confirmPmInstall = confirmPmInstall;
             _installDrive = installDrive;
+            // Карточка не дублирует состояние строки, а читает его напрямую (CanLaunch,
+            // IsInstalled и т.д. — проброшенные геттеры), но WPF-биндинг обновляет
+            // значение только когда САМА AppCardViewModel поднимает PropertyChanged для
+            // своего свойства. Без этой подписки фоновый пересчёт строки
+            // (CatalogViewModel.UpdateInstalledStatusAsync — переиндексация Play-кнопки
+            // при каждом обновлении статуса установленных) не долетал бы до уже открытой
+            // карточки: она замирала на значении, актуальном в момент открытия. Снимается
+            // в Detach() при закрытии окна (AppCardWindow.Closed), чтобы Row не держал
+            // ссылку на закрытую карточку.
+            Row.PropertyChanged += Row_PropertyChanged;
 
             LaunchCommand = new RelayCommand(_ =>
             {
@@ -234,6 +244,35 @@ namespace Ven4Tools.ViewModels
                 RaiseInstallStateChanged();
             }
         }
+
+        // Изменения строки, актуальные для карточки, и какие собственные свойства
+        // карточки по ним нужно перепроверить — та же связка, что RaiseInstallStateChanged
+        // поднимает вручную после Install/Uninstall/Reinstall, только теперь ещё и на
+        // события, пришедшие СНАРУЖИ (фоновое обновление статуса каталога).
+        private void Row_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(AppRowViewModel.IsInstalled):
+                case nameof(AppRowViewModel.InstalledVersion):
+                case nameof(AppRowViewModel.HasUpdate):
+                    OnPropertyChanged(nameof(IsInstalled));
+                    OnPropertyChanged(nameof(VersionText));
+                    OnPropertyChanged(nameof(ShowInstallButton));
+                    OnPropertyChanged(nameof(ShowInstalledActions));
+                    RefreshCommands();
+                    break;
+                case nameof(AppRowViewModel.CanLaunch):
+                    OnPropertyChanged(nameof(CanLaunch));
+                    OnPropertyChanged(nameof(ShowLaunchButton));
+                    RefreshCommands();
+                    break;
+            }
+        }
+
+        // Вызывается при закрытии окна карточки (AppCardWindow.Closed) — без отписки
+        // Row держал бы ссылку на закрытую карточку до конца жизни строки каталога.
+        public void Detach() => Row.PropertyChanged -= Row_PropertyChanged;
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null) =>
