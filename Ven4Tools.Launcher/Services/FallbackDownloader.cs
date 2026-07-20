@@ -1,68 +1,160 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
+using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ven4Tools.Launcher.Services;
 
+/// <summary>
+/// Один кандидат на загрузку: URL, транспорт (обычный или IP-pinned HttpClient)
+/// и человекочитаемая метка источника для лога. Один и тот же URL может встречаться
+/// с разными клиентами (например, CDN-домен обычным клиентом и он же прямым IP).
+/// </summary>
+internal readonly record struct DownloadCandidate(string Url, HttpClient Client, string SourceLabel);
+
 internal sealed class FallbackDownloader
 {
-    private readonly HttpClient _httpClient;
-
-    public FallbackDownloader(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
-
-    public async Task<bool> DownloadAsync(
-        string primaryUrl,
-        string? fallbackUrl,
+    /// <summary>
+    /// Скачивает файл, перебирая источники по порядку до первого успеха. По каждому
+    /// кандидату — проверка доверенного хоста (до и после редиректа), .partial-файл и
+    /// обязательная сверка SHA256. Возвращает SourceLabel фактически сработавшего
+    /// кандидата (для лога «скачано через …»).
+    ///
+    /// Первый кандидат — как прежний «основной»: ошибка валидации его хоста
+    /// (InvalidOperationException) не проглатывается. Для остальных кандидатов
+    /// недоверенный хост/сетевая ошибка проглатываются и идёт переход к следующему.
+    /// Отмена вызывающей стороной (её токен) — сразу пробрасывается, следующие
+    /// кандидаты не пробуются.
+    /// </summary>
+    public async Task<string> DownloadAsync(
+        IReadOnlyList<DownloadCandidate> candidates,
         string targetPath,
         CancellationToken cancellationToken,
         string? expectedSha256 = null,
         Action<long, long?>? progress = null,
-        Action? switchingToFallback = null)
+        Action<string>? switchingTo = null)
     {
-        if (!DownloadValidator.IsAllowedDownloadHost(primaryUrl))
+        if (candidates == null || candidates.Count == 0)
         {
-            throw new InvalidOperationException("Основной URL загрузки не входит в список доверенных.");
+            throw new InvalidOperationException("Список источников загрузки пуст.");
         }
 
-        try
+        Exception? lastError = null;
+        bool anyAttempted = false;
+
+        for (int i = 0; i < candidates.Count; i++)
         {
-            await DownloadSingleAsync(
-                primaryUrl,
-                targetPath,
-                cancellationToken,
-                expectedSha256,
-                progress);
-            return false;
+            DownloadCandidate candidate = candidates[i];
+            bool isFirst = i == 0;
+
+            if (!DownloadValidator.IsAllowedDownloadHost(candidate.Url))
+            {
+                // Первый (основной) источник с недоверенным хостом — жёсткая ошибка,
+                // как в прежней двухисточниковой версии. Недоверенный резерв — пропуск.
+                if (isFirst)
+                {
+                    throw new InvalidOperationException("Основной URL загрузки не входит в список доверенных.");
+                }
+                continue;
+            }
+
+            try
+            {
+                if (anyAttempted)
+                {
+                    switchingTo?.Invoke(candidate.SourceLabel);
+                }
+
+                await DownloadSingleAsync(
+                    candidate.Client,
+                    candidate.Url,
+                    targetPath,
+                    cancellationToken,
+                    expectedSha256,
+                    progress);
+                return candidate.SourceLabel;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Отмена именно вызывающей стороной (наш токен) — не пробуем следующие
+                // источники, операция в любом случае должна остановиться.
+                throw;
+            }
+            catch (Exception ex)
+            {
+                lastError = ex;
+                anyAttempted = true;
+            }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+
+        // Ни один источник не сработал — пробрасываем последнюю реальную ошибку
+        // (сохраняя её тип: вызывающий код и тесты различают HttpRequestException/
+        // InvalidOperationException), либо сообщаем об отсутствии доверенных источников.
+        if (lastError != null)
         {
-            // Отмена именно вызывающей стороной (наш токен) — не пытаемся зеркало,
-            // операция в любом случае должна остановиться.
-            throw;
+            ExceptionDispatchInfo.Capture(lastError).Throw();
         }
-        catch when (
-            !string.IsNullOrWhiteSpace(fallbackUrl) &&
-            !string.Equals(primaryUrl, fallbackUrl, StringComparison.OrdinalIgnoreCase) &&
-            DownloadValidator.IsAllowedDownloadHost(fallbackUrl))
-        {
-            switchingToFallback?.Invoke();
-            await DownloadSingleAsync(
-                fallbackUrl!,
-                targetPath,
-                cancellationToken,
-                expectedSha256,
-                progress);
-            return true;
-        }
+        throw new InvalidOperationException("Нет доступных доверенных источников загрузки.");
     }
 
-    private async Task DownloadSingleAsync(
+    /// <summary>
+    /// Строит упорядоченный список кандидатов на загрузку из доступных ссылок.
+    /// Порядок по умолчанию (Auto): CDN(домен) → CDN(прямой IP) → Хостинг(зеркало) →
+    /// GitHub. Явный выбор источника переставляет его в начало — остальные остаются
+    /// резервом позади в том же относительном порядке (фоллбэк не отключается).
+    /// Кандидаты с пустым/null URL пропускаются; одинаковые пары (Url, Client) не
+    /// дублируются. Чистая функция без сети — покрыта unit-тестами.
+    /// </summary>
+    internal static List<DownloadCandidate> BuildCandidates(
+        DownloadSource preference,
+        string? cdnUrl,
+        string? cdnMirrorHostingUrl,
+        string? githubUrl,
+        HttpClient normalClient,
+        HttpClient ipPinnedClient)
+    {
+        // Базовый порядок Auto. «CDN (прямой IP)» — та же ссылка cdnUrl, но другой
+        // транспорт (ipPinnedClient): это не отдельный URL, а отдельная точка TCP-
+        // подключения для той же ссылки.
+        var ordered = new List<(DownloadSource Source, string? Url, HttpClient Client, string Label)>
+        {
+            (DownloadSource.CdnDomain,     cdnUrl,              normalClient,   "CDN"),
+            (DownloadSource.CdnDirectIp,   cdnUrl,              ipPinnedClient, "CDN (прямой IP)"),
+            (DownloadSource.HostingMirror, cdnMirrorHostingUrl, normalClient,   "Хостинг"),
+            (DownloadSource.Github,        githubUrl,           normalClient,   "GitHub"),
+        };
+
+        if (preference != DownloadSource.Auto)
+        {
+            int idx = ordered.FindIndex(c => c.Source == preference);
+            if (idx > 0)
+            {
+                var chosen = ordered[idx];
+                ordered.RemoveAt(idx);
+                ordered.Insert(0, chosen);
+            }
+        }
+
+        var result = new List<DownloadCandidate>();
+        foreach (var c in ordered)
+        {
+            if (string.IsNullOrWhiteSpace(c.Url)) continue;
+            if (result.Any(r =>
+                    string.Equals(r.Url, c.Url, StringComparison.OrdinalIgnoreCase) &&
+                    ReferenceEquals(r.Client, c.Client)))
+                continue;
+            result.Add(new DownloadCandidate(c.Url!, c.Client, c.Label));
+        }
+        return result;
+    }
+
+    private static async Task DownloadSingleAsync(
+        HttpClient client,
         string url,
         string targetPath,
         CancellationToken cancellationToken,
@@ -74,7 +166,7 @@ internal sealed class FallbackDownloader
 
         try
         {
-            using HttpResponseMessage response = await _httpClient.GetAsync(
+            using HttpResponseMessage response = await client.GetAsync(
                 url,
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);

@@ -114,7 +114,13 @@ namespace Ven4Tools.Launcher.Services
 
         private async Task CheckLauncherAsync()
         {
-            var info = await _github.CheckLauncherUpdate(_launcherVersion);
+            // Обнаружение обновления лаунчера — через ту же CDN-first логику, что и
+            // ручная проверка (LauncherUpdateService.CheckForUpdateAsync): CDN
+            // version.json основной, GitHub резерв. Иначе при блокировке GitHub по SNI
+            // фоновая проверка вообще не узнавала бы о новой версии (GitHub-only была
+            // структурно идентичной, но не исправленной дырой — Vibe-Coding).
+            var updateSvc = new LauncherUpdateService(_log);
+            var info = await updateSvc.CheckForUpdateAsync(_launcherVersion);
             if (info?.HasUpdate != true) return;
             if (info.LatestVersion == LastNotifiedLauncherVersion) return;
             if (_cts.IsCancellationRequested) return;
@@ -131,22 +137,61 @@ namespace Ven4Tools.Launcher.Services
             var versionInfo = FileVersionInfo.GetVersionInfo(clientExe);
             string installedVersion = versionInfo.FileVersion ?? "0.0.0";
 
+            // Последняя версия клиента из двух источников: CDN version.json (работает
+            // при блокировке GitHub по SNI) и GitHub-релизы (резерв + release notes).
+            // Здесь ВСЕГДА сравниваем оба источника и берём max — не то же самое, что
+            // ResolveSetupUpdateAsync у лаунчера (тот при любом обновлении с CDN
+            // возвращает его сразу, не сверяясь с GitHub, — см. комментарий там про
+            // почему это допустимо). Для клиента так безопаснее: список версий и так
+            // всегда идёт с GitHub (release notes), поэтому сравнение с CDN бесплатное.
+            // Оба пути закрывают одну и ту же дыру (раньше — GitHub-only проверка,
+            // молчавшая при блокировке GitHub по SNI), просто разной механикой.
+            string? latestVersion = null;
+            string? downloadUrl = null;
+            string? releaseNotes = null;
+
+            try
+            {
+                using var cdn = new CdnService();
+                var cdnInfo = await cdn.GetVersionInfoAsync();
+                if (!string.IsNullOrEmpty(cdnInfo?.Client?.Version))
+                {
+                    latestVersion = cdnInfo.Client.Version;
+                    downloadUrl = cdnInfo.Client.ZipUrl;
+                }
+            }
+            catch { /* CDN недоступен — остаётся GitHub */ }
+
             var versions = await _github.GetAvailableClientVersions();
             var latest = versions.FirstOrDefault(v => v.IsLatest);
-            if (latest == null) return;
+            if (latest != null &&
+                (latestVersion == null || VersionComparer.IsNewer(latest.Version, latestVersion)))
+            {
+                // GitHub опережает CDN (лаг CDN) либо CDN недоступен — берём GitHub.
+                latestVersion = latest.Version;
+                downloadUrl = latest.DownloadUrl;
+                releaseNotes = latest.ReleaseNotes;
+            }
+            else if (latest != null &&
+                     string.Equals(latest.Version, latestVersion, StringComparison.OrdinalIgnoreCase))
+            {
+                // Версии совпали — подтягиваем release notes из GitHub для уведомления.
+                releaseNotes = latest.ReleaseNotes;
+            }
 
-            if (!VersionComparer.IsNewer(latest.Version, installedVersion)) return;
-            if (latest.Version == LastNotifiedClientVersion) return;
+            if (latestVersion == null) return;
+            if (!VersionComparer.IsNewer(latestVersion, installedVersion)) return;
+            if (latestVersion == LastNotifiedClientVersion) return;
             if (_cts.IsCancellationRequested) return;
 
-            LastNotifiedClientVersion = latest.Version;
+            LastNotifiedClientVersion = latestVersion;
             UpdateAvailable?.Invoke("client", new UpdateInfo
             {
                 HasUpdate = true,
                 CurrentVersion = installedVersion,
-                LatestVersion = latest.Version,
-                DownloadUrl = latest.DownloadUrl,
-                ReleaseNotes = latest.ReleaseNotes
+                LatestVersion = latestVersion,
+                DownloadUrl = downloadUrl,
+                ReleaseNotes = releaseNotes
             });
         }
 

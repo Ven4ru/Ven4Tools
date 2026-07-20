@@ -13,6 +13,16 @@ namespace Ven4Tools.Launcher.Models
 
         [JsonPropertyName("launcher")]
         public CdnLauncherInfo? Launcher { get; set; }
+
+        // Текущий IP-адрес cdn.ven4tools.ru — подписан вместе со всем манифестом
+        // (доверенное поле). Нужен для варианта «прямой IP в обход DNS»: сам
+        // version.json лежит на этом же домене, поэтому если домен заблокируют по
+        // DNS отдельно от IP — повторную попытку делаем по этому адресу
+        // (см. CdnService/IpPinnedHttpClientFactory). Значение НЕ участвует в
+        // allowlist-проверке URL: ссылка загрузки всё равно https://cdn.ven4tools.ru/...
+        // и проходит штатную SNI/сертификат-валидацию.
+        [JsonPropertyName("cdn_ip")]
+        public string? CdnIp { get; set; }
     }
 
     public class CdnClientInfo
@@ -25,6 +35,10 @@ namespace Ven4Tools.Launcher.Models
 
         [JsonPropertyName("zip_fallback")]
         public string? ZipFallback { get; set; }
+
+        // Зеркало клиента на хостинге (независимый провайдер, только путь /releases/).
+        [JsonPropertyName("zip_mirror_hosting")]
+        public string? ZipMirrorHosting { get; set; }
 
         // SHA256 zip-архива клиента для проверки целостности после скачивания.
         [JsonPropertyName("zip_sha256")]
@@ -41,6 +55,16 @@ namespace Ven4Tools.Launcher.Models
 
         [JsonPropertyName("setup_url")]
         public string? SetupUrl { get; set; }
+
+        // GitHub-резерв установщика. Присутствует в version.json всегда — раньше
+        // отсутствовал в модели (баг упущения), из-за чего GitHub-ссылка установщика
+        // не участвовала в цепочке источников при обнаружении обновления через CDN.
+        [JsonPropertyName("setup_fallback")]
+        public string? SetupFallback { get; set; }
+
+        // Зеркало установщика на хостинге (независимый провайдер, только путь /releases/).
+        [JsonPropertyName("setup_mirror_hosting")]
+        public string? SetupMirrorHosting { get; set; }
 
         // SHA256 установщика лаунчера для проверки целостности после скачивания.
         [JsonPropertyName("setup_sha256")]

@@ -1,7 +1,7 @@
 <Window x:Class="Ven4Tools.Launcher.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Настройки — Ven4Tools Launcher" Height="380" Width="380"
+        Title="Настройки — Ven4Tools Launcher" Height="500" Width="380"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{DynamicResource WindowBackground}"
         FontFamily="Segoe UI Variable Text, Segoe UI">
@@ -26,6 +26,19 @@
                      Foreground="{DynamicResource TextPrimary}" Click="RbAutoUpdateMode_Click">
             <TextBlock Text="Автоматически"/>
         </RadioButton>
+
+        <TextBlock Text="ИСТОЧНИК ЗАГРУЗКИ" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
+        <ComboBox x:Name="cmbDownloadSource" Margin="0,4"
+                  SelectionChanged="CmbDownloadSource_SelectionChanged">
+            <ComboBoxItem Content="Авто (рекомендуется)"/>
+            <ComboBoxItem Content="GitHub"/>
+            <ComboBoxItem Content="CDN (домен)"/>
+            <ComboBoxItem Content="CDN (прямой IP)"/>
+            <ComboBoxItem Content="Хостинг (зеркало ven4tools.ru)"/>
+        </ComboBox>
+        <TextBlock Text="Автоматически выбирает самый быстрый доступный источник, переключаясь на другие при сбое."
+                   TextWrapping="Wrap" FontSize="11"
+                   Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
 
         <Button x:Name="btnCloseSettings" Content="Закрыть" Height="34" Margin="0,24,0,0"
                 HorizontalAlignment="Right" Width="100" Click="BtnClose_Click"/>

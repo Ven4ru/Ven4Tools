@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Windows;
 using Ven4Tools.Launcher.Helpers;
+using Ven4Tools.Launcher.Services;
 
 namespace Ven4Tools.Launcher
 {
@@ -23,6 +24,13 @@ namespace Ven4Tools.Launcher
                         _autostart                   = settings.Autostart;
                         _startMinimized              = settings.StartMinimized;
                         _autoUpdateClient            = settings.AutoUpdateClient;
+                        // Незнакомое/повреждённое значение enum (например, из битого
+                        // settings.json) тихо откатываем на Auto — не роняем запуск.
+                        _downloadSource              = Enum.IsDefined(settings.DownloadSource)
+                                                        ? settings.DownloadSource
+                                                        : DownloadSource.Auto;
+                        _lastKnownCdnIp              = settings.LastKnownCdnIp ?? "";
+                        CdnService.SeedLastKnownCdnIp(_lastKnownCdnIp);
                         _lastNotifiedLauncherVersion = settings.LastNotifiedLauncherVersion ?? "";
                         _lastNotifiedClientVersion   = settings.LastNotifiedClientVersion   ?? "";
                         _lastNotifiedNotificationId  = settings.LastNotifiedNotificationId  ?? "";
@@ -44,6 +52,8 @@ namespace Ven4Tools.Launcher
                     Autostart                   = _autostart,
                     StartMinimized              = _startMinimized,
                     AutoUpdateClient            = _autoUpdateClient,
+                    DownloadSource              = _downloadSource,
+                    LastKnownCdnIp              = _lastKnownCdnIp,
                     LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
                     LastNotifiedClientVersion   = _lastNotifiedClientVersion,
                     LastNotifiedNotificationId  = _lastNotifiedNotificationId
@@ -59,7 +69,7 @@ namespace Ven4Tools.Launcher
             if (_settingsWindow == null || !_settingsWindow.IsLoaded)
             {
                 _settingsWindow = new SettingsWindow(
-                    this, _backgroundUpdates, _startMinimized, _autostart, _autoUpdateClient)
+                    this, _backgroundUpdates, _startMinimized, _autostart, _autoUpdateClient, _downloadSource)
                 {
                     Owner = this
                 };
@@ -72,7 +82,7 @@ namespace Ven4Tools.Launcher
         // Значения могут поменяться из контекстного меню трея, пока окно настроек
         // открыто — держим его в курсе.
         private void SyncSettingsWindow() =>
-            _settingsWindow?.Sync(_backgroundUpdates, _startMinimized, _autostart, _autoUpdateClient);
+            _settingsWindow?.Sync(_backgroundUpdates, _startMinimized, _autostart, _autoUpdateClient, _downloadSource);
 
         internal void OnBackgroundUpdatesChanged(bool isChecked)
         {
@@ -103,6 +113,12 @@ namespace Ven4Tools.Launcher
         internal void OnAutoUpdateClientChanged(bool isChecked)
         {
             _autoUpdateClient = isChecked;
+            SaveSettings();
+        }
+
+        internal void OnDownloadSourceChanged(DownloadSource source)
+        {
+            _downloadSource = source;
             SaveSettings();
         }
 

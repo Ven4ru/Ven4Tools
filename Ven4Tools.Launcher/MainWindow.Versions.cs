@@ -28,6 +28,15 @@ namespace Ven4Tools.Launcher
                         AddLog($"🌐 CDN доступен: клиент {cdnInfo.Client.Version}");
                     else
                         AddLog("⚠️ CDN недоступен, использую GitHub как основной источник");
+
+                    // Свежий подписанный cdn_ip сохраняем для IP-pinning на будущее
+                    // (следующий запуск при блокировке домена по DNS пойдёт по этому IP).
+                    string? freshIp = CdnService.LastKnownCdnIp;
+                    if (!string.IsNullOrEmpty(freshIp) && freshIp != _lastKnownCdnIp)
+                    {
+                        _lastKnownCdnIp = freshIp;
+                        SaveSettings();
+                    }
                 }
                 catch { AddLog("⚠️ CDN недоступен, использую GitHub как основной источник"); }
 
@@ -72,21 +81,25 @@ namespace Ven4Tools.Launcher
                         // CDN-подстановку накладываем поверх только в этом ручном пути.
                         var info = GitHubService.MapRelease(release, firstStable)!;
                         string githubUrl = clientAsset.browser_download_url ?? "";
+                        // GitHub-ссылка есть всегда — крайний резерв в цепочке источников.
+                        info.GithubUrl = githubUrl;
 
                         // Если CDN знает эту версию — качаем с CDN (быстрее),
-                        // GitHub оставляем как резерв на случай недоступности CDN.
+                        // остальные источники (прямой IP, зеркало, GitHub) остаются
+                        // резервом в цепочке кандидатов (см. DownloadVersionAsync).
                         if (cdnInfo?.Client != null &&
                             string.Equals(cdnInfo.Client.Version, version, StringComparison.OrdinalIgnoreCase) &&
                             !string.IsNullOrWhiteSpace(cdnInfo.Client.ZipUrl) &&
                             DownloadValidator.IsAllowedDownloadHost(cdnInfo.Client.ZipUrl))
                         {
                             info.DownloadUrl = cdnInfo.Client.ZipUrl!;
-                            info.FallbackUrl = cdnInfo.Client.ZipFallback ?? githubUrl;
+                            info.CdnUrl = cdnInfo.Client.ZipUrl;
+                            info.MirrorHostingUrl = cdnInfo.Client.ZipMirrorHosting;
                             // Хеш из version.json относится к одному и тому же zip
-                            // (CDN и GitHub отдают идентичный архив), поэтому годится
-                            // и для основной, и для резервной ссылки.
+                            // (CDN, зеркало и GitHub отдают идентичный архив), поэтому
+                            // годится для всех источников.
                             info.ExpectedSha256 = cdnInfo.Client.ZipSha256;
-                            AddLog($"   ⚡ {version} → CDN (резерв: GitHub)");
+                            AddLog($"   ⚡ {version} → CDN (резерв: прямой IP, хостинг, GitHub)");
                         }
 
                         AddLog($"   ✅ {version}{(release.prerelease ? " [PRE]" : "")} → {clientAsset.name}");
