@@ -24,7 +24,7 @@
 <p align="center">
 
 ```powershell
-irm ven4tools.ru/install.ps1 | iex
+$t="$env:TEMP\v4t.ps1";irm ven4tools.ru/install.ps1 -OutFile $t;&$t
 ```
 
 </p>
