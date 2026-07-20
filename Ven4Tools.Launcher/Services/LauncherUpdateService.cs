@@ -1,5 +1,6 @@
 // Services/LauncherUpdateService.cs
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -47,10 +48,12 @@ namespace Ven4Tools.Launcher.Services
         private static readonly HttpClient _httpClient = CreateClient();
 
         private readonly Action<string>? _log;
+        private readonly DownloadSource _preference;
 
-        public LauncherUpdateService(Action<string>? log = null)
+        public LauncherUpdateService(Action<string>? log = null, DownloadSource preference = DownloadSource.Auto)
         {
             _log = log;
+            _preference = preference;
         }
 
         private static HttpClient CreateClient()
@@ -113,36 +116,151 @@ namespace Ven4Tools.Launcher.Services
         }
 
         /// <summary>
-        /// Проверка обновления лаунчера через GitHub Releases API.
+        /// Проверка обновления лаунчера. CDN version.json — основной источник
+        /// обнаружения версии (симметрично клиенту), GitHub Releases — резерв.
         /// Возвращает null при сетевой ошибке (для вызывающего кода это «обновлений нет»).
         /// </summary>
-        public async Task<UpdateInfo?> CheckForUpdateAsync()
+        public Task<UpdateInfo?> CheckForUpdateAsync() => CheckForUpdateAsync(GetCurrentVersion());
+
+        /// <summary>
+        /// То же, но с явной текущей версией (для фоновой проверки, где версия
+        /// передаётся снаружи). "0.0.0" — «любая доступная версия считается новее».
+        /// </summary>
+        public async Task<UpdateInfo?> CheckForUpdateAsync(string currentVersion)
         {
             try
             {
-                using var gitHub = new GitHubService();
-                var info = await gitHub.CheckLauncherUpdate(GetCurrentVersion());
-
-                if (info == null)
-                {
-                    Log("Не удалось получить информацию о релизах GitHub.");
-                    return null;
-                }
-
-                if (info.HasUpdate && string.IsNullOrEmpty(info.DownloadUrl))
-                {
-                    // Релиз новее, но установщика в нём нет — обновлять нечем.
-                    Log($"В релизе {info.LatestVersion} нет установщика Ven4Tools.Setup — обновление пропущено.");
-                    info.HasUpdate = false;
-                }
-
-                return info;
+                return await ResolveSetupUpdateAsync(currentVersion);
             }
             catch (Exception ex)
             {
                 Log($"Ошибка проверки обновлений лаунчера: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Обнаружение обновления установщика: сначала CDN version.json (основной
+        /// источник — работает, даже если GitHub заблокирован по SNI), затем GitHub
+        /// Releases как резерв. GitHub-обнаружение обогащается CDN-ссылками и SHA256
+        /// (для той же версии), чтобы дальнейшая загрузка шла по полной цепочке
+        /// источников (CDN/зеркало/GitHub), а не только через GitHub.
+        ///
+        /// Если CDN уже показал обновление — возвращаем его сразу, не сверяясь с
+        /// GitHub на предмет ещё более новой версии (в отличие от клиентской проверки
+        /// в UpdateBackgroundService.CheckClientAsync, которая всегда берёт max по
+        /// обоим источникам). Допустимо, т.к. релиз лаунчера деплоится на CDN тем же
+        /// действием, что публикует GitHub-релиз — CDN не может показывать версию
+        /// СТАРЕЕ реально доступной на GitHub в штатном сценарии. Если это когда-либо
+        /// перестанет быть так — привести к той же max-логике, что у клиента.
+        /// </summary>
+        private async Task<UpdateInfo?> ResolveSetupUpdateAsync(string currentVersion)
+        {
+            // 1. CDN version.json — основной источник обнаружения версии лаунчера.
+            var cdnUpdate = await TryCheckViaCdnAsync(currentVersion);
+            if (cdnUpdate != null) return cdnUpdate;
+
+            // 2. GitHub Releases — резерв (или CDN не показал обновления / лаг CDN,
+            //    когда релиз уже на GitHub, но ещё не задеплоен на CDN).
+            using var gitHub = new GitHubService();
+            var info = await gitHub.CheckLauncherUpdate(currentVersion);
+            if (info == null)
+            {
+                Log("Не удалось получить информацию о релизах (CDN и GitHub недоступны).");
+                return null;
+            }
+
+            if (info.HasUpdate && string.IsNullOrEmpty(info.DownloadUrl))
+            {
+                // Релиз новее, но установщика в нём нет — обновлять нечем.
+                Log($"В релизе {info.LatestVersion} нет установщика Ven4Tools.Setup — обновление пропущено.");
+                info.HasUpdate = false;
+            }
+
+            if (info.HasUpdate && !string.IsNullOrEmpty(info.LatestVersion))
+            {
+                await EnrichWithCdnAsync(info);
+            }
+
+            return info;
+        }
+
+        /// <summary>
+        /// Обнаружение обновления через подписанный version.json CDN. Возвращает
+        /// UpdateInfo с обновлением ТОЛЬКО если CDN доступен, подписан, содержит
+        /// валидный SHA256 и версию новее текущей. Иначе — null (проверит GitHub).
+        /// </summary>
+        private static async Task<UpdateInfo?> TryCheckViaCdnAsync(string currentVersion)
+        {
+            using var cdn = new CdnService();
+            CdnVersionInfo? cdnInfo = await cdn.GetVersionInfoAsync();
+            var l = cdnInfo?.Launcher;
+            if (l == null || string.IsNullOrEmpty(l.Version) || !IsValidSha256(l.SetupSha256))
+                return null;
+
+            if (!VersionComparer.IsNewer(l.Version, currentVersion))
+                return null; // CDN не показывает обновления — пусть решает GitHub (мог обогнать CDN)
+
+            return new UpdateInfo
+            {
+                HasUpdate = true,
+                CurrentVersion = currentVersion,
+                LatestVersion = l.Version,
+                // Для обратной совместимости DownloadUrl держим GitHub-ссылку (если есть),
+                // иначе CDN-ссылку — фактическую загрузку ведёт цепочка BuildSetupCandidates.
+                DownloadUrl = l.SetupFallback ?? l.SetupUrl,
+                SetupCdnUrl = l.SetupUrl,
+                SetupMirrorHostingUrl = l.SetupMirrorHosting,
+                SetupGithubUrl = l.SetupFallback,
+                ExpectedSha256 = l.SetupSha256
+            };
+        }
+
+        /// <summary>
+        /// Дополняет GitHub-обнаруженное обновление ссылками CDN/зеркала и SHA256 из
+        /// подписанного version.json — только если версия на CDN совпадает с найденной
+        /// (иначе хеш относится к другому билду). Без подтверждённого хеша дальнейшая
+        /// загрузка откажет (fail-closed).
+        /// </summary>
+        private static async Task EnrichWithCdnAsync(UpdateInfo info)
+        {
+            try
+            {
+                using var cdn = new CdnService();
+                CdnVersionInfo? cdnInfo = await cdn.GetVersionInfoAsync();
+                var l = cdnInfo?.Launcher;
+                if (l != null &&
+                    string.Equals(l.Version, info.LatestVersion, StringComparison.OrdinalIgnoreCase) &&
+                    IsValidSha256(l.SetupSha256))
+                {
+                    info.ExpectedSha256 = l.SetupSha256;
+                    info.SetupCdnUrl = l.SetupUrl;
+                    info.SetupMirrorHostingUrl = l.SetupMirrorHosting;
+                    info.SetupGithubUrl = l.SetupFallback ?? info.DownloadUrl;
+                }
+            }
+            catch
+            {
+                // CDN недоступен — хеш не подтверждён, скачивание будет отменено (fail-closed).
+            }
+        }
+
+        /// <summary>
+        /// Разворачивает ссылки установщика из UpdateInfo в упорядоченную цепочку
+        /// кандидатов с транспортами (обычный клиент + IP-pinned для варианта «прямой IP»).
+        /// IP для pinning — последний известный cdn_ip, иначе резервный FallbackCdnIp.
+        /// </summary>
+        private List<DownloadCandidate> BuildSetupCandidates(UpdateInfo info)
+        {
+            string ip = CdnService.LastKnownCdnIp ?? IpPinnedHttpClientFactory.FallbackCdnIp;
+            HttpClient ipPinned = IpPinnedHttpClientFactory.GetOrCreate(ip, TimeSpan.FromMinutes(10));
+            return FallbackDownloader.BuildCandidates(
+                _preference,
+                info.SetupCdnUrl,
+                info.SetupMirrorHostingUrl,
+                info.SetupGithubUrl ?? info.DownloadUrl,
+                _httpClient,
+                ipPinned);
         }
 
         /// <summary>
@@ -183,24 +301,27 @@ namespace Ven4Tools.Launcher.Services
         /// установщик ждёт завершения процесса и только потом меняет файлы.
         /// </summary>
         /// <param name="updateInfo">Готовая информация об обновлении; если null — проверяется заново.</param>
-        /// <param name="expectedSha256">Ожидаемый SHA256 установщика (из version.json CDN). Обязателен.</param>
-        /// <param name="fallbackUrl">Резервный URL установщика (CDN), если основной недоступен.</param>
-        public async Task<bool> DownloadAndRunSetupUpdateAsync(
-            UpdateInfo? updateInfo = null,
-            string? expectedSha256 = null,
-            string? fallbackUrl = null)
+        public async Task<bool> DownloadAndRunSetupUpdateAsync(UpdateInfo? updateInfo = null)
         {
             string? stagingDir = null;
             try
             {
                 updateInfo ??= await CheckForUpdateAsync();
                 if (updateInfo == null || !updateInfo.HasUpdate) return false;
-                if (string.IsNullOrEmpty(updateInfo.DownloadUrl)) return false;
                 if (string.IsNullOrEmpty(updateInfo.LatestVersion)) return false;
-                if (!IsValidSha256(expectedSha256))
+                if (!IsValidSha256(updateInfo.ExpectedSha256))
                 {
                     Log("Обновление лаунчера отменено: контрольная сумма установщика недоступна " +
                         "(CDN не ответил или версия на CDN не совпадает с релизом).");
+                    return false;
+                }
+
+                // Упорядоченная цепочка источников: CDN(домен) → CDN(IP) → Хостинг → GitHub
+                // (с учётом выбранного пользователем предпочтения).
+                var candidates = BuildSetupCandidates(updateInfo);
+                if (candidates.Count == 0)
+                {
+                    Log("Обновление лаунчера отменено: нет доступных источников установщика.");
                     return false;
                 }
 
@@ -214,17 +335,16 @@ namespace Ven4Tools.Launcher.Services
 
                 // FallbackDownloader: проверка доверенного хоста (включая редиректы),
                 // .partial-загрузка и обязательная сверка SHA256 до принятия файла.
-                // Таймаут на весь цикл скачивания (основной URL + фолбэк): без него
+                // Таймаут на весь цикл скачивания (все источники): без него
                 // зависший поток на ResponseHeadersRead блокирует обновление навсегда.
-                var downloader = new FallbackDownloader(_httpClient);
+                var downloader = new FallbackDownloader();
                 using var downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-                await downloader.DownloadAsync(
-                    updateInfo.DownloadUrl,
-                    fallbackUrl,
+                string source = await downloader.DownloadAsync(
+                    candidates,
                     setupPath,
                     downloadCts.Token,
-                    expectedSha256);
-                Log("Целостность установщика подтверждена (SHA256).");
+                    updateInfo.ExpectedSha256);
+                Log($"Целостность установщика подтверждена (SHA256), источник: {source}.");
 
                 // Заметка: при появлении сертификата подписи кода здесь дополнительно
                 // проверяется Authenticode-подпись установщика перед запуском.
@@ -280,14 +400,12 @@ namespace Ven4Tools.Launcher.Services
 
                 if (answer != MessageBoxResult.Yes) return false;
 
-                // Ищем последний стабильный релиз с установщиком Ven4Tools.Setup-X.Y.Z.exe.
-                // "0.0.0" — любой найденный релиз считается новее, берём самый свежий.
-                using var gitHub = new GitHubService();
-                var latest = await gitHub.CheckLauncherUpdate("0.0.0");
+                // Ищем последнюю доступную версию установщика: CDN version.json (основной
+                // источник — работает даже при блокировке GitHub) с резервом на GitHub.
+                // "0.0.0" — любая найденная версия считается новее, берём самую свежую.
+                var latest = await ResolveSetupUpdateAsync("0.0.0");
 
-                if (latest?.DownloadUrl == null ||
-                    string.IsNullOrEmpty(latest.LatestVersion) ||
-                    !DownloadValidator.IsAllowedDownloadHost(latest.DownloadUrl))
+                if (latest == null || !latest.HasUpdate || string.IsNullOrEmpty(latest.LatestVersion))
                 {
                     Log("Установщик в релизах не найден — продолжаем в переносном режиме.");
                     MessageBox.Show(
@@ -301,14 +419,24 @@ namespace Ven4Tools.Launcher.Services
 
                 // SHA256 обязателен (fail-closed): хеш берём из version.json CDN и только
                 // если версия на CDN совпадает с версией релиза — иначе хеш от другого билда.
-                (string? expectedSha256, string? fallbackUrl) =
-                    await GetSetupHashFromCdnAsync(latest.LatestVersion);
-
-                if (expectedSha256 == null)
+                if (!IsValidSha256(latest.ExpectedSha256))
                 {
                     Log("Контрольная сумма установщика недоступна (CDN) — установка отменена.");
                     MessageBox.Show(
                         "Не удалось подтвердить целостность установщика.\n" +
+                        "Лаунчер продолжит работу в переносном режиме.",
+                        "Ven4Tools Launcher",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return false;
+                }
+
+                var candidates = BuildSetupCandidates(latest);
+                if (candidates.Count == 0)
+                {
+                    Log("Нет доступных источников установщика — продолжаем в переносном режиме.");
+                    MessageBox.Show(
+                        "Не удалось найти доступный источник установщика.\n" +
                         "Лаунчер продолжит работу в переносном режиме.",
                         "Ven4Tools Launcher",
                         MessageBoxButton.OK,
@@ -325,15 +453,14 @@ namespace Ven4Tools.Launcher.Services
                 Directory.CreateDirectory(stagingDir);
                 string setupPath = Path.Combine(stagingDir, setupName);
 
-                var downloader = new FallbackDownloader(_httpClient);
+                var downloader = new FallbackDownloader();
                 using var downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-                await downloader.DownloadAsync(
-                    latest.DownloadUrl,
-                    fallbackUrl,
+                string source = await downloader.DownloadAsync(
+                    candidates,
                     setupPath,
                     downloadCts.Token,
-                    expectedSha256);
-                Log("Целостность установщика подтверждена (SHA256).");
+                    latest.ExpectedSha256);
+                Log($"Целостность установщика подтверждена (SHA256), источник: {source}.");
 
                 // Заметка: при появлении сертификата подписи кода здесь дополнительно
                 // проверяется Authenticode-подпись установщика перед запуском.
@@ -361,32 +488,6 @@ namespace Ven4Tools.Launcher.Services
                 TryDeleteDirectory(stagingDir);
                 return false;
             }
-        }
-
-        /// <summary>
-        /// SHA256 установщика и резервный URL из version.json CDN — только если
-        /// версия лаунчера на CDN совпадает с запрошенной. Любая ошибка → (null, null):
-        /// вызывающий код обязан отменить установку (fail-closed).
-        /// </summary>
-        internal static async Task<(string? Sha256, string? FallbackUrl)> GetSetupHashFromCdnAsync(string version)
-        {
-            try
-            {
-                using var cdnService = new CdnService();
-                CdnVersionInfo? cdnInfo = await cdnService.GetVersionInfoAsync();
-                if (cdnInfo?.Launcher != null &&
-                    string.Equals(cdnInfo.Launcher.Version, version, StringComparison.OrdinalIgnoreCase) &&
-                    IsValidSha256(cdnInfo.Launcher.SetupSha256))
-                {
-                    return (cdnInfo.Launcher.SetupSha256, cdnInfo.Launcher.SetupUrl);
-                }
-            }
-            catch
-            {
-                // CDN недоступен — хеш подтвердить нечем, установка будет отменена.
-            }
-
-            return (null, null);
         }
 
         private static void TryDeleteDirectory(string? path)

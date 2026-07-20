@@ -19,7 +19,7 @@ namespace Ven4Tools.Launcher
                 // клиентских версий (CDN + GitHub-релизы).
                 await LoadVersionsAsync();
 
-                var updateSvc = new LauncherUpdateService(AddLog);
+                var updateSvc = new LauncherUpdateService(AddLog, _downloadSource);
                 var updateInfo = await updateSvc.CheckForUpdateAsync();
 
                 if (updateInfo != null && updateInfo.HasUpdate)
@@ -73,25 +73,16 @@ namespace Ven4Tools.Launcher
                 AddLog("📥 Начинаем скачивание обновления лаунчера...");
                 btnInstallUpdate.Visibility = Visibility.Collapsed;
 
-                var updateSvc = new LauncherUpdateService(AddLog);
+                var updateSvc = new LauncherUpdateService(AddLog, _downloadSource);
 
-                // Сначала узнаём, какую версию ставим, чтобы взять с CDN хеш именно для неё.
+                // CheckForUpdateAsync уже возвращает готовый UpdateInfo с SHA256 и
+                // ссылками-кандидатами (CDN version.json — основной источник, GitHub —
+                // резерв). Загрузка идёт по всей цепочке источников с учётом выбранного
+                // пользователем предпочтения; без подтверждённого хеша обновление не
+                // выполняется (fail-closed — проверяется внутри DownloadAndRunSetupUpdateAsync).
                 var updateInfo = await updateSvc.CheckForUpdateAsync();
 
-                // SHA256 установщика берём из version.json CDN — но только если версия
-                // на CDN совпадает с устанавливаемой (иначе хеш относится к другому билду).
-                // Без подтверждённого хеша обновление не выполняется (fail-closed).
-                // Тот же хелпер, что использует OfferInstallationAsync — единая проверка
-                // строгости хеша (LauncherUpdateService.IsValidSha256), без дублирования.
-                string? expectedSha256 = null;
-                string? fallbackUrl = null;
-                if (updateInfo?.HasUpdate == true)
-                {
-                    (expectedSha256, fallbackUrl) =
-                        await LauncherUpdateService.GetSetupHashFromCdnAsync(updateInfo.LatestVersion!);
-                }
-
-                var result = await updateSvc.DownloadAndRunSetupUpdateAsync(updateInfo, expectedSha256, fallbackUrl);
+                var result = await updateSvc.DownloadAndRunSetupUpdateAsync(updateInfo);
 
                 if (result)
                 {

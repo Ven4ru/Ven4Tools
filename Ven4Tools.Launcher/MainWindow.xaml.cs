@@ -41,6 +41,10 @@ namespace Ven4Tools.Launcher
         private bool                 _autostart         = false;
         private bool                 _startMinimized    = false;
         private bool                 _autoUpdateClient  = false;
+        // Выбранный пользователем источник загрузки (переставляется в начало цепочки).
+        private DownloadSource       _downloadSource    = DownloadSource.Auto;
+        // Кэш последнего известного IP CDN из подписанного version.json (для IP-pinning).
+        private string               _lastKnownCdnIp    = "";
         private SettingsWindow?      _settingsWindow;
         private readonly string      _dataFolderPath;
         // Запросы на установку компонентов из setup отложены до первого видимого показа
@@ -126,7 +130,7 @@ namespace Ven4Tools.Launcher
 
                 // Лаунчер запущен не из папки установки — предлагаем установить.
                 // Если пользователь согласился и установщик запущен — выходим.
-                var installSvc = new LauncherUpdateService(AddLog);
+                var installSvc = new LauncherUpdateService(AddLog, _downloadSource);
                 if (await installSvc.OfferInstallationAsync())
                 {
                     ExitApplication();
@@ -187,6 +191,8 @@ namespace Ven4Tools.Launcher
             public bool    Autostart                   { get; set; }
             public bool    StartMinimized              { get; set; }
             public bool    AutoUpdateClient             { get; set; }
+            public DownloadSource DownloadSource        { get; set; } = DownloadSource.Auto;
+            public string? LastKnownCdnIp               { get; set; }
             public string? LastNotifiedLauncherVersion { get; set; }
             public string? LastNotifiedClientVersion   { get; set; }
             public string? LastNotifiedNotificationId  { get; set; }

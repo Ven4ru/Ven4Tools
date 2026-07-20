@@ -11,6 +11,17 @@ public sealed class FallbackDownloaderTests
     private const string PrimaryUrl = "https://cdn.ven4tools.ru/client.zip";
     private const string FallbackUrl = "https://github.com/Ven4ru/Ven4Tools/client.zip";
 
+    private static IReadOnlyList<DownloadCandidate> Two(HttpClient http) => new[]
+    {
+        new DownloadCandidate(PrimaryUrl, http, "CDN"),
+        new DownloadCandidate(FallbackUrl, http, "GitHub"),
+    };
+
+    private static IReadOnlyList<DownloadCandidate> One(HttpClient http) => new[]
+    {
+        new DownloadCandidate(PrimaryUrl, http, "CDN"),
+    };
+
     [Fact]
     public async Task DownloadAsync_UsesFallbackAfterPrimaryFailure()
     {
@@ -23,21 +34,86 @@ public sealed class FallbackDownloaderTests
                 ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
                 : Response(request.RequestUri, "fallback payload");
         }));
-        bool switched = false;
+        string? switchedTo = null;
 
-        bool usedFallback = await new FallbackDownloader(http).DownloadAsync(
-            PrimaryUrl,
-            FallbackUrl,
+        string usedSource = await new FallbackDownloader().DownloadAsync(
+            Two(http),
             Path.Combine(area.Path, "client.zip"),
             CancellationToken.None,
-            switchingToFallback: () => switched = true);
+            switchingTo: label => switchedTo = label);
 
-        Assert.True(usedFallback);
-        Assert.True(switched);
+        Assert.Equal("GitHub", usedSource);
+        Assert.Equal("GitHub", switchedTo);
         Assert.Equal(new[] { new Uri(PrimaryUrl), new Uri(FallbackUrl) }, requests);
         Assert.Equal(
             "fallback payload",
             await File.ReadAllTextAsync(Path.Combine(area.Path, "client.zip")));
+    }
+
+    [Fact]
+    public async Task DownloadAsync_ReturnsPrimaryLabelWhenPrimarySucceeds()
+    {
+        using var area = new TemporaryDirectory();
+        bool switched = false;
+        using var http = new HttpClient(new DelegateHandler(
+            request => Response(request.RequestUri, "primary payload")));
+
+        string usedSource = await new FallbackDownloader().DownloadAsync(
+            Two(http),
+            Path.Combine(area.Path, "client.zip"),
+            CancellationToken.None,
+            switchingTo: _ => switched = true);
+
+        Assert.Equal("CDN", usedSource);
+        Assert.False(switched); // основной сработал — переключения не было
+    }
+
+    [Fact]
+    public async Task DownloadAsync_ThrowsWhenPrimaryHostUntrusted()
+    {
+        using var area = new TemporaryDirectory();
+        using var http = new HttpClient(new DelegateHandler(
+            request => Response(request.RequestUri, "payload")));
+        var candidates = new[]
+        {
+            new DownloadCandidate("https://evil.example/client.zip", http, "Злой"),
+            new DownloadCandidate(FallbackUrl, http, "GitHub"),
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => new FallbackDownloader().DownloadAsync(
+                candidates,
+                Path.Combine(area.Path, "client.zip"),
+                CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task DownloadAsync_SkipsUntrustedNonFirstCandidate()
+    {
+        using var area = new TemporaryDirectory();
+        var requests = new List<Uri>();
+        using var http = new HttpClient(new DelegateHandler(request =>
+        {
+            requests.Add(request.RequestUri!);
+            return request.RequestUri!.Host == "cdn.ven4tools.ru"
+                ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+                : Response(request.RequestUri, "github payload");
+        }));
+        var candidates = new[]
+        {
+            new DownloadCandidate(PrimaryUrl, http, "CDN"),
+            new DownloadCandidate("https://evil.example/client.zip", http, "Злой"),
+            new DownloadCandidate(FallbackUrl, http, "GitHub"),
+        };
+
+        string usedSource = await new FallbackDownloader().DownloadAsync(
+            candidates,
+            Path.Combine(area.Path, "client.zip"),
+            CancellationToken.None);
+
+        Assert.Equal("GitHub", usedSource);
+        // Недоверенный резерв не запрашивался — только CDN (503) и GitHub.
+        Assert.Equal(new[] { new Uri(PrimaryUrl), new Uri(FallbackUrl) }, requests);
     }
 
     [Fact]
@@ -55,9 +131,8 @@ public sealed class FallbackDownloaderTests
         string target = Path.Combine(area.Path, "client.zip");
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => new FallbackDownloader(http).DownloadAsync(
-                PrimaryUrl,
-                FallbackUrl,
+            () => new FallbackDownloader().DownloadAsync(
+                Two(http),
                 target,
                 cancellation.Token));
 
@@ -83,9 +158,8 @@ public sealed class FallbackDownloaderTests
         string target = Path.Combine(area.Path, "client.zip");
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => new FallbackDownloader(http).DownloadAsync(
-                PrimaryUrl,
-                FallbackUrl,
+            () => new FallbackDownloader().DownloadAsync(
+                Two(http),
                 target,
                 cancellation.Token));
 
@@ -106,14 +180,13 @@ public sealed class FallbackDownloaderTests
                 : Response(request.RequestUri, expectedBody)));
         string target = Path.Combine(area.Path, "client.zip");
 
-        bool usedFallback = await new FallbackDownloader(http).DownloadAsync(
-            PrimaryUrl,
-            FallbackUrl,
+        string usedSource = await new FallbackDownloader().DownloadAsync(
+            Two(http),
             target,
             CancellationToken.None,
             expectedHash);
 
-        Assert.True(usedFallback);
+        Assert.Equal("GitHub", usedSource);
         Assert.Equal(expectedBody, await File.ReadAllTextAsync(target));
         Assert.False(File.Exists(target + ".partial"));
     }
@@ -127,9 +200,8 @@ public sealed class FallbackDownloaderTests
         string target = Path.Combine(area.Path, "client.zip");
 
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => new FallbackDownloader(http).DownloadAsync(
-                PrimaryUrl,
-                fallbackUrl: null,
+            () => new FallbackDownloader().DownloadAsync(
+                One(http),
                 target,
                 CancellationToken.None));
 
@@ -146,14 +218,24 @@ public sealed class FallbackDownloaderTests
         string target = Path.Combine(area.Path, "client.zip");
 
         await Assert.ThrowsAsync<HttpRequestException>(
-            () => new FallbackDownloader(http).DownloadAsync(
-                PrimaryUrl,
-                FallbackUrl,
+            () => new FallbackDownloader().DownloadAsync(
+                Two(http),
                 target,
                 CancellationToken.None));
 
         Assert.False(File.Exists(target));
         Assert.False(File.Exists(target + ".partial"));
+    }
+
+    [Fact]
+    public async Task DownloadAsync_ThrowsWhenNoCandidates()
+    {
+        using var area = new TemporaryDirectory();
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => new FallbackDownloader().DownloadAsync(
+                System.Array.Empty<DownloadCandidate>(),
+                Path.Combine(area.Path, "client.zip"),
+                CancellationToken.None));
     }
 
     private static HttpResponseMessage Response(Uri? finalUri, string body)

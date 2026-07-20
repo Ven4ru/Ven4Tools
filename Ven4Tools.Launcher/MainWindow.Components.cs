@@ -88,10 +88,12 @@ namespace Ven4Tools.Launcher
                 AddLog($"   ⚠️ Мало свободного места: ≈{freeGB} ГБ (рекомендуется минимум 2 ГБ)");
 
             AddLog("🔍 Обновления лаунчера...");
-            var ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-            var currentVersion = ver != null ? $"{ver.Major}.{ver.Minor}.{ver.Build}" : "0.0.0";
-            using var gitHubServiceCheck = new GitHubService();
-            var updateInfo = await gitHubServiceCheck.CheckLauncherUpdate(currentVersion);
+            // CDN version.json — основной источник обнаружения версии лаунчера, GitHub —
+            // резерв (та же CDN-first логика, что у ручной/фоновой проверки). Раньше здесь
+            // была GitHub-only проверка — при блокировке GitHub по SNI обновление не
+            // обнаруживалось бы вовсе (структурно идентичная, но не исправленная дыра).
+            var launcherUpdateSvc = new LauncherUpdateService(AddLog, _downloadSource);
+            var updateInfo = await launcherUpdateSvc.CheckForUpdateAsync();
             if (updateInfo?.HasUpdate == true)
             {
                 AddLog($"   📢 Доступно обновление лаунчера {updateInfo.LatestVersion}");
@@ -556,8 +558,12 @@ namespace Ven4Tools.Launcher
                     }
                 };
 
-            var downloader = new FallbackDownloader(_httpClient);
-            await downloader.DownloadAsync(url, fallbackUrl: null, destPath, ct, expectedSha256: null, progress: progress);
+            // Одиночный источник (компоненты Microsoft: winget/VCLibs/UI.Xaml/WebView2/VC++)
+            // — оборачиваем в список из одного кандидата с обычным клиентом. IP-pinning и
+            // хостинг-зеркало этому потоку не нужны (URL не с cdn.ven4tools.ru).
+            var downloader = new FallbackDownloader();
+            var candidates = new[] { new DownloadCandidate(url, _httpClient, "Источник") };
+            await downloader.DownloadAsync(candidates, destPath, ct, expectedSha256: null, progress: progress);
         }
 
         // Единый сценарий для установщиков-одиночек Microsoft (WebView2, VC++):

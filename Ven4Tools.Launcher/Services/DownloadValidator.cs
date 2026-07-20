@@ -34,6 +34,14 @@ namespace Ven4Tools.Launcher.Services
         {
             if (uri.Scheme != "https") return false;
             var host = uri.Host.ToLowerInvariant();
+
+            // Зеркало релизов на хостинге ven4tools.ru: доверяем ТОЛЬКО пути /releases/.
+            // Остальной сайт (в т.ч. /api/db.php и любые другие эндпоинты) НЕ является
+            // доверенным источником загрузки — на этом хосте живёт обычный сайт с API,
+            // которому нельзя доверять так же широко, как выделенному CDN.
+            if (host == "ven4tools.ru" || host == "www.ven4tools.ru")
+                return uri.AbsolutePath.StartsWith("/releases/", StringComparison.OrdinalIgnoreCase);
+
             return host == "github.com"
                 || host.EndsWith(".github.com", StringComparison.Ordinal)
                 || host == "objects.githubusercontent.com"
