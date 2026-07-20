@@ -14,6 +14,14 @@ public sealed class DownloadValidatorTests
     [InlineData("http://github.com/file.zip", false)]
     [InlineData("https://github.com.evil.example/file.zip", false)]
     [InlineData("https://evil.example/file.zip", false)]
+    // Хостинг-зеркало: доверяем ТОЛЬКО пути /releases/ (регистр не важен).
+    [InlineData("https://ven4tools.ru/releases/Ven4Tools-Client-4.1.8.zip", true)]
+    [InlineData("https://www.ven4tools.ru/releases/Ven4Tools.Setup-3.1.3.exe", true)]
+    [InlineData("https://ven4tools.ru/RELEASES/x.zip", true)]
+    [InlineData("https://ven4tools.ru/api/db.php", false)]
+    [InlineData("https://ven4tools.ru/", false)]
+    [InlineData("https://ven4tools.ru/releases-evil/x.zip", false)]
+    [InlineData("http://ven4tools.ru/releases/x.zip", false)]
     [InlineData("", false)]
     [InlineData("not-a-url", false)]
     public void LauncherAllowlist_RejectsUntrustedLocations(string url, bool expected)
