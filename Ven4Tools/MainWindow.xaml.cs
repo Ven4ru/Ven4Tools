@@ -26,6 +26,7 @@ namespace Ven4Tools
         private CatalogTab?    _catalogTab;
         private InstalledTab?  _installedTab;
         private SystemTab?     _systemTab;
+        private DiagnosticsTab? _diagnosticsTab;
         private WindowsUpdateTab? _windowsUpdateTab;
         private OfficeTab?     _officeTab;
         private ActivationTab? _activationTab;
@@ -169,6 +170,15 @@ namespace Ven4Tools
             if (_systemTab == null) _systemTab = new SystemTab();
             MainFrame.Content = (_systemTab);
             UpdateMascot("system");
+        }
+
+        private void NavigateToDiagnostics(object? sender, RoutedEventArgs? e)
+        {
+            SetActiveButton(btnDiagnosticsTab);
+            AppLogger.Write("📂 Открыта вкладка: Диагностика");
+            if (_diagnosticsTab == null) _diagnosticsTab = new DiagnosticsTab();
+            MainFrame.Content = (_diagnosticsTab);
+            UpdateMascot("system"); // отдельного маскота для этой вкладки нет — используем нейтрального "system"
         }
 
         private void NavigateToWindowsUpdate(object? sender, RoutedEventArgs? e)
@@ -579,7 +589,7 @@ namespace Ven4Tools
 
         private void SetActiveButton(Button activeButton)
         {
-            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnWindowsUpdateTab };
+            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnDiagnosticsTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnWindowsUpdateTab };
             foreach (var btn in buttons)
             {
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");
