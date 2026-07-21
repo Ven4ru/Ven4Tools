@@ -41,6 +41,9 @@ namespace Ven4Tools.Services
         /// <summary>%SystemRoot%\System32\shutdown.exe — часть базовой ОС, путь фиксирован.</summary>
         public static string ShutdownExe { get; } = Path.Combine(SystemDir, "shutdown.exe");
 
+        /// <summary>%SystemRoot%\System32\net.exe — часть базовой ОС, путь фиксирован.</summary>
+        public static string NetExe { get; } = Path.Combine(SystemDir, "net.exe");
+
         /// <summary>%SystemRoot%\System32\notepad.exe — часть базовой ОС, путь фиксирован.</summary>
         public static string NotepadExe { get; } = Path.Combine(SystemDir, "notepad.exe");
 
