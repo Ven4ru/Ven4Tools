@@ -13,10 +13,8 @@ namespace Ven4Tools.Views.Tabs
         {
             InitializeComponent();
 
-            // Обработчики разделов «Информация о системе», логов, Turbo Boost и очистки кэша
-            // Windows Update — подключены. Кнопки запуска диагностики и полного отчёта
-            // (btnRunDiagnostics, btnCopyFullReport) пока не подключены — их обработчики
-            // добавляются в оркестраторе (Task 7).
+            // Обработчики всех кнопок вкладки: информация о системе, логи, Turbo Boost,
+            // очистка кэша Windows Update, запуск диагностики и экспорт полного отчёта.
             btnCopySystemInfo.Click += BtnCopySystemInfo_Click;
             btnOpenLogs.Click += BtnOpenLogs_Click;
             btnOpenLatestLog.Click += BtnOpenLatestLog_Click;
@@ -24,6 +22,8 @@ namespace Ven4Tools.Views.Tabs
             btnDisableTurboBoost.Click += BtnDisableTurboBoost_Click;
             btnEnableTurboBoost.Click += BtnEnableTurboBoost_Click;
             btnClearWuCache.Click += BtnClearWuCache_Click;
+            btnRunDiagnostics.Click += BtnRunDiagnostics_Click;
+            btnCopyFullReport.Click += BtnCopyFullReport_Click;
 
             Loaded += DiagnosticsTab_Loaded;
         }
