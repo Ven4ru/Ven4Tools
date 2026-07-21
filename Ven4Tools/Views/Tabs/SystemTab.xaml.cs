@@ -41,13 +41,7 @@ namespace Ven4Tools.Views.Tabs
             chkUpdateNotifications.Click += (_, _) => SaveSettings();
             sliderCatalogTimeout.ValueChanged += (_, e) => { txtCatalogTimeout.Text = $"{(int)e.NewValue} сек"; SaveSettings(); };
             sliderCheckTimeout.ValueChanged += (_, e) => { txtCheckTimeout.Text = $"{(int)e.NewValue} сек"; SaveSettings(); };
-            btnCopySystemInfo.Click += BtnCopySystemInfo_Click;
-            btnOpenLogs.Click += BtnOpenLogs_Click;
-            btnOpenLatestLog.Click += BtnOpenLatestLog_Click;
-            btnClearLogs.Click += BtnClearLogs_Click;
             btnCheckUpdates.Click += BtnCheckUpdates_Click;
-            btnDisableTurboBoost.Click += BtnDisableTurboBoost_Click;
-            btnEnableTurboBoost.Click += BtnEnableTurboBoost_Click;
             // Подписка на btnSaveSnapshot задаётся в XAML (Click="BtnSaveSnapshot_Click"),
             // повторная подписка в code-behind вызывала двойной вызов обработчика.
 
@@ -76,7 +70,7 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private async void SystemTab_Loaded(object sender, RoutedEventArgs e)
+        private void SystemTab_Loaded(object sender, RoutedEventArgs e)
         {
             // Переподписка при каждом показе вкладки (после Unloaded подписка снимается)
             if (!_connSubscribed)
@@ -89,16 +83,10 @@ namespace Ven4Tools.Views.Tabs
             if (_initialized) return;
             _initialized = true;
 
-            await LoadSystemInfoAsync();
             LoadSourceOrderUI();
             UpdateCacheStats();
             LoadCacheAppsList();
             LoadSnapshotsList();
-
-            await RefreshTurboBoostStatusAsync();
-            bool? turbo = await GetTurboBoostStateAsync();
-            if (turbo.HasValue)
-                AppLogger.Write(turbo.Value ? "⚡ Турбобуст: включён" : "⚡ Турбобуст: отключён");
         }
 
     }
