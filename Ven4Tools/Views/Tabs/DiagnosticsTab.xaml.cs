@@ -20,6 +20,8 @@ namespace Ven4Tools.Views.Tabs
             btnOpenLogs.Click += BtnOpenLogs_Click;
             btnOpenLatestLog.Click += BtnOpenLatestLog_Click;
             btnClearLogs.Click += BtnClearLogs_Click;
+            btnDisableTurboBoost.Click += BtnDisableTurboBoost_Click;
+            btnEnableTurboBoost.Click += BtnEnableTurboBoost_Click;
 
             Loaded += DiagnosticsTab_Loaded;
         }
@@ -30,6 +32,7 @@ namespace Ven4Tools.Views.Tabs
             _initialized = true;
 
             await LoadSystemInfoAsync();
+            await RefreshTurboBoostStatusAsync();
         }
     }
 }
