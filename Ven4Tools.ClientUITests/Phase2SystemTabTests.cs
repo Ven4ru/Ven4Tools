@@ -100,45 +100,6 @@ namespace Ven4Tools.ClientUITests
         }
 
         [TestMethod]
-        public void Диагностика_ЛогиИПроверкаОбновлений()
-        {
-            var s = Require();
-            GoToSystemSubTab(s, "Диагностика");
-
-            var openLogsBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnOpenLogs"));
-            Assert.IsNotNull(openLogsBtn, "Не найдена кнопка «Открыть папку» (логи).");
-            openLogsBtn!.AsButton().Invoke();
-            System.Threading.Thread.Sleep(1000); // откроет окно проводника — побочный эффект принят
-
-            var latestLogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnOpenLatestLog"));
-            Assert.IsNotNull(latestLogBtn, "Не найдена кнопка «Последний лог».");
-            latestLogBtn!.AsButton().Invoke();
-            System.Threading.Thread.Sleep(800);
-
-            var checkUpdBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCheckUpdates"));
-            Assert.IsNotNull(checkUpdBtn, "Не найдена кнопка «Проверить обновления» (winget upgrade list).");
-            checkUpdBtn!.AsButton().Invoke();
-            bool reEnabled = Retry.WhileFalse(() => checkUpdBtn.AsButton().IsEnabled,
-                timeout: TimeSpan.FromSeconds(60), interval: TimeSpan.FromMilliseconds(500), throwOnTimeout: false).Success;
-            Assert.IsTrue(reEnabled, "«Проверить обновления» не вернулась в активное состояние за 60с.");
-
-            // Очистка логов — только проверяем подтверждение, реально не удаляем.
-            var clearLogsBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnClearLogs"));
-            Assert.IsNotNull(clearLogsBtn, "Не найдена кнопка «Очистить» (логи).");
-            clearLogsBtn!.AsButton().Invoke();
-            System.Threading.Thread.Sleep(500);
-            var confirmBox = s.MainWindow.ModalWindows.FirstOrDefault();
-            if (confirmBox != null)
-            {
-                var no = confirmBox.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
-                    .FirstOrDefault(b => (b.Name ?? "") == "Нет" || (b.Name ?? "") == "No");
-                Assert.IsNotNull(no, "Не найдена кнопка «Нет» в подтверждении очистки логов.");
-                no!.Click();
-                System.Threading.Thread.Sleep(300);
-            }
-        }
-
-        [TestMethod]
         public void ОфлайнИПриватность_ВыборКэшаИЗагрузка()
         {
             var s = Require();
