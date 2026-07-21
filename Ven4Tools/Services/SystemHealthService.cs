@@ -212,7 +212,11 @@ namespace Ven4Tools.Services
                 var value = key?.GetValue("HiberbootEnabled");
                 return value != null ? Convert.ToInt32(value) != 0 : null;
             }
-            catch { return null; }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "SystemHealthService.IsFastStartupEnabled");
+                return null;
+            }
         }
 
         public static async Task DisableFastStartupAsync()

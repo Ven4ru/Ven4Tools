@@ -23,7 +23,7 @@ namespace Ven4Tools.Views.Tabs
                 }
                 foreach (var disk in disks)
                 {
-                    if (disk.Health != DiskHealth.Healthy) _lastRunHadCritical = true;
+                    if (disk.Health is DiskHealth.Warning or DiskHealth.Unhealthy) _lastRunHadCritical = true;
                     string icon = disk.Health switch
                     {
                         DiskHealth.Healthy => "🟢",
