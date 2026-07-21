@@ -1,23 +1,14 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Management;
-using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using Microsoft.Win32;
-using Ven4Tools.Models;
 using Ven4Tools.Services;
-using Ven4Tools.Shared;
 
 namespace Ven4Tools.Views.Tabs
 {
-    public partial class SystemTab : UserControl
+    public partial class DiagnosticsTab : UserControl
     {
         // CurrentControlSet — псевдоним активного набора, а не жёсткий ControlSet001:
         // на системах, где активен ControlSet002 (после отказа предыдущей загрузки),
@@ -98,7 +89,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 var psi = new ProcessStartInfo
                 {
-                    FileName = Ven4Tools.Services.TrustedExecutablePaths.PowerCfgExe,
+                    FileName = TrustedExecutablePaths.PowerCfgExe,
                     Arguments = $"/query SCHEME_CURRENT {TurboSubgroup} {TurboSetting}",
                     UseShellExecute = false,
                     CreateNoWindow = true,
@@ -127,7 +118,7 @@ namespace Ven4Tools.Views.Tabs
         {
             var psi = new ProcessStartInfo
             {
-                FileName = Ven4Tools.Services.TrustedExecutablePaths.PowerCfgExe,
+                FileName = TrustedExecutablePaths.PowerCfgExe,
                 Arguments = args,
                 UseShellExecute = false,
                 CreateNoWindow = true,
