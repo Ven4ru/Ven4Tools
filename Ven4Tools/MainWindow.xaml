@@ -76,6 +76,7 @@
 
                         <TextBlock Text="WINDOWS И СИСТЕМА" Style="{StaticResource SectionLabel}"/>
                         <Button x:Name="btnSystemTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE713;" Content="Настройки" Click="NavigateToSystem"/>
+                        <Button x:Name="btnDiagnosticsTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE9D9;" Content="Диагностика" Click="NavigateToDiagnostics"/>
                         <Grid>
                             <Button x:Name="btnWindowsUpdateTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE72E;" Content="Windows Update" Click="NavigateToWindowsUpdate"/>
                             <Border x:Name="badgeWindowsUpdateCount" Background="{StaticResource StatusDanger}" CornerRadius="7"
