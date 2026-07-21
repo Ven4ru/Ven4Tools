@@ -250,10 +250,23 @@ namespace Ven4Tools.Services
                     Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SoftwareDistribution", "Download");
                 if (Directory.Exists(dir))
                 {
-                    foreach (var file in Directory.GetFiles(dir))
+                    var files = Directory.GetFiles(dir);
+                    int deleted = 0;
+                    foreach (var file in files)
                     {
-                        try { File.Delete(file); } catch { /* файл занят службой — пропускаем */ }
+                        try { File.Delete(file); deleted++; }
+                        catch (Exception ex)
+                        {
+                            AppLogger.Write(ex, $"SystemHealthService.ClearWindowsUpdateCacheAsync: не удалось удалить {file}");
+                        }
                     }
+                    // Ни один файл не удалился при непустом каталоге — обычно значит,
+                    // что службы не остановились (см. RunNetAsync — он не бросает
+                    // исключение на "уже остановлена", только на реальный сбой это
+                    // и всплывёт: файлы останутся залоченными). Даём знать вызывающему,
+                    // а не молча "успешно очистили ничего".
+                    if (files.Length > 0 && deleted == 0)
+                        throw new Exception("Не удалось удалить ни одного файла кэша — возможно, службы Windows Update не остановились");
                 }
             }
             finally
@@ -275,7 +288,19 @@ namespace Ven4Tools.Services
                 RedirectStandardError = true
             };
             using var process = Process.Start(psi) ?? throw new Exception("Не удалось запустить net.exe");
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
             await process.WaitForExitAsync();
+            await stdoutTask;
+            string err = await stderrTask;
+            // net.exe возвращает ненулевой код и в безобидных случаях (служба уже
+            // остановлена/запущена) — не бросаем исключение здесь (в отличие от
+            // RunPowerCfgAsync), просто логируем. Настоящий сбой (нет прав и т.п.)
+            // всё равно не останется незамеченным: ClearWindowsUpdateCacheAsync
+            // выше бросит исключение, если из-за незакрытых хендлов не удалится
+            // ни один файл кэша.
+            if (process.ExitCode != 0)
+                AppLogger.Write($"[SystemHealthService] net {action} {service} завершился с кодом {process.ExitCode}: {err}");
         }
 
         private static List<EventRecordSnapshot> QueryEvents(
