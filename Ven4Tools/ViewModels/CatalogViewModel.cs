@@ -298,6 +298,17 @@ namespace Ven4Tools.ViewModels
                 Suggestions.Clear();
                 SuggestionsStatus = "⏳ Поиск по источникам...";
 
+                // Если пользователь ввёл название категории («видео», «антивирус»),
+                // а не имя пакета — ищем по тегу манифеста. Choco по тегам искать не
+                // умеет, поэтому в тег-режиме источник один (winget); слово-категория
+                // не является осмысленным именем choco-пакета, так что ничего не теряем.
+                var tags = CategorySearchMap.TryGetTags(query);
+                if (tags != null)
+                {
+                    await RunTagSuggestionsAsync(tags, query, token);
+                    return;
+                }
+
                 var wingetTask = WingetService.SearchAsync(query, token);
                 var chocoTask = PackageManagerService.SearchChocoAsync(query, token);
                 await Task.WhenAll(wingetTask, chocoTask);
@@ -330,6 +341,36 @@ namespace Ven4Tools.ViewModels
             {
                 if (!token.IsCancellationRequested)
                     SuggestionsStatus = "⚠ Winget не ответил вовремя";
+            }
+        }
+
+        // Поиск по тегам категории: по каждому тегу отдельный winget-вызов, результаты
+        // объединяются с дедупликацией по Id. Лимит 15 сохранён после объединения — тот
+        // же, что у SearchAsync (окно подсказок рассчитано на короткий список).
+        private async Task RunTagSuggestionsAsync(string[] tags, string query, CancellationToken token)
+        {
+            var merged = new List<WingetPackage>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var tag in tags)
+            {
+                var found = await WingetService.SearchByTagAsync(tag, token);
+                if (token.IsCancellationRequested) return;
+                foreach (var pkg in found)
+                    if (seen.Add(pkg.Id)) merged.Add(pkg);
+            }
+
+            if (merged.Count == 0)
+            {
+                SuggestionsStatus = $"😕 Ничего не найдено по категории «{query}»";
+                return;
+            }
+            SuggestionsStatus = "";
+
+            foreach (var pkg in merged.Take(15))
+            {
+                var captureId = pkg.Id; var captureName = pkg.Name;
+                Suggestions.Add(new SearchSuggestionViewModel(pkg.Name, $"winget:{pkg.Id}", "📦 Winget",
+                    () => AddWingetSuggestion(captureName, captureId)));
             }
         }
 
