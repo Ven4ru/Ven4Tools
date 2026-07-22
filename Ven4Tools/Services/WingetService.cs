@@ -106,6 +106,93 @@ namespace Ven4Tools.Services
         }
 
         /// <summary>
+        /// Search winget by manifest <paramref name="tag"/> (e.g. "video", "antivirus").
+        /// Структурно идентичен <see cref="SearchAsync"/>, но ищет по тегу манифеста
+        /// (winget search --tag) — так находятся приложения, когда пользователь ввёл
+        /// не имя пакета, а категорию (см. CategorySearchMap). Returns up to 15
+        /// deduplicated results (IDs must contain a dot).
+        /// Бросает <see cref="TimeoutException"/>, если winget не ответил за <see cref="UiCallTimeout"/>.
+        /// </summary>
+        public static async Task<List<WingetPackage>> SearchByTagAsync(
+            string tag, CancellationToken token = default)
+        {
+            var results = new List<WingetPackage>();
+            // Теги — фиксированный внутренний словарь (CategorySearchMap), не ручной
+            // ввод, поэтому санитизация не нужна для безопасности; прогоняем через тот
+            // же SanitizeQuery лишь для единообразия — все валидные теги (слова с
+            // дефисами) она пропускает без изменений.
+            tag = CommandLineGuard.SanitizeQuery(tag);
+            if (string.IsNullOrEmpty(tag)) return results;
+
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            timeoutCts.CancelAfter(UiCallTimeout);
+            try
+            {
+                // Аргументы отдельными токенами через ArgumentList (см. SearchAsync) —
+                // .NET экранирует каждый, тег не может «вырваться» в посторонние флаги.
+                var psi = WingetRunner.CreateStartInfo(new[]
+                {
+                    "search", "--tag", tag, "--source", "winget", "--accept-source-agreements"
+                });
+                if (psi == null) return results;
+
+                using var process = Process.Start(psi);
+                if (process == null) return results;
+
+                // Kill(entireProcessTree) — по таймауту/отмене убиваем winget и потомков,
+                // иначе пайп не закрывается и ReadToEndAsync зависает.
+                using var reg = timeoutCts.Token.Register(() =>
+                    { try { process.Kill(entireProcessTree: true); } catch { } });
+
+                var stderrTask = process.StandardError.ReadToEndAsync();
+                string output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync(timeoutCts.Token);
+                await stderrTask;
+
+                bool headerPassed = false;
+                foreach (var line in output.Split(
+                    new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (!headerPassed)
+                    {
+                        if (WingetRunner.IsTableSeparator(line)) headerPassed = true;
+                        continue;
+                    }
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    var parts = Regex.Split(line.Trim(), @"\s{2,}");
+                    if (parts.Length < 2) continue;
+
+                    string id = parts[1].Trim();
+                    if (!id.Contains('.')) continue; // настоящие winget ID всегда содержат точку
+
+                    results.Add(new WingetPackage
+                    {
+                        Name    = parts[0].Trim(),
+                        Id      = id,
+                        Version = parts.Length > 2 ? parts[2].Trim() : "",
+                        Source  = parts.Length > 3 ? parts[3].Trim() : "winget"
+                    });
+                }
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !token.IsCancellationRequested)
+            {
+                throw new TimeoutException("Превышено время ожидания ответа winget при поиске по тегу.");
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[WingetService] SearchByTagAsync: {ex.Message}");
+            }
+
+            return results
+                .GroupBy(p => p.Id)
+                .Select(g => g.First())
+                .Take(15)
+                .ToList();
+        }
+
+        /// <summary>
         /// Validate a winget package by exact ID. Returns (Name, Version) or (null, null).
         /// Бросает <see cref="TimeoutException"/>, если winget не ответил за <see cref="UiCallTimeout"/>.
         /// </summary>
