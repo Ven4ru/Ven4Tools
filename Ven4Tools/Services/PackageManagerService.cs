@@ -176,8 +176,10 @@ namespace Ven4Tools.Services
                 psi.ArgumentList.Add("8");
                 using var p = Process.Start(psi);
                 if (p == null) return results;
-                var errTask = p.StandardError.ReadToEndAsync();
-                string output = await p.StandardOutput.ReadToEndAsync();
+                // Токен передан в чтение (не только в WaitForExitAsync) — иначе зависший
+                // choco мог бы задержать возврат дольше, чем ожидает вызывающий код.
+                var errTask = p.StandardError.ReadToEndAsync(token);
+                string output = await p.StandardOutput.ReadToEndAsync(token);
                 await p.WaitForExitAsync(token);
                 await errTask;
                 foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
@@ -186,6 +188,13 @@ namespace Ven4Tools.Services
                     if (parts.Length >= 2)
                         results.Add((parts[0].Trim(), parts[0].Trim(), parts[1].Trim()));
                 }
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                // Отмена вызывающей стороной — пробрасываем, а не превращаем в пустой
+                // список: вызывающий код должен отличать «отменено» от «не найдено»
+                // (см. тот же фикс в WingetService).
+                throw;
             }
             catch (Exception ex) { AppLogger.Write($"[PackageManagerService] Поиск в Chocolatey: {ex.Message}"); }
             return results;

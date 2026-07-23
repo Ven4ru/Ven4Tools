@@ -144,9 +144,16 @@ namespace Ven4Tools.Services
 
                 await using var fs = new FileStream(partial, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
                 await using var stream = await resp.Content.ReadAsStreamAsync(token);
+                // Sliding-таймаут простоя между чтениями — ResponseHeadersRead не покрывает
+                // HttpClient.Timeout на потоковое чтение тела; без этого зависший/крайне
+                // медленный сервер вешал бы офлайн-кэширование до ручной отмены (см. тот же
+                // фикс в InstallationService/FallbackDownloader).
+                using var idleCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                idleCts.CancelAfter(TimeSpan.FromSeconds(60));
                 int bytes;
-                while ((bytes = await stream.ReadAsync(buf.AsMemory(), token)) > 0)
+                while ((bytes = await stream.ReadAsync(buf.AsMemory(), idleCts.Token)) > 0)
                 {
+                    idleCts.CancelAfter(TimeSpan.FromSeconds(60));
                     await fs.WriteAsync(buf.AsMemory(0, bytes), token);
                     read += bytes;
                     if (total > 0)
@@ -169,8 +176,10 @@ namespace Ven4Tools.Services
                 progress?.Report(($"✅ {app.Name}", 100));
                 return true;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
+                // Отмена вызывающей стороной — пробрасываем. Idle-таймаут (не token)
+                // падает в общий catch ниже и трактуется как обычный сбой источника.
                 try { if (File.Exists(partial)) File.Delete(partial); } catch { }
                 throw;
             }
