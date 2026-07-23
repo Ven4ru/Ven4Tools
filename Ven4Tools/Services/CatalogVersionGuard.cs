@@ -47,8 +47,12 @@ namespace Ven4Tools.Services
             {
                 int current = (_cached ??= ReadFromDisk());
                 if (version <= current) return;
-                Persist(version);
-                _cached = version;
+                // _cached обновляем ТОЛЬКО если запись реально удалась — иначе текущий
+                // процесс считал бы версию сохранённой, а после перезапуска ReadFromDisk()
+                // вернула бы старое значение (защита тихо откатилась бы, при этом ничего
+                // не сообщив вызывающему коду).
+                if (Persist(version))
+                    _cached = version;
             }
         }
 
@@ -68,10 +72,18 @@ namespace Ven4Tools.Services
             return 0;
         }
 
-        private static void Persist(int version)
+        private static bool Persist(int version)
         {
-            try { FileHelper.WriteAllTextAtomic(_path, Protect(version)); }
-            catch (Exception ex) { AppLogger.Write($"[CatalogVersionGuard] Persist: {ex.Message}"); }
+            try
+            {
+                FileHelper.WriteAllTextAtomic(_path, Protect(version));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[CatalogVersionGuard] Persist: {ex.Message}");
+                return false;
+            }
         }
 
         internal static string Protect(int version)

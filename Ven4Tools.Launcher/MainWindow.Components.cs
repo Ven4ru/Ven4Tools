@@ -509,6 +509,13 @@ namespace Ven4Tools.Launcher
                     $"Add-AppxPackage -Path '{tempMsix.Replace("'", "''")}' -ForceApplicationShutdown\r\n",
                     Encoding.UTF8);
 
+                // Держим temp-скрипт открытым с FileShare.Read НЕПРЕРЫВНО от записи до
+                // завершения PowerShell — иначе между закрытием файла записи и открытием
+                // PowerShell остаётся окно для подмены содержимого другим процессом того
+                // же пользователя (TOCTOU). Зеркалирует защиту InstallationService/пакетов
+                // VCLibs-UI.Xaml-msix выше в этом же методе.
+                using var scriptGuard = new FileStream(tempScript, FileMode.Open, FileAccess.Read, FileShare.Read);
+
                 var psi = new ProcessStartInfo
                 {
                     FileName               = Services.TrustedExecutablePaths.PowerShellExe,
@@ -563,7 +570,10 @@ namespace Ven4Tools.Launcher
             // хостинг-зеркало этому потоку не нужны (URL не с cdn.ven4tools.ru).
             var downloader = new FallbackDownloader();
             var candidates = new[] { new DownloadCandidate(url, _httpClient, "Источник") };
-            await downloader.DownloadAsync(candidates, destPath, ct, expectedSha256: null, progress: progress);
+            // Защитный хендл закрывается сразу — эти файлы (VCLibs/UI.Xaml/msix) получают
+            // собственную непрерывную защиту FileShare.Read в RunWingetInstallScriptAsync
+            // (открывается заново перед проверкой Authenticode-подписи).
+            using var _ = await downloader.DownloadAsync(candidates, destPath, ct, expectedSha256: null, progress: progress);
         }
 
         // Единый сценарий для установщиков-одиночек Microsoft (WebView2, VC++):

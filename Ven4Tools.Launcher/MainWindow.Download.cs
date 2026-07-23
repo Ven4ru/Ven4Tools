@@ -139,7 +139,10 @@ namespace Ven4Tools.Launcher
             try
             {
                 var downloader = new FallbackDownloader();
-                string usedSource = await downloader.DownloadAsync(
+                // using держит FileShare.Read-хендл на tempZip открытым до конца метода
+                // (в т.ч. через SafeZipExtractor.ExtractAsync ниже) — закрывает окно TOCTOU
+                // между проверкой SHA256 внутри DownloadAsync и распаковкой архива.
+                using var downloadResult = await downloader.DownloadAsync(
                     candidates,
                     tempZip,
                     token,
@@ -159,6 +162,7 @@ namespace Ven4Tools.Launcher
                         progressDownload.Value = 0;
                         txtDownloadStatus.Text = "Скачивание: 0%";
                     });
+                string usedSource = downloadResult.SourceLabel;
                 AddLog($"📥 Источник загрузки: {usedSource}");
 
                 token.ThrowIfCancellationRequested();

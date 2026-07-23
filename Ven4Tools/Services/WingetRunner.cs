@@ -88,6 +88,18 @@ namespace Ven4Tools.Services
 
         public static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
 
+        // ReadToEndAsync/ReadToEnd без токена завершаются только когда пайп закрывается
+        // (процесс завершился и освободил хендлы). Kill(true) обычно это гарантирует, но
+        // если он не сработал (запись в catch { } проглатывает исключение) или пайп
+        // унаследован процессом вне убитого дерева — ожидание может зависнуть навсегда,
+        // и обещанный внешний таймаут перестаёт быть верхней границей. Даём разумный
+        // grace-период после kill; если труба не закрылась — не ждём бесконечно.
+        private static async Task<string?> ReadWithGraceAsync(Task<string> readTask, TimeSpan grace)
+        {
+            var completed = await Task.WhenAny(readTask, Task.Delay(grace));
+            return completed == readTask ? await readTask : null;
+        }
+
         // Строка-разделитель таблицы winget: под строкой заголовка колонок winget
         // печатает строку из дефисов (с пробелами между колонками). Единый строгий
         // критерий для всех парсеров вывода winget: непустая строка только из дефисов
@@ -153,8 +165,8 @@ namespace Ven4Tools.Services
                 // процессы, без них пайп не закрывается и ReadToEndAsync зависает.
                 try { p.Kill(true); } catch { }
             }
-            string output = await outputTask;
-            await stderrTask;
+            string output = await ReadWithGraceAsync(outputTask, TimeSpan.FromSeconds(5)) ?? string.Empty;
+            await ReadWithGraceAsync(stderrTask, TimeSpan.FromSeconds(5));
             return (exitCode, output);
         }
 
@@ -205,8 +217,8 @@ namespace Ven4Tools.Services
                 // процессы, без них пайп не закрывается и ReadToEndAsync зависает.
                 try { p.Kill(true); } catch { }
             }
-            string output = await outputTask;
-            await stderrTask;
+            string output = await ReadWithGraceAsync(outputTask, TimeSpan.FromSeconds(5)) ?? string.Empty;
+            await ReadWithGraceAsync(stderrTask, TimeSpan.FromSeconds(5));
             return (exitCode, output);
         }
 
@@ -252,6 +264,11 @@ namespace Ven4Tools.Services
             {
                 try { p.Kill(true); } catch { }
                 onLine("⚠ winget завис — принудительное завершение");
+                // Не await stderrTask напрямую — при неуспешном Kill пайп может не
+                // закрыться и подвесить возврат из метода. Ограниченное ожидание не
+                // блокирует навсегда и всё равно наблюдает задачу (не оставляет
+                // необработанное исключение в фоне).
+                await ReadWithGraceAsync(stderrTask, TimeSpan.FromSeconds(5));
                 return -1;
             }
             string stderrOutput = await stderrTask;

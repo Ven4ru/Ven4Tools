@@ -36,11 +36,12 @@ public sealed class FallbackDownloaderTests
         }));
         string? switchedTo = null;
 
-        string usedSource = await new FallbackDownloader().DownloadAsync(
+        using var downloadResult = await new FallbackDownloader().DownloadAsync(
             Two(http),
             Path.Combine(area.Path, "client.zip"),
             CancellationToken.None,
             switchingTo: label => switchedTo = label);
+        string usedSource = downloadResult.SourceLabel;
 
         Assert.Equal("GitHub", usedSource);
         Assert.Equal("GitHub", switchedTo);
@@ -58,11 +59,12 @@ public sealed class FallbackDownloaderTests
         using var http = new HttpClient(new DelegateHandler(
             request => Response(request.RequestUri, "primary payload")));
 
-        string usedSource = await new FallbackDownloader().DownloadAsync(
+        using var downloadResult = await new FallbackDownloader().DownloadAsync(
             Two(http),
             Path.Combine(area.Path, "client.zip"),
             CancellationToken.None,
             switchingTo: _ => switched = true);
+        string usedSource = downloadResult.SourceLabel;
 
         Assert.Equal("CDN", usedSource);
         Assert.False(switched); // основной сработал — переключения не было
@@ -106,10 +108,11 @@ public sealed class FallbackDownloaderTests
             new DownloadCandidate(FallbackUrl, http, "GitHub"),
         };
 
-        string usedSource = await new FallbackDownloader().DownloadAsync(
+        using var downloadResult = await new FallbackDownloader().DownloadAsync(
             candidates,
             Path.Combine(area.Path, "client.zip"),
             CancellationToken.None);
+        string usedSource = downloadResult.SourceLabel;
 
         Assert.Equal("GitHub", usedSource);
         // Недоверенный резерв не запрашивался — только CDN (503) и GitHub.
@@ -180,11 +183,12 @@ public sealed class FallbackDownloaderTests
                 : Response(request.RequestUri, expectedBody)));
         string target = Path.Combine(area.Path, "client.zip");
 
-        string usedSource = await new FallbackDownloader().DownloadAsync(
+        using var downloadResult = await new FallbackDownloader().DownloadAsync(
             Two(http),
             target,
             CancellationToken.None,
             expectedHash);
+        string usedSource = downloadResult.SourceLabel;
 
         Assert.Equal("GitHub", usedSource);
         Assert.Equal(expectedBody, await File.ReadAllTextAsync(target));
