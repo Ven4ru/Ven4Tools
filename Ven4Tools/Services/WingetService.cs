@@ -94,8 +94,11 @@ namespace Ven4Tools.Services
                 using var reg = timeoutCts.Token.Register(() =>
                     { try { process.Kill(entireProcessTree: true); } catch { } });
 
-                var stderrTask = process.StandardError.ReadToEndAsync();
-                string output = await process.StandardOutput.ReadToEndAsync();
+                // Токен таймаута передан прямо в ReadToEndAsync (не только в
+                // WaitForExitAsync) — иначе при неудачном Kill (см. комментарий выше)
+                // чтение зависшего пайпа само может не иметь верхней границы.
+                var stderrTask = process.StandardError.ReadToEndAsync(timeoutCts.Token);
+                string output = await process.StandardOutput.ReadToEndAsync(timeoutCts.Token);
                 await process.WaitForExitAsync(timeoutCts.Token);
                 await stderrTask;
 
@@ -185,8 +188,10 @@ namespace Ven4Tools.Services
                 using var reg = timeoutCts.Token.Register(() =>
                     { try { process.Kill(entireProcessTree: true); } catch { } });
 
-                var stderrTask = process.StandardError.ReadToEndAsync();
-                string output = await process.StandardOutput.ReadToEndAsync();
+                // Токен таймаута передан прямо в ReadToEndAsync — см. аналогичный
+                // комментарий в SearchInternalAsync выше.
+                var stderrTask = process.StandardError.ReadToEndAsync(timeoutCts.Token);
+                string output = await process.StandardOutput.ReadToEndAsync(timeoutCts.Token);
                 await process.WaitForExitAsync(timeoutCts.Token);
                 await stderrTask;
                 if (process.ExitCode != 0) return (null, null);

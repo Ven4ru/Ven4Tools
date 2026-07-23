@@ -355,7 +355,7 @@ namespace Ven4Tools.Views.Tabs
                 using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, token);
                 response.EnsureSuccessStatusCode();
 
-                using var src = await response.Content.ReadAsStreamAsync();
+                using var src = await response.Content.ReadAsStreamAsync(token);
                 using var dst = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
                 var  buf      = new byte[65536];
                 int  read;
@@ -363,8 +363,15 @@ namespace Ven4Tools.Views.Tabs
                 long? size    = response.Content.Headers.ContentLength;
                 int  lastPct  = -1;
 
-                while ((read = await src.ReadAsync(buf, token)) > 0)
+                // Sliding-таймаут простоя между чтениями — тот же класс риска, что и
+                // в InstallationService/FallbackDownloader/OfflineService: зависший или
+                // крайне медленный сервер иначе вешал бы загрузку до ручной отмены.
+                using var idleCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                idleCts.CancelAfter(TimeSpan.FromSeconds(60));
+
+                while ((read = await src.ReadAsync(buf, idleCts.Token)) > 0)
                 {
+                    idleCts.CancelAfter(TimeSpan.FromSeconds(60));
                     await dst.WriteAsync(buf, 0, read, token);
                     total += read;
 
@@ -394,8 +401,10 @@ namespace Ven4Tools.Views.Tabs
                 _downloadedFilePath = tempFile;
                 btnInstallOffice.IsEnabled = true;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
+                // Idle-таймаут (не token) падает в общий catch ниже — показывается как
+                // обычная ошибка загрузки, а не как «отменено пользователем».
                 AppLogger.Write("⏹️ Скачивание отменено");
                 SetProgress(true, "⏹️ Отменено", 0, "");
                 try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
