@@ -344,20 +344,21 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        // Поиск по тегам категории: по каждому тегу отдельный winget-вызов, результаты
+        // Поиск по тегам категории: winget-вызовы по всем тегам идут параллельно
+        // (Task.WhenAll — как у соседнего RunSearchSuggestionsAsync с winget+choco),
+        // иначе при 2 тегах окно ожидания растягивалось до 2×UiCallTimeout. Результаты
         // объединяются с дедупликацией по Id. Лимит 15 сохранён после объединения — тот
         // же, что у SearchAsync (окно подсказок рассчитано на короткий список).
         private async Task RunTagSuggestionsAsync(string[] tags, string query, CancellationToken token)
         {
+            var results = await Task.WhenAll(tags.Select(t => WingetService.SearchByTagAsync(t, token)));
+            if (token.IsCancellationRequested) return;
+
             var merged = new List<WingetPackage>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var tag in tags)
-            {
-                var found = await WingetService.SearchByTagAsync(tag, token);
-                if (token.IsCancellationRequested) return;
+            foreach (var found in results)
                 foreach (var pkg in found)
                     if (seen.Add(pkg.Id)) merged.Add(pkg);
-            }
 
             if (merged.Count == 0)
             {

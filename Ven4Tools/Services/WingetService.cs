@@ -25,9 +25,52 @@ namespace Ven4Tools.Services
         public static async Task<List<WingetPackage>> SearchAsync(
             string query, CancellationToken token = default)
         {
-            var results = new List<WingetPackage>();
             query = CommandLineGuard.SanitizeQuery(query);
-            if (string.IsNullOrEmpty(query)) return results;
+            if (string.IsNullOrEmpty(query)) return new List<WingetPackage>();
+
+            return await SearchInternalAsync(
+                new[] { "search", "--name", query, "--source", "winget", "--accept-source-agreements" },
+                "Превышено время ожидания ответа winget при поиске.",
+                "SearchAsync",
+                token);
+        }
+
+        /// <summary>
+        /// Search winget by manifest <paramref name="tag"/> (e.g. "video", "antivirus").
+        /// Структурно идентичен <see cref="SearchAsync"/>, но ищет по тегу манифеста
+        /// (winget search --tag) — так находятся приложения, когда пользователь ввёл
+        /// не имя пакета, а категорию (см. CategorySearchMap). Returns up to 15
+        /// deduplicated results (IDs must contain a dot).
+        /// Бросает <see cref="TimeoutException"/>, если winget не ответил за <see cref="UiCallTimeout"/>.
+        /// </summary>
+        public static async Task<List<WingetPackage>> SearchByTagAsync(
+            string tag, CancellationToken token = default)
+        {
+            // Теги — фиксированный внутренний словарь (CategorySearchMap), не ручной
+            // ввод, поэтому санитизация не нужна для безопасности; прогоняем через тот
+            // же SanitizeQuery лишь для единообразия — все валидные теги (слова с
+            // дефисами) она пропускает без изменений.
+            tag = CommandLineGuard.SanitizeQuery(tag);
+            if (string.IsNullOrEmpty(tag)) return new List<WingetPackage>();
+
+            return await SearchInternalAsync(
+                new[] { "search", "--tag", tag, "--source", "winget", "--accept-source-agreements" },
+                "Превышено время ожидания ответа winget при поиске по тегу.",
+                "SearchByTagAsync",
+                token);
+        }
+
+        /// <summary>
+        /// Общее ядро <see cref="SearchAsync"/> и <see cref="SearchByTagAsync"/>:
+        /// запуск winget с заданными <paramref name="args"/>, парсинг таблицы,
+        /// дедупликация по Id и обрезка до 15 результатов. Отличаются вызывающие лишь
+        /// набором аргументов, текстом <paramref name="timeoutMessage"/> и контекстом
+        /// лога <paramref name="logContext"/>.
+        /// </summary>
+        private static async Task<List<WingetPackage>> SearchInternalAsync(
+            string[] args, string timeoutMessage, string logContext, CancellationToken token)
+        {
+            var results = new List<WingetPackage>();
 
             // Внутренний таймаут поверх внешнего токена: даже без токена (диалоги
             // передают default) зависший winget будет принудительно завершён.
@@ -40,10 +83,7 @@ namespace Ven4Tools.Services
                 // пользовательский ввод не может «вырваться» из кавычек в посторонние
                 // winget-флаги — устойчиво даже при ослаблении набора символов в
                 // CommandLineGuard, в отличие от прямой строковой интерполяции.
-                var psi = WingetRunner.CreateStartInfo(new[]
-                {
-                    "search", "--name", query, "--source", "winget", "--accept-source-agreements"
-                });
+                var psi = WingetRunner.CreateStartInfo(args);
                 if (psi == null) return results;
 
                 using var process = Process.Start(psi);
@@ -90,99 +130,12 @@ namespace Ven4Tools.Services
                 // Именно таймаут (а не отмена пользователем через внешний токен) —
                 // сообщаем вызывающему явным исключением, чтобы UI показал ошибку
                 // вместо «вечного поиска».
-                throw new TimeoutException("Превышено время ожидания ответа winget при поиске.");
+                throw new TimeoutException(timeoutMessage);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                AppLogger.Write($"[WingetService] SearchAsync: {ex.Message}");
-            }
-
-            return results
-                .GroupBy(p => p.Id)
-                .Select(g => g.First())
-                .Take(15)
-                .ToList();
-        }
-
-        /// <summary>
-        /// Search winget by manifest <paramref name="tag"/> (e.g. "video", "antivirus").
-        /// Структурно идентичен <see cref="SearchAsync"/>, но ищет по тегу манифеста
-        /// (winget search --tag) — так находятся приложения, когда пользователь ввёл
-        /// не имя пакета, а категорию (см. CategorySearchMap). Returns up to 15
-        /// deduplicated results (IDs must contain a dot).
-        /// Бросает <see cref="TimeoutException"/>, если winget не ответил за <see cref="UiCallTimeout"/>.
-        /// </summary>
-        public static async Task<List<WingetPackage>> SearchByTagAsync(
-            string tag, CancellationToken token = default)
-        {
-            var results = new List<WingetPackage>();
-            // Теги — фиксированный внутренний словарь (CategorySearchMap), не ручной
-            // ввод, поэтому санитизация не нужна для безопасности; прогоняем через тот
-            // же SanitizeQuery лишь для единообразия — все валидные теги (слова с
-            // дефисами) она пропускает без изменений.
-            tag = CommandLineGuard.SanitizeQuery(tag);
-            if (string.IsNullOrEmpty(tag)) return results;
-
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(token);
-            timeoutCts.CancelAfter(UiCallTimeout);
-            try
-            {
-                // Аргументы отдельными токенами через ArgumentList (см. SearchAsync) —
-                // .NET экранирует каждый, тег не может «вырваться» в посторонние флаги.
-                var psi = WingetRunner.CreateStartInfo(new[]
-                {
-                    "search", "--tag", tag, "--source", "winget", "--accept-source-agreements"
-                });
-                if (psi == null) return results;
-
-                using var process = Process.Start(psi);
-                if (process == null) return results;
-
-                // Kill(entireProcessTree) — по таймауту/отмене убиваем winget и потомков,
-                // иначе пайп не закрывается и ReadToEndAsync зависает.
-                using var reg = timeoutCts.Token.Register(() =>
-                    { try { process.Kill(entireProcessTree: true); } catch { } });
-
-                var stderrTask = process.StandardError.ReadToEndAsync();
-                string output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync(timeoutCts.Token);
-                await stderrTask;
-
-                bool headerPassed = false;
-                foreach (var line in output.Split(
-                    new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    if (!headerPassed)
-                    {
-                        if (WingetRunner.IsTableSeparator(line)) headerPassed = true;
-                        continue;
-                    }
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-
-                    var parts = Regex.Split(line.Trim(), @"\s{2,}");
-                    if (parts.Length < 2) continue;
-
-                    string id = parts[1].Trim();
-                    if (!id.Contains('.')) continue; // настоящие winget ID всегда содержат точку
-
-                    results.Add(new WingetPackage
-                    {
-                        Name    = parts[0].Trim(),
-                        Id      = id,
-                        Version = parts.Length > 2 ? parts[2].Trim() : "",
-                        Source  = parts.Length > 3 ? parts[3].Trim() : "winget"
-                    });
-                }
-            }
-            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !token.IsCancellationRequested)
-            {
-                throw new TimeoutException("Превышено время ожидания ответа winget при поиске по тегу.");
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex)
-            {
-                AppLogger.Write($"[WingetService] SearchByTagAsync: {ex.Message}");
+                AppLogger.Write($"[WingetService] {logContext}: {ex.Message}");
             }
 
             return results
