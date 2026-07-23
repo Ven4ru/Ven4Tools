@@ -339,11 +339,17 @@ namespace Ven4Tools.Launcher.Services
                 // зависший поток на ResponseHeadersRead блокирует обновление навсегда.
                 var downloader = new FallbackDownloader();
                 using var downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-                string source = await downloader.DownloadAsync(
+                // using держит FileShare.Read-хендл на setupPath открытым до Process.Start
+                // ниже — закрывает окно TOCTOU между проверкой SHA256 и запуском установщика
+                // (уникальная папка защищает от заранее подложенного файла, но не от процесса
+                // того же пользователя, наблюдающего за %TEMP% и подменяющего файл после его
+                // появления).
+                using var downloadResult = await downloader.DownloadAsync(
                     candidates,
                     setupPath,
                     downloadCts.Token,
                     updateInfo.ExpectedSha256);
+                string source = downloadResult.SourceLabel;
                 Log($"Целостность установщика подтверждена (SHA256), источник: {source}.");
 
                 // Заметка: при появлении сертификата подписи кода здесь дополнительно
@@ -455,11 +461,15 @@ namespace Ven4Tools.Launcher.Services
 
                 var downloader = new FallbackDownloader();
                 using var downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-                string source = await downloader.DownloadAsync(
+                // using держит FileShare.Read-хендл на setupPath открытым до Process.Start
+                // ниже — закрывает окно TOCTOU между проверкой SHA256 и запуском установщика
+                // (см. аналогичный фикс в ResolveAndInstallSetupUpdateAsync выше).
+                using var downloadResult = await downloader.DownloadAsync(
                     candidates,
                     setupPath,
                     downloadCts.Token,
                     latest.ExpectedSha256);
+                string source = downloadResult.SourceLabel;
                 Log($"Целостность установщика подтверждена (SHA256), источник: {source}.");
 
                 // Заметка: при появлении сертификата подписи кода здесь дополнительно

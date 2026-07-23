@@ -132,6 +132,13 @@ namespace Ven4Tools.Services
                 // вместо «вечного поиска».
                 throw new TimeoutException(timeoutMessage);
             }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                // Отмена вызывающей стороной (её собственный token) — пробрасываем, а не
+                // превращаем в пустой список: вызывающий код должен отличать «отменено»
+                // от «ничего не найдено» (см. соответствующий catch на его стороне).
+                throw;
+            }
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
@@ -207,6 +214,12 @@ namespace Ven4Tools.Services
                 // Таймаут (не отмена пользователем) — отличаем от «не найдено» (null,null),
                 // чтобы диалог показал понятное сообщение.
                 throw new TimeoutException("Превышено время ожидания ответа winget при проверке ID.");
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                // Отмена вызывающей стороной — пробрасываем, а не превращаем в (null, null):
+                // вызывающий код должен отличать «отменено» от «пакет не найден».
+                throw;
             }
             catch { return (null, null); }
         }

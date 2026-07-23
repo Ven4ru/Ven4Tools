@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Text.RegularExpressions;
 
 namespace Ven4Tools.Services
 {
@@ -141,10 +142,18 @@ namespace Ven4Tools.Services
                         windowsAppsRoot, $"Microsoft.DesktopAppInstaller_*_{arch}__8wekyb3d8bbwe");
                     // Может встретиться больше одной версии пакета (например, в окне
                     // между авто-обновлением из Store и очисткой старой) — берём
-                    // самую свежую по имени папки (версия — часть имени, сортировка
-                    // строкой достаточно точна для этого формата "X.Y.Z.W").
-                    Array.Sort(candidates, StringComparer.OrdinalIgnoreCase);
-                    Array.Reverse(candidates);
+                    // самую свежую. Сортировка СТРОКОЙ здесь некорректна: "1.9..."
+                    // лексически больше "1.27...", можно выбрать более старый пакет.
+                    // Парсим версию из имени папки и сравниваем как System.Version;
+                    // если формат имени неожиданный (парсинг не удался для обеих
+                    // сторон) — откат на строковую сортировку, не хуже прежнего.
+                    Array.Sort(candidates, (a, b) =>
+                    {
+                        var va = TryParsePackageVersion(a);
+                        var vb = TryParsePackageVersion(b);
+                        if (va != null && vb != null) return vb.CompareTo(va);
+                        return string.Compare(b, a, StringComparison.OrdinalIgnoreCase);
+                    });
 
                     foreach (var dir in candidates)
                     {
@@ -170,6 +179,20 @@ namespace Ven4Tools.Services
                 _packageWingetCache[arch] = result;
                 return result;
             }
+        }
+
+        private static readonly Regex _packageVersionRegex =
+            new(@"_(?<ver>\d+(?:\.\d+){1,3})_", RegexOptions.Compiled);
+
+        // Извлекает версию из имени папки пакета вида
+        // "Microsoft.DesktopAppInstaller_X.Y.Z.W_arch__8wekyb3d8bbwe". Возвращает
+        // null при неожиданном формате имени — вызывающий код тогда откатывается
+        // на строковую сортировку.
+        private static Version? TryParsePackageVersion(string dirPath)
+        {
+            string name = Path.GetFileName(dirPath);
+            var m = _packageVersionRegex.Match(name);
+            return m.Success && Version.TryParse(m.Groups["ver"].Value, out var v) ? v : null;
         }
 
         /// <summary>

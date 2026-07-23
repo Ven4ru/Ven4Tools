@@ -17,13 +17,37 @@ namespace Ven4Tools.Launcher.Services;
 /// </summary>
 internal readonly record struct DownloadCandidate(string Url, HttpClient Client, string SourceLabel);
 
+/// <summary>
+/// Результат успешной загрузки: метка сработавшего источника + открытый
+/// FileShare.Read-хендл на итоговый файл. Хендл открыт сразу после проверки
+/// SHA256/перемещения файла — держать его в вызывающем коде (using) до конца
+/// использования файла (запуск/распаковка), иначе между проверкой хеша и
+/// использованием остаётся окно TOCTOU для подмены файла другим процессом
+/// того же пользователя. Dispose закрывает хендл.
+/// </summary>
+internal sealed class DownloadResult : IDisposable
+{
+    public string SourceLabel { get; }
+    public FileStream Guard { get; }
+
+    public DownloadResult(string sourceLabel, FileStream guard)
+    {
+        SourceLabel = sourceLabel;
+        Guard = guard;
+    }
+
+    public void Dispose() => Guard.Dispose();
+}
+
 internal sealed class FallbackDownloader
 {
     /// <summary>
     /// Скачивает файл, перебирая источники по порядку до первого успеха. По каждому
     /// кандидату — проверка доверенного хоста (до и после редиректа), .partial-файл и
-    /// обязательная сверка SHA256. Возвращает SourceLabel фактически сработавшего
-    /// кандидата (для лога «скачано через …»).
+    /// обязательная сверка SHA256. Возвращает результат с SourceLabel фактически
+    /// сработавшего кандидата (для лога «скачано через …») и открытым защитным
+    /// хендлом файла (см. <see cref="DownloadResult"/>) — вызывающий код обязан
+    /// держать его открытым (using) до конца использования файла.
     ///
     /// Первый кандидат — как прежний «основной»: ошибка валидации его хоста
     /// (InvalidOperationException) не проглатывается. Для остальных кандидатов
@@ -31,7 +55,7 @@ internal sealed class FallbackDownloader
     /// Отмена вызывающей стороной (её токен) — сразу пробрасывается, следующие
     /// кандидаты не пробуются.
     /// </summary>
-    public async Task<string> DownloadAsync(
+    public async Task<DownloadResult> DownloadAsync(
         IReadOnlyList<DownloadCandidate> candidates,
         string targetPath,
         CancellationToken cancellationToken,
@@ -77,7 +101,12 @@ internal sealed class FallbackDownloader
                     cancellationToken,
                     expectedSha256,
                     progress);
-                return candidate.SourceLabel;
+
+                // Открываем защитный хендл СРАЗУ после успешной проверки хеша/перемещения
+                // файла в DownloadSingleAsync — минимизирует окно TOCTOU до нескольких
+                // инструкций вместо произвольного времени в вызывающем коде.
+                var guard = new FileStream(targetPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return new DownloadResult(candidate.SourceLabel, guard);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -180,6 +209,13 @@ internal sealed class FallbackDownloader
             long bytesRead = 0;
             var buffer = new byte[81920];
 
+            // Sliding-таймаут простоя между чтениями — без него сервер, отдающий байты
+            // бесконечно медленно (или переставший отвечать после заголовков), вешал бы
+            // загрузку до внешнего таймаута вызывающего кода (10 мин на весь цикл
+            // источников — слишком долго для одного зависшего источника).
+            using var idleCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            idleCts.CancelAfter(TimeSpan.FromSeconds(60));
+
             await using (Stream source = await response.Content.ReadAsStreamAsync(cancellationToken))
             await using (var destination = new FileStream(
                 partialPath,
@@ -190,8 +226,9 @@ internal sealed class FallbackDownloader
                 useAsync: true))
             {
                 int count;
-                while ((count = await source.ReadAsync(buffer.AsMemory(), cancellationToken)) > 0)
+                while ((count = await source.ReadAsync(buffer.AsMemory(), idleCts.Token)) > 0)
                 {
+                    idleCts.CancelAfter(TimeSpan.FromSeconds(60));
                     await destination.WriteAsync(buffer.AsMemory(0, count), cancellationToken);
                     bytesRead += count;
                     progress?.Invoke(bytesRead, totalBytes);

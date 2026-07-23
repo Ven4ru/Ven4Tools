@@ -413,7 +413,10 @@ namespace Ven4Tools.Services
                 try
                 {
                     // Таймаут 30 секунд только на установление соединения и заголовки;
-                    // скачивание тела ограничено лишь токеном отмены пользователя.
+                    // скачивание тела дополнительно ограничено sliding-таймаутом простоя
+                    // (idleCts, ниже) — без него сервер, отдающий байты бесконечно медленно
+                    // (или вовсе переставший отвечать после заголовков), вешал бы загрузку
+                    // до ручной отмены пользователем.
                     using var headersCts = CancellationTokenSource.CreateLinkedTokenSource(token);
                     headersCts.CancelAfter(TimeSpan.FromSeconds(30));
                     long totalRead = 0;
@@ -430,10 +433,15 @@ namespace Ven4Tools.Services
                         var totalBytes = response.Content.Headers.ContentLength ?? -1L;
                         using var contentStream = await response.Content.ReadAsStreamAsync();
                         using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
+                        // Сбрасывается после каждого успешного чтения — таймаут на простой между
+                        // байтами, а не на всю загрузку целиком (большие легитимные файлы не рвутся).
+                        using var idleCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                        idleCts.CancelAfter(TimeSpan.FromSeconds(60));
                         var buf = new byte[8192];
                         int bytesRead;
-                        while ((bytesRead = await contentStream.ReadAsync(buf, token)) > 0)
+                        while ((bytesRead = await contentStream.ReadAsync(buf, idleCts.Token)) > 0)
                         {
+                            idleCts.CancelAfter(TimeSpan.FromSeconds(60));
                             token.ThrowIfCancellationRequested();
                             await fileStream.WriteAsync(buf, 0, bytesRead, token);
                             totalRead += bytesRead;
