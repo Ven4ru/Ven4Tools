@@ -75,7 +75,7 @@ namespace Ven4Tools.Launcher.Services
         private static readonly Dictionary<string, bool> _compromisedCache = new();
         private static readonly object _compromisedCacheLock = new();
 
-        private static bool IsDirectoryAclCompromised(string dirPath)
+        internal static bool IsDirectoryAclCompromised(string dirPath)
         {
             lock (_compromisedCacheLock)
             {
@@ -109,6 +109,36 @@ namespace Ven4Tools.Launcher.Services
 
                 _compromisedCache[dirPath] = compromised;
                 return compromised;
+            }
+        }
+
+        /// <summary>
+        /// Сбрасывает закэшированный результат проверки ACL для одного каталога.
+        /// Согласовано с клиентским TrustedExecutablePaths.InvalidateAclCache — см.
+        /// подробный комментарий там. Используется после
+        /// MainWindow.InstallChocoAsync (установка Chocolatey из лаунчера).
+        /// </summary>
+        internal static void InvalidateAclCache(string dirPath)
+        {
+            lock (_compromisedCacheLock)
+            {
+                _compromisedCache.Remove(dirPath);
+            }
+        }
+
+        /// <summary>Удобный вызов InvalidateAclCache для конкретно chocolatey\bin.</summary>
+        internal static void InvalidateChocolateyAclCache()
+        {
+            InvalidateAclCache(Path.Combine(CommonAppDataDir, "chocolatey", "bin"));
+        }
+
+        // Только для тестов: позволяет проверить, что запись в кэше действительно
+        // отсутствует/присутствует, не меняя поведение резолвинга.
+        internal static bool IsAclCacheEntryCached(string dirPath)
+        {
+            lock (_compromisedCacheLock)
+            {
+                return _compromisedCache.ContainsKey(dirPath);
             }
         }
     }

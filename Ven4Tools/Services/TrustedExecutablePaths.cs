@@ -297,5 +297,39 @@ namespace Ven4Tools.Services
                 return compromised;
             }
         }
+
+        /// <summary>
+        /// Сбрасывает закэшированный результат проверки ACL для одного каталога.
+        /// _compromisedCache не имеет TTL — предполагается, что ACL обычной папки не
+        /// меняется на лету, что верно почти всегда, КРОМЕ сразу после установки:
+        /// официальный установщик Chocolatey может временно расширить/сузить права на
+        /// C:\ProgramData\chocolatey\bin в процессе собственной установки — один
+        /// неудачно совпавший по времени вызов иначе кэшировал бы «скомпрометировано»
+        /// навсегда до перезапуска процесса, даже если реально всё в порядке.
+        /// </summary>
+        internal static void InvalidateAclCache(string dirPath)
+        {
+            lock (_compromisedCacheLock)
+            {
+                _compromisedCache.Remove(dirPath);
+            }
+        }
+
+        /// <summary>Удобный вызов InvalidateAclCache для конкретно chocolatey\bin —
+        /// используется после PackageManagerService.InstallChocoAsync.</summary>
+        internal static void InvalidateChocolateyAclCache()
+        {
+            InvalidateAclCache(Path.Combine(CommonAppDataDir, "chocolatey", "bin"));
+        }
+
+        // Только для тестов: позволяет проверить, что запись в кэше действительно
+        // отсутствует/присутствует, не меняя поведение резолвинга.
+        internal static bool IsAclCacheEntryCached(string dirPath)
+        {
+            lock (_compromisedCacheLock)
+            {
+                return _compromisedCache.ContainsKey(dirPath);
+            }
+        }
     }
 }
