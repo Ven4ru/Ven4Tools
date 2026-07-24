@@ -63,7 +63,17 @@ namespace Ven4Tools.Services
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
                         UseShellExecute = false,
-                        CreateNoWindow = true
+                        CreateNoWindow = true,
+                        // Согласовано с RunChocoInstallAsync/SearchChocoAsync ниже в этом
+                        // файле — без явной кодировки .NET использует Console.OutputEncoding
+                        // вызывающего процесса (обычно OEM-кодовая страница), которая может
+                        // не совпадать с тем, что реально пишет choco.exe/.NET рантайм choco
+                        // (не подтверждено живьём именно для этого вызова — --version отдаёт
+                        // только ASCII, но choco.exe способен писать не-ASCII в других
+                        // сценариях, см. отчёт по расследованию; фикс защитный, ради
+                        // согласованности с соседними методами этого же файла).
+                        StandardOutputEncoding = System.Text.Encoding.UTF8,
+                        StandardErrorEncoding = System.Text.Encoding.UTF8
                     };
                     using var p = Process.Start(psi);
                     if (p == null) return false;
@@ -105,7 +115,11 @@ namespace Ven4Tools.Services
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    // См. комментарий в IsChocoInstalledAsync выше — согласовано со всеми
+                    // остальными местами файла, читающими вывод choco/PowerShell.
+                    StandardOutputEncoding = System.Text.Encoding.UTF8,
+                    StandardErrorEncoding = System.Text.Encoding.UTF8
                 };
                 using var p = Process.Start(psi);
                 if (p == null) return false;
