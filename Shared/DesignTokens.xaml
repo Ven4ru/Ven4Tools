@@ -1,6 +1,34 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!-- Shared desktop interpretation of the ven4tools.ru visual language. -->
+
+    <!--
+        Правило цвета кнопок действий (визуальный аудит 2026-07-24) — единая роль = единый цвет
+        во всех вкладках клиента:
+
+        • Primary (Установить/Скачать/Обновить/Сохранить — главное действие, двигающее
+          пользователя вперёд по сценарию экрана): Background="{StaticResource BrandGreen}",
+          Foreground="#06130D". Намеренно StaticResource BrandGreen, а НЕ DynamicResource
+          AccentColor — AccentColor переопределяется ThemeService на каждую тему (в теме
+          «Тёмная»/«Светлая» это стандартный синий Windows #0078D4, в «Бирюзовой» — циан
+          #00BCD4, и только в «Как на сайте» — зелёный), то есть при следовании AccentColor
+          главная кнопка "Установить" меняла бы цвет вместе с темой интерфейса и теряла
+          узнаваемость бренда. Установить (Каталог) уже красили в BrandGreen до этого аудита —
+          это и есть эталон, остальные Primary-кнопки приведены к нему.
+        • Danger (Удалить/Применить твик службы/Очистить — необратимое или рискованное
+          действие): единый цвет StatusDanger (#F87171). Для повторяющихся кнопок в списках
+          (десятки строк) — DangerButtonStyle (контур по умолчанию, сплошная заливка только
+          на hover, см. App.xaml) — не создаёт «стену красного». Для одиночной крупной
+          CTA-кнопки экрана (например «Применить выбранное» в Очистке) — сплошная заливка
+          Background="{StaticResource StatusDanger}", Foreground="#06130D" (тот же принцип
+          тёмного текста на светлой заливке, что и у Primary).
+        • Secondary (второстепенное действие: Отмена/Обновить каталог/Проверить доступность/
+          Проверить обновления/Запустить диагностику/переход на внешний ресурс): без
+          Background/Foreground-оverride — обычная кнопка (SurfaceRaised/CardBackground +
+          BorderBrush, см. общий Style TargetType="Button" в App.xaml). Кнопки перехода на
+          внешний сайт (активация, GitHub, обратная связь) тоже Secondary — они не меняют
+          состояние приложения, только открывают браузер.
+    -->
     <SolidColorBrush x:Key="SurfaceBase" Color="#0A0A14"/>
     <SolidColorBrush x:Key="SurfaceScene" Color="#0D1018"/>
     <SolidColorBrush x:Key="SurfaceCard" Color="#11161F"/>
