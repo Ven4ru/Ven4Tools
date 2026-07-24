@@ -929,7 +929,17 @@ namespace Ven4Tools.ViewModels
                 // EffectiveProgress, а не сырой Percentage — Percentage теперь считается
                 // заново в каждой фазе (0-100% скачивание, отдельно 0-100% установка), и
                 // усреднение по нему "прыгало" бы назад в момент переключения фаз.
-                OverallProgressPercentage = InstallProgress.All(x => x.Percentage >= 100 || x.Status.Contains("Ошибка") || x.Status.Contains("Отменено"))
+                //
+                // Шорткат "всё завершено" сверяется по Phase (Done/Error), а не по
+                // Percentage>=100 — после разделения на фазы Percentage достигает 100
+                // ещё в середине процесса (конец фазы «Загрузка», см. «🔐 Проверка
+                // SHA256...» в InstallationService), когда сама установка (elevated-
+                // процесс) ещё даже не запущена. Со старым условием общая полоска
+                // «Диск установки» могла ложно показать 100%, пока это же приложение
+                // по факту продолжало устанавливаться — ровно тот же класс бага,
+                // который и была призвана исправить замена Percentage на
+                // EffectiveProgress в Average() ниже, только для сиблингового условия.
+                OverallProgressPercentage = InstallProgress.All(x => x.Phase is InstallPhase.Done or InstallPhase.Error)
                     ? 100
                     : InstallProgress.Average(x => x.EffectiveProgress);
             });
