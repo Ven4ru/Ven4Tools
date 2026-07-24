@@ -137,6 +137,8 @@ namespace Ven4Tools.Views.Tabs
                             else
                                 AppLogger.Write($"Невалидное значение региона (GeoName): {backup.GeoName}");
                         }
+                        else
+                            geo.DeleteValue("Name", throwOnMissingValue: false);
 
                         if (backup.GeoNation != null)
                         {
@@ -228,6 +230,8 @@ namespace Ven4Tools.Views.Tabs
                 {
                     if (_originalGeoName != null)
                         geo.SetValue("Name", _originalGeoName, RegistryValueKind.String);
+                    else
+                        geo.DeleteValue("Name", throwOnMissingValue: false);
 
                     if (_originalGeoNation != null)
                         geo.SetValue("Nation", _originalGeoNation, RegistryValueKind.String);
