@@ -70,4 +70,31 @@ public sealed class AppInstallProgressPhaseTests
 
         Assert.True(startOfInstalling.EffectiveProgress >= endOfDownload.EffectiveProgress);
     }
+
+    [Fact]
+    public void Outcome_DefaultsToNotYetDetermined()
+    {
+        // До финального отчёта об установке (ReportInstallOutcomeAsync) все
+        // промежуточные статусы («Скачивание...», «Установка...») не должны
+        // выглядеть как уже подтверждённый или проваленный результат.
+        var progress = new AppInstallProgress();
+
+        Assert.Equal(InstallOutcome.NotYetDetermined, progress.Outcome);
+    }
+
+    [Fact]
+    public void Outcome_ChangeRaisesPropertyChanged()
+    {
+        // InstallOutcomeToBrushConverter в CatalogTab.xaml биндится напрямую на
+        // Outcome — без PropertyChanged смена итога не долетит до уже
+        // отрисованного элемента списка (тот же класс бага, что у Phase/Status).
+        var progress = new AppInstallProgress();
+        string? raisedProperty = null;
+        ((INotifyPropertyChanged)progress).PropertyChanged += (_, e) => raisedProperty = e.PropertyName;
+
+        progress.Outcome = InstallOutcome.ConfirmedSuccess;
+
+        Assert.Equal(nameof(AppInstallProgress.Outcome), raisedProperty);
+        Assert.Equal(InstallOutcome.ConfirmedSuccess, progress.Outcome);
+    }
 }
