@@ -413,12 +413,16 @@ namespace Ven4Tools.Services
 
             // Прямые ссылки без SHA256 в каталоге не выполняем:
             // скачанный установщик нечем верифицировать, запускать его небезопасно.
+            // Не терминальная неудача (диспетчер пробует следующий источник) —
+            // appProgress здесь намеренно не трогаем (ни Status, ни Phase, ни
+            // progress.Report), как и в аналогичном "нет SHA256" пропуске в
+            // InstallFromCacheAsync выше: выставление Phase.Error для источника,
+            // который просто пропускается, а не проваливается, красило бы полоску
+            // прогресса в красный на мгновение, пока диспетчер уже перешёл к
+            // следующему источнику — вводящая в заблуждение вспышка "ошибки" там,
+            // где реальной терминальной неудачи ещё нет.
             if (!HashHelper.HasExpectedHash(app.Sha256))
             {
-                appProgress.Status = "⚠ Нет SHA256 в каталоге — прямая ссылка пропущена";
-                appProgress.Phase = InstallPhase.Error;
-                appProgress.IsIndeterminate = false;
-                progress.Report(appProgress);
                 Log($"⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, пробую следующий");
                 AppLogger.Write($"[InstallationService] ⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, продолжаю через winget");
                 InstallFailureService.Append(app.DisplayName, app.Id, "direct", "В каталоге не указан SHA256");
