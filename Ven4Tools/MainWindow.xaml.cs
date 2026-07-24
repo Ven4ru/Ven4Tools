@@ -464,7 +464,7 @@ namespace Ven4Tools
             // (тот же фикс, что уже применён к переустановке из истории — HistoryTab).
             if (!string.IsNullOrEmpty(catalogApp.SilentArgs))
                 appInfo.SilentArgs = catalogApp.SilentArgs;
-            var prog = new Progress<Services.AppInstallProgress>(p => AppLogger.Write($"  {p.Status}"));
+            var prog = new Progress<AppInstallProgress>(p => AppLogger.Write($"  {p.Status}"));
 
             // Общий семафор: не даём пину запустить установку параллельно с каталогом/историей.
             if (btn != null) btn.IsEnabled = false;

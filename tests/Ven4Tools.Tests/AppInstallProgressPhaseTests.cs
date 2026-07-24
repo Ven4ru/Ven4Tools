@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using Ven4Tools.Services;
+using Ven4Tools.Models;
 
 namespace Ven4Tools.Tests;
 

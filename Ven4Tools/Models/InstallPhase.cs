@@ -1,4 +1,4 @@
-namespace Ven4Tools.Services
+namespace Ven4Tools.Models
 {
     // Явная фаза установки для UI (см. AppInstallProgress.Phase). Порядок значений
     // важен: Download — значение по умолчанию (0), чтобы объект перед первым
