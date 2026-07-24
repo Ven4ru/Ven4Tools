@@ -912,12 +912,26 @@ namespace Ven4Tools.ViewModels
             var progress = new Progress<AppInstallProgress>(p =>
             {
                 var existing = InstallProgress.FirstOrDefault(x => x.AppId == p.AppId);
-                if (existing != null) { existing.Status = p.Status; existing.Percentage = p.Percentage; }
+                if (existing != null)
+                {
+                    existing.Status = p.Status;
+                    existing.Percentage = p.Percentage;
+                    // Phase/IsIndeterminate — те же поля, что двигают цвет и режим полоски
+                    // в CatalogTab (InstallPhaseToBrushConverter, ProgressBar.IsIndeterminate).
+                    // Без копирования сюда защитная ветка "existing != null" тихо теряла бы
+                    // смену фазы, если бы когда-нибудь появился сценарий с пересозданием
+                    // AppInstallProgress для того же AppId вместо мутации одного экземпляра.
+                    existing.Phase = p.Phase;
+                    existing.IsIndeterminate = p.IsIndeterminate;
+                }
                 else InstallProgress.Add(p);
 
+                // EffectiveProgress, а не сырой Percentage — Percentage теперь считается
+                // заново в каждой фазе (0-100% скачивание, отдельно 0-100% установка), и
+                // усреднение по нему "прыгало" бы назад в момент переключения фаз.
                 OverallProgressPercentage = InstallProgress.All(x => x.Percentage >= 100 || x.Status.Contains("Ошибка") || x.Status.Contains("Отменено"))
                     ? 100
-                    : InstallProgress.Average(x => x.Percentage);
+                    : InstallProgress.Average(x => x.EffectiveProgress);
             });
 
             var pmConsentCache = new Dictionary<string, bool>();
