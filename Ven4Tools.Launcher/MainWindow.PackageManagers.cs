@@ -68,7 +68,14 @@ namespace Ven4Tools.Launcher
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true,
                     UseShellExecute        = false,
-                    CreateNoWindow         = true
+                    CreateNoWindow         = true,
+                    // Согласовано с клиентским PackageManagerService — без явной
+                    // кодировки .NET использует Console.OutputEncoding вызывающего
+                    // процесса, которая может не совпадать с тем, что реально пишет
+                    // choco.exe. Защитный фикс (не подтверждён вживую для --version,
+                    // который отдаёт только ASCII) ради согласованности.
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding  = Encoding.UTF8
                 };
                 using var process = Process.Start(psi);
                 if (process == null) return (false, null);
@@ -147,6 +154,16 @@ namespace Ven4Tools.Launcher
                     CreateNoWindow         = !needElevation
                 };
                 if (needElevation) psi.Verb = "runas";
+                // Кодировка задаётся только для неэлевированной ветки — она единственная
+                // реально читает потоки (RedirectStandardOutput/Error выше зависит от
+                // needElevation); при runas потоки не перенаправляются, задавать
+                // кодировку было бы бессмысленно. Согласовано с клиентским
+                // PackageManagerService — защитный фикс, не подтверждён вживую.
+                else
+                {
+                    psi.StandardOutputEncoding = Encoding.UTF8;
+                    psi.StandardErrorEncoding  = Encoding.UTF8;
+                }
 
                 using var proc = Process.Start(psi);
                 if (proc != null)
@@ -164,6 +181,12 @@ namespace Ven4Tools.Launcher
                         await proc.WaitForExitAsync(ct);
                 }
 
+                // Официальный установщик мог только что создать/переписать
+                // C:\ProgramData\chocolatey\bin — согласовано с клиентским
+                // PackageManagerService.InstallChocoAsync (см. коммит "сброс кэша ACL
+                // после установки Chocolatey (клиент)"): без сброса результат проверки
+                // ACL мог бы закэшироваться навсегда на промежуточном состоянии.
+                Services.TrustedExecutablePaths.InvalidateChocolateyAclCache();
                 var result = await CheckChocoInstalledAsync();
                 if (result.IsInstalled)
                 {
