@@ -393,7 +393,7 @@ namespace Ven4Tools.Services
                 || (!token.IsCancellationRequested
                     && confirmPmInstall != null
                     && await confirmPmInstall("Chocolatey")
-                    && await PackageManagerService.InstallChocoAsync(msg => Log(msg)));
+                    && await PackageManagerService.InstallChocoAsync(token, msg => Log(msg)));
             if (chocoOk && await PackageManagerService.RunChocoInstallAsync(app.ChocoId, token, msg => Log(msg)))
                 // Choco (RunChocoInstallAsync) не различает 0 и 3010 на возврате —
                 // reboot здесь всегда false, честно (не выдумываем то, чего сейчас

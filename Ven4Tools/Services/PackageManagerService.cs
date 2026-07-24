@@ -15,6 +15,40 @@ namespace Ven4Tools.Services
         // Сбрасывается после InstallChocoAsync, чтобы отразить свежую установку.
         private static bool? _cachedChocoInstalled;
 
+        // 10 минут — тот же порядок величины, что уже используется в проекте для
+        // аналогичных операций (Ven4Tools.Launcher.InstallChocoAsync, LauncherUpdateService).
+        // Меньше внутреннего таймаута самого Chocolatey (2700 сек / 45 мин — см.
+        // commandExecutionTimeoutSeconds в chocolatey.log): раньше при зависании
+        // скрипта установки пакета (подтверждено живьём в chocolatey.log за
+        // 2026-07-05 — hwmonitor и cpu-z зависли на 45 минут каждый на скачивании с
+        // download.cpuid.com) вызывающий код ждал молча ровно столько, сколько ждал
+        // сам Chocolatey — никакого собственного дедлайна не было, только внешняя
+        // отмена пользователем. Теперь зависание всплывает как явная ошибка
+        // заметно раньше, чем через 45 минут молчания.
+        private static readonly TimeSpan InstallOperationTimeout = TimeSpan.FromMinutes(10);
+
+        /// <summary>
+        /// Готовит пару токенов для ожидания процесса с собственным дедлайном поверх
+        /// внешнего токена отмены. Выделено в чистую функцию без зависимости от
+        /// Process — тестируется без реального choco.exe.
+        /// </summary>
+        internal static (CancellationTokenSource TimeoutCts, CancellationTokenSource LinkedCts) CreateInstallTimeoutTokens(
+            CancellationToken externalToken, TimeSpan timeout)
+        {
+            var timeoutCts = new CancellationTokenSource(timeout);
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalToken, timeoutCts.Token);
+            return (timeoutCts, linkedCts);
+        }
+
+        /// <summary>
+        /// Отличает истечение внутреннего таймаута от отмены пользователем — после
+        /// того как linkedCts из <see cref="CreateInstallTimeoutTokens"/> сработал,
+        /// вызывающий код должен показать разные сообщения («таймаут» — это не
+        /// «отменено пользователем»).
+        /// </summary>
+        internal static bool IsTimeoutNotCancellation(CancellationTokenSource timeoutCts, CancellationToken externalToken)
+            => timeoutCts.IsCancellationRequested && !externalToken.IsCancellationRequested;
+
         public static async Task<bool> IsChocoInstalledAsync()
         {
             if (_cachedChocoInstalled.HasValue) return _cachedChocoInstalled.Value;
@@ -46,7 +80,7 @@ namespace Ven4Tools.Services
             return result;
         }
 
-        public static async Task<bool> InstallChocoAsync(Action<string>? log = null)
+        public static async Task<bool> InstallChocoAsync(CancellationToken token, Action<string>? log = null)
         {
             log?.Invoke("📦 Установка Chocolatey...");
             try
@@ -75,15 +109,43 @@ namespace Ven4Tools.Services
                 };
                 using var p = Process.Start(psi);
                 if (p == null) return false;
-                await Task.WhenAll(
-                    p.StandardOutput.ReadToEndAsync(),
-                    p.StandardError.ReadToEndAsync());
-                await p.WaitForExitAsync();
+
+                // Раньше здесь не было вообще НИКАКОГО ограничения по времени — ни
+                // внутреннего таймаута, ни даже внешнего CancellationToken (метод не
+                // принимал его параметром): зависший официальный install-скрипт (сеть,
+                // неожиданный промпт) ждал бы бесконечно, и пользователь не мог бы
+                // прервать это иначе как убив весь процесс Ven4Tools. См.
+                // InstallOperationTimeout выше — тот же дедлайн, что и для установки
+                // отдельных пакетов через choco (RunChocoInstallAsync).
+                var (timeoutCts, linkedCts) = CreateInstallTimeoutTokens(token, InstallOperationTimeout);
+                using (timeoutCts)
+                using (linkedCts)
+                {
+                    var stdoutTask = p.StandardOutput.ReadToEndAsync(linkedCts.Token);
+                    var stderrTask = p.StandardError.ReadToEndAsync(linkedCts.Token);
+                    try
+                    {
+                        await p.WaitForExitAsync(linkedCts.Token);
+                        await Task.WhenAll(stdoutTask, stderrTask);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        try { p.Kill(entireProcessTree: true); } catch { }
+                        if (IsTimeoutNotCancellation(timeoutCts, token))
+                        {
+                            log?.Invoke($"⏱️ Установка Chocolatey превысила таймаут {(int)InstallOperationTimeout.TotalMinutes} мин — прервана");
+                            return false;
+                        }
+                        throw;
+                    }
+                }
+
                 _cachedChocoInstalled = null; // сброс кэша — версия могла измениться
                 bool ok = await IsChocoInstalledAsync();
                 log?.Invoke(ok ? "✅ Chocolatey установлен" : "⚠️ Chocolatey не найден после установки");
                 return ok;
             }
+            catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
                 log?.Invoke($"❌ Ошибка установки Chocolatey: {ex.Message}");
@@ -132,14 +194,32 @@ namespace Ven4Tools.Services
                 p.BeginOutputReadLine();
                 p.BeginErrorReadLine();
 
-                while (!p.HasExited)
+                // Раньше цикл ожидания полагался ТОЛЬКО на внешний token (отмена
+                // пользователем кнопкой) — никакого собственного дедлайна не было.
+                // Подтверждено живьём в chocolatey.log (2026-07-05): hwmonitor и cpu-z
+                // зависли на скачивании с download.cpuid.com и провисели ровно 45 минут
+                // (внутренний таймаут самого Chocolatey, commandExecutionTimeoutSeconds),
+                // прежде чем сам Chocolatey их прервал — всё это время наш процесс ждал
+                // молча. InstallOperationTimeout меньше 45 минут: зависание теперь
+                // всплывает пользователю заметно раньше.
+                var (timeoutCts, linkedCts) = CreateInstallTimeoutTokens(token, InstallOperationTimeout);
+                using (timeoutCts)
+                using (linkedCts)
                 {
-                    if (token.IsCancellationRequested)
+                    try
+                    {
+                        await p.WaitForExitAsync(linkedCts.Token);
+                    }
+                    catch (OperationCanceledException)
                     {
                         try { p.Kill(entireProcessTree: true); } catch { }
+                        if (IsTimeoutNotCancellation(timeoutCts, token))
+                        {
+                            log?.Invoke($"⏱️ Choco: установка «{packageId}» превысила таймаут {(int)InstallOperationTimeout.TotalMinutes} мин — прервана");
+                            return false;
+                        }
                         token.ThrowIfCancellationRequested();
                     }
-                    await Task.Delay(100, token);
                 }
                 return p.ExitCode == 0;
             }
