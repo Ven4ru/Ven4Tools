@@ -72,4 +72,34 @@ public sealed class PackageManagerServiceTimeoutTests
             Assert.False(timeoutCts.IsCancellationRequested);
         }
     }
+
+    // ── Инвалидация ACL-кэша после InstallChocoAsync ────────────────────────────
+
+    [Fact]
+    public void InvalidateAclCache_RemovesCachedEntry()
+    {
+        using var dir = new TemporaryDirectory();
+
+        Assert.False(TrustedExecutablePaths.IsAclCacheEntryCached(dir.Path));
+        _ = TrustedExecutablePaths.IsDirectoryAclCompromised(dir.Path); // популяризует кэш
+        Assert.True(TrustedExecutablePaths.IsAclCacheEntryCached(dir.Path));
+
+        TrustedExecutablePaths.InvalidateAclCache(dir.Path);
+
+        Assert.False(TrustedExecutablePaths.IsAclCacheEntryCached(dir.Path));
+    }
+
+    [Fact]
+    public void InvalidateChocolateyAclCache_ClearsEntryForChocolateyBinDirectory()
+    {
+        string chocoBin = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "chocolatey", "bin");
+
+        _ = TrustedExecutablePaths.IsDirectoryAclCompromised(chocoBin); // популяризует кэш
+        Assert.True(TrustedExecutablePaths.IsAclCacheEntryCached(chocoBin));
+
+        TrustedExecutablePaths.InvalidateChocolateyAclCache();
+
+        Assert.False(TrustedExecutablePaths.IsAclCacheEntryCached(chocoBin));
+    }
 }
