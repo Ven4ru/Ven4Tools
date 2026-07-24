@@ -155,6 +155,12 @@ namespace Ven4Tools.Services
                 }
 
                 _cachedChocoInstalled = null; // сброс кэша — версия могла измениться
+                // Официальный установщик мог только что создать/переписать
+                // C:\ProgramData\chocolatey\bin — если проверка ACL этого каталога
+                // случайно попала на промежуточный момент установки, результат
+                // («скомпрометировано») иначе кэшировался бы навсегда на весь остаток
+                // процесса (см. TrustedExecutablePaths._compromisedCache — без TTL).
+                TrustedExecutablePaths.InvalidateChocolateyAclCache();
                 bool ok = await IsChocoInstalledAsync();
                 log?.Invoke(ok ? "✅ Chocolatey установлен" : "⚠️ Chocolatey не найден после установки");
                 return ok;
