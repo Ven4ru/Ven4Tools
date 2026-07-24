@@ -67,12 +67,22 @@ namespace Ven4Tools.Services
 
                 token.ThrowIfCancellationRequested();
 
+                // ── Baseline ДО установки: приложение уже стоит? какая версия? ──
+                // Опорная точка для сверки по факту после установки (см.
+                // InstallOutcomeEvaluator) — без неё нельзя отличить «поставили
+                // впервые» от «уже стояло, ничего не изменилось» (AlreadyUpToDate).
+                // Тот же ключ (AlternativeId ?? Id), что уже использует
+                // CatalogViewModel.UpdateInstalledStatusAsync для бейджа «установлено»
+                // на карточках — единая точка правды по всему клиенту.
+                string outcomeCheckId = !string.IsNullOrEmpty(app.AlternativeId) ? app.AlternativeId! : app.Id;
+                var baseline = await CaptureInstalledBaselineAsync(outcomeCheckId);
+
                 // ── Local installer (drag-drop) ────────────────────────────────
                 if (!string.IsNullOrEmpty(app.LocalInstallerPath) && File.Exists(app.LocalInstallerPath))
-                    return await InstallFromLocalAsync(app, appProgress, progress, installDrive, token);
+                    return await InstallFromLocalAsync(app, appProgress, progress, installDrive, outcomeCheckId, baseline, token);
 
                 // ── Offline cache ──────────────────────────────────────────────
-                var cacheResult = await InstallFromCacheAsync(app, appProgress, progress, installDrive, token);
+                var cacheResult = await InstallFromCacheAsync(app, appProgress, progress, installDrive, outcomeCheckId, baseline, token);
                 if (cacheResult != null) return cacheResult.Value;
 
                 // ── Строгий офлайн без кэша — прекращаем ────────────────────────
@@ -87,7 +97,8 @@ namespace Ven4Tools.Services
 
                 // ── Цепочка источников (winget/choco/direct) ───────────────────
                 return await InstallFromSourcesAsync(
-                    app, wingetSources, appProgress, progress, installDrive, version, confirmPmInstall, token);
+                    app, wingetSources, appProgress, progress, installDrive, version, confirmPmInstall,
+                    outcomeCheckId, baseline, token);
             }
             catch (OperationCanceledException)
             {
@@ -112,7 +123,7 @@ namespace Ven4Tools.Services
         // ── Стратегия 1: локальный установщик (drag-drop) ──────────────────────
         private async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallFromLocalAsync(
             AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
-            string installDrive, CancellationToken token)
+            string installDrive, string outcomeCheckId, InstalledBaseline baseline, CancellationToken token)
         {
             // Файл уже на диске (drag-drop) — фазы «Загрузка» здесь нет вообще,
             // сразу Installing. Гранулярного прогресса самого установщика нет
@@ -200,21 +211,13 @@ namespace Ven4Tools.Services
                 return (false, "Не удалось запустить установщик", appProgress);
             }
 
-            if (run.Value.Ok)
-                return await ReportInstallSuccessAsync(app, appProgress, progress, run.Value.Reboot, "local",
-                    "✅ Установлено (локальный файл)",
-                    $"✅ {app.DisplayName} — локальный установщик",
-                    $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — локальный установщик",
-                    "Установлено из локального файла",
-                    "Установлено (требуется перезагрузка)");
-
-            appProgress.Status = "❌ Ошибка локального установщика";
-            appProgress.Phase = InstallPhase.Error;
-            appProgress.IsIndeterminate = false;
-            progress.Report(appProgress);
-            Log($"❌ {app.DisplayName}: локальный установщик завершился с кодом {run.Value.ExitCode}");
-            InstallFailureService.Append(app.DisplayName, app.Id, "local", $"Код выхода {run.Value.ExitCode}");
-            return (false, "Ошибка локального установщика", appProgress);
+            // Локальный установщик — единственный путь без фолбэка на другой источник,
+            // поэтому это терминальная точка и для успеха, и для неудачи: в обоих
+            // случаях сверяем с фактическим состоянием системы, а не только с кодом
+            // выхода (плохой код мог быть у установщика, который на самом деле справился).
+            return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
+                run.Value.Ok, run.Value.Reboot, "local", "локальный установщик", token,
+                run.Value.Ok ? null : $"код выхода {run.Value.ExitCode}");
         }
 
         // ── Стратегия 2: офлайн-кэш ────────────────────────────────────────────
@@ -222,7 +225,7 @@ namespace Ven4Tools.Services
         // удалась — в этих случаях диспетчер продолжает следующими стратегиями.
         private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromCacheAsync(
             AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
-            string installDrive, CancellationToken token)
+            string installDrive, string outcomeCheckId, InstalledBaseline baseline, CancellationToken token)
         {
             string? cachedPath = OfflineService.GetCachedInstallerPath(app.Id);
             if (cachedPath == null) return null;
@@ -278,13 +281,12 @@ namespace Ven4Tools.Services
                 return null;
             }
             if (run is { Ok: true })
-                return await ReportInstallSuccessAsync(app, appProgress, progress, run.Value.Reboot, "cache",
-                    "✅ Установлено (кэш)",
-                    $"✅ {app.DisplayName} установлено из офлайн-кэша",
-                    $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} (офлайн-кэш)",
-                    "Установлено из офлайн-кэша",
-                    "Установлено из кэша (требуется перезагрузка)");
+                return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
+                    true, run.Value.Reboot, "cache", "офлайн-кэш", token);
 
+            // Неудача из кэша не терминальна — диспетчер пробует следующую стратегию
+            // (цепочку источников), которая сама сверит результат по факту, если тоже
+            // окажется терминальной неудачей. Проверять здесь нечего.
             return null;
         }
 
@@ -292,7 +294,8 @@ namespace Ven4Tools.Services
         private async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallFromSourcesAsync(
             AppInfo app, string[] wingetSources, AppInstallProgress appProgress,
             IProgress<AppInstallProgress> progress, string installDrive, string? version,
-            Func<string, Task<bool>>? confirmPmInstall, CancellationToken token)
+            Func<string, Task<bool>>? confirmPmInstall, string outcomeCheckId, InstalledBaseline baseline,
+            CancellationToken token)
         {
             string primaryId = !string.IsNullOrEmpty(app.AlternativeId) ? app.AlternativeId : app.Id;
 
@@ -320,29 +323,30 @@ namespace Ven4Tools.Services
                 var result = srcId switch
                 {
                     SourceOrderSettings.Winget => await InstallFromWingetAsync(
-                        app, primaryId, wingetSources, appProgress, progress, installDrive, version, token),
+                        app, primaryId, wingetSources, appProgress, progress, installDrive, version,
+                        outcomeCheckId, baseline, token),
                     SourceOrderSettings.Choco => await InstallFromChocoAsync(
-                        app, appProgress, progress, confirmPmInstall, token),
+                        app, appProgress, progress, confirmPmInstall, outcomeCheckId, baseline, token),
                     SourceOrderSettings.Direct => await InstallFromDirectDownloadAsync(
-                        app, primaryId, appProgress, progress, installDrive, token),
+                        app, primaryId, appProgress, progress, installDrive, outcomeCheckId, baseline, token),
                     _ => null
                 };
                 if (result != null) return result.Value;
             }
 
-            appProgress.Status = "❌ Ошибка";
-            appProgress.Phase = InstallPhase.Error;
-            appProgress.IsIndeterminate = false;
-            progress.Report(appProgress);
-            Log($"❌ {app.DisplayName} — все источники исчерпаны");
-            InstallFailureService.Append(app.DisplayName, app.Id, "all-sources", "Все источники исчерпаны");
-            return (false, "Не удалось установить", appProgress);
+            // Все источники исчерпаны — терминальная неудача цепочки. Сверяем с
+            // фактическим состоянием системы на случай, если один из источников
+            // (например choco) на самом деле справился, но был ошибочно распознан
+            // как неудача (см. ReportInstallOutcomeAsync — честная коррекция).
+            return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
+                false, false, "all-sources", "все источники", token, "все источники исчерпаны");
         }
 
         // ── Источник: Winget ───────────────────────────────────────────────────
         private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromWingetAsync(
             AppInfo app, string primaryId, string[] wingetSources, AppInstallProgress appProgress,
-            IProgress<AppInstallProgress> progress, string installDrive, string? version, CancellationToken token)
+            IProgress<AppInstallProgress> progress, string installDrive, string? version,
+            string outcomeCheckId, InstalledBaseline baseline, CancellationToken token)
         {
             if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) return null;
             foreach (var wsrc in wingetSources)
@@ -361,18 +365,10 @@ namespace Ven4Tools.Services
                 appProgress.Percentage = 0;
                 progress.Report(appProgress);
 
-                if (await RunWingetAsync(primaryId, wsrc, token, version, installDrive))
-                {
-                    appProgress.Status = "✅ Установлено (Winget)";
-                    appProgress.Phase = InstallPhase.Done;
-                    appProgress.IsIndeterminate = false;
-                    appProgress.Percentage = 100;
-                    progress.Report(appProgress);
-                    Log($"✅ {app.DisplayName} — Winget ({wsrc}): {primaryId}");
-                    if (ProfileService.Current.SaveInstallHistory)
-                        await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "winget", app.CategoryString);
-                    return (true, "Установлено через Winget", appProgress);
-                }
+                var wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive);
+                if (wingetRun.Ok)
+                    return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
+                        true, wingetRun.Reboot, "winget", $"Winget ({wsrc})", token);
             }
             return null;
         }
@@ -380,7 +376,8 @@ namespace Ven4Tools.Services
         // ── Источник: Chocolatey ───────────────────────────────────────────────
         private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromChocoAsync(
             AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
-            Func<string, Task<bool>>? confirmPmInstall, CancellationToken token)
+            Func<string, Task<bool>>? confirmPmInstall, string outcomeCheckId, InstalledBaseline baseline,
+            CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(app.ChocoId)) return null;
             // Как и Winget — единый чёрный ящик. RunChocoInstallAsync запускает choco
@@ -398,24 +395,19 @@ namespace Ven4Tools.Services
                     && await confirmPmInstall("Chocolatey")
                     && await PackageManagerService.InstallChocoAsync(msg => Log(msg)));
             if (chocoOk && await PackageManagerService.RunChocoInstallAsync(app.ChocoId, token, msg => Log(msg)))
-            {
-                appProgress.Status = "✅ Установлено (Chocolatey)";
-                appProgress.Phase = InstallPhase.Done;
-                appProgress.IsIndeterminate = false;
-                appProgress.Percentage = 100;
-                progress.Report(appProgress);
-                Log($"✅ {app.DisplayName} — Chocolatey: {app.ChocoId}");
-                if (ProfileService.Current.SaveInstallHistory)
-                    await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, "choco", app.CategoryString);
-                return (true, "Установлено через Chocolatey", appProgress);
-            }
+                // Choco (RunChocoInstallAsync) не различает 0 и 3010 на возврате —
+                // reboot здесь всегда false, честно (не выдумываем то, чего сейчас
+                // не видно), в отличие от winget/elevated-путей, где это различие есть.
+                return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
+                    true, false, "choco", "Chocolatey", token);
             return null;
         }
 
         // ── Источник: прямая загрузка ──────────────────────────────────────────
         private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromDirectDownloadAsync(
             AppInfo app, string primaryId, AppInstallProgress appProgress,
-            IProgress<AppInstallProgress> progress, string installDrive, CancellationToken token)
+            IProgress<AppInstallProgress> progress, string installDrive,
+            string outcomeCheckId, InstalledBaseline baseline, CancellationToken token)
         {
             if (!app.InstallerUrls.Any()) return null;
 
@@ -599,12 +591,8 @@ namespace Ven4Tools.Services
                     {
                         try { File.Delete(tempFile); } catch { }
                         if (run.Value.Ok)
-                            return await ReportInstallSuccessAsync(app, appProgress, progress, run.Value.Reboot, "direct",
-                                "✅ Установлено (прямая ссылка)",
-                                $"✅ {app.DisplayName} — прямая ссылка: {url}",
-                                $"⚠ Установлено. Требуется перезагрузка. {app.DisplayName} — прямая ссылка: {url}",
-                                "Установлено",
-                                "Установлено (требуется перезагрузка)");
+                            return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
+                                true, run.Value.Reboot, "direct", "прямая ссылка", token, url);
                     }
                 }
                 // Отмена пользователем — пробрасываем; таймаут заголовков — пробуем следующий источник
@@ -644,21 +632,206 @@ namespace Ven4Tools.Services
             return (proc.ExitCode == 0 || proc.ExitCode == 3010, proc.ExitCode == 3010, proc.ExitCode);
         }
 
-        // ── Общий репорт успешной установки: прогресс + лог + история ───────────
-        private async Task<(bool Success, string Message, AppInstallProgress Progress)> ReportInstallSuccessAsync(
-            AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
-            bool reboot, string source, string statusOk, string logOk, string logReboot,
-            string messageOk, string messageReboot)
+        // ── Проверка результата установки по факту ──────────────────────────────
+
+        /// <summary>Снимок состояния «установлено ли приложение» на момент проверки
+        /// (используется и как baseline до установки, и как итог после неё).</summary>
+        private readonly struct InstalledBaseline
         {
-            appProgress.Status = reboot ? "⚠ Установлено. Требуется перезагрузка." : statusOk;
-            appProgress.Phase = InstallPhase.Done;
+            /// <summary>Есть ли вообще надёжный ID для сверки с winget list.</summary>
+            public bool VerificationSupported { get; init; }
+            public bool WasInstalled { get; init; }
+            public string? Version { get; init; }
+
+            public static readonly InstalledBaseline Unsupported = new() { VerificationSupported = false };
+        }
+
+        // Ретраи на «нашли / не нашли» после установки — не мгновенная единичная
+        // проверка. Индекс winget (реестр/ARP) может не успеть отразить только что
+        // завершившуюся установку сразу же — без паузы это источник ложных
+        // Unconfirmed. Задержки нарастающие, суммарно ~1.4 с — не бесконечно, но
+        // достаточно для типичной задержки записи в реестр установщиком.
+        private static readonly TimeSpan[] VerificationRetryDelays =
+            { TimeSpan.Zero, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(900) };
+
+        /// <summary>
+        /// ID для сверки с winget list — тот же способ (AlternativeId ?? Id), что уже
+        /// использует бейдж «установлено» в каталоге (CatalogViewModel). «User.»-префикс —
+        /// синтетический ID для приложений без каталожной записи в winget (добавлены
+        /// вручную только с ChocoId, см. CatalogViewModel.AddChocoSuggestion) — winget list
+        /// никогда не найдёт такой токен, сверка была бы фиктивной, поэтому такие ID
+        /// заведомо помечаются как «проверка недоступна» (тот же признак, что уже
+        /// использует InstallFromWingetAsync, чтобы вообще не пытаться ставить через winget).
+        /// </summary>
+        private static bool IsVerifiableId(string outcomeCheckId) =>
+            !string.IsNullOrEmpty(outcomeCheckId) && !outcomeCheckId.StartsWith("User.", StringComparison.Ordinal);
+
+        private static async Task<InstalledBaseline> CaptureInstalledBaselineAsync(string outcomeCheckId)
+        {
+            if (!IsVerifiableId(outcomeCheckId)) return InstalledBaseline.Unsupported;
+
+            var checker = new InstalledAppsService();
+            await checker.RefreshAsync();
+            bool found = checker.IsInstalled(outcomeCheckId);
+            return new InstalledBaseline
+            {
+                VerificationSupported = true,
+                WasInstalled = found,
+                Version = found ? checker.GetInstalledVersion(outcomeCheckId) : null
+            };
+        }
+
+        private static async Task<InstalledBaseline> VerifyInstalledWithRetryAsync(string outcomeCheckId, CancellationToken token)
+        {
+            if (!IsVerifiableId(outcomeCheckId)) return InstalledBaseline.Unsupported;
+
+            foreach (var delay in VerificationRetryDelays)
+            {
+                if (delay > TimeSpan.Zero)
+                {
+                    try { await Task.Delay(delay, token); }
+                    catch (OperationCanceledException)
+                    {
+                        // Отмена во время до-проверки уже завершившегося установщика не
+                        // должна обнулять сам факт того, что процесс уже отработал —
+                        // просто прекращаем ретраи с тем, что успели узнать.
+                        break;
+                    }
+                }
+
+                var checker = new InstalledAppsService();
+                await checker.RefreshAsync();
+                if (checker.IsInstalled(outcomeCheckId))
+                    return new InstalledBaseline
+                    {
+                        VerificationSupported = true,
+                        WasInstalled = true,
+                        Version = checker.GetInstalledVersion(outcomeCheckId)
+                    };
+            }
+            return new InstalledBaseline { VerificationSupported = true, WasInstalled = false };
+        }
+
+        // ── Общий репорт результата установки: сверка по факту + прогресс + лог ──
+        // Единая точка для ВСЕХ путей установки (winget, choco, прямая ссылка,
+        // локальный установщик, офлайн-кэш) и для двух терминальных точек неудачи
+        // (локальный установщик без фолбэка, цепочка источников исчерпана) — код
+        // выхода процесса здесь не финальный вердикт, а только одна из вводных для
+        // InstallOutcomeEvaluator наравне со сверкой по факту.
+        private async Task<(bool Success, string Message, AppInstallProgress Progress)> ReportInstallOutcomeAsync(
+            AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
+            string outcomeCheckId, InstalledBaseline baseline,
+            bool exitCodeSuccess, bool reboot, string source, string sourceLabel,
+            CancellationToken token, string? logDetail = null)
+        {
+            if (baseline.VerificationSupported)
+            {
+                appProgress.Status = "🔍 Проверка результата...";
+                appProgress.IsIndeterminate = true;
+                progress.Report(appProgress);
+            }
+
+            var post = await VerifyInstalledWithRetryAsync(outcomeCheckId, token);
+
+            var outcome = InstallOutcomeEvaluator.Evaluate(new InstallOutcomeContext
+            {
+                VerificationSupported = baseline.VerificationSupported,
+                ExitCodeSuccess = exitCodeSuccess,
+                WasInstalledBefore = baseline.WasInstalled,
+                VersionBefore = baseline.Version,
+                FoundAfter = post.WasInstalled,
+                VersionAfter = post.Version
+            });
+
+            bool success = outcome switch
+            {
+                InstallOutcome.ConfirmedFailure => false,
+                // Проверка недоступна/не выполнялась — как и раньше, доверяем коду
+                // выхода целиком (не регрессия для путей без надёжного ID).
+                InstallOutcome.NotYetDetermined => exitCodeSuccess,
+                _ => true
+            };
+
+            string detailSuffix = string.IsNullOrEmpty(logDetail) ? "" : $" — {logDetail}";
+            string status, logLine, message;
+
+            switch (outcome)
+            {
+                case InstallOutcome.ConfirmedSuccess:
+                    status = reboot ? "⚠ Установлено. Требуется перезагрузка." : $"✅ Установлено ({sourceLabel})";
+                    logLine = reboot
+                        ? $"⚠ {app.DisplayName} — {sourceLabel}: установлено (подтверждено по факту), требуется перезагрузка{detailSuffix}"
+                        : $"✅ {app.DisplayName} — {sourceLabel}: установлено (подтверждено по факту){detailSuffix}";
+                    message = reboot ? "Установлено (требуется перезагрузка)" : "Установлено";
+                    break;
+
+                case InstallOutcome.AlreadyUpToDate:
+                    // Не «только что поставили» — версия до и после установки совпадает,
+                    // хотя код выхода мог быть успешным (типичный no-op тихого инсталлятора).
+                    status = "ℹ️ Уже установлено — версия не изменилась";
+                    logLine = $"ℹ️ {app.DisplayName} — {sourceLabel}: уже было установлено, версия «{baseline.Version}» не изменилась{detailSuffix}";
+                    message = "Уже установлено (версия не изменилась)";
+                    break;
+
+                case InstallOutcome.Unconfirmed:
+                    // Код выхода успешный, но по факту в системе не нашли даже после
+                    // ретраев — честно не пишем «Установлено» без оговорки.
+                    status = reboot
+                        ? "⚠ Установлено, требуется перезагрузка (не удалось подтвердить финальное состояние до перезагрузки)"
+                        : "⚠ Похоже, установлено — не удалось подтвердить";
+                    logLine = reboot
+                        ? $"⚠ {app.DisplayName} — {sourceLabel}: код выхода успешный, требуется перезагрузка, но по факту в системе не найдено (часть инсталляторов дописывают реестр только после перезагрузки){detailSuffix}"
+                        : $"⚠ {app.DisplayName} — {sourceLabel}: код выхода успешный, но по факту в системе не найдено даже после повторных проверок{detailSuffix}";
+                    message = reboot ? "Установлено, требуется перезагрузка (не подтверждено)" : "Не удалось подтвердить установку";
+                    break;
+
+                case InstallOutcome.ConfirmedFailure:
+                    status = "❌ Не установлено";
+                    logLine = $"❌ {app.DisplayName} — {sourceLabel}: не установлено (код выхода — ошибка, по факту в системе не найдено){detailSuffix}";
+                    message = "Не установлено";
+                    InstallFailureService.Append(app.DisplayName, app.Id, source,
+                        string.IsNullOrEmpty(logDetail) ? "Код выхода — ошибка" : logDetail);
+                    break;
+
+                default: // NotYetDetermined — надёжного ID для сверки нет, доверяем коду выхода как раньше
+                    if (exitCodeSuccess)
+                    {
+                        status = reboot ? "⚠ Установлено. Требуется перезагрузка." : $"✅ Установлено ({sourceLabel})";
+                        logLine = reboot
+                            ? $"⚠ {app.DisplayName} — {sourceLabel}: установлено, требуется перезагрузка (проверка по факту недоступна){detailSuffix}"
+                            : $"✅ {app.DisplayName} — {sourceLabel} (проверка по факту недоступна){detailSuffix}";
+                        message = reboot ? "Установлено (требуется перезагрузка)" : "Установлено";
+                    }
+                    else
+                    {
+                        status = "❌ Ошибка установки";
+                        logLine = $"❌ {app.DisplayName} — {sourceLabel}: код выхода — ошибка (проверка по факту недоступна){detailSuffix}";
+                        message = "Ошибка установки";
+                        InstallFailureService.Append(app.DisplayName, app.Id, source,
+                            string.IsNullOrEmpty(logDetail) ? "Код выхода — ошибка" : logDetail);
+                    }
+                    break;
+            }
+
+            appProgress.Status = status;
+            appProgress.Outcome = outcome;
             appProgress.IsIndeterminate = false;
-            appProgress.Percentage = 100;
+            if (success) appProgress.Percentage = 100;
+            appProgress.Phase = success ? InstallPhase.Done : InstallPhase.Error;
             progress.Report(appProgress);
-            Log(reboot ? logReboot : logOk);
-            if (ProfileService.Current.SaveInstallHistory)
+            Log(logLine);
+
+            // История/трекер версий — только для тех исходов, где реально что-то
+            // изменилось (ConfirmedSuccess) или где иного нет и мы доверяем коду
+            // выхода как раньше (NotYetDetermined). AlreadyUpToDate и Unconfirmed
+            // намеренно исключены: ни «переустановка» не подтверждена, ни то, что
+            // приложение вообще появилось — фиксировать в истории нечего.
+            bool trackHistory = outcome == InstallOutcome.ConfirmedSuccess
+                || (outcome == InstallOutcome.NotYetDetermined && exitCodeSuccess);
+            if (trackHistory && ProfileService.Current.SaveInstallHistory)
                 await InstallHistoryService.Instance.TrackAsync(app.Id, app.DisplayName, source, app.CategoryString);
-            return (true, reboot ? messageReboot : messageOk, appProgress);
+
+            return (success, message, appProgress);
         }
 
         // ── Помощники для выбора диска установки ───────────────────────────────
@@ -710,7 +883,11 @@ namespace Ven4Tools.Services
             return $" INSTALLDIR=\"{target}\"";
         }
 
-        private async Task<bool> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null)
+        // Возвращает признак перезагрузки отдельно от общего Ok (0 и 3010 — оба
+        // Ok=true) — раньше это различие терялось на возврате из метода, и путь
+        // Winget никогда не мог показать «Требуется перезагрузка» в отличие от
+        // остальных путей (RunElevatedInstallerAsync возвращает Reboot честно).
+        private async Task<(bool Ok, bool Reboot)> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null)
         {
             var profile = ProfileService.Current;
 
@@ -741,14 +918,14 @@ namespace Ven4Tools.Services
             if (!string.IsNullOrEmpty(version) && !CommandLineGuard.ValidateId(version))
             {
                 Log($"❌ Недопустимая версия «{version}» для {appId} — источник Winget пропущен");
-                return false;
+                return (false, false);
             }
 
             var wingetExe = TrustedExecutablePaths.ResolveWinget();
             if (wingetExe == null)
             {
                 Log($"❌ winget не найден по доверенному пути для {appId}");
-                return false;
+                return (false, false);
             }
             var psi = new ProcessStartInfo
             {
@@ -811,12 +988,12 @@ namespace Ven4Tools.Services
                     // winget не установлен в системе — не валим весь цикл источников,
                     // просто сообщаем о неудаче, чтобы перейти к следующему источнику.
                     Log($"❌ winget не найден — источник Winget пропущен ({appId})");
-                    return false;
+                    return (false, false);
                 }
                 catch (FileNotFoundException)
                 {
                     Log($"❌ winget не найден — источник Winget пропущен ({appId})");
-                    return false;
+                    return (false, false);
                 }
 
                 process.BeginOutputReadLine();
@@ -835,9 +1012,10 @@ namespace Ven4Tools.Services
                 }
 
                 // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — установка прошла успешно
-                if (process.ExitCode == 3010)
+                bool reboot = process.ExitCode == 3010;
+                if (reboot)
                     Log($"⚠ Установлено. Требуется перезагрузка. ({appId})");
-                return process.ExitCode == 0 || process.ExitCode == 3010;
+                return (process.ExitCode == 0 || reboot, reboot);
             }
         }
 
@@ -927,6 +1105,21 @@ namespace Ven4Tools.Services
         {
             get => _phase;
             set => SetField(ref _phase, value);
+        }
+
+        private InstallOutcome _outcome = InstallOutcome.NotYetDetermined;
+        /// <summary>
+        /// Результат сверки кода выхода установщика с фактическим состоянием системы
+        /// (см. <see cref="InstallOutcomeEvaluator"/>). Остаётся <see cref="InstallOutcome.NotYetDetermined"/>
+        /// до финального отчёта об установке — все промежуточные статусы («Скачивание»,
+        /// «Установка...») его не трогают. UI (CatalogTab) красит текст статуса по этому
+        /// свойству отдельно от <see cref="Phase"/> — Phase про этап процесса, Outcome про
+        /// то, насколько мы уверены в итоге.
+        /// </summary>
+        public InstallOutcome Outcome
+        {
+            get => _outcome;
+            set => SetField(ref _outcome, value);
         }
 
         /// <summary>
