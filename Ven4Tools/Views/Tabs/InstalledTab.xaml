@@ -127,8 +127,8 @@
                         <Button x:Name="btnUpgradeAll"
                                 Content="Обновить всё"
                                 Margin="4,0,0,0" Height="34" Padding="14,0"
-                                Background="{DynamicResource AccentColor}"
-                                Foreground="White"
+                                Background="{StaticResource BrandGreen}"
+                                Foreground="#06130D"
                                 FontWeight="Bold"
                                 FontSize="12"
                                 ToolTip="Обновить все приложения (winget upgrade --all)"
@@ -200,17 +200,17 @@
                     <Button x:Name="btnUpdateSelected"
                             Content="Обновить"
                             Height="30" Padding="12,0"
-                            Background="{DynamicResource AccentColor}"
-                            Foreground="White"
+                            Background="{StaticResource BrandGreen}"
+                            Foreground="#06130D"
                             FontWeight="Bold"
                             FontSize="12"
                             IsEnabled="False"
                             Click="BtnUpdateSelected_Click"/>
                     <Button x:Name="btnUninstallSelected" Content="Удалить"
+                            Style="{StaticResource DangerButtonStyle}"
                             IsEnabled="False" Margin="4,0,0,0"
                             Height="30" Padding="10,0"
-                            Background="#C42B2B" Foreground="White"
-                            FontWeight="Bold" FontSize="12"
+                            FontSize="12"
                             Click="BtnUninstallSelected_Click"/>
                 </StackPanel>
             </Grid>
@@ -358,7 +358,7 @@
                                                 Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
                                                 IsEnabled="{Binding CanAct}"
                                                 Height="26" Padding="10,0" Margin="0,0,6,0"
-                                                Background="#E6820E" Foreground="White"
+                                                Background="{StaticResource BrandGreen}" Foreground="#06130D"
                                                 FontSize="12" FontWeight="Bold"
                                                 Tag="{Binding}"
                                                 Click="BtnUpdate_Click"/>
