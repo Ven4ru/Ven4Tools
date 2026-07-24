@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
-using Ven4Tools.Services;
+using Ven4Tools.Models;
 
 namespace Ven4Tools.ViewModels
 {

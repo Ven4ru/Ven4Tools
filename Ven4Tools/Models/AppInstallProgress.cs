@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace Ven4Tools.Services
+namespace Ven4Tools.Models
 {
     // INotifyPropertyChanged обязателен: CatalogViewModel переиспользует один и
     // тот же экземпляр на все последующие Progress<AppInstallProgress>-события

@@ -1,4 +1,4 @@
-namespace Ven4Tools.Services
+namespace Ven4Tools.Models
 {
     /// <summary>
     /// Итог сопоставления заявленного результата установки (код выхода процесса)
