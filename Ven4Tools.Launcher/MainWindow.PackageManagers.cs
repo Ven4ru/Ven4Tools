@@ -181,6 +181,12 @@ namespace Ven4Tools.Launcher
                         await proc.WaitForExitAsync(ct);
                 }
 
+                // Официальный установщик мог только что создать/переписать
+                // C:\ProgramData\chocolatey\bin — согласовано с клиентским
+                // PackageManagerService.InstallChocoAsync (см. коммит "сброс кэша ACL
+                // после установки Chocolatey (клиент)"): без сброса результат проверки
+                // ACL мог бы закэшироваться навсегда на промежуточном состоянии.
+                Services.TrustedExecutablePaths.InvalidateChocolateyAclCache();
                 var result = await CheckChocoInstalledAsync();
                 if (result.IsInstalled)
                 {
