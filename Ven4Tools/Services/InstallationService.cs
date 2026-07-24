@@ -79,6 +79,7 @@ namespace Ven4Tools.Services
                 if (OfflineService.IsOffline)
                 {
                     appProgress.Status = "❌ Нет в кэше (офлайн режим)";
+                    appProgress.Phase = InstallPhase.Error;
                     progress.Report(appProgress);
                     Log($"⚠️ {app.DisplayName}: офлайн режим, установщик не кэширован");
                     return (false, "Офлайн режим — нет кэша", appProgress);
@@ -91,6 +92,8 @@ namespace Ven4Tools.Services
             catch (OperationCanceledException)
             {
                 appProgress.Status = "⏹️ Отменено";
+                appProgress.Phase = InstallPhase.Error;
+                appProgress.IsIndeterminate = false;
                 progress.Report(appProgress);
                 Log($"⏹️ {app.DisplayName} отменено");
                 throw;
@@ -98,6 +101,8 @@ namespace Ven4Tools.Services
             catch (Exception ex)
             {
                 appProgress.Status = "❌ Ошибка";
+                appProgress.Phase = InstallPhase.Error;
+                appProgress.IsIndeterminate = false;
                 progress.Report(appProgress);
                 Log($"❌ {app.DisplayName}: {ex.Message}");
                 return (false, ex.Message, appProgress);
@@ -109,8 +114,14 @@ namespace Ven4Tools.Services
             AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
             string installDrive, CancellationToken token)
         {
+            // Файл уже на диске (drag-drop) — фазы «Загрузка» здесь нет вообще,
+            // сразу Installing. Гранулярного прогресса самого установщика нет
+            // (elevated чёрный ящик) — честно показываем IsIndeterminate, а не
+            // выдумываем проценты.
             appProgress.Status = "📂 Локальный установщик...";
-            appProgress.Percentage = 30;
+            appProgress.Phase = InstallPhase.Installing;
+            appProgress.IsIndeterminate = true;
+            appProgress.Percentage = 0;
             progress.Report(appProgress);
             Log($"📂 {app.DisplayName}: локальный файл {app.LocalInstallerPath}");
 
@@ -125,6 +136,8 @@ namespace Ven4Tools.Services
             if (!HashHelper.HasExpectedHash(app.Sha256))
             {
                 appProgress.Status = "❌ Нет SHA256 для локального установщика — запуск отклонён";
+                appProgress.Phase = InstallPhase.Error;
+                appProgress.IsIndeterminate = false;
                 progress.Report(appProgress);
                 Log($"❌ {app.DisplayName}: локальный установщик без SHA256 — запуск отклонён (fail-closed)");
                 InstallFailureService.Append(app.DisplayName, app.Id, "local", "Нет SHA256 — установка локального файла требует зафиксированного хеша");
@@ -155,6 +168,8 @@ namespace Ven4Tools.Services
                 if (!await HashHelper.VerifyHashAsync(verifiedStream, app.Sha256!))
                 {
                     appProgress.Status = "❌ Файл изменён с момента добавления";
+                    appProgress.Phase = InstallPhase.Error;
+                    appProgress.IsIndeterminate = false;
                     progress.Report(appProgress);
                     Log($"❌ {app.DisplayName}: SHA256 локального файла не совпадает с зафиксированным при добавлении");
                     InstallFailureService.Append(app.DisplayName, app.Id, "local", "SHA256 не совпадает — файл изменён с момента добавления");
@@ -177,6 +192,8 @@ namespace Ven4Tools.Services
             if (run == null)
             {
                 appProgress.Status = "❌ Не удалось запустить установщик";
+                appProgress.Phase = InstallPhase.Error;
+                appProgress.IsIndeterminate = false;
                 progress.Report(appProgress);
                 Log($"❌ {app.DisplayName}: Process.Start вернул null");
                 InstallFailureService.Append(app.DisplayName, app.Id, "local", "Process.Start вернул null");
@@ -192,6 +209,8 @@ namespace Ven4Tools.Services
                     "Установлено (требуется перезагрузка)");
 
             appProgress.Status = "❌ Ошибка локального установщика";
+            appProgress.Phase = InstallPhase.Error;
+            appProgress.IsIndeterminate = false;
             progress.Report(appProgress);
             Log($"❌ {app.DisplayName}: локальный установщик завершился с кодом {run.Value.ExitCode}");
             InstallFailureService.Append(app.DisplayName, app.Id, "local", $"Код выхода {run.Value.ExitCode}");
@@ -216,8 +235,12 @@ namespace Ven4Tools.Services
                 Log($"⚠ Нет SHA256 в каталоге для {app.DisplayName} — кэш пропущен, пробую следующий источник");
                 return null;
             }
+            // Файл уже в офлайн-кэше на диске — фазы «Загрузка» нет, сразу Installing.
+            // Гранулярного прогресса самого установщика нет — честно IsIndeterminate.
             appProgress.Status = "🔌 Из кэша...";
-            appProgress.Percentage = 50;
+            appProgress.Phase = InstallPhase.Installing;
+            appProgress.IsIndeterminate = true;
+            appProgress.Percentage = 0;
             progress.Report(appProgress);
 
             bool cacheIsMsi = cachedPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
@@ -279,6 +302,8 @@ namespace Ven4Tools.Services
             if (!CommandLineGuard.ValidateId(primaryId))
             {
                 appProgress.Status = "❌ Недопустимый идентификатор пакета";
+                appProgress.Phase = InstallPhase.Error;
+                appProgress.IsIndeterminate = false;
                 progress.Report(appProgress);
                 Log($"❌ {app.DisplayName}: недопустимый ID «{primaryId}» — установка отменена");
                 InstallFailureService.Append(app.DisplayName, app.Id, "validation", $"Недопустимый ID «{primaryId}»");
@@ -306,6 +331,8 @@ namespace Ven4Tools.Services
             }
 
             appProgress.Status = "❌ Ошибка";
+            appProgress.Phase = InstallPhase.Error;
+            appProgress.IsIndeterminate = false;
             progress.Report(appProgress);
             Log($"❌ {app.DisplayName} — все источники исчерпаны");
             InstallFailureService.Append(app.DisplayName, app.Id, "all-sources", "Все источники исчерпаны");
@@ -321,13 +348,24 @@ namespace Ven4Tools.Services
             foreach (var wsrc in wingetSources)
             {
                 token.ThrowIfCancellationRequested();
+                // Winget скачивает и ставит пакет как единый чёрный ящик: RunWingetAsync
+                // только логирует построчный вывод, не парсит из него проценты (WingetRunner
+                // сознательно отбрасывает строки прогресс-бара как шум, см. IsTableSeparator/
+                // построчный фильтр). Локализованный вывод (без --locale en-US по правилам
+                // проекта) делает матчинг "Downloading"/"Installing" по тексту хрупким —
+                // поэтому честно показываем IsIndeterminate на весь процесс, а не
+                // выдумываем разбивку на фазы, которой на самом деле не видно.
                 appProgress.Status = $"📦 Winget ({wsrc})...";
-                appProgress.Percentage = 10;
+                appProgress.Phase = InstallPhase.Installing;
+                appProgress.IsIndeterminate = true;
+                appProgress.Percentage = 0;
                 progress.Report(appProgress);
 
                 if (await RunWingetAsync(primaryId, wsrc, token, version, installDrive))
                 {
                     appProgress.Status = "✅ Установлено (Winget)";
+                    appProgress.Phase = InstallPhase.Done;
+                    appProgress.IsIndeterminate = false;
                     appProgress.Percentage = 100;
                     progress.Report(appProgress);
                     Log($"✅ {app.DisplayName} — Winget ({wsrc}): {primaryId}");
@@ -345,8 +383,13 @@ namespace Ven4Tools.Services
             Func<string, Task<bool>>? confirmPmInstall, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(app.ChocoId)) return null;
+            // Как и Winget — единый чёрный ящик. RunChocoInstallAsync запускает choco
+            // с --no-progress --limit-output и только логирует строки, без парсинга
+            // процентов скачивания. Честный IsIndeterminate вместо выдуманной разбивки.
             appProgress.Status = "🍫 Chocolatey...";
-            appProgress.Percentage = 15;
+            appProgress.Phase = InstallPhase.Installing;
+            appProgress.IsIndeterminate = true;
+            appProgress.Percentage = 0;
             progress.Report(appProgress);
 
             bool chocoOk = await PackageManagerService.IsChocoInstalledAsync()
@@ -357,6 +400,8 @@ namespace Ven4Tools.Services
             if (chocoOk && await PackageManagerService.RunChocoInstallAsync(app.ChocoId, token, msg => Log(msg)))
             {
                 appProgress.Status = "✅ Установлено (Chocolatey)";
+                appProgress.Phase = InstallPhase.Done;
+                appProgress.IsIndeterminate = false;
                 appProgress.Percentage = 100;
                 progress.Report(appProgress);
                 Log($"✅ {app.DisplayName} — Chocolatey: {app.ChocoId}");
@@ -379,6 +424,8 @@ namespace Ven4Tools.Services
             if (!HashHelper.HasExpectedHash(app.Sha256))
             {
                 appProgress.Status = "⚠ Нет SHA256 в каталоге — прямая ссылка пропущена";
+                appProgress.Phase = InstallPhase.Error;
+                appProgress.IsIndeterminate = false;
                 progress.Report(appProgress);
                 Log($"⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, пробую следующий");
                 AppLogger.Write($"[InstallationService] ⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, продолжаю через winget");
@@ -399,8 +446,13 @@ namespace Ven4Tools.Services
                     continue;
                 }
 
+                // Начало реальной фазы «Загрузка» — перескалировано на полный 0-100%
+                // диапазон (раньше эта фаза жила в промежутке 20-50% общей шкалы,
+                // что вместе с фазой установки смотрелось как одна невнятная полоска).
                 appProgress.Status = "📥 Скачивание...";
-                appProgress.Percentage = 20;
+                appProgress.Phase = InstallPhase.Download;
+                appProgress.IsIndeterminate = false;
+                appProgress.Percentage = 0;
                 progress.Report(appProgress);
 
                 string urlExt = Path.GetExtension(new Uri(url).LocalPath).ToLowerInvariant();
@@ -431,6 +483,14 @@ namespace Ven4Tools.Services
                         }
 
                         var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                        // Сервер не отдал Content-Length — реальный процент скачивания
+                        // посчитать нечем. Честно показываем IsIndeterminate вместо
+                        // застрявшего на месте (или выдуманного) числа.
+                        if (totalBytes <= 0)
+                        {
+                            appProgress.IsIndeterminate = true;
+                            progress.Report(appProgress);
+                        }
                         using var contentStream = await response.Content.ReadAsStreamAsync();
                         using var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
                         // Сбрасывается после каждого успешного чтения — таймаут на простой между
@@ -447,7 +507,7 @@ namespace Ven4Tools.Services
                             totalRead += bytesRead;
                             if (totalBytes > 0)
                             {
-                                appProgress.Percentage = 20 + (int)((double)totalRead / totalBytes * 30);
+                                appProgress.Percentage = (int)((double)totalRead / totalBytes * 100);
                                 progress.Report(appProgress);
                             }
                         }
@@ -456,8 +516,12 @@ namespace Ven4Tools.Services
                     double downloadedMb = Math.Round(totalRead / 1_048_576.0, 1);
                     AppLogger.Write($"📥 Загружен установщик — {downloadedMb} МБ: {Path.GetFileName(tempFile)}");
 
+                    // Всё ещё часть фазы «Загрузка» (файл уже получен, проверяем его
+                    // целостность перед запуском) — доводим до 100%, IsIndeterminate
+                    // снимаем на случай, если он включился из-за неизвестного Content-Length.
                     appProgress.Status = "🔐 Проверка SHA256...";
-                    appProgress.Percentage = 55;
+                    appProgress.IsIndeterminate = false;
+                    appProgress.Percentage = 100;
                     progress.Report(appProgress);
 
                     bool tempIsMsi = tempFile.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
@@ -498,8 +562,14 @@ namespace Ven4Tools.Services
                         {
                             Log($"✅ SHA256 OK: {app.DisplayName}");
                             token.ThrowIfCancellationRequested();
+                            // Переключение фазы: Загрузка завершена, начинается Установка —
+                            // сбрасываем Percentage на 0 (не тащим хвост от 100%). Гранулярного
+                            // прогресса самого установщика нет (elevated чёрный ящик, формат
+                            // произвольный) — честно IsIndeterminate, а не выдуманные проценты.
                             appProgress.Status = "⚙️ Установка...";
-                            appProgress.Percentage = 60;
+                            appProgress.Phase = InstallPhase.Installing;
+                            appProgress.IsIndeterminate = true;
+                            appProgress.Percentage = 0;
                             progress.Report(appProgress);
 
                             var psi = new ProcessStartInfo
@@ -519,6 +589,8 @@ namespace Ven4Tools.Services
                         Log($"❌ SHA256 mismatch: {app.DisplayName}");
                         try { File.Delete(tempFile); } catch { }
                         appProgress.Status = "⚠ SHA256 не совпал — пробуем следующий источник";
+                        appProgress.Phase = InstallPhase.Error;
+                        appProgress.IsIndeterminate = false;
                         progress.Report(appProgress);
                         hashMismatchCount++;
                         continue;
@@ -579,6 +651,8 @@ namespace Ven4Tools.Services
             string messageOk, string messageReboot)
         {
             appProgress.Status = reboot ? "⚠ Установлено. Требуется перезагрузка." : statusOk;
+            appProgress.Phase = InstallPhase.Done;
+            appProgress.IsIndeterminate = false;
             appProgress.Percentage = 100;
             progress.Report(appProgress);
             Log(reboot ? logReboot : logOk);
@@ -796,6 +870,25 @@ namespace Ven4Tools.Services
     // хотя установка по факту продолжается и завершается. В императивном
     // коде до MVVM-переноса это компенсировалось явным Items.Refresh() —
     // при переносе на биндинг эквивалент потерялся.
+    // Явная фаза установки для UI (см. AppInstallProgress.Phase). Порядок значений
+    // важен: Download — значение по умолчанию (0), чтобы объект перед первым
+    // Report() уже имел осмысленную фазу без явного присвоения.
+    public enum InstallPhase
+    {
+        /// <summary>Загрузка установщика. Используется, только если скачивание
+        /// реально происходит (прямая ссылка) — не выставляется искусственно там,
+        /// где источник уже локален (кэш, drag-drop) или сам является чёрным
+        /// ящиком (winget/choco).</summary>
+        Download,
+        /// <summary>Установка — после того как файл получен (или сразу, если
+        /// скачивания как такового не было).</summary>
+        Installing,
+        /// <summary>Завершено успешно (в т.ч. с отложенной перезагрузкой).</summary>
+        Done,
+        /// <summary>Завершено с ошибкой либо отменено пользователем.</summary>
+        Error
+    }
+
     public class AppInstallProgress : INotifyPropertyChanged
     {
         public string AppId { get; set; } = string.Empty;
@@ -821,6 +914,38 @@ namespace Ven4Tools.Services
             get => _isIndeterminate;
             set => SetField(ref _isIndeterminate, value);
         }
+
+        private InstallPhase _phase = InstallPhase.Download;
+        /// <summary>
+        /// Текущая фаза установки. Percentage считается заново в каждой фазе
+        /// (полные 0-100% на скачивание, отдельно 0-100% на установку) — раньше
+        /// обе фазы были замешаны в одну шкалу 0-100, из-за чего полоска прогресса
+        /// была нечитаемой (пользовательский фидбек 2026-07-24). UI (CatalogTab)
+        /// красит полоску по этому свойству через InstallPhaseToBrushConverter.
+        /// </summary>
+        public InstallPhase Phase
+        {
+            get => _phase;
+            set => SetField(ref _phase, value);
+        }
+
+        /// <summary>
+        /// Сквозная оценка прогресса (0-100) для агрегированной шкалы по всей
+        /// очереди установки (CatalogViewModel.OverallProgressPercentage). Без
+        /// неё агрегат «прыгал» бы назад в момент переключения Download →
+        /// Installing, когда Percentage сбрасывается на 0 для новой фазы.
+        /// Взвешено 50/50 между фазами; для IsIndeterminate (нет гранулярных
+        /// данных о ходе фазы) берётся середина её диапазона — честная оценка
+        /// «примерно на этом этапе», а не выдуманный точный процент.
+        /// </summary>
+        public double EffectiveProgress => Phase switch
+        {
+            InstallPhase.Download => IsIndeterminate ? 25.0 : Percentage * 0.5,
+            InstallPhase.Installing => IsIndeterminate ? 75.0 : 50.0 + Percentage * 0.5,
+            InstallPhase.Done => 100.0,
+            InstallPhase.Error => 100.0,
+            _ => Percentage
+        };
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null) =>
