@@ -27,9 +27,33 @@
         <TextBlock Grid.Row="1" x:Name="txtStatus" Text="" TextWrapping="Wrap"
                    Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
 
-        <TreeView Grid.Row="2" x:Name="treeUpdates"
-                  Background="{DynamicResource CardBackground}"
-                  BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+        <Grid Grid.Row="2">
+            <TreeView x:Name="treeUpdates"
+                      Background="{DynamicResource CardBackground}"
+                      BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+
+            <!-- Пустое состояние: показывается, когда дерево обновлений пусто (служба
+                 недоступна / ещё не проверяли / ошибка / всё установлено) — раньше здесь
+                 был просто пустой прямоугольник без единой подсказки. Иконка — тот же
+                 Segoe Fluent Icons, что уже используют кнопки/навигация в проекте (см.
+                 overlay добавления локального установщика в MainWindow.xaml как образец
+                 паттерна «крупная иконка + заголовок + подзаголовок»). -->
+            <StackPanel x:Name="pnlUpdatesEmpty"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        IsHitTestVisible="False">
+                <TextBlock Text="&#xE72E;" FontFamily="Segoe Fluent Icons" FontSize="40"
+                           Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="txtUpdatesEmptyTitle" Text="Список обновлений пуст"
+                           FontSize="16" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimary}"
+                           HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                <TextBlock x:Name="txtUpdatesEmptySubtitle"
+                           Text="Нажмите «Проверить обновления», чтобы начать проверку"
+                           FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                           HorizontalAlignment="Center" Margin="0,4,0,0"
+                           TextWrapping="Wrap" MaxWidth="320" TextAlignment="Center"/>
+            </StackPanel>
+        </Grid>
 
         <!-- Footer: выбор + установка -->
         <Border Grid.Row="3" Margin="0,12,0,0" Padding="12,8" Background="{StaticResource SurfaceCard}"

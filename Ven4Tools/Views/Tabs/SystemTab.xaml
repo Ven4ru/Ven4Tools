@@ -100,10 +100,31 @@
                 </ScrollViewer>
             </TabItem>
             <TabItem Header="Источники">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="8,12,8,8">
-            <!-- Порядок источников -->
-            <GroupBox Header="🔀 Порядок источников установки" Margin="0,0,0,15">
+                <!-- Карточка (Border, не GroupBox) растянута на весь TabItem через
+                     Grid-родитель (а не StackPanel — тот игнорирует VerticalAlignment
+                     ="Stretch" по направлению стека), чтобы рамка с фоном CardBackground
+                     реально доходила до низа вкладки, а не заканчивалась сразу под
+                     контентом с чёрной пустотой ниже (эта под-вкладка заметно короче
+                     «Общие»/«Профиль и снимки», но делит с ними общий TabControl без
+                     фиксированной высоты). Именно Border, а не общий стиль GroupBox
+                     (App.xaml) — у GroupBox в этом проекте свой ControlTemplate, чей
+                     корневой Grid на практике не растягивается вертикально даже с
+                     VerticalAlignment="Stretch" на самом GroupBox (проверено диагностикой
+                     с Background="Red" — под GroupBox оставалась пустая полоса вплоть до
+                     низа вкладки); DockPanel + Border такой проблемы не имеет. -->
+                <Grid Margin="8,12,8,8">
+                    <Border Background="{DynamicResource CardBackground}"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            CornerRadius="8">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Top" Background="{DynamicResource CardBackground}"
+                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                                    CornerRadius="8,8,0,0" Padding="8,4">
+                                <TextBlock Text="🔀 Порядок источников установки"
+                                           Foreground="{DynamicResource HeaderForeground}"
+                                           FontWeight="Bold" FontSize="13"/>
+                            </Border>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="10">
                     <!-- Mode -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -175,10 +196,10 @@
                     <TextBlock x:Name="txtSourceOrderStatus" Margin="0,6,0,0"
                                FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
-            </GroupBox>
-
-                    </StackPanel>
-                </ScrollViewer>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Border>
+                </Grid>
             </TabItem>
             <TabItem Header="Офлайн и приватность">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">

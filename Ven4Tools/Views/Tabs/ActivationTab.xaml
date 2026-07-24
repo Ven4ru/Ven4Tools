@@ -42,7 +42,7 @@
                             </TextBlock>
                             <Button x:Name="btnActivateWindows" Content="🌐 Открыть официальный сайт →"
                                     Height="40" Width="260" HorizontalAlignment="Left"
-                                    Background="#0078D4" Foreground="White" FontWeight="Bold" IsEnabled="False"/>
+                                    FontWeight="Bold" IsEnabled="False"/>
                         </StackPanel>
                     </GroupBox>
 
@@ -55,7 +55,7 @@
                             </TextBlock>
                             <Button x:Name="btnActivateOffice" Content="🌐 Открыть официальный сайт →"
                                     Height="40" Width="260" HorizontalAlignment="Left"
-                                    Background="#0078D4" Foreground="White" FontWeight="Bold" IsEnabled="False"/>
+                                    FontWeight="Bold" IsEnabled="False"/>
                         </StackPanel>
                     </GroupBox>
 

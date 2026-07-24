@@ -60,6 +60,9 @@ namespace Ven4Tools.Views.Tabs
             btnCheck.IsEnabled = false;
             txtStatus.Text = "⏳ Проверка обновлений...";
             treeUpdates.Items.Clear();
+            // Идёт проверка — это не «пусто», а «загрузка»; не показываем пустое
+            // состояние поверх дерева, пока не появится финальный результат.
+            pnlUpdatesEmpty.Visibility = Visibility.Collapsed;
 
             if (!_service.IsServiceRunning())
             {
@@ -70,12 +73,16 @@ namespace Ven4Tools.Views.Tabs
                 {
                     txtStatus.Text = "❌ Не удалось запустить службу Windows Update.";
                     btnCheck.IsEnabled = true;
+                    ShowUpdatesEmptyState("Служба Windows Update недоступна",
+                        "Не удалось запустить службу — подробности в сообщении выше");
                     return;
                 }
                 if (startNow == MessageBoxResult.No)
                 {
                     txtStatus.Text = "⚠ Служба Windows Update не запущена — проверка недоступна.";
                     btnCheck.IsEnabled = true;
+                    ShowUpdatesEmptyState("Служба Windows Update недоступна",
+                        "Нажмите «Проверить обновления» ещё раз, когда служба будет запущена");
                     return;
                 }
             }
@@ -91,6 +98,8 @@ namespace Ven4Tools.Views.Tabs
                 if (!result.Success)
                 {
                     txtStatus.Text = $"❌ {result.ErrorMessage}";
+                    ShowUpdatesEmptyState("Не удалось получить список обновлений",
+                        "Подробности — в сообщении выше");
                     return;
                 }
 
@@ -99,6 +108,7 @@ namespace Ven4Tools.Views.Tabs
                     txtStatus.Text = "✅ Обновлений не найдено — система актуальна.";
                     AppLogger.Write("🛡️ Windows Update: обновлений не найдено");
                     UpdateSelectionSummary();
+                    ShowUpdatesEmptyState("Обновлений нет", "Система полностью обновлена");
                     return;
                 }
 
@@ -114,9 +124,22 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
+        /// <summary>
+        /// Показывает подсказку по центру пустого дерева обновлений вместо голого
+        /// прямоугольника. Вызывается на всех терминальных состояниях, где реальный
+        /// список патчей не построен (служба недоступна / ошибка / всё установлено).
+        /// </summary>
+        private void ShowUpdatesEmptyState(string title, string subtitle)
+        {
+            txtUpdatesEmptyTitle.Text = title;
+            txtUpdatesEmptySubtitle.Text = subtitle;
+            pnlUpdatesEmpty.Visibility = Visibility.Visible;
+        }
+
         private void RenderTree()
         {
             treeUpdates.Items.Clear();
+            pnlUpdatesEmpty.Visibility = Visibility.Collapsed;
             foreach (var category in _tree)
             {
                 var categoryItem = new TreeViewItem { IsExpanded = false };
