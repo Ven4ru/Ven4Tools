@@ -371,7 +371,7 @@ namespace Ven4Tools.Launcher
 
                 await DownloadWingetPackagesAsync(msixUrl, tempVcLibs, tempUiXaml, tempMsix, ct);
 
-                if (!await RunWingetInstallScriptAsync(tempVcLibs, tempUiXaml, tempMsix))
+                if (!await RunWingetInstallScriptAsync(tempVcLibs, tempUiXaml, tempMsix, ct))
                     return;
 
                 var result = await CheckWingetWithVersionAsync();
@@ -478,7 +478,19 @@ namespace Ven4Tools.Launcher
         // пакет не подписан Microsoft (установка отменена). FileShare.Read держим
         // открытым от проверки подписи до завершения Add-AppxPackage — запрещает
         // подмену файла другим процессом того же пользователя в этом окне (TOCTOU).
-        private async Task<bool> RunWingetInstallScriptAsync(string tempVcLibs, string tempUiXaml, string tempMsix)
+        //
+        // ct — тот же бюджет времени (10 минут / кнопка «Отмена»), что и у скачивания
+        // выше в InstallWingetAsync. Раньше ожидание PowerShell не принимало токен
+        // вовсе: зависший Add-AppxPackage (или отклик пользователя на «Отмена» во
+        // время установки) не имел никакого выхода — кнопка «Отмена» оставалась
+        // видимой, но не действовала, пока PowerShell сам не завершится. Симметрично
+        // уже исправленным CheckWingetWithVersionAsync (10 сек) и InstallChocoAsync
+        // в MainWindow.PackageManagers.cs (тот же паттерн для родственной установки).
+        // Как и в InstallChocoAsync, процесс не убивается принудительно при отмене —
+        // Add-AppxPackage безопаснее довести до конца в фоне, чем прервать посреди
+        // записи; отмена лишь освобождает UI-поток ожидания.
+        private async Task<bool> RunWingetInstallScriptAsync(
+            string tempVcLibs, string tempUiXaml, string tempMsix, CancellationToken ct)
         {
             using var vcLibsHandle = new FileStream(tempVcLibs, FileMode.Open, FileAccess.Read, FileShare.Read);
             using var uiXamlHandle = new FileStream(tempUiXaml, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -529,9 +541,9 @@ namespace Ven4Tools.Launcher
                 using var proc = Process.Start(psi);
                 if (proc != null)
                 {
-                    var stdoutTask = proc.StandardOutput.ReadToEndAsync();
-                    string stderr  = await proc.StandardError.ReadToEndAsync();
-                    await proc.WaitForExitAsync();
+                    var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
+                    string stderr  = await proc.StandardError.ReadToEndAsync(ct);
+                    await proc.WaitForExitAsync(ct);
                     await stdoutTask;
                     if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
                         AddLog($"⚠️ PowerShell: {stderr.Trim()}");
@@ -629,7 +641,14 @@ namespace Ven4Tools.Launcher
                     };
                     if (needElevation) psi.Verb = "runas";
                     using var proc = Process.Start(psi);
-                    if (proc != null) await proc.WaitForExitAsync();
+                    // ct — тот же бюджет времени (5 минут / кнопка «Отмена»), что и у
+                    // скачивания выше. Раньше ожидание установщика не принимало токен:
+                    // зависший WebView2/VC++-инсталлятор не давал «Отмене» выхода —
+                    // кнопка оставалась видимой, но бездействовала (тот же пробел, что
+                    // был у RunWingetInstallScriptAsync). Процесс не убивается
+                    // принудительно при отмене — тот же осознанный выбор, что и в
+                    // InstallChocoAsync/RunWingetInstallScriptAsync.
+                    if (proc != null) await proc.WaitForExitAsync(ct);
                 }
                 // Завершение процесса установщика ≠ успех: exit code Microsoft-установщиков
                 // ненадёжен, а WebView2/VC++ могут «встать» только после перезагрузки.
