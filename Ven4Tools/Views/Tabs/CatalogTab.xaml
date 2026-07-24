@@ -7,6 +7,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <vm:CategoryNameToHeaderConverter x:Key="CategoryHeaderConverter"/>
         <vm:StringToVisibilityConverter x:Key="StringToVis"/>
+        <vm:InstallPhaseToBrushConverter x:Key="PhaseToBrush"/>
     </UserControl.Resources>
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -385,8 +386,9 @@
                                     <ProgressBar Grid.Row="1" Grid.ColumnSpan="2"
                                                  Height="4" Margin="0,3,0,0"
                                                  Value="{Binding Percentage}"
+                                                 IsIndeterminate="{Binding IsIndeterminate}"
                                                  Background="{DynamicResource BorderBrush}"
-                                                 Foreground="{DynamicResource AccentColor}"/>
+                                                 Foreground="{Binding Phase, Converter={StaticResource PhaseToBrush}}"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
