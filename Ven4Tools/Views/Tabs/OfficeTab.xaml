@@ -118,7 +118,7 @@
                                Margin="0,0,0,8"/>
                     <ProgressBar x:Name="progressOffice"
                                  Height="8" Minimum="0" Maximum="100" Value="0"
-                                 Foreground="#0078D4"
+                                 Foreground="{DynamicResource AccentColor}"
                                  Background="{DynamicResource BorderBrush}"/>
                     <TextBlock x:Name="txtInstallDetail"
                                Text=""
