@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Text.RegularExpressions;
 
 namespace Ven4Tools.Launcher.Services
 {
@@ -24,6 +25,8 @@ namespace Ven4Tools.Launcher.Services
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         private static readonly string CommonAppDataDir =
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+        private static readonly string ProgramFilesDir =
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 
         /// <summary>%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe — путь фиксирован.</summary>
         public static string PowerShellExe { get; } =
@@ -33,16 +36,117 @@ namespace Ven4Tools.Launcher.Services
         public static string ShutdownExe { get; } = Path.Combine(SystemDir, "shutdown.exe");
 
         /// <summary>
-        /// winget — App Execution Alias в %LocalAppData%\Microsoft\WindowsApps, защищённой
-        /// ACL-папке (см. подробный комментарий в клиентском TrustedExecutablePaths.ResolveWinget).
-        /// DACL проверяется явно, а не предполагается — тот же вывод пентеста 2026-07-14.
+        /// winget — сначала пробуем сам пакет App Installer под Program Files\WindowsApps
+        /// (см. ResolveWingetFromPackageFolder), и только если не нашли — старый путь
+        /// через App Execution Alias в %LocalAppData%\Microsoft\WindowsApps с ACL-проверкой.
+        ///
+        /// Портировано из клиентского Ven4Tools.Services.TrustedExecutablePaths.ResolveWinget
+        /// (аудит round 16, 2026-07-24) — до этого лаунчер использовал только alias+ACL,
+        /// хотя клиентский аудит 2026-07-17 уже показал, что этой эвристики недостаточно
+        /// в ОБЕ стороны: пентест 2026-07-14 нашёл случай, когда ACL персональной папки
+        /// оказывалась слабее ожидаемой (обычный пользователь мог подменить winget.exe),
+        /// а аудит 2026-07-17 — что на живых машинах та же папка регулярно шире узкого
+        /// предположения без реальной компрометации (ложный отказ резолвинга). Пакетная
+        /// папка Program Files\WindowsApps\Microsoft.DesktopAppInstaller_* заблокирована
+        /// TrustedInstaller на уровне ОС независимо от состояния профиля/машины, а сам
+        /// winget.exe там — не reparse point, поэтому Authenticode-проверка работает
+        /// штатно и служит основным источником доверия вместо ACL. `UpdateBackgroundService`
+        /// вызывает ResolveWinget на фоновом таймере — тот же путь резолвинга, что и здесь.
         /// </summary>
         public static string? ResolveWinget()
         {
+            var fromPackage = ResolveWingetFromPackageFolder();
+            if (fromPackage != null) return fromPackage;
+
             var dir = Path.Combine(LocalAppDataDir, "Microsoft", "WindowsApps");
             var alias = Path.Combine(dir, "winget.exe");
             if (!File.Exists(alias)) return null;
             return IsDirectoryAclCompromised(dir) ? null : alias;
+        }
+
+        private static readonly Dictionary<string, string?> _packageWingetCache = new();
+        private static readonly object _packageWingetCacheLock = new();
+
+        /// <summary>
+        /// Находит winget.exe внутри пакета Microsoft.DesktopAppInstaller под
+        /// Program Files\WindowsApps и проверяет его Authenticode-подпись (Microsoft
+        /// Corporation) — не reparse point, в отличие от alias'а в профиле пользователя.
+        /// Возвращает null при любой проблеме (пакет не найден, доступ ограничен,
+        /// подпись не подтверждена) — вызывающий код тогда падает на alias-путь.
+        /// Результат кэшируется на процесс: для конкретной версии пакета содержимое
+        /// файла не меняется на лету.
+        /// </summary>
+        private static string? ResolveWingetFromPackageFolder()
+        {
+            string arch = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture switch
+            {
+                System.Runtime.InteropServices.Architecture.X64   => "x64",
+                System.Runtime.InteropServices.Architecture.Arm64 => "arm64",
+                System.Runtime.InteropServices.Architecture.X86   => "x86",
+                _ => ""
+            };
+            if (arch.Length == 0) return null;
+
+            string windowsAppsRoot = Path.Combine(ProgramFilesDir, "WindowsApps");
+
+            lock (_packageWingetCacheLock)
+            {
+                if (_packageWingetCache.TryGetValue(arch, out var cached)) return cached;
+
+                string? result = null;
+                try
+                {
+                    // Публикатор "8wekyb3d8bbwe" — фиксированный хеш издателя Microsoft
+                    // для App Installer, одинаков на всех машинах и версиях пакета.
+                    var candidates = Directory.GetDirectories(
+                        windowsAppsRoot, $"Microsoft.DesktopAppInstaller_*_{arch}__8wekyb3d8bbwe");
+                    // Может встретиться больше одной версии пакета — берём самую свежую
+                    // по версии из имени папки (строковая сортировка некорректна:
+                    // "1.9..." лексически больше "1.27..."). Откат на строковую сортировку,
+                    // если формат имени неожиданный.
+                    Array.Sort(candidates, (a, b) =>
+                    {
+                        var va = TryParsePackageVersion(a);
+                        var vb = TryParsePackageVersion(b);
+                        if (va != null && vb != null) return vb.CompareTo(va);
+                        return string.Compare(b, a, StringComparison.OrdinalIgnoreCase);
+                    });
+
+                    foreach (var dir in candidates)
+                    {
+                        var exePath = Path.Combine(dir, "winget.exe");
+                        if (!File.Exists(exePath)) continue;
+
+                        if (AuthenticodeVerifier.IsSignedByMicrosoft(exePath, out _))
+                        {
+                            result = exePath;
+                            break;
+                        }
+                    }
+                }
+                catch
+                {
+                    // Доступ к Program Files\WindowsApps ограничен на этой сборке Windows,
+                    // пакет не найден и т.п. — не фатально, вызывающий код перейдёт на alias.
+                }
+
+                _packageWingetCache[arch] = result;
+                return result;
+            }
+        }
+
+        private static readonly Regex _packageVersionRegex =
+            new(@"_(?<ver>\d+(?:\.\d+){1,3})_", RegexOptions.Compiled);
+
+        // Извлекает версию из имени папки пакета вида
+        // "Microsoft.DesktopAppInstaller_X.Y.Z.W_arch__8wekyb3d8bbwe". Возвращает
+        // null при неожиданном формате имени — вызывающий код тогда откатывается
+        // на строковую сортировку.
+        private static Version? TryParsePackageVersion(string dirPath)
+        {
+            string name = Path.GetFileName(dirPath);
+            var m = _packageVersionRegex.Match(name);
+            return m.Success && Version.TryParse(m.Groups["ver"].Value, out var v) ? v : null;
         }
 
         /// <summary>
