@@ -27,6 +27,7 @@ namespace Ven4Tools
         private InstalledTab?  _installedTab;
         private SystemTab?     _systemTab;
         private DiagnosticsTab? _diagnosticsTab;
+        private BenchmarkTab?  _benchmarkTab;
         private WindowsUpdateTab? _windowsUpdateTab;
         private OfficeTab?     _officeTab;
         private ActivationTab? _activationTab;
@@ -178,6 +179,15 @@ namespace Ven4Tools
             AppLogger.Write("📂 Открыта вкладка: Диагностика");
             if (_diagnosticsTab == null) _diagnosticsTab = new DiagnosticsTab();
             MainFrame.Content = (_diagnosticsTab);
+            UpdateMascot("system"); // отдельного маскота для этой вкладки нет — используем нейтрального "system"
+        }
+
+        private void NavigateToBenchmark(object? sender, RoutedEventArgs? e)
+        {
+            SetActiveButton(btnBenchmarkTab);
+            AppLogger.Write("📂 Открыта вкладка: Бенчмарк");
+            if (_benchmarkTab == null) _benchmarkTab = new BenchmarkTab();
+            MainFrame.Content = (_benchmarkTab);
             UpdateMascot("system"); // отдельного маскота для этой вкладки нет — используем нейтрального "system"
         }
 
@@ -589,7 +599,7 @@ namespace Ven4Tools
 
         private void SetActiveButton(Button activeButton)
         {
-            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnDiagnosticsTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnWindowsUpdateTab };
+            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnDiagnosticsTab, btnBenchmarkTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnWindowsUpdateTab };
             foreach (var btn in buttons)
             {
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");
