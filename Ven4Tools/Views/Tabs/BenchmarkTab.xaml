@@ -1,0 +1,205 @@
+<UserControl x:Class="Ven4Tools.Views.Tabs.BenchmarkTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource ContentBackground}">
+    <Grid Margin="20">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <StackPanel Margin="0,0,0,16">
+            <TextBlock Text="Тест скорости диска" Style="{StaticResource PageTitleStyle}"/>
+            <TextBlock Text="Измерение скорости накопителя, тип подключения и потолок интерфейса. Работает без интернета"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="8,0,8,8">
+
+                <!-- Выбор накопителя и тома -->
+                <GroupBox Header="💽 Что тестируем" Margin="0,0,0,15">
+                    <StackPanel Margin="10">
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Накопитель:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="cmbDisks" Grid.Column="1" Height="30"/>
+                        </Grid>
+                        <Grid Margin="0,10,0,5">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Том для теста:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="cmbVolumes" Grid.Column="1" Height="30"/>
+                        </Grid>
+                        <TextBlock x:Name="txtDiskHint" Margin="0,10,0,0" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextSecondary}" FontSize="11"
+                                   Text="Определение накопителей..."/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Сведения о накопителе -->
+                <GroupBox Header="🔌 Подключение накопителя" Margin="0,0,0,15">
+                    <StackPanel Margin="10">
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Модель:" Foreground="{DynamicResource TextSecondary}"/>
+                            <TextBlock x:Name="txtModel" Grid.Column="1" Text="—" Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+                        </Grid>
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Объём:" Foreground="{DynamicResource TextSecondary}"/>
+                            <TextBlock x:Name="txtCapacity" Grid.Column="1" Text="—" Foreground="{DynamicResource TextPrimary}"/>
+                        </Grid>
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Тип носителя:" Foreground="{DynamicResource TextSecondary}"/>
+                            <TextBlock x:Name="txtMedia" Grid.Column="1" Text="—" Foreground="{DynamicResource TextPrimary}"/>
+                        </Grid>
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Подключение:" Foreground="{DynamicResource TextSecondary}"/>
+                            <TextBlock x:Name="txtConnection" Grid.Column="1" Text="—" Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+                        </Grid>
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Потолок интерфейса:" Foreground="{DynamicResource TextSecondary}"/>
+                            <TextBlock x:Name="txtCeiling" Grid.Column="1" Text="—" Foreground="{DynamicResource TextPrimary}"/>
+                        </Grid>
+                        <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" FontSize="11"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   Text="ℹ️ Точный слот на материнской плате определить нельзя — Windows такую разметку не сообщает. Всё, что не удалось выяснить достоверно, помечается как «не определяется», а не подставляется приблизительно."/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Параметры прогона -->
+                <GroupBox Header="⚙️ Параметры теста" Margin="0,0,0,15">
+                    <StackPanel Margin="10">
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Профиль:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="cmbProfile" Grid.Column="1" Height="30">
+                                <ComboBoxItem Content="Быстрый — 1 проход, около минуты" Tag="Fast"/>
+                                <ComboBoxItem Content="Обычный — 3 прохода, около трёх минут" Tag="Normal" IsSelected="True"/>
+                                <ComboBoxItem Content="Точный — 5 проходов, около пяти минут" Tag="Precise"/>
+                            </ComboBox>
+                        </Grid>
+                        <Grid Margin="0,10,0,5">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Тестовый файл:" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="cmbFileSize" Grid.Column="1" Height="30"/>
+                        </Grid>
+                        <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" FontSize="11"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   Text="ℹ️ Тест работает через временный файл на выбранном томе и удаляет его после прогона. Прямой записи на устройство в обход файловой системы нет — данные в безопасности."/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Предупреждения -->
+                <Border x:Name="pnlWarnings" Background="{DynamicResource CardBackground}" CornerRadius="6"
+                        Padding="14" Margin="0,0,0,15" Visibility="Collapsed"
+                        BorderThickness="1" BorderBrush="{DynamicResource StatusWarning}">
+                    <StackPanel>
+                        <TextBlock Text="⚠️ Что может повлиять на результат" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource StatusWarning}" Margin="0,0,0,8"/>
+                        <StackPanel x:Name="pnlWarningItems"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Запуск -->
+                <Border Background="{DynamicResource CardBackground}" CornerRadius="6" Padding="14" Margin="0,0,0,15">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="btnRunBenchmark" Content="▶ Запустить тест" Height="36" Width="200"/>
+                            <TextBlock x:Name="txtRunStatus" VerticalAlignment="Center" Margin="14,0,0,0"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       Text="Тест ещё не запускался"/>
+                        </StackPanel>
+                        <ProgressBar x:Name="progressBenchmark" Height="6" Minimum="0" Maximum="100"
+                                     Margin="0,12,0,0" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Результаты -->
+                <GroupBox Header="📊 Результаты" Margin="0,0,0,15">
+                    <Grid x:Name="gridResults" Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Тест" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Чтение" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Запись" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" x:Name="txtP0Name" Text="SEQ1M Q8T1"
+                                   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,6">
+                            <TextBlock x:Name="txtP0Read" Text="—" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource AccentColor}"/>
+                            <TextBlock x:Name="txtP0ReadSub" Text="" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,6">
+                            <TextBlock x:Name="txtP0Write" Text="—" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtP0WriteSub" Text="" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" x:Name="txtP1Name" Text="SEQ1M Q1T1"
+                                   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,6">
+                            <TextBlock x:Name="txtP1Read" Text="—" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource AccentColor}"/>
+                            <TextBlock x:Name="txtP1ReadSub" Text="" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,6">
+                            <TextBlock x:Name="txtP1Write" Text="—" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtP1WriteSub" Text="" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" x:Name="txtP2Name" Text="RND4K Q32T16"
+                                   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,6">
+                            <TextBlock x:Name="txtP2Read" Text="—" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource AccentColor}"/>
+                            <TextBlock x:Name="txtP2ReadSub" Text="" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,6">
+                            <TextBlock x:Name="txtP2Write" Text="—" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtP2WriteSub" Text="" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" x:Name="txtP3Name" Text="RND4K Q1T1"
+                                   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,6">
+                            <TextBlock x:Name="txtP3Read" Text="—" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource AccentColor}"/>
+                            <TextBlock x:Name="txtP3ReadSub" Text="" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="4" Grid.Column="2" Margin="0,6">
+                            <TextBlock x:Name="txtP3Write" Text="—" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtP3WriteSub" Text="" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Выводы -->
+                <GroupBox Header="🧠 Что это значит" Margin="0,0,0,15">
+                    <StackPanel x:Name="pnlConclusions" Margin="10">
+                        <TextBlock x:Name="txtConclusionsPlaceholder" Text="Запустите тест, чтобы увидеть разбор результата"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Отчёт -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <Button x:Name="btnCopyReport" Content="📋 Скопировать отчёт" Height="34" Width="200"
+                            Margin="0,0,10,0" IsEnabled="False"/>
+                    <Button x:Name="btnSaveReport" Content="💾 Сохранить в файл" Height="34" Width="190"
+                            IsEnabled="False"/>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
