@@ -84,18 +84,24 @@ namespace Ven4Tools.ClientUITests
         public void ОткрепитьПин_УдаляетИзПанели()
         {
             var s = Require();
+            // Точный текст ToolTip — пояснение действия (см. прототип всплывающих
+            // подсказок), а не короткая подпись «Открепить», поэтому ищем по
+            // устойчивому ключевому слову, а не по всей фразе целиком — так же,
+            // как тест звезды избранного выше ищет по "избранное", а не по полному
+            // тексту подсказки.
             var unpinBtn = Retry.WhileNull(
                 () => s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
                     .FirstOrDefault(b => b.Properties.HelpText.IsSupported &&
-                        (b.Properties.HelpText.Value ?? "") == "Открепить"),
+                        (b.Properties.HelpText.Value ?? "").Contains("закреплённых", StringComparison.OrdinalIgnoreCase)),
                 timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
-            Assert.IsNotNull(unpinBtn, "Не найдена кнопка «Открепить» для пина cpu-z.");
+            Assert.IsNotNull(unpinBtn, "Не найдена кнопка открепления для пина cpu-z.");
             unpinBtn!.Click();
             System.Threading.Thread.Sleep(500);
 
             var stillThere = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
-                .Any(b => b.Properties.HelpText.IsSupported && (b.Properties.HelpText.Value ?? "") == "Открепить");
-            Assert.IsFalse(stillThere, "Кнопка «Открепить» всё ещё видна после клика — пин не удалился.");
+                .Any(b => b.Properties.HelpText.IsSupported &&
+                    (b.Properties.HelpText.Value ?? "").Contains("закреплённых", StringComparison.OrdinalIgnoreCase));
+            Assert.IsFalse(stillThere, "Кнопка открепления всё ещё видна после клика — пин не удалился.");
         }
 
         [TestMethod]
