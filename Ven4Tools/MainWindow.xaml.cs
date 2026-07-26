@@ -427,7 +427,7 @@ namespace Ven4Tools
                 {
                     Content = "▶", Width = 22, Height = 22, FontSize = 9,
                     Tag = id, Padding = new Thickness(0),
-                    ToolTip = $"Установить {name}"
+                    ToolTip = $"Установит закреплённое приложение «{name}»."
                 };
                 installBtn.Click += PinInstallBtn_Click;
                 var unpinBtn = new Button
@@ -437,7 +437,7 @@ namespace Ven4Tools
                     Background = System.Windows.Media.Brushes.Transparent,
                     BorderThickness = new Thickness(0),
                     Foreground = (Brush)FindResource("TextSecondary"),
-                    ToolTip = "Открепить"
+                    ToolTip = "Уберёт приложение из панели закреплённых. Само приложение останется на компьютере."
                 };
                 unpinBtn.Click += PinUnpinBtn_Click;
                 row.Children.Add(installBtn);

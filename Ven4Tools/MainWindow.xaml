@@ -153,7 +153,9 @@
                     <Grid>
                         <Button x:Name="btnClearGlobalLog" Content="&#xE74D;" Style="{StaticResource IconButtonStyle}"
                                 HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,5,5,0"
-                                Background="Transparent" Panel.ZIndex="2" ToolTip="Очистить журнал" Click="BtnClearGlobalLog_Click"/>
+                                Background="Transparent" Panel.ZIndex="2"
+                                ToolTip="Удалит все сообщения из видимого журнала текущего сеанса."
+                                Click="BtnClearGlobalLog_Click"/>
                         <ListBox x:Name="lstGlobalLog" Margin="6" Background="Transparent" BorderThickness="0"
                                  SelectionMode="Extended" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  VirtualizingPanel.IsVirtualizing="True" HorizontalContentAlignment="Stretch">

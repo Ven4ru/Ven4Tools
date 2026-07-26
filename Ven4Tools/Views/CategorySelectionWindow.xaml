@@ -123,6 +123,7 @@
         <!-- Footer -->
         <Button x:Name="btnContinue" Grid.Row="2"
                 Content="{DynamicResource cat_continue}"
+                ToolTip="Сохранит выбранные категории и откроет основной интерфейс клиента."
                 Height="42" Width="200" Margin="0,20,0,0"
                 HorizontalAlignment="Center"
                 IsEnabled="False"

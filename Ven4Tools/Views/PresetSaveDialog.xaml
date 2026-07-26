@@ -43,6 +43,7 @@
             <Button Content="Отмена" Width="70" Height="30" Margin="0,0,8,0" Click="Cancel_Click"/>
             <Button Content="Сохранить" Width="80" Height="30"
                     Background="{DynamicResource AccentColor}" Foreground="White"
+                    ToolTip="Сохранит выбранные приложения как новый пресет с указанным именем."
                     BorderThickness="0" Click="Save_Click"/>
         </StackPanel>
     </Grid>
