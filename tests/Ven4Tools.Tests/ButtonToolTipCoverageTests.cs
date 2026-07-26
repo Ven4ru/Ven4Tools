@@ -53,6 +53,55 @@ public sealed class ButtonToolTipCoverageTests
             initializer.Groups["body"].Value);
     }
 
+    [Theory]
+    [InlineData("Ven4Tools/App.xaml")]
+    [InlineData("Ven4Tools.Launcher/App.xaml")]
+    public void ToolTipStyleKeepsLongExplanationsReadable(string relativePath)
+    {
+        string path = Path.Combine(
+            FindRepositoryRoot(),
+            relativePath.Replace('/', Path.DirectorySeparatorChar));
+        XDocument document = XDocument.Load(path);
+        XElement style = document.Descendants(Presentation + "Style")
+            .Single(element => (string?)element.Attribute("TargetType") == "ToolTip");
+        Dictionary<string, string?> setters = style.Elements(Presentation + "Setter")
+            .ToDictionary(
+                element => (string)element.Attribute("Property")!,
+                element => (string?)element.Attribute("Value"),
+                StringComparer.Ordinal);
+        XElement text = style.Descendants(Presentation + "TextBlock").Single();
+
+        Assert.Equal("380", setters["MaxWidth"]);
+        Assert.Equal("10,7", setters["Padding"]);
+        Assert.Equal("15000", setters["ToolTipService.ShowDuration"]);
+        Assert.Equal("Wrap", (string?)text.Attribute("TextWrapping"));
+        Assert.Equal("360", (string?)text.Attribute("MaxWidth"));
+    }
+
+    [Theory]
+    [InlineData("Ven4Tools/App.xaml")]
+    [InlineData("Ven4Tools.Launcher/App.xaml")]
+    public void ButtonStyleUsesCalmToolTipTiming(string relativePath)
+    {
+        string path = Path.Combine(
+            FindRepositoryRoot(),
+            relativePath.Replace('/', Path.DirectorySeparatorChar));
+        XDocument document = XDocument.Load(path);
+        XElement style = document.Descendants(Presentation + "Style")
+            .Single(element =>
+                (string?)element.Attribute("TargetType") == "Button" &&
+                element.Attribute(Xaml + "Key") is null);
+        Dictionary<string, string?> setters = style.Elements(Presentation + "Setter")
+            .ToDictionary(
+                element => (string)element.Attribute("Property")!,
+                element => (string?)element.Attribute("Value"),
+                StringComparer.Ordinal);
+
+        Assert.Equal("450", setters["ToolTipService.InitialShowDelay"]);
+        Assert.Equal("100", setters["ToolTipService.BetweenShowDelay"]);
+        Assert.Equal("15000", setters["ToolTipService.ShowDuration"]);
+    }
+
     private static IEnumerable<string> EnumerateApplicationXaml(string repositoryRoot)
     {
         foreach (string directoryName in new[] { "Ven4Tools", "Ven4Tools.Launcher" })

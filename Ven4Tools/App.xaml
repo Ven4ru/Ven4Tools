@@ -256,6 +256,9 @@
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
+            <Setter Property="ToolTipService.BetweenShowDelay" Value="100"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -354,8 +357,10 @@
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="MaxWidth" Value="380"/>
+            <Setter Property="Padding" Value="10,7"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToolTip">
@@ -365,6 +370,8 @@
                                 CornerRadius="4"
                                 Padding="{TemplateBinding Padding}">
                             <TextBlock Text="{TemplateBinding Content}"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="360"
                                        Foreground="{TemplateBinding Foreground}"
                                        FontSize="{TemplateBinding FontSize}"/>
                         </Border>
