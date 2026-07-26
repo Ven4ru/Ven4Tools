@@ -49,6 +49,7 @@
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Click="BtnDecline_Click"/>
             <Button x:Name="btnAccept" Grid.Column="2" Content="Принять и установить" Height="36" Padding="20,0"
                     Background="{DynamicResource AccentColor}" Foreground="White" FontWeight="SemiBold"
+                    ToolTip="Подтвердит условия лицензии и продолжит установку выбранного приложения."
                     BorderThickness="0" Click="BtnAccept_Click"/>
         </Grid>
     </Grid>

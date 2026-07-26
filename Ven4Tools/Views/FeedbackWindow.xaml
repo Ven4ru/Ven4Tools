@@ -90,6 +90,7 @@
                     Background="{DynamicResource AccentColor}"
                     Foreground="White" FontWeight="SemiBold" BorderThickness="0"
                     IsEnabled="False"
+                    ToolTip="Отправит выбранную оценку и введённый комментарий разработчику."
                     Click="BtnSend_Click"/>
         </Grid>
     </Grid>

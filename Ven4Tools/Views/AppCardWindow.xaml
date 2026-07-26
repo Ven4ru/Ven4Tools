@@ -65,17 +65,21 @@
                  fail-closed, не гадаем) — единообразно с CatalogTab. -->
             <Button Content="▶ Запустить" Height="34" Margin="0,0,0,6"
                     Command="{Binding LaunchCommand}"
+                    ToolTip="Запустит установленное приложение."
                     Visibility="{Binding ShowLaunchButton, Converter={StaticResource BoolToVis}}"
                     Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="Bold"/>
             <Button Content="Установить" Height="34" Margin="0,0,0,6"
                     Command="{Binding InstallCommand}"
+                    ToolTip="Скачает и установит приложение из доступного доверенного источника."
                     Visibility="{Binding ShowInstallButton, Converter={StaticResource BoolToVis}}"
                     Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="Bold"/>
             <Button Content="🔄 Переустановить" Height="30" Margin="0,0,0,6"
                     Command="{Binding ReinstallCommand}"
+                    ToolTip="Повторно установит приложение. Текущая версия может быть заменена."
                     Visibility="{Binding ShowInstalledActions, Converter={StaticResource BoolToVis}}"/>
             <Button Content="🗑 Удалить" Height="30"
                     Command="{Binding UninstallCommand}"
+                    ToolTip="После подтверждения удалит приложение с компьютера."
                     Visibility="{Binding ShowInstalledActions, Converter={StaticResource BoolToVis}}"
                     Background="#5a1414" Foreground="#ffb4b4"/>
         </StackPanel>

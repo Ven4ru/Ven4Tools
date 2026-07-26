@@ -35,6 +35,7 @@
                              Background="{DynamicResource BorderBrush}"/>
                 <Button x:Name="btnSkip"
                         Content="Пропустить"
+                        ToolTip="Остановит оставшиеся стартовые проверки и откроет клиент с уже загруженными данными."
                         Click="BtnSkip_Click"
                         HorizontalAlignment="Right"
                         Width="110" Height="26"
