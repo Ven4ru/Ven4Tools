@@ -156,6 +156,31 @@ public sealed class LauncherSmokeTests : IDisposable
         ExercisePrimaryControlBindings();
     }
 
+    [Fact]
+    public void FunctionalButtonsExposeExplanations()
+    {
+        string[] functionalButtons =
+        [
+            "btnSelectFolder",
+            "btnFindClient",
+            "btnCheckUpdates",
+            "btnLaunchApp",
+            "btnChangelog",
+            "btnOpenSettings",
+            "btnDeleteClient"
+        ];
+
+        foreach (string automationId in functionalButtons)
+        {
+            AutomationElement? element = _window.FindFirstDescendant(
+                condition => condition.ByAutomationId(automationId));
+            Assert.NotNull(element);
+            Assert.False(
+                string.IsNullOrWhiteSpace(element.Properties.HelpText.ValueOrDefault),
+                $"Кнопка {automationId} не сообщает пользователю результат действия.");
+        }
+    }
+
     public void Dispose()
     {
         _application.Close();

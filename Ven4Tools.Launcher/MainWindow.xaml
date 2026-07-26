@@ -56,10 +56,13 @@
                     <Button x:Name="btnLaunchApp" Content="Установить Ven4Tools" Height="48" Margin="0,0,0,8"
                             Background="{StaticResource BrandGreen}" Foreground="#06130D" FontSize="14"
                             FontWeight="Bold" Effect="{StaticResource BrandAuraEffect}"
+                            ToolTip="Запустит установленный клиент. Если его нет, скачает, проверит и установит выбранную версию."
                             Click="BtnLaunchApp_Click"/>
                     <Button x:Name="btnCheckUpdates" Content="Проверить обновления"
+                            ToolTip="Обновит список версий клиента и проверит обновление лаунчера. Ничего не устанавливает автоматически."
                             Style="{StaticResource SideCommand}" Click="BtnCheckUpdates_Click"/>
                     <Button x:Name="btnChangelog" Content="Что нового"
+                            ToolTip="Покажет или скроет описание изменений выбранной версии клиента."
                             Style="{StaticResource SideCommand}" Click="BtnChangelog_Click"/>
                 </StackPanel>
 
@@ -68,8 +71,10 @@
                         <Expander Header="Параметры установки" IsExpanded="True" Margin="0,0,0,8">
                             <StackPanel Margin="0,8,0,4">
                                 <Button x:Name="btnSelectFolder" Content="Выбрать папку"
+                                        ToolTip="Откроет выбор безопасной папки, куда лаунчер будет устанавливать и обновлять клиент."
                                         Style="{StaticResource SideCommand}" Click="BtnSelectFolder_Click"/>
                                 <Button x:Name="btnFindClient" Content="Найти клиент на диске"
+                                        ToolTip="Найдёт Ven4Tools.exe в стандартных папках и предложит привязать лаунчер к найденной копии."
                                         Style="{StaticResource SideCommand}" Click="BtnFindClient_Click"/>
                                 <TextBlock Text="ВЕРСИЯ КЛИЕНТА" Style="{StaticResource EyebrowStyle}" Margin="2,12,0,5"/>
                                 <TextBlock x:Name="txtInstalledVersion" Text="Текущая версия: —"
@@ -83,13 +88,16 @@
                         </Expander>
 
                         <Button x:Name="btnOpenSettings" Content="⚙ Настройки"
+                                ToolTip="Откроет настройки фоновых проверок, автозапуска, обновления клиента и источника загрузки."
                                 Style="{StaticResource SideCommand}" Click="BtnOpenSettings_Click" Margin="0,0,0,8"/>
 
                         <Button x:Name="btnInstallUpdate" Content="Обновить лаунчер" Height="38"
                                 Visibility="Collapsed" Background="#243FBA65" Foreground="{StaticResource StatusSuccess}"
+                                ToolTip="Скачает проверенный установщик новой версии, обновит лаунчер и перезапустит его."
                                 Click="BtnInstallUpdate_Click"/>
                         <Button x:Name="btnInstallMissing" Content="Установить компоненты" Height="38"
                                 Visibility="Collapsed" Background="#24FBBF24" Foreground="{StaticResource StatusWarning}"
+                                ToolTip="Проверит недостающие системные компоненты и предложит установить каждый из них с подтверждением."
                                 Click="BtnInstallMissing_Click"/>
                     </StackPanel>
                 </ScrollViewer>
@@ -98,7 +106,9 @@
                     <Separator Margin="0,0,0,8"/>
                     <Button x:Name="btnDeleteClient" Content="Удалить клиент"
                             Style="{StaticResource SideCommand}" Foreground="{StaticResource StatusDanger}"
-                            Background="Transparent" Click="BtnDeleteClient_Click"/>
+                            Background="Transparent"
+                            ToolTip="После подтверждения удалит папку клиента, его ярлыки и записи автозапуска. Настройки и логи лаунчера сохранятся."
+                            Click="BtnDeleteClient_Click"/>
                     <Button x:Name="btnExit" Content="Закрыть лаунчер"
                             Style="{StaticResource SideCommand}" Background="Transparent"
                             Foreground="{DynamicResource TextSecondary}" Click="BtnExit_Click"/>
@@ -191,6 +201,7 @@
                             <ProgressBar x:Name="progressDownload" Height="7" Minimum="0" Maximum="100" Value="0"/>
                             <Button x:Name="btnCancelDownload" Content="Отмена" HorizontalAlignment="Right"
                                     Height="28" Padding="10,0" Margin="0,14,0,0" Visibility="Collapsed"
+                                    ToolTip="Остановит текущую загрузку клиента. Установка не будет продолжена."
                                     Foreground="{StaticResource StatusDanger}" Click="BtnCancelDownload_Click"/>
                         </Grid>
                     </StackPanel>
