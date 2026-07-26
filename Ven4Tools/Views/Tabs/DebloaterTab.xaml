@@ -24,8 +24,10 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                 <Button x:Name="btnDebloatSelectAll" Content="Все" Width="50" Height="30"
+                        ToolTip="Отметит все действия очистки, показанные текущим фильтром."
                         Margin="0,0,6,0" Click="BtnSelectAll_Click"/>
                 <Button x:Name="btnDebloatSelectNone" Content="Сброс" Width="60" Height="30"
+                        ToolTip="Снимет отметки со всех действий очистки."
                         Click="BtnSelectNone_Click"/>
             </StackPanel>
         </Grid>
@@ -128,11 +130,13 @@
             </StackPanel>
             <Button x:Name="btnCancelDebloat" Grid.Column="1"
                     Content="⏹ Отмена"
+                    ToolTip="Остановит применение оставшихся действий. Уже выполненные изменения сохранятся."
                     Height="38" Padding="16,0" FontWeight="SemiBold"
                     Visibility="Collapsed"
                     Click="BtnCancelDebloat_Click" Margin="12,0,0,0"/>
             <Button x:Name="btnApplyDebloat" Grid.Column="2"
                     Content="🧹 Применить выбранное"
+                    ToolTip="После подтверждения создаст точку восстановления и применит выбранные изменения Windows."
                     Height="38" Padding="16,0" FontWeight="SemiBold"
                     Background="{StaticResource StatusDanger}" Foreground="#06130D"
                     Click="BtnApplyDebloat_Click" Margin="12,0,0,0"/>

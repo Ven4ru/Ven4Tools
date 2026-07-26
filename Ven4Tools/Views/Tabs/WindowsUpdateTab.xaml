@@ -18,6 +18,7 @@
                            FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
             </StackPanel>
             <Button x:Name="btnCheck" Content="Проверить обновления" Height="34" Padding="16,0"
+                    ToolTip="Найдёт доступные обновления Windows. На этом шаге ничего не устанавливается."
                     HorizontalAlignment="Right" VerticalAlignment="Top"
                     Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
@@ -67,6 +68,7 @@
                        VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
             <Button x:Name="btnInstall" Grid.Column="1" Content="Установить выбранные" Height="38"
                     Padding="24,0" IsEnabled="False"
+                    ToolTip="Скачает и установит отмеченные обновления Windows. После установки может потребоваться перезагрузка."
                     Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="SemiBold"
                     BorderThickness="0" Click="BtnInstall_Click"/>
         </Grid>

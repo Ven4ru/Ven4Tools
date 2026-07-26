@@ -39,11 +39,12 @@
                              Tag="Поиск по названию или категории"/>
                     <Button x:Name="btnClearSearch" Grid.Column="1" Content="&#xE711;" FontFamily="Segoe Fluent Icons"
                             Width="28" Height="28" Margin="4,0,0,0"
+                            ToolTip="Очистит строку поиска и снова покажет полный список текущей категории."
                             Command="{Binding ClearSearchCommand}"
                             Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVis}}"/>
                     <Button x:Name="btnFavoritesOnly" Grid.Column="2" Content="&#xE734;" FontFamily="Segoe Fluent Icons"
                             Width="28" Height="28" Margin="4,0,0,0"
-                            FontSize="16" ToolTip="Только избранные"
+                            FontSize="16" ToolTip="Включит или выключит показ только избранных приложений."
                             Command="{Binding ToggleFavoritesOnlyCommand}"
                             Foreground="{Binding FavoritesOnlyBrush}"
                             Background="Transparent" BorderThickness="1"/>
@@ -71,6 +72,7 @@
                                    FontSize="11" TextWrapping="Wrap"/>
                         <Button x:Name="btnRetryLoadCatalog"
                                 Content="🔄 Повторить загрузку"
+                                ToolTip="Повторно загрузит каталог из доступных источников после ошибки."
                                 Command="{Binding RetryLoadCatalogCommand}"
                                 Margin="0,5,0,0" HorizontalAlignment="Left"
                                 Padding="8,3" FontSize="11"/>
@@ -265,19 +267,25 @@
                 <GroupBox Header="Инструменты каталога">
                     <StackPanel>
                         <Button x:Name="btnCheckUpdates" Content="Проверить обновления" Height="35" Margin="3"
+                                ToolTip="Проверит, доступны ли новые версии установленных приложений. Ничего не устанавливает."
                                 Command="{Binding CheckUpdatesCommand}"/>
                         <Button x:Name="btnRefreshCatalog" Content="Обновить каталог" Height="35" Margin="3"
+                                ToolTip="Загрузит свежий каталог приложений и обновит показанные записи."
                                 Command="{Binding RefreshCatalogCommand}"/>
                         <Button x:Name="btnRefreshAvailability" Content="Проверить доступность" Height="35" Margin="3"
+                                ToolTip="Повторно проверит, из каких источников сейчас можно скачать приложения."
                                 Command="{Binding RefreshAvailabilityCommand}"/>
                         <Button x:Name="btnClearAllUserApps" Content="Очистить добавленные" Height="35" Margin="3"
                                 Foreground="{StaticResource StatusDanger}"
+                                ToolTip="После подтверждения удалит из каталога все приложения, добавленные пользователем."
                                 Command="{Binding ClearAllUserAppsCommand}"/>
                         <Separator Margin="3,4"/>
                         <Button x:Name="btnExportList" Content="Экспорт списка" Height="32" Margin="3"
-                                ToolTip="Сохранить выбранные приложения в JSON" Command="{Binding ExportListCommand}"/>
+                                ToolTip="Сохранит список выбранных приложений в JSON-файл без их установки."
+                                Command="{Binding ExportListCommand}"/>
                         <Button x:Name="btnImportList" Content="Импорт списка" Height="32" Margin="3"
-                                ToolTip="Загрузить список приложений из JSON" Command="{Binding ImportListCommand}"/>
+                                ToolTip="Загрузит JSON-список и отметит найденные в каталоге приложения."
+                                Command="{Binding ImportListCommand}"/>
                     </StackPanel>
                 </GroupBox>
 
@@ -288,7 +296,7 @@
                                 Content="{Binding SavePresetLabel}"
                                 Height="32" Margin="3"
                                 Command="{Binding SavePresetCommand}"
-                                ToolTip="Сохранить отмеченные приложения как пресет"/>
+                                ToolTip="Сохранит отмеченные приложения как именованный пресет для повторного выбора."/>
 
                         <ItemsControl x:Name="lstPresets" ItemsSource="{Binding Presets}" Margin="3,4,3,2">
                             <ItemsControl.ItemTemplate>
@@ -413,11 +421,13 @@
                 </StackPanel>
                 <Button x:Name="btnCancelInstall" Grid.Column="1" Content="Отмена" Height="38" MinWidth="90"
                         Margin="0,0,8,0"
+                        ToolTip="Остановит установку после завершения текущего шага. Уже установленные приложения останутся."
                         Command="{Binding CancelInstallCommand}"/>
                 <Button x:Name="btnInstall" Grid.Column="2"
                         Height="38" MinWidth="190"
                         Background="{StaticResource BrandGreen}" Foreground="#06130D"
                         Effect="{StaticResource BrandAuraEffect}"
+                        ToolTip="Установит все отмеченные приложения по очереди. Для нескольких приложений будет предложена точка восстановления."
                         Command="{Binding InstallSelectedCommand}">
                     <!-- StringFormat молча игнорируется, когда целевое свойство биндинга —
                          object (Button.Content), а не string: показывало голое число вместо

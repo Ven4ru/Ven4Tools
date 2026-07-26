@@ -86,6 +86,7 @@
             <GroupBox Header="🔔 Обновления приложений" Margin="0,0,0,15">
                 <StackPanel>
                     <Button x:Name="btnCheckUpdates" Content="🔍 Проверить обновления"
+                            ToolTip="Проверит через winget доступные обновления приложений. Ничего не устанавливает."
                             Height="35" Margin="10" HorizontalAlignment="Left" Width="200"/>
                     <TextBox x:Name="txtUpdatesLog" Margin="10,0,10,10" Height="100"
                              Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
@@ -167,8 +168,10 @@
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0">
                                 <Button x:Name="btnSrcUp" Content="▲" Width="32" Height="32"
+                                        ToolTip="Поднимет выбранный источник выше в порядке попыток установки."
                                         Margin="0,0,0,6" Click="BtnSrcUp_Click"/>
                                 <Button x:Name="btnSrcDown" Content="▼" Width="32" Height="32"
+                                        ToolTip="Опустит выбранный источник ниже в порядке попыток установки."
                                         Click="BtnSrcDown_Click"/>
                             </StackPanel>
                         </Grid>
@@ -189,6 +192,7 @@
                     <!-- Save button -->
                     <Button x:Name="btnSaveSourceOrder"
                             Content="💾 Сохранить и перепроверить доступность"
+                            ToolTip="Сохранит порядок источников и заново проверит доступность приложений по новым правилам."
                             Height="36" Margin="0,12,0,0"
                             FontWeight="SemiBold"
                             Click="BtnSaveSourceOrder_Click"/>
@@ -254,6 +258,7 @@
                                  Foreground="{DynamicResource TextPrimary}"
                                  VerticalContentAlignment="Center" Padding="6,0"/>
                         <Button x:Name="btnBrowseCachePath" Content="📁" Width="34" Height="30"
+                                ToolTip="Откроет выбор папки для хранения офлайн-кэша установщиков."
                                 Grid.Column="1" Click="BtnBrowseCachePath_Click"/>
                     </Grid>
 
@@ -270,8 +275,10 @@
                                        Foreground="{DynamicResource TextSecondary}" FontSize="12"
                                        VerticalAlignment="Center"/>
                             <Button x:Name="btnOpenCacheFolder" Content="📂 Открыть" Width="90" Height="28"
+                                    ToolTip="Откроет текущую папку офлайн-кэша в Проводнике."
                                     Grid.Column="1" Margin="0,0,8,0" Click="BtnOpenCacheFolder_Click"/>
                             <Button x:Name="btnClearCache" Content="🗑️ Очистить" Width="90" Height="28"
+                                    ToolTip="После подтверждения удалит сохранённые установщики из офлайн-кэша."
                                     Grid.Column="2" Click="BtnClearCache_Click"/>
                         </Grid>
                     </Border>
@@ -296,8 +303,10 @@
                                              Tag="Поиск по названию..."
                                              TextChanged="TxtCacheAppFilter_TextChanged"/>
                                     <Button x:Name="btnCacheSelectAll" Content="Все" Width="44" Height="26"
+                                            ToolTip="Отметит все приложения, показанные в списке подготовки офлайн-кэша."
                                             Grid.Column="1" Margin="0,0,6,0" Click="BtnCacheSelectAll_Click"/>
                                     <Button x:Name="btnCacheSelectNone" Content="Сброс" Width="52" Height="26"
+                                            ToolTip="Снимет отметки со всех приложений для загрузки в кэш."
                                             Grid.Column="2" Click="BtnCacheSelectNone_Click"/>
                                 </Grid>
                                 <ItemsControl x:Name="listCacheApps">
@@ -321,10 +330,12 @@
                         </Grid.ColumnDefinitions>
                         <Button x:Name="btnDownloadToCache" Height="36"
                                 Content="⬇️ Скачать выбранные в кэш"
+                                ToolTip="Скачает установщики отмеченных приложений и проверит их перед сохранением для офлайн-установки."
                                 FontWeight="SemiBold" Click="BtnDownloadToCache_Click"
                                 Margin="0,0,8,0"/>
                         <Button x:Name="btnCancelCacheDownload" Height="36" Width="80"
                                 Content="⏹ Стоп" Grid.Column="1"
+                                ToolTip="Остановит загрузку оставшихся установщиков. Уже проверенные файлы сохранятся в кэше."
                                 Visibility="Collapsed"
                                 Click="BtnCancelCacheDownload_Click"/>
                     </Grid>
@@ -371,9 +382,11 @@
                                FontSize="11" Margin="0,0,0,10"/>
                     <StackPanel Orientation="Horizontal">
                         <Button x:Name="btnExportSettings" Content="📤 Экспорт настроек"
+                                ToolTip="Сохранит настройки Ven4Tools в выбранный JSON-файл."
                                 Height="35" Width="180" Margin="0,0,10,0"
                                 Click="BtnExportSettings_Click"/>
                         <Button x:Name="btnImportSettings" Content="📥 Импорт настроек"
+                                ToolTip="Загрузит настройки из JSON-файла и применит поддерживаемые параметры."
                                 Height="35" Width="180"
                                 Click="BtnImportSettings_Click"/>
                     </StackPanel>
@@ -394,6 +407,7 @@
                     </TextBlock>
 
                     <Button x:Name="btnSaveSnapshot" Content="📸 Сохранить снапшот"
+                            ToolTip="Сохранит текущие твики очистки и пресеты, чтобы их можно было восстановить позже."
                             Height="34" HorizontalAlignment="Left" Width="200"
                             Margin="0,0,0,10" Click="BtnSaveSnapshot_Click"/>
 
@@ -421,7 +435,7 @@
                                                             Height="26" Padding="8,0"
                                                             FontSize="11" Margin="6,0,0,0"
                                                             Tag="{Binding}"
-                                                            ToolTip="Восстановить твики Debloater и пресеты из этого снапшота"
+                                                            ToolTip="После подтверждения восстановит твики очистки и пресеты из этого снапшота."
                                                             Click="BtnRestoreSnapshot_Click"/>
                                                     <Button Content="✕"
                                                             Width="26" Height="26" Padding="0"
@@ -430,7 +444,7 @@
                                                             Foreground="{DynamicResource TextSecondary}"
                                                             BorderThickness="0"
                                                             Tag="{Binding}"
-                                                            ToolTip="Удалить снапшот"
+                                                            ToolTip="После подтверждения навсегда удалит этот сохранённый снапшот."
                                                             Click="BtnDeleteSnapshot_Click"/>
                                                 </StackPanel>
                                             </Grid>

@@ -12,6 +12,7 @@
 
             <!-- Главная кнопка -->
             <Button x:Name="btnRunAll" Content="🔍 Запустить полную диагностику"
+                    ToolTip="Проверит сетевые адаптеры, задержку, доступность сервисов, внешний IP и DNS. Настройки не изменяет."
                     Height="42" FontSize="14" FontWeight="SemiBold"
                     HorizontalAlignment="Left" MinWidth="280"
                     Margin="0,0,0,20"/>
@@ -47,6 +48,7 @@
                                Foreground="{DynamicResource TextSecondary}" FontSize="12"
                                Visibility="Collapsed"/>
                     <Button x:Name="btnRefreshAdapters" Content="🔄 Обновить"
+                            ToolTip="Повторно считает состояние и параметры сетевых адаптеров."
                             Height="30" Width="100" HorizontalAlignment="Left" Margin="0,8,0,0"/>
                 </StackPanel>
             </GroupBox>
@@ -83,6 +85,7 @@
                         <TextBlock x:Name="txtPingIcon4" Grid.Row="3" Grid.Column="2" Text="⬜" VerticalAlignment="Center" Margin="6,0,0,0" FontSize="13"/>
                     </Grid>
                     <Button x:Name="btnPing" Content="📡 Пинговать" Height="30" Width="120"
+                            ToolTip="Измерит задержку и потери пакетов до указанных адресов."
                             HorizontalAlignment="Left" Margin="0,10,0,0"/>
                 </StackPanel>
             </GroupBox>
@@ -123,6 +126,7 @@
                         <TextBlock x:Name="txtSvcMs5" Grid.Row="4" Grid.Column="2" Text="" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="6,0,0,0"/>
                     </Grid>
                     <Button x:Name="btnCheckServices" Content="🌍 Проверить сервисы" Height="30" Width="180"
+                            ToolTip="Проверит, открываются ли основные интернет-сервисы по HTTPS."
                             HorizontalAlignment="Left" Margin="0,10,0,0"/>
                 </StackPanel>
             </GroupBox>
@@ -134,7 +138,8 @@
                     <TextBlock x:Name="txtPublicIp" Text="не определён"
                                Foreground="{DynamicResource TextPrimary}" FontFamily="JetBrains Mono, Consolas"
                                FontSize="13" VerticalAlignment="Center" Margin="4,0,14,0"/>
-                    <Button x:Name="btnGetIp" Content="Определить" Height="30" Width="110"/>
+                    <Button x:Name="btnGetIp" Content="Определить" Height="30" Width="110"
+                            ToolTip="Запросит у внешнего сервиса ваш текущий публичный IP-адрес."/>
                 </StackPanel>
             </GroupBox>
 
@@ -142,6 +147,7 @@
             <GroupBox Header="🔍 DNS" Margin="0,0,0,14">
                 <StackPanel Margin="10">
                     <Button x:Name="btnCheckDns" Content="🔍 Проверить DNS (google.com)" Height="35"
+                            ToolTip="Проверит, может ли Windows преобразовать имя google.com в IP-адрес."
                             Width="260" HorizontalAlignment="Left"/>
                     <TextBlock x:Name="txtDnsResult" Text="" Foreground="{DynamicResource TextSecondary}"
                                FontSize="11" FontFamily="JetBrains Mono, Consolas"
@@ -153,6 +159,7 @@
             <GroupBox Header="⚙️ Инструменты" Margin="0,0,0,14">
                 <StackPanel Margin="10">
                     <Button x:Name="btnResetNetwork" Content="🔄 Сбросить сетевые настройки (winsock, IP)"
+                            ToolTip="После подтверждения сбросит Winsock и параметры IP. Сеть временно отключится, может потребоваться перезагрузка."
                             Height="35" Width="320" HorizontalAlignment="Left"/>
                     <TextBlock Text="Потребуются права администратора и перезагрузка"
                                Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,6,0,0"/>

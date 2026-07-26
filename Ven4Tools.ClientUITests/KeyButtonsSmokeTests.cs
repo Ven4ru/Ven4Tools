@@ -108,6 +108,44 @@ namespace Ven4Tools.ClientUITests
         }
 
         [TestMethod]
+        public void ФункциональныеКнопки_ИмеютПояснения()
+        {
+            var s = Require();
+            (string NavigationId, string ButtonId, string TabName)[] cases =
+            {
+                ("btnCatalogTab", "btnInstall", "Каталог"),
+                ("btnInstalledTab", "btnRefresh", "Установленные"),
+                ("btnSystemTab", "btnCheckUpdates", "Настройки"),
+                ("btnWindowsUpdateTab", "btnCheck", "Windows Update"),
+                ("btnOfficeTab", "btnDownloadOffice", "Office"),
+                ("btnActivationTab", "btnActivateWindows", "Лицензия"),
+                ("btnDebloaterTab", "btnApplyDebloat", "Очистка"),
+                ("btnNetworkTab", "btnRunAll", "Сеть"),
+                ("btnHistoryTab", "btnClearHistory", "История"),
+                ("btnAboutTab", "btnGitHub", "О программе"),
+                ("btnBenchmarkTab", "btnRunBenchmark", "Бенчмарк")
+            };
+
+            foreach (var item in cases)
+            {
+                var navigation = s.MainWindow.FindFirstDescendant(
+                    cf => cf.ByAutomationId(item.NavigationId));
+                Assert.IsNotNull(navigation, $"Не найдена навигация вкладки «{item.TabName}».");
+                navigation!.AsButton().Invoke();
+
+                var button = Retry.WhileNull(
+                    () => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId(item.ButtonId)),
+                    timeout: T,
+                    interval: TimeSpan.FromMilliseconds(250),
+                    throwOnTimeout: false).Result;
+                Assert.IsNotNull(button, $"На вкладке «{item.TabName}» не найдена кнопка {item.ButtonId}.");
+                Assert.IsFalse(
+                    string.IsNullOrWhiteSpace(button!.Properties.HelpText.ValueOrDefault),
+                    $"Кнопка {item.ButtonId} на вкладке «{item.TabName}» не объясняет результат действия.");
+            }
+        }
+
+        [TestMethod]
         public void СистемнаяИнформация_КопированиеВБуфер_РаботаетИМеняетСодержимое()
         {
             var s = Require();

@@ -104,7 +104,8 @@
                 <Border Background="{DynamicResource CardBackground}" CornerRadius="6" Padding="14" Margin="0,0,0,15">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <Button x:Name="btnRunBenchmark" Content="▶ Запустить тест" Height="36" Width="200"/>
+                            <Button x:Name="btnRunBenchmark" Content="▶ Запустить тест" Height="36" Width="200"
+                                    ToolTip="Создаст временный файл на выбранном томе и измерит чтение и запись. Тест может занять несколько минут."/>
                             <TextBlock x:Name="txtRunStatus" VerticalAlignment="Center" Margin="14,0,0,0"
                                        Foreground="{DynamicResource TextSecondary}"
                                        Text="Тест ещё не запускался"/>
@@ -194,9 +195,11 @@
                 <!-- Отчёт -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                     <Button x:Name="btnCopyReport" Content="📋 Скопировать отчёт" Height="34" Width="200"
-                            Margin="0,0,10,0" IsEnabled="False"/>
+                            Margin="0,0,10,0" IsEnabled="False"
+                            ToolTip="Скопирует результаты теста и сведения о накопителе в буфер обмена."/>
                     <Button x:Name="btnSaveReport" Content="💾 Сохранить в файл" Height="34" Width="190"
-                            IsEnabled="False"/>
+                            IsEnabled="False"
+                            ToolTip="Откроет выбор файла и сохранит туда полный текстовый отчёт о тесте."/>
                 </StackPanel>
 
             </StackPanel>

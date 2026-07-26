@@ -49,7 +49,7 @@ public sealed class ButtonToolTipCoverageTests
 
         Assert.True(initializer.Success, $"Не найден инициализатор кнопки {variableName} в {relativePath}.");
         Assert.Matches(
-            new Regex(@"\bToolTip\s*=\s*""[^""]+""", RegexOptions.CultureInvariant),
+            new Regex(@"\bToolTip\s*=\s*\$?""[^""]+""", RegexOptions.CultureInvariant),
             initializer.Groups["body"].Value);
     }
 
@@ -165,7 +165,7 @@ public sealed class ButtonToolTipCoverageTests
         }
 
         if (button.Content is "Отмена" &&
-            button.Name is not "btnCancelDownload" and not "btnCancelOffice")
+            button.Name is not "btnCancelDownload" and not "btnCancelOffice" and not "btnCancelInstall")
         {
             return false;
         }

@@ -23,6 +23,7 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button x:Name="btnClearHistory" Content="🗑️ Очистить"
                         Style="{StaticResource DangerButtonStyle}"
+                        ToolTip="После подтверждения удалит сохранённую историю установок."
                         Height="32" Padding="12,0" Margin="0,0,0,0"
                         Click="BtnClearHistory_Click"/>
             </StackPanel>
@@ -103,7 +104,7 @@
                             <Button Grid.Column="3" Content="🔄"
                                     Height="28" Width="36" FontSize="14"
                                     VerticalAlignment="Center"
-                                    ToolTip="Переустановить"
+                                    ToolTip="Повторно установит это приложение из доступного источника."
                                     Tag="{Binding}"
                                     Click="BtnReinstall_Click"/>
                         </Grid>
