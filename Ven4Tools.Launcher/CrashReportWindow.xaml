@@ -133,6 +133,7 @@
                         Height="36" Padding="20,0"
                         Background="#1f6feb" Foreground="White"
                         FontWeight="SemiBold" BorderThickness="0"
+                        ToolTip="Создаст на GitHub issue с показанными сведениями об ошибке и вашим необязательным комментарием."
                         Click="BtnCreate_Click"/>
             </Grid>
         </Border>
