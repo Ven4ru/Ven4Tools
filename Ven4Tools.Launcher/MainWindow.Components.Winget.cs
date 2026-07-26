@@ -71,10 +71,11 @@ namespace Ven4Tools.Launcher
         {
             AddLog("📦 Получение информации о winget с GitHub...");
 
-            string uniq       = Guid.NewGuid().ToString("N");
-            string tempMsix   = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_winget_setup.msixbundle");
-            string tempVcLibs = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_VCLibs.appx");
-            string tempUiXaml = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_UIXaml.appx");
+            string uniq           = Guid.NewGuid().ToString("N");
+            string tempMsix       = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_winget_setup.msixbundle");
+            string tempVcLibs     = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_VCLibs.appx");
+            string tempUiXaml     = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_UIXaml.appx");
+            string tempAppRuntime = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_WindowsAppRuntime.exe");
 
             Dispatcher.Invoke(() =>
             {
@@ -98,7 +99,13 @@ namespace Ven4Tools.Launcher
                 string? msixUrl = await ResolveWingetMsixUrlAsync(ct);
                 if (msixUrl == null) return;
 
-                await DownloadWingetPackagesAsync(msixUrl, tempVcLibs, tempUiXaml, tempMsix, ct);
+                await DownloadWingetPackagesAsync(msixUrl, tempVcLibs, tempUiXaml, tempAppRuntime, tempMsix, ct);
+
+                // Свежие сборки winget зависят от платформенного пакета
+                // Microsoft.WindowsAppRuntime.1.8 — без него Add-AppxPackage падает с
+                // HRESULT 0x80073CF3. Ставим рантайм заранее, но best-effort: неудача
+                // не отменяет установку winget, о ней сообщит уже сам Add-AppxPackage.
+                await RunWindowsAppRuntimeInstallerAsync(tempAppRuntime, ct);
 
                 if (!await RunWingetInstallScriptAsync(tempVcLibs, tempUiXaml, tempMsix, ct))
                     return;
@@ -145,6 +152,7 @@ namespace Ven4Tools.Launcher
                 try { if (File.Exists(tempMsix))   File.Delete(tempMsix);   } catch { }
                 try { if (File.Exists(tempVcLibs)) File.Delete(tempVcLibs); } catch { }
                 try { if (File.Exists(tempUiXaml)) File.Delete(tempUiXaml); } catch { }
+                try { if (File.Exists(tempAppRuntime)) File.Delete(tempAppRuntime); } catch { }
                 _downloadCts?.Dispose();
                 _downloadCts = null;
                 Dispatcher.Invoke(() =>
@@ -181,11 +189,22 @@ namespace Ven4Tools.Launcher
             return msixUrl;
         }
 
-        // Скачивание трёх пакетов winget: зависимости (VCLibs + UI.Xaml) параллельно
-        // и без индивидуального прогресса (иначе две загрузки перебивали бы полосу
-        // друг у друга), затем основной msixbundle — с прогрессом.
+        // Установщик Windows App Runtime 1.8 — обязательная платформенная зависимость
+        // свежих сборок winget (без неё Add-AppxPackage завершается с HRESULT
+        // 0x80073CF3). У ветки 1.8 нет вечной ссылки «latest», как у VCLibs: версия
+        // всегда явно указана в пути URL, поэтому пин конкретной версии обязателен —
+        // здесь 1.8.10 (1.8.260710003, релиз 14.07.2026). Требует ручной актуализации
+        // при будущих правках — по аналогии с уже существующим пином UI.Xaml v2.8.6
+        // в этом же файле.
+        private const string WindowsAppRuntimeInstallerUrl =
+            "https://aka.ms/windowsappsdk/1.8/1.8.260710003/windowsappruntimeinstall-x64.exe";
+
+        // Скачивание пакетов winget: зависимости (VCLibs + UI.Xaml + установщик
+        // Windows App Runtime) параллельно и без индивидуального прогресса (иначе
+        // загрузки перебивали бы полосу друг у друга), затем основной msixbundle —
+        // с прогрессом.
         private async Task DownloadWingetPackagesAsync(
-            string msixUrl, string tempVcLibs, string tempUiXaml, string tempMsix, CancellationToken ct)
+            string msixUrl, string tempVcLibs, string tempUiXaml, string tempAppRuntime, string tempMsix, CancellationToken ct)
         {
             AddLog("⬇️ Скачивание зависимостей...");
             Dispatcher.Invoke(() => txtDownloadStatus.Text = "Скачивание зависимостей...");
@@ -195,11 +214,84 @@ namespace Ven4Tools.Launcher
             var uiXamlTask = DownloadTrustedFileAsync(
                 "https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx",
                 tempUiXaml, "UI.Xaml", reportProgress: false, ct);
+            var appRuntimeTask = DownloadTrustedFileAsync(
+                WindowsAppRuntimeInstallerUrl, tempAppRuntime, "Windows App Runtime", reportProgress: false, ct);
 
-            await Task.WhenAll(vcLibsTask, uiXamlTask);
+            await Task.WhenAll(vcLibsTask, uiXamlTask, appRuntimeTask);
 
             AddLog($"⬇️ Скачивание winget ({msixUrl.Split('/').Last()})...");
             await DownloadTrustedFileAsync(msixUrl, tempMsix, "Winget", reportProgress: true, ct);
+        }
+
+        // Установка платформенного пакета Windows App Runtime 1.8 (тихий режим) до
+        // Add-AppxPackage для самого winget. Best-effort: возвращаемое значение
+        // используется только для логирования и НЕ прерывает установку winget —
+        // если рантайм уже стоит той же или более новой версии либо установка не
+        // удалась, Add-AppxPackage всё равно будет предпринят и сам сообщит об
+        // ошибке по уже существующему пути логирования.
+        //
+        // FileShare.Read держим открытым от проверки подписи до завершения
+        // установщика — запрещает подмену файла другим процессом того же
+        // пользователя в этом окне (TOCTOU), как и в RunWingetInstallScriptAsync.
+        // Элевация не запрашивается: рантайм ставится как framework-пакет для
+        // текущего пользователя, что согласуется с остальной установкой winget.
+        private async Task<bool> RunWindowsAppRuntimeInstallerAsync(string tempAppRuntime, CancellationToken ct)
+        {
+            try
+            {
+                using var runtimeHandle = new FileStream(tempAppRuntime, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+                if (!AuthenticodeVerifier.IsSignedByMicrosoft(tempAppRuntime, out string sigError))
+                {
+                    AddLog($"⛔ Подлинность Windows App Runtime не подтверждена ({sigError}) — пропускаю установку рантайма");
+                    return false;
+                }
+
+                AddLog("📦 Установка Windows App Runtime...");
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName               = tempAppRuntime,
+                    Arguments              = "--quiet",
+                    UseShellExecute        = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true,
+                    CreateNoWindow         = true,
+                    // Согласовано с MainWindow.PackageManagers.cs — без явной кодировки
+                    // .NET использует Console.OutputEncoding вызывающего процесса, которая
+                    // может не совпадать с тем, что реально пишет установщик, и текст
+                    // ошибки в логе превращается в нечитаемые символы.
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding  = Encoding.UTF8
+                };
+
+                using var proc = Process.Start(psi);
+                if (proc == null) return false;
+
+                var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
+                string stderr  = await proc.StandardError.ReadToEndAsync(ct);
+                await proc.WaitForExitAsync(ct);
+                await stdoutTask;
+
+                if (proc.ExitCode != 0)
+                {
+                    if (!string.IsNullOrWhiteSpace(stderr))
+                        AddLog($"⚠️ Windows App Runtime: {stderr.Trim()}");
+                    return false;
+                }
+                return true;
+            }
+            // Отмену пользователем и общий таймаут пробрасываем наружу — их
+            // обрабатывает InstallWingetAsync, как и для остальных шагов.
+            catch (OperationCanceledException) { throw; }
+            // Любая другая ошибка рантайма не должна ронять установку winget:
+            // сообщаем в лог и продолжаем — Add-AppxPackage сам покажет, если
+            // отсутствующая зависимость действительно окажется фатальной.
+            catch (Exception ex)
+            {
+                AddLog($"⚠️ Не удалось установить Windows App Runtime ({ex.Message}) — продолжаю установку winget");
+                return false;
+            }
         }
 
         // Проверка подписи Microsoft у всех трёх пакетов и их установка одним
@@ -264,7 +356,13 @@ namespace Ven4Tools.Launcher
                     UseShellExecute        = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true,
-                    CreateNoWindow         = true
+                    CreateNoWindow         = true,
+                    // Согласовано с MainWindow.PackageManagers.cs — без явной кодировки
+                    // .NET использует Console.OutputEncoding вызывающего процесса, которая
+                    // может не совпадать с тем, что реально пишет PowerShell: текст ошибки
+                    // Add-AppxPackage приходил в лог нечитаемыми символами.
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding  = Encoding.UTF8
                 };
 
                 using var proc = Process.Start(psi);
