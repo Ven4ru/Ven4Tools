@@ -62,10 +62,13 @@
                     <TextBlock Text="📌 Ссылки" FontWeight="Bold" FontSize="13"
                                Foreground="{DynamicResource HeaderForeground}" Margin="0,0,0,10"/>
                     <Button x:Name="btnGitHub" Content="🐙 GitHub репозиторий"
+                            ToolTip="Откроет страницу исходного кода и релизов Ven4Tools на GitHub."
                             Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"/>
                     <Button x:Name="btnFeedback" Content="📧 Обратная связь"
+                            ToolTip="Откроет форму для оценки и отправки комментария разработчику."
                             Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"/>
                     <Button x:Name="btnReportIssue" Content="🐛 Сообщить о проблеме"
+                            ToolTip="Откроет GitHub с подготовленной формой сообщения о проблеме и данными о версии системы."
                             Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"/>
                 </StackPanel>
             </Border>

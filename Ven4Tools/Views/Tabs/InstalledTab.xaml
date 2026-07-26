@@ -118,6 +118,7 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                         <Button x:Name="btnRefresh"
                                 Content="Проверить обновления"
+                                ToolTip="Обновит список установленных приложений и найдёт доступные новые версии. Ничего не устанавливает."
                                 Height="34" Padding="14,0"
                                 Background="{DynamicResource CardBackground}"
                                 Foreground="{DynamicResource TextPrimary}"
@@ -131,19 +132,21 @@
                                 Foreground="#06130D"
                                 FontWeight="Bold"
                                 FontSize="12"
-                                ToolTip="Обновить все приложения (winget upgrade --all)"
+                                ToolTip="После подтверждения обновит через winget все приложения, для которых доступна новая версия."
                                 Click="BtnUpgradeAll_Click"/>
                         <Button x:Name="btnExport" Content="Экспорт"
                                 Margin="4,0,0,0" Height="34" Padding="10,0"
                                 Background="{DynamicResource CardBackground}"
                                 Foreground="{DynamicResource TextPrimary}"
                                 FontSize="12"
+                                ToolTip="Сохранит список установленных приложений в файл winget или JSON."
                                 Click="BtnExport_Click"/>
                         <Button x:Name="btnImport" Content="Импорт"
                                 Margin="4,0,0,0" Height="34" Padding="10,0"
                                 Background="{DynamicResource CardBackground}"
                                 Foreground="{DynamicResource TextPrimary}"
                                 FontSize="12"
+                                ToolTip="Выберет файл winget или JSON и установит перечисленные в нём приложения."
                                 Click="BtnImport_Click"/>
                     </StackPanel>
                 </Grid>
@@ -205,12 +208,14 @@
                             FontWeight="Bold"
                             FontSize="12"
                             IsEnabled="False"
+                            ToolTip="Обновит отмеченные приложения, для которых найдены новые версии."
                             Click="BtnUpdateSelected_Click"/>
                     <Button x:Name="btnUninstallSelected" Content="Удалить"
                             Style="{StaticResource DangerButtonStyle}"
                             IsEnabled="False" Margin="4,0,0,0"
                             Height="30" Padding="10,0"
                             FontSize="12"
+                            ToolTip="После общего подтверждения удалит все отмеченные приложения по очереди."
                             Click="BtnUninstallSelected_Click"/>
                 </StackPanel>
             </Grid>
@@ -361,12 +366,14 @@
                                                 Background="{StaticResource BrandGreen}" Foreground="#06130D"
                                                 FontSize="12" FontWeight="Bold"
                                                 Tag="{Binding}"
+                                                ToolTip="Обновит это приложение до доступной версии."
                                                 Click="BtnUpdate_Click"/>
                                         <Button Content="Удалить"
                                                 Style="{StaticResource DangerButtonStyle}"
                                                 IsEnabled="{Binding CanAct}"
                                                 Height="26" Padding="10,0"
                                                 Tag="{Binding}"
+                                                ToolTip="После подтверждения удалит это приложение с компьютера."
                                                 Click="BtnUninstall_Click"/>
                                     </StackPanel>
                                 </Grid>

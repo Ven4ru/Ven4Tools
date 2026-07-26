@@ -68,7 +68,8 @@ namespace Ven4Tools.Views.Tabs
                     Height = 32,
                     Width = 240,
                     HorizontalAlignment = HorizontalAlignment.Left,
-                    Margin = new Thickness(0, 10, 0, 0)
+                    Margin = new Thickness(0, 10, 0, 0),
+                    ToolTip = "После подтверждения отключит быстрый запуск Windows и удалит файл гибернации."
                 };
                 fixBtn.Click += BtnDisableFastStartup_Click;
                 pnlRebootHistory.Children.Add(fixBtn);

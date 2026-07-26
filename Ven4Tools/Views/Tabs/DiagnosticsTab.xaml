@@ -21,6 +21,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Button x:Name="btnRunDiagnostics" Content="🔍 Запустить диагностику"
+                                ToolTip="Проверит состояние системы, дисков, недавние сбои, Windows Update и аппаратные события. Ничего не исправляет автоматически."
                                 Height="36" Width="220" HorizontalAlignment="Left"/>
                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
                             <Ellipse x:Name="dotHealthBadge" Width="10" Height="10" Fill="{DynamicResource TextSecondary}" Margin="0,0,8,0"/>
@@ -55,6 +56,7 @@
                             <TextBlock x:Name="txtAppVersion" Grid.Column="1" Foreground="{DynamicResource TextPrimary}"/>
                         </Grid>
                         <Button x:Name="btnCopySystemInfo" Content="📋 Копировать информацию"
+                                ToolTip="Скопирует показанные сведения о Windows, процессоре, памяти и версии Ven4Tools."
                                 Height="30" Width="180" Margin="0,15,0,0" HorizontalAlignment="Left"/>
                     </StackPanel>
                 </GroupBox>
@@ -83,6 +85,7 @@
                                        Foreground="{DynamicResource TextSecondary}"/>
                         </StackPanel>
                         <Button x:Name="btnClearWuCache" Content="🧹 Очистить кэш Windows Update"
+                                ToolTip="После подтверждения остановит службы обновления, очистит их кэш и снова запустит службы."
                                 Height="30" Width="240" Margin="0,10,0,0" HorizontalAlignment="Left" Visibility="Collapsed"/>
                     </StackPanel>
                 </GroupBox>
@@ -109,8 +112,10 @@
                                    Margin="10,8,10,0"/>
                         <StackPanel Orientation="Horizontal" Margin="10,10">
                             <Button x:Name="btnDisableTurboBoost" Content="❌ Отключить Turbo Boost"
+                                    ToolTip="Изменит параметры электропитания и немедленно отключит Turbo Boost процессора."
                                     Height="35" Width="180" Margin="0,0,10,0"/>
                             <Button x:Name="btnEnableTurboBoost" Content="✅ Включить Turbo Boost"
+                                    ToolTip="Вернёт Turbo Boost в параметры электропитания. Перезагрузка не требуется."
                                     Height="35" Width="180"/>
                         </StackPanel>
                         <TextBlock Text="ℹ️ Изменение применяется немедленно, перезагрузка не требуется"
@@ -123,10 +128,13 @@
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="10,10,10,5">
                             <Button x:Name="btnOpenLogs" Content="📁 Открыть папку"
+                                    ToolTip="Откроет в Проводнике папку, где Ven4Tools хранит диагностические журналы."
                                     Height="35" Width="150" Margin="0,0,10,0"/>
                             <Button x:Name="btnOpenLatestLog" Content="📄 Последний лог"
+                                    ToolTip="Загрузит содержимое самого свежего журнала в поле просмотра ниже."
                                     Height="35" Width="155" Margin="0,0,10,0"/>
                             <Button x:Name="btnClearLogs" Content="🗑️ Очистить"
+                                    ToolTip="После подтверждения удалит сохранённые файлы журналов Ven4Tools."
                                     Height="35" Width="100"/>
                         </StackPanel>
                         <TextBox x:Name="txtLatestLog" Margin="10,0,10,10" Height="100"
@@ -139,6 +147,7 @@
 
                 <!-- Экспорт отчёта -->
                 <Button x:Name="btnCopyFullReport" Content="📤 Скопировать полный отчёт"
+                        ToolTip="Соберёт результаты диагностики в текстовый отчёт и скопирует его в буфер обмена."
                         Height="34" Width="240" HorizontalAlignment="Left" Margin="0,0,0,10"/>
 
             </StackPanel>
