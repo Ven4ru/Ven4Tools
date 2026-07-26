@@ -1,0 +1,164 @@
+using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Linq;
+
+namespace Ven4Tools.Tests;
+
+public sealed class ButtonToolTipCoverageTests
+{
+    private static readonly XNamespace Presentation =
+        "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
+    private static readonly XNamespace Xaml =
+        "http://schemas.microsoft.com/winfx/2006/xaml";
+
+    [Fact]
+    public void AllFunctionalXamlButtonsHaveExplanations()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        List<string> missing = EnumerateApplicationXaml(repositoryRoot)
+            .SelectMany(ReadButtons)
+            .Where(IsFunctional)
+            .Where(button => string.IsNullOrWhiteSpace(button.ToolTip))
+            .Select(button => button.Diagnostic)
+            .OrderBy(diagnostic => diagnostic, StringComparer.Ordinal)
+            .ToList();
+
+        Assert.True(
+            missing.Count == 0,
+            "Функциональные кнопки без пояснения:" + Environment.NewLine +
+            string.Join(Environment.NewLine, missing));
+    }
+
+    [Theory]
+    [InlineData("Ven4Tools/MainWindow.xaml.cs", "installBtn")]
+    [InlineData("Ven4Tools/MainWindow.xaml.cs", "unpinBtn")]
+    [InlineData("Ven4Tools/Views/Tabs/DiagnosticsTab.RebootHistory.cs", "fixBtn")]
+    public void DynamicButtonsHaveExplanations(string relativePath, string variableName)
+    {
+        string path = Path.Combine(
+            FindRepositoryRoot(),
+            relativePath.Replace('/', Path.DirectorySeparatorChar));
+        string source = File.ReadAllText(path);
+        string initializerPattern =
+            $@"\b{Regex.Escape(variableName)}\s*=\s*new\s+Button\s*\{{(?<body>.*?)\n\s*\}}";
+        Match initializer = Regex.Match(
+            source,
+            initializerPattern,
+            RegexOptions.Singleline | RegexOptions.CultureInvariant);
+
+        Assert.True(initializer.Success, $"Не найден инициализатор кнопки {variableName} в {relativePath}.");
+        Assert.Matches(
+            new Regex(@"\bToolTip\s*=\s*""[^""]+""", RegexOptions.CultureInvariant),
+            initializer.Groups["body"].Value);
+    }
+
+    private static IEnumerable<string> EnumerateApplicationXaml(string repositoryRoot)
+    {
+        foreach (string directoryName in new[] { "Ven4Tools", "Ven4Tools.Launcher" })
+        {
+            string directory = Path.Combine(repositoryRoot, directoryName);
+            foreach (string path in Directory.EnumerateFiles(directory, "*.xaml", SearchOption.AllDirectories))
+            {
+                if (!path.Contains(
+                        $"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    yield return path;
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<ButtonInfo> ReadButtons(string path)
+    {
+        XDocument document = XDocument.Load(path, LoadOptions.SetLineInfo);
+        foreach (XElement button in document.Descendants(Presentation + "Button"))
+        {
+            string? name = (string?)button.Attribute(Xaml + "Name");
+            string? content = (string?)button.Attribute("Content");
+            string? click = (string?)button.Attribute("Click");
+            string? command = (string?)button.Attribute("Command");
+            string? toolTip = (string?)button.Attribute("ToolTip");
+            int line = ((IXmlLineInfo)button).LineNumber;
+
+            yield return new ButtonInfo(path, line, name, content, click, command, toolTip);
+        }
+    }
+
+    private static bool IsFunctional(ButtonInfo button)
+    {
+        bool hasAction =
+            !string.IsNullOrWhiteSpace(button.Click) ||
+            !string.IsNullOrWhiteSpace(button.Command) ||
+            !string.IsNullOrWhiteSpace(button.Name);
+        if (!hasAction)
+        {
+            return false;
+        }
+
+        if (button.Click?.StartsWith("NavigateTo", StringComparison.Ordinal) == true ||
+            button.Name?.EndsWith("Tab", StringComparison.Ordinal) == true)
+        {
+            return false;
+        }
+
+        if (button.Name?.StartsWith("btnClose", StringComparison.Ordinal) == true ||
+            string.Equals(button.Name, "btnExit", StringComparison.Ordinal) ||
+            Regex.IsMatch(button.Name ?? "", "^star[1-5]$", RegexOptions.CultureInvariant))
+        {
+            return false;
+        }
+
+        if (button.Content is "Закрыть" or "Позже" or "Готово" or "Отклонить")
+        {
+            return false;
+        }
+
+        if (button.Content is "Отмена" &&
+            button.Name is not "btnCancelDownload" and not "btnCancelOffice")
+        {
+            return false;
+        }
+
+        if (button.Content is "Пропустить" &&
+            !button.Path.EndsWith(
+                $"{Path.DirectorySeparatorChar}SplashWindow.xaml",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        DirectoryInfo? current = new(AppContext.BaseDirectory);
+        while (current is not null)
+        {
+            if (File.Exists(Path.Combine(current.FullName, "Ven4Tools.sln")))
+            {
+                return current.FullName;
+            }
+
+            current = current.Parent;
+        }
+
+        throw new DirectoryNotFoundException("Не найден корень репозитория с Ven4Tools.sln.");
+    }
+
+    private sealed record ButtonInfo(
+        string Path,
+        int Line,
+        string? Name,
+        string? Content,
+        string? Click,
+        string? Command,
+        string? ToolTip)
+    {
+        public string Diagnostic =>
+            $"{System.IO.Path.GetRelativePath(FindRepositoryRoot(), Path)}:{Line} " +
+            $"Name={Name ?? "—"}; Content={Content ?? "—"}; Click={Click ?? "—"}; Command={Command ?? "—"}";
+    }
+}
