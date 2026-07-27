@@ -31,7 +31,7 @@ namespace Ven4Tools.Views.Tabs
             foreach (var disk in _disks)
             {
                 string capacity = disk.SizeBytes > 0
-                    ? $" — {disk.SizeBytes / 1_000_000_000d:F0} ГБ"
+                    ? " — " + BenchmarkReportBuilder.FormatCapacity(disk.SizeBytes)
                     : "";
                 string suffix = disk.CanBenchmark ? "" : " (нет тома для теста)";
 
@@ -100,18 +100,18 @@ namespace Ven4Tools.Views.Tabs
 
             txtModel.Text = disk.FriendlyName;
             txtCapacity.Text = disk.SizeBytes > 0
-                ? $"{disk.SizeBytes / 1_000_000_000d:F1} ГБ"
+                ? BenchmarkReportBuilder.FormatCapacity(disk.SizeBytes)
                 : "неизвестно";
 
-            string media = DiskInventoryService.DescribeMedia(disk.Media);
-            txtMedia.Text = disk.SpindleSpeed > 0 ? $"{media}, {disk.SpindleSpeed} об/мин" : media;
+            txtMedia.Text = BenchmarkReportBuilder.DescribeMediaWithSpindle(disk);
 
             txtConnection.Text = BenchmarkReportBuilder.DescribeConnection(disk);
 
             // Потолок показываем только когда параметры линии получены достоверно.
             if (disk.Link.IsKnown && disk.Link.CeilingMegabytesPerSecond > 0)
             {
-                txtCeiling.Text = $"{disk.Link.CeilingMegabytesPerSecond:F0} МБ/с";
+                txtCeiling.Text = BenchmarkReportBuilder.FormatSpeedRounded(
+                    disk.Link.CeilingMegabytesPerSecond) + " МБ/с";
                 txtCeiling.Foreground = (Brush)FindResource("TextPrimary");
             }
             else
@@ -141,7 +141,7 @@ namespace Ven4Tools.Views.Tabs
                 cmbVolumes.Items.Add(new ComboBoxItem
                 {
                     Content = $"{volume.Letter}{label} — свободно " +
-                              $"{volume.FreeBytes / 1_000_000_000d:F0} ГБ{system}",
+                              BenchmarkReportBuilder.FormatCapacity(volume.FreeBytes) + system,
                     Tag = volume
                 });
             }
