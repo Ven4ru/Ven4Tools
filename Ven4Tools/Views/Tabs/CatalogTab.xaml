@@ -236,21 +236,21 @@
                                                 Command="{Binding LaunchCommand}"
                                                 Visibility="{Binding CanLaunch, Converter={StaticResource BoolToVis}}"
                                                 Background="{StaticResource BrandGreen}" Foreground="#06130D"
-                                                ToolTip="Запустить"/>
+                                                ToolTip="Запустит установленное приложение."/>
 
                                         <Button Content="🔄" Width="24" Height="24" Margin="4,0,0,0"
                                                 Command="{Binding DataContext.SuggestAlternativeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"
                                                 Visibility="{Binding ShowSuggestButton, Converter={StaticResource BoolToVis}}"
                                                 Background="#FF8C00" Foreground="White" FontSize="12"
-                                                ToolTip="Предложить альтернативный источник"/>
+                                                ToolTip="Откроет выбор другого источника установки для этого приложения."/>
 
                                         <Button Content="❌" Width="20" Height="20" Margin="4,0,0,0"
                                                 Command="{Binding DataContext.RemoveUserAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"
                                                 Visibility="{Binding IsUserAdded, Converter={StaticResource BoolToVis}}"
                                                 Background="#640000" Foreground="White" FontSize="10" Padding="0"
-                                                ToolTip="Удалить из списка"/>
+                                                ToolTip="После подтверждения уберёт это добавленное вручную приложение из каталога. С компьютера оно не удаляется."/>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>
@@ -320,20 +320,20 @@
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                                 <Button Content="→" Width="26" Height="26" Padding="0" FontSize="13" Margin="2,0,0,0"
-                                                        ToolTip="Применить пресет"
+                                                        ToolTip="Отметит в каталоге приложения из этого пресета. Установка не начнётся."
                                                         Command="{Binding DataContext.ApplyPresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"/>
                                                 <Button Content="✏" Width="26" Height="26" Padding="0" FontSize="11" Margin="2,0,0,0"
-                                                        ToolTip="Изменить название и описание"
+                                                        ToolTip="Откроет изменение названия и описания этого пресета."
                                                         Command="{Binding DataContext.RenamePresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"/>
                                                 <Button Content="↻" Width="26" Height="26" Padding="0" FontSize="12" Margin="2,0,0,0"
-                                                        ToolTip="Применить пресет и обновить состав"
+                                                        ToolTip="Отметит приложения пресета и подготовит перезапись его состава текущим выбором."
                                                         Command="{Binding DataContext.UpdateAppsPresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"/>
                                                 <Button Content="✕" Width="26" Height="26" Padding="0" FontSize="11" Margin="2,0,0,0"
                                                         Background="Transparent" Foreground="{DynamicResource TextSecondary}" BorderThickness="0"
-                                                        ToolTip="Удалить пресет"
+                                                        ToolTip="После подтверждения удалит этот пресет. Установленные приложения останутся."
                                                         Command="{Binding DataContext.DeletePresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"/>
                                             </StackPanel>

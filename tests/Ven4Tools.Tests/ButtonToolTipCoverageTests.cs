@@ -102,6 +102,58 @@ public sealed class ButtonToolTipCoverageTests
         Assert.Equal("15000", setters["ToolTipService.ShowDuration"]);
     }
 
+    // Проверка присутствия подсказки (тест выше) не ловит расхождение стиля:
+    // кнопки, у которых подсказка была ещё до перехода на пояснения, остались
+    // с коротким «Удалить пресет» вместо «что произойдёт»-формулировки и не
+    // попали ни в один список пропущенных. Требуем завершённое предложение —
+    // это объективный признак принятой формулировки.
+    [Fact]
+    public void FunctionalXamlButtonExplanationsAreCompleteSentences()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        List<string> terse = EnumerateApplicationXaml(repositoryRoot)
+            .SelectMany(ReadButtons)
+            .Where(IsFunctional)
+            .Where(button => !string.IsNullOrWhiteSpace(button.ToolTip))
+            // Привязки вычисляются во время выполнения — текст здесь недоступен.
+            .Where(button => !button.ToolTip!.TrimStart().StartsWith("{", StringComparison.Ordinal))
+            .Where(button => !button.ToolTip!.TrimEnd().EndsWith(".", StringComparison.Ordinal))
+            .Select(button => $"{button.Diagnostic}; ToolTip={button.ToolTip}")
+            .OrderBy(diagnostic => diagnostic, StringComparer.Ordinal)
+            .ToList();
+
+        Assert.True(
+            terse.Count == 0,
+            "Подсказки не в формате завершённого предложения:" + Environment.NewLine +
+            string.Join(Environment.NewLine, terse));
+    }
+
+    // Стиль с x:Key не наследует сеттеры неявного стиля Button, поэтому тайминги
+    // подсказок нужно держать в нём явно — иначе у кнопок деструктивных действий
+    // подсказка закрывается через 5 секунд вместо 15.
+    [Theory]
+    [InlineData("Ven4Tools/App.xaml", "DangerButtonStyle")]
+    public void KeyedButtonStylesKeepCalmToolTipTiming(string relativePath, string styleKey)
+    {
+        string path = Path.Combine(
+            FindRepositoryRoot(),
+            relativePath.Replace('/', Path.DirectorySeparatorChar));
+        XDocument document = XDocument.Load(path);
+        XElement style = document.Descendants(Presentation + "Style")
+            .Single(element =>
+                (string?)element.Attribute("TargetType") == "Button" &&
+                (string?)element.Attribute(Xaml + "Key") == styleKey);
+        Dictionary<string, string?> setters = style.Elements(Presentation + "Setter")
+            .ToDictionary(
+                element => (string)element.Attribute("Property")!,
+                element => (string?)element.Attribute("Value"),
+                StringComparer.Ordinal);
+
+        Assert.Equal("450", setters["ToolTipService.InitialShowDelay"]);
+        Assert.Equal("100", setters["ToolTipService.BetweenShowDelay"]);
+        Assert.Equal("15000", setters["ToolTipService.ShowDuration"]);
+    }
+
     private static IEnumerable<string> EnumerateApplicationXaml(string repositoryRoot)
     {
         foreach (string directoryName in new[] { "Ven4Tools", "Ven4Tools.Launcher" })
