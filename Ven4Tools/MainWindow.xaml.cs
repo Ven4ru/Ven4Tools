@@ -235,7 +235,7 @@ namespace Ven4Tools
         {
             bool online    = ConnectivityMonitor.IsEffectivelyOnline && !ProfileService.Current.OfflineMode;
 
-            // Online-only tabs
+            // Вкладки, работающие только при наличии сети
             btnOfficeTab.Visibility     = online ? Visibility.Visible : Visibility.Collapsed;
             btnActivationTab.Visibility = online ? Visibility.Visible : Visibility.Collapsed;
             btnNetworkTab.Visibility    = online ? Visibility.Visible : Visibility.Collapsed;
@@ -561,7 +561,7 @@ namespace Ven4Tools
                 if (dlg.ShowDialog() == true && dlg.Result != null)
                 {
                     AppLogger.Write($"📦 Добавлен локальный установщик: {dlg.Result.DisplayName}");
-                    // Pass to CatalogTab's user apps mechanism
+                    // Передаём во вкладку каталога — в механизм пользовательских приложений
                     if (_catalogTab != null)
                         _catalogTab.AddLocalInstallerApp(dlg.Result);
                 }

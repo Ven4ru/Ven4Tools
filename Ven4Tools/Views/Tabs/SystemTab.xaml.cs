@@ -45,7 +45,7 @@ namespace Ven4Tools.Views.Tabs
             // Подписка на btnSaveSnapshot задаётся в XAML (Click="BtnSaveSnapshot_Click"),
             // повторная подписка в code-behind вызывала двойной вызов обработчика.
 
-            // Offline mode
+            // Офлайн-режим
             chkOfflineMode.Click      += ChkOfflineMode_Click;
             chkForceOnlineMode.Click  += ChkForceOnlineMode_Click;
             chkParanoidMode.Click     += ChkParanoidMode_Click;

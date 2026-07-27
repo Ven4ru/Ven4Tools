@@ -4,8 +4,10 @@ using System.Threading.Tasks;
 namespace Ven4Tools.Helpers;
 
 /// <summary>
-/// Atomic file write via temp-file + replace, preventing data loss on crash or power failure.
-/// Each call uses a unique temp filename to avoid races between concurrent writes to the same path.
+/// Атомарная запись файла через временный файл с последующей заменой — не теряет
+/// данные при падении приложения или отключении питания.
+/// Имя временного файла у каждого вызова своё, чтобы одновременные записи по одному
+/// и тому же пути не мешали друг другу.
 /// </summary>
 internal static class FileHelper
 {
