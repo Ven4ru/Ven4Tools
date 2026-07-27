@@ -3,9 +3,11 @@ using System.IO;
 namespace Ven4Tools.Launcher.Helpers;
 
 /// <summary>
-/// Atomic file write via temp-file + replace, preventing data loss on crash or power failure.
-/// Mirrors Ven4Tools.Helpers.FileHelper (client) byte-for-byte — separate assemblies, same
-/// mechanism (File.Move overwrite, not File.Replace) so the two really are one pattern.
+/// Атомарная запись файла через временный файл с последующей заменой — не теряет
+/// данные при падении приложения или отключении питания.
+/// Повторяет Ven4Tools.Helpers.FileHelper (клиент): сборки разные, механизм один и тот же
+/// (File.Move с перезаписью, не File.Replace), чтобы это был действительно один паттерн.
+/// Асинхронной перегрузки здесь нет — лаунчеру она пока не нужна.
 /// </summary>
 internal static class FileHelper
 {

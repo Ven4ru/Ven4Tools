@@ -18,8 +18,8 @@ namespace Ven4Tools.Services
         private static readonly TimeSpan UiCallTimeout = TimeSpan.FromSeconds(60);
 
         /// <summary>
-        /// Search winget for packages matching <paramref name="query"/>.
-        /// Returns up to 15 deduplicated results (IDs must contain a dot).
+        /// Ищет в winget пакеты, подходящие под <paramref name="query"/>.
+        /// Возвращает не более 15 результатов без повторов (идентификатор обязан содержать точку).
         /// Бросает <see cref="TimeoutException"/>, если winget не ответил за <see cref="UiCallTimeout"/>.
         /// </summary>
         public static async Task<List<WingetPackage>> SearchAsync(
@@ -36,11 +36,11 @@ namespace Ven4Tools.Services
         }
 
         /// <summary>
-        /// Search winget by manifest <paramref name="tag"/> (e.g. "video", "antivirus").
+        /// Ищет в winget по тегу манифеста <paramref name="tag"/> (например, "video", "antivirus").
         /// Структурно идентичен <see cref="SearchAsync"/>, но ищет по тегу манифеста
         /// (winget search --tag) — так находятся приложения, когда пользователь ввёл
-        /// не имя пакета, а категорию (см. CategorySearchMap). Returns up to 15
-        /// deduplicated results (IDs must contain a dot).
+        /// не имя пакета, а категорию (см. CategorySearchMap). Возвращает не более 15
+        /// результатов без повторов (идентификатор обязан содержать точку).
         /// Бросает <see cref="TimeoutException"/>, если winget не ответил за <see cref="UiCallTimeout"/>.
         /// </summary>
         public static async Task<List<WingetPackage>> SearchByTagAsync(
@@ -156,7 +156,8 @@ namespace Ven4Tools.Services
         }
 
         /// <summary>
-        /// Validate a winget package by exact ID. Returns (Name, Version) or (null, null).
+        /// Проверяет пакет winget по точному идентификатору.
+        /// Возвращает (Name, Version) либо (null, null), если пакет не найден.
         /// Бросает <see cref="TimeoutException"/>, если winget не ответил за <see cref="UiCallTimeout"/>.
         /// </summary>
         public static async Task<(string? Name, string? Version)> ValidateIdAsync(

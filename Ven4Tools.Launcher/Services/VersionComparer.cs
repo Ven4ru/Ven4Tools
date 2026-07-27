@@ -3,8 +3,9 @@ namespace Ven4Tools.Launcher.Services
     internal static class VersionComparer
     {
         /// <summary>
-        /// Returns positive if v1 > v2, negative if v1 < v2, 0 if equal.
-        /// Stable version ranks higher than same-number pre-release: "3.1.0" > "3.1.0-pre".
+        /// Возвращает положительное число, если v1 > v2, отрицательное, если v1 &lt; v2,
+        /// и 0 при равенстве. Стабильная версия старше предрелизной с тем же номером:
+        /// "3.1.0" > "3.1.0-pre".
         /// </summary>
         public static int Compare(string? v1, string? v2)
         {

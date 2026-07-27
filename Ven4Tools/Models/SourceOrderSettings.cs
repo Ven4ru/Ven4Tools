@@ -18,14 +18,14 @@ namespace Ven4Tools.Models
             [Direct] = "🔗 Прямая ссылка"
         };
 
-        // "global" or "per_category"
+        // "global" — общий порядок, "per_category" — свой основной источник у категории
         public string Mode { get; set; } = "global";
 
-        // Ordered list of source IDs: ["winget","direct","choco"]
+        // Упорядоченный список идентификаторов источников: ["winget","direct","choco"]
         public List<string> GlobalOrder { get; set; } = new(AllSources);
 
-        // Per-category primary source: "Браузеры" -> "winget"
-        // Empty string or missing = use global order
+        // Основной источник для категории: "Браузеры" -> "winget".
+        // Пустая строка или отсутствие ключа — используется общий порядок.
         public Dictionary<string, string> CategoryPrimary { get; set; } = new();
     }
 }

@@ -20,7 +20,7 @@ namespace Ven4Tools.Services
         // ложноотрицательные результаты) — считаем соединение активным всегда.
         public static bool IsEffectivelyOnline => ProfileService.Current.ForceOnlineMode || IsOnline;
 
-        // Fires on every change: true = came online, false = went offline
+        // Срабатывает на каждое изменение: true — соединение появилось, false — пропало
         public static event Action<bool>? StatusChanged;
 
         public static void Start()
@@ -70,7 +70,7 @@ namespace Ven4Tools.Services
             }
             catch { }
 
-            // Fallback: try raw TCP
+            // Запасной путь: пробуем чистое TCP-соединение
             try
             {
                 using var tcp = new System.Net.Sockets.TcpClient();
