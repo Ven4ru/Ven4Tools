@@ -75,10 +75,6 @@ AGENTS.md
 # Локальные служебные файлы ассистента разработки
 .claude/
 
-# Remote install (фича на паузе — добавить в git когда будет готова)
-Ven4Tools/Models/RemoteCommand.cs
-Ven4Tools/Services/RemoteCommandService.cs
-
 # Внутренние ops-скрипты (не для публичного репо)
 deploy_cdn.ps1
 _deploy_env.ps1

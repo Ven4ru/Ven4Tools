@@ -194,8 +194,11 @@ namespace Ven4Tools.ClientUITests
             Assert.IsTrue(buttonReEnabled, "#4: кнопка «Проверить доступность» не вернулась в enabled-состояние после проверки.");
 
             // ---- #1: кнопка «Предложить альтернативный источник» у недоступного приложения ----
+            // Ищем по устойчивому ключевому слову, а не по точному тексту подсказки:
+            // формулировки пояснений меняются, точное совпадение ломало бы тест.
             var suggestButtons = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
-                .Where(b => (b.Properties.HelpText.IsSupported && b.Properties.HelpText.Value == "Предложить альтернативный источник"))
+                .Where(b => (b.Properties.HelpText.IsSupported &&
+                             (b.Properties.HelpText.Value ?? "").Contains("другого источника", StringComparison.OrdinalIgnoreCase)))
                 .ToList();
             Assert.IsTrue(suggestButtons.Count >= 1,
                 $"#1: не найдена кнопка «Предложить альтернативный источник» — приложение «{RealCatalogAppId}» (с подменённым AlternativeId) не помечено недоступным (или ещё проверяется).");

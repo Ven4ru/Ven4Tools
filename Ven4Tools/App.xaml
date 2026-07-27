@@ -73,6 +73,15 @@
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <!-- Тайминги подсказок дублируются из безымянного стиля Button намеренно:
+                 стиль с x:Key НЕ наследует сеттеры неявного стиля (BasedOn здесь не
+                 используется, чтобы не притянуть Height/Margin/Padding и не изменить
+                 вид кнопок в плотных списках). Без этих трёх строк у кнопок
+                 деструктивных действий подсказка исчезала через 5 секунд вместо 15,
+                 хотя именно у них текст самый длинный и важный. -->
+            <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
+            <Setter Property="ToolTipService.BetweenShowDelay" Value="100"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
