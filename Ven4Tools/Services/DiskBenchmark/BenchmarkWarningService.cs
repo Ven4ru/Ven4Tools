@@ -88,9 +88,19 @@ namespace Ven4Tools.Services.DiskBenchmark
         /// <summary>
         /// Определяет, включено ли шифрование тома. При недоступности сведений считаем,
         /// что шифрования нет: выдумывать предупреждение на пустом месте не следует.
+        ///
+        /// Буква тома подставляется в WQL-запрос, поэтому она предварительно проверяется
+        /// на строгий вид «X:» — как в PciLinkResolver.QueryProperties, где значение из
+        /// того же источника экранируется перед подстановкой. Значение приходит от Windows
+        /// (Win32_LogicalDisk.DeviceID), но полагаться на это в месте склейки запроса не
+        /// следует: любая другая форма означает, что источник изменился, и запрос лучше
+        /// не выполнять вовсе, чем выполнить с непредусмотренным условием.
         /// </summary>
         private static bool IsBitLockerProtected(string letter)
         {
+            if (letter.Length != 2 || !char.IsAsciiLetter(letter[0]) || letter[1] != ':')
+                return false;
+
             try
             {
                 var scope = new ManagementScope(@"root\CIMV2\Security\MicrosoftVolumeEncryption");
