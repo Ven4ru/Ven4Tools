@@ -36,12 +36,33 @@ try {
 
     if (-not $url) { throw 'Не удалось получить ссылку на установщик' }
 
+    # Ссылка приходит из ответа API, то есть из данных, а не из самого скрипта.
+    # Дальше по ней скачивается и запускается EXE, поэтому хост проверяется по
+    # тому же белому списку, что и в лаунчере (Services/DownloadValidator.cs): подмена
+    # ответа API не должна приводить к запуску файла с чужого сервера.
+    $allowedHosts = @(
+        'github.com', 'objects.githubusercontent.com',
+        'cdn.ven4tools.ru', 'ven4tools.ru', 'www.ven4tools.ru'
+    )
+    $uri = [uri]$url
+    $hostOk = ($uri.Scheme -eq 'https') -and (
+        ($allowedHosts -contains $uri.Host) -or
+        $uri.Host.EndsWith('.githubusercontent.com') -or
+        $uri.Host.EndsWith('.github.com')
+    )
+    if (-not $hostOk) {
+        throw "Недоверенный источник установщика: $($uri.Scheme)://$($uri.Host) — установка прервана"
+    }
+
     Write-Host "  Загрузка..." -ForegroundColor Gray
     $tmp = Join-Path $env:TEMP 'Ven4Tools.Setup.exe'
     Invoke-WebRequest $url -OutFile $tmp -UseBasicParsing
 
     # Проверка целостности, если сервер отдаёт хеш. Блок условный — не ломает
-    # установку, если сервер вдруг перестанет отдавать хеш.
+    # установку, если сервер вдруг перестанет отдавать хеш (latest_version.php
+    # оставляет launcher_sha256 пустым, когда не смог сам скачать ассет).
+    # Пропуск проверки не молчаливый: без него пользователь не отличил бы
+    # проверенную загрузку от непроверенной.
     if ($api.downloads.launcher_sha256) {
         Write-Host "  Проверка целостности..." -ForegroundColor Gray
         $actual = (Get-FileHash $tmp -Algorithm SHA256).Hash
@@ -49,6 +70,8 @@ try {
             Remove-Item $tmp -Force
             throw "Несовпадение SHA256 — установка прервана"
         }
+    } else {
+        Write-Host "  ! Сервер не отдал SHA256 — проверка целостности пропущена" -ForegroundColor Yellow
     }
 
     # Версия загруженного установщика — из его собственных метаданных exe
