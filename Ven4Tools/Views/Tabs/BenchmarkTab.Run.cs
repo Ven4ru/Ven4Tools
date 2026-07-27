@@ -69,7 +69,7 @@ namespace Ven4Tools.Views.Tabs
 
                 txtRunStatus.Text = result.Cancelled
                     ? "Тест остановлен, показаны частичные результаты"
-                    : $"Готово за {FormatDuration(result.Duration)}";
+                    : "Готово за " + BenchmarkReportBuilder.FormatDuration(result.Duration);
 
                 btnCopyReport.IsEnabled = result.Measurements.Count > 0;
                 btnSaveReport.IsEnabled = result.Measurements.Count > 0;
@@ -146,9 +146,10 @@ namespace Ven4Tools.Views.Tabs
                 return;
             }
 
-            value.Text = $"{measurement.MegabytesPerSecond:F1} МБ/с";
-            details.Text = $"{measurement.OperationsPerSecond:F0} оп/с · задержка " +
-                           FormatLatency(measurement.AverageLatencyMicroseconds);
+            value.Text = BenchmarkReportBuilder.FormatSpeed(measurement.MegabytesPerSecond) + " МБ/с";
+            details.Text = BenchmarkReportBuilder.FormatIops(measurement.OperationsPerSecond) +
+                           " оп/с · задержка " +
+                           BenchmarkReportBuilder.FormatLatency(measurement.AverageLatencyMicroseconds);
         }
 
         private void ShowConclusions(BenchmarkRunResult result)
@@ -167,15 +168,19 @@ namespace Ven4Tools.Views.Tabs
             var sequentialRead = result.Find("SEQ1M Q8T1", BenchmarkOperation.Read);
             if (sequentialRead != null)
             {
-                AddConclusion($"Последовательное чтение {sequentialRead.MegabytesPerSecond:F0} МБ/с — " +
+                AddConclusion("Последовательное чтение " +
+                              BenchmarkReportBuilder.FormatSpeedRounded(sequentialRead.MegabytesPerSecond) +
+                              " МБ/с — " +
                               BenchmarkReportBuilder.DescribeLevel(sequentialRead.MegabytesPerSecond) + ".");
 
                 var disk = result.Disk;
                 if (disk != null && disk.Link.IsKnown && disk.Link.CeilingMegabytesPerSecond > 0)
                 {
                     double share = sequentialRead.MegabytesPerSecond / disk.Link.CeilingMegabytesPerSecond * 100;
-                    AddConclusion($"Накопитель выбирает {share:F0}% пропускной способности интерфейса " +
-                                  $"({disk.Link.CeilingMegabytesPerSecond:F0} МБ/с).");
+                    AddConclusion("Накопитель выбирает " + BenchmarkReportBuilder.FormatPercent(share) +
+                                  "% пропускной способности интерфейса (" +
+                                  BenchmarkReportBuilder.FormatSpeedRounded(disk.Link.CeilingMegabytesPerSecond) +
+                                  " МБ/с).");
                 }
                 else
                 {
@@ -187,8 +192,8 @@ namespace Ven4Tools.Views.Tabs
             var randomRead = result.Find("RND4K Q1T1", BenchmarkOperation.Read);
             if (randomRead != null && randomRead.AverageLatencyMicroseconds > 0)
             {
-                AddConclusion($"Задержка одиночного случайного чтения — " +
-                              FormatLatency(randomRead.AverageLatencyMicroseconds) +
+                AddConclusion("Задержка одиночного случайного чтения — " +
+                              BenchmarkReportBuilder.FormatLatency(randomRead.AverageLatencyMicroseconds) +
                               ". Отзывчивость системы и скорость запуска программ зависят от неё " +
                               "сильнее, чем от последовательной скорости.");
             }
@@ -204,15 +209,5 @@ namespace Ven4Tools.Views.Tabs
                 Foreground = (Brush)FindResource("TextPrimary")
             });
         }
-
-        private static string FormatLatency(double microseconds) =>
-            microseconds >= 1000
-                ? $"{microseconds / 1000:F2} мс"
-                : $"{microseconds:F0} мкс";
-
-        private static string FormatDuration(TimeSpan duration) =>
-            duration.TotalMinutes >= 1
-                ? $"{(int)duration.TotalMinutes} мин {duration.Seconds} с"
-                : $"{duration.TotalSeconds:F0} с";
     }
 }

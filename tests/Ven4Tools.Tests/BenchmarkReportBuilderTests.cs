@@ -1,3 +1,4 @@
+using System.Globalization;
 using Ven4Tools.Models;
 using Ven4Tools.Services.DiskBenchmark;
 
@@ -120,6 +121,36 @@ public class BenchmarkReportBuilderTests
 
         Assert.Contains("NVMe", description);
         Assert.Contains("не определяются", description);
+    }
+
+    /// <summary>
+    /// Числа вкладки и числа отчёта обязаны совпадать посимвольно на любой языковой
+    /// настройке системы. Раньше вкладка форматировала их интерполяцией в текущей
+    /// культуре, из-за чего на англоязычной Windows та же задержка показывалась
+    /// как «1.28 мс» на экране и «1,28 мс» в отчёте.
+    /// </summary>
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("de-DE")]
+    [InlineData("ru-RU")]
+    public void ЧислаФорматируютсяОдинаково_НезависимоОтКультурыСистемы(string cultureName)
+    {
+        var original = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
+
+            Assert.Equal("1,28 мс", BenchmarkReportBuilder.FormatLatency(1282));
+            Assert.Equal("512 мкс", BenchmarkReportBuilder.FormatLatency(512));
+            Assert.Equal("6543,2", BenchmarkReportBuilder.FormatSpeed(6543.2));
+            Assert.Equal("6543", BenchmarkReportBuilder.FormatSpeedRounded(6543.2));
+            Assert.Equal("1,00 ТБ", BenchmarkReportBuilder.FormatCapacity(1_000_204_886_016));
+            Assert.Equal("2 мин 41 с", BenchmarkReportBuilder.FormatDuration(TimeSpan.FromSeconds(161)));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
     }
 
     [Fact]
