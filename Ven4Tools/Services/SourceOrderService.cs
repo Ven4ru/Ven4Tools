@@ -16,7 +16,8 @@ namespace Ven4Tools.Services
 
         public static SourceOrderSettings Current { get; private set; } = new();
 
-        // Fires after Save() — CatalogTab subscribes to re-check availability
+        // Срабатывает после Save() — вкладка каталога подписывается, чтобы
+        // перепроверить доступность приложений в новом порядке источников.
         public static event Action? Changed;
 
         // Инкрементируется при каждом Save(). Позволяет CatalogTab понять, что
@@ -36,8 +37,8 @@ namespace Ven4Tools.Services
                         File.ReadAllText(_path));
                     if (loaded != null)
                     {
-                        // Migrate the previous untouched default. Preserve every
-                        // genuinely customized order.
+                        // Переносим прежний порядок по умолчанию, если пользователь его
+                        // не трогал. Любой действительно настроенный порядок сохраняем.
                         var legacyDefault = new[]
                         {
                             SourceOrderSettings.Winget,
@@ -59,7 +60,8 @@ namespace Ven4Tools.Services
                                      .ToList())
                             loaded.CategoryPrimary.Remove(key);
 
-                        // Ensure all sources are present in GlobalOrder (forward compat)
+                        // Дополняем порядок источниками, которых в сохранённом файле
+                        // ещё нет (совместимость с будущими версиями каталога).
                         foreach (var s in SourceOrderSettings.AllSources)
                             if (!loaded.GlobalOrder.Contains(s))
                                 loaded.GlobalOrder.Add(s);
@@ -84,9 +86,9 @@ namespace Ven4Tools.Services
             catch (Exception ex) { AppLogger.Write($"[SourceOrderService] Save: {ex.Message}"); }
         }
 
-        // Returns effective source order for a category.
-        // When per_category mode: category primary goes first, rest from GlobalOrder.
-        // Falls back to GlobalOrder when no override set.
+        // Возвращает действующий порядок источников для категории.
+        // В режиме per_category основной источник категории идёт первым,
+        // остальные — в общем порядке. Если переопределения нет — общий порядок.
         public static List<string> GetOrderForCategory(string? categoryName = null)
         {
             if (Current.Mode == "per_category"

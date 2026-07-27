@@ -26,6 +26,14 @@ namespace Ven4Tools.Views.Tabs
                 btnInstallOffice.IsEnabled = false;
                 return;
             }
+
+            // Установка Office — такая же длительная установка с повышением прав, как
+            // и установка приложений каталога, поэтому она обязана делить общий признак
+            // занятости: иначе каталог считает, что установок нет, и запускает вторую
+            // параллельно (два установщика Windows одновременно + переключение региона
+            // системы у этой вкладки), а шапка показывает «Нет активных задач».
+            if (UiGuards.WarnIfInstallBusy()) return;
+
             string installerPath = _downloadedFilePath;
 
             var (displayName, _) = GetSelectedVersion();
@@ -42,6 +50,7 @@ namespace Ven4Tools.Views.Tabs
             SetProgress(true, "⏳ Подготовка установки...", 0, "");
             AppLogger.Write($"\n🚀 Установка {displayName}...");
 
+            await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
                 SetPhase("🔐 Проверка подлинности установщика...");
@@ -161,6 +170,8 @@ namespace Ven4Tools.Views.Tabs
             }
             finally
             {
+                InstallationService.InstallSemaphore.Release();
+
                 if (regionChanged)
                 {
                     RestoreRegion();

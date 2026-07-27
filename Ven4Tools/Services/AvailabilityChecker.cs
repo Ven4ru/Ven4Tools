@@ -79,7 +79,7 @@ namespace Ven4Tools.Services
             if (ProfileService.Current.ParanoidMode)
                 return (AvailabilityStatus.Unknown, 0);
 
-            // Offline: skip network, report from local cache only
+            // Офлайн: сеть не трогаем, отвечаем только по локальному кэшу
             if (OfflineService.IsOffline)
             {
                 if (OfflineService.HasCachedInstaller(app.Id))
@@ -91,7 +91,8 @@ namespace Ven4Tools.Services
                 ? app.AlternativeId
                 : app.Id ?? string.Empty;
 
-            // Cache by the resolved ID so AlternativeId changes invalidate correctly
+            // Ключ кэша — итоговый идентификатор, чтобы смена AlternativeId
+            // корректно обесценивала прежнюю запись
             string cacheKey = wingetId;
 
             if (cache.TryGetValue(cacheKey, out var cached) && DateTime.Now - cached.Timestamp < cacheDuration)

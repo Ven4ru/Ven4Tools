@@ -175,7 +175,8 @@ namespace Ven4Tools.Services.DiskBenchmark
                 _ => "сопоставимо с уровнем NVMe PCIe 5.0"
             };
 
-        private static string DescribeMediaWithSpindle(PhysicalDiskInfo disk)
+        /// <summary>Тип носителя, при наличии — со скоростью шпинделя.</summary>
+        public static string DescribeMediaWithSpindle(PhysicalDiskInfo disk)
         {
             string media = DiskInventoryService.DescribeMedia(disk.Media);
             return disk.SpindleSpeed > 0
@@ -184,22 +185,38 @@ namespace Ven4Tools.Services.DiskBenchmark
         }
 
         private static string FormatSpeed(BenchmarkMeasurement? measurement) =>
-            measurement == null ? "—" : measurement.MegabytesPerSecond.ToString("F1", Culture);
+            measurement == null ? "—" : FormatSpeed(measurement.MegabytesPerSecond);
 
         private static string FormatIops(BenchmarkMeasurement? measurement) =>
-            measurement == null ? "—" : measurement.OperationsPerSecond.ToString("F0", Culture);
+            measurement == null ? "—" : FormatIops(measurement.OperationsPerSecond);
 
-        private static string FormatLatency(BenchmarkMeasurement? measurement)
-        {
-            if (measurement == null || measurement.AverageLatencyMicroseconds <= 0) return "—";
-            double microseconds = measurement.AverageLatencyMicroseconds;
-            return microseconds >= 1000
+        private static string FormatLatency(BenchmarkMeasurement? measurement) =>
+            measurement == null || measurement.AverageLatencyMicroseconds <= 0
+                ? "—"
+                : FormatLatency(measurement.AverageLatencyMicroseconds);
+
+        /// <summary>Скорость с десятыми долями — формат таблицы результатов.</summary>
+        public static string FormatSpeed(double megabytesPerSecond) =>
+            megabytesPerSecond.ToString("F1", Culture);
+
+        /// <summary>Скорость, округлённая до целых — формат выводов под таблицей.</summary>
+        public static string FormatSpeedRounded(double megabytesPerSecond) =>
+            megabytesPerSecond.ToString("F0", Culture);
+
+        public static string FormatIops(double operationsPerSecond) =>
+            operationsPerSecond.ToString("F0", Culture);
+
+        /// <summary>Доля в процентах без знака «%» — знак добавляет вызывающий текст.</summary>
+        public static string FormatPercent(double percent) =>
+            percent.ToString("F0", Culture);
+
+        public static string FormatLatency(double microseconds) =>
+            microseconds >= 1000
                 ? (microseconds / 1000).ToString("F2", Culture) + " мс"
                 : microseconds.ToString("F0", Culture) + " мкс";
-        }
 
         /// <summary>Ёмкость в десятичных единицах — так её указывают производители.</summary>
-        private static string FormatCapacity(long bytes)
+        public static string FormatCapacity(long bytes)
         {
             if (bytes >= 1_000_000_000_000L)
                 return (bytes / 1_000_000_000_000d).ToString("F2", Culture) + " ТБ";
@@ -210,7 +227,7 @@ namespace Ven4Tools.Services.DiskBenchmark
         public static string FormatBinarySize(long bytes) =>
             (bytes / 1024d / 1024 / 1024).ToString("F0", Culture) + " ГиБ";
 
-        private static string FormatDuration(TimeSpan duration)
+        public static string FormatDuration(TimeSpan duration)
         {
             if (duration.TotalMinutes >= 1)
                 return ((int)duration.TotalMinutes).ToString(Culture) + " мин " +
