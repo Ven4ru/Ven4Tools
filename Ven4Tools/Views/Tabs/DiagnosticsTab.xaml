@@ -115,7 +115,7 @@
                                     ToolTip="Изменит параметры электропитания и немедленно отключит Turbo Boost процессора."
                                     Height="35" Width="180" Margin="0,0,10,0"/>
                             <Button x:Name="btnEnableTurboBoost" Content="✅ Включить Turbo Boost"
-                                    ToolTip="Вернёт Turbo Boost в параметры электропитания. Перезагрузка не требуется."
+                                    ToolTip="Изменит параметры электропитания и немедленно включит Turbo Boost процессора. Перезагрузка не требуется."
                                     Height="35" Width="180"/>
                         </StackPanel>
                         <TextBlock Text="ℹ️ Изменение применяется немедленно, перезагрузка не требуется"
