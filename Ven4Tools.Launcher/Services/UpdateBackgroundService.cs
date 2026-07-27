@@ -26,7 +26,7 @@ namespace Ven4Tools.Launcher.Services
         public string LastNotifiedClientVersion { get; set; } = "";
         public string LastNotifiedNotificationId { get; set; } = "";
 
-        // type: "launcher" or "client"
+        // Первый параметр — тип обновления: "launcher" либо "client"
         public event Action<string, UpdateInfo>? UpdateAvailable;
         public event Action<int>? WingetUpgradeCountChanged;
         public event Action<Notification>? NotificationAvailable;

@@ -22,7 +22,7 @@ namespace Ven4Tools.Views.Tabs
 
         private void LoadSettings()
         {
-            // AppSettings is already loaded from the same file at startup
+            // AppSettings уже загружены из того же файла при старте приложения
             chkNotifications.IsChecked = AppSettings.Notifications;
             chkUpdateNotifications.IsChecked = AppSettings.UpdateNotifications;
             sliderCatalogTimeout.Value = Math.Clamp(AppSettings.CatalogTimeout, 3, 30);

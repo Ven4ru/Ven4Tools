@@ -23,14 +23,14 @@ namespace Ven4Tools.Views
 
             _selected = card.Tag?.ToString() ?? "";
 
-            // Reset all cards
+            // Сбрасываем оформление всех карточек
             foreach (var c in new[] { cardBasic, cardExtended, cardFull })
             {
                 c.BorderBrush = (Brush)Application.Current.FindResource("BorderBrush");
                 c.BorderThickness = new Thickness(2);
             }
 
-            // Highlight selected
+            // Подсвечиваем выбранную
             card.BorderBrush = AccentBorder;
             card.BorderThickness = new Thickness(3);
 
