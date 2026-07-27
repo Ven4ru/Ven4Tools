@@ -159,9 +159,11 @@ namespace Ven4Tools.ClientUITests
 
             // Используем то же добавленное через winget-предложение приложение из
             // предыдущего теста (в рамках одной ClassInitialize-сессии список общий).
+            // Ищем по устойчивому ключевому слову, а не по точному тексту подсказки:
+            // формулировки пояснений меняются, точное совпадение ломало бы тест.
             var removeBtn = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
                 .FirstOrDefault(b => b.Properties.HelpText.IsSupported &&
-                    (b.Properties.HelpText.Value ?? "") == "Удалить из списка");
+                    (b.Properties.HelpText.Value ?? "").Contains("добавленное вручную", StringComparison.OrdinalIgnoreCase));
             if (removeBtn == null)
             {
                 Assert.Inconclusive("Нет ни одного пользовательского приложения для проверки удаления (предыдущий тест не добавил / не сохранился в этой сессии).");
