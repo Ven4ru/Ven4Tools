@@ -60,6 +60,10 @@ Ven4Admin/
 _publish*/
 _publish_*/
 
+# Локальные копии манифеста обновлений (генерируются при релизе, боевые версии живут на CDN)
+/version.json
+/version.json.sig
+
 # Local backups (symlink to OneDrive, not for git — trailing-slash form won't
 # match a symlink, non-slash form is needed to actually ignore it)
 _backups
