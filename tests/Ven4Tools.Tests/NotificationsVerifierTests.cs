@@ -15,6 +15,21 @@ public sealed class NotificationsVerifierTests
     }
 
     [Fact]
+    public void SignedFixture_HasNoCarriageReturns()
+    {
+        // Лаунчер скачивает notifications.json напрямую с raw.githubusercontent.com,
+        // то есть проверяет байты git-объекта (LF). Подпись же считается по файлу
+        // с диска. Если рабочая копия чекаутится с CRLF (Windows + core.autocrlf),
+        // подписывается один набор байт, а проверяется другой — и проверка молча
+        // падает у всех пользователей, тогда как тест подписи на машине разработчика
+        // остаётся зелёным (он читает тот же CRLF-файл). От этого защищает пометка
+        // `-text` в .gitattributes; тест фиксирует результат, а не намерение.
+        byte[] fixture = File.ReadAllBytes(FixturePath("notifications.json"));
+
+        Assert.DoesNotContain((byte)'\r', fixture);
+    }
+
+    [Fact]
     public void ModifiedNotifications_IsRejected()
     {
         string json = File.ReadAllText(FixturePath("notifications.json"), Encoding.UTF8);

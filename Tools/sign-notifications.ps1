@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Подписывает Catalog/notifications.json ECDSA-ключом (Ven4Tools.Notifications.v1).
 
@@ -13,6 +13,13 @@ notifications.json раздаётся лаунчеру с raw.githubusercontent.
 закоммитить И notifications.json, И обновлённый notifications.json.sig —
 несовпадающая пара (старая подпись + новый текст) отклоняется
 NotificationsVerifier.Verify так же, как и полное отсутствие подписи.
+
+Подпись считается над байтами файла с диска, а лаунчер проверяет байты,
+которые отдаёт raw.githubusercontent.com (то есть содержимое git-объекта).
+Чтобы это было одно и то же, notifications.json помечен в .gitattributes
+как -text (без EOL-нормализации) — не убирать эту пометку и не «чинить»
+окончания строк в файле вручную, иначе подпись станет невалидной у всех
+пользователей, а проверка провалится молча.
 
 .EXAMPLE
 .\Tools\sign-notifications.ps1
