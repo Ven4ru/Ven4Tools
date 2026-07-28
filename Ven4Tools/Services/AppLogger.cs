@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Ven4Tools.Helpers;
 
 namespace Ven4Tools.Services
 {
@@ -41,13 +42,11 @@ namespace Ven4Tools.Services
                         _logPath = Path.Combine(dir, "app.log");
                     }
 
-                    // Клиент elevated, а %LocalAppData%\Ven4Tools доступен на запись
-                    // непривилегированному процессу того же пользователя — тот мог
-                    // до старта заменить каталог/файл junction'ом/reparse point на
-                    // защищённую цель. Пишем/двигаем файл только если ни каталог,
-                    // ни сам файл лога не являются reparse point — иначе elevated-
-                    // запись ушла бы туда, куда перенаправляет подмена.
-                    if (IsReparsePoint(Path.GetDirectoryName(_logPath)!) || IsReparsePoint(_logPath))
+                    // Пишем/двигаем файл только если ни каталог, ни сам файл лога не
+                    // являются reparse point — обоснование см. в PathHelper.IsReparsePoint
+                    // (тот же guard применён к журналу установки в InstallationService).
+                    if (PathHelper.IsReparsePoint(Path.GetDirectoryName(_logPath)!) ||
+                        PathHelper.IsReparsePoint(_logPath))
                         return;
 
                     // Простая ротация: при превышении лимита текущий лог становится app.old.log
@@ -67,16 +66,6 @@ namespace Ven4Tools.Services
             {
                 // Логирование не должно ронять приложение
             }
-        }
-
-        private static bool IsReparsePoint(string path)
-        {
-            try
-            {
-                if (!File.Exists(path) && !Directory.Exists(path)) return false;
-                return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0;
-            }
-            catch { return true; } // не удалось проверить — fail-closed, не пишем
         }
     }
 }

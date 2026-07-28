@@ -154,6 +154,20 @@ namespace Ven4Tools.Views.Tabs
                     ? $"✅ {entry.AppName} переустановлен"
                     : $"❌ {entry.AppName}: {result.Message}");
             }
+            catch (OperationCanceledException)
+            {
+                // InstallAppAsync гасит обычные ошибки и возвращает (false, сообщение),
+                // но отмену пробрасывает наружу намеренно. Сюда же попадает таймаут
+                // HttpClient при прямой загрузке (TaskCanceledException). Без этого
+                // блока исключение вылетало бы из async void-обработчика и роняло
+                // приложение целиком — как уже сделано в каталоге, карточке, Office
+                // и вкладке «Установленные».
+                AppLogger.Write($"⏹️ Переустановка {entry.AppName} прервана");
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"❌ Ошибка переустановки {entry.AppName}: {ex.Message}");
+            }
             finally
             {
                 InstallationService.InstallSemaphore.Release();

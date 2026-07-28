@@ -246,6 +246,15 @@ namespace Ven4Tools.Services
             {
                 lock (_logLock)
                 {
+                    // Тот же guard, что у AppLogger: журнал установки лежит в том же
+                    // доступном пользователю дереве %LocalAppData%\Ven4Tools, а клиент
+                    // работает elevated — без проверки подмена каталога/файла junction'ом
+                    // перенаправила бы elevated-дозапись в защищённую цель. Раньше guard
+                    // стоял только у AppLogger, хотя оба пишут в одно и то же дерево.
+                    if (PathHelper.IsReparsePoint(Path.GetDirectoryName(_logPath)!) ||
+                        PathHelper.IsReparsePoint(_logPath))
+                        return;
+
                     File.AppendAllText(_logPath, $"{DateTime.Now:HH:mm:ss} - {message}\n");
                 }
             }
