@@ -5,3 +5,13 @@
 # EOL-нормализацию — файлы всегда чекаутятся байт-в-байт как в git-объекте.
 Catalog/master.json -text
 Catalog/master.json.sig -text
+
+# Подписанные уведомления лаунчера: та же схема, что и у каталога выше.
+# notifications.json раздаётся лаунчеру напрямую с raw.githubusercontent.com,
+# то есть проверяются ровно те байты, что лежат в git-объекте (LF). Без -text
+# рабочая копия на Windows чекаутится с CRLF, подписывающий скрипт берёт
+# файл с диска — и подпись считается над CRLF-байтами, которых пользователь
+# никогда не получит. Проверка в NotificationsVerifier при этом молча падает
+# (fail-closed, без диагностики), и уведомление просто не показывается.
+Catalog/notifications.json -text
+Catalog/notifications.json.sig -text

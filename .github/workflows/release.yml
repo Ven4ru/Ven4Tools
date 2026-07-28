@@ -105,10 +105,25 @@ jobs:
         run: |
           $exists = gh release view ${{ steps.ver.outputs.TAG }} 2>$null
           if ($LASTEXITCODE -eq 0) {
-            Write-Host "Релиз ${{ steps.ver.outputs.TAG }} уже существует — загружаем ассет"
-            gh release upload ${{ steps.ver.outputs.TAG }} `
-              "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip" `
-              --clobber
+            # Ассет НЕ перезаписывается, если он уже прикреплён к релизу.
+            # Штатный порядок выпуска — сборка на машине автора, прогон UI-тестов
+            # именно по этому архиву, публикация его же в релиз и раскладка того
+            # же файла на CDN и зеркало хостинга; sha256 из version.json считается
+            # по нему. Прежний `--clobber` затирал этот архив собранным здесь:
+            # два независимых `dotnet publish` не воспроизводимы побайтово, и
+            # GitHub начинал отдавать архив с другим sha256. Проверка целостности
+            # в лаунчере (FallbackDownloader) на GitHub-кандидате после этого
+            # всегда проваливалась — «крайний резерв» цепочки источников молча
+            # переставал работать, оставляя рабочими только CDN и зеркало.
+            $assetName = "Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip"
+            $published = gh release view ${{ steps.ver.outputs.TAG }} --json assets -q '.assets[].name'
+            if ($published -contains $assetName) {
+              Write-Host "Релиз ${{ steps.ver.outputs.TAG }} уже содержит $assetName — сборка из CI не публикуется (архив автора остаётся единственным)."
+            } else {
+              Write-Host "Релиз ${{ steps.ver.outputs.TAG }} существует, но без архива — загружаем собранный здесь"
+              gh release upload ${{ steps.ver.outputs.TAG }} `
+                "_release/$assetName"
+            }
           } else {
             gh release create ${{ steps.ver.outputs.TAG }} `
               "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip" `
