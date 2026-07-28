@@ -37,26 +37,50 @@ try {
     if (-not $url) { throw 'Не удалось получить ссылку на установщик' }
 
     # Ссылка приходит из ответа API, то есть из данных, а не из самого скрипта.
-    # Дальше по ней скачивается и запускается EXE, поэтому хост проверяется по
-    # тому же белому списку, что и в лаунчере (Services/DownloadValidator.cs): подмена
+    # Дальше по ней скачивается и запускается EXE, поэтому источник проверяется по
+    # тем же правилам, что и в лаунчере (Services/DownloadValidator.cs): подмена
     # ответа API не должна приводить к запуску файла с чужого сервера.
-    $allowedHosts = @(
-        'github.com', 'objects.githubusercontent.com',
-        'cdn.ven4tools.ru', 'ven4tools.ru', 'www.ven4tools.ru'
-    )
+    #
+    # Правила намеренно повторяют DownloadValidator.IsAllowedUri, включая
+    # ограничение по пути для самого сайта: ven4tools.ru — обычный хост с API и
+    # статикой, доверенным источником загрузки на нём является ТОЛЬКО /releases/.
+    function Test-AllowedSource([uri]$candidate) {
+        if ($candidate.Scheme -ne 'https') { return $false }
+        $h = $candidate.Host.ToLowerInvariant()
+        if ($h -eq 'ven4tools.ru' -or $h -eq 'www.ven4tools.ru') {
+            return $candidate.AbsolutePath.StartsWith('/releases/', [StringComparison]::OrdinalIgnoreCase)
+        }
+        return (
+            $h -eq 'github.com' -or $h.EndsWith('.github.com') -or
+            $h -eq 'objects.githubusercontent.com' -or $h.EndsWith('.githubusercontent.com') -or
+            $h -eq 'cdn.ven4tools.ru'
+        )
+    }
+
     $uri = [uri]$url
-    $hostOk = ($uri.Scheme -eq 'https') -and (
-        ($allowedHosts -contains $uri.Host) -or
-        $uri.Host.EndsWith('.githubusercontent.com') -or
-        $uri.Host.EndsWith('.github.com')
-    )
-    if (-not $hostOk) {
-        throw "Недоверенный источник установщика: $($uri.Scheme)://$($uri.Host) — установка прервана"
+    if (-not (Test-AllowedSource $uri)) {
+        throw "Недоверенный источник установщика: $($uri.Scheme)://$($uri.Host)$($uri.AbsolutePath) — установка прервана"
     }
 
     Write-Host "  Загрузка..." -ForegroundColor Gray
     $tmp = Join-Path $env:TEMP 'Ven4Tools.Setup.exe'
-    Invoke-WebRequest $url -OutFile $tmp -UseBasicParsing
+    $resp = Invoke-WebRequest $url -OutFile $tmp -UseBasicParsing -PassThru
+
+    # Проверка итогового адреса после редиректов: Invoke-WebRequest следует за ними
+    # автоматически, поэтому проверки исходной ссылки мало — файл мог приехать с
+    # другого хоста (штатный случай: github.com → *.githubusercontent.com).
+    # Зеркалирует DownloadValidator.IsAllowedDownloadHostAfterRedirect в лаунчере.
+    # Свойство с итоговым адресом называется по-разному в Windows PowerShell 5.1
+    # и PowerShell 7+, поэтому берём то, которое реально есть.
+    $finalUri = $null
+    $base = $resp.BaseResponse
+    if ($base -and $base.ResponseUri) { $finalUri = [uri]$base.ResponseUri }
+    elseif ($base -and $base.RequestMessage -and $base.RequestMessage.RequestUri) { $finalUri = [uri]$base.RequestMessage.RequestUri }
+
+    if ($finalUri -and -not (Test-AllowedSource $finalUri)) {
+        if (Test-Path $tmp) { Remove-Item $tmp -Force }
+        throw "Загрузка перенаправлена на недоверенный источник: $($finalUri.Scheme)://$($finalUri.Host)$($finalUri.AbsolutePath) — установка прервана"
+    }
 
     # Проверка целостности, если сервер отдаёт хеш. Блок условный — не ломает
     # установку, если сервер вдруг перестанет отдавать хеш (latest_version.php

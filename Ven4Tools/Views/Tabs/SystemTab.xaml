@@ -25,7 +25,8 @@
                         <ComboBoxItem Content="Светлая" Tag="light"/>
                     </ComboBox>
                     <TextBlock Grid.Row="1" Text="Язык интерфейса" VerticalAlignment="Center" Margin="0,10,0,0"/>
-                    <ComboBox x:Name="cmbLanguage" Grid.Row="1" Grid.Column="1" Margin="3,10,3,3" SelectionChanged="CmbLanguage_SelectionChanged">
+                    <ComboBox x:Name="cmbLanguage" Grid.Row="1" Grid.Column="1" Margin="3,10,3,3" SelectionChanged="CmbLanguage_SelectionChanged"
+                              ToolTip="Влияет только на окно выбора профиля каталога, которое показывается при первом запуске. Остальной интерфейс приложения переведён не полностью и остаётся на русском.">
                         <ComboBoxItem Content="Автоматически" Tag="auto"/>
                         <ComboBoxItem Content="Русский" Tag="ru"/>
                         <ComboBoxItem Content="English" Tag="en"/>
