@@ -97,7 +97,13 @@ namespace Ven4Tools.Launcher
                             info.MirrorHostingUrl = cdnInfo.Client.ZipMirrorHosting;
                             // Хеш из version.json относится к одному и тому же zip
                             // (CDN, зеркало и GitHub отдают идентичный архив), поэтому
-                            // годится для всех источников.
+                            // годится для всех источников. Это не свойство кода, а
+                            // условие выпуска: в релиз, на CDN и на зеркало кладётся
+                            // один и тот же файл. Если на GitHub окажется отдельно
+                            // собранный архив (два `dotnet publish` не воспроизводимы
+                            // побайтово), GitHub-кандидат будет молча отбраковываться
+                            // проверкой целостности — см. защиту от перезаписи ассета
+                            // в .github/workflows/release.yml.
                             info.ExpectedSha256 = cdnInfo.Client.ZipSha256;
                             AddLog($"   ⚡ {version} → CDN (резерв: прямой IP, хостинг, GitHub)");
                         }

@@ -35,16 +35,23 @@ public sealed class FallbackDownloaderTests
                 : Response(request.RequestUri, "fallback payload");
         }));
         string? switchedTo = null;
+        string? switchReason = null;
 
         using var downloadResult = await new FallbackDownloader().DownloadAsync(
             Two(http),
             Path.Combine(area.Path, "client.zip"),
             CancellationToken.None,
-            switchingTo: label => switchedTo = label);
+            switchingTo: (label, reason) =>
+            {
+                switchedTo = label;
+                switchReason = reason;
+            });
         string usedSource = downloadResult.SourceLabel;
 
         Assert.Equal("GitHub", usedSource);
         Assert.Equal("GitHub", switchedTo);
+        // Основной источник ответил 503 — это именно недоступность, не целостность.
+        Assert.Equal("недоступен", switchReason);
         Assert.Equal(new[] { new Uri(PrimaryUrl), new Uri(FallbackUrl) }, requests);
         Assert.Equal(
             "fallback payload",
@@ -63,7 +70,7 @@ public sealed class FallbackDownloaderTests
             Two(http),
             Path.Combine(area.Path, "client.zip"),
             CancellationToken.None,
-            switchingTo: _ => switched = true);
+            switchingTo: (_, _) => switched = true);
         string usedSource = downloadResult.SourceLabel;
 
         Assert.Equal("CDN", usedSource);
@@ -117,6 +124,33 @@ public sealed class FallbackDownloaderTests
         Assert.Equal("GitHub", usedSource);
         // Недоверенный резерв не запрашивался — только CDN (503) и GitHub.
         Assert.Equal(new[] { new Uri(PrimaryUrl), new Uri(FallbackUrl) }, requests);
+    }
+
+    [Fact]
+    public async Task DownloadAsync_ReportsIntegrityFailureSeparatelyFromUnavailability()
+    {
+        // Источник ответил успешно, но отдал не тот файл (несовпадение SHA256).
+        // Журнал не должен объяснять это «недоступностью» источника: реальный
+        // случай — на GitHub лежит отдельно пересобранный архив релиза, ссылка
+        // при этом полностью рабочая.
+        using var area = new TemporaryDirectory();
+        using var http = new HttpClient(new DelegateHandler(request =>
+            Response(
+                request.RequestUri,
+                request.RequestUri!.Host == "cdn.ven4tools.ru" ? "другой архив" : "ожидаемый архив")));
+        string expectedSha256 = Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes("ожидаемый архив")));
+        string? switchReason = null;
+
+        using var downloadResult = await new FallbackDownloader().DownloadAsync(
+            Two(http),
+            Path.Combine(area.Path, "client.zip"),
+            CancellationToken.None,
+            expectedSha256,
+            switchingTo: (_, reason) => switchReason = reason);
+
+        Assert.Equal("GitHub", downloadResult.SourceLabel);
+        Assert.Equal("не прошёл проверку целостности", switchReason);
     }
 
     [Fact]

@@ -61,7 +61,7 @@ internal sealed class FallbackDownloader
         CancellationToken cancellationToken,
         string? expectedSha256 = null,
         Action<long, long?>? progress = null,
-        Action<string>? switchingTo = null)
+        Action<string, string>? switchingTo = null)
     {
         if (candidates == null || candidates.Count == 0)
         {
@@ -91,7 +91,10 @@ internal sealed class FallbackDownloader
             {
                 if (anyAttempted)
                 {
-                    switchingTo?.Invoke(candidate.SourceLabel);
+                    // Причина отказа предыдущего кандидата передаётся отдельно:
+                    // «не прошёл проверку целостности» и «недоступен» — разные
+                    // события, и первое нельзя показывать как проблему со связью.
+                    switchingTo?.Invoke(candidate.SourceLabel, DescribeFailure(lastError));
                 }
 
                 await DownloadSingleAsync(
@@ -252,7 +255,8 @@ internal sealed class FallbackDownloader
                     expectedSha256,
                     StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new IOException("Контрольная сумма загруженного файла не совпала.");
+                    throw new IntegrityCheckFailedException(
+                        "Контрольная сумма загруженного файла не совпала.");
                 }
             }
 
@@ -264,6 +268,14 @@ internal sealed class FallbackDownloader
             throw;
         }
     }
+
+    /// <summary>
+    /// Короткое описание причины отказа источника для журнала лаунчера.
+    /// </summary>
+    private static string DescribeFailure(Exception? error) =>
+        error is IntegrityCheckFailedException
+            ? "не прошёл проверку целостности"
+            : "недоступен";
 
     private static void TryDelete(string path)
     {
