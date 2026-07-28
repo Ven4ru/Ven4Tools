@@ -487,6 +487,20 @@ namespace Ven4Tools
                 var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, installDrive, null, Views.UiGuards.ConfirmPackageManagerInstallAsync);
                 AppLogger.Write(r.Success ? $"✅ {catalogApp.Name}" : $"❌ {r.Message}");
             }
+            catch (OperationCanceledException)
+            {
+                // InstallAppAsync гасит обычные ошибки и возвращает (false, сообщение),
+                // но отмену пробрасывает наружу намеренно. Сюда же попадает таймаут
+                // HttpClient при прямой загрузке (TaskCanceledException). Без этого
+                // блока исключение вылетало бы из async void-обработчика и роняло
+                // приложение целиком — как уже сделано в каталоге, карточке, Office
+                // и вкладке «Установленные».
+                AppLogger.Write($"⏹️ Установка {catalogApp.Name} прервана");
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"❌ Ошибка установки {catalogApp.Name}: {ex.Message}");
+            }
             finally
             {
                 Services.InstallationService.InstallSemaphore.Release();
