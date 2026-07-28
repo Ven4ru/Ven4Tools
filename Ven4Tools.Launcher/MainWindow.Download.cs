@@ -156,9 +156,9 @@ namespace Ven4Tools.Launcher
                             txtDownloadStatus.Text = $"Скачивание: {percent}%";
                         }
                     },
-                    switchingTo: label =>
+                    switchingTo: (label, reason) =>
                     {
-                        AddLog($"⚠️ Предыдущий источник недоступен, переключаюсь: {label}...");
+                        AddLog($"⚠️ Предыдущий источник {reason}, переключаюсь: {label}...");
                         progressDownload.Value = 0;
                         txtDownloadStatus.Text = "Скачивание: 0%";
                     });
