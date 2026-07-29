@@ -108,10 +108,15 @@ namespace Ven4Tools.Services
                 var payload = new System.Net.Http.FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("action",     "crash_report"),
-                    // Хешируется только на границе отправки (не в Write/локальном файле) —
-                    // тот же паттерн, что GitHubService.HashSessionId в лаунчере. Иначе
-                    // сырой SessionId в crash_reports позволял бы связать отзыв (хешируется
-                    // в FeedbackService) с крашем той же сессии по совпадающему значению.
+                    // Хешируется на границе отправки (не в Write/локальном файле) —
+                    // тот же паттерн, что GitHubService.HashSessionId в лаунчере: наружу
+                    // уходит обезличенный хеш, а не сырой SessionId. Внимание: хеш
+                    // намеренно ОДИН И ТОТ ЖЕ, что у FeedbackService и у issue лаунчера,
+                    // то есть краш и отзыв одного сеанса по-прежнему связываются между
+                    // собой — это осознанная плата за группировку отчётов одного сеанса,
+                    // а не свойство «несвязываемости». SessionId живёт один запуск и
+                    // между запусками не сохраняется, поэтому связать сеансы одного
+                    // устройства этим значением нельзя.
                     new KeyValuePair<string, string>("session_id", HashHelper.HashSessionId(report.SessionId)),
                     new KeyValuePair<string, string>("version",    report.Version),
                     new KeyValuePair<string, string>("timestamp",  report.Timestamp),
