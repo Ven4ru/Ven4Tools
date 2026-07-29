@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using Ven4Tools.Helpers;
 
 namespace Ven4Tools.Services
 {
@@ -102,6 +103,25 @@ namespace Ven4Tools.Services
             try
             {
                 Directory.CreateDirectory(BaseDir);
+
+                // Импорт — единственный путь, где в каталог настроек попадает
+                // содержимое, полностью заданное посторонним файлом (архив принесён
+                // пользователем откуда угодно). Клиент при этом работает elevated, а
+                // сам каталог доступен на запись обычному процессу того же
+                // пользователя: подменив его junction'ом, тот перенаправил бы запись
+                // в защищённое место. Здесь распаковка идёт напрямую (нужен
+                // потоковый лимит на размер записи), минуя FileHelper с его
+                // проверкой, — поэтому проверяем тем же PathHelper явно.
+                if (PathHelper.IsReparsePoint(BaseDir))
+                {
+                    AppLogger.Write("[ProfileExportService] Import: каталог настроек подменён ссылкой, импорт отменён");
+                    return new OperationResult
+                    {
+                        Success = false,
+                        Message = "Импорт отменён: каталог настроек подменён ссылкой."
+                    };
+                }
+
                 using (var archive = ZipFile.OpenRead(zipPath))
                 {
                     foreach (var entry in archive.Entries)
