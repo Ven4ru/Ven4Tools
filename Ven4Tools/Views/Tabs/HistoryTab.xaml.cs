@@ -28,6 +28,20 @@ namespace Ven4Tools.Views.Tabs
             txtHistorySearch.GotFocus  += (_, _) => { if (txtHistorySearch.Text == (string)txtHistorySearch.Tag) txtHistorySearch.Text = ""; };
             txtHistorySearch.LostFocus += (_, _) => { if (string.IsNullOrWhiteSpace(txtHistorySearch.Text)) txtHistorySearch.Text = (string)txtHistorySearch.Tag; };
             txtHistorySearch.Text = (string)txtHistorySearch.Tag;
+
+            // Флаг приватности SaveInstallHistory до этого существовал только в
+            // profile.json: отключить запись истории можно было лишь правкой файла
+            // руками. Управление вынесено туда, где история и показывается.
+            chkSaveHistory.IsChecked = ProfileService.Current.SaveInstallHistory;
+        }
+
+        private void ChkSaveHistory_Click(object sender, RoutedEventArgs e)
+        {
+            ProfileService.Current.SaveInstallHistory = chkSaveHistory.IsChecked == true;
+            ProfileService.Save();
+            AppLogger.Write(ProfileService.Current.SaveInstallHistory
+                ? "[История] Запись истории установок включена"
+                : "[История] Запись истории установок отключена");
         }
 
         private async void HistoryTab_Loaded(object sender, RoutedEventArgs e)

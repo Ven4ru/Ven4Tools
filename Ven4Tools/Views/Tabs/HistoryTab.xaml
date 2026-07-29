@@ -21,6 +21,11 @@
                 </Border>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <CheckBox x:Name="chkSaveHistory" Content="Сохранять историю"
+                          VerticalAlignment="Center" Margin="0,0,14,0"
+                          Foreground="{DynamicResource TextPrimary}"
+                          ToolTip="Когда снято — новые установки не записываются в историю. Уже сохранённые записи остаются, удалить их можно кнопкой «Очистить»."
+                          Click="ChkSaveHistory_Click"/>
                 <Button x:Name="btnClearHistory" Content="🗑️ Очистить"
                         Style="{StaticResource DangerButtonStyle}"
                         ToolTip="После подтверждения удалит сохранённую историю установок."
