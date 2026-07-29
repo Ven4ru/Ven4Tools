@@ -39,20 +39,34 @@
                  Segoe Fluent Icons, что уже используют кнопки/навигация в проекте (см.
                  overlay добавления локального установщика в MainWindow.xaml как образец
                  паттерна «крупная иконка + заголовок + подзаголовок»). -->
+            <!-- IsHitTestVisible перенесён с панели на сами надписи: панель обязана
+                 пропускать клики мимо себя к дереву, но кнопка перехода к диагностике
+                 внутри неё должна нажиматься, а у дочерних элементов отключённый
+                 hit-test родителя переопределить нельзя. -->
             <StackPanel x:Name="pnlUpdatesEmpty"
-                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                        IsHitTestVisible="False">
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="&#xE72E;" FontFamily="Segoe Fluent Icons" FontSize="40"
+                           IsHitTestVisible="False"
                            Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center"/>
                 <TextBlock x:Name="txtUpdatesEmptyTitle" Text="Список обновлений пуст"
-                           FontSize="16" FontWeight="SemiBold"
+                           FontSize="16" FontWeight="SemiBold" IsHitTestVisible="False"
                            Foreground="{DynamicResource TextPrimary}"
                            HorizontalAlignment="Center" Margin="0,12,0,0"/>
                 <TextBlock x:Name="txtUpdatesEmptySubtitle"
                            Text="Нажмите «Проверить обновления», чтобы начать проверку"
                            FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                           IsHitTestVisible="False"
                            HorizontalAlignment="Center" Margin="0,4,0,0"
                            TextWrapping="Wrap" MaxWidth="320" TextAlignment="Center"/>
+                <!-- Появляется только на проблемных исходах проверки (служба недоступна,
+                     ошибка получения списка) — на исправной системе без обновлений
+                     вопрос «почему не ставятся» не имеет смысла. -->
+                <Button x:Name="btnOpenDiagnostics" Content="Почему обновления не ставятся? → Диагностика"
+                        ToolTip="Откроет вкладку «Диагностика» с журналом ошибок Windows Update за 7 дней и очисткой кэша обновлений."
+                        Height="34" Padding="16,0" Margin="0,16,0,0"
+                        HorizontalAlignment="Center" Visibility="Collapsed"
+                        Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
             </StackPanel>
         </Grid>
 

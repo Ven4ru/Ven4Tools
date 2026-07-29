@@ -9,6 +9,13 @@ namespace Ven4Tools.Views.Tabs
     {
         private bool _initialized = false;
 
+        /// <summary>
+        /// Запрос на переход к вкладке «Обновления Windows». Диагностика знает про
+        /// ошибки обновления, но не про навигацию — переключением занимается
+        /// MainWindow, как это уже сделано у OfficeTab.GoToActivation.
+        /// </summary>
+        public event Action? GoToWindowsUpdate;
+
         public DiagnosticsTab()
         {
             InitializeComponent();
@@ -22,6 +29,7 @@ namespace Ven4Tools.Views.Tabs
             btnDisableTurboBoost.Click += BtnDisableTurboBoost_Click;
             btnEnableTurboBoost.Click += BtnEnableTurboBoost_Click;
             btnClearWuCache.Click += BtnClearWuCache_Click;
+            btnOpenWindowsUpdate.Click += (_, _) => GoToWindowsUpdate?.Invoke();
             btnRunDiagnostics.Click += BtnRunDiagnostics_Click;
             btnCopyFullReport.Click += BtnCopyFullReport_Click;
 

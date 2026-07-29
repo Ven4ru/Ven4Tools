@@ -57,6 +57,7 @@ namespace Ven4Tools.Views.Tabs
         {
             pnlWindowsUpdateFailures.Children.Clear();
             btnClearWuCache.Visibility = Visibility.Collapsed;
+            btnOpenWindowsUpdate.Visibility = Visibility.Collapsed;
             try
             {
                 var failures = await SystemHealthService.GetWindowsUpdateFailuresAsync();
@@ -82,6 +83,9 @@ namespace Ven4Tools.Views.Tabs
                     });
                 }
                 btnClearWuCache.Visibility = Visibility.Visible;
+                // Ошибки есть — предлагаем сразу перейти туда, где патчи можно
+                // переустановить, не заставляя искать вкладку в меню вручную.
+                btnOpenWindowsUpdate.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
