@@ -48,7 +48,14 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 string downloadUrl = string.Format(officeDirectLinks[productId], lang);
-                using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, token);
+                // Таймаут 30 секунд на соединение и заголовки — вторая половина той же
+                // пары, что и sliding-таймаут ниже (см. InstallationService.DirectDownload,
+                // где пара введена целиком). Без него фаза заголовков ограничена только
+                // общим таймаутом HttpClient по умолчанию, то есть кнопка «Скачать»
+                // остаётся заблокированной сильно дольше нужного на молчащем сервере.
+                using var headersCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                headersCts.CancelAfter(TimeSpan.FromSeconds(30));
+                using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, headersCts.Token);
                 response.EnsureSuccessStatusCode();
 
                 using var src = await response.Content.ReadAsStreamAsync(token);

@@ -106,13 +106,34 @@ namespace Ven4Tools.Services
             catch (Exception ex) { AppLogger.Write($"[OfflineService] Очистка офлайн-кэша: {ex.Message}"); }
         }
 
+        /// <summary>
+        /// Создаёт каталог офлайн-кэша и проверяет, что ни он, ни базовый каталог не
+        /// подменены reparse point'ом — тот же guard, что уже стоит у FileHelper,
+        /// AppLogger, журнала установки и импорта настроек. Сюда он не доехал, хотя
+        /// путь тот же по строению: кэш лежит в %LocalAppData%\Ven4Tools (дерево,
+        /// доступное на запись обычному процессу того же пользователя), а клиент
+        /// работает elevated — подменив каталог junction'ом, непривилегированный
+        /// процесс перенаправил бы туда elevated-запись установщика. В отличие от
+        /// текстовых настроек здесь пишется исполняемый файл фиксированного,
+        /// предсказуемого имени, поэтому пропуск guard'а тут опаснее, а не безобиднее.
+        /// Бросает IOException — вызывающий уже обязан переживать ошибки записи.
+        /// </summary>
         public static void EnsureCacheDir()
         {
             var dir = CachePath;
             Directory.CreateDirectory(dir);
+            EnsureCacheNotRedirected(dir);
             var marker = Path.Combine(dir, CacheMarkerName);
             if (!File.Exists(marker))
                 File.WriteAllText(marker, CacheMarkerContent);
+        }
+
+        private static void EnsureCacheNotRedirected(string dir)
+        {
+            if (PathHelper.IsReparsePoint(CacheBasePath))
+                throw new IOException($"Базовый каталог кэша подменён ссылкой, запись отменена: {CacheBasePath}");
+            if (PathHelper.IsReparsePoint(dir))
+                throw new IOException($"Каталог офлайн-кэша подменён ссылкой, запись отменена: {dir}");
         }
 
         // ── Downloading ───────────────────────────────────────────────────────────
@@ -131,10 +152,27 @@ namespace Ven4Tools.Services
             string dest = Path.Combine(CachePath, SanitizeId(app.Id) + ext);
             string partial = dest + ".partial";
 
+            // Имена dest/partial выводятся из Id приложения, то есть предсказуемы —
+            // сам файл тоже проверяем непосредственно перед записью, а не только каталог.
+            if (PathHelper.IsReparsePoint(dest) || PathHelper.IsReparsePoint(partial))
+            {
+                AppLogger.Write($"[OfflineService] Кэширование «{app.Name}» отменено: файл кэша подменён ссылкой");
+                progress?.Report(($"❌ {app.Name}: файл кэша подменён ссылкой", 0));
+                return false;
+            }
+
             progress?.Report(($"⬇️ {app.Name}...", 0));
             try
             {
-                using var resp = await http.GetAsync(app.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, token);
+                // Таймаут 30 секунд только на соединение и заголовки: вызывающий передаёт
+                // общий HttpClient с большим (SystemTab.Cache — 15 минут) таймаутом, чтобы
+                // не рвать длинные загрузки, и без отдельного ограничения фаза заголовков
+                // наследовала бы его целиком. Тело ниже ограничено sliding-таймаутом
+                // простоя. Тот же приём уже был у InstallationService.DirectDownload —
+                // сюда доехала только вторая половина пары.
+                using var headersCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                headersCts.CancelAfter(TimeSpan.FromSeconds(30));
+                using var resp = await http.GetAsync(app.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, headersCts.Token);
                 resp.EnsureSuccessStatusCode();
                 if (!DownloadValidator.ValidateAfterRedirect(resp))
                     throw new InvalidOperationException("Редирект загрузки ведёт не на HTTPS");

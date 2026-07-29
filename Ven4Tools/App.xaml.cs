@@ -178,11 +178,27 @@ namespace Ven4Tools
         /// Восстанавливает мьютекс единственного экземпляра, если повышенная копия
         /// так и не стартовала (пользователь отклонил UAC) — чтобы состояние
         /// единственного экземпляра оставалось согласованным.
+        ///
+        /// Признак владения (createdNew) обязателен ровно так же, как в OnStartup:
+        /// пока висит запрос UAC, мьютекс отпущен, и за эти секунды другой запуск
+        /// клиента успевает его занять. Тогда конструктор владения НЕ даёт, а поле
+        /// всё равно заполнялось — и OnExit вызывал ReleaseMutex на невладеемом
+        /// мьютексе, то есть ApplicationException прямо при завершении приложения.
+        /// Инвариант поля: непустое ⇒ мьютекс принадлежит этому процессу.
         /// </summary>
         public static void ReacquireSingleInstanceMutex()
         {
-            if (_instanceMutex == null)
-                _instanceMutex = new Mutex(true, "Ven4Tools.Client.SingleInstance", out _);
+            if (_instanceMutex != null) return;
+
+            var mutex = new Mutex(true, "Ven4Tools.Client.SingleInstance", out bool createdNew);
+            if (createdNew)
+            {
+                _instanceMutex = mutex;
+                return;
+            }
+
+            // Мьютекс уже занят другим экземпляром — владения нет, держать нечего.
+            mutex.Dispose();
         }
 
         protected override void OnExit(ExitEventArgs e)

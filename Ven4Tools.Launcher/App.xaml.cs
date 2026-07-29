@@ -77,13 +77,27 @@ public partial class App : Application
     /// не найден и т.п.) — вызывается, когда ReleaseSingleInstanceMutex() уже
     /// сработал, но повышенная копия так и не стартовала, и текущий процесс
     /// продолжает работать.
+    ///
+    /// Признак владения (createdNew) обязателен ровно так же, как в OnStartup:
+    /// пока висит запрос UAC, мьютекс отпущен, и за эти секунды другой запуск
+    /// лаунчера успевает его занять. Тогда конструктор владения НЕ даёт, а поле
+    /// всё равно заполнялось — и ReleaseSingleInstanceMutex вызывал ReleaseMutex
+    /// на невладеемом мьютексе, то есть ApplicationException при завершении.
+    /// Инвариант поля: непустое ⇒ мьютекс принадлежит этому процессу.
     /// </summary>
     public static void ReacquireSingleInstanceMutex()
     {
-        if (_mutex == null)
+        if (_mutex != null) return;
+
+        var mutex = new Mutex(true, "Ven4Tools.Launcher.SingleInstance", out bool createdNew);
+        if (createdNew)
         {
-            _mutex = new Mutex(true, "Ven4Tools.Launcher.SingleInstance", out _);
+            _mutex = mutex;
+            return;
         }
+
+        // Мьютекс уже занят другим экземпляром — владения нет, держать нечего.
+        mutex.Dispose();
     }
 
     private static void OnDomainException(object sender, UnhandledExceptionEventArgs e)

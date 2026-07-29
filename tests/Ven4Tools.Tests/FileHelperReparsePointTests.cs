@@ -1,4 +1,5 @@
 using Ven4Tools.Helpers;
+using LauncherFileHelper = Ven4Tools.Launcher.Helpers.FileHelper;
 
 namespace Ven4Tools.Tests;
 
@@ -154,5 +155,85 @@ public sealed class FileHelperReparsePointTests
             // на этой машине недостижим, проверять нечего.
             return false;
         }
+    }
+
+    /// <summary>
+    /// Внутренний помощник для тестов копии FileHelper в лаунчере — тот же способ
+    /// подмены каталога, вынесен, чтобы не дублировать логику ещё раз.
+    /// </summary>
+    internal static bool TryCreateDirectoryLinkForTests(string link, string target)
+        => TryCreateDirectoryLink(link, target);
+}
+
+/// <summary>
+/// Те же проверки для копии FileHelper в лаунчере. Копия существует намеренно
+/// (общей библиотеки между клиентом и лаунчером нет), и её докстринг обещает, что
+/// механизм записи «один и тот же» — но проверку на подмену пути reparse point'ом
+/// она изначально не получила: guard добавили только клиентской копии. Лаунчер тоже
+/// оказывается в elevated-процессе, когда его запускают «от имени администратора»,
+/// и пишет в то же дерево %LocalAppData%\Ven4Tools. Эти тесты фиксируют паритет
+/// двух копий, чтобы расхождение не вернулось.
+/// </summary>
+public sealed class LauncherFileHelperReparsePointTests
+{
+    [Fact]
+    public void ОбычныйКаталог_ЗаписьВыполняется()
+    {
+        using var temp = new TemporaryDirectory();
+        string file = Path.Combine(temp.Path, "настройки.json");
+
+        LauncherFileHelper.WriteAllTextAtomic(file, "{\"значение\":1}");
+
+        Assert.Equal("{\"значение\":1}", File.ReadAllText(file));
+    }
+
+    [Fact]
+    public void НесуществующийКаталог_СоздаётсяИЗаписьВыполняется()
+    {
+        using var temp = new TemporaryDirectory();
+        string file = Path.Combine(temp.Path, "вложенный", "launcher_settings.json");
+
+        LauncherFileHelper.WriteAllTextAtomic(file, "содержимое");
+
+        Assert.Equal("содержимое", File.ReadAllText(file));
+    }
+
+    [Fact]
+    public void ПодменённыйКаталог_ЗаписьОтклоняется()
+    {
+        using var temp = new TemporaryDirectory();
+        string target = Path.Combine(temp.Path, "цель");
+        string link = Path.Combine(temp.Path, "ссылка");
+        Directory.CreateDirectory(target);
+
+        if (!FileHelperReparsePointTests.TryCreateDirectoryLinkForTests(link, target)) return;
+
+        string file = Path.Combine(link, "launcher_settings.json");
+
+        Assert.Throws<IOException>(() => LauncherFileHelper.WriteAllTextAtomic(file, "секрет"));
+        Assert.Empty(Directory.GetFiles(target));
+    }
+
+    [Fact]
+    public void ПодменённыйФайл_ЗаписьОтклоняется()
+    {
+        using var temp = new TemporaryDirectory();
+        string target = Path.Combine(temp.Path, "цель.json");
+        string link = Path.Combine(temp.Path, "launcher_settings.json");
+        File.WriteAllText(target, "исходное");
+
+        try
+        {
+            File.CreateSymbolicLink(link, target);
+        }
+        catch (Exception)
+        {
+            // Символические ссылки на файлы требуют прав администратора либо
+            // режима разработчика — где недоступно, сценарий недостижим.
+            return;
+        }
+
+        Assert.Throws<IOException>(() => LauncherFileHelper.WriteAllTextAtomic(link, "подменённое"));
+        Assert.Equal("исходное", File.ReadAllText(target));
     }
 }
