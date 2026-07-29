@@ -161,7 +161,9 @@ namespace Ven4Tools.Services
             return (AvailabilityStatus.Unavailable, 0);
         }
 
-        private long ParseWingetSize(string output)
+        // internal, а не private: разбор зависит от культуры потока, а поймать это
+        // можно только тестом, который сам подменяет CurrentCulture на ru-RU.
+        internal long ParseWingetSize(string output)
         {
             try
             {
@@ -173,7 +175,17 @@ namespace Ven4Tools.Services
                         var match = _wingetSizeRegex.Match(line);
                         if (match.Success)
                         {
-                            double value = double.Parse(match.Groups[1].Value.Replace(',', '.'));
+                            // Замена запятой на точку без InvariantCulture ничего не давала:
+                            // на русской локали (основная аудитория) точка не является ни
+                            // десятичным разделителем, ни разделителем групп, поэтому
+                            // "84.7" не разбирался вовсе — double.Parse бросал исключение,
+                            // его глотал catch ниже, и размер тихо подменялся заглушкой
+                            // DefaultUnknownSizeMB для каждого приложения с дробным размером.
+                            // Разбор по InvariantCulture — тот же приём, что уже применён
+                            // в Tools/New-CatalogDriftReport.ps1 (ConvertTo-Bytes).
+                            double value = double.Parse(
+                                match.Groups[1].Value.Replace(',', '.'),
+                                System.Globalization.CultureInfo.InvariantCulture);
                             string unit = match.Groups[2].Value;
 
                             return unit switch
