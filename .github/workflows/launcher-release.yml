@@ -130,9 +130,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # --latest=false обязателен: без явного флага GitHub при публикации
+          # черновика сам решает, какой релиз считать Latest, и выбирает самый
+          # свежий по дате — то есть launcher-релиз перебивал клиентский. На
+          # странице релизов и в бейдже README «Latest» тогда указывал на
+          # установщик лаунчера, а не на клиент (наблюдалось при выпуске
+          # launcher-v3.1.5 25.07.2026). Отметку Latest ставит только релиз
+          # клиента (release.yml, флаг --latest).
           gh release create "launcher-v$env:RELEASE_VERSION" `
             "_release/Ven4Tools.Setup-${env:RELEASE_VERSION}.exe" `
             "_release/SHA256SUMS.txt" `
             --title "Ven4Tools Launcher $env:RELEASE_VERSION" `
             --generate-notes `
-            --draft
+            --draft `
+            --latest=false
