@@ -45,6 +45,11 @@ namespace Ven4Tools.ViewModels
         public ObservableCollection<Preset> Presets { get; } = new();
         public ObservableCollection<DiskOption> AvailableDisks { get; } = new();
 
+        // Неуспешные установки последней пачки — с причиной из журнала сбоев и кнопкой
+        // повтора. Журнал (failed_installs.json) писался и раньше, но читал его только
+        // лаунчер для отчёта автору — сам пользователь своих неудач не видел.
+        public ObservableCollection<FailedInstallViewModel> FailedInstalls { get; } = new();
+
         // Ключ — CategoryString (то же значение, что видит GroupDescription),
         // используется CategoryNameToHeaderConverter в CatalogTab.xaml.
         public Dictionary<string, CategoryHeaderViewModel> CategoryHeaders { get; } = new();
@@ -893,6 +898,7 @@ namespace Ven4Tools.ViewModels
             if (Views.UiGuards.WarnIfInstallBusy()) return;
 
             InstallProgress.Clear();
+            ClearFailedInstalls();
             OverallProgressPercentage = 0;
             IsInstalling = true;
 
@@ -963,6 +969,12 @@ namespace Ven4Tools.ViewModels
                 finally { pmConsentLock.Release(); }
             }
 
+            // Момент старта пачки — граница, по которой из общего журнала сбоев
+            // отбираются записи именно этой установки, а не прошлых сеансов.
+            var batchStartedUtc = DateTime.UtcNow;
+            var failedRows = new List<(AppRowViewModel Row, string Message)>();
+            var failedRowsLock = new object();
+
             var tasks = selected.Select(row => Task.Run(async () =>
             {
                 await InstallationService.InstallSemaphore.WaitAsync();
@@ -978,7 +990,11 @@ namespace Ven4Tools.ViewModels
                             _versionTracker.TrackInstall(row.AppId, row.PinnedVersion, row.VersionOptions[1]);
                         row.JustInstalled = true;
                     }
-                    else failed++;
+                    else
+                    {
+                        failed++;
+                        lock (failedRowsLock) failedRows.Add((row, result.Message));
+                    }
                     InstallStatusText = $"⏳ Установка: {completed + failed}/{selected.Count} (✅ {completed} | ❌ {failed})";
                 }
                 finally { InstallationService.InstallSemaphore.Release(); }
@@ -987,7 +1003,11 @@ namespace Ven4Tools.ViewModels
             try
             {
                 await Task.WhenAll(tasks);
-                InstallStatusText = $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed}";
+                // При ошибках сразу указываем, где смотреть причину и как повторить —
+                // иначе итог «ошибок: N» остаётся числом без объяснения.
+                InstallStatusText = failed > 0
+                    ? $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed} — причины в блоке «Не установлено»"
+                    : $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed}";
                 Log(InstallStatusText);
                 await UpdateInstalledStatusAsync();
             }
@@ -997,8 +1017,117 @@ namespace Ven4Tools.ViewModels
                 IsInstalling = false;
                 _installCts?.Dispose();
                 _installCts = null;
+                // И после обычного завершения, и после отмены: то, что не встало,
+                // пользователь должен увидеть здесь же, а не только в логе.
+                PublishFailedInstalls(failedRows, batchStartedUtc);
                 _ = UpdateSpaceStatusAsync();
             }
+        }
+
+        // ── Неуспешные установки: список причин и повтор ────────────────────────
+
+        public bool HasFailedInstalls => FailedInstalls.Count > 0;
+
+        public string FailedInstallsHeader => $"⚠️ Не установлено: {FailedInstalls.Count}";
+
+        private void ClearFailedInstalls()
+        {
+            if (FailedInstalls.Count == 0) return;
+            FailedInstalls.Clear();
+            RaiseFailedInstallsChanged();
+        }
+
+        private void RaiseFailedInstallsChanged()
+        {
+            OnPropertyChanged(nameof(HasFailedInstalls));
+            OnPropertyChanged(nameof(FailedInstallsHeader));
+        }
+
+        /// <summary>
+        /// Собирает сводку неудач пачки: список строится по фактическим результатам
+        /// установки (он полный), а способ и причина подтягиваются из журнала сбоев
+        /// по AppId и времени. Если записи в журнале нет (например, строгий офлайн без
+        /// кэша — там журнал не пишется), показываем сообщение самого установщика.
+        /// </summary>
+        private void PublishFailedInstalls(
+            List<(AppRowViewModel Row, string Message)> failedRows, DateTime batchStartedUtc)
+        {
+            FailedInstalls.Clear();
+
+            if (failedRows.Count > 0)
+            {
+                var journal = InstallFailureService.ReadAll();
+                foreach (var (row, message) in failedRows)
+                {
+                    var record = InstallFailureReport.FindLatest(journal, row.AppId, batchStartedUtc);
+                    string error = !string.IsNullOrWhiteSpace(record?.Error)
+                        ? record!.Error
+                        : (string.IsNullOrWhiteSpace(message) ? "Причина неизвестна" : message);
+
+                    FailedInstalls.Add(new FailedInstallViewModel(
+                        row.DisplayName,
+                        InstallFailureReport.MethodLabel(record?.Method),
+                        error,
+                        item => RetryFailedInstallAsync(row, item)));
+                }
+            }
+
+            RaiseFailedInstallsChanged();
+        }
+
+        /// <summary>
+        /// Повтор одной неудачной установки — тем же путём, что и обычная установка
+        /// из каталога (<c>InstallationService.InstallAppAsync</c>), под тем же общим
+        /// семафором. Никакой отдельной ветки установки здесь нет.
+        /// </summary>
+        private async Task RetryFailedInstallAsync(AppRowViewModel row, FailedInstallViewModel item)
+        {
+            if (Views.UiGuards.WarnIfInstallBusy()) return;
+
+            _installService ??= new InstallationService();
+            item.RetryStatus = "⏳ Повторная установка...";
+            Log($"🔁 Повтор установки: {row.DisplayName}");
+
+            var retryStartedUtc = DateTime.UtcNow;
+            var progress = new Progress<AppInstallProgress>(p => item.RetryStatus = p.Status);
+
+            await InstallationService.InstallSemaphore.WaitAsync();
+            bool success;
+            string message;
+            try
+            {
+                var result = await _installService.InstallAppAsync(
+                    row.App, _wingetSources, CancellationToken.None, progress, SelectedInstallDrive,
+                    row.PinnedVersion, Views.UiGuards.ConfirmPackageManagerInstallAsync);
+                success = result.Success;
+                message = result.Message;
+            }
+            finally
+            {
+                InstallationService.InstallSemaphore.Release();
+            }
+
+            if (success)
+            {
+                row.JustInstalled = true;
+                Log($"✅ Повторная установка удалась: {row.DisplayName}");
+                FailedInstalls.Remove(item);
+                RaiseFailedInstallsChanged();
+                await UpdateInstalledStatusAsync();
+                _ = UpdateSpaceStatusAsync();
+                return;
+            }
+
+            // Не встало снова — показываем свежую причину вместо причины первой попытки.
+            var record = InstallFailureReport.FindLatest(
+                InstallFailureService.ReadAll(), row.AppId, retryStartedUtc);
+            item.UpdateFailure(
+                InstallFailureReport.MethodLabel(record?.Method),
+                !string.IsNullOrWhiteSpace(record?.Error)
+                    ? record!.Error
+                    : (string.IsNullOrWhiteSpace(message) ? "Причина неизвестна" : message));
+            item.RetryStatus = "❌ Повтор не удался";
+            Log($"❌ Повторная установка не удалась: {row.DisplayName}");
         }
 
         // ── Пользовательские приложения ─────────────────────────────────────────
