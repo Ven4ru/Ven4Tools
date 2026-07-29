@@ -83,7 +83,7 @@ namespace Ven4Tools.ClientUITests
 
             // «Markdown» встречается в описании Obsidian («База знаний и заметки
             // в Markdown с двусвязными ссылками»), но не в его DisplayName —
-            // до фикса раунда 22 такой запрос не находил бы приложение вовсе.
+            // до доработки топ-5 (2026-07-29) такой запрос не находил бы приложение.
             search!.Click();
             search.AsTextBox().Enter("Markdown");
             System.Threading.Thread.Sleep(800);

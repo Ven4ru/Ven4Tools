@@ -45,6 +45,24 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# .OUTPUTS обещает "код возврата всегда 0", но без обработчика непредвиденная
+# ошибка (битый report.json, недоступный CatalogPath и т.п.) уронила бы скрипт
+# с ненулевым кодом — сосед Verify-CatalogDownloads.ps1 отдельно защищён шагом
+# workflow (continue-on-error: true), а этот шаг — нет. Trap ловит то же самое
+# здесь, чтобы контракт из .OUTPUTS был правдой, а не пожеланием.
+trap {
+    Write-Host "Построение отчёта о расхождениях упало: $($_.Exception.Message)"
+    $fallback = "## Ревалидация каталога`n`n> [!WARNING]`n> Построение отчёта о расхождениях завершилось ошибкой: " +
+        "$($_.Exception.Message)`n> Смотри лог прогона за подробностями.`n"
+    Write-Utf8NoBom -Path $MarkdownPath -Text $fallback
+    if ($env:GITHUB_OUTPUT) {
+        Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value 'has-drift=true'
+        Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value 'drift-count=0'
+        Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value 'checked-count=0'
+    }
+    exit 0
+}
+
 # Предел тела issue у GitHub — 65536 символов, оставляем запас на служебный текст.
 $MaxBodyLength = 60000
 

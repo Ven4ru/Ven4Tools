@@ -103,9 +103,18 @@ namespace Ven4Tools.Services
         private async Task<(bool Success, string Message, AppInstallProgress Progress)> ReportInstallOutcomeAsync(
             AppInfo app, AppInstallProgress appProgress, IProgress<AppInstallProgress> progress,
             string outcomeCheckId, InstalledBaseline baseline,
-            bool exitCodeSuccess, bool reboot, string source, string sourceLabel,
-            CancellationToken token, string? logDetail = null)
+            bool exitCodeSuccess, bool reboot, string source,
+            CancellationToken token, string? logDetail = null, string? sourceDetail = null)
         {
+            // Единственное место, где строится читаемое название способа установки —
+            // InstallFailureReport.MethodLabel (тот же метод показывает способ в блоке
+            // «Не установлено» каталога). Раньше вызывающий код передавал свою копию
+            // строки сюда отдельным параметром, и капитализация разошлась («прямая
+            // ссылка» здесь против «Прямая ссылка» там) — один и тот же способ
+            // установки читался по-разному в логе и в панели неудач в одной сессии.
+            string sourceLabel = InstallFailureReport.MethodLabel(source);
+            if (!string.IsNullOrEmpty(sourceDetail)) sourceLabel += $" ({sourceDetail})";
+
             if (baseline.VerificationSupported)
             {
                 appProgress.Status = "🔍 Проверка результата...";

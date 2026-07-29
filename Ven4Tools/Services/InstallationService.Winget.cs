@@ -40,7 +40,7 @@ namespace Ven4Tools.Services
                 var wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive);
                 if (wingetRun.Ok)
                     return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
-                        true, wingetRun.Reboot, "winget", $"Winget ({wsrc})", token);
+                        true, wingetRun.Reboot, "winget", token, sourceDetail: wsrc);
             }
             return null;
         }

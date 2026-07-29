@@ -40,7 +40,7 @@ namespace Ven4Tools.Services
                 // reboot здесь всегда false, честно (не выдумываем то, чего сейчас
                 // не видно), в отличие от winget/elevated-путей, где это различие есть.
                 return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
-                    true, false, "choco", "Chocolatey", token);
+                    true, false, "choco", token);
             return null;
         }
     }

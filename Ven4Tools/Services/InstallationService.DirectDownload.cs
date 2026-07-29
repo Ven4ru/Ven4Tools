@@ -207,7 +207,7 @@ namespace Ven4Tools.Services
                         try { File.Delete(tempFile); } catch { }
                         if (run.Value.Ok)
                             return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
-                                true, run.Value.Reboot, "direct", "прямая ссылка", token, url);
+                                true, run.Value.Reboot, "direct", token, url);
                     }
                 }
                 // Отмена пользователем — пробрасываем; таймаут заголовков — пробуем следующий источник

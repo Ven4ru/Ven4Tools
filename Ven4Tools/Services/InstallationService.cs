@@ -167,7 +167,7 @@ namespace Ven4Tools.Services
             // (например choco) на самом деле справился, но был ошибочно распознан
             // как неудача (см. ReportInstallOutcomeAsync — честная коррекция).
             return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
-                false, false, "all-sources", "все источники", token, "все источники исчерпаны");
+                false, false, "all-sources", token, "все источники исчерпаны");
         }
 
         // ── Общий запуск elevated-установщика ──────────────────────────────────
