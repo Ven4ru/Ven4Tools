@@ -167,13 +167,16 @@ namespace Ven4Tools.Launcher
             sb.AppendLine($"**Версия:** `{firstFail.Version}`  ");
             sb.AppendLine($"**ОС:** {firstFail.OsVersion}  ");
             sb.AppendLine($"**Session:** `{sessionHash}`\n");
-            sb.AppendLine("| Приложение | ID | Метод | Ошибка | Время |");
+            sb.AppendLine("| Приложение | ID | Метод | Ошибка | Время (UTC) |");
             sb.AppendLine("|---|---|---|---|---|");
             foreach (var f in _failures)
             {
+                // Только UTC: issue публичный, а местное время выдаёт часовой пояс
+                // пользователя (грубая геолокация). В самом окне отчёта время
+                // по-прежнему показывается местное — оно никуда не уходит.
                 DateTime ts = DateTime.TryParse(f.Timestamp, CultureInfo.InvariantCulture,
                     DateTimeStyles.RoundtripKind, out var d)
-                    ? d.ToLocalTime() : DateTime.Now;
+                    ? d.ToUniversalTime() : DateTime.UtcNow;
                 string error = GitHubService.SanitizePersonalData(f.Error);
                 sb.AppendLine(
                     $"| {f.AppName} | `{f.AppId}` | {f.Method} | {error} | {ts:dd.MM.yyyy HH:mm} |");
