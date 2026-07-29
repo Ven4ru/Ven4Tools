@@ -134,6 +134,19 @@ namespace Ven4Tools
             var report = CrashReportService.Read();
             if (report == null || report.Reported) return;
 
+            // Параноидальный режим обещает блокировать отправку краш-отчётов.
+            // Вопрос здесь был бы нечестным: TrySendPendingAsync в этом режиме молча
+            // ничего не отправляет, а файл отчёта остаётся на диске — и лаунчер при
+            // следующем запуске предложит опубликовать его в ПУБЛИЧНОМ issue на GitHub,
+            // ровно то, чего пользователь этим режимом и не хочет. Поэтому не
+            // спрашиваем и сразу удаляем отчёт: отправлять его всё равно некуда.
+            if (ProfileService.Current.ParanoidMode)
+            {
+                CrashReportService.DeletePending();
+                AppLogger.Write("[App] Отчёт о сбое удалён без отправки: включён параноидальный режим");
+                return;
+            }
+
             if (!report.SendApproved)
             {
                 var answer = MessageBox.Show(

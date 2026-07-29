@@ -389,7 +389,10 @@ namespace Ven4Tools
 
             // На prerelease-канале перед выходом один раз показываем окно отзыва;
             // после его закрытия Close() вызывается повторно и приложение завершается.
-            if (ChannelService.IsPreRelease && !_feedbackShown)
+            // В параноидальном режиме окно не показываем вовсе: FeedbackService в нём
+            // ничего не отправляет, а написанный отзыв лёг бы в pending_feedback.json
+            // и ушёл бы на сервер позже — при первом же старте с выключенным режимом.
+            if (ChannelService.IsPreRelease && !_feedbackShown && !ProfileService.Current.ParanoidMode)
             {
                 e.Cancel = true;
                 _feedbackShown = true;
