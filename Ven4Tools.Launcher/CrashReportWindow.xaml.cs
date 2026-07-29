@@ -99,9 +99,13 @@ namespace Ven4Tools.Launcher
         private string BuildIssueBody()
         {
             string userNote = txtUserComment.Text.Trim();
+            // В теле issue — ВСЕГДА UTC, а не местное время. Issue уходит в публичный
+            // репозиторий, а местное время выдаёт часовой пояс пользователя, то есть
+            // грубую геолокацию — данные, которые отчёт о сбое сообщать не должен
+            // (в самом окне пользователю по-прежнему показывается местное время).
             DateTime ts = DateTime.TryParse(_report.Timestamp, System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.RoundtripKind, out var d)
-                ? d.ToLocalTime() : DateTime.Now;
+                ? d.ToUniversalTime() : DateTime.UtcNow;
 
             // Issue уходит в публичный репозиторий — персональные данные не отправляем:
             // имя машины опускаем, SessionId заменяем коротким хэшем (хватает для
@@ -119,7 +123,7 @@ namespace Ven4Tools.Launcher
 | Поле | Значение |
 |---|---|
 | **Версия** | `{_report.Version}` |
-| **Время** | {ts:dd.MM.yyyy HH:mm:ss} |
+| **Время** | {ts:dd.MM.yyyy HH:mm:ss} UTC |
 | **ОС** | {_report.OsVersion} |
 | **Session** | `{sessionHash}` |
 
