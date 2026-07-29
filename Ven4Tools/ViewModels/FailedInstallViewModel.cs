@@ -25,7 +25,12 @@ namespace Ven4Tools.ViewModels
             _method = method;
             _error = error;
             _retry = retry;
-            RetryCommand = new RelayCommand(
+            // FromAsync, а не обычный конструктор: так во всей папке ViewModels не
+            // остаётся ни одной асинхронной команды с незакрытым async void —
+            // инвариант проверяется одним grep'ом. Собственный catch в
+            // ExecuteRetryAsync при этом сохранён: он не только гасит исключение,
+            // но и показывает причину пользователю в RetryStatus.
+            RetryCommand = RelayCommand.FromAsync(
                 async _ => await ExecuteRetryAsync(),
                 _ => InstallFailureReport.CanRetry(IsRetrying));
         }

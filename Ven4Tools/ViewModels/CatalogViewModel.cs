@@ -120,7 +120,7 @@ namespace Ven4Tools.ViewModels
                 if (ShowFavoritesOnly) AppsView.Refresh();
             });
 
-            SuggestAlternativeCommand = new RelayCommand(async p =>
+            SuggestAlternativeCommand = RelayCommand.FromAsync(async p =>
             {
                 if (p is AppRowViewModel row) await SuggestAlternativeAsync(row);
             });
@@ -135,7 +135,7 @@ namespace Ven4Tools.ViewModels
                 if (p is AppRowViewModel row) RemoveUserApp(row);
             });
 
-            InstallSelectedCommand = new RelayCommand(async _ => await InstallSelectedAsync(),
+            InstallSelectedCommand = RelayCommand.FromAsync(async _ => await InstallSelectedAsync(),
                 _ => !IsInstalling && Apps.Any(a => a.IsSelected && a.IsSelectable));
 
             CancelInstallCommand = new RelayCommand(_ =>
@@ -146,11 +146,11 @@ namespace Ven4Tools.ViewModels
                     _installCts.Cancel();
             }, _ => IsInstalling);
 
-            RefreshAvailabilityCommand = new RelayCommand(async _ => await RefreshAvailabilityAsync(),
+            RefreshAvailabilityCommand = RelayCommand.FromAsync(async _ => await RefreshAvailabilityAsync(),
                 _ => !_isCheckingAvailability);
 
-            RefreshCatalogCommand = new RelayCommand(async _ => await RefreshCatalogAsync());
-            RetryLoadCatalogCommand = new RelayCommand(async _ => await LoadAsync());
+            RefreshCatalogCommand = RelayCommand.FromAsync(async _ => await RefreshCatalogAsync());
+            RetryLoadCatalogCommand = RelayCommand.FromAsync(async _ => await LoadAsync());
 
             ClearAllUserAppsCommand = new RelayCommand(_ =>
             {
@@ -168,12 +168,12 @@ namespace Ven4Tools.ViewModels
             ExportListCommand = new RelayCommand(_ => ExportList());
             ImportListCommand = new RelayCommand(_ => ImportList());
 
-            SavePresetCommand = new RelayCommand(async _ => await SavePresetAsync(),
+            SavePresetCommand = RelayCommand.FromAsync(async _ => await SavePresetAsync(),
                 _ => Apps.Any(a => a.IsSelected));
             ApplyPresetCommand = new RelayCommand(p => { if (p is Preset preset) ApplyPreset(preset); });
-            RenamePresetCommand = new RelayCommand(async p => { if (p is Preset preset) await RenamePresetAsync(preset); });
+            RenamePresetCommand = RelayCommand.FromAsync(async p => { if (p is Preset preset) await RenamePresetAsync(preset); });
             UpdateAppsPresetCommand = new RelayCommand(p => { if (p is Preset preset) BeginUpdatePresetComposition(preset); });
-            DeletePresetCommand = new RelayCommand(async p => { if (p is Preset preset) await DeletePresetAsync(preset); });
+            DeletePresetCommand = RelayCommand.FromAsync(async p => { if (p is Preset preset) await DeletePresetAsync(preset); });
 
             CheckUpdatesCommand = new RelayCommand(_ => SwitchToUpdatesRequested?.Invoke());
 
@@ -554,13 +554,25 @@ namespace Ven4Tools.ViewModels
         private static readonly System.Text.RegularExpressions.Regex _sizeNumberRegex =
             new(@"(\d+(?:\.\d+)?)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
-        private static int ParseSizeToMB(string size)
+        // internal, а не private: разбор зависит от культуры потока, а поймать это
+        // можно только тестом, который сам подменяет CurrentCulture на ru-RU.
+        internal static int ParseSizeToMB(string size)
         {
             if (string.IsNullOrEmpty(size)) return 100;
             try
             {
                 var match = _sizeNumberRegex.Match(size);
-                if (match.Success && double.TryParse(match.Value, out double value))
+                // Разбор строго по InvariantCulture: в каталоге размер всегда записан
+                // с точкой ("84.7 MB"), а на русской локали точка не считается ни
+                // десятичным разделителем, ни разделителем групп — TryParse по текущей
+                // культуре возвращал false для 62 из 71 записи каталога, и размер молча
+                // подменялся заглушкой 100 МБ. Тот же приём, что в ConvertTo-Bytes
+                // из Tools/New-CatalogDriftReport.ps1 и в AvailabilityChecker.
+                if (match.Success && double.TryParse(
+                        match.Value,
+                        System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out double value))
                     return size.Contains("GB", StringComparison.OrdinalIgnoreCase) ? (int)(value * 1024) : (int)value;
             }
             catch { }
