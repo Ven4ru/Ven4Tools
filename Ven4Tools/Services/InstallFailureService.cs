@@ -44,7 +44,13 @@ namespace Ven4Tools.Services
             }
         }
 
-        private static List<InstallFailure> ReadAll()
+        /// <summary>
+        /// Все записи журнала сбоев (от старых к новым). Читает клиент — чтобы
+        /// показать пользователю его собственные неудачные установки; тот же файл
+        /// независимо читает лаунчер для отчёта автору, поэтому формат на диске
+        /// менять нельзя.
+        /// </summary>
+        public static List<InstallFailure> ReadAll()
         {
             if (!File.Exists(FailuresPath)) return new();
             try { return JsonConvert.DeserializeObject<List<InstallFailure>>(
