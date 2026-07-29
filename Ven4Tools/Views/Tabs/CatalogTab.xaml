@@ -404,6 +404,54 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
                 </GroupBox>
+
+                <!-- Неуспешные установки последней пачки. Раньше эти данные писались
+                     в журнал сбоев, но читал его только лаунчер (отчёт автору) —
+                     пользователь причину не видел. Панель появляется только при
+                     наличии неудач. -->
+                <GroupBox Header="{Binding FailedInstallsHeader}" Margin="0,10,0,0"
+                          Visibility="{Binding HasFailedInstalls, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="Эти приложения не установились. Ниже — способ установки и причина; попытку можно повторить."
+                                   FontSize="10" TextWrapping="Wrap" Margin="2,0,2,6"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                        <Expander IsExpanded="True" Header="Подробности">
+                            <ItemsControl x:Name="lstFailedInstalls" ItemsSource="{Binding FailedInstalls}" Margin="0,4,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:FailedInstallViewModel}">
+                                        <Border Margin="0,2" Padding="8,6" CornerRadius="6"
+                                                Background="{DynamicResource CardBackground}"
+                                                BorderBrush="{StaticResource StatusDanger}" BorderThickness="1">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding DisplayName}"
+                                                           FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextPrimary}"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding MethodText}"
+                                                           FontSize="10" Margin="0,2,0,0"
+                                                           Foreground="{DynamicResource TextSecondary}"/>
+                                                <!-- Причина бывает длинной (ссылка, вывод winget) — переносим
+                                                     и ограничиваем высоту, полный текст остаётся в подсказке. -->
+                                                <TextBlock Text="{Binding Error}" ToolTip="{Binding Error}"
+                                                           FontSize="10" Margin="0,2,0,0" MaxHeight="52"
+                                                           TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                                           Foreground="{StaticResource StatusDanger}"/>
+                                                <TextBlock Text="{Binding RetryStatus}"
+                                                           FontSize="10" Margin="0,4,0,0" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource AccentColor}"
+                                                           Visibility="{Binding RetryStatus, Converter={StaticResource StringToVis}}"/>
+                                                <Button Content="🔁 Повторить" Margin="0,5,0,0"
+                                                        HorizontalAlignment="Left" Padding="8,3" FontSize="11"
+                                                        Command="{Binding RetryCommand}"
+                                                        ToolTip="Повторит установку этого приложения тем же способом, что и обычная установка из каталога. Кнопка недоступна, пока идёт другая установка."/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Expander>
+                    </StackPanel>
+                </GroupBox>
             </StackPanel>
         </ScrollViewer>
 
