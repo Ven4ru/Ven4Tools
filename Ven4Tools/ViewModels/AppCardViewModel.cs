@@ -56,9 +56,9 @@ namespace Ven4Tools.ViewModels
                 }
             }, _ => Row.CanLaunch && !IsBusy);
 
-            InstallCommand   = new RelayCommand(async _ => await InstallAsync(),   _ => !IsInstalled && !IsBusy);
-            ReinstallCommand = new RelayCommand(async _ => await ReinstallAsync(), _ => IsInstalled && !IsBusy);
-            UninstallCommand = new RelayCommand(async _ => await UninstallAsync(), _ => IsInstalled && !IsBusy);
+            InstallCommand   = RelayCommand.FromAsync(async _ => await InstallAsync(),   _ => !IsInstalled && !IsBusy);
+            ReinstallCommand = RelayCommand.FromAsync(async _ => await ReinstallAsync(), _ => IsInstalled && !IsBusy);
+            UninstallCommand = RelayCommand.FromAsync(async _ => await UninstallAsync(), _ => IsInstalled && !IsBusy);
         }
 
         public string DisplayName => Row.DisplayName;
