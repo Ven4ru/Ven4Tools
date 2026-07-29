@@ -198,10 +198,18 @@ internal sealed class FallbackDownloader
 
         try
         {
+            // Таймаут 30 секунд только на соединение и заголовки. Клиенты клиентских
+            // загрузок создаются с Timeout.InfiniteTimeSpan (MainWindow._httpClient и
+            // IpPinnedHttpClientFactory), поэтому источник, принявший соединение и
+            // замолчавший до отправки заголовков, висел бы до ручной отмены — и, что
+            // хуже, съедал бы весь перебор: следующие кандидаты не пробуются, пока
+            // текущий не завершился. Sliding-таймаут ниже покрывает только фазу тела.
+            using var headersCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            headersCts.CancelAfter(TimeSpan.FromSeconds(30));
             using HttpResponseMessage response = await client.GetAsync(
                 url,
                 HttpCompletionOption.ResponseHeadersRead,
-                cancellationToken);
+                headersCts.Token);
             response.EnsureSuccessStatusCode();
             if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(response))
             {
