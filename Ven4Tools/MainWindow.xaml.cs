@@ -611,15 +611,31 @@ namespace Ven4Tools
                 imgMascot.Visibility = Visibility.Collapsed;
                 return;
             }
+            // Своего маскота есть не у каждой вкладки. Часть переходов передаёт
+            // сюда нейтральное "system" явно, но вкладки «Установленные»,
+            // «Оптимизация» и «История» передают собственное имя, файла для
+            // которого в Resources\Mascots нет — там маскот просто молча
+            // пропадал, хотя на соседних вкладках оставался на месте. Общий
+            // откат на "system" убирает это расхождение и заодно избавляет
+            // будущие вкладки от необходимости помнить про такой случай.
+            if (!TryShowMascot(tabName) && !TryShowMascot("system"))
+            {
+                imgMascot.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private bool TryShowMascot(string tabName)
+        {
             try
             {
                 var uri = new Uri($"pack://application:,,,/Resources/Mascots/{tabName}.png");
                 imgMascot.Source = new System.Windows.Media.Imaging.BitmapImage(uri);
                 imgMascot.Visibility = Visibility.Visible;
+                return true;
             }
             catch
             {
-                imgMascot.Visibility = Visibility.Collapsed;
+                return false;
             }
         }
 
