@@ -52,7 +52,7 @@ namespace Ven4Tools.Services
                     await Task.Delay(Interval, ct);
                 }
             }
-            catch (OperationCanceledException) { /* штатна остановка через Dispose */ }
+            catch (OperationCanceledException) { /* штатная остановка через Dispose */ }
         }
 
         internal async Task CheckOnceAsync(CancellationToken ct)
@@ -61,10 +61,14 @@ namespace Ven4Tools.Services
             if (mode == "NotSet") return;
             if (ProfileService.Current.ParanoidMode) return;
             if (ProfileService.Current.OfflineMode) return;
-            if (!ConnectivityMonitor.IsOnline)
+            // IsEffectivelyOnline, а не IsOnline — та же причина, что и в
+            // UpdateBackgroundService: «Принудительный онлайн-режим» должен перекрывать
+            // автодетект сети и здесь, иначе на VPN с ложноотрицательным детектом
+            // фоновый поиск обновлений Windows молча не запускается.
+            if (!ConnectivityMonitor.IsEffectivelyOnline)
             {
                 await ConnectivityMonitor.CheckAsync();
-                if (!ConnectivityMonitor.IsOnline) return;
+                if (!ConnectivityMonitor.IsEffectivelyOnline) return;
             }
 
             var result = await _service.SearchAsync(ct);
