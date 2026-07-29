@@ -1,0 +1,137 @@
+name: Ревалидация каталога
+
+# Каталог фиксирует sha256/version/size, а часть ссылок вендоров — «вечные»
+# (например download.mozilla.org/?product=firefox-latest). Как только вендор
+# выкладывает новую сборку, зафиксированный хеш перестаёт сходиться: клиент
+# молча проваливает проверку SHA256 и уходит на winget/choco. Раз в неделю
+# перекачиваем все прямые ссылки и сверяем с каталогом.
+#
+# Каталог этот workflow НЕ правит: приватного ключа подписи у CI нет и быть
+# не должно, а master.json без валидной master.json.sig клиент отвергает
+# целиком. Поэтому результат — issue, а обновление и переподписание каталога
+# остаются ручной операцией владельца через ven4admin и Tools/CatalogSigner.
+
+on:
+  schedule:
+    # Воскресенье, 03:17 UTC (06:17 МСК) — вне пиковых часов GitHub Actions.
+    - cron: '17 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-revalidation
+  cancel-in-progress: false
+
+jobs:
+  revalidate:
+    name: Сверка прямых ссылок с каталогом
+    # Только windows-latest: Verify-CatalogDownloads.ps1 читает ProductVersion
+    # через System.Diagnostics.FileVersionInfo и проверяет подпись через
+    # Get-AuthenticodeSignature — на Linux второе бросает
+    # PlatformNotSupportedException, а первое возвращает пустоту.
+    runs-on: windows-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Скачивание установщиков и сбор фактических данных
+        id: verify
+        # Windows PowerShell 5.1, а не pwsh: скрипт написан под 5.1
+        # (в частности Add-Type -AssemblyName System.Net.Http — идиома 5.1).
+        shell: powershell
+        # Падение самой ревалидации не должно съесть отчёт: если report.json
+        # не появится, следующий шаг заведёт issue именно об этом.
+        continue-on-error: true
+        run: |
+          ./Tools/Verify-CatalogDownloads.ps1 `
+            -OutputDirectory "$env:RUNNER_TEMP\catalog-audit" `
+            -TimeoutMinutes 10
+
+      - name: Построение отчёта о расхождениях
+        id: report
+        shell: powershell
+        run: |
+          ./Tools/New-CatalogDriftReport.ps1 `
+            -ReportPath "$env:RUNNER_TEMP\catalog-audit\report.json" `
+            -CatalogPath "./Catalog/master.json" `
+            -MarkdownPath "$env:RUNNER_TEMP\catalog-audit\drift.md" `
+            -RunUrl "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+
+      - name: Сохранение отчёта артефактом
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: catalog-revalidation-report
+          path: |
+            ${{ runner.temp }}/catalog-audit/report.json
+            ${{ runner.temp }}/catalog-audit/drift.md
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Заведение или обновление issue
+        if: steps.report.outputs.has-drift == 'true'
+        # pwsh, а не powershell: gh — программа на Go, она читает командную
+        # строку как UTF-16, и PowerShell 7 передаёт кириллицу в аргументах
+        # без потерь. OutputEncoding выставляем, чтобы корректно разобрать
+        # UTF-8 из вывода gh.
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BODY_FILE: ${{ runner.temp }}/catalog-audit/drift.md
+          DRIFT_COUNT: ${{ steps.report.outputs.drift-count }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+          $ErrorActionPreference = 'Stop'
+
+          # Заголовок неизменен от прогона к прогону — по нему и ищем дубль.
+          $title = 'Ревалидация каталога: расхождения в master.json'
+
+          # Ищем среди открытых issue перебором, а не через gh issue list
+          # --search: поисковый индекс GitHub обновляется с задержкой и на
+          # свежесозданной issue дал бы промах, то есть дубль каждую неделю.
+          $open = gh issue list --repo "$env:REPO" --state open --limit 100 --json number,title | ConvertFrom-Json
+          $existing = @($open | Where-Object { $_.title -eq $title }) | Select-Object -First 1
+
+          if ($existing) {
+            Write-Host "Issue #$($existing.number) уже открыта — обновляю тело."
+            gh issue edit $existing.number --repo "$env:REPO" --body-file "$env:BODY_FILE"
+            # Правка тела не шлёт уведомление, поэтому отдельный короткий комментарий.
+            gh issue comment $existing.number --repo "$env:REPO" `
+              --body "Каталог перепроверен. Расхождений сейчас: $env:DRIFT_COUNT. Отчёт в теле issue обновлён, лог прогона: $env:RUN_URL"
+          }
+          else {
+            Write-Host 'Открытой issue нет — завожу новую.'
+            gh issue create --repo "$env:REPO" --title $title --body-file "$env:BODY_FILE"
+          }
+
+      - name: Закрытие issue, если расхождений не осталось
+        if: steps.report.outputs.has-drift == 'false'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+          $ErrorActionPreference = 'Stop'
+
+          $title = 'Ревалидация каталога: расхождения в master.json'
+          $open = gh issue list --repo "$env:REPO" --state open --limit 100 --json number,title | ConvertFrom-Json
+          $existing = @($open | Where-Object { $_.title -eq $title }) | Select-Object -First 1
+
+          if ($existing) {
+            Write-Host "Расхождений нет — закрываю issue #$($existing.number)."
+            gh issue close $existing.number --repo "$env:REPO" `
+              --comment "Каталог перепроверен: все прямые ссылки отдают ровно то, что записано в master.json. Лог прогона: $env:RUN_URL"
+          }
+          else {
+            Write-Host 'Расхождений нет, открытых issue тоже нет — ничего не делаю.'
+          }
