@@ -110,7 +110,7 @@ namespace Ven4Tools.Services
             // случаях сверяем с фактическим состоянием системы, а не только с кодом
             // выхода (плохой код мог быть у установщика, который на самом деле справился).
             return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
-                run.Value.Ok, run.Value.Reboot, "local", "локальный установщик", token,
+                run.Value.Ok, run.Value.Reboot, "local", token,
                 run.Value.Ok ? null : $"код выхода {run.Value.ExitCode}");
         }
 
@@ -176,7 +176,7 @@ namespace Ven4Tools.Services
             }
             if (run is { Ok: true })
                 return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
-                    true, run.Value.Reboot, "cache", "офлайн-кэш", token);
+                    true, run.Value.Reboot, "cache", token);
 
             // Неудача из кэша не терминальна — диспетчер пробует следующую стратегию
             // (цепочку источников), которая сама сверит результат по факту, если тоже

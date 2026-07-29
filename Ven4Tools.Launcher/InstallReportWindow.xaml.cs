@@ -29,7 +29,7 @@ namespace Ven4Tools.Launcher
 
             foreach (var f in _failures)
             {
-                DateTime ts = DateTime.TryParse(f.Timestamp, null,
+                DateTime ts = DateTime.TryParse(f.Timestamp, CultureInfo.InvariantCulture,
                     DateTimeStyles.RoundtripKind, out var d) ? d.ToLocalTime() : DateTime.Now;
 
                 var card = new Border
@@ -171,7 +171,7 @@ namespace Ven4Tools.Launcher
             sb.AppendLine("|---|---|---|---|---|");
             foreach (var f in _failures)
             {
-                DateTime ts = DateTime.TryParse(f.Timestamp, null,
+                DateTime ts = DateTime.TryParse(f.Timestamp, CultureInfo.InvariantCulture,
                     DateTimeStyles.RoundtripKind, out var d)
                     ? d.ToLocalTime() : DateTime.Now;
                 string error = GitHubService.SanitizePersonalData(f.Error);

@@ -1110,6 +1110,11 @@ namespace Ven4Tools.ViewModels
             if (success)
             {
                 row.JustInstalled = true;
+                // Та же запись версии, что и в обычной пакетной установке (строка 990) —
+                // повтор должен обновлять "версия, установленная в прошлый раз" наравне
+                // с обычным путём, а не только успех с первой попытки.
+                if (row.PinnedVersion != null && row.VersionOptions.Count > 1)
+                    _versionTracker.TrackInstall(row.AppId, row.PinnedVersion, row.VersionOptions[1]);
                 Log($"✅ Повторная установка удалась: {row.DisplayName}");
                 FailedInstalls.Remove(item);
                 RaiseFailedInstallsChanged();

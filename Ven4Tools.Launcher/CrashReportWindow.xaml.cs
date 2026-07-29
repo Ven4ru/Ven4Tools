@@ -21,7 +21,7 @@ namespace Ven4Tools.Launcher
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            if (DateTime.TryParse(_report.Timestamp, null,
+            if (DateTime.TryParse(_report.Timestamp, System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.RoundtripKind, out var dt))
             {
                 txtSubtitle.Text = $"Версия {_report.Version}  ·  {dt.ToLocalTime():dd.MM.yyyy HH:mm:ss}";
@@ -99,7 +99,7 @@ namespace Ven4Tools.Launcher
         private string BuildIssueBody()
         {
             string userNote = txtUserComment.Text.Trim();
-            DateTime ts = DateTime.TryParse(_report.Timestamp, null,
+            DateTime ts = DateTime.TryParse(_report.Timestamp, System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.RoundtripKind, out var d)
                 ? d.ToLocalTime() : DateTime.Now;
 
