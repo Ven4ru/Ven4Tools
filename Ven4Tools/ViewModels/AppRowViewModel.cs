@@ -42,6 +42,36 @@ namespace Ven4Tools.ViewModels
         // приложения нужны отдельно от IconUrl тем же способом.
         public string? Description { get; set; }
 
+        // Идентификаторы источников установки, по которым тоже осмысленно искать.
+        // В каталоге winget-идентификатор попадает в AppInfo.AlternativeId (так его
+        // заполняет CatalogViewModel.SyncCatalogToAppManager из App.WingetId) —
+        // отдельного поля WingetId у AppInfo нет. Свойства-обёртки нужны, чтобы
+        // поиск не зависел от этой детали хранения.
+        public string? WingetId => App.AlternativeId;
+        public string? ChocoId => App.ChocoId;
+
+        /// <summary>
+        /// Совпадает ли строка каталога с поисковым запросом. Раньше сравнивалось только
+        /// отображаемое имя, из-за чего запросы вроде «архиватор» или «блокнот» ничего не
+        /// находили в курируемом каталоге, хотя эти слова есть в описании приложения, —
+        /// и каталог проигрывал внешнему поиску winget/Chocolatey. Теперь запрос ищется
+        /// без учёта регистра ещё и в описании, и в идентификаторах winget/Chocolatey
+        /// (по ним ищут, когда знают точное имя пакета).
+        /// </summary>
+        public bool MatchesSearch(string? searchText)
+        {
+            if (string.IsNullOrWhiteSpace(searchText)) return true;
+
+            string query = searchText.Trim();
+            return ContainsQuery(DisplayName, query)
+                || ContainsQuery(Description, query)
+                || ContainsQuery(WingetId, query)
+                || ContainsQuery(ChocoId, query);
+        }
+
+        private static bool ContainsQuery(string? value, string query) =>
+            !string.IsNullOrEmpty(value) && value.Contains(query, StringComparison.OrdinalIgnoreCase);
+
         // Версия из каталога (последняя доступная) — отличается от InstalledVersion
         // (реально установленной), нужна для карточки, когда приложение ещё не
         // установлено.

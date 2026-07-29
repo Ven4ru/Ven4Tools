@@ -177,7 +177,13 @@ namespace Ven4Tools
         {
             SetActiveButton(btnDiagnosticsTab);
             AppLogger.Write("📂 Открыта вкладка: Диагностика");
-            if (_diagnosticsTab == null) _diagnosticsTab = new DiagnosticsTab();
+            if (_diagnosticsTab == null)
+            {
+                _diagnosticsTab = new DiagnosticsTab();
+                // Найденные ошибки Windows Update — повод сразу открыть вкладку
+                // обновлений; тот же приём, что у OfficeTab.GoToActivation.
+                _diagnosticsTab.GoToWindowsUpdate += () => NavigateToWindowsUpdate(null, null);
+            }
             MainFrame.Content = (_diagnosticsTab);
             UpdateMascot("system"); // отдельного маскота для этой вкладки нет — используем нейтрального "system"
         }
@@ -195,7 +201,13 @@ namespace Ven4Tools
         {
             SetActiveButton(btnWindowsUpdateTab);
             AppLogger.Write("📂 Открыта вкладка: Windows Update");
-            if (_windowsUpdateTab == null) _windowsUpdateTab = new WindowsUpdateTab();
+            if (_windowsUpdateTab == null)
+            {
+                _windowsUpdateTab = new WindowsUpdateTab();
+                // Обратный переход: проверка обновлений ничего не дала — причины
+                // ищутся в журнале ошибок на вкладке «Диагностика».
+                _windowsUpdateTab.GoToDiagnostics += () => NavigateToDiagnostics(null, null);
+            }
             MainFrame.Content = (_windowsUpdateTab);
             UpdateMascot("system"); // отдельного маскота для этой вкладки пока нет — используем нейтрального "system"
         }
