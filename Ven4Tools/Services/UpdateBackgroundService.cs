@@ -80,10 +80,15 @@ namespace Ven4Tools.Services
             if (ProfileService.Current.OfflineMode) return;
             // Параноидальный режим: фоновые проверки обновлений (winget) отключены.
             if (ProfileService.Current.ParanoidMode) return;
-            if (!ConnectivityMonitor.IsOnline)
+            // IsEffectivelyOnline, а не IsOnline: настройка «Принудительный онлайн-режим»
+            // обещает игнорировать автодетект сети, но фоновая проверка сверялась с сырым
+            // результатом детекта. На VPN/прокси с ложноотрицательным детектом флаг был
+            // включён, вкладки оставались видимыми — а уведомления об обновлениях не
+            // приходили никогда, без единого следа в журнале.
+            if (!ConnectivityMonitor.IsEffectivelyOnline)
             {
                 await ConnectivityMonitor.CheckAsync();
-                if (!ConnectivityMonitor.IsOnline) return;
+                if (!ConnectivityMonitor.IsEffectivelyOnline) return;
             }
 
             var profile = ProfileService.Current;
