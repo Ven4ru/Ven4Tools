@@ -249,8 +249,9 @@ namespace Ven4Tools.ViewModels
             if (!row.MatchesProfile) return false;
             if (ProfileService.Current.HideInstalled && row.IsInstalled) return false;
             if (ShowFavoritesOnly && !row.IsFavorite) return false;
-            if (string.IsNullOrWhiteSpace(SearchText)) return true;
-            return row.DisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+            // Совпадение по имени, описанию и идентификаторам winget/Chocolatey —
+            // см. AppRowViewModel.MatchesSearch.
+            return row.MatchesSearch(SearchText);
         }
 
         public void ApplyProfileFilters()

@@ -18,9 +18,17 @@ namespace Ven4Tools.Views.Tabs
         private CancellationTokenSource? _searchCts;
         private bool _firstRunHandled;
 
+        /// <summary>
+        /// Запрос на переход к вкладке «Диагностика». Сама вкладка обновлений про
+        /// навигацию не знает — переключением занимается MainWindow, как это уже
+        /// сделано у OfficeTab.GoToActivation.
+        /// </summary>
+        public event Action? GoToDiagnostics;
+
         public WindowsUpdateTab()
         {
             InitializeComponent();
+            btnOpenDiagnostics.Click += (_, _) => GoToDiagnostics?.Invoke();
             Loaded += WindowsUpdateTab_Loaded;
         }
 
@@ -108,7 +116,7 @@ namespace Ven4Tools.Views.Tabs
                     txtStatus.Text = "✅ Обновлений не найдено — система актуальна.";
                     AppLogger.Write("🛡️ Windows Update: обновлений не найдено");
                     UpdateSelectionSummary();
-                    ShowUpdatesEmptyState("Обновлений нет", "Система полностью обновлена");
+                    ShowUpdatesEmptyState("Обновлений нет", "Система полностью обновлена", offerDiagnostics: false);
                     return;
                 }
 
@@ -129,10 +137,17 @@ namespace Ven4Tools.Views.Tabs
         /// прямоугольника. Вызывается на всех терминальных состояниях, где реальный
         /// список патчей не построен (служба недоступна / ошибка / всё установлено).
         /// </summary>
-        private void ShowUpdatesEmptyState(string title, string subtitle)
+        /// <param name="offerDiagnostics">
+        /// Показать ли кнопку перехода к вкладке «Диагностика». По умолчанию — да:
+        /// пустой список после неудачной проверки почти всегда означает проблему,
+        /// причины которой видны в журнале ошибок Windows Update. Передаётся false
+        /// для исправной системы («Обновлений нет»), где такой вопрос не возникает.
+        /// </param>
+        private void ShowUpdatesEmptyState(string title, string subtitle, bool offerDiagnostics = true)
         {
             txtUpdatesEmptyTitle.Text = title;
             txtUpdatesEmptySubtitle.Text = subtitle;
+            btnOpenDiagnostics.Visibility = offerDiagnostics ? Visibility.Visible : Visibility.Collapsed;
             pnlUpdatesEmpty.Visibility = Visibility.Visible;
         }
 
