@@ -127,7 +127,7 @@ public sealed class InstallFailureReportTests
         string json = JsonConvert.SerializeObject(new InstallFailure());
 
         foreach (string field in new[]
-                 { "SessionId", "AppName", "AppId", "Method", "Error", "Version", "OsVersion", "Timestamp" })
+                 { "SessionId", "AppName", "AppId", "Method", "Error", "Version", "OsVersion", "Timestamp", "Reported" })
         {
             Assert.Contains($"\"{field}\"", json, StringComparison.Ordinal);
         }

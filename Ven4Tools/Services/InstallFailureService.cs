@@ -75,5 +75,13 @@ namespace Ven4Tools.Services
         public string Version     { get; set; } = "";
         public string OsVersion   { get; set; } = "";
         public string Timestamp   { get; set; } = "";
+
+        // Пишется и читается только лаунчером (InstallReportWindow) после отправки
+        // отчёта. Клиент это поле никогда не выставляет — но обязан объявить его
+        // здесь: Append перечитывает файл целиком через этот тип и пишет обратно,
+        // и без свойства Reported флаг «уже отчитались» терялся бы у всех прошлых
+        // записей при каждом новом сбое, заставляя лаунчер заново предлагать
+        // отправить уже отправленные отчёты.
+        public bool Reported { get; set; }
     }
 }
