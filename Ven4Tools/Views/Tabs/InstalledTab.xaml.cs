@@ -108,18 +108,16 @@ namespace Ven4Tools.Views.Tabs
         // Расшифровка кода выхода winget/COM в единый результат: успех операции,
         // требуется ли перезагрузка и причина неуспеха. Централизует разбор hex-кодов,
         // ранее продублированный в BtnUpgradeAll_Click и UpdateAppAsync.
+        // Success/Reboot — специфика именно ОБНОВЛЕНИЯ списком (эта вкладка), а текст
+        // причины берётся из общего WingetErrorMapper, чтобы одна и та же ошибка
+        // читалась одинаково и здесь, и в каталоге (блок «Не установлено»).
         // Примечание: деинсталляция (TryUninstallAsync) трактует 0x8A150014 как «пакет
         // не установлен» = успех — иная семантика, поэтому сюда намеренно не сведена.
-        private static (bool Success, bool Reboot, string Reason) DescribeWingetExitCode(int code) => code switch
+        private static (bool Success, bool Reboot, string Reason) DescribeWingetExitCode(int code)
         {
-            0                          => (true,  false, ""),
-            3010                       => (true,  true,  ""),
-            unchecked((int)0x8A15002C) => (true,  true,  ""),
-            unchecked((int)0x8A15002B) => (false, false, "обновление недоступно — версия в источнике не подходит для данной системы"),
-            unchecked((int)0x8A150014) => (false, false, "обновление недоступно — версия в источнике не подходит для данной системы"),
-            unchecked((int)0x80072EE2) => (false, false, "ошибка сети — источник недоступен, попробуйте позже"),
-            unchecked((int)0x80072EFE) => (false, false, "ошибка сети — источник недоступен, попробуйте позже"),
-            _                          => (false, false, $"winget завершился с кодом {code}")
-        };
+            if (code == 0) return (true, false, "");
+            if (code == 3010 || code == unchecked((int)0x8A15002C)) return (true, true, "");
+            return (false, false, WingetErrorMapper.MapExitCode(code));
+        }
     }
 }
