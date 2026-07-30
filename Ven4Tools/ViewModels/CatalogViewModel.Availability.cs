@@ -187,6 +187,13 @@ namespace Ven4Tools.ViewModels
                     string version = _installedAppsService.GetInstalledVersion(wingetId);
                     row.InstalledVersion = version;
                     row.HasUpdate = !string.IsNullOrEmpty(version) && row.VersionOptions.Count > 1 && version != row.VersionOptions[1];
+                    // Пропуск обновления действует только для той версии, которую
+                    // пользователь явно отложил. Вышла более новая — VersionOptions[1]
+                    // изменился, совпадения нет, метка возвращается сама (ручная
+                    // очистка сохранённой записи не нужна).
+                    string? ignoredVersion = _ignoredUpdatesService.GetIgnoredVersion(row.AppId);
+                    row.IsUpdateIgnored = row.HasUpdate && ignoredVersion != null
+                        && ignoredVersion == row.VersionOptions[1];
                     row.LaunchPath = AppLaunchResolver.TryResolve(row.DisplayName);
                     installed++;
                     if (row.HasUpdate) outdated++;
@@ -196,6 +203,7 @@ namespace Ven4Tools.ViewModels
                 {
                     row.InstalledVersion = null;
                     row.HasUpdate = false;
+                    row.IsUpdateIgnored = false;
                     row.LaunchPath = null;
                 }
             }
