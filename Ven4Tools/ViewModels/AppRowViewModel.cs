@@ -217,6 +217,32 @@ namespace Ven4Tools.ViewModels
             }
         }
 
+        // Пользователь решил пропустить конкретное обновление (см.
+        // Services/IgnoredUpdatesService.cs). Не путать с PinnedVersion ниже —
+        // то выбор версии для установки прямо сейчас, а это «не напоминать
+        // про эту версию». Строка при этом не красится оранжевым и получает
+        // отдельный тултип, но сама возможность установить обновление остаётся.
+        private bool _isUpdateIgnored;
+        public bool IsUpdateIgnored
+        {
+            get => _isUpdateIgnored;
+            set
+            {
+                if (SetField(ref _isUpdateIgnored, value))
+                {
+                    OnPropertyChanged(nameof(RowBrush));
+                    OnPropertyChanged(nameof(StatusTooltip));
+                    OnPropertyChanged(nameof(IgnoreUpdateGlyph));
+                    OnPropertyChanged(nameof(IgnoreUpdateTooltip));
+                }
+            }
+        }
+
+        public string IgnoreUpdateGlyph => IsUpdateIgnored ? "🔔" : "🔕";
+        public string IgnoreUpdateTooltip => IsUpdateIgnored
+            ? "Показывать это обновление снова"
+            : "Пропустить это обновление (до выхода следующей версии)";
+
         private bool _justInstalled;
         // Приложение установлено в рамках текущей сессии (только что) — тускнеет
         // и блокируется, как в реальном клиенте после успешной установки.
@@ -258,7 +284,7 @@ namespace Ven4Tools.ViewModels
             {
                 if (JustInstalled) return _justInstalledBrush;
                 if (IsInstalled)
-                    return HasUpdate ? _hasUpdateBrush : _installedBrush;
+                    return (HasUpdate && !IsUpdateIgnored) ? _hasUpdateBrush : _installedBrush;
                 return Availability switch
                 {
                     RowAvailability.Available   => Brushes.LightGreen,
@@ -274,6 +300,7 @@ namespace Ven4Tools.ViewModels
             {
                 if (IsInstalled)
                 {
+                    if (HasUpdate && IsUpdateIgnored) return $"✓ Установлено ({InstalledVersion}) | 🔕 Обновление пропущено";
                     if (HasUpdate) return $"✓ Установлено ({InstalledVersion}) | 🆙 Доступна новая версия";
                     return string.IsNullOrEmpty(InstalledVersion) ? "✓ Уже установлено" : $"✓ Установлено ({InstalledVersion})";
                 }
