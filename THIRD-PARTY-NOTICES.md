@@ -20,7 +20,6 @@ Ven4Tools распространяется в виде самодостаточ�
 | Компонент | Версия | Лицензия |
 |-----------|--------|----------|
 | Newtonsoft.Json | 13.0.4 | MIT |
-| Microsoft.Web.WebView2 | 1.0.4078.44 | Microsoft Software License Terms |
 | System.Management | 10.0.10 | MIT |
 | System.Security.Cryptography.ProtectedData | 10.0.10 | MIT |
 | System.ServiceProcess.ServiceController | 10.0.10 | MIT |
@@ -70,13 +69,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
-### Microsoft.Web.WebView2
-
-Copyright (c) Microsoft Corporation.
-
-Компонент распространяется на условиях «Microsoft Software License Terms»
-(Microsoft Edge WebView2), допускающих распространение в составе приложений.
-Полный текст лицензии поставляется вместе с пакетом NuGet
-`Microsoft.Web.WebView2` (файл лицензии внутри пакета) и доступен на официальной
-странице пакета: <https://www.nuget.org/packages/Microsoft.Web.WebView2>.
