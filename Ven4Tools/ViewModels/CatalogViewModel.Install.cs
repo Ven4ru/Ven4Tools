@@ -253,7 +253,8 @@ namespace Ven4Tools.ViewModels
             if (success)
             {
                 row.JustInstalled = true;
-                // Та же запись версии, что и в обычной пакетной установке (строка 990) —
+                // Та же запись версии, что и в обычной пакетной установке
+                // (InstallSelectedAsync выше в этом файле) —
                 // повтор должен обновлять "версия, установленная в прошлый раз" наравне
                 // с обычным путём, а не только успех с первой попытки.
                 if (row.PinnedVersion != null && row.VersionOptions.Count > 1)
