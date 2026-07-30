@@ -118,6 +118,34 @@ namespace Ven4Tools.Services
             }
         }
 
+        /// <summary>
+        /// Итог попытки установки из ОДНОГО источника цепочки.
+        /// <para><c>Result</c> — терминальный итог: если не null, цепочка источников
+        /// на этом заканчивается (источник отработал).</para>
+        /// <para><c>FailureDetail</c> — читаемая причина неудачи этого источника
+        /// (расшифровка кода выхода), чтобы при исчерпании всей цепочки показать
+        /// пользователю не «Код выхода — ошибка», а последнюю внятную причину.</para>
+        /// Отдельным полем, а не <c>ref</c>-параметром: C# запрещает <c>ref</c>/<c>out</c>
+        /// у async-методов (CS1988).
+        /// </summary>
+        private readonly struct SourceAttempt
+        {
+            public (bool Success, string Message, AppInstallProgress Progress)? Result { get; init; }
+            public string? FailureDetail { get; init; }
+
+            public static SourceAttempt Finished((bool Success, string Message, AppInstallProgress Progress) result)
+                => new() { Result = result };
+
+            public static SourceAttempt Failed(string? failureDetail)
+                => new() { FailureDetail = failureDetail };
+        }
+
+        // Приводит итог источника без расшифровки кодов (прямая загрузка) к общему
+        // виду цепочки: терминальный итог либо «источник не подошёл, идём дальше».
+        private static SourceAttempt WrapDirectAttempt(
+            (bool Success, string Message, AppInstallProgress Progress)? result)
+            => result != null ? SourceAttempt.Finished(result.Value) : SourceAttempt.Failed(null);
+
         // ── Стратегия 3: цепочка источников (winget → choco → direct) ──────────
         private async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallFromSourcesAsync(
             AppInfo app, string[] wingetSources, AppInstallProgress appProgress,
@@ -144,30 +172,40 @@ namespace Ven4Tools.Services
             var sourceOrder  = SourceOrderService.GetOrderForCategory(app.CategoryString);
             Log($"🔀 Порядок источников для «{app.DisplayName}»: {string.Join(" → ", sourceOrder)}");
 
+            // Последняя внятная причина неудачи из пройденных источников —
+            // попадёт в блок «Не установлено» вместо голого «Код выхода — ошибка».
+            string? lastFailureDetail = null;
+
             foreach (var srcId in sourceOrder)
             {
                 token.ThrowIfCancellationRequested();
 
-                var result = srcId switch
+                var attempt = srcId switch
                 {
                     SourceOrderSettings.Winget => await InstallFromWingetAsync(
                         app, primaryId, wingetSources, appProgress, progress, installDrive, version,
                         outcomeCheckId, baseline, token),
                     SourceOrderSettings.Choco => await InstallFromChocoAsync(
                         app, appProgress, progress, confirmPmInstall, outcomeCheckId, baseline, token),
-                    SourceOrderSettings.Direct => await InstallFromDirectDownloadAsync(
-                        app, primaryId, appProgress, progress, installDrive, outcomeCheckId, baseline, token),
-                    _ => null
+                    // Прямая загрузка со своей MSI/EXE-спецификой расшифровки кодов не
+                    // даёт — оборачиваем её итог как есть, без причины неудачи.
+                    SourceOrderSettings.Direct => WrapDirectAttempt(await InstallFromDirectDownloadAsync(
+                        app, primaryId, appProgress, progress, installDrive, outcomeCheckId, baseline, token)),
+                    _ => default
                 };
-                if (result != null) return result.Value;
+                if (attempt.FailureDetail != null) lastFailureDetail = attempt.FailureDetail;
+                if (attempt.Result != null) return attempt.Result.Value;
             }
 
             // Все источники исчерпаны — терминальная неудача цепочки. Сверяем с
             // фактическим состоянием системы на случай, если один из источников
             // (например choco) на самом деле справился, но был ошибочно распознан
             // как неудача (см. ReportInstallOutcomeAsync — честная коррекция).
+            string finalDetail = lastFailureDetail != null
+                ? $"все источники исчерпаны — последняя причина: {lastFailureDetail}"
+                : "все источники исчерпаны";
             return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
-                false, false, "all-sources", token, "все источники исчерпаны");
+                false, false, "all-sources", token, finalDetail);
         }
 
         // ── Общий запуск elevated-установщика ──────────────────────────────────

@@ -173,20 +173,27 @@ namespace Ven4Tools.Services
             }
         }
 
-        public static async Task<bool> RunChocoInstallAsync(
+        /// <summary>
+        /// Запускает установку пакета через choco. Возвращает не только признак
+        /// успеха, но и реальный код выхода — он нужен вызывающему коду, чтобы
+        /// показать пользователю расшифровку (<see cref="ChocoErrorMapper"/>), а не
+        /// голое «код выхода — ошибка». Код -1 — синтетический признак «реального
+        /// кода нет» (choco не запустился, невалидный ID, таймаут).
+        /// </summary>
+        public static async Task<(bool Ok, int ExitCode)> RunChocoInstallAsync(
             string packageId, CancellationToken token, Action<string>? log = null)
         {
             if (!CommandLineGuard.ValidateId(packageId))
             {
                 log?.Invoke($"❌ Choco: недопустимый идентификатор пакета «{packageId}»");
-                return false;
+                return (false, -1);
             }
             log?.Invoke($"🍫 Choco: установка {packageId}...");
             var chocoExe = TrustedExecutablePaths.ResolveChocolatey();
             if (chocoExe == null)
             {
                 log?.Invoke("❌ Choco: исполняемый файл не найден по доверенному пути");
-                return false;
+                return (false, -1);
             }
             try
             {
@@ -236,15 +243,15 @@ namespace Ven4Tools.Services
                         if (IsTimeoutNotCancellation(timeoutCts, token))
                         {
                             log?.Invoke($"⏱️ Choco: установка «{packageId}» превысила таймаут {(int)InstallOperationTimeout.TotalMinutes} мин — прервана");
-                            return false;
+                            return (false, -1);
                         }
                         token.ThrowIfCancellationRequested();
                     }
                 }
-                return p.ExitCode == 0;
+                return (p.ExitCode == 0, p.ExitCode);
             }
             catch (OperationCanceledException) { throw; }
-            catch (Exception ex) { log?.Invoke($"❌ Choco: {ex.Message}"); return false; }
+            catch (Exception ex) { log?.Invoke($"❌ Choco: {ex.Message}"); return (false, -1); }
         }
 
         // ── Search ────────────────────────────────────────────────────────────────
