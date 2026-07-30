@@ -15,12 +15,13 @@ namespace Ven4Tools.Services
     public partial class InstallationService
     {
         // ── Источник: Winget ───────────────────────────────────────────────────
-        private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromWingetAsync(
+        private async Task<SourceAttempt> InstallFromWingetAsync(
             AppInfo app, string primaryId, string[] wingetSources, AppInstallProgress appProgress,
             IProgress<AppInstallProgress> progress, string installDrive, string? version,
             string outcomeCheckId, InstalledBaseline baseline, CancellationToken token)
         {
-            if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) return null;
+            if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) return SourceAttempt.Failed(null);
+            string? lastFailureDetail = null;
             foreach (var wsrc in wingetSources)
             {
                 token.ThrowIfCancellationRequested();
@@ -39,17 +40,30 @@ namespace Ven4Tools.Services
 
                 var wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive);
                 if (wingetRun.Ok)
-                    return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
-                        true, wingetRun.Reboot, "winget", token, sourceDetail: wsrc);
+                    return SourceAttempt.Finished(await ReportInstallOutcomeAsync(
+                        app, appProgress, progress, outcomeCheckId, baseline,
+                        true, wingetRun.Reboot, "winget", token, sourceDetail: wsrc));
+
+                // Код выхода больше не теряется на границе метода: расшифровываем его
+                // в читаемую причину — и в лог, и дальше в блок «Не установлено».
+                // -1 — синтетический признак «winget вообще не запускался» (не найден,
+                // недопустимая версия): расшифровывать нечего, писать пользователю
+                // «winget завершился с кодом -1» было бы прямой неправдой — причина
+                // такого источника уже отдельно записана в лог выше по стеку.
+                if (wingetRun.ExitCode == -1) continue;
+                lastFailureDetail = WingetErrorMapper.MapExitCode(wingetRun.ExitCode);
+                Log($"❌ Winget ({wsrc}, {primaryId}): {lastFailureDetail}");
             }
-            return null;
+            return SourceAttempt.Failed(lastFailureDetail);
         }
 
         // Возвращает признак перезагрузки отдельно от общего Ok (0 и 3010 — оба
         // Ok=true) — раньше это различие терялось на возврате из метода, и путь
         // Winget никогда не мог показать «Требуется перезагрузка» в отличие от
         // остальных путей (RunElevatedInstallerAsync возвращает Reboot честно).
-        private async Task<(bool Ok, bool Reboot)> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null)
+        // Код выхода отдаётся третьим полем — по нему WingetErrorMapper строит
+        // человекочитаемую причину неудачи (-1 = winget вообще не запустился).
+        private async Task<(bool Ok, bool Reboot, int ExitCode)> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null)
         {
             var profile = ProfileService.Current;
 
@@ -80,14 +94,14 @@ namespace Ven4Tools.Services
             if (!string.IsNullOrEmpty(version) && !CommandLineGuard.ValidateId(version))
             {
                 Log($"❌ Недопустимая версия «{version}» для {appId} — источник Winget пропущен");
-                return (false, false);
+                return (false, false, -1);
             }
 
             var wingetExe = TrustedExecutablePaths.ResolveWinget();
             if (wingetExe == null)
             {
                 Log($"❌ winget не найден по доверенному пути для {appId}");
-                return (false, false);
+                return (false, false, -1);
             }
             var psi = new ProcessStartInfo
             {
@@ -150,12 +164,12 @@ namespace Ven4Tools.Services
                     // winget не установлен в системе — не валим весь цикл источников,
                     // просто сообщаем о неудаче, чтобы перейти к следующему источнику.
                     Log($"❌ winget не найден — источник Winget пропущен ({appId})");
-                    return (false, false);
+                    return (false, false, -1);
                 }
                 catch (FileNotFoundException)
                 {
                     Log($"❌ winget не найден — источник Winget пропущен ({appId})");
-                    return (false, false);
+                    return (false, false, -1);
                 }
 
                 process.BeginOutputReadLine();
@@ -177,7 +191,7 @@ namespace Ven4Tools.Services
                 bool reboot = process.ExitCode == 3010;
                 if (reboot)
                     Log($"⚠ Установлено. Требуется перезагрузка. ({appId})");
-                return (process.ExitCode == 0 || reboot, reboot);
+                return (process.ExitCode == 0 || reboot, reboot, process.ExitCode);
             }
         }
     }
