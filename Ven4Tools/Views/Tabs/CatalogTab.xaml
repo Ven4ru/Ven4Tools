@@ -221,6 +221,18 @@
                                                 Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"/>
 
+                                        <!-- 🔕 Пропустить это обновление — видна только у строк
+                                             с доступным обновлением; повторный клик возвращает
+                                             уведомление. См. Services/IgnoredUpdatesService.cs. -->
+                                        <Button Content="{Binding IgnoreUpdateGlyph}" Width="20" Height="20"
+                                                Margin="4,0,0,0"
+                                                Background="Transparent" BorderThickness="0" FontSize="12" Padding="0"
+                                                Cursor="Hand"
+                                                ToolTip="{Binding IgnoreUpdateTooltip}"
+                                                Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
+                                                Command="{Binding DataContext.ToggleIgnoreUpdateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"/>
+
                                         <ComboBox Width="95" Height="22" Margin="4,0,0,0" FontSize="10"
                                                   VerticalAlignment="Center"
                                                   Visibility="{Binding ShowVersionCombo, Converter={StaticResource BoolToVis}}"

@@ -40,6 +40,7 @@ namespace Ven4Tools.ViewModels
         private readonly FavoritesService _favoritesService = new();
         private InstallationService? _installService;
         private readonly VersionTrackingService _versionTracker = new();
+        private readonly IgnoredUpdatesService _ignoredUpdatesService = new();
         private readonly string[] _wingetSources = { "winget", "msstore" };
         private readonly CancellationTokenSource _availabilityCts = new();
 
@@ -63,6 +64,7 @@ namespace Ven4Tools.ViewModels
         public sealed record DiskOption(string Name, string Space);
 
         public RelayCommand ToggleFavoriteCommand { get; }
+        public RelayCommand ToggleIgnoreUpdateCommand { get; }
         public RelayCommand SuggestAlternativeCommand { get; }
         public RelayCommand OpenCardCommand { get; }
         public RelayCommand RemoveUserAppCommand { get; }
@@ -124,6 +126,29 @@ namespace Ven4Tools.ViewModels
                 _favoritesService.Toggle(row.AppId);
                 row.IsFavorite = _favoritesService.IsFavorite(row.AppId);
                 if (ShowFavoritesOnly) AppsView.Refresh();
+            });
+
+            // «Пропустить это обновление» — глушит уведомление только для той версии,
+            // которая доступна сейчас (VersionOptions[1] — первая реальная версия,
+            // нулевой элемент — «Последняя»). Когда выйдет более новая, сохранённая
+            // версия перестанет совпадать и оранжевая метка вернётся сама.
+            ToggleIgnoreUpdateCommand = new RelayCommand(p =>
+            {
+                if (p is not AppRowViewModel row || !row.HasUpdate) return;
+                if (row.IsUpdateIgnored)
+                {
+                    _ignoredUpdatesService.ClearIgnore(row.AppId);
+                    row.IsUpdateIgnored = false;
+                    Log($"🔔 Уведомления об обновлении {row.DisplayName} снова включены");
+                }
+                else
+                {
+                    string? latest = row.VersionOptions.Count > 1 ? row.VersionOptions[1] : null;
+                    if (latest == null) return;
+                    _ignoredUpdatesService.Ignore(row.AppId, latest);
+                    row.IsUpdateIgnored = true;
+                    Log($"🔕 Обновление {row.DisplayName} до версии {latest} пропущено — уведомление появится снова при выходе новой версии");
+                }
             });
 
             SuggestAlternativeCommand = RelayCommand.FromAsync(async p =>
