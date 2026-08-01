@@ -46,6 +46,14 @@ namespace Ven4Tools.Services
                         app, appProgress, progress, outcomeCheckId, baseline,
                         true, false, "choco", token));
 
+                // -1 — синтетический признак «choco вообще не запускался» (невалидный
+                // ID, исполняемый файл не найден, общее исключение) — RunChocoInstallAsync
+                // уже залогировал точную причину выше по стеку. ChocoErrorMapper
+                // хранит для -1 конкретно «не ответил вовремя», что было бы неправдой
+                // для остальных трёх случаев — расшифровывать нечего, как и в
+                // InstallFromWingetAsync (см. комментарий там же).
+                if (chocoRun.ExitCode == -1) return SourceAttempt.Failed(null);
+
                 // Код выхода choco раньше затирался до bool — теперь расшифровываем
                 // его в читаемую причину для лога и блока «Не установлено».
                 string failureDetail = ChocoErrorMapper.MapExitCode(chocoRun.ExitCode);
