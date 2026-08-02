@@ -19,12 +19,16 @@ public sealed class ChocoErrorMapperTests
     }
 
     [Fact]
-    public void MapExitCode_КодТаймаута_СообщаетОТаймауте()
+    public void MapExitCode_СинтетическийКодОтсутствияЗапуска_НеУтверждаетКонкретнуюПричину()
     {
-        // -1 — синтетический код, которым RunChocoInstallAsync помечает случаи,
-        // когда реального кода выхода нет (таймаут, choco не запустился).
+        // -1 покрывает несколько разных причин (невалидный ID, choco не найден,
+        // таймаут, исключение) — единого текста для них нет, поэтому таблица не
+        // должна утверждать что-то конкретное вроде "таймаут" (реальный вызывающий
+        // код — InstallFromChocoAsync — вообще перехватывает -1 до вызова этого
+        // метода; здесь фиксируем честный фолбэк на случай прямого вызова).
         var message = ChocoErrorMapper.MapExitCode(-1);
-        Assert.Contains("таймауту", message);
+        Assert.Contains("-1", message);
+        Assert.DoesNotContain("таймаут", message);
     }
 
     [Fact]
