@@ -36,7 +36,7 @@ namespace Ven4Tools.Launcher
                 btnCancelDownload.Visibility = silent ? Visibility.Collapsed : Visibility.Visible;
                 btnLaunchApp.IsEnabled = false;
             });
-            SetOperationStage(2); // Проверка целостности
+            Dispatcher.Invoke(() => SetOperationStage(2)); // Проверка целостности
 
             try
             {
@@ -47,7 +47,7 @@ namespace Ven4Tools.Launcher
                 if (result.Outcome == LocalArchiveOutcome.Rejected)
                 {
                     Dispatcher.Invoke(() => txtDownloadStatus.Text = "Отклонено");
-                    SetOperationStage(0);
+                    Dispatcher.Invoke(() => SetOperationStage(0));
                     AddLog($"⛔ {result.RejectionReason}");
                     if (!silent)
                         Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
@@ -75,7 +75,7 @@ namespace Ven4Tools.Launcher
                         if (answer != MessageBoxResult.Yes)
                         {
                             Dispatcher.Invoke(() => txtDownloadStatus.Text = "Отменено");
-                            SetOperationStage(0);
+                            Dispatcher.Invoke(() => SetOperationStage(0));
                             AddLog("⏹ Установка архивной версии отменена пользователем");
                             return;
                         }
@@ -91,13 +91,13 @@ namespace Ven4Tools.Launcher
             catch (OperationCanceledException)
             {
                 Dispatcher.Invoke(() => { txtDownloadStatus.Text = "Отменено"; progressDownload.Value = 0; });
-                SetOperationStage(0);
+                Dispatcher.Invoke(() => SetOperationStage(0));
                 AddLog("⏹ Установка из файла отменена");
             }
             catch (Exception ex)
             {
                 Dispatcher.Invoke(() => txtDownloadStatus.Text = "Ошибка");
-                SetOperationStage(0);
+                Dispatcher.Invoke(() => SetOperationStage(0));
                 AddLog($"❌ Ошибка установки из файла: {ex.Message}");
                 if (!silent)
                     Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
