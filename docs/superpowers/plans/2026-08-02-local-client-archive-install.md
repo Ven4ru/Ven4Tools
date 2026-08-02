@@ -872,6 +872,15 @@ public sealed class LocalArchiveVerifierTests
         return dest;
     }
 
+    // ИСПРАВЛЕНО при исполнении (найдено имплементором Task 5): порча поля
+    // "sha256_canonical" не ломает тест — LocalArchiveVerifier проверяет подпись
+    // против ЖИВОГО пересчитанного canonicalHashHex, а не против значения из
+    // самого файла (осознанное решение — иначе подмена этой декоративной метки
+    // не требовала бы приватного ключа). Значит порча именно этого поля не меняет
+    // исход: подпись всё равно проходит по Version+Signature+пересчитанному хешу,
+    // и тест с оригинальной подменой поля молча проверял бы не то (Offline вместо
+    // Rejected). Портить нужно "signature" — единственное поле, реально участвующее
+    // в ECDSA-проверке.
     private static void FlipByteInSignatureEntry(string zipPath)
     {
         using var archive = ZipFile.Open(zipPath, ZipArchiveMode.Update);
@@ -881,7 +890,7 @@ public sealed class LocalArchiveVerifierTests
         entry.Delete();
         var newEntry = archive.CreateEntry(CanonicalArchiveHasher.SignatureEntryName);
         using var writer = new StreamWriter(newEntry.Open());
-        writer.Write(json.Replace("sha256_canonical", "sha256_CANONICAL")); // ломает JSON-ключ -> не распарсится как валидная подпись
+        writer.Write(json.Replace("\"signature\"", "\"signature_TAMPERED\"")); // ломает поле, реально проверяемое ECDSA
     }
 
     // CdnService не абстрагирован интерфейсом — тесты, которым сеть не нужна
