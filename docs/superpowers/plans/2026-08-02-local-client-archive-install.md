@@ -39,7 +39,7 @@
 | `Ven4Tools.Launcher/CliInstallRunner.cs` | Новый — headless-путь для `--install-from` |
 | `Ven4Tools.Launcher/App.xaml.cs` | **Изменить** — разбор `--install-from=`/`--silent` в `OnStartup` |
 | `Ven4Tools.Launcher/Services/LauncherPaths.cs` | **Изменить** — добавить `ResolveClientPath()`, общий для `MainWindow` и `CliInstallRunner` |
-| `version.json`, `_release/version.json` | **Изменить** — добавить пустые `revokedClientHashes`/`historicalClientArchives` (схема; реальное заполнение — на следующем релизе) |
+| `version.json`, `_release/version.json` | ~~Изменить~~ — **не трогаются** (untracked/gitignored, не часть репозитория, см. правку в Task 2, Step 5) |
 | `tests/Ven4Tools.Tests/CanonicalArchiveHasherTests.cs` | Новый |
 | `tests/Ven4Tools.Tests/CdnVersionInfoDeserializationTests.cs` | Новый |
 | `tests/Ven4Tools.Tests/LocalArchiveVerifierTests.cs` | Новый |
@@ -261,7 +261,7 @@ git commit -m "Лаунчер: канонический хеш содержим�
 
 **Files:**
 - Modify: `Ven4Tools.Launcher/Models/CdnVersionInfo.cs`
-- Modify: `version.json`, `_release/version.json`
+- ~~Modify: `version.json`, `_release/version.json`~~ (отменено — см. Step 5)
 - Test: `tests/Ven4Tools.Tests/CdnVersionInfoDeserializationTests.cs`
 
 **Interfaces:**
@@ -349,23 +349,19 @@ Expected: FAIL — компиляция (свойств ещё нет).
 Run: `dotnet test tests/Ven4Tools.Tests --filter "FullyQualifiedName~CdnVersionInfoDeserializationTests"`
 Expected: PASS (2/2).
 
-- [ ] **Step 5: Обновить схему в реальных файлах `version.json`**
+- [x] **Step 5 (ОТМЕНЁН — исходное предположение плана было неверным):** ~~Обновить схему в реальных файлах `version.json`~~
 
-В `version.json` (корень репо) и `_release/version.json` добавить после `"cdn_ip"`:
+При исполнении (Task 2, реализация) обнаружено: `version.json` и `_release/` — в `.gitignore` (`/version.json`, `/version.json.sig`, `_release/`, см. `.gitignore:64-65,75`) и никогда не были в git-истории (`git log --all -- version.json _release/version.json` — пусто). Это локальные, генерируемые на месте артефакты, не часть репозитория — при исследовании перед написанием плана они были прочитаны как untracked-файлы основного чекаута и ошибочно приняты за версии, живущие в репо. Редактировать и коммитить их не нужно и невозможно осмысленно (в свежем `git worktree` их вообще нет на диске — untracked-файлы между worktree не расшариваются).
 
-```json
-  "revokedClientHashes": [],
-  "historicalClientArchives": [],
-```
+Схема (`revokedClientHashes`/`historicalClientArchives`) фактически появится в реальном `version.json` естественным образом — на следующем реальном релизе, когда кто-то вручную допишет эти поля в JSON перед запуском `Tools/deploy-version-manifest.ps1` (тот подписывает и заливает файл на CDN как есть, схему не валидирует). Никакого отдельного шага/коммита в этом плане для этого не требуется — модель `CdnVersionInfo` (Step 3-4) уже готова прочитать эти поля, когда они появятся.
 
-Это только схема (пустые списки) — реальное заполнение `historicalClientArchives` происходит на СЛЕДУЮЩЕМ релизе клиента (текущая 4.4.2 остаётся «текущей», её хеш переносится в исторический список только когда её сменит следующая версия). Пересборка подписи `version.json.sig` и заливка на CDN этим шагом НЕ делается — это отдельное действие `Tools/deploy-version-manifest.ps1` в момент реального релиза, не часть этой задачи.
-
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
-git add Ven4Tools.Launcher/Models/CdnVersionInfo.cs tests/Ven4Tools.Tests/CdnVersionInfoDeserializationTests.cs version.json _release/version.json
-git commit -m "version.json: схема для revokedClientHashes и historicalClientArchives"
+git add Ven4Tools.Launcher/Models/CdnVersionInfo.cs tests/Ven4Tools.Tests/CdnVersionInfoDeserializationTests.cs
+git commit -m "CdnVersionInfo: схема для revokedClientHashes и historicalClientArchives"
 ```
+(Выполнено — commit `8289615`, без `version.json`/`_release/version.json`, см. правку Step 5 выше.)
 
 ---
 
