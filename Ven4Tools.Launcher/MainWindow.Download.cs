@@ -124,11 +124,6 @@ namespace Ven4Tools.Launcher
             string tempZip = Path.Combine(
                 Path.GetTempPath(),
                 $"Ven4Tools_Client_{version.Version}_{Guid.NewGuid():N}.zip");
-            string clientParent = Path.GetDirectoryName(Path.GetFullPath(_clientPath))
-                ?? throw new InvalidOperationException("Не удалось определить каталог установки.");
-            string extractPath = Path.Combine(
-                clientParent,
-                $".Ven4Tools_Client.staging-{Guid.NewGuid():N}");
 
             progressDownload.Value    = 0;
             txtDownloadStatus.Text    = "Скачивание: 0%";
@@ -229,7 +224,6 @@ namespace Ven4Tools.Launcher
                     try
                     {
                         if (File.Exists(tempZip)) File.Delete(tempZip);
-                        if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true);
                         break;
                     }
                     catch (IOException) when (attempt < 5)
@@ -265,8 +259,11 @@ namespace Ven4Tools.Launcher
 
             try
             {
-                SetOperationStage(3); // Распаковка
-                txtDownloadStatus.Text = "Распаковка...";
+                Dispatcher.Invoke(() =>
+                {
+                    SetOperationStage(3); // Распаковка
+                    txtDownloadStatus.Text = "Распаковка...";
+                });
                 await SafeZipExtractor.ExtractAsync(sourceArchivePath, extractPath, token);
                 AddLog("✅ Архив безопасно распакован");
 
@@ -274,22 +271,22 @@ namespace Ven4Tools.Launcher
 
                 if (IsClientRunning())
                 {
-                    txtDownloadStatus.Text = "Клиент запущен";
+                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "Клиент запущен");
 
                     if (silent)
                     {
-                        SetOperationStage(0);
+                        Dispatcher.Invoke(() => SetOperationStage(0));
                         AddLog("⏸ Установка отложена: клиент запущен");
                         return false;
                     }
 
-                    var answer = System.Windows.MessageBox.Show(
+                    var answer = Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
                         "Ven4Tools сейчас запущен.\n\nЗакрыть клиент сейчас, чтобы установить эту версию?",
-                        "Клиент запущен", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        "Клиент запущен", MessageBoxButton.YesNo, MessageBoxImage.Question));
 
                     if (answer != MessageBoxResult.Yes)
                     {
-                        SetOperationStage(0);
+                        Dispatcher.Invoke(() => SetOperationStage(0));
                         AddLog("⏹ Установка отменена — клиент не закрыт");
                         return false;
                     }
@@ -297,14 +294,17 @@ namespace Ven4Tools.Launcher
                     AddLog("🔒 Закрываю клиент перед установкой...");
                     if (!await TryCloseRunningClientAsync())
                     {
-                        txtDownloadStatus.Text = "Клиент запущен";
-                        SetOperationStage(0);
+                        Dispatcher.Invoke(() =>
+                        {
+                            txtDownloadStatus.Text = "Клиент запущен";
+                            SetOperationStage(0);
+                        });
                         AddLog("⚠️ Клиент не закрылся за отведённое время — установка отменена");
                         if (!silent)
-                            System.Windows.MessageBox.Show(
+                            Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
                                 "Не удалось закрыть клиент автоматически (возможно, он свёрнут в трей).\n\n" +
                                 "Закройте его вручную и повторите установку.",
-                                "Клиент не закрылся", MessageBoxButton.OK, MessageBoxImage.Warning);
+                                "Клиент не закрылся", MessageBoxButton.OK, MessageBoxImage.Warning));
                         return false;
                     }
                     AddLog("✅ Клиент закрыт, продолжаю установку");
@@ -312,28 +312,37 @@ namespace Ven4Tools.Launcher
 
                 if (!InstallPathGuard.IsClientPathSafe(_clientPath, _dataFolderPath))
                 {
-                    txtDownloadStatus.Text = "Ошибка пути";
-                    SetOperationStage(0);
+                    Dispatcher.Invoke(() =>
+                    {
+                        txtDownloadStatus.Text = "Ошибка пути";
+                        SetOperationStage(0);
+                    });
                     AddLog($"⛔ Папка установки клиента пересекается с папкой данных — установка отменена: {_clientPath}");
                     if (!silent)
-                        System.Windows.MessageBox.Show(
+                        Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
                             $"Папка установки клиента:\n{_clientPath}\n\nсовпадает или вложена в папку данных Ven4Tools. " +
                             "Установка отменена во избежание потери настроек.\n\nВыберите другую папку установки.",
-                            "Небезопасный путь установки", MessageBoxButton.OK, MessageBoxImage.Error);
+                            "Небезопасный путь установки", MessageBoxButton.OK, MessageBoxImage.Error));
                     return false;
                 }
 
-                SetOperationStage(4); // Установка файлов
-                txtDownloadStatus.Text = "Установка файлов...";
+                Dispatcher.Invoke(() =>
+                {
+                    SetOperationStage(4); // Установка файлов
+                    txtDownloadStatus.Text = "Установка файлов...";
+                });
                 var installer = new TransactionalDirectoryInstaller();
                 installer.Install(extractPath, _clientPath, token);
 
-                SetOperationStage(5); // Готово
-                txtDownloadStatus.Text = "Готово";
-                progressDownload.Value = 100;
+                Dispatcher.Invoke(() =>
+                {
+                    SetOperationStage(5); // Готово
+                    txtDownloadStatus.Text = "Готово";
+                    progressDownload.Value = 100;
+                });
                 AddLog($"✅ Клиент {versionLabel} установлен");
 
-                SetLaunchButtonState(LaunchButtonState.Launch);
+                Dispatcher.Invoke(() => SetLaunchButtonState(LaunchButtonState.Launch));
                 _clientUpdateAvailable = false;
                 return true;
             }
