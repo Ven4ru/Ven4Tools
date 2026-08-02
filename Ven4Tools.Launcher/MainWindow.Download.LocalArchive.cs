@@ -27,7 +27,7 @@ namespace Ven4Tools.Launcher
             _ = InstallFromLocalArchiveAsync(dialog.FileName, _downloadCts.Token, silent: false);
         }
 
-        internal async Task InstallFromLocalArchiveAsync(string archivePath, CancellationToken token, bool silent)
+        internal async Task<bool> InstallFromLocalArchiveAsync(string archivePath, CancellationToken token, bool silent)
         {
             Dispatcher.Invoke(() =>
             {
@@ -53,7 +53,7 @@ namespace Ven4Tools.Launcher
                         Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
                             result.RejectionReason, "Установка отклонена",
                             MessageBoxButton.OK, MessageBoxImage.Error));
-                    return;
+                    return false;
                 }
 
                 AddLog(result.Outcome == LocalArchiveOutcome.Offline
@@ -77,7 +77,7 @@ namespace Ven4Tools.Launcher
                             Dispatcher.Invoke(() => txtDownloadStatus.Text = "Отменено");
                             Dispatcher.Invoke(() => SetOperationStage(0));
                             AddLog("⏹ Установка архивной версии отменена пользователем");
-                            return;
+                            return false;
                         }
                     }
                 }
@@ -87,12 +87,14 @@ namespace Ven4Tools.Launcher
                     Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
                         $"Клиент {result.Version} успешно установлен в:\n{_clientPath}",
                         "Установка завершена", MessageBoxButton.OK, MessageBoxImage.Information));
+                return installed;
             }
             catch (OperationCanceledException)
             {
                 Dispatcher.Invoke(() => { txtDownloadStatus.Text = "Отменено"; progressDownload.Value = 0; });
                 Dispatcher.Invoke(() => SetOperationStage(0));
                 AddLog("⏹ Установка из файла отменена");
+                return false;
             }
             catch (Exception ex)
             {
@@ -102,6 +104,7 @@ namespace Ven4Tools.Launcher
                 if (!silent)
                     Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
                         $"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error));
+                return false;
             }
             finally
             {

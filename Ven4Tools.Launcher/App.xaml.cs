@@ -29,6 +29,52 @@ public partial class App : Application
             return;
         }
 
+        string? installFromPath = null;
+        bool silentInstall = false;
+        foreach (var arg in e.Args)
+        {
+            if (arg.StartsWith("--install-from=", StringComparison.OrdinalIgnoreCase))
+                installFromPath = arg["--install-from=".Length..].Trim('"');
+            else if (string.Equals(arg, "--silent", StringComparison.OrdinalIgnoreCase))
+                silentInstall = true;
+        }
+
+        if (installFromPath != null)
+        {
+            _mutex = new Mutex(true, "Ven4Tools.Launcher.SingleInstance", out bool createdNewCli);
+            if (!createdNewCli)
+            {
+                Console.Error.WriteLine("Ven4Tools Launcher уже запущен.");
+                _mutex.Dispose();
+                _mutex = null;
+                Shutdown(3);
+                return;
+            }
+
+            // Явный режим завершения: при нуле показанных окон поведение WPF-режима
+            // по умолчанию (OnLastWindowClose) для этого пути не проверялось —
+            // завершаем процесс сами, точным кодом возврата, без зависимости от
+            // подсчёта окон.
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            var window = new MainWindow();
+
+            // КРИТИЧНО: не блокировать здесь синхронно (.GetAwaiter().GetResult()) —
+            // Dispatcher.Run() запускается только ПОСЛЕ возврата из OnStartup, а
+            // InstallFromLocalArchiveAsync использует Dispatcher.Invoke, которому
+            // для работы нужен уже запущенный цикл диспетчера. Синхронная блокировка
+            // здесь = гарантированный deadlock (воспроизведено эмпирически при
+            // исполнении этой задачи). BeginInvoke ставит колбэк в очередь и
+            // возвращается немедленно — OnStartup завершается, Application.Run()
+            // запускает Dispatcher.Run(), и только тогда колбэк реально выполняется.
+            Dispatcher.BeginInvoke(new Action(async () =>
+            {
+                int exitCode = await CliInstallRunner.RunAsync(window, installFromPath, silentInstall);
+                ReleaseSingleInstanceMutex();
+                Shutdown(exitCode);
+            }));
+            return;
+        }
+
         _mutex = new Mutex(true, "Ven4Tools.Launcher.SingleInstance", out bool createdNew);
 
         if (!createdNew)
