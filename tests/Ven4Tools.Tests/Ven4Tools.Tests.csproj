@@ -40,5 +40,7 @@
     <None Include="Fixtures\version-manifest-sample.json.sig" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Catalog\notifications.json" Link="Fixtures\notifications.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Catalog\notifications.json.sig" Link="Fixtures\notifications.json.sig" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fixtures\client-archive-signed-sample.zip" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fixtures\client-archive-unsigned-sample.zip" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
