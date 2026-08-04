@@ -24,6 +24,14 @@ namespace Ven4Tools.Services
         private readonly CancellationTokenSource _cts = new();
         private Task? _loop;
 
+        // Кол-во найденных патчей из прошлой проверки — чтобы не показывать
+        // уведомление повторно при каждом цикле, если число не изменилось.
+        // Тот же приём, что _lastUpgradeCount в UpdateBackgroundService (и
+        // LastNotified*-поля фонового сервиса лаунчера): без него одно и то же
+        // «Доступны обновления Windows» всплывало бы каждые 6 часов до тех пор,
+        // пока пользователь не установит патчи.
+        private int _lastNotifiedCount = -1;
+
         public static int AvailableCount { get; private set; }
         public static event Action? CountChanged;
 
@@ -76,12 +84,13 @@ namespace Ven4Tools.Services
 
             SetCount(result.Items.Count);
 
-            if (result.Items.Count > 0)
+            if (result.Items.Count > 0 && result.Items.Count != _lastNotifiedCount)
             {
                 UpdateBackgroundService.ShowNotification(
                     "Доступны обновления Windows",
                     $"Найдено {result.Items.Count} патчей. Откройте вкладку «Windows Update», чтобы выбрать и установить.");
             }
+            _lastNotifiedCount = result.Items.Count;
 
             if (mode == "NotifyAndDownload" && result.Items.Count > 0 && !WindowsUpdateService.IsBusy)
             {

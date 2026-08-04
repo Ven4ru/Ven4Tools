@@ -51,7 +51,13 @@ namespace Ven4Tools.Views.Tabs
                     AppLogger.Write(upgrade.Reboot
                         ? "✅ Обновление завершено. Для применения некоторых обновлений требуется перезагрузка."
                         : "✅ Обновление всех приложений завершено");
-                else
+                // code == -1 — синтетический признак «winget вообще не отработал»
+                // (не найден, завис и был принудительно завершён по таймауту):
+                // реального кода выхода нет, RunStreamingAsync уже написал в лог
+                // точную причину. WingetErrorMapper расшифровал бы это как
+                // «winget завершился с кодом -1 (0xFFFFFFFF)» — прямая неправда.
+                // Тот же guard уже стоял в UpdateAppAsync ниже, здесь его не было.
+                else if (code != -1)
                     AppLogger.Write($"⚠ {upgrade.Reason}");
             }
             catch (Exception ex)
