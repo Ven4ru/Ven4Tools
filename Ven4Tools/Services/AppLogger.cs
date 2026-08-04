@@ -27,6 +27,27 @@ namespace Ven4Tools.Services
             Write($"{context}: {ex.Message}");
         }
 
+        /// <summary>
+        /// Удаляет файлы общего журнала приложения (app.log и ротированный app.old.log).
+        /// Нужен кнопке «Очистить логи» на вкладке «Диагностика»: она удаляла только
+        /// журналы установок в подпапке logs, а общий журнал лежит уровнем выше — и
+        /// переживал очистку, хотя пользователю обещано удалить ВСЕ файлы логов.
+        /// Удаление идёт под тем же замком, что и запись, чтобы не пересечься с ней.
+        /// </summary>
+        public static void ClearAppLogFiles()
+        {
+            lock (_fileLock)
+            {
+                string dir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Ven4Tools");
+                foreach (var name in new[] { "app.log", "app.old.log" })
+                {
+                    try { File.Delete(Path.Combine(dir, name)); } catch { }
+                }
+            }
+        }
+
         private static void WriteToFile(string message)
         {
             try

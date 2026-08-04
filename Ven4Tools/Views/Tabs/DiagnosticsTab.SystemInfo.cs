@@ -131,8 +131,13 @@ namespace Ven4Tools.Views.Tabs
                         {
                             File.Delete(file);
                         }
-                        AppLogger.Write("🗑️ Логи очищены");
                     }
+                    // Общий журнал приложения (app.log / app.old.log) лежит НЕ в подпапке
+                    // logs, а уровнем выше — раньше он переживал очистку, хотя вопрос
+                    // пользователю звучит «Удалить все файлы логов?». Именно там копятся
+                    // сообщения вкладок и сервисов, поэтому обещание должно выполняться.
+                    AppLogger.ClearAppLogFiles();
+                    AppLogger.Write("🗑️ Логи очищены");
                 }
                 catch (Exception ex)
                 {
