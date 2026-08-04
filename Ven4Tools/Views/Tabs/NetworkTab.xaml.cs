@@ -204,7 +204,13 @@ namespace Ven4Tools.Views.Tabs
             {
                 var ip = await DiagnosticsService.GetPublicIpAsync();
                 txtPublicIp.Text = ip;
-                AppLogger.Write($"[Сеть] Внешний IP: {ip}");
+                // Само ЗНАЧЕНИЕ внешнего IP в журнал не пишем: app.log остаётся на диске
+                // до ротации по размеру (~1 МБ), то есть публичный адрес пользователя
+                // пережил бы сеанс без всякой необходимости — он и так показан рядом,
+                // в поле txtPublicIp. Пишем только факт и исход проверки.
+                AppLogger.Write(ip == "не определён"
+                    ? "[Сеть] Внешний IP не определён"
+                    : "[Сеть] Внешний IP определён");
             }
             finally { if (!_busy) btnGetIp.IsEnabled = true; }
         }
