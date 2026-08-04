@@ -24,6 +24,18 @@ namespace Ven4Tools.ViewModels
         private string _catalogErrorDetail = "";
         public string CatalogErrorDetail { get => _catalogErrorDetail; set => SetField(ref _catalogErrorDetail, value); }
 
+        /// <summary>
+        /// Показывает заглушку «Каталог недоступен» с кнопкой «Повторить загрузку».
+        /// Вынесено отдельно: раньше заглушку выставляла ровно одна ветка (каталог == null),
+        /// а остальные способы остаться без каталога её не показывали.
+        /// </summary>
+        private void ShowCatalogError(string detail)
+        {
+            StatusText = "❌ Ошибка: не удалось загрузить каталог";
+            CatalogErrorDetail = detail;
+            CatalogErrorVisible = true;
+        }
+
         public async Task LoadAsync()
         {
             CatalogErrorVisible = false;
@@ -36,9 +48,7 @@ namespace Ven4Tools.ViewModels
                 var catalog = CatalogLoaderService.LoadedCatalog ?? await _catalogLoader.LoadCatalogAsync();
                 if (catalog == null)
                 {
-                    StatusText = "❌ Ошибка: не удалось загрузить каталог";
-                    CatalogErrorDetail = "Нет подключения к интернету или CDN недоступен.\nПроверьте сеть и нажмите «Повторить загрузку».";
-                    CatalogErrorVisible = true;
+                    ShowCatalogError("Нет подключения к интернету или CDN недоступен.\nПроверьте сеть и нажмите «Повторить загрузку».");
                     return;
                 }
 
@@ -67,6 +77,17 @@ namespace Ven4Tools.ViewModels
                 ApplyProfileFilters();
 
                 StatusText = $"Загружено {Apps.Count} приложений";
+
+                // Пустой каталог — такой же провал загрузки, как и null, только молчаливый.
+                // LoadCatalogAsync никогда не возвращает null: без сети и кэша он отдаёт
+                // встроенную копию, а если и её ресурс не читается — ПУСТОЙ каталог. Поэтому
+                // ветка выше на практике недостижима, и пользователь оставался с надписью
+                // «Загружено 0 приложений», пустым списком, без заглушки и без единого способа
+                // повторить попытку. Свои (пользовательские) приложения к этому моменту уже
+                // построены в BuildRows и из списка не пропадают — заглушка показывается над ним.
+                if (catalog.Apps.Count == 0)
+                    ShowCatalogError("Каталог пуст: его не удалось получить ни из сети, ни из локального кэша, ни из встроенной копии.\nПроверьте сеть и нажмите «Повторить загрузку».");
+
                 _ = InitialLoadAvailabilityAsync().ContinueWith(
                     t => Log($"❌ Ошибка фоновой загрузки каталога: {t.Exception?.GetBaseException().Message}"),
                     TaskContinuationOptions.OnlyOnFaulted);
@@ -82,12 +103,23 @@ namespace Ven4Tools.ViewModels
             {
                 StatusText = "❌ Ошибка загрузки";
                 Log($"Ошибка загрузки каталога: {ex.Message}");
+                // Если до построения строк дело так и не дошло — показываем ту же заглушку
+                // с кнопкой повтора. Раньше исключение оставляло пользователя с пустым
+                // списком и одной строкой статуса, без возможности повторить загрузку.
+                // Условие по Apps.Count: если строки уже построены, а упало что-то после
+                // них, список рабочий — надпись «Каталог недоступен» была бы неверной.
+                if (Apps.Count == 0)
+                    ShowCatalogError($"Загрузка прервана ошибкой: {ex.Message}\nНажмите «Повторить загрузку».");
             }
         }
 
         private async Task RefreshCatalogAsync()
         {
             Log("🔄 Обновление каталога...");
+            // Заглушка снимается на время попытки: иначе после успешного «Обновить каталог»
+            // на экране оставалась висеть красная плашка «Каталог недоступен» от прошлой
+            // неудачи — её сбрасывала только кнопка «Повторить загрузку» (LoadAsync).
+            CatalogErrorVisible = false;
             try
             {
                 var catalogCachePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "master.json");
@@ -100,7 +132,21 @@ namespace Ven4Tools.ViewModels
 
                 _catalogLoader ??= new CatalogLoaderService();
                 var loaded = await _catalogLoader.LoadCatalogAsync();
-                if (loaded == null) { Log("❌ Ошибка: не удалось загрузить каталог"); return; }
+                if (loaded == null)
+                {
+                    ShowCatalogError("Нет подключения к интернету или CDN недоступен.\nПроверьте сеть и нажмите «Повторить загрузку».");
+                    Log("❌ Ошибка: не удалось загрузить каталог");
+                    return;
+                }
+                // Кэш перед обновлением удалён намеренно, поэтому пустой ответ здесь особенно
+                // опасен: BuildRows очистит уже показанный список, и пользователь остался бы
+                // с пустым каталогом и одной строкой в журнале. Список тогда не трогаем.
+                if (loaded.Apps.Count == 0)
+                {
+                    ShowCatalogError("Каталог пуст: его не удалось получить ни из сети, ни из встроенной копии.\nПрежний список оставлен как есть, нажмите «Повторить загрузку».");
+                    Log("❌ Ошибка: каталог получен пустым, прежний список сохранён");
+                    return;
+                }
 
                 _catalog = loaded;
                 SyncCatalogToAppManager();
@@ -118,7 +164,12 @@ namespace Ven4Tools.ViewModels
                     t => Log($"❌ Ошибка фоновой загрузки каталога: {t.Exception?.GetBaseException().Message}"),
                     TaskContinuationOptions.OnlyOnFaulted);
             }
-            catch (Exception ex) { Log($"❌ Ошибка: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                Log($"❌ Ошибка: {ex.Message}");
+                if (Apps.Count == 0)
+                    ShowCatalogError($"Обновление прервано ошибкой: {ex.Message}\nНажмите «Повторить загрузку».");
+            }
         }
 
         private void SyncCatalogToAppManager()
