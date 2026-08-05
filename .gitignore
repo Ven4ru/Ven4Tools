@@ -53,7 +53,12 @@ publish/
 # Admin tool lives in its own separate repository
 Ven4Admin/
 
-# Secrets — never commit real tokens
+# Секреты — реальные токены не коммитим никогда.
+# Класса Secrets в проекте больше нет: подход «зашить GitHub PAT в лаунчер»
+# отменён (токен из распространяемого exe извлекается кем угодно), краш-репорты
+# идут через серверный прокси ven4tools.ru/api/db.php, токен живёт на сервере.
+# Запись оставлена страховкой — если Secrets.cs когда-нибудь появится локально,
+# он не уедет в публичный репозиторий.
 **/Secrets.cs
 
 # Local publish artifacts
