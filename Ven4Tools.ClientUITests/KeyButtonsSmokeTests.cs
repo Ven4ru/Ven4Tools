@@ -149,22 +149,18 @@ namespace Ven4Tools.ClientUITests
         public void СистемнаяИнформация_КопированиеВБуфер_РаботаетИМеняетСодержимое()
         {
             var s = Require();
-            var systemBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnSystemTab"));
-            Assert.IsNotNull(systemBtn, "Не найдена кнопка вкладки «Система».");
-            systemBtn!.AsButton().Invoke();
-            System.Threading.Thread.Sleep(500);
 
-            // SystemTab — вложенный TabControl из 5 под-вкладок; контент не выбранной
-            // под-вкладки не реализуется в дереве UIA. btnCopySystemInfo — в «Диагностика».
+            // «Диагностика» — верхнеуровневая вкладка (btnDiagnosticsTab), а не под-вкладка
+            // «Системы»: переехала 2026-07-21. Тест до этого шёл в «Систему» и искал там
+            // TabItem «Диагностика» — с тех пор падал в каждом прогоне.
+            var diagBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnDiagnosticsTab"));
+            Assert.IsNotNull(diagBtn, "Не найдена кнопка вкладки «Диагностика».");
+            diagBtn!.AsButton().Invoke();
+            System.Threading.Thread.Sleep(600);
+
             // Таймаут увеличен — под нагрузкой полного прогона набора тестов система
             // может тормозить сильнее, чем в изолированном запуске одного теста.
             var longTimeout = TimeSpan.FromSeconds(30);
-            var diagSubTab = Retry.WhileNull(
-                () => s.MainWindow.FindFirstDescendant(cf => cf.ByControlType(ControlType.TabItem).And(cf.ByName("Диагностика"))),
-                timeout: longTimeout, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
-            Assert.IsNotNull(diagSubTab, "Не найдена под-вкладка «Диагностика» на вкладке «Система».");
-            diagSubTab!.Click();
-            System.Threading.Thread.Sleep(600);
 
             // Тестовый проект без ссылки на WPF (нет System.Windows.Clipboard) — читаем/пишем
             // буфер обмена через PowerShell Get-Clipboard/Set-Clipboard.
