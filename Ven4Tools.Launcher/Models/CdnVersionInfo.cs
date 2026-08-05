@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Ven4Tools.Launcher.Models
@@ -23,6 +24,12 @@ namespace Ven4Tools.Launcher.Models
         // и проходит штатную SNI/сертификат-валидацию.
         [JsonPropertyName("cdn_ip")]
         public string? CdnIp { get; set; }
+
+        [JsonPropertyName("revokedClientHashes")]
+        public List<string>? RevokedClientHashes { get; set; }
+
+        [JsonPropertyName("historicalClientArchives")]
+        public List<HistoricalClientArchive>? HistoricalClientArchives { get; set; }
     }
 
     public class CdnClientInfo
@@ -69,5 +76,14 @@ namespace Ven4Tools.Launcher.Models
         // SHA256 установщика лаунчера для проверки целостности после скачивания.
         [JsonPropertyName("setup_sha256")]
         public string? SetupSha256 { get; set; }
+    }
+
+    public class HistoricalClientArchive
+    {
+        [JsonPropertyName("version")]
+        public string? Version { get; set; }
+
+        [JsonPropertyName("sha256")]
+        public string? Sha256 { get; set; }
     }
 }

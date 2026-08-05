@@ -58,6 +58,9 @@
                             FontWeight="Bold" Effect="{StaticResource BrandAuraEffect}"
                             ToolTip="Запустит установленный клиент. Если его нет, скачает, проверит и установит выбранную версию."
                             Click="BtnLaunchApp_Click"/>
+                    <Button x:Name="btnInstallFromFile" Content="Установить из файла..." Height="32" Margin="0,0,0,8"
+                            ToolTip="Установить клиента из уже скачанного вами архива (.zip) — на случай, если обычная загрузка недоступна лаунчеру, но архив у вас уже есть другим путём."
+                            Click="BtnInstallFromFile_Click"/>
                     <Button x:Name="btnCheckUpdates" Content="Проверить обновления"
                             ToolTip="Обновит список версий клиента и проверит обновление лаунчера. Ничего не устанавливает автоматически."
                             Style="{StaticResource SideCommand}" Click="BtnCheckUpdates_Click"/>
