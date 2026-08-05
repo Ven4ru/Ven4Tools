@@ -52,13 +52,19 @@ namespace Ven4Tools.Launcher
                 hasOptionalMissing = true;
             }
 
-            AddLog("🔍 WebView2 Runtime...");
+            // WebView2 Runtime — опционален: ни клиент, ни лаунчер его не используют
+            // (пакет Microsoft.Web.WebView2 убран из клиента, элементов WebView2 в
+            // интерфейсе нет). Раньше его отсутствие помечалось как проблема и тянуло
+            // за собой предложение перезапуска с правами администратора — пользователя
+            // подталкивали ставить ненужный рантайм. Оставлен как предложение, потому
+            // что он нужен части стороннего ПО, которое ставится через Ven4Tools.
+            AddLog("🔍 WebView2 Runtime (опционально)...");
             if (IsWebView2Installed())
                 AddLog("   ✅ WebView2 Runtime установлен");
             else
             {
-                AddLog("   ❌ WebView2 Runtime не установлен");
-                hasIssues = true;
+                AddLog("   ⚠️ WebView2 Runtime не установлен — для самого Ven4Tools не требуется");
+                hasOptionalMissing = true;
             }
 
             AddLog("🔍 Visual C++ Redistributable 2015-2022 x64...");
@@ -155,14 +161,17 @@ namespace Ven4Tools.Launcher
             AddLog("🔧 Устранение проблем...");
 
             // Перезапуск с правами администратора предлагаем только когда они
-            // действительно нужны — для установки WebView2 или VC++ Redistributable.
-            // Иначе элевация запрашивается точечно через UAC при запуске установщиков.
+            // действительно нужны — то есть под обязательный VC++ Redistributable.
+            // WebView2 сюда не входит: он опционален (Ven4Tools им не пользуется),
+            // и ради него запрашивать элевацию заранее незачем — если пользователь
+            // всё же согласится его ставить, UAC появится точечно при запуске
+            // установщика.
             bool isAdmin = IsRunAsAdmin();
-            bool needsAdminComponents = !IsWebView2Installed() || !IsVcRedistInstalled();
+            bool needsAdminComponents = !IsVcRedistInstalled();
             if (!isAdmin && needsAdminComponents)
             {
                 var restartResult = System.Windows.MessageBox.Show(
-                    "Для установки системных компонентов (WebView2, Visual C++ Redistributable)\n" +
+                    "Для установки системного компонента (Visual C++ Redistributable)\n" +
                     "потребуются права администратора.\n\n" +
                     "Можно перезапустить лаунчер с правами администратора,\n" +
                     "либо продолжить — тогда запрос UAC появится при запуске установщиков.\n\n" +
@@ -207,8 +216,11 @@ namespace Ven4Tools.Launcher
             if (!IsWebView2Installed())
             {
                 var r = System.Windows.MessageBox.Show(
-                    "WebView2 Runtime не установлен!\n\nУстановить сейчас?",
-                    "Требуется WebView2 Runtime", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    "WebView2 Runtime не установлен.\n\n" +
+                    "Для работы Ven4Tools он не нужен, но требуется части стороннего ПО,\n" +
+                    "которое можно установить через каталог.\n\n" +
+                    "Установить сейчас?",
+                    "WebView2 Runtime (опционально)", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (r == MessageBoxResult.Yes)
                 {
                     await InstallWebView2Async();

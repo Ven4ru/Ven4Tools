@@ -59,14 +59,13 @@ namespace Ven4Tools.Views
                 }
                 ct.ThrowIfCancellationRequested();
 
-                // 4. WebView2
+                // 4. WebView2 — только справочно. Ven4Tools его не использует
+                // (пакет убран, элементов WebView2 в интерфейсе нет), поэтому его
+                // отсутствие больше не показывается как предупреждение: раньше строка
+                // «⚠ WebView2 не установлен» на splash-экране выглядела как проблема
+                // клиента, которой на самом деле нет.
                 SetStatus("Проверка WebView2...");
-                string? wv2 = GetWebView2Version();
-                if (wv2 == null)
-                {
-                    SetStatus("⚠ WebView2 не установлен");
-                    await Task.Delay(900, ct);
-                }
+                GetWebView2Version();
                 ct.ThrowIfCancellationRequested();
 
                 // 5. winget
