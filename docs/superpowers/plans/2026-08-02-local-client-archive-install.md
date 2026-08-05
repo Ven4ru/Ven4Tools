@@ -39,7 +39,7 @@
 | `Ven4Tools.Launcher/CliInstallRunner.cs` | Новый — headless-путь для `--install-from` |
 | `Ven4Tools.Launcher/App.xaml.cs` | **Изменить** — разбор `--install-from=`/`--silent` в `OnStartup` |
 | `Ven4Tools.Launcher/Services/LauncherPaths.cs` | **Изменить** — добавить `ResolveClientPath()`, общий для `MainWindow` и `CliInstallRunner` |
-| `version.json`, `_release/version.json` | **Изменить** — добавить пустые `revokedClientHashes`/`historicalClientArchives` (схема; реальное заполнение — на следующем релизе) |
+| `version.json`, `_release/version.json` | ~~Изменить~~ — **не трогаются** (untracked/gitignored, не часть репозитория, см. правку в Task 2, Step 5) |
 | `tests/Ven4Tools.Tests/CanonicalArchiveHasherTests.cs` | Новый |
 | `tests/Ven4Tools.Tests/CdnVersionInfoDeserializationTests.cs` | Новый |
 | `tests/Ven4Tools.Tests/LocalArchiveVerifierTests.cs` | Новый |
@@ -261,7 +261,7 @@ git commit -m "Лаунчер: канонический хеш содержим�
 
 **Files:**
 - Modify: `Ven4Tools.Launcher/Models/CdnVersionInfo.cs`
-- Modify: `version.json`, `_release/version.json`
+- ~~Modify: `version.json`, `_release/version.json`~~ (отменено — см. Step 5)
 - Test: `tests/Ven4Tools.Tests/CdnVersionInfoDeserializationTests.cs`
 
 **Interfaces:**
@@ -349,23 +349,19 @@ Expected: FAIL — компиляция (свойств ещё нет).
 Run: `dotnet test tests/Ven4Tools.Tests --filter "FullyQualifiedName~CdnVersionInfoDeserializationTests"`
 Expected: PASS (2/2).
 
-- [ ] **Step 5: Обновить схему в реальных файлах `version.json`**
+- [x] **Step 5 (ОТМЕНЁН — исходное предположение плана было неверным):** ~~Обновить схему в реальных файлах `version.json`~~
 
-В `version.json` (корень репо) и `_release/version.json` добавить после `"cdn_ip"`:
+При исполнении (Task 2, реализация) обнаружено: `version.json` и `_release/` — в `.gitignore` (`/version.json`, `/version.json.sig`, `_release/`, см. `.gitignore:64-65,75`) и никогда не были в git-истории (`git log --all -- version.json _release/version.json` — пусто). Это локальные, генерируемые на месте артефакты, не часть репозитория — при исследовании перед написанием плана они были прочитаны как untracked-файлы основного чекаута и ошибочно приняты за версии, живущие в репо. Редактировать и коммитить их не нужно и невозможно осмысленно (в свежем `git worktree` их вообще нет на диске — untracked-файлы между worktree не расшариваются).
 
-```json
-  "revokedClientHashes": [],
-  "historicalClientArchives": [],
-```
+Схема (`revokedClientHashes`/`historicalClientArchives`) фактически появится в реальном `version.json` естественным образом — на следующем реальном релизе, когда кто-то вручную допишет эти поля в JSON перед запуском `Tools/deploy-version-manifest.ps1` (тот подписывает и заливает файл на CDN как есть, схему не валидирует). Никакого отдельного шага/коммита в этом плане для этого не требуется — модель `CdnVersionInfo` (Step 3-4) уже готова прочитать эти поля, когда они появятся.
 
-Это только схема (пустые списки) — реальное заполнение `historicalClientArchives` происходит на СЛЕДУЮЩЕМ релизе клиента (текущая 4.4.2 остаётся «текущей», её хеш переносится в исторический список только когда её сменит следующая версия). Пересборка подписи `version.json.sig` и заливка на CDN этим шагом НЕ делается — это отдельное действие `Tools/deploy-version-manifest.ps1` в момент реального релиза, не часть этой задачи.
-
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
-git add Ven4Tools.Launcher/Models/CdnVersionInfo.cs tests/Ven4Tools.Tests/CdnVersionInfoDeserializationTests.cs version.json _release/version.json
-git commit -m "version.json: схема для revokedClientHashes и historicalClientArchives"
+git add Ven4Tools.Launcher/Models/CdnVersionInfo.cs tests/Ven4Tools.Tests/CdnVersionInfoDeserializationTests.cs
+git commit -m "CdnVersionInfo: схема для revokedClientHashes и historicalClientArchives"
 ```
+(Выполнено — commit `8289615`, без `version.json`/`_release/version.json`, см. правку Step 5 выше.)
 
 ---
 
@@ -876,6 +872,15 @@ public sealed class LocalArchiveVerifierTests
         return dest;
     }
 
+    // ИСПРАВЛЕНО при исполнении (найдено имплементором Task 5): порча поля
+    // "sha256_canonical" не ломает тест — LocalArchiveVerifier проверяет подпись
+    // против ЖИВОГО пересчитанного canonicalHashHex, а не против значения из
+    // самого файла (осознанное решение — иначе подмена этой декоративной метки
+    // не требовала бы приватного ключа). Значит порча именно этого поля не меняет
+    // исход: подпись всё равно проходит по Version+Signature+пересчитанному хешу,
+    // и тест с оригинальной подменой поля молча проверял бы не то (Offline вместо
+    // Rejected). Портить нужно "signature" — единственное поле, реально участвующее
+    // в ECDSA-проверке.
     private static void FlipByteInSignatureEntry(string zipPath)
     {
         using var archive = ZipFile.Open(zipPath, ZipArchiveMode.Update);
@@ -885,7 +890,7 @@ public sealed class LocalArchiveVerifierTests
         entry.Delete();
         var newEntry = archive.CreateEntry(CanonicalArchiveHasher.SignatureEntryName);
         using var writer = new StreamWriter(newEntry.Open());
-        writer.Write(json.Replace("sha256_canonical", "sha256_CANONICAL")); // ломает JSON-ключ -> не распарсится как валидная подпись
+        writer.Write(json.Replace("\"signature\"", "\"signature_TAMPERED\"")); // ломает поле, реально проверяемое ECDSA
     }
 
     // CdnService не абстрагирован интерфейсом — тесты, которым сеть не нужна
@@ -1429,22 +1434,23 @@ git commit -m "Лаунчер: кнопка «Установить из файл
 - Modify: `Ven4Tools.Launcher/App.xaml.cs`
 
 **Interfaces:**
-- Consumes: `InstallFromLocalArchiveAsync` (Task 6, теперь `internal`, вызывается на headless `MainWindow`-инстансе), `LauncherPaths.ResolveClientPath()` (Task 6, Step 3).
-- Produces: `internal static class CliInstallRunner { public static int Run(string archivePath, bool silent); }` — код возврата процесса: `0` успех, `1` отказ верификации/установки, `2` неверные аргументы (уже занято `OnStartup`), `3` уже запущен другой экземпляр.
+- Consumes: `InstallFromLocalArchiveAsync` (Task 6, теперь `internal async Task<bool>`, вызывается на headless `MainWindow`-инстансе).
+- Produces: `internal static class CliInstallRunner { public static Task<int> RunAsync(MainWindow window, string archivePath, bool silent); }` — код возврата процесса: `0` успех, `1` отказ верификации/установки/исключение, `3` уже запущен другой экземпляр. (`LauncherPaths.ResolveClientPath()` из Task 6 в итоге этой задачей не используется — `_clientPath` полностью резолвится конструктором `MainWindow` без обращения к нему.)
 
-**Важное архитектурное решение:** headless-путь не создаёт видимое окно, но переиспользует САМ класс `MainWindow` (создаёт экземпляр без `Show()`) — это даёт доступ ко всем уже существующим полям (`_clientPath`, `_httpClient`, `AddLog`, `SetOperationStage`, `ExtractAndInstallClientAsync`) без дублирования логики в отдельном классе. `AddLog` в `MainWindow` уже пишет в файловый лог лаунчера независимо от видимости окна (проверить в `MainWindow.Logging.cs`/аналогичном файле перед реализацией — если `AddLog` трогает UI-элемент `txtLog` без проверки на null/headless, обернуть обращение или использовать `Dispatcher.Invoke`, т.к. `InitializeComponent()` уже создал все элементы даже без `Show()`).
+**Важное архитектурное решение (ПЕРЕСМОТРЕНО при исполнении — исходный вариант плана реально зависает, см. ниже):** headless-путь переиспользует САМ класс `MainWindow` (создаёт экземпляр без `Show()`) — это даёт доступ ко всем уже существующим полям и методам (`_clientPath`, `AddLog`, `SetOperationStage`, `ExtractAndInstallClientAsync`) без дублирования логики установки в отдельном классе.
 
-- [ ] **Step 1: Найти и прочитать текущую реализацию `AddLog`**
+**Найденный при исполнении критический баг исходного текста плана (не гипотеза — воспроизведено эмпирически имплементором Task 7, зависание на 100% запусков):** исходная версия этого шага предлагала `window.InstallFromLocalArchiveAsync(...).GetAwaiter().GetResult()` синхронно внутри `App.OnStartup`. Это гарантированно вешает процесс намертво на самом первом `Dispatcher.Invoke` внутри `InstallFromLocalArchiveAsync` — ещё до `AddLog`, до любого `await`. Причина: `Dispatcher.Invoke` требует запущенного消息-цикла (`Dispatcher.Run()`), а он стартует только ПОСЛЕ возврата из `OnStartup` (WPF: `Application.Run()` вызывает `OnStartup`, и только потом — `Dispatcher.Run()`). CLI-ветка блокирует именно тот поток, который должен этот цикл запустить — классический deadlock, не редкая гонка, воспроизводится каждый раз.
 
-Run: `grep -rn "private void AddLog\|private.*AddLog(" Ven4Tools.Launcher/*.cs`
+Также попутно найдено (и здесь же исправляется): исходный текст плана жёстко подставлял `silent: true` в вызов `InstallFromLocalArchiveAsync`, независимо от фактического CLI-флага `--silent` — делая собственный флаг `--silent` мёртвым параметром. Это противоречило же описанию в спеке («без флага `--silent` возможны диалоги») — исправлено ниже, флаг прокидывается по назначению.
 
-Убедиться, что `AddLog` не падает без видимого окна (обычно WPF позволяет обращаться к элементам созданного, но не показанного окна — `InitializeComponent()` уже выполнен в конструкторе). Если `AddLog` использует `Dispatcher.BeginInvoke`/`Invoke` — ничего дополнительно делать не нужно. Если обращается к `txtLog` напрямую без диспетчера — не критично для headless-режима (тот же поток), но зафиксировать этот факт в комментарии `CliInstallRunner`.
+**Исправленная архитектура:** не блокировать поток внутри `OnStartup` синхронно. Вместо `.GetAwaiter().GetResult()` — поставить установку в очередь диспетчера через `Dispatcher.BeginInvoke` и вернуться из `OnStartup` немедленно, дав `Application.Run()` запустить `Dispatcher.Run()`. К моменту, когда очередь дойдёт до нашего колбэка, цикл уже активен — `Dispatcher.Invoke` внутри `InstallFromLocalArchiveAsync` работает штатно. `ShutdownMode` явно ставится в `OnExplicitShutdown` — иначе поведение WPF при нуле открытых окон (`OnLastWindowClose` по умолчанию) для этого пути не гарантировано и не проверялось.
 
-- [ ] **Step 2: Реализовать `CliInstallRunner`**
+- [ ] **Step 1: Реализовать `CliInstallRunner`**
 
 ```csharp
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ven4Tools.Launcher;
 
@@ -1453,28 +1459,20 @@ namespace Ven4Tools.Launcher;
 /// скриптовое/автоматизированное разворачивание клиента без открытия окна лаунчера.
 /// Переиспользует MainWindow (без Show()) вместо дублирования логики установки —
 /// InstallFromLocalArchiveAsync и ExtractAndInstallClientAsync общие с обычным UI-путём.
+/// Вызывается ТОЛЬКО после того, как Dispatcher уже запущен (через Dispatcher.BeginInvoke
+/// из App.OnStartup, см. Step 3) — синхронный вызов до старта цикла диспетчера
+/// гарантированно вешает процесс на первом же Dispatcher.Invoke внутри
+/// InstallFromLocalArchiveAsync (эмпирически воспроизведено при исполнении Task 7).
 /// </summary>
 internal static class CliInstallRunner
 {
-    public static int Run(string archivePath, bool silent)
+    public static async Task<int> RunAsync(MainWindow window, string archivePath, bool silent)
     {
         try
         {
-            var window = new MainWindow();
-            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-
-            window.InstallFromLocalArchiveAsync(archivePath, cts.Token, silent: true)
-                .GetAwaiter().GetResult();
-
-            // InstallFromLocalArchiveAsync сам не возвращает булев итог наружу (тот же
-            // контракт, что и обработчик кнопки) — итог читаем из текстового статуса,
-            // выставленного методом, т.к. переделывать сигнатуру под два разных вызывающих
-            // (кнопка / CLI) ради одного bool — лишняя связанность ради одного use case.
-            string status = window.CurrentDownloadStatusText;
-            if (silent && status != "Готово")
-                Console.Error.WriteLine($"Установка не завершена: {status}");
-
-            return status == "Готово" ? 0 : 1;
+            bool success = await window.InstallFromLocalArchiveAsync(
+                archivePath, CancellationToken.None, silent);
+            return success ? 0 : 1;
         }
         catch (Exception ex)
         {
@@ -1485,17 +1483,15 @@ internal static class CliInstallRunner
 }
 ```
 
-**Пересмотр интерфейса Task 6:** для этого нужен способ прочитать финальный статус без парсинга UI-строки как основного контракта — как более чистая альтернатива, в Task 6 `InstallFromLocalArchiveAsync` меняет возвращаемый тип с `Task` на `Task<bool>` (`true` — успех), и всюду, где он вызывался как `_ = InstallFromLocalArchiveAsync(...)` (fire-and-forget из `BtnInstallFromFile_Click`), это не ломается — `Task<bool>`, отброшенный как `_`, работает точно так же. Обновить сигнатуру в Task 6, Step 5 (`internal async Task<bool> InstallFromLocalArchiveAsync(...)`), и все `return;` внутри нёе на `return false;`, а последний успешный путь — на `return installed;`. Тогда `CliInstallRunner.Run` использует:
+**Пересмотр интерфейса Task 6:** в Task 6 `InstallFromLocalArchiveAsync` меняет возвращаемый тип с `Task` на `Task<bool>` (`true` — успех), и всюду, где он вызывался как `_ = InstallFromLocalArchiveAsync(...)` (fire-and-forget из `BtnInstallFromFile_Click`), это не ломается — `Task<bool>`, отброшенный как `_`, работает точно так же. Обновить сигнатуру в Task 6, Step 5 (`internal async Task<bool> InstallFromLocalArchiveAsync(...)`), и все `return;` внутри неё на `return false;`, а последний успешный путь — на `return installed;`.
 
-```csharp
-            bool success = window.InstallFromLocalArchiveAsync(archivePath, cts.Token, silent: true)
-                .GetAwaiter().GetResult();
-            return success ? 0 : 1;
-```
+- [ ] **Step 2: Проверить `AddLog` и side-эффекты конструктора `MainWindow`**
 
-(Без обращения к приватному текстовому статусу — чище, типобезопасно.) Убрать из `CliInstallRunner` код, читающий `CurrentDownloadStatusText` (это поле не создаётся вовсе).
+Run: `grep -n "private void AddLog" Ven4Tools.Launcher/MainWindow.Tray.cs`
 
-- [ ] **Step 3: Разбор аргументов в `App.xaml.cs`**
+`AddLog` уже использует `Dispatcher.Invoke` внутри себя (пишет только в UI-текстбокс `txtLog`, файлового лога у лаунчера сейчас нет вообще — это факт, а не решение этой задачи; если нужен файловый след CLI-запуска, это отдельная будущая доработка, не блокирует эту задачу). Отдельно зафиксировать (без исправления в рамках этой задачи — вне её объёма): конструктор `MainWindow` безусловно вызывает `CreateTrayIcon()` и `StartBackgroundService()`, даже когда окно никогда не показывается — при `--install-from --silent` это значит, что иконка в трее и фоновый апдейтер могут на короткое время появиться/запуститься до `Shutdown()`. Не устраняется в этой задаче (потребовало бы отдельного headless-флага в конструктор `MainWindow` — более широкое изменение, чем предполагает эта задача); зафиксировать как известное ограничение в комментарии `CliInstallRunner` или в логе плана.
+
+- [ ] **Step 3: Разбор аргументов и запуск через `Dispatcher.BeginInvoke` в `App.xaml.cs`**
 
 В `Ven4Tools.Launcher/App.xaml.cs`, метод `OnStartup`, сразу после блока `VEN4TOOLS_UI_TEST` (после строки `if (...) { base.OnStartup(e); return; }`) и до создания обычного single-instance мьютекса:
 
@@ -1522,9 +1518,27 @@ internal static class CliInstallRunner
                 return;
             }
 
-            int exitCode = CliInstallRunner.Run(installFromPath, silentInstall);
-            ReleaseSingleInstanceMutex();
-            Shutdown(exitCode);
+            // Явный режим завершения: при нуле показанных окон поведение WPF-режима
+            // по умолчанию (OnLastWindowClose) для этого пути не проверялось —
+            // завершаем процесс сами, точным кодом возврата, без зависимости от
+            // подсчёта окон.
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            var window = new MainWindow();
+
+            // КРИТИЧНО: не блокировать здесь синхронно (.GetAwaiter().GetResult()) —
+            // Dispatcher.Run() запускается только ПОСЛЕ возврата из OnStartup, а
+            // InstallFromLocalArchiveAsync использует Dispatcher.Invoke, которому
+            // для работы нужен уже запущенный цикл диспетчера. Синхронная блокировка
+            // здесь = гарантированный deadlock (воспроизведено эмпирически при
+            // исполнении этой задачи). BeginInvoke ставит колбэк в очередь и
+            // возвращается немедленно — OnStartup завершается, Application.Run()
+            // запускает Dispatcher.Run(), и только тогда колбэк реально выполняется.
+            Dispatcher.BeginInvoke(new Action(async () =>
+            {
+                int exitCode = await CliInstallRunner.RunAsync(window, installFromPath, silentInstall);
+                ReleaseSingleInstanceMutex();
+                Shutdown(exitCode);
+            }));
             return;
         }
 ```
@@ -1532,12 +1546,12 @@ internal static class CliInstallRunner
 - [ ] **Step 4: Собрать, проверить вручную**
 
 Run: `dotnet build Ven4Tools.sln -c Release` — 0 ошибок, 0 предупреждений.
-Run (вручную, с реальным подписанным архивом из Task 4 или свежим релизным):
+Run (вручную, с любым zip-файлом — реальный сигнал успеха здесь не «клиент установился», а «процесс реально завершается с кодом возврата, а не висит»):
 ```powershell
-.\Ven4Tools.Launcher\bin\Release\net8.0-windows\win-x64\Ven4Tools.Launcher.exe --install-from="C:\путь\к\Ven4Tools-Client-X.Y.Z.zip" --silent
+.\Ven4Tools.Launcher\bin\Release\net8.0-windows\win-x64\Ven4Tools.Launcher.exe --install-from="C:\путь\к\любому.zip" --silent
 echo $LASTEXITCODE
 ```
-Expected: `0`, клиент установлен в стандартный путь, окно лаунчера не появлялось.
+Expected: процесс завершается за разумное время (не висит бесконечно) с каким-то кодом возврата (0 при реально валидном подписанном архиве из релиза, 1 при отказе верификации на случайном zip — оба варианта доказывают, что deadlock устранён, окно лаунчера не появлялось). Если процесс всё ещё висит — это блокирующая находка, не коммитить, эскалировать.
 
 - [ ] **Step 5: Commit**
 
