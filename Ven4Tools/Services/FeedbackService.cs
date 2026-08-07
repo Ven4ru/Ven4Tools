@@ -29,7 +29,11 @@ namespace Ven4Tools.Services
                     // privacy.html — «обезличенный идентификатор сеанса (хеш)»).
                     SessionId   = HashHelper.HashSessionId(CrashReportService.SessionId),
                     Version     = ChannelService.InstalledVersion,
-                    Channel     = "prerelease",
+                    // Канал берём из channel.json, а не из константы: окно отзыва
+                    // сегодня показывается только на prerelease, но зашитая строка
+                    // означала бы, что при любом расширении сценария отзыв со
+                    // стабильного канала уедет на сервер помеченным как prerelease.
+                    Channel     = ChannelService.IsPreRelease ? "prerelease" : "stable",
                     Rating      = rating,
                     Text        = CrashReportService.SanitizePath(text),
                     // Точность до секунд (не до 100 нс) — метка времени не должна служить
@@ -74,7 +78,19 @@ namespace Ven4Tools.Services
         public static async Task TrySendPendingAsync()
         {
             // Параноидальный режим: отправка отзывов на сервер запрещена.
-            if (ProfileService.Current.ParanoidMode) return;
+            // Отложенный отзыв при этом удаляем, а не оставляем лежать на диске:
+            // иначе он молча дожидался бы первого запуска с выключенным режимом и
+            // уехал бы на сервер тогда. Ровно то же делает CrashReportService с
+            // отложенным отчётом о сбое (см. App.AskAndSendPendingCrashReport).
+            if (ProfileService.Current.ParanoidMode)
+            {
+                if (Read() != null)
+                {
+                    DeletePending();
+                    AppLogger.Write("[FeedbackService] Отложенный отзыв удалён без отправки: включён параноидальный режим");
+                }
+                return;
+            }
             try
             {
                 var record = Read();

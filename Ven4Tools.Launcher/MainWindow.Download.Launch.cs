@@ -91,16 +91,8 @@ namespace Ven4Tools.Launcher
                     _clientProcess = clientProcess;
                     _watchdog?.Dispose();
                     _watchdog = new WatchdogService(clientProcess);
-                    _watchdog.ClientFrozen += report => Dispatcher.Invoke(() =>
-                    {
-                        var win = new CrashReportWindow(report) { Owner = this };
-                        win.ShowDialog();
-                    });
-                    _watchdog.ClientKilledWithoutCrash += report => Dispatcher.Invoke(() =>
-                    {
-                        var win = new CrashReportWindow(report) { Owner = this };
-                        win.ShowDialog();
-                    });
+                    _watchdog.ClientFrozen += report => Dispatcher.Invoke(() => ShowCrashReport(report));
+                    _watchdog.ClientKilledWithoutCrash += report => Dispatcher.Invoke(() => ShowCrashReport(report));
                     clientProcess.EnableRaisingEvents = true;
                     clientProcess.Exited += (_, _) =>
                     {
@@ -132,6 +124,21 @@ namespace Ven4Tools.Launcher
                 AddLog($"❌ Ошибка запуска: {ex.Message}");
                 System.Windows.MessageBox.Show($"Не удалось запустить клиент: {ex.Message}", "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        // Показ окна отчёта о зависании/принудительном завершении клиента.
+        // Тот же гейт, что и у отчётов при старте лаунчера (ShowStartupReports):
+        // окно предлагает опубликовать отчёт ПУБЛИЧНЫМ issue на GitHub, а
+        // параноидальный режим клиента обещает отправку отчётов блокировать.
+        private void ShowCrashReport(CrashReport report)
+        {
+            if (ClientPrivacySettings.IsParanoidMode())
+            {
+                AddLog("🔒 Отчёт о сбое клиента не предлагается: включён параноидальный режим");
+                return;
+            }
+            var win = new CrashReportWindow(report) { Owner = this };
+            win.ShowDialog();
         }
 
         private void BtnCancelDownload_Click(object sender, RoutedEventArgs e)

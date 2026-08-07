@@ -61,6 +61,12 @@ namespace Ven4Tools
                 try { LocalizationService.Init(); } catch { }
                 try { ThemeService.Apply(ProfileService.Current.Theme); } catch { }
                 try { _heartbeat = new HeartbeatService(); } catch { }
+                // Регион Windows, подменённый вкладкой «Office» на время загрузки
+                // установщика, возвращаем на старте: если прошлый сеанс убили в
+                // середине, штатное восстановление в finally не отработало. Вкладка
+                // создаётся лениво (а без интернета её кнопка вообще скрыта), поэтому
+                // страховка обязана жить здесь, а не в её конструкторе.
+                try { OfficeRegionRecoveryService.Recover(); } catch { }
                 // Краш-репорт прошлого сеанса отправляется только с явного согласия пользователя
                 try { AskAndSendPendingCrashReport(); } catch { }
                 // Отправка отложенного отзыва — тоже fire-and-forget

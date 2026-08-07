@@ -27,10 +27,9 @@ namespace Ven4Tools.Views.Tabs
 
         // Persistent-маркер региона на диске — страховка от hard-kill / отключения питания
         // между SetRegionUS() и RestoreRegion(). Если процесс убит, файл переживёт и регион
-        // будет восстановлен при следующем запуске (см. конструктор).
-        private static readonly string _regionBackupPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Ven4Tools", "region_backup.json");
+        // будет восстановлен при следующем запуске клиента: сам маркер и восстановление
+        // живут в OfficeRegionRecoveryService, а не здесь — вкладка создаётся лениво, и
+        // привязанная к её конструктору страховка не срабатывала бы там, где нужна.
 
         public event Action? GoToActivation;
 
