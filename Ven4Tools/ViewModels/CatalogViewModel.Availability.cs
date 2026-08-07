@@ -220,12 +220,17 @@ namespace Ven4Tools.ViewModels
             var dialog = new AlternativeSourceDialog(row.DisplayName) { Owner = owner };
             if (dialog.ShowDialog() != true) return;
 
+            // Два независимых условия, а не if/else-if: окно позволяет указать и пакет
+            // winget, и свою ссылку одновременно, причём у каждого источника свой флажок
+            // «Приоритет». При else-if заполненная ссылка молча терялась, если пользователь
+            // ещё и выбрал пакет из списка. Сохраняем отдельными вызовами — иначе общий
+            // параметр priority применился бы к обоим источникам сразу.
             if (dialog.SelectedPackage != null)
             {
                 _appManager.SaveAlternativeSource(row.AppId, dialog.SelectedPackage.Id, null, dialog.UseWingetFirst);
                 Log($"✅ Сохранён Winget ID: {dialog.SelectedPackage.Id} для {row.DisplayName}");
             }
-            else if (!string.IsNullOrEmpty(dialog.CustomUrl))
+            if (!string.IsNullOrEmpty(dialog.CustomUrl))
             {
                 _appManager.SaveAlternativeSource(row.AppId, null, dialog.CustomUrl, dialog.UseUrlFirst);
                 Log($"✅ Сохранена ссылка: {dialog.CustomUrl} для {row.DisplayName}");
