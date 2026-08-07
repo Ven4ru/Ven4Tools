@@ -135,6 +135,15 @@ namespace Ven4Tools
 
             cmbResults.SelectedItem = existing;
             cmbResults.IsEnabled = true;
+            // Флажок «Приоритет» обязан включаться вместе со списком. Он выключен в
+            // конструкторе и включался только при непустом результате поиска — а при
+            // пустом (winget ничего не нашёл, ради чего ручной ввод и существует)
+            // оставался выключенным навсегда. При этом BtnOk_Click читает его значение
+            // и для ручного ввода тоже: выключенный флажок нельзя отметить, поэтому
+            // UseWingetFirst для ручного ID был всегда false, а обещание подписи
+            // «Источник с галочкой „Приоритет“ будет использоваться первым» —
+            // недостижимым именно в том сценарии, где оно нужнее всего.
+            chkPriorityWinget.IsEnabled = true;
             _hasWingetResults = true;
             CheckCanSave();
         }
@@ -208,7 +217,8 @@ namespace Ven4Tools
             if (SelectedPackage != null && !CommandLineGuard.ValidateId(SelectedPackage.Id))
             {
                 MessageBox.Show(
-                    "Недопустимый Winget ID: разрешены только буквы, цифры, точка, дефис, плюс, подчёркивание и пробел.",
+                    "Недопустимый Winget ID: разрешены только буквы, цифры, точка, дефис, плюс и подчёркивание. " +
+                    "Пробелов в идентификаторах winget не бывает — проверьте, не скопирован ли вместе с ID лишний текст.",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 SelectedPackage = null;
                 return;

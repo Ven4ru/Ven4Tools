@@ -18,30 +18,11 @@ namespace Ven4Tools.Launcher.Services
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Ven4Tools", "crash_last.json");
 
-        /// <summary>
-        /// Путь к папке клиента: из настроек (launcher_settings.json → InstallPath),
-        /// либо, если не задан, рядом с исполняемым файлом лаунчера — та же логика,
-        /// что использует MainWindow при старте. Общий метод, чтобы CliInstallRunner
-        /// не дублировал резолвинг мимо MainWindow и не расходился с ним.
-        /// </summary>
-        public static string ResolveClientPath()
-        {
-            string appData = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
-            string settingsPath = Path.Combine(appData, "launcher_settings.json");
-            string installPath = AppDomain.CurrentDomain.BaseDirectory;
-            try
-            {
-                if (File.Exists(settingsPath))
-                {
-                    var json = File.ReadAllText(settingsPath);
-                    var settings = Newtonsoft.Json.Linq.JObject.Parse(json);
-                    string? fromSettings = settings["InstallPath"]?.ToString();
-                    if (!string.IsNullOrWhiteSpace(fromSettings)) installPath = fromSettings;
-                }
-            }
-            catch { }
-            return Path.Combine(installPath, "Ven4Tools_Client");
-        }
+        // Резолвинга пути к папке клиента здесь намеренно нет. Он был добавлен как
+        // «общий метод для MainWindow и CliInstallRunner», но по факту не вызывался
+        // ниоткуда: CliInstallRunner переиспользует сам MainWindow целиком, а тот
+        // считает путь у себя (MainWindow.xaml.cs / MainWindow.Download.cs). Второй
+        // экземпляр той же логики, в который никто не заходит, опаснее его отсутствия —
+        // правку пути сделали бы в нём и не увидели бы никакого эффекта.
     }
 }
