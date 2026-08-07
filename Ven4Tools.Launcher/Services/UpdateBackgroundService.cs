@@ -197,8 +197,19 @@ namespace Ven4Tools.Launcher.Services
 
         // Убрать ANSI escape-коды из вывода winget перед парсингом.
         // [0-9;?]* — параметры CSI включая private-mode prefix '?'; lh — cursor hide/show.
+        // Держится синхронно с WingetRunner._ansiRegex в клиенте — там же этот шаблон
+        // уже был ужесточён, а копия лаунчера правку не получила. Отличия, которые
+        // возвращены здесь:
+        //   • OSC закрывается не только BEL (\x07), но и ST (ESC \), а тело OSC больше
+        //     не может проглотить ESC — иначе последовательность смены заголовка окна,
+        //     которую winget шлёт при прогрессе, съедала весь остаток вывода до
+        //     следующего BEL вместе со строками таблицы;
+        //   • добавлен однобайтовый CSI (\x9B) — второй способ закодировать то же самое.
+        // Симптом старого шаблона: в выводе оставался мусор, строка-разделитель «---»
+        // не находилась, CountWingetUpgradesAsync возвращал 0, и лаунчер молча
+        // показывал «обновлений нет».
         private static readonly System.Text.RegularExpressions.Regex _ansiRegex =
-            new(@"\x1B(?:\[[0-9;?]*[mGKHFABCDsuJhlLM]|\][^\x07]*\x07|[()][0-9A-Za-z])",
+            new(@"\x1B(?:\[[0-9;?]*[mGKHFABCDsuJhlLM]|\][^\x07\x1B]*(?:\x07|\x1B\\)|[()][0-9A-Za-z])|\x9B[0-9;?]*[mGKHFABCDsuJhlLM]",
                 System.Text.RegularExpressions.RegexOptions.Compiled);
 
         private static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
