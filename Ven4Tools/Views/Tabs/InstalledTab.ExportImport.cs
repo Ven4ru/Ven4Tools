@@ -32,8 +32,12 @@ namespace Ven4Tools.Views.Tabs
             AppLogger.Write($"📤 Экспорт в {System.IO.Path.GetFileName(dlg.FileName)}...");
             try
             {
-                var (_, output) = await WingetRunner.RunAsync($"export -o \"{dlg.FileName}\" --accept-source-agreements");
-                bool ok = System.IO.File.Exists(dlg.FileName);
+                var (code, output) = await WingetRunner.RunAsync($"export -o \"{dlg.FileName}\" --accept-source-agreements --disable-interactivity");
+                // Одного File.Exists мало: SaveFileDialog разрешает выбрать уже
+                // существующий файл, и при неудаче winget на диске остаётся СТАРЫЙ файл —
+                // проверка проходила, и пользователь получал «✅ Экспортировано»
+                // на устаревшие данные. Требуем ещё и нулевой код выхода.
+                bool ok = code == 0 && System.IO.File.Exists(dlg.FileName);
                 AppLogger.Write(ok ? $"✅ Экспортировано → {dlg.FileName}"
                        : $"⚠ winget: {output.Trim().Split('\n').LastOrDefault()}");
             }
@@ -71,11 +75,36 @@ namespace Ven4Tools.Views.Tabs
             await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
-                var (_, output) = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements");
-                bool ok = output.Contains("успешно") || output.Contains("successfully") || output.Contains("All packages");
-                AppLogger.Write(ok ? "✅ Импорт завершён"
-                       : $"⚠ {output.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l))}");
-                if (ok) await LoadAppsAsync();
+                // Успех определяется кодом выхода, как в BtnUpgradeAll_Click и
+                // UpdateAppAsync (см. InstalledTab.BulkOps.cs), а не поиском подстрок
+                // «успешно»/«successfully» в выводе. Проект принципиально не передаёт
+                // --locale en-US, поэтому winget печатает на языке системы: на любой
+                // локали кроме русской и английской удачный импорт объявлялся неудачей
+                // (и список установленных не обновлялся), а неудачный — успехом, если
+                // слово «successfully» попадалось в отчёте по одному из пакетов.
+                var (code, output) = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements");
+                var exit = DescribeWingetExitCode(code);
+
+                if (exit.Success)
+                    AppLogger.Write(exit.Reboot
+                        ? "✅ Импорт завершён (для части пакетов требуется перезагрузка)"
+                        : "✅ Импорт завершён");
+                // code == -1 — синтетический признак «winget вообще не отработал»
+                // (не найден, убит по таймауту): реального кода выхода нет, расшифровка
+                // дала бы «winget завершился с кодом -1» — прямую неправду.
+                else if (code == -1)
+                    AppLogger.Write("⚠ Импорт не выполнен: winget не отработал (причина — в логе выше)");
+                else
+                {
+                    AppLogger.Write($"⚠ Импорт завершён с ошибками: {exit.Reason}");
+                    string? lastLine = output.Trim().Split('\n')
+                        .LastOrDefault(l => !string.IsNullOrWhiteSpace(l))?.Trim();
+                    if (!string.IsNullOrEmpty(lastLine)) AppLogger.Write($"   winget: {lastLine}");
+                }
+
+                // Обновляем список, если winget реально отработал: при частичной неудаче
+                // часть пакетов всё равно установлена, и список обязан это отразить.
+                if (code != -1) await LoadAppsAsync();
             }
             catch (Exception ex) { AppLogger.Write($"❌ Ошибка импорта: {ex.Message}"); }
             finally

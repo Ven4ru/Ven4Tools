@@ -1,5 +1,6 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using Ven4Tools.Services;
@@ -14,18 +15,15 @@ namespace Ven4Tools.Views.Tabs
             txtUpdatesLog.Text = "⏳ Проверка...";
             try
             {
+                // --accept-source-agreements --disable-interactivity — как и во всех
+                // остальных read-only запросах к winget (InstalledAppsService,
+                // InstalledTab.List, UpdateBackgroundService). Без них на свежей системе
+                // winget ждёт подтверждения условий источника и упирается в таймаут.
                 var (_, raw) = await WingetRunner.RunAsync(
-                    "upgrade --include-unknown --source winget",
+                    "upgrade --include-unknown --source winget --accept-source-agreements --disable-interactivity",
                     TimeSpan.FromMinutes(3));
 
-                var upgradable = raw.Split('\n')
-                    .Select(l => WingetRunner.StripAnsi(l).Trim())
-                    .Where(l => !string.IsNullOrWhiteSpace(l)
-                             && !l.StartsWith("Name")
-                             && !l.StartsWith("-")
-                             && !l.StartsWith("The ")
-                             && l.Contains("  "))
-                    .ToList();
+                var upgradable = ParseUpgradableRows(raw);
 
                 if (upgradable.Count > 0)
                 {
@@ -47,6 +45,39 @@ namespace Ven4Tools.Views.Tabs
             {
                 btnCheckUpdates.IsEnabled = true;
             }
+        }
+
+        // Разбор таблицы winget upgrade — тем же способом, что и в
+        // UpdateBackgroundService.CountWingetUpgradesAsync: берём строки между
+        // разделителем «---» и футером, разделитель определяем общим
+        // WingetRunner.IsTableSeparator.
+        //
+        // Прежняя версия фильтровала строки по английским префиксам («Name», «The ») —
+        // единственный парсер вывода winget в клиенте, не переведённый на общий критерий.
+        // Проект принципиально не передаёт --locale en-US, поэтому на русской Windows
+        // winget печатает «Имя/ИД/Версия» и русский футер: ни один из префиксов не
+        // совпадал, и строка заголовка вместе с футером попадала в список как
+        // «доступные обновления», завышая счётчик на экране настроек.
+        private static List<string> ParseUpgradableRows(string raw)
+        {
+            var rows = new List<string>();
+            if (string.IsNullOrWhiteSpace(raw)) return rows;
+
+            var lines = WingetRunner.StripAnsi(raw).Replace("\r", "").Split('\n');
+            int sepIdx = Array.FindIndex(lines, WingetRunner.IsTableSeparator);
+            if (sepIdx < 0) return rows;
+
+            for (int i = sepIdx + 1; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                if (string.IsNullOrWhiteSpace(line)) break;      // пустая строка = начался футер
+                if (WingetRunner.IsTableSeparator(line)) continue;
+                string t = line.Trim();
+                // Строки-суммарники футера winget («N upgrades available» и т.п.)
+                if (Regex.IsMatch(t, @"^\d+\b.*(package|upgrade)", RegexOptions.IgnoreCase)) break;
+                rows.Add(t);
+            }
+            return rows;
         }
     }
 }
