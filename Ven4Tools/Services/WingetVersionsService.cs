@@ -12,9 +12,18 @@ namespace Ven4Tools.Services
             if (!CommandLineGuard.ValidateId(wingetId)) return new List<string>();
             try
             {
+                // --accept-source-agreements обязателен: без него winget на машине,
+                // где соглашение источника ещё не принято (свежая Windows — типовой
+                // сценарий для установщика ПО), вместо списка версий печатает запрос
+                // подтверждения и завершается ошибкой. Список версий молча оказывался
+                // пустым, и выбор версии в каталоге не работал вовсе.
+                // --disable-interactivity — тот же набор флагов, что у остальных
+                // разборов вывода winget (list/upgrade/install): вывод парсится,
+                // интерактивные элементы в нём недопустимы.
                 var (_, output) = await WingetRunner.RunAsync(new[]
                 {
-                    "show", "--id", wingetId, "--versions", "-e", "--source", "winget"
+                    "show", "--id", wingetId, "--versions", "-e", "--source", "winget",
+                    "--accept-source-agreements", "--disable-interactivity"
                 }, token: token);
 
                 return ParseVersions(output);

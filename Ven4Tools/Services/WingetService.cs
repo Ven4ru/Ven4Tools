@@ -29,7 +29,8 @@ namespace Ven4Tools.Services
             if (string.IsNullOrEmpty(query)) return new List<WingetPackage>();
 
             return await SearchInternalAsync(
-                new[] { "search", "--name", query, "--source", "winget", "--accept-source-agreements" },
+                new[] { "search", "--name", query, "--source", "winget",
+                        "--accept-source-agreements", "--disable-interactivity" },
                 "Превышено время ожидания ответа winget при поиске.",
                 "SearchAsync",
                 token);
@@ -54,7 +55,8 @@ namespace Ven4Tools.Services
             if (string.IsNullOrEmpty(tag)) return new List<WingetPackage>();
 
             return await SearchInternalAsync(
-                new[] { "search", "--tag", tag, "--source", "winget", "--accept-source-agreements" },
+                new[] { "search", "--tag", tag, "--source", "winget",
+                        "--accept-source-agreements", "--disable-interactivity" },
                 "Превышено время ожидания ответа winget при поиске по тегу.",
                 "SearchByTagAsync",
                 token);
@@ -178,7 +180,8 @@ namespace Ven4Tools.Services
                 // CommandLineGuard, в отличие от прямой строковой интерполяции.
                 var psi = WingetRunner.CreateStartInfo(new[]
                 {
-                    "show", "--id", id, "-e", "--source", "winget", "--accept-source-agreements"
+                    "show", "--id", id, "-e", "--source", "winget", "--accept-source-agreements",
+                    "--disable-interactivity"
                 });
                 if (psi == null) return (null, null);
 

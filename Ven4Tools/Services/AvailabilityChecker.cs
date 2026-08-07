@@ -141,7 +141,8 @@ namespace Ven4Tools.Services
                 var (exitCode, output) = await WingetRunner.RunAsync(new[]
                 {
                     "show", "--id", appId, "--exact",
-                    "--source", "winget", "--accept-source-agreements"
+                    "--source", "winget", "--accept-source-agreements",
+                    "--disable-interactivity"
                 });
 
                 bool success = exitCode == 0 &&

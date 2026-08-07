@@ -26,7 +26,8 @@ namespace Ven4Tools.Services
             {
                 var (exitCode, _) = await WingetRunner.RunAsync(new[]
                 {
-                    "uninstall", "--id", wingetId, "--silent", "--accept-source-agreements"
+                    "uninstall", "--id", wingetId, "--silent", "--accept-source-agreements",
+                    "--disable-interactivity"
                 });
                 // 0 = успех, 0x8A150014 = пакет не установлен (нечего удалять — считаем успехом).
                 if (exitCode == 0 || exitCode == unchecked((int)0x8A150014))

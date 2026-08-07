@@ -82,7 +82,7 @@ namespace Ven4Tools.Views.Tabs
                 // локали кроме русской и английской удачный импорт объявлялся неудачей
                 // (и список установленных не обновлялся), а неудачный — успехом, если
                 // слово «successfully» попадалось в отчёте по одному из пакетов.
-                var (code, output) = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements");
+                var (code, output) = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements --disable-interactivity");
                 var exit = DescribeWingetExitCode(code);
 
                 if (exit.Success)
