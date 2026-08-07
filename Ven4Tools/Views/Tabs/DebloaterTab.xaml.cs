@@ -70,25 +70,40 @@ namespace Ven4Tools.Views.Tabs
 
         // ── UI helpers ───────────────────────────────────────────────────────────
 
-        private void ApplyFilter()
+        /// <summary>
+        /// Элементы, показанные текущим фильтром. Вынесено отдельно, потому что этот
+        /// же набор нужен кнопке «Все»: она обязана отмечать ровно то, что пользователь
+        /// видит на экране, а не весь список целиком.
+        /// </summary>
+        private List<DebloatItem> GetFilteredItems()
         {
-            if (lstDebloat == null) return;
-
             string cat = "all";
             if (rbApps.IsChecked == true)     cat = "app";
             if (rbPrivacy.IsChecked == true)  cat = "privacy";
             if (rbServices.IsChecked == true) cat = "service";
 
-            lstDebloat.ItemsSource = cat == "all"
-                ? _allItems
+            return cat == "all"
+                ? _allItems.ToList()
                 : _allItems.Where(i => i.Category == cat).ToList();
+        }
+
+        private void ApplyFilter()
+        {
+            if (lstDebloat == null) return;
+
+            lstDebloat.ItemsSource = GetFilteredItems();
         }
 
         private void FilterChanged(object sender, RoutedEventArgs e) => ApplyFilter();
 
+        // Отмечаем только видимые сейчас действия. Раньше отмечались все 35 сразу:
+        // пользователь, выбрав фильтр «Приложения» и нажав «Все», молча ставил галки
+        // ещё и на правки реестра и на отключение служб (DiagTrack, SysMain,
+        // dmwappushservice), которых на экране не было — и «Применить» их выполняло.
+        // Подсказка кнопки при этом всегда обещала «показанные текущим фильтром».
         private void BtnSelectAll_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var item in _allItems) item.IsSelected = true;
+            foreach (var item in GetFilteredItems()) item.IsSelected = true;
             ApplyFilter();
         }
 

@@ -1,14 +1,19 @@
 <Window x:Class="Ven4Tools.Views.WindowsUpdateModeDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Windows Update" Height="260" Width="440"
+        Title="Windows Update" SizeToContent="Height" MinHeight="260" Width="440"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{DynamicResource WindowBackground}">
+    <!-- Высота подбирается по содержимому: описания у переключателей переносятся по
+         словам, и при жёстко заданной Height="260" нижняя часть второго варианта и
+         пояснение под ним просто не помещались в окно без прокрутки. -->
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="16"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="16"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -34,10 +39,13 @@
             </RadioButton>
         </StackPanel>
 
-        <TextBlock Grid.Row="3" Text="Этот выбор — на будущее: сейчас его можно сбросить только через сброс профиля."
+        <!-- Строка 3 — отступ, поэтому пояснение живёт в собственной строке 4.
+             Раньше оно стояло в Grid.Row="3" (жёсткие 16 px): текст переносится на две
+             строки, нижняя обрезалась, а зазор между переключателями и кнопкой пропадал. -->
+        <TextBlock Grid.Row="4" Text="Выбор сохраняется в профиле и пока не меняется из настроек. Сегодня это ни на что не влияет: оба режима работают одинаково, установка всегда запускается вручную."
                    FontSize="11" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
 
-        <Button Grid.Row="4" x:Name="btnOk" Content="Готово" Height="36" HorizontalAlignment="Right"
+        <Button Grid.Row="6" x:Name="btnOk" Content="Готово" Height="36" HorizontalAlignment="Right"
                 Padding="24,0" Background="{DynamicResource AccentColor}" Foreground="White"
                 FontWeight="SemiBold" BorderThickness="0" Click="BtnOk_Click"/>
     </Grid>
