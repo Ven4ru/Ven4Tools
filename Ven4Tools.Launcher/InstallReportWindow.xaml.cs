@@ -177,9 +177,15 @@ namespace Ven4Tools.Launcher
                 DateTime ts = DateTime.TryParse(f.Timestamp, CultureInfo.InvariantCulture,
                     DateTimeStyles.RoundtripKind, out var d)
                     ? d.ToUniversalTime() : DateTime.UtcNow;
-                string error = GitHubService.SanitizePersonalData(f.Error);
+                // Название и идентификатор чистим наравне с текстом ошибки: у
+                // приложения, добавленного пользователем вручную, название по
+                // умолчанию берётся из имени выбранного файла установщика и вполне
+                // может содержать имя пользователя или машины.
+                string appName = GitHubService.SanitizePersonalData(f.AppName);
+                string appId   = GitHubService.SanitizePersonalData(f.AppId);
+                string error   = GitHubService.SanitizePersonalData(f.Error);
                 sb.AppendLine(
-                    $"| {f.AppName} | `{f.AppId}` | {f.Method} | {error} | {ts:dd.MM.yyyy HH:mm} |");
+                    $"| {appName} | `{appId}` | {f.Method} | {error} | {ts:dd.MM.yyyy HH:mm} |");
             }
             sb.AppendLine("\n---\n*Отчёт создан автоматически через Ven4Tools Launcher*");
             return sb.ToString();

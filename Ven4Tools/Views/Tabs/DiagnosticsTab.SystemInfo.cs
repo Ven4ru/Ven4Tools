@@ -80,7 +80,10 @@ namespace Ven4Tools.Views.Tabs
             {
                 string logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "logs");
                 Directory.CreateDirectory(logsPath);
-                Process.Start(TrustedExecutablePaths.ExplorerExe, logsPath);
+                // Путь в кавычках: он лежит в профиле пользователя, а имя учётной
+                // записи Windows вполне может содержать пробел («Иван Петров») —
+                // без кавычек explorer получил бы обрезанный по пробелу путь.
+                Process.Start(TrustedExecutablePaths.ExplorerExe, $"\"{logsPath}\"");
                 AppLogger.Write($"📁 Открыта папка логов: {logsPath}");
             }
             catch (Exception ex)
@@ -106,7 +109,10 @@ namespace Ven4Tools.Views.Tabs
                 var preview = string.Join("\n", lines.Skip(Math.Max(0, lines.Length - 50)));
                 txtLatestLog.Text = preview;
 
-                Process.Start(new ProcessStartInfo { FileName = TrustedExecutablePaths.NotepadExe, Arguments = latestLog, UseShellExecute = true });
+                // Кавычки обязательны по той же причине, что и у кнопки «Открыть папку
+                // логов»: путь идёт через профиль пользователя, имя которого может
+                // содержать пробел, и «блокнот» открыл бы не тот файл.
+                Process.Start(new ProcessStartInfo { FileName = TrustedExecutablePaths.NotepadExe, Arguments = $"\"{latestLog}\"", UseShellExecute = true });
                 AppLogger.Write($"📄 Открыт лог: {Path.GetFileName(latestLog)}");
             }
             catch (Exception ex)

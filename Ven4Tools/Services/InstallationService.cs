@@ -34,13 +34,51 @@ namespace Ven4Tools.Services
         private readonly string _logPath;
         private readonly object _logLock = new object();
 
+        // Сколько журналов установки хранить. Каждый запуск установки создаёт свой файл,
+        // и без ограничения папка logs росла бесконечно: единственной уборкой была
+        // ручная кнопка «Очистить логи». Остальные локальные журналы проекта давно
+        // ограничены (app.log — ротация по 1 МБ, история установок и журнал сбоев —
+        // по 100 записей), этот оставался единственным без предела.
+        private const int MaxInstallLogFiles = 30;
+
         public InstallationService()
         {
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var logsFolder = Path.Combine(appData, "Ven4Tools", "logs");
             Directory.CreateDirectory(logsFolder);
 
+            TrimOldInstallLogs(logsFolder);
+
             _logPath = Path.Combine(logsFolder, $"install_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
+        }
+
+        /// <summary>
+        /// Удаляет самые старые журналы установки, оставляя не более
+        /// <see cref="MaxInstallLogFiles"/> последних. Порядок — по имени файла:
+        /// оно начинается с отсортированной метки времени, поэтому лексикографическая
+        /// сортировка совпадает с хронологической и не зависит от времени файловой
+        /// системы (его меняет копирование папки). Best-effort: сбой уборки не должен
+        /// мешать установке.
+        /// </summary>
+        private static void TrimOldInstallLogs(string logsFolder)
+        {
+            try
+            {
+                // Подменённый ссылкой каталог не трогаем — тот же guard, что у Log()
+                // и AppLogger: клиент работает elevated, а папка доступна на запись
+                // обычному процессу пользователя.
+                if (PathHelper.IsReparsePoint(logsFolder)) return;
+
+                var files = Directory.GetFiles(logsFolder, "install_*.log");
+                if (files.Length <= MaxInstallLogFiles) return;
+
+                Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+                for (int i = 0; i < files.Length - MaxInstallLogFiles; i++)
+                {
+                    try { File.Delete(files[i]); } catch { }
+                }
+            }
+            catch { }
         }
 
         // Диспетчер установки: последовательно пробует стратегии в порядке приоритета
