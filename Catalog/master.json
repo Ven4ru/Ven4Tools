@@ -1,7 +1,16 @@
 {
-  "version": 11,
-  "lastUpdated": "2026-07-17 07:30:00",
+  "version": 12,
+  "lastUpdated": "2026-08-09 16:36:00",
   "changelog": [
+    {
+      "version": 12,
+      "date": "2026-08-09",
+      "addedApps": [
+        "tailscale"
+      ],
+      "removedApps": [],
+      "message": "Добавлен Tailscale — mesh-VPN для удалённого доступа между своими устройствами (категория «Системные»)."
+    },
     {
       "version": 11,
       "date": "2026-07-17",
@@ -947,6 +956,21 @@
       "profile": "extended",
       "sha256": "945fdf327e4d38e4ced61b0727b7ab8a1222958782982052989ddf7cb7096f62",
       "chocoId": "powertoys"
+    },
+    {
+      "id": "tailscale",
+      "name": "Tailscale",
+      "category": "Системные",
+      "wingetId": "Tailscale.Tailscale",
+      "downloadUrl": "",
+      "version": "1.102.2",
+      "size": "",
+      "official": true,
+      "iconUrl": "https://cdn.simpleicons.org/tailscale",
+      "description": "Приватная mesh-VPN сеть на базе WireGuard для безопасного доступа между своими устройствами.",
+      "profile": "extended",
+      "sha256": "",
+      "chocoId": "tailscale"
     },
     {
       "id": "rufus",
