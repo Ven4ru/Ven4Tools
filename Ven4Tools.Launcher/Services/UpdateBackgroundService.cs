@@ -276,6 +276,17 @@ namespace Ven4Tools.Launcher.Services
                 Log("winget upgrade не ответил за 60 секунд — проверка обновлений winget пропущена.");
                 return 0;
             }
+            catch (System.ComponentModel.Win32Exception win32Ex) when (win32Ex.NativeErrorCode == 5)
+            {
+                // Свежеустановленный/обновлённый MSIX-пакет winget не сразу становится
+                // исполняемым в текущей сессии (ACL и alias выполнения регистрируются
+                // при следующем логоне/перезагрузке) — Process.Start падает с Access
+                // Denied, хотя файл физически на месте (ResolveWinget его уже нашёл).
+                // Не повод пугать логом сырым текстом .NET-исключения — тихо пропускаем
+                // эту проверку, следующий тик таймера повторит её сам.
+                Log("winget только что установлен/обновлён и ещё не готов к использованию в этой сессии — проверка обновлений отложена.");
+                return 0;
+            }
             catch (Exception ex)
             {
                 Log($"Ошибка запуска winget upgrade: {ex.Message}");
