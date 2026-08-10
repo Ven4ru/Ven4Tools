@@ -37,7 +37,7 @@ namespace Ven4Tools.Views.Tabs
                     _catalogReadySubscribed = true;
                 }
                 // Обновляем changelog если каталог уже был загружен до открытия вкладки
-                if (CatalogLoaderService.LoadedCatalog != null)
+                if (CatalogLoaderService.State.Status != CatalogLoadStatus.NotLoaded)
                 {
                     pnlChangelog.Children.Clear();
                     PopulateChangelog();
@@ -64,7 +64,7 @@ namespace Ven4Tools.Views.Tabs
 
         private void PopulateChangelog()
         {
-            var entries = CatalogLoaderService.LoadedCatalog?.Changelog;
+            var entries = CatalogLoaderService.State.Catalog?.Changelog;
 
             if (entries == null || entries.Count == 0)
             {

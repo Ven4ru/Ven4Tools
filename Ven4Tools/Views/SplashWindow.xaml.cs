@@ -39,10 +39,12 @@ namespace Ven4Tools.Views
             {
                 // 1. Каталог — по результату определяем доступность сети
                 SetStatus("Загрузка каталога...");
+                // Причину сбоя загрузки пишет сам CatalogLoaderService — здесь только
+                // не даём ей уронить старт: ниже мы всё равно смотрим на источник каталога.
                 try { await CatalogLoaderService.PreloadAsync(ct); } catch (OperationCanceledException) { throw; } catch { }
                 ct.ThrowIfCancellationRequested();
 
-                var source = CatalogLoaderService.LoadedCatalog?.Source;
+                var source = CatalogLoaderService.State.Catalog?.Source;
                 if (source == "cache" || source == "embedded")
                 {
                     SetStatus("⚠ Сеть недоступна — каталог из кэша");

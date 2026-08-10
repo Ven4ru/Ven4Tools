@@ -181,8 +181,9 @@ namespace Ven4Tools.ViewModels
                 _ => !_isCheckingAvailability);
 
             RefreshCatalogCommand = RelayCommand.FromAsync(async _ => await RefreshCatalogAsync());
-            // forceReload: повтор обязан заново обратиться к источникам, а не переиспользовать
-            // тот же (пустой) каталог из памяти, из-за которого заглушка и появилась.
+            // forceReload: повтор обязан заново обратиться к источникам в любом случае —
+            // кнопку нажимают из-за уже показанной заглушки, и переиспользовать то, что
+            // лежит в памяти, было бы для неё бессмысленно.
             RetryLoadCatalogCommand = RelayCommand.FromAsync(async _ => await LoadAsync(forceReload: true));
 
             ClearAllUserAppsCommand = new RelayCommand(_ =>
