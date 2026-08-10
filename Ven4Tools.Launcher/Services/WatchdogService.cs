@@ -80,7 +80,7 @@ namespace Ven4Tools.Launcher.Services
 
                 ClientFrozen?.Invoke(report);
             }
-            catch { }
+            catch { /* тик раз в 10 с: сообщение о сбое повторялось бы бесконечно, поэтому просто ждём следующий тик */ }
         }
 
         // Вызывается из обработчика Process.Exited клиента (LaunchExistingClient),

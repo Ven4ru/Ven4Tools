@@ -147,7 +147,7 @@ namespace Ven4Tools.Services
                         catch { /* один битый ключ не должен рушить весь скан */ }
                     }
                 }
-                catch { }
+                catch { /* ветка реестра недоступна целиком — этот источник просто не даёт кандидатов */ }
             }
             return result;
         }
@@ -200,7 +200,7 @@ namespace Ven4Tools.Services
                         string nameHint = Path.GetFileNameWithoutExtension(lnk);
                         result.Add(new Candidate(Normalize(nameHint), targetPath));
                     }
-                    catch { }
+                    catch { /* один битый ярлык не должен рушить весь скан */ }
                 }
             }
             finally { Marshal.FinalReleaseComObject(shell); }
@@ -293,10 +293,10 @@ namespace Ven4Tools.Services
                             if (exe != null)
                                 result.Add(new Candidate(Normalize(displayName), exe));
                         }
-                        catch { }
+                        catch { /* один битый ключ не должен рушить весь скан */ }
                     }
                 }
-                catch { }
+                catch { /* ветка реестра недоступна целиком — этот источник просто не даёт кандидатов */ }
             }
             return result;
         }

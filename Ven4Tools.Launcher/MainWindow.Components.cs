@@ -404,7 +404,7 @@ namespace Ven4Tools.Launcher
                 Helpers.FileHelper.WriteAllTextAtomic(path,
                     Newtonsoft.Json.JsonConvert.SerializeObject(list, Newtonsoft.Json.Formatting.Indented));
             }
-            catch { }
+            catch { /* пометка не записалась — записи просто всплывут ещё раз при следующем запуске, состояние не портится */ }
         }
     }
 }
