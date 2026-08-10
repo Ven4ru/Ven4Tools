@@ -181,7 +181,7 @@ public partial class App : Application
             // попадать туда изначально. Отдельный try: мы уже в обработчике
             // необработанного исключения, и сбой самой очистки не должен стоить
             // всего отчёта — тогда пишем исходный текст.
-            try { text = Services.GitHubService.SanitizePersonalData(text); } catch { }
+            try { text = Helpers.PersonalDataSanitizer.Sanitize(text); } catch { }
             // Через FileHelper, а не голым File.WriteAllText: он проверяет каталог и
             // целевой файл на подмену reparse point'ом. Единственное место в лаунчере,
             // писавшее в %LocalAppData%\Ven4Tools в обход этого guard'а, — хотя дерево

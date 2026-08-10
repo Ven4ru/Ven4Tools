@@ -92,7 +92,7 @@ namespace Ven4Tools.Launcher
                     LauncherPaths.CrashReportPath,
                     JsonConvert.SerializeObject(_report, Formatting.Indented));
             }
-            catch { }
+            catch { /* не записалась пометка — окно предложит тот же отчёт при следующем запуске; терять из-за этого сам отчёт хуже */ }
         }
 
         private string BuildIssueBody()
@@ -110,11 +110,11 @@ namespace Ven4Tools.Launcher
             // имя машины опускаем, SessionId заменяем коротким хэшем (хватает для
             // дедупликации), а текст исключения и stack trace очищаем от путей
             // профиля и имени пользователя.
-            string sessionHash = GitHubService.HashSessionId(_report.SessionId);
-            string exceptionBlock = GitHubService.SanitizePersonalData(
+            string sessionHash = PersonalDataSanitizer.HashSessionId(_report.SessionId);
+            string exceptionBlock = PersonalDataSanitizer.Sanitize(
                 $"{_report.ExceptionType}: {_report.Message}{(_report.InnerMessage != null ? $"\n  → {_report.InnerMessage}" : "")}");
-            string stackTrace = GitHubService.SanitizePersonalData(_report.StackTrace);
-            userNote = GitHubService.SanitizePersonalData(userNote);
+            string stackTrace = PersonalDataSanitizer.Sanitize(_report.StackTrace);
+            userNote = PersonalDataSanitizer.Sanitize(userNote);
 
             return $"""
 ## 🐛 Автоматический отчёт о вылете

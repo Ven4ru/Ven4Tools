@@ -109,7 +109,7 @@ namespace Ven4Tools.Services
                 {
                     new KeyValuePair<string, string>("action",     "crash_report"),
                     // Хешируется на границе отправки (не в Write/локальном файле) —
-                    // тот же паттерн, что GitHubService.HashSessionId в лаунчере: наружу
+                    // тот же паттерн, что PersonalDataSanitizer.HashSessionId в лаунчере: наружу
                     // уходит обезличенный хеш, а не сырой SessionId. Внимание: хеш
                     // намеренно ОДИН И ТОТ ЖЕ, что у FeedbackService и у issue лаунчера,
                     // то есть краш и отзыв одного сеанса по-прежнему связываются между
@@ -194,7 +194,7 @@ namespace Ven4Tools.Services
 
             // Пути ЧУЖОГО профиля (например, в исключении фигурирует C:\Users\ИмяДругогоПользователя\...,
             // а не текущего) — замены выше это не ловят, так как завязаны на Environment.UserName/*Profile
-            // текущего пользователя. Тот же regex, что в GitHubService.SanitizePersonalData (лаунчер).
+            // текущего пользователя. Тот же regex, что в PersonalDataSanitizer.Sanitize (лаунчер).
             text = System.Text.RegularExpressions.Regex.Replace(
                 text,
                 @"([A-Za-z]:\\Users\\)[^\\\r\n]+",

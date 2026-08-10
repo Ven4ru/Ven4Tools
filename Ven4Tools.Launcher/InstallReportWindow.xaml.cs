@@ -151,7 +151,7 @@ namespace Ven4Tools.Launcher
                 FileHelper.WriteAllTextAtomic(InstallFailure.FailuresPath,
                     Newtonsoft.Json.JsonConvert.SerializeObject(all, Newtonsoft.Json.Formatting.Indented));
             }
-            catch { }
+            catch { /* не записалась пометка — окно предложит те же неудачи при следующем запуске, но данные не теряются */ }
         }
 
         private string BuildBody()
@@ -161,7 +161,7 @@ namespace Ven4Tools.Launcher
             // имя машины опускаем, SessionId заменяем коротким хэшем (хватает для
             // дедупликации), а тексты ошибок очищаем от путей профиля и имени пользователя.
             var firstFail = _failures.First();
-            string sessionHash = GitHubService.HashSessionId(firstFail.SessionId);
+            string sessionHash = PersonalDataSanitizer.HashSessionId(firstFail.SessionId);
 
             sb.AppendLine("## 📦 Отчёт об ошибках установки\n");
             sb.AppendLine($"**Версия:** `{firstFail.Version}`  ");
@@ -181,9 +181,9 @@ namespace Ven4Tools.Launcher
                 // приложения, добавленного пользователем вручную, название по
                 // умолчанию берётся из имени выбранного файла установщика и вполне
                 // может содержать имя пользователя или машины.
-                string appName = GitHubService.SanitizePersonalData(f.AppName);
-                string appId   = GitHubService.SanitizePersonalData(f.AppId);
-                string error   = GitHubService.SanitizePersonalData(f.Error);
+                string appName = PersonalDataSanitizer.Sanitize(f.AppName);
+                string appId   = PersonalDataSanitizer.Sanitize(f.AppId);
+                string error   = PersonalDataSanitizer.Sanitize(f.Error);
                 sb.AppendLine(
                     $"| {appName} | `{appId}` | {f.Method} | {error} | {ts:dd.MM.yyyy HH:mm} |");
             }

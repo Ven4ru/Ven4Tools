@@ -60,14 +60,14 @@ namespace Ven4Tools.Launcher
                 _availableVersions = new System.Collections.Generic.List<ClientVersionInfo>();
                 // «latest» — первый стабильный релиз именно с клиентским zip-архивом;
                 // launcher-only релизы (без Client-*.zip) не должны помечаться как latest.
-                // Предикат/маппинг общие с GitHubService — см. IsClientZipAsset/MapRelease.
-                var firstStable = GitHubService.FindFirstStableClientRelease(releases);
+                // Предикат/маппинг общие с автообновлением — см. ClientVersionMapper.
+                var firstStable = ClientVersionMapper.FindFirstStableClientRelease(releases);
                 foreach (var release in releases)
                 {
                     var version = release.tag_name?.TrimStart('v');
                     if (string.IsNullOrEmpty(version)) continue;
 
-                    var clientAsset = GitHubService.FindClientZipAsset(release);
+                    var clientAsset = ClientVersionMapper.FindClientZipAsset(release);
                     if (clientAsset != null)
                     {
                         // Качаем только с доверенных доменов GitHub по HTTPS
@@ -79,7 +79,7 @@ namespace Ven4Tools.Launcher
 
                         // Базовый маппинг (GitHub-ссылка) — общий с автообновлением;
                         // CDN-подстановку накладываем поверх только в этом ручном пути.
-                        var info = GitHubService.MapRelease(release, firstStable)!;
+                        var info = ClientVersionMapper.MapRelease(release, firstStable)!;
                         string githubUrl = clientAsset.browser_download_url ?? "";
                         // GitHub-ссылка есть всегда — крайний резерв в цепочке источников.
                         info.GithubUrl = githubUrl;

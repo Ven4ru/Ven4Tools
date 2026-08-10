@@ -1,16 +1,28 @@
 // Services/DownloadValidator.cs
 using System;
+using System.Linq;
 using System.Net.Http;
 
 namespace Ven4Tools.Launcher.Services
 {
     /// <summary>
-    /// Валидация URL скачивания: разрешаем только HTTPS-ссылки на доверенные домены
-    /// (GitHub и Microsoft). Защищает от подмены ответа API — лаунчер не станет
-    /// скачивать файл с чужого хоста.
+    /// Валидация параметров скачивания: разрешаем только HTTPS-ссылки на доверенные
+    /// домены (GitHub и Microsoft) и требуем полноценный SHA256-хеш там, где он
+    /// обязателен. Защищает от подмены ответа API — лаунчер не станет скачивать
+    /// файл с чужого хоста и не примет файл без подтверждённой контрольной суммы.
     /// </summary>
     public static class DownloadValidator
     {
+        /// <summary>
+        /// Полный SHA256-дайджест в hex: ровно 64 шестнадцатеричных символа.
+        /// Обрезанный или пустой хеш проверкой целостности не является — вызывающий
+        /// код обязан отказаться от загрузки (fail-closed).
+        /// </summary>
+        public static bool IsValidSha256(string? value)
+        {
+            return value?.Length == 64 && value.All(Uri.IsHexDigit);
+        }
+
         public static bool IsAllowedDownloadHost(string? url)
         {
             if (string.IsNullOrWhiteSpace(url)) return false;
