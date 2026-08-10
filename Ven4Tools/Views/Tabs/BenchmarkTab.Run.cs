@@ -54,7 +54,7 @@ namespace Ven4Tools.Views.Tabs
             });
 
             AppLogger.Write($"⏱️ Запущен тест скорости диска: {_selectedDisk.FriendlyName}, " +
-                            $"том {_selectedVolume.Letter}, профиль {DiskBenchmarkEngine.DescribeProfile(SelectedProfile)}");
+                            $"том {_selectedVolume.Letter}, профиль {BenchmarkPresets.DescribeProfile(SelectedProfile)}");
 
             try
             {
@@ -105,7 +105,7 @@ namespace Ven4Tools.Views.Tabs
 
         private void ClearResults()
         {
-            for (int index = 0; index < DiskBenchmarkEngine.Patterns.Length; index++)
+            for (int index = 0; index < BenchmarkPresets.Patterns.Length; index++)
             {
                 SetCell(index, BenchmarkOperation.Read, null);
                 SetCell(index, BenchmarkOperation.Write, null);
@@ -121,9 +121,9 @@ namespace Ven4Tools.Views.Tabs
 
         private void ShowResults(BenchmarkRunResult result)
         {
-            for (int index = 0; index < DiskBenchmarkEngine.Patterns.Length; index++)
+            for (int index = 0; index < BenchmarkPresets.Patterns.Length; index++)
             {
-                string name = DiskBenchmarkEngine.Patterns[index].Name;
+                string name = BenchmarkPresets.Patterns[index].Name;
                 SetCell(index, BenchmarkOperation.Read, result.Find(name, BenchmarkOperation.Read));
                 SetCell(index, BenchmarkOperation.Write, result.Find(name, BenchmarkOperation.Write));
             }

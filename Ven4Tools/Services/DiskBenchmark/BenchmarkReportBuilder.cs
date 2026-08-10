@@ -46,7 +46,7 @@ namespace Ven4Tools.Services.DiskBenchmark
             }
 
             report.AppendLine("Тестовый том:   " + result.VolumeLetter);
-            report.AppendLine("Профиль:        " + DiskBenchmarkEngine.DescribeProfile(result.Profile) +
+            report.AppendLine("Профиль:        " + BenchmarkPresets.DescribeProfile(result.Profile) +
                               ", проходов: " + result.Passes.ToString(Culture));
             report.AppendLine("Тестовый файл:  " + FormatBinarySize(result.FileSizeBytes));
             report.AppendLine("Длительность:   " + FormatDuration(result.Duration));
@@ -66,7 +66,7 @@ namespace Ven4Tools.Services.DiskBenchmark
                 "Запись, МБ/с".PadLeft(SpeedColumn) + "IOPS".PadLeft(IopsColumn) + "Задержка".PadLeft(LatencyColumn));
             report.AppendLine(new string('-', TableWidth));
 
-            foreach (var pattern in DiskBenchmarkEngine.Patterns)
+            foreach (var pattern in BenchmarkPresets.Patterns)
             {
                 var read = result.Find(pattern.Name, BenchmarkOperation.Read);
                 var write = result.Find(pattern.Name, BenchmarkOperation.Write);

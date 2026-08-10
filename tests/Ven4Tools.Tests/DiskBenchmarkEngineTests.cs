@@ -90,7 +90,7 @@ public class DiskBenchmarkEngineTests
     [Fact]
     public void Паттерны_СоответствуютНаборуCrystalDiskMark()
     {
-        var names = DiskBenchmarkEngine.Patterns.Select(p => p.Name).ToArray();
+        var names = BenchmarkPresets.Patterns.Select(p => p.Name).ToArray();
 
         Assert.Equal(new[] { "SEQ1M Q8T1", "SEQ1M Q1T1", "RND4K Q32T16", "RND4K Q1T1" }, names);
     }
@@ -98,7 +98,7 @@ public class DiskBenchmarkEngineTests
     [Fact]
     public void ГлубинаОчереди_ЭтоПроизведениеОчередиНаПотоки()
     {
-        var random = DiskBenchmarkEngine.Patterns.Single(p => p.Name == "RND4K Q32T16");
+        var random = BenchmarkPresets.Patterns.Single(p => p.Name == "RND4K Q32T16");
 
         Assert.Equal(512, random.Streams);
         Assert.Equal(4096, random.BlockSize);
@@ -120,7 +120,7 @@ public class DiskBenchmarkEngineTests
     [InlineData("RND4K Q1T1")]
     public void ПаттерныСОчередьюОдин_ИзмеряютсяСинхронно(string name)
     {
-        var pattern = DiskBenchmarkEngine.Patterns.Single(p => p.Name == name);
+        var pattern = BenchmarkPresets.Patterns.Single(p => p.Name == name);
 
         Assert.Equal(1, pattern.QueueDepth);
         Assert.True(DiskBenchmarkEngine.UsesSynchronousIo(pattern));
@@ -135,7 +135,7 @@ public class DiskBenchmarkEngineTests
     [InlineData("RND4K Q32T16")]
     public void ПаттерныСГлубокойОчередью_ИзмеряютсяАсинхронно(string name)
     {
-        var pattern = DiskBenchmarkEngine.Patterns.Single(p => p.Name == name);
+        var pattern = BenchmarkPresets.Patterns.Single(p => p.Name == name);
 
         Assert.True(pattern.QueueDepth > 1);
         Assert.False(DiskBenchmarkEngine.UsesSynchronousIo(pattern));
@@ -147,13 +147,13 @@ public class DiskBenchmarkEngineTests
     [InlineData(BenchmarkProfile.Precise, 5)]
     public void ПрофильЗадаётЧислоПроходов(BenchmarkProfile profile, int expected)
     {
-        Assert.Equal(expected, DiskBenchmarkEngine.PassesForProfile(profile));
+        Assert.Equal(expected, BenchmarkPresets.PassesForProfile(profile));
     }
 
     [Fact]
     public void РазмерыТестовогоФайла_КратныБлокуВОдинМегабайт()
     {
-        foreach (long size in DiskBenchmarkEngine.FileSizes)
+        foreach (long size in BenchmarkPresets.FileSizes)
         {
             Assert.Equal(0, size % (1024 * 1024));
             // Блоков должно хватать на все потоки запросов самого широкого паттерна.
