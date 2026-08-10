@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -129,6 +128,9 @@ namespace Ven4Tools.Launcher
             txtDownloadStatus.Text    = "Скачивание: 0%";
             btnCancelDownload.Visibility = Visibility.Visible;
             btnLaunchApp.IsEnabled    = false;
+            // Та же блокировка, что и у «Установить Ven4Tools»: иначе кнопка остаётся
+            // нажимаемой во время загрузки и запускает вторую установку в тот же каталог.
+            btnInstallFromFile.IsEnabled = false;
             SetOperationStage(1); // Загрузка
 
             try
@@ -235,6 +237,7 @@ namespace Ven4Tools.Launcher
                 btnCancelDownload.Visibility = Visibility.Collapsed;
                 btnCancelDownload.IsEnabled  = true;
                 btnLaunchApp.IsEnabled       = true;
+                btnInstallFromFile.IsEnabled = true;
                 _downloadCts?.Dispose();
                 _downloadCts = null;
             }

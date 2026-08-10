@@ -16,12 +16,38 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
+            // Тот же признак занятости, по которому страхуется тихое автообновление
+            // (см. TriggerAutoClientUpdateAsync). Кнопка «Установить из файла...» была
+            // единственной точкой входа без этой проверки: во время идущей загрузки
+            // (ручной, тихой из трея или установки компонента) клик перезаписывал общий
+            // _downloadCts. Прежний токен при этом терялся неотменяемым — кнопка
+            // «Отмена» с этого момента отменяла уже другую операцию, — а две установки
+            // клиента шли параллельно в один и тот же каталог.
+            if (_downloadCts != null)
+            {
+                AddLog("⏳ Уже идёт другая операция — установка из файла отложена до её завершения");
+                System.Windows.MessageBox.Show(
+                    "Сейчас выполняется другая операция (загрузка или установка). " +
+                    "Дождитесь её завершения и повторите.",
+                    "Лаунчер занят", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
                 Filter = "Архив клиента Ven4Tools (*.zip)|*.zip",
                 Title = "Выберите архив клиента"
             };
             if (dialog.ShowDialog() != true) return;
+
+            // Диалог мог провисеть сколько угодно — за это время фоновая проверка
+            // обновлений могла начать тихую установку. Проверяем повторно, как это
+            // делает TriggerAutoClientUpdateAsync после LoadVersionsAsync.
+            if (_downloadCts != null)
+            {
+                AddLog("⏳ Пока был открыт выбор файла, началась другая операция — установка из файла отменена");
+                return;
+            }
 
             _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
             _ = InstallFromLocalArchiveAsync(dialog.FileName, _downloadCts.Token, silent: false);
@@ -35,6 +61,7 @@ namespace Ven4Tools.Launcher
                 txtDownloadStatus.Text = "Проверка подписи...";
                 btnCancelDownload.Visibility = silent ? Visibility.Collapsed : Visibility.Visible;
                 btnLaunchApp.IsEnabled = false;
+                btnInstallFromFile.IsEnabled = false;
             });
             Dispatcher.Invoke(() => SetOperationStage(2)); // Проверка целостности
 
@@ -113,6 +140,7 @@ namespace Ven4Tools.Launcher
                     btnCancelDownload.Visibility = Visibility.Collapsed;
                     btnCancelDownload.IsEnabled = true;
                     btnLaunchApp.IsEnabled = true;
+                    btnInstallFromFile.IsEnabled = true;
                 });
                 _downloadCts?.Dispose();
                 _downloadCts = null;
