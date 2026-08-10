@@ -48,8 +48,10 @@ namespace Ven4Tools.Views.Tabs
 
         private void LoadCacheAppsList()
         {
-            var catalog = CatalogLoaderService.LoadedCatalog;
-            if (catalog == null || catalog.Apps.Count == 0)
+            // UsableCatalog отдаёт каталог только со статусом Loaded — прежняя проверка
+            // «null или пусто» теперь выражена самим состоянием загрузки.
+            var catalog = CatalogLoaderService.State.UsableCatalog;
+            if (catalog == null)
             {
                 listCacheApps.ItemsSource = null;
                 return;

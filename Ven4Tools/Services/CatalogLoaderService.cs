@@ -10,10 +10,90 @@ using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
 {
+    /// <summary>
+    /// Чем закончилась последняя попытка получить каталог. Отдельный статус нужен,
+    /// чтобы «каталога ещё нет» и «каталог получен, но пустой» перестали выглядеть
+    /// одинаково: пустой каталог — это провал загрузки (не было ни сети, ни кэша,
+    /// ни встроенной копии), а не законный результат, и переиспользовать его как
+    /// готовый нельзя.
+    /// </summary>
+    public enum CatalogLoadStatus
+    {
+        /// <summary>Загрузка ещё не выполнялась — в памяти нет никакого каталога.</summary>
+        NotLoaded,
+
+        /// <summary>Каталог получен и содержит приложения — им можно пользоваться.</summary>
+        Loaded,
+
+        /// <summary>Каталог получен, но приложений в нём нет — попытку нужно повторить.</summary>
+        LoadedEmpty
+    }
+
+    /// <summary>
+    /// Явное состояние загрузки каталога: статус + сам каталог. Заменяет прежнее
+    /// «просто поле <c>MasterCatalog?</c>», по которому нельзя было отличить неудачу
+    /// от результата, из-за чего повтор загрузки подхватывал пустой каталог и не
+    /// делал ни одного обращения к источникам.
+    /// </summary>
+    public readonly record struct CatalogLoadState
+    {
+        // Конструктор закрыт намеренно: состояние собирается только фабриками ниже,
+        // поэтому пара «статус + каталог» не может разъехаться (например, Loaded с
+        // null-каталогом). Состояние по умолчанию (default) — корректный NotLoaded.
+        private CatalogLoadState(CatalogLoadStatus status, MasterCatalog? catalog)
+        {
+            Status = status;
+            Catalog = catalog;
+        }
+
+        /// <summary>Чем закончилась последняя попытка загрузки.</summary>
+        public CatalogLoadStatus Status { get; }
+
+        /// <summary>Полученный каталог; <c>null</c> только при <see cref="CatalogLoadStatus.NotLoaded"/>.</summary>
+        public MasterCatalog? Catalog { get; }
+
+        /// <summary>Исходное состояние: попыток загрузки ещё не было.</summary>
+        public static CatalogLoadState NotLoaded => new(CatalogLoadStatus.NotLoaded, null);
+
+        /// <summary>
+        /// Строит состояние по полученному каталогу: пустой набор приложений
+        /// (в том числе отсутствующий) сразу помечается как <see cref="CatalogLoadStatus.LoadedEmpty"/>.
+        /// </summary>
+        public static CatalogLoadState From(MasterCatalog catalog) =>
+            new(catalog.Apps is { Count: > 0 } ? CatalogLoadStatus.Loaded : CatalogLoadStatus.LoadedEmpty,
+                catalog);
+
+        /// <summary>Каталогом можно пользоваться как готовым результатом загрузки.</summary>
+        public bool IsUsable => Status == CatalogLoadStatus.Loaded;
+
+        /// <summary>
+        /// Каталог, если он пригоден к использованию, иначе <c>null</c>. Именно это
+        /// свойство должен читать код, решающий «нужно ли грузить заново».
+        /// </summary>
+        public MasterCatalog? UsableCatalog => IsUsable ? Catalog : null;
+    }
+
     public class CatalogLoaderService : IDisposable
     {
-        public static MasterCatalog? LoadedCatalog { get; private set; }
+        /// <summary>
+        /// Явное состояние последней загрузки каталога. Единственный источник правды:
+        /// любое решение «переиспользовать то, что в памяти, или идти в источники»
+        /// принимается по <see cref="CatalogLoadState.IsUsable"/>, а не по проверке на null.
+        /// </summary>
+        public static CatalogLoadState State { get; private set; } = CatalogLoadState.NotLoaded;
+
         public static event Action<MasterCatalog>? CatalogReady;
+
+        /// <summary>
+        /// Единая точка публикации результата: обновляет состояние и оповещает
+        /// подписчиков. Раньше присваивание поля и вызов события были продублированы
+        /// в пяти ветках — статус мог разъехаться с фактическим каталогом.
+        /// </summary>
+        private static void Publish(MasterCatalog catalog)
+        {
+            State = CatalogLoadState.From(catalog);
+            CatalogReady?.Invoke(catalog);
+        }
 
         private static readonly SemaphoreSlim _preloadLock = new(1, 1);
 
@@ -72,13 +152,11 @@ namespace Ven4Tools.Services
                 var cached = await TryReadCacheAsync(ct);
                 if (cached != null)
                 {
-                    LoadedCatalog = cached;
-                    CatalogReady?.Invoke(cached);
+                    Publish(cached);
                     return cached;
                 }
                 var embedded = LoadEmbeddedCatalog();
-                LoadedCatalog = embedded;
-                CatalogReady?.Invoke(embedded);
+                Publish(embedded);
                 return embedded;
             }
 
@@ -102,10 +180,9 @@ namespace Ven4Tools.Services
 
                 var (catalog, remoteJson, remoteSignature) = loaded.Value;
 
-                // Присваиваем результат до записи на диск: ошибка кэширования
+                // Публикуем результат до записи на диск: ошибка кэширования
                 // (например, Program Files без прав на запись) не должна обнулять каталог.
-                LoadedCatalog = catalog;
-                CatalogReady?.Invoke(catalog);
+                Publish(catalog);
                 RememberCatalogVersion(catalog.Version);
 
                 try
@@ -136,14 +213,12 @@ namespace Ven4Tools.Services
                 var cached = await TryReadCacheAsync(ct);
                 if (cached != null)
                 {
-                    LoadedCatalog = cached;
-                    CatalogReady?.Invoke(cached);
+                    Publish(cached);
                     return cached;
                 }
 
                 var embedded = LoadEmbeddedCatalog();
-                LoadedCatalog = embedded;
-                CatalogReady?.Invoke(embedded);
+                Publish(embedded);
                 return embedded;
             }
         }
@@ -326,14 +401,17 @@ namespace Ven4Tools.Services
 
         public static async Task PreloadAsync(CancellationToken ct = default)
         {
-            if (LoadedCatalog != null) return;
+            // Пропускаем предзагрузку только если в памяти лежит ПРИГОДНЫЙ каталог:
+            // пустой результат прошлой попытки — это неудача, её нужно повторить,
+            // а не считать предзагрузку выполненной.
+            if (State.IsUsable) return;
 
             // Только один preload одновременно — иначе параллельные вызовы
-            // (splash + фоновые тригеры) дублируют сетевые запросы и гонку за LoadedCatalog.
+            // (splash + фоновые тригеры) дублируют сетевые запросы и гонку за состоянием.
             await _preloadLock.WaitAsync(ct);
             try
             {
-                if (LoadedCatalog != null) return;
+                if (State.IsUsable) return;
 
                 using var loader = new CatalogLoaderService();
                 await loader.LoadCatalogAsync(ct);

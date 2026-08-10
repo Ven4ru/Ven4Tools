@@ -120,7 +120,7 @@ namespace Ven4Tools.Views.Tabs
             // каталогом и Windows Update (Task 8).
             if (UiGuards.WarnIfInstallBusy()) return;
 
-            var catalog = CatalogLoaderService.LoadedCatalog;
+            var catalog = CatalogLoaderService.State.Catalog;
             var catalogApp = catalog?.Apps.FirstOrDefault(a => a.Id == entry.AppId);
             if (catalogApp == null)
             {
