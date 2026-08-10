@@ -1,12 +1,9 @@
 using System;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Ven4Tools.Models;
 using Ven4Tools.Services;
 using Ven4Tools.Shared;
 using Ven4Tools.Views;
@@ -14,13 +11,19 @@ using Ven4Tools.Views.Tabs;
 
 namespace Ven4Tools
 {
+    /// <summary>
+    /// Главное окно — координатор: навигация по вкладкам, индикаторы в шапке и
+    /// подключение выделенных контроллеров. Собственной прикладной логики не держит:
+    /// трей — <see cref="TrayIconController"/>, закреплённые приложения —
+    /// <see cref="PinsStripController"/> и <see cref="PinnedAppsService"/>,
+    /// перетаскивание установщиков — <see cref="InstallerDropHandler"/>,
+    /// маскот — <see cref="MascotController"/>, журнал — <see cref="GlobalLogController"/>.
+    /// </summary>
     public partial class MainWindow : Window
     {
         private bool _categorySelectionShown = false;
         private string _currentTab = "catalog";
         private bool _feedbackShown = false;
-
-        private readonly ObservableCollection<LogEntry> _logEntries = new();
 
         private CatalogTab?    _catalogTab;
         private InstalledTab?  _installedTab;
@@ -34,7 +37,13 @@ namespace Ven4Tools
         private NetworkTab?    _networkTab;
         private HistoryTab?    _historyTab;
         private DebloaterTab?  _debloaterTab;
-        private System.Windows.Forms.NotifyIcon? _trayIcon;
+
+        private readonly GlobalLogController _globalLog;
+        private readonly MascotController _mascot;
+        private readonly PinsStripController _pins;
+        private readonly InstallerDropHandler _drop;
+        private readonly TrayIconController _tray;
+
         private DispatcherTimer? _activeTasksTimer;
         private bool? _lastActiveTasksBusy;
 
@@ -44,8 +53,18 @@ namespace Ven4Tools
             txtSidebarVersion.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "—";
             MotionService.Enabled = Environment.GetEnvironmentVariable("VEN4TOOLS_REDUCE_MOTION") != "1";
             Loaded += (_, _) => MotionService.FadeIn(this);
-            lstGlobalLog.ItemsSource = _logEntries;
-            AppLogger.MessageReceived += AddLog;
+
+            // Контроллеры создаются до проверки прав: окно уже показано, а XAML-события
+            // (drag&drop, кнопки журнала) могут прийти и на пути аварийного перезапуска.
+            _globalLog = new GlobalLogController(lstGlobalLog);
+            _mascot    = new MascotController(imgMascot);
+            _pins      = new PinsStripController(pnlPins, wrapPins, this,
+                             () => _catalogTab?.SelectedInstallDrive ?? "C:\\");
+            _drop      = new InstallerDropHandler(this, pnlDropOverlay,
+                             app => _catalogTab?.AddLocalInstallerApp(app));
+            _tray      = new TrayIconController(Dispatcher, ShowFromTray, ForceExit);
+
+            AppLogger.MessageReceived += _globalLog.Append;
 
             if (!IsRunAsAdmin())
             {
@@ -58,8 +77,8 @@ namespace Ven4Tools
             Loaded += (s, e) => ShowCategorySelectionIfNeeded();
             Loaded += (s, e) =>
             {
-                InitTrayIcon();
-                RefreshPinsStrip();
+                _tray.Initialize();
+                _pins.Refresh();
             };
             Loaded += (s, e) =>
             {
@@ -119,13 +138,15 @@ namespace Ven4Tools
         protected override void OnClosed(EventArgs e)
         {
             // Снимаем подписки на статические события, иначе окно не освобождается GC
-            AppLogger.MessageReceived -= AddLog;
+            AppLogger.MessageReceived -= _globalLog.Append;
             ConnectivityMonitor.StatusChanged -= OnConnectivityChanged;
             WindowsUpdateBackgroundService.CountChanged -= OnWindowsUpdateCountChanged;
-            UpdateBackgroundService.UnregisterNotifier();
+            _tray.UnregisterNotifier();
             _activeTasksTimer?.Stop();
             base.OnClosed(e);
         }
+
+        // ── Навигация ─────────────────────────────────────────────────────────────
 
         private void NavigateToCatalog(object? sender, RoutedEventArgs? e)
         {
@@ -300,44 +321,7 @@ namespace Ven4Tools
             UpdateMascot("history");
         }
 
-        // ── Tray icon ─────────────────────────────────────────────────────────────
-
-        private void InitTrayIcon()
-        {
-            try
-            {
-                _trayIcon = new System.Windows.Forms.NotifyIcon
-                {
-                    Icon    = System.Drawing.Icon.ExtractAssociatedIcon(
-                                  System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName
-                                  ?? ""),
-                    Visible = true,
-                    Text    = "Ven4Tools"
-                };
-
-                var menu = new System.Windows.Forms.ContextMenuStrip();
-                menu.Items.Add("Открыть", null, (_, _) => Dispatcher.Invoke(ShowFromTray));
-                menu.Items.Add("-");
-                menu.Items.Add("Выход", null, (_, _) => Dispatcher.Invoke(ForceExit));
-
-                _trayIcon.ContextMenuStrip = menu;
-                _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(ShowFromTray);
-
-                // Фоновый сервис уведомлений показывает балуны через нашу трей-иконку,
-                // чтобы не плодить вторую иконку в трее.
-                UpdateBackgroundService.RegisterNotifier((title, body) =>
-                    Dispatcher.Invoke(() =>
-                    {
-                        try
-                        {
-                            _trayIcon?.ShowBalloonTip(8000, title, body,
-                                System.Windows.Forms.ToolTipIcon.Info);
-                        }
-                        catch { }
-                    }));
-            }
-            catch { }
-        }
+        // ── Трей ──────────────────────────────────────────────────────────────────
 
         private void ShowFromTray()
         {
@@ -348,7 +332,7 @@ namespace Ven4Tools
 
         private void ForceExit()
         {
-            _trayIcon?.Dispose();
+            _tray.Dispose();
             ConnectivityMonitor.Stop();
             Application.Current.Shutdown();
         }
@@ -363,9 +347,8 @@ namespace Ven4Tools
             {
                 e.Cancel = true;
                 Hide();
-                _trayIcon?.ShowBalloonTip(2000, "Ven4Tools",
-                    "Приложение свёрнуто в трей. Двойной клик для открытия.",
-                    System.Windows.Forms.ToolTipIcon.Info);
+                _tray.ShowBalloon(2000, "Ven4Tools",
+                    "Приложение свёрнуто в трей. Двойной клик для открытия.");
                 return;
             }
 
@@ -401,244 +384,30 @@ namespace Ven4Tools
                 return;
             }
 
-            _trayIcon?.Dispose();
+            _tray.Dispose();
             ConnectivityMonitor.Stop();
         }
 
-        // ── Quick pins ────────────────────────────────────────────────────────────
+        // ── Подключение XAML-событий к контроллерам ───────────────────────────────
 
-        public void RefreshPinsStrip()
-        {
-            var pins = ProfileService.Current.PinnedAppIds;
-            if (pins.Count == 0) { pnlPins.Visibility = Visibility.Collapsed; return; }
+        private void MainArea_DragEnter(object sender, DragEventArgs e) => _drop.DragEnter(e);
 
-            pnlPins.Visibility = Visibility.Visible;
-            wrapPins.Children.Clear();
-            var catalog = Services.CatalogLoaderService.LoadedCatalog;
+        private void MainArea_DragOver(object sender, DragEventArgs e) => _drop.DragOver(e);
 
-            foreach (var id in pins)
-            {
-                var app = catalog?.Apps.FirstOrDefault(a => a.Id == id);
-                string name = app?.Name ?? id;
+        private void MainArea_DragLeave(object sender, DragEventArgs e) => _drop.DragLeave(e);
 
-                var card = new Border
-                {
-                    Background    = (Brush)FindResource("CardBackground"),
-                    CornerRadius  = new CornerRadius(8),
-                    Padding       = new Thickness(8, 4, 4, 4),
-                    Margin        = new Thickness(0, 0, 6, 0),
-                    Cursor        = System.Windows.Input.Cursors.Hand
-                };
-                var row = new StackPanel { Orientation = Orientation.Horizontal };
-                row.Children.Add(new TextBlock
-                {
-                    Text = name.Length > 16 ? name.Substring(0, 16) + "…" : name,
-                    Foreground = (Brush)FindResource("TextPrimary"),
-                    FontSize = 11, VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(0, 0, 6, 0)
-                });
-                var installBtn = new Button
-                {
-                    Content = "▶", Width = 22, Height = 22, FontSize = 9,
-                    Tag = id, Padding = new Thickness(0),
-                    ToolTip = $"Установит закреплённое приложение «{name}»."
-                };
-                installBtn.Click += PinInstallBtn_Click;
-                var unpinBtn = new Button
-                {
-                    Content = "×", Width = 18, Height = 18, FontSize = 10,
-                    Tag = id, Padding = new Thickness(0),
-                    Background = System.Windows.Media.Brushes.Transparent,
-                    BorderThickness = new Thickness(0),
-                    Foreground = (Brush)FindResource("TextSecondary"),
-                    ToolTip = "Уберёт приложение из панели закреплённых. Само приложение останется на компьютере."
-                };
-                unpinBtn.Click += PinUnpinBtn_Click;
-                row.Children.Add(installBtn);
-                row.Children.Add(unpinBtn);
-                card.Child = row;
-                wrapPins.Children.Add(card);
-            }
-        }
+        private void MainArea_Drop(object sender, DragEventArgs e) => _drop.Drop(e);
 
-        private async void PinInstallBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if ((sender as Button)?.Tag is not string id) return;
-            if (Views.UiGuards.WarnIfInstallBusy()) return;
+        private void BtnClearGlobalLog_Click(object sender, RoutedEventArgs e) => _globalLog.Clear();
 
-            var catalog = Services.CatalogLoaderService.LoadedCatalog;
-            var catalogApp = catalog?.Apps.FirstOrDefault(a => a.Id == id);
-            if (catalogApp == null) { AppLogger.Write($"❌ Приложение {id} не найдено в каталоге"); return; }
+        private void CopyGlobalLog_Click(object sender, RoutedEventArgs e) => _globalLog.CopySelectedOrAll();
 
-            var btn = sender as Button;
-
-            AppLogger.Write($"📌 Установка из пина: {catalogApp.Name}...");
-            var appInfo = new Models.AppInfo
-            {
-                Id = catalogApp.Id, DisplayName = catalogApp.Name,
-                AlternativeId = catalogApp.WingetId,
-                InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl)
-                    ? new System.Collections.Generic.List<string> { catalogApp.DownloadUrl } : new(),
-                ChocoId = catalogApp.ChocoId,
-                // SHA256 обязателен для установки из пина по прямой ссылке.
-                Sha256 = catalogApp.Sha256
-            };
-            // Переопределение тихого флага (напр. AutoHotkey v2: "/silent" вместо "/S") —
-            // без этого установка из пина теряет override и падает на дефолтном "/S"
-            // (тот же фикс, что уже применён к переустановке из истории — HistoryTab).
-            if (!string.IsNullOrEmpty(catalogApp.SilentArgs))
-                appInfo.SilentArgs = catalogApp.SilentArgs;
-            var prog = new Progress<AppInstallProgress>(p => AppLogger.Write($"  {p.Status}"));
-
-            // Общий семафор: не даём пину запустить установку параллельно с каталогом/историей.
-            if (btn != null) btn.IsEnabled = false;
-            await Services.InstallationService.InstallSemaphore.WaitAsync();
-            try
-            {
-                using var installer = new Services.InstallationService();
-                using var cts = new System.Threading.CancellationTokenSource();
-                string installDrive = _catalogTab?.SelectedInstallDrive ?? "C:\\";
-                var r = await installer.InstallAppAsync(appInfo, new[] { "winget", "msstore" }, cts.Token, prog, installDrive, null, Views.UiGuards.ConfirmPackageManagerInstallAsync);
-                AppLogger.Write(r.Success ? $"✅ {catalogApp.Name}" : $"❌ {r.Message}");
-            }
-            catch (OperationCanceledException)
-            {
-                // InstallAppAsync гасит обычные ошибки и возвращает (false, сообщение),
-                // но отмену пробрасывает наружу намеренно. Сюда же попадает таймаут
-                // HttpClient при прямой загрузке (TaskCanceledException). Без этого
-                // блока исключение вылетало бы из async void-обработчика и роняло
-                // приложение целиком — как уже сделано в каталоге, карточке, Office
-                // и вкладке «Установленные».
-                AppLogger.Write($"⏹️ Установка {catalogApp.Name} прервана");
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write($"❌ Ошибка установки {catalogApp.Name}: {ex.Message}");
-            }
-            finally
-            {
-                Services.InstallationService.InstallSemaphore.Release();
-                if (btn != null) btn.IsEnabled = true;
-            }
-        }
-
-        private void PinUnpinBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if ((sender as Button)?.Tag is not string id) return;
-            ProfileService.Current.PinnedAppIds.Remove(id);
-            ProfileService.Save();
-            RefreshPinsStrip();
-        }
-
-        public static void PinApp(string id)
-        {
-            var pins = ProfileService.Current.PinnedAppIds;
-            if (pins.Contains(id) || pins.Count >= 6) return;
-            pins.Add(id);
-            ProfileService.Save();
-        }
-
-        public static void UnpinApp(string id)
-        {
-            ProfileService.Current.PinnedAppIds.Remove(id);
-            ProfileService.Save();
-        }
-
-        public static bool IsPinned(string id) =>
-            ProfileService.Current.PinnedAppIds.Contains(id);
-
-        // ── Drag & drop ───────────────────────────────────────────────────────────
-
-        private void MainArea_DragEnter(object sender, DragEventArgs e)
-        {
-            if (IsExeOrMsi(e))
-            {
-                e.Effects = DragDropEffects.Copy;
-                pnlDropOverlay.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                e.Effects = DragDropEffects.None;
-            }
-            e.Handled = true;
-        }
-
-        private void MainArea_DragOver(object sender, DragEventArgs e)
-        {
-            e.Effects = IsExeOrMsi(e) ? DragDropEffects.Copy : DragDropEffects.None;
-            e.Handled = true;
-        }
-
-        private void MainArea_DragLeave(object sender, DragEventArgs e)
-        {
-            pnlDropOverlay.Visibility = Visibility.Collapsed;
-        }
-
-        private void MainArea_Drop(object sender, DragEventArgs e)
-        {
-            pnlDropOverlay.Visibility = Visibility.Collapsed;
-            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
-
-            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            foreach (var file in files)
-            {
-                if (!file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                    && !file.EndsWith(".msi", StringComparison.OrdinalIgnoreCase)) continue;
-
-                var dlg = new Views.LocalInstallerDialog(file) { Owner = this };
-                if (dlg.ShowDialog() == true && dlg.Result != null)
-                {
-                    AppLogger.Write($"📦 Добавлен локальный установщик: {dlg.Result.DisplayName}");
-                    // Передаём во вкладку каталога — в механизм пользовательских приложений
-                    if (_catalogTab != null)
-                        _catalogTab.AddLocalInstallerApp(dlg.Result);
-                }
-            }
-        }
-
-        private static bool IsExeOrMsi(DragEventArgs e)
-        {
-            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return false;
-            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            return files.Any(f =>
-                f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
-                f.EndsWith(".msi", StringComparison.OrdinalIgnoreCase));
-        }
+        // ── Прочее ────────────────────────────────────────────────────────────────
 
         private void UpdateMascot(string tabName)
         {
             _currentTab = tabName;
-            if (ProfileService.Current.Theme != "web")
-            {
-                imgMascot.Visibility = Visibility.Collapsed;
-                return;
-            }
-            // Своего маскота есть не у каждой вкладки. Часть переходов передаёт
-            // сюда нейтральное "system" явно, но вкладки «Установленные»,
-            // «Очистка» и «История» передают собственное имя, файла для
-            // которого в Resources\Mascots нет — там маскот просто молча
-            // пропадал, хотя на соседних вкладках оставался на месте. Общий
-            // откат на "system" убирает это расхождение и заодно избавляет
-            // будущие вкладки от необходимости помнить про такой случай.
-            if (!TryShowMascot(tabName) && !TryShowMascot("system"))
-            {
-                imgMascot.Visibility = Visibility.Collapsed;
-            }
-        }
-
-        private bool TryShowMascot(string tabName)
-        {
-            try
-            {
-                var uri = new Uri($"pack://application:,,,/Resources/Mascots/{tabName}.png");
-                imgMascot.Source = new System.Windows.Media.Imaging.BitmapImage(uri);
-                imgMascot.Visibility = Visibility.Visible;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            _mascot.Show(tabName);
         }
 
         private void SetActiveButton(Button activeButton)
@@ -686,30 +455,6 @@ namespace Ven4Tools
             // без прав администратора клиент неработоспособен, поэтому завершаемся
             // в любом случае.
             Application.Current.Shutdown();
-        }
-
-        public void AddLog(string message)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                var entry = LogEntry.Parse(message);
-                _logEntries.Add(entry);
-                while (_logEntries.Count > 500) _logEntries.RemoveAt(0);
-                lstGlobalLog.ScrollIntoView(entry);
-            });
-        }
-
-        private void BtnClearGlobalLog_Click(object sender, RoutedEventArgs e) => _logEntries.Clear();
-
-        private void CopyGlobalLog_Click(object sender, RoutedEventArgs e)
-        {
-            var items = lstGlobalLog.SelectedItems.Count > 0
-                ? lstGlobalLog.SelectedItems.Cast<LogEntry>()
-                : _logEntries.AsEnumerable();
-            var text = string.Join(Environment.NewLine,
-                items.Select(entry => $"[{entry.Time}] {entry.Icon} {entry.Message}"));
-            if (!string.IsNullOrEmpty(text))
-                Clipboard.SetText(text);
         }
 
         private void ShowCategorySelectionIfNeeded()
