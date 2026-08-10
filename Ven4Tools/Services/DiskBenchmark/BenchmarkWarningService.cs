@@ -70,7 +70,7 @@ namespace Ven4Tools.Services.DiskBenchmark
                 return false;
             }
 
-            long required = fileSizeBytes + DiskBenchmarkEngine.FreeSpaceReserveBytes;
+            long required = fileSizeBytes + BenchmarkPresets.FreeSpaceReserveBytes;
             if (volume.FreeBytes < required)
             {
                 error =

@@ -57,7 +57,7 @@ namespace Ven4Tools.Views.Tabs
         private void FillFileSizes()
         {
             cmbFileSize.Items.Clear();
-            foreach (long size in DiskBenchmarkEngine.FileSizes)
+            foreach (long size in BenchmarkPresets.FileSizes)
             {
                 cmbFileSize.Items.Add(new ComboBoxItem
                 {
@@ -72,7 +72,7 @@ namespace Ven4Tools.Views.Tabs
         private long SelectedFileSize =>
             cmbFileSize.SelectedItem is ComboBoxItem item && item.Tag is long size
                 ? size
-                : DiskBenchmarkEngine.FileSizes[0];
+                : BenchmarkPresets.FileSizes[0];
 
         /// <summary>Профиль прогона, выбранный пользователем.</summary>
         private BenchmarkProfile SelectedProfile

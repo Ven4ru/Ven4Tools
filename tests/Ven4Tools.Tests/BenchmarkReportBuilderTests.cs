@@ -29,7 +29,7 @@ public class BenchmarkReportBuilderTests
             Duration = TimeSpan.FromSeconds(161)
         };
 
-        foreach (var pattern in DiskBenchmarkEngine.Patterns)
+        foreach (var pattern in BenchmarkPresets.Patterns)
         {
             result.Measurements.Add(new BenchmarkMeasurement
             {
@@ -78,7 +78,7 @@ public class BenchmarkReportBuilderTests
     {
         string report = BenchmarkReportBuilder.Build(BuildResult(PciLinkInfo.Unknown));
 
-        foreach (var pattern in DiskBenchmarkEngine.Patterns)
+        foreach (var pattern in BenchmarkPresets.Patterns)
             Assert.Contains(pattern.Name, report);
     }
 

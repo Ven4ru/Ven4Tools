@@ -40,41 +40,6 @@ namespace Ven4Tools.Services.DiskBenchmark
 
         public const string TempFileName = "Ven4Tools_benchmark.tmp";
 
-        /// <summary>Запас свободного места сверх размера тестового файла.</summary>
-        public const long FreeSpaceReserveBytes = 1024L * 1024 * 1024;
-
-        /// <summary>Доступные размеры тестового файла.</summary>
-        public static readonly long[] FileSizes =
-        {
-            1024L * 1024 * 1024,
-            2048L * 1024 * 1024,
-            4096L * 1024 * 1024,
-            8192L * 1024 * 1024
-        };
-
-        /// <summary>Паттерны нагрузки в порядке вывода в таблице результатов.</summary>
-        public static readonly BenchmarkPattern[] Patterns =
-        {
-            new BenchmarkPattern { Name = "SEQ1M Q8T1",   BlockSize = 1024 * 1024, QueueDepth = 8,  ThreadCount = 1,  Sequential = true },
-            new BenchmarkPattern { Name = "SEQ1M Q1T1",   BlockSize = 1024 * 1024, QueueDepth = 1,  ThreadCount = 1,  Sequential = true },
-            new BenchmarkPattern { Name = "RND4K Q32T16", BlockSize = 4096,        QueueDepth = 32, ThreadCount = 16, Sequential = false },
-            new BenchmarkPattern { Name = "RND4K Q1T1",   BlockSize = 4096,        QueueDepth = 1,  ThreadCount = 1,  Sequential = false }
-        };
-
-        public static int PassesForProfile(BenchmarkProfile profile) => profile switch
-        {
-            BenchmarkProfile.Fast => 1,
-            BenchmarkProfile.Precise => 5,
-            _ => 3
-        };
-
-        public static string DescribeProfile(BenchmarkProfile profile) => profile switch
-        {
-            BenchmarkProfile.Fast => "Быстрый",
-            BenchmarkProfile.Precise => "Точный",
-            _ => "Обычный"
-        };
-
         /// <summary>Полный прогон. Отмена — штатный путь: возвращается частичный результат.</summary>
         public static async Task<BenchmarkRunResult> RunAsync(
             PhysicalDiskInfo disk,
@@ -84,7 +49,7 @@ namespace Ven4Tools.Services.DiskBenchmark
             IProgress<BenchmarkProgress>? progress,
             CancellationToken ct)
         {
-            int passes = PassesForProfile(profile);
+            int passes = BenchmarkPresets.PassesForProfile(profile);
             var result = new BenchmarkRunResult
             {
                 Disk = disk,
@@ -100,7 +65,7 @@ namespace Ven4Tools.Services.DiskBenchmark
 
             // Лучшее значение по проходам для каждой пары «паттерн + направление».
             var best = new Dictionary<string, BenchmarkMeasurement>();
-            int totalMeasurements = passes * Patterns.Length * 2;
+            int totalMeasurements = passes * BenchmarkPresets.Patterns.Length * 2;
             int doneMeasurements = 0;
 
             try
@@ -109,7 +74,7 @@ namespace Ven4Tools.Services.DiskBenchmark
 
                 for (int pass = 1; pass <= passes; pass++)
                 {
-                    foreach (var pattern in Patterns)
+                    foreach (var pattern in BenchmarkPresets.Patterns)
                     {
                         foreach (var operation in new[] { BenchmarkOperation.Read, BenchmarkOperation.Write })
                         {
@@ -154,7 +119,7 @@ namespace Ven4Tools.Services.DiskBenchmark
             }
 
             // Порядок в отчёте не зависит от порядка завершения замеров.
-            foreach (var pattern in Patterns)
+            foreach (var pattern in BenchmarkPresets.Patterns)
             {
                 foreach (var operation in new[] { BenchmarkOperation.Read, BenchmarkOperation.Write })
                 {
