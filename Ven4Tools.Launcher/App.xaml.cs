@@ -160,6 +160,9 @@ public partial class App : Application
         Application.Current?.Shutdown(1);
     }
 
+    /// <summary>Сколько файлов launcher_crash_*.txt хранить на диске.</summary>
+    private const int MaxLauncherCrashFiles = 20;
+
     private static void WriteLauncherCrash(Exception ex)
     {
         try
@@ -170,8 +173,45 @@ public partial class App : Application
             Directory.CreateDirectory(dir);
             // Миллисекунды + GUID исключают коллизию имён при двух крашах в одну секунду
             var file = Path.Combine(dir, $"launcher_crash_{DateTime.Now:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}.txt");
-            File.WriteAllText(file,
-                $"[{DateTime.UtcNow:O}] {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
+            string text = $"[{DateTime.UtcNow:O}] {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}";
+            // Текст очищается от путей профиля, имени пользователя и имени машины
+            // ровно так же, как клиент чистит свой crash_last.json в момент записи:
+            // файл лежит в папке, которую пользователь открывает кнопкой «Открыть
+            // папку логов» и прикладывает к обращениям, поэтому имена не должны
+            // попадать туда изначально. Отдельный try: мы уже в обработчике
+            // необработанного исключения, и сбой самой очистки не должен стоить
+            // всего отчёта — тогда пишем исходный текст.
+            try { text = Services.GitHubService.SanitizePersonalData(text); } catch { }
+            // Через FileHelper, а не голым File.WriteAllText: он проверяет каталог и
+            // целевой файл на подмену reparse point'ом. Единственное место в лаунчере,
+            // писавшее в %LocalAppData%\Ven4Tools в обход этого guard'а, — хотя дерево
+            // то же самое, доступное на запись обычному процессу пользователя, а лаунчер
+            // штатно оказывается elevated при запуске «от имени администратора»
+            // (обоснование целиком — в Helpers/FileHelper.cs).
+            Helpers.FileHelper.WriteAllTextAtomic(file, text);
+            TrimOldLauncherCrashFiles(dir);
+        }
+        catch { }
+    }
+
+    /// <summary>
+    /// Оставляет не более <see cref="MaxLauncherCrashFiles"/> последних файлов
+    /// launcher_crash_*.txt. Ни один код их не читает и не удаляет — без уборки
+    /// каждый вылет добавлял файл навсегда. Сортировка по имени: оно начинается с
+    /// отсортированной метки времени, поэтому не зависит от времени файловой системы
+    /// (его меняет копирование папки). Тот же приём, что у журналов установки клиента.
+    /// </summary>
+    private static void TrimOldLauncherCrashFiles(string dir)
+    {
+        try
+        {
+            var files = Directory.GetFiles(dir, "launcher_crash_*.txt");
+            if (files.Length <= MaxLauncherCrashFiles) return;
+            Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < files.Length - MaxLauncherCrashFiles; i++)
+            {
+                try { File.Delete(files[i]); } catch { }
+            }
         }
         catch { }
     }

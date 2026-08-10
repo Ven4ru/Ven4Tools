@@ -30,7 +30,14 @@ namespace Ven4Tools.Services
                     Error       = error,
                     Version     = _version,
                     OsVersion   = Environment.OSVersion.ToString(),
-                    Timestamp   = DateTime.UtcNow.ToString("O")
+                    Timestamp   = DateTime.UtcNow.ToString("O"),
+                    // При включённом параноидальном режиме запись сразу помечается
+                    // «уже отчитались»: единственный потребитель этого флага — лаунчер,
+                    // который иначе предложил бы опубликовать её ПУБЛИЧНЫМ issue на
+                    // GitHub при первом же запуске с выключенным режимом. Клиент флаг
+                    // не смотрит, поэтому список «Повторить» и панель неудачных
+                    // установок работают как раньше.
+                    Reported    = ProfileService.Current.ParanoidMode
                 });
                 // Защита от неограниченного роста файла — храним не более 100 последних записей
                 const int maxRecords = 100;

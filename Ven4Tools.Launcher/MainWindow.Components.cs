@@ -1,15 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using Ven4Tools.Launcher.Models;
 using Ven4Tools.Launcher.Services;
-using Ven4Tools.Shared;
 
 namespace Ven4Tools.Launcher
 {
@@ -382,6 +379,32 @@ namespace Ven4Tools.Launcher
                 return list.FindAll(f => !f.Reported);
             }
             catch { return new(); }
+        }
+
+        /// <summary>
+        /// Помечает все записи журнала неудачных установок как «уже отчитались».
+        /// Нужно при включённом параноидальном режиме: отложенный отчёт о сбое в этом
+        /// случае удаляется, а журнал неудачных установок — нет, и записи молча ждали
+        /// первого запуска с выключенным режимом, после чего лаунчер снова предлагал
+        /// опубликовать их ПУБЛИЧНЫМ issue. Сам файл не удаляем: его читает клиент,
+        /// чтобы показать пользователю неудачные установки с кнопкой «Повторить».
+        /// </summary>
+        private static void MarkAllInstallFailuresReported()
+        {
+            try
+            {
+                string path = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Ven4Tools", "failed_installs.json");
+                if (!System.IO.File.Exists(path)) return;
+                var list = Newtonsoft.Json.JsonConvert.DeserializeObject<System.Collections.Generic.List<InstallFailure>>(
+                    System.IO.File.ReadAllText(path)) ?? new();
+                if (list.TrueForAll(f => f.Reported)) return;
+                list.ForEach(f => f.Reported = true);
+                Helpers.FileHelper.WriteAllTextAtomic(path,
+                    Newtonsoft.Json.JsonConvert.SerializeObject(list, Newtonsoft.Json.Formatting.Indented));
+            }
+            catch { }
         }
     }
 }

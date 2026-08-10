@@ -1,5 +1,4 @@
 using System;
-using Newtonsoft.Json;
 
 namespace Ven4Tools.Models
 {
@@ -34,16 +33,11 @@ namespace Ven4Tools.Models
         // используется дефолт AppInfo.SilentArgs ("/S").
         public string? SilentArgs { get; set; }
 
-        [JsonIgnore]
-        public bool IsSelected { get; set; }
-
-        [JsonIgnore]
-        public bool IsUnavailable { get; set; }
-
-        [JsonIgnore]
-        public string Status => IsUnavailable ? "❌ Недоступно" : "✅ Доступно";
-
-        [JsonIgnore]
-        public string Source { get; set; } = "online";
+        // Полей IsSelected/IsUnavailable/Status/Source здесь больше нет: это остатки
+        // code-behind вкладки «Каталог», удалённого при переходе на MVVM (2026-07-13).
+        // Состояние строки каталога живёт в AppRowViewModel, источник загрузки
+        // каталога — в MasterCatalog.Source; на удалённые свойства не ссылался
+        // ни один файл, а [JsonIgnore] на них создавал ложное впечатление, что
+        // модель что-то отслеживает.
     }
 }
