@@ -200,7 +200,10 @@ namespace Ven4Tools.Launcher
             "Ven4Tools", "failed_installs.json");
 
         public string SessionId  { get; set; } = "";
-        public string MachineName{ get; set; } = "";
+        // Поля MachineName здесь нет: клиент его в failed_installs.json никогда не
+        // писал, лаунчер никогда не читал и не показывал, а объявленное свойство
+        // заставляло Newtonsoft переносить имя машины из старых файлов при каждой
+        // перезаписи журнала. См. клиентский InstallFailure — там его тоже нет.
         public string AppName    { get; set; } = "";
         public string AppId      { get; set; } = "";
         public string Method     { get; set; } = "";
