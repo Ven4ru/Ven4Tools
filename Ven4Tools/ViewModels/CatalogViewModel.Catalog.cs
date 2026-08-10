@@ -36,7 +36,15 @@ namespace Ven4Tools.ViewModels
             CatalogErrorVisible = true;
         }
 
-        public async Task LoadAsync()
+        /// <param name="forceReload">
+        /// Игнорировать уже загруженный в память каталог и обратиться к источникам заново.
+        /// Нужно кнопке «Повторить загрузку»: заглушка показывается ровно тогда, когда
+        /// каталог получен пустым, но при этом он УЖЕ лежит в статическом
+        /// <see cref="CatalogLoaderService.LoadedCatalog"/>. Без этого флага повтор
+        /// подхватывал тот же пустой объект, не делая ни одного сетевого запроса, —
+        /// кнопка перерисовывала ту же заглушку и восстановиться было невозможно.
+        /// </param>
+        public async Task LoadAsync(bool forceReload = false)
         {
             CatalogErrorVisible = false;
             StatusText = "⏳ Загрузка каталога...";
@@ -45,7 +53,11 @@ namespace Ven4Tools.ViewModels
 
             try
             {
-                var catalog = CatalogLoaderService.LoadedCatalog ?? await _catalogLoader.LoadCatalogAsync();
+                // Пустой каталог в памяти — это неудача прошлой попытки, а не результат:
+                // подхватывать его повторно нельзя даже без явного forceReload.
+                var preloaded = CatalogLoaderService.LoadedCatalog;
+                if (forceReload || preloaded is { Apps.Count: 0 }) preloaded = null;
+                var catalog = preloaded ?? await _catalogLoader.LoadCatalogAsync();
                 if (catalog == null)
                 {
                     ShowCatalogError("Нет подключения к интернету или CDN недоступен.\nПроверьте сеть и нажмите «Повторить загрузку».");
