@@ -85,7 +85,7 @@ namespace Ven4Tools.Services
         /// Короткий хеш идентификатора сеанса для отправки на сервер: обезличивает
         /// SessionId, оставаясь достаточным для группировки отзывов/крашей одного
         /// сеанса. Общая реализация для FeedbackService и CrashReportService (клиент) —
-        /// та же логика, что GitHubService.HashSessionId в лаунчере (отдельная сборка).
+        /// та же логика, что PersonalDataSanitizer.HashSessionId в лаунчере (отдельная сборка).
         /// </summary>
         public static string HashSessionId(string? sessionId)
         {

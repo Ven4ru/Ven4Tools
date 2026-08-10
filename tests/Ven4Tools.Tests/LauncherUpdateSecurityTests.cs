@@ -12,13 +12,13 @@ public sealed class LauncherUpdateSecurityTests
     [InlineData("za7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", false)]
     public void IsValidSha256_RequiresCompleteHexDigest(string value, bool expected)
     {
-        Assert.Equal(expected, LauncherUpdateService.IsValidSha256(value));
+        Assert.Equal(expected, DownloadValidator.IsValidSha256(value));
     }
 
     [Fact]
     public void BuildSetupUpdateArguments_ContainsSilentUpdateWaitAndRelaunchFlags()
     {
-        string args = LauncherUpdateService.BuildSetupUpdateArguments(waitPid: 4242);
+        string args = LauncherUpdateInstaller.BuildSetupUpdateArguments(waitPid: 4242);
 
         Assert.Contains("/S", args);
         Assert.Contains("/UPDATE", args);
@@ -31,7 +31,7 @@ public sealed class LauncherUpdateSecurityTests
     [InlineData("10.20.30", "Ven4Tools.Setup-10.20.30.exe")]
     public void BuildSetupFileName_ProducesExpectedName(string version, string expected)
     {
-        Assert.Equal(expected, LauncherUpdateService.BuildSetupFileName(version));
+        Assert.Equal(expected, LauncherUpdateInstaller.BuildSetupFileName(version));
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class LauncherUpdateSecurityTests
         // Разделители пути не должны попасть в итоговое имя файла, иначе
         // комбинация Path.Combine(stagingDir, fileName) могла бы уйти
         // за пределы временной папки.
-        string name = LauncherUpdateService.BuildSetupFileName("1.0.0/../evil");
+        string name = LauncherUpdateInstaller.BuildSetupFileName("1.0.0/../evil");
 
         Assert.DoesNotContain("/", name);
         Assert.DoesNotContain("\\", name);

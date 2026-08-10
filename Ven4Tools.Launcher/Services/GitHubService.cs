@@ -1,14 +1,23 @@
 // Services/GitHubService.cs
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Net.Http;
+using Ven4Tools.Launcher.Helpers;
 using Ven4Tools.Launcher.Models;
 
 namespace Ven4Tools.Launcher.Services
 {
+    /// <summary>
+    /// Тонкий клиент GitHub API: HTTP-запросы, кэш списка релизов и отправка
+    /// отчёта об ошибке через серверный прокси. Знания о том, какие ассеты
+    /// относятся к клиенту или к установщику лаунчера, здесь нет — она вынесена
+    /// в <see cref="ClientVersionMapper"/> и <see cref="LauncherUpdateSelector"/>,
+    /// а очистка персональных данных — в
+    /// <see cref="PersonalDataSanitizer"/> (её зовут и те места, где GitHub
+    /// вообще не участвует).
+    /// </summary>
     public class GitHubService : IDisposable
     {
         // Единый HttpClient на весь процесс: пересоздание экземпляра в каждом
@@ -109,57 +118,6 @@ namespace Ven4Tools.Launcher.Services
         }
 
         /// <summary>
-        /// Клиентский zip-ассет релиза: имя содержит «Client» или «Ven4Tools»,
-        /// оканчивается на «.zip» и не относится к лаунчеру. Единый предикат для
-        /// GetAvailableClientVersions (автообновление) и MainWindow.LoadVersionsAsync
-        /// (ручной список версий) — раньше он дублировался в обоих местах и разошёлся.
-        /// </summary>
-        internal static bool IsClientZipAsset(GitHubAsset? asset)
-        {
-            return asset?.name != null &&
-                   (asset.name.Contains("Client", StringComparison.OrdinalIgnoreCase) ||
-                    asset.name.Contains("Ven4Tools", StringComparison.OrdinalIgnoreCase)) &&
-                   asset.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
-                   !asset.name.Contains("Launcher", StringComparison.OrdinalIgnoreCase);
-        }
-
-        /// <summary>
-        /// Первый стабильный релиз с клиентским zip-архивом («latest»):
-        /// launcher-only релизы (без zip) не должны помечаться как latest.
-        /// </summary>
-        internal static GitHubRelease? FindFirstStableClientRelease(List<GitHubRelease> releases) =>
-            releases.FirstOrDefault(r => !r.prerelease && r.assets?.Any(IsClientZipAsset) == true);
-
-        /// <summary>Клиентский zip-ассет данного релиза (или null, если его нет).</summary>
-        internal static GitHubAsset? FindClientZipAsset(GitHubRelease release) =>
-            release.assets?.FirstOrDefault(IsClientZipAsset);
-
-        /// <summary>
-        /// Базовое отображение релиза в ClientVersionInfo с GitHub-ссылкой.
-        /// Возвращает null, если у релиза нет тега или клиентского zip-ассета.
-        /// CDN-подстановка (ZipUrl/FallbackUrl/ExpectedSha256) и проверка
-        /// доверенности хоста применяются поверх, в MainWindow.LoadVersionsAsync.
-        /// </summary>
-        internal static ClientVersionInfo? MapRelease(GitHubRelease release, GitHubRelease? firstStable)
-        {
-            var version = release.tag_name?.TrimStart('v');
-            if (string.IsNullOrEmpty(version)) return null;
-
-            var clientAsset = FindClientZipAsset(release);
-            if (clientAsset == null) return null;
-
-            return new ClientVersionInfo
-            {
-                Version      = version,
-                DownloadUrl  = clientAsset.browser_download_url ?? "",
-                ReleaseDate  = release.published_at,
-                ReleaseNotes = release.body,
-                IsLatest     = release == firstStable,
-                FileSize     = clientAsset.size
-            };
-        }
-
-        /// <summary>
         /// Получение списка доступных версий клиента.
         /// Используется автообновлением (UpdateBackgroundService.CheckClientAsync)
         /// только для обнаружения новой версии и текста уведомления — фактическая
@@ -170,17 +128,7 @@ namespace Ven4Tools.Launcher.Services
         public async Task<List<ClientVersionInfo>> GetAvailableClientVersions()
         {
             var releases = await GetAllReleases();
-            var firstStable = FindFirstStableClientRelease(releases);
-
-            var versions = new List<ClientVersionInfo>();
-            foreach (var release in releases)
-            {
-                var info = MapRelease(release, firstStable);
-                if (info != null) versions.Add(info);
-            }
-
-            versions.Sort((a, b) => VersionComparer.Compare(b.Version, a.Version));
-            return versions;
+            return ClientVersionMapper.MapReleases(releases);
         }
 
         /// <summary>
@@ -194,7 +142,7 @@ namespace Ven4Tools.Launcher.Services
             {
                 var (releases, _) = await GetAllReleasesWithError();
                 if (releases.Count == 0) return null;
-                return SelectLauncherUpdate(releases, currentVersion);
+                return LauncherUpdateSelector.SelectLauncherUpdate(releases, currentVersion);
             }
             catch
             {
@@ -203,66 +151,11 @@ namespace Ven4Tools.Launcher.Services
         }
 
         /// <summary>
-        /// Ассет установщика лаунчера в релизе: Ven4Tools.Setup-X.Y.Z.exe.
-        /// Самообновление и установка идут только через установщик — отдельный
-        /// «голый» exe лаунчера в релизах больше не публикуется и не ищется.
-        /// </summary>
-        internal static bool IsLauncherSetupAsset(string? name)
-        {
-            return name != null &&
-                   name.StartsWith("Ven4Tools.Setup", StringComparison.OrdinalIgnoreCase) &&
-                   name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
-        }
-
-        /// <summary>
-        /// Выбор новейшего стабильного релиза лаунчера с установщиком.
-        /// Чистая функция без сети — покрыта unit-тестами.
-        /// </summary>
-        internal static UpdateInfo? SelectLauncherUpdate(List<GitHubRelease> releases, string currentVersion)
-        {
-            string? latestVersion = null;
-            string? downloadUrl = null;
-            string? releaseNotes = null;
-
-            foreach (var release in releases)
-            {
-                if (release.prerelease || release.tag_name == null) continue;
-
-                var asset = release.assets?.FirstOrDefault(a => IsLauncherSetupAsset(a.name));
-                if (asset == null) continue;
-
-                string ver = ParseVersionFromTag(release.tag_name);
-                if (latestVersion == null || VersionComparer.IsNewer(ver, latestVersion))
-                {
-                    latestVersion = ver;
-                    downloadUrl = asset.browser_download_url;
-                    releaseNotes = release.body;
-                }
-            }
-
-            if (latestVersion == null) return null;
-
-            return new UpdateInfo
-            {
-                HasUpdate = VersionComparer.IsNewer(latestVersion, currentVersion),
-                CurrentVersion = currentVersion,
-                LatestVersion = latestVersion,
-                DownloadUrl = downloadUrl,
-                ReleaseNotes = releaseNotes
-            };
-        }
-
-        // "launcher-v2.0.0" → "2.0.0", "v3.4.2" → "3.4.2"
-        internal static string ParseVersionFromTag(string tag)
-        {
-            string v = tag.TrimStart('v');
-            if (v.StartsWith("launcher-", StringComparison.OrdinalIgnoreCase))
-                v = v["launcher-".Length..].TrimStart('v');
-            return v;
-        }
-
-        /// <summary>
-        /// Получение последней стабильной версии winget с GitHub
+        /// Получение последней стабильной версии winget с GitHub.
+        /// Остаётся здесь, а не в отдельном классе: это такой же анонимный GET к
+        /// api.github.com тем же <see cref="_sharedClient"/> с теми же заголовками —
+        /// отличается только репозиторий (microsoft/winget-cli вместо нашего).
+        /// Разбора ассетов и правил именования тут нет, выносить нечего.
         /// </summary>
         public async Task<string?> GetLatestWingetVersionAsync()
         {
@@ -298,60 +191,6 @@ namespace Ven4Tools.Launcher.Services
         private const string CrashProxyUrl = "https://ven4tools.ru/api/db.php?action=report_crash";
 
         /// <summary>
-        /// Удаление персональных данных из текста перед отправкой в публичный репозиторий:
-        /// имя пользователя, имя машины и пути вида C:\Users\имя\ заменяются плейсхолдерами.
-        /// </summary>
-        public static string SanitizePersonalData(string? text)
-        {
-            if (string.IsNullOrEmpty(text)) return text ?? "";
-
-            // Пути профилей: C:\Users\имя\ → C:\Users\<пользователь>\
-            text = System.Text.RegularExpressions.Regex.Replace(
-                text,
-                @"([A-Za-z]:\\Users\\)[^\\\r\n]+",
-                "$1<пользователь>",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-            // Тот же путь с forward-slash и UNC-путь без буквы диска — тот же класс,
-            // что и в клиентском CrashReportService.SanitizePath (кросс-модульная
-            // согласованность).
-            text = System.Text.RegularExpressions.Regex.Replace(
-                text,
-                @"([A-Za-z]:/Users/)[^/\r\n]+",
-                "$1<пользователь>",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            text = System.Text.RegularExpressions.Regex.Replace(
-                text,
-                @"(\\\\[^\\\r\n]+\\Users\\)[^\\\r\n]+",
-                "$1<пользователь>",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-            // Имя пользователя и имя машины в произвольных местах текста.
-            // Короткие значения (< 3 символов) не заменяем — слишком много ложных срабатываний.
-            string user = Environment.UserName;
-            if (!string.IsNullOrEmpty(user) && user.Length >= 3)
-                text = text.Replace(user, "<пользователь>", StringComparison.OrdinalIgnoreCase);
-
-            string machine = Environment.MachineName;
-            if (!string.IsNullOrEmpty(machine) && machine.Length >= 3)
-                text = text.Replace(machine, "<машина>", StringComparison.OrdinalIgnoreCase);
-
-            return text;
-        }
-
-        /// <summary>
-        /// Короткий хэш идентификатора сессии: достаточен для дедупликации отчётов,
-        /// но не раскрывает исходный SessionId в публичном репозитории.
-        /// </summary>
-        public static string HashSessionId(string? sessionId)
-        {
-            if (string.IsNullOrEmpty(sessionId)) return "";
-            byte[] hash = System.Security.Cryptography.SHA256.HashData(
-                System.Text.Encoding.UTF8.GetBytes(sessionId));
-            return Convert.ToHexString(hash)[..8].ToLowerInvariant();
-        }
-
-        /// <summary>
         /// Отправка отчёта об ошибке через серверный прокси ven4tools.ru.
         /// Сервер сам создаёт issue в репозитории, используя свой токен.
         /// </summary>
@@ -364,8 +203,8 @@ namespace Ven4Tools.Launcher.Services
                 // из любых данных, уходящих в публичный репозиторий
                 var payload = new
                 {
-                    title = SanitizePersonalData(title),
-                    body  = SanitizePersonalData(body),
+                    title = PersonalDataSanitizer.Sanitize(title),
+                    body  = PersonalDataSanitizer.Sanitize(body),
                     labels = labels ?? new[] { "bug" }
                 };
 

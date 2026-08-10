@@ -4,7 +4,7 @@ using Ven4Tools.Launcher.Services;
 
 namespace Ven4Tools.Tests;
 
-public sealed class GitHubServiceTests
+public sealed class LauncherUpdateSelectorTests
 {
     [Theory]
     [InlineData("Ven4Tools.Setup-2.1.0.exe", true)]
@@ -14,7 +14,7 @@ public sealed class GitHubServiceTests
     [InlineData(null, false)]
     public void IsLauncherSetupAsset_MatchesOnlySetupExe(string? name, bool expected)
     {
-        Assert.Equal(expected, GitHubService.IsLauncherSetupAsset(name));
+        Assert.Equal(expected, LauncherUpdateSelector.IsLauncherSetupAsset(name));
     }
 
     [Theory]
@@ -23,7 +23,7 @@ public sealed class GitHubServiceTests
     [InlineData("2.0.0", "2.0.0")]
     public void ParseVersionFromTag_StripsPrefixes(string tag, string expected)
     {
-        Assert.Equal(expected, GitHubService.ParseVersionFromTag(tag));
+        Assert.Equal(expected, LauncherUpdateSelector.ParseVersionFromTag(tag));
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public sealed class GitHubServiceTests
             }
         };
 
-        var result = GitHubService.SelectLauncherUpdate(releases, currentVersion: "1.0.0");
+        var result = LauncherUpdateSelector.SelectLauncherUpdate(releases, currentVersion: "1.0.0");
 
         Assert.NotNull(result);
         Assert.Equal("2.0.0", result!.LatestVersion);
@@ -98,7 +98,7 @@ public sealed class GitHubServiceTests
             }
         };
 
-        var result = GitHubService.SelectLauncherUpdate(releases, currentVersion: "2.1.0");
+        var result = LauncherUpdateSelector.SelectLauncherUpdate(releases, currentVersion: "2.1.0");
 
         Assert.NotNull(result);
         Assert.Equal("2.2.0", result!.LatestVersion);
@@ -121,7 +121,7 @@ public sealed class GitHubServiceTests
             }
         };
 
-        var result = GitHubService.SelectLauncherUpdate(releases, currentVersion: "2.1.0");
+        var result = LauncherUpdateSelector.SelectLauncherUpdate(releases, currentVersion: "2.1.0");
 
         Assert.Null(result);
     }
@@ -142,7 +142,7 @@ public sealed class GitHubServiceTests
             }
         };
 
-        var result = GitHubService.SelectLauncherUpdate(releases, currentVersion: "2.1.0");
+        var result = LauncherUpdateSelector.SelectLauncherUpdate(releases, currentVersion: "2.1.0");
 
         Assert.NotNull(result);
         Assert.False(result!.HasUpdate);
