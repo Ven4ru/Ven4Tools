@@ -199,7 +199,13 @@ namespace Ven4Tools.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Ровно этот catch однажды уже спрятал культурно-зависимый сбой разбора
+                // (см. комментарий выше): размер подменялся заглушкой, и в журнале не было
+                // ни строки. Теперь причина видна.
+                AppLogger.Write($"[AvailabilityChecker] Не удалось разобрать размер из вывода winget: {ex.Message}");
+            }
 
             return DefaultUnknownSizeMB;
         }

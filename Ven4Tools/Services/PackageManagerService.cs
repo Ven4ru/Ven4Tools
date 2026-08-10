@@ -84,7 +84,14 @@ namespace Ven4Tools.Services
                     if (!exited) { try { p.Kill(); } catch { } }
                     return exited && p.ExitCode == 0;
                 }
-                catch { return false; }
+                catch (Exception ex)
+                {
+                    // Результат кэшируется на весь сеанс: сбой здесь навсегда объявляет
+                    // Chocolatey отсутствующим, хотя он может быть установлен. Без записи
+                    // в журнал причину «источник choco пропал» найти невозможно.
+                    AppLogger.Write(ex, "[PackageManagerService] Проверка наличия Chocolatey не удалась");
+                    return false;
+                }
             });
             _cachedChocoInstalled = result;
             return result;

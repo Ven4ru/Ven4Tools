@@ -110,7 +110,12 @@ namespace Ven4Tools.Views.Tabs
                 if (matches.Count > 0)
                     return Convert.ToInt32(matches[0].Groups[1].Value, 16) != 0;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Иначе в UI просто появляется «неизвестно», а причина нигде не остаётся —
+                // соседние обработчики турбобуста пишут свои ошибки в журнал так же.
+                AppLogger.Write(ex, "❌ Не удалось определить состояние турбобуста");
+            }
             return null;
         }
 
@@ -145,7 +150,7 @@ namespace Ven4Tools.Views.Tabs
                     ?? Registry.LocalMachine.CreateSubKey(TurboBoostRegPath);
                 key.SetValue("Attributes", value, RegistryValueKind.DWord);
             }
-            catch { }
+            catch { /* только видимость пункта в Панели управления — на сам турбобуст не влияет */ }
         }
     }
 }

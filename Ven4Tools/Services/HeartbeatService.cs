@@ -36,7 +36,7 @@ namespace Ven4Tools.Services
                 if (dispatcher == null) return;
                 _ = dispatcher.InvokeAsync(WriteHeartbeatFile);
             }
-            catch { }
+            catch { /* удар раз в 3 с — логировать нельзя, залило бы журнал; пропуск удара сам по себе сигнал watchdog'у */ }
         }
 
         private void WriteHeartbeatFile()
@@ -55,7 +55,7 @@ namespace Ven4Tools.Services
                 FileHelper.WriteAllTextAtomic(HeartbeatPath,
                     JsonConvert.SerializeObject(payload, Formatting.Indented));
             }
-            catch { }
+            catch { /* та же причина, что и в Beat: запись идёт раз в 3 с, журнал этим не засоряем */ }
         }
 
         public void Dispose()

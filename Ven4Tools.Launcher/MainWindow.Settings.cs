@@ -37,7 +37,12 @@ namespace Ven4Tools.Launcher
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Молча откатиться на значения по умолчанию — значит потерять путь установки,
+                // автозапуск и источник загрузки без единого следа. Сообщаем в журнал.
+                AddLog($"⚠️ Не удалось прочитать настройки лаунчера, применены значения по умолчанию: {ex.Message}");
+            }
         }
 
         private void SaveSettings()
@@ -61,7 +66,12 @@ namespace Ven4Tools.Launcher
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented);
                 FileHelper.WriteAllTextAtomic(_settingsPath, json);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Иначе выглядит как «настройка не сохраняется» — переключатель встаёт
+                // в новое положение, а после перезапуска возвращается к прежнему.
+                AddLog($"⚠️ Не удалось сохранить настройки лаунчера: {ex.Message}");
+            }
         }
 
         private void BtnOpenSettings_Click(object sender, RoutedEventArgs e)
@@ -152,7 +162,7 @@ namespace Ven4Tools.Launcher
                     key.DeleteValue("Ven4Tools.Launcher", throwOnMissingValue: false);
                 }
             }
-            catch { }
+            catch { /* ветка HKCU\Run всегда доступна текущему пользователю на запись — отказ здесь исключителен и на работу лаунчера не влияет */ }
         }
     }
 }

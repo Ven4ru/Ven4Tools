@@ -80,7 +80,7 @@ namespace Ven4Tools.Services
                     var ip = (await _http.GetStringAsync(url)).Trim();
                     if (!string.IsNullOrEmpty(ip)) return ip;
                 }
-                catch { }
+                catch { /* источник не ответил — пробуем следующий, итог виден в возвращаемом значении */ }
             }
             return "не определён";
         }
@@ -108,7 +108,12 @@ namespace Ven4Tools.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Сервис существует ради диагностики — молчаливый пустой список адаптеров
+                // выглядел бы как «сети нет», хотя на деле не отработало перечисление.
+                AppLogger.Write(ex, "[DiagnosticsService] Не удалось перечислить сетевые адаптеры");
+            }
             return list;
         }
 

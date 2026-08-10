@@ -28,7 +28,13 @@ namespace Ven4Tools.Views.Tabs
                             "list --accept-source-agreements --disable-interactivity");
                         _cachedRawOutput = output;
                     }
-                    catch { _cachedRawOutput = string.Empty; }
+                    catch (Exception ex)
+                    {
+                        // Пустой вывод неотличим от «ничего не установлено»: вкладка покажет
+                        // «пусто» без единого намёка на сбой winget — поэтому пишем причину.
+                        AppLogger.Write(ex, "[InstalledTab] Предзагрузка списка установленных приложений не удалась");
+                        _cachedRawOutput = string.Empty;
+                    }
                 });
             }
         }
@@ -47,6 +53,8 @@ namespace Ven4Tools.Views.Tabs
                 txtLoadingMsg.Text = preload.IsCompleted
                     ? "⏳ Загрузка списка приложений..."
                     : "⏳ Почти готово, дожидаемся предзагрузки...";
+                // Сбой предзагрузки уже записан в журнал внутри самой задачи — здесь только
+                // не даём ему всплыть повторно, кэш в этом случае просто пуст.
                 try { await preload; } catch { }
                 // Чтение и обнуление кэша — атомарно под блокировкой
                 lock (_preloadLock)

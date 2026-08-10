@@ -150,6 +150,8 @@ namespace Ven4Tools.Services.WindowsUpdate
             }
 
             string severity = "";
+            // MsrcSeverity заполнена только у обновлений безопасности — её отсутствие
+            // штатно, поэтому просто оставляем пустую строку.
             try { severity = (string)u.MsrcSeverity ?? ""; } catch { }
 
             return new WindowsUpdateItem
@@ -298,7 +300,11 @@ namespace Ven4Tools.Services.WindowsUpdate
                     }
 
                     bool overallRebootRequired = false;
-                    try { overallRebootRequired = (bool)installResult.RebootRequired; } catch { }
+                    // Пустой catch здесь означал бы «перезагрузка не нужна» при том, что
+                    // прочитать флаг просто не удалось — пользователь остался бы с
+                    // недоустановленными патчами. Пишем причину так же, как в CheckRebootRequired.
+                    try { overallRebootRequired = (bool)installResult.RebootRequired; }
+                    catch (Exception ex) { AppLogger.Write($"[WindowsUpdateComSource] Чтение RebootRequired после установки: {ex.Message}"); }
 
                     return new WindowsUpdateInstallOutcome
                     {

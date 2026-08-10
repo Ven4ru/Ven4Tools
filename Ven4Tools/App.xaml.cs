@@ -98,14 +98,22 @@ namespace Ven4Tools
                     _updateBgService = new UpdateBackgroundService();
                     _updateBgService.Start();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // Сбой здесь молча лишает пользователя фоновых уведомлений
+                    // об обновлениях на весь сеанс — без записи в журнал причину не найти.
+                    AppLogger.Write(ex, "[App] Не удалось запустить фоновую проверку обновлений приложений");
+                }
 
                 try
                 {
                     _windowsUpdateBgService = new WindowsUpdateBackgroundService();
                     _windowsUpdateBgService.Start();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    AppLogger.Write(ex, "[App] Не удалось запустить фоновую проверку обновлений Windows");
+                }
             }
             catch (Exception ex)
             {
