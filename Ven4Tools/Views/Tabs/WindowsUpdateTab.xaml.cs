@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Controls;
 using Ven4Tools.Services;
 using Ven4Tools.Services.WindowsUpdate;
-using Ven4Tools.Views;
 
 namespace Ven4Tools.Views.Tabs
 {

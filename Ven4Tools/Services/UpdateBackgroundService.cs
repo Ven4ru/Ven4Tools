@@ -1,8 +1,6 @@
 using System;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
 {
@@ -141,10 +139,13 @@ namespace Ven4Tools.Services
                 {
                     string line = lines[i];
                     if (string.IsNullOrWhiteSpace(line)) break; // начался футер
-                    string t = line.Trim();
                     if (WingetRunner.IsTableSeparator(line)) continue;
-                    // Строки-суммарники футера winget («N upgrades available» и т.п.)
-                    if (Regex.IsMatch(t, @"^\d+\b.*(package|upgrade)", RegexOptions.IgnoreCase)) break;
+                    // Строка-суммарник футера winget («32 upgrades available.»,
+                    // «Доступны обновления: 32.») — не строка таблицы. Отсекаем по
+                    // локаленезависимому признаку выравнивания колонок, а не по
+                    // английским словам: на русской Windows футер под прежний шаблон
+                    // не подходил и считался ещё одним доступным обновлением.
+                    if (!WingetRunner.IsTableRow(line)) break;
                     count++;
                 }
                 return count;

@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Newtonsoft.Json;
-using Ven4Tools.Launcher;
 
 namespace Ven4Tools.Launcher.Services
 {

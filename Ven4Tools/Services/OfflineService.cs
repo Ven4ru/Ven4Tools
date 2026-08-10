@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Ven4Tools.Helpers;
-using Ven4Tools.Models;
 using CatalogApp = Ven4Tools.Models.App;
 
 namespace Ven4Tools.Services

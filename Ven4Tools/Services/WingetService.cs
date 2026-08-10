@@ -104,8 +104,13 @@ namespace Ven4Tools.Services
                 await process.WaitForExitAsync(timeoutCts.Token);
                 await stderrTask;
 
+                // ANSI-последовательности убираем перед разбором таблицы — как и
+                // остальные разборы вывода winget. Без этого escape-код в начале
+                // строки-разделителя не давал WingetRunner.IsTableSeparator её
+                // распознать, headerPassed оставался false, и поиск возвращал пустой
+                // список при реально найденных пакетах.
                 bool headerPassed = false;
-                foreach (var line in output.Split(
+                foreach (var line in WingetRunner.StripAnsi(output).Split(
                     new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     if (!headerPassed)

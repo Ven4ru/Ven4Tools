@@ -15,7 +15,13 @@ namespace Ven4Tools.Services
                 {
                     "list", "--accept-source-agreements", "--disable-interactivity"
                 });
-                _rawOutput = output;
+                // ANSI-последовательности убираем сразу при получении вывода, а не
+                // в каждом разборе отдельно: без этого escape-код перед идентификатором
+                // ломал границу «слева пробел» в ContainsWhitespaceBoundedToken, а в
+                // GetInstalledVersion сдвигал позицию колонки Version относительно
+                // строки заголовка и делал строку-разделитель ненаходимой. Тот же
+                // StripAnsi, что уже применяют остальные разборы вывода winget.
+                _rawOutput = WingetRunner.StripAnsi(output);
             }
             catch (Exception ex)
             {

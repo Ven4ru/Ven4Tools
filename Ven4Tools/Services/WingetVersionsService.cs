@@ -37,7 +37,12 @@ namespace Ven4Tools.Services
 
         private static List<string> ParseVersions(string output)
         {
-            var lines = output.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            // ANSI-последовательности убираем перед разбором — как и остальные
+            // разборы вывода winget. Без этого escape-код в начале строки-разделителя
+            // не давал WingetRunner.IsTableSeparator её распознать, pastSeparator
+            // никогда не выставлялся, и список версий оказывался пустым.
+            var lines = WingetRunner.StripAnsi(output)
+                .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             bool pastSeparator = false;
             var versions = new List<string>();
 
