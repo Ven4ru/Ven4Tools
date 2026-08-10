@@ -214,6 +214,23 @@ namespace Ven4Tools.Launcher.Services
 
         private static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
 
+        // Строка-разделитель таблицы winget. Держится синхронно с клиентским
+        // WingetRunner.IsTableSeparator (общей библиотеки между проектами намеренно нет):
+        // непустая строка только из дефисов и пробелов, минимум с одним дефисом.
+        private static bool IsTableSeparator(string line)
+        {
+            string t = line.Trim();
+            return t.Length > 0 && t.Contains('-') && t.All(c => c == '-' || c == ' ');
+        }
+
+        // Внутренний разрыв в 2+ пробела — признак выравнивания колонок таблицы winget.
+        private static readonly System.Text.RegularExpressions.Regex _columnGapRegex =
+            new(@"\S {2,}\S", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        // Строка данных таблицы winget, в отличие от строки-суммарника футера.
+        // Держится синхронно с клиентским WingetRunner.IsTableRow.
+        private static bool IsTableRow(string line) => _columnGapRegex.IsMatch(line.Trim());
+
         private async Task<int> CountWingetUpgradesAsync(CancellationToken token)
         {
             System.Diagnostics.Process? p = null;
@@ -243,15 +260,15 @@ namespace Ven4Tools.Launcher.Services
                 await p.WaitForExitAsync(timeoutCts.Token);
                 await errTask;
                 // Считаем только строки таблицы между разделителем «---» и футером.
-                // Футер winget («N upgrades available.») отделён пустой строкой —
-                // на ней останавливаемся, чтобы не считать его за приложение.
+                // Футер winget пустой строкой НЕ отделён (проверено на живом выводе):
+                // сразу после последней строки таблицы идёт «32 upgrades available.» /
+                // «Доступны обновления: 32.», поэтому отсекаем его по локаленезависимому
+                // признаку выравнивания колонок. Прежний шаблон искал английские
+                // package/upgrade — на русской Windows футер под него не подходил и
+                // считался ещё одним доступным обновлением (счётчик завышался на 1).
                 output = StripAnsi(output);
                 var lines = output.Replace("\r", "").Split('\n');
-                int sepIdx = Array.FindIndex(lines, l =>
-                {
-                    string t = l.Trim();
-                    return t.Length >= 5 && t.Contains('-') && t.All(c => c == '-' || c == ' ');
-                });
+                int sepIdx = Array.FindIndex(lines, IsTableSeparator);
                 if (sepIdx < 0) return 0;
 
                 int count = 0;
@@ -259,11 +276,8 @@ namespace Ven4Tools.Launcher.Services
                 {
                     string line = lines[i];
                     if (string.IsNullOrWhiteSpace(line)) break; // начался футер
-                    string t = line.Trim();
-                    if (t.All(c => c == '-' || c == ' ')) continue; // ещё один разделитель
-                    // Строки-суммарники футера winget («N upgrades available.» / «N package(s)...»)
-                    if (System.Text.RegularExpressions.Regex.IsMatch(t, @"^\d+\b.*(package|upgrade)",
-                            System.Text.RegularExpressions.RegexOptions.IgnoreCase)) break;
+                    if (IsTableSeparator(line)) continue;       // ещё один разделитель
+                    if (!IsTableRow(line)) break;               // строка-суммарник футера
                     count++;
                 }
                 return count;

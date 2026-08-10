@@ -1,7 +1,6 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
 {

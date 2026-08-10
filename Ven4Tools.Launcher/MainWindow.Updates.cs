@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows;
-using Ven4Tools.Launcher.Models;
 using Ven4Tools.Launcher.Services;
 
 namespace Ven4Tools.Launcher

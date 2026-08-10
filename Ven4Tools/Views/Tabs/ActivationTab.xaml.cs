@@ -6,9 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Threading.Tasks;
-using Ven4Tools.Models;
 using Ven4Tools.Services;
-using Ven4Tools.Views;
 
 namespace Ven4Tools.Views.Tabs
 {

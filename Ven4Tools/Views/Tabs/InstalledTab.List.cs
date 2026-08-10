@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
-using Ven4Tools.Models;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.Views.Tabs
@@ -129,9 +126,10 @@ namespace Ven4Tools.Views.Tabs
                     continue;
                 }
 
-                // Пропускаем строку-разделитель из дефисов
-                string t = rawLine.Trim();
-                if (t.Length >= 5 && t.All(c => c == '-' || c == ' ')) continue;
+                // Пропускаем строку-разделитель из дефисов — общим критерием
+                // WingetRunner.IsTableSeparator, а не собственной копией условия
+                // (прежняя требовала длину ≥ 5 и не требовала ни одного дефиса).
+                if (WingetRunner.IsTableSeparator(rawLine)) continue;
 
                 // Выровнять строку по offset заголовка
                 string line = rawLine.Length > offset ? rawLine.Substring(offset) : rawLine;

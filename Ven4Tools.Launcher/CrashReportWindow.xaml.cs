@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Windows;
 using Newtonsoft.Json;
 using Ven4Tools.Launcher.Helpers;

@@ -1,15 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using Ven4Tools.Launcher.Models;
 using Ven4Tools.Launcher.Services;
-using Ven4Tools.Shared;
 
 namespace Ven4Tools.Launcher
 {
