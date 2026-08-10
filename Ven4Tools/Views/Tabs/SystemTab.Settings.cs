@@ -25,6 +25,12 @@ namespace Ven4Tools.Views.Tabs
             sliderCheckTimeout.Value = Math.Clamp(AppSettings.CheckTimeout, 5, 60);
             txtCatalogTimeout.Text = $"{(int)sliderCatalogTimeout.Value} сек";
             txtCheckTimeout.Text = $"{(int)sliderCheckTimeout.Value} сек";
+
+            // Параметры установки живут в профиле (profile.json), а не в AppSettings —
+            // их читает InstallationService через ProfileService.Current.
+            chkSilentInstall.IsChecked = ProfileService.Current.SilentInstall;
+            txtDefaultInstallFolder.Text = ProfileService.Current.DefaultInstallFolder;
+            txtDefaultInstallFolderStatus.Text = "";
         }
 
         private void SaveSettings()
@@ -34,6 +40,56 @@ namespace Ven4Tools.Views.Tabs
                 checkTimeout:        (int)sliderCheckTimeout.Value,
                 notifications:       chkNotifications.IsChecked ?? true,
                 updateNotifications: chkUpdateNotifications.IsChecked ?? true);
+        }
+
+        // ── Установка приложений ──────────────────────────────────────────────────
+
+        private void ChkSilentInstall_Click(object sender, RoutedEventArgs e)
+        {
+            ProfileService.Current.SilentInstall = chkSilentInstall.IsChecked == true;
+            ProfileService.Save();
+        }
+
+        private void BtnBrowseDefaultInstallFolder_Click(object sender, RoutedEventArgs e)
+        {
+            using var dlg = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description         = "Выберите папку установки приложений по умолчанию",
+                ShowNewFolderButton = true
+            };
+            if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+            ApplyDefaultInstallFolder(dlg.SelectedPath);
+        }
+
+        private void TxtDefaultInstallFolder_LostFocus(object sender, RoutedEventArgs e)
+            => ApplyDefaultInstallFolder(txtDefaultInstallFolder.Text);
+
+        /// <summary>
+        /// Сохраняет папку установки в профиль, предварительно прогоняя её через тот же
+        /// <see cref="CommandLineGuard.ValidateInstallFolder"/>, которым пользуется путь
+        /// winget. Иначе значение молча отбрасывалось бы только в момент установки, и
+        /// пользователь считал бы, что папка задана. Пустая строка допустима — это
+        /// штатный сброс к выбору winget по умолчанию.
+        /// </summary>
+        private void ApplyDefaultInstallFolder(string? path)
+        {
+            string value = (path ?? "").Trim();
+
+            if (!CommandLineGuard.ValidateInstallFolder(value))
+            {
+                txtDefaultInstallFolder.Text = ProfileService.Current.DefaultInstallFolder;
+                txtDefaultInstallFolderStatus.Text =
+                    "⚠ Путь не принят: нужен абсолютный локальный путь без сетевых имён и кавычек. Оставлено прежнее значение.";
+                return;
+            }
+
+            txtDefaultInstallFolder.Text = value;
+            ProfileService.Current.DefaultInstallFolder = value;
+            ProfileService.Save();
+
+            txtDefaultInstallFolderStatus.Text = value.Length == 0
+                ? "Папка не задана — winget выбирает её сам."
+                : $"Сохранено: {value}";
         }
 
         // ── Перенос настроек (экспорт/импорт) ─────────────────────────────────────

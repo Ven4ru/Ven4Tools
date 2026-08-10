@@ -53,6 +53,43 @@
                 </StackPanel>
             </GroupBox>
             
+            <!-- Установка приложений -->
+            <GroupBox Header="📦 Установка приложений" Margin="0,0,0,15">
+                <StackPanel Margin="10">
+                    <CheckBox x:Name="chkSilentInstall"
+                              Content="Ставить приложения без окна установщика (только источник winget)"
+                              Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"
+                              Click="ChkSilentInstall_Click"/>
+                    <TextBlock Text="Добавляет winget флаг --silent. Действует только когда приложение ставится через winget, и только если сам пакет поддерживает тихий режим — иначе окно установщика всё равно появится. На установку через Chocolatey не влияет. Для прямых ссылок флаги тихого режима берутся из каталога, а этот флажок используется лишь как запасной вариант, когда в каталоге они не указаны."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,0,0,14"/>
+
+                    <TextBlock Text="Папка установки по умолчанию (только winget):"
+                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="txtDefaultInstallFolder" Height="30" Margin="0,0,8,0"
+                                 Background="{DynamicResource CardBackground}"
+                                 Foreground="{DynamicResource TextPrimary}"
+                                 VerticalContentAlignment="Center" Padding="6,0"
+                                 ToolTip="Абсолютный путь на локальном диске, например D:\Programs. Пустое поле — winget выбирает папку сам."
+                                 LostFocus="TxtDefaultInstallFolder_LostFocus"/>
+                        <Button x:Name="btnBrowseDefaultInstallFolder" Content="📁" Width="34" Height="30"
+                                ToolTip="Откроет выбор папки, которую winget будет получать как --location."
+                                Grid.Column="1" Click="BtnBrowseDefaultInstallFolder_Click"/>
+                    </Grid>
+                    <TextBlock Text="Передаётся winget как --location. Многие установщики этот параметр игнорируют и ставятся туда, куда заложено в самом пакете; приложения из Microsoft Store (msstore) его не поддерживают вовсе. Если в каталоге выбран несистемный диск установки, папка используется только когда она лежит на этом же диске — иначе подставляется «Program Files» выбранного диска. Путь должен быть абсолютным и локальным: сетевые пути и кавычки не принимаются. Пустое поле — winget выбирает папку сам."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,0,0,4"/>
+                    <TextBlock x:Name="txtDefaultInstallFolderStatus"
+                               TextWrapping="Wrap" FontSize="11"
+                               Foreground="{DynamicResource TextSecondary}"/>
+                </StackPanel>
+            </GroupBox>
+
             <!-- Таймауты -->
             <GroupBox Header="⏱️ Таймауты" Margin="0,0,0,15">
                 <Grid Margin="10">
