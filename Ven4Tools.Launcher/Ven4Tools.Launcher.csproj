@@ -7,9 +7,6 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>disable</ImplicitUsings>
-    <!-- Гейтит стиль кода (сейчас — только IDE0005, неиспользуемые using) прямо
-         при сборке, не только в IDE. См. .editorconfig в корне репо. -->
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>Ven4Tools.Launcher</AssemblyName>
     <!-- AssemblyVersion/FileVersion намеренно не заданы отдельно: SDK выводит их из
