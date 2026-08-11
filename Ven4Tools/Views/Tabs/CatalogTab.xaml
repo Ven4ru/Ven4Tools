@@ -277,6 +277,13 @@
                                                 Visibility="{Binding IsUserAdded, Converter={StaticResource BoolToVis}}"
                                                 Background="#640000" Foreground="White" FontSize="10" Padding="0"
                                                 ToolTip="После подтверждения уберёт это добавленное вручную приложение из каталога. С компьютера оно не удаляется."/>
+
+                                        <Button Content="🙈" Width="20" Height="20" Margin="4,0,0,0"
+                                                Command="{Binding DataContext.HideAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding ShowHideButton, Converter={StaticResource BoolToVis}}"
+                                                Background="Transparent" BorderThickness="0" FontSize="12" Padding="0"
+                                                ToolTip="Скроет приложение из каталога. Вернуть — «Настройки» → «Показать скрытые»."/>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>
