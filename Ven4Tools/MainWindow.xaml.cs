@@ -342,8 +342,10 @@ namespace Ven4Tools
         private void Window_Closing_Extended(object sender, System.ComponentModel.CancelEventArgs e)
         {
             // При сворачивании в трей окно не закрывается — установка продолжается,
-            // предупреждение и окно отзыва не нужны.
-            if (ProfileService.Current.MinimizeToTray)
+            // предупреждение и окно отзыва не нужны. Если иконку создать не удалось
+            // (см. TrayIconController.Initialize) — сворачивать некуда, окно должно
+            // закрыться штатно, иначе процесс зависает без окна и без иконки.
+            if (ProfileService.Current.MinimizeToTray && _tray.IsAvailable)
             {
                 e.Cancel = true;
                 Hide();
