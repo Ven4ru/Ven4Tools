@@ -31,8 +31,8 @@ public sealed class ButtonToolTipCoverageTests
     }
 
     [Theory]
-    [InlineData("Ven4Tools/MainWindow.xaml.cs", "installBtn")]
-    [InlineData("Ven4Tools/MainWindow.xaml.cs", "unpinBtn")]
+    [InlineData("Ven4Tools/Views/PinsStripController.cs", "installBtn")]
+    [InlineData("Ven4Tools/Views/PinsStripController.cs", "unpinBtn")]
     [InlineData("Ven4Tools/Views/Tabs/DiagnosticsTab.RebootHistory.cs", "fixBtn")]
     public void DynamicButtonsHaveExplanations(string relativePath, string variableName)
     {
