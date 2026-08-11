@@ -24,9 +24,6 @@ namespace Ven4Tools.Launcher.Services
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Ven4Tools", "Launcher");
 
-        /// <summary>Полный путь к установленному exe лаунчера.</summary>
-        public static string InstalledExePath { get; } = Path.Combine(InstallDir, ExeName);
-
         /// <summary>
         /// Текущая версия лаунчера в формате X.Y.Z (из метаданных сборки).
         /// </summary>

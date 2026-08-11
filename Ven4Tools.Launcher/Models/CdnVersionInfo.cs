@@ -5,7 +5,10 @@ namespace Ven4Tools.Launcher.Models
 {
     /// <summary>
     /// Модель version.json с CDN: информация о версиях и ссылки на загрузку
-    /// клиента и лаунчера. У каждой ссылки есть CDN-вариант и GitHub-резерв.
+    /// клиента и лаунчера. У ссылки установщика лаунчера есть GitHub-резерв
+    /// (<see cref="CdnLauncherInfo.SetupFallback"/>); GitHub-ссылка клиента
+    /// строится независимо (см. MainWindow.Versions.cs/UpdateBackgroundService),
+    /// поэтому у клиента поля zip_fallback в модели нет.
     /// </summary>
     public class CdnVersionInfo
     {
@@ -39,9 +42,6 @@ namespace Ven4Tools.Launcher.Models
 
         [JsonPropertyName("zip_url")]
         public string? ZipUrl { get; set; }
-
-        [JsonPropertyName("zip_fallback")]
-        public string? ZipFallback { get; set; }
 
         // Зеркало клиента на хостинге (независимый провайдер, только путь /releases/).
         [JsonPropertyName("zip_mirror_hosting")]

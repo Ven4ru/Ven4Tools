@@ -334,8 +334,6 @@ namespace Ven4Tools.Services
             catch { }
         }
 
-        public string GetLogPath() => _logPath;
-
         public void Dispose()
         {
             // HttpClient общий (static) — живёт всё время работы приложения, не освобождается здесь.
