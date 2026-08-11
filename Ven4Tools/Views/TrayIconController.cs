@@ -20,6 +20,14 @@ namespace Ven4Tools.Views
         private readonly Action _exitRequested;
         private Forms.NotifyIcon? _icon;
 
+        /// <summary>
+        /// true, если иконку в трее удалось создать. Сворачивание в трей должно
+        /// проверять этот флаг — иначе при сбое <see cref="Initialize"/> окно
+        /// прячется без иконки, вернуть его нечем (единственный экземпляр держит
+        /// мьютекс, повторный запуск невозможен).
+        /// </summary>
+        public bool IsAvailable => _icon != null;
+
         public TrayIconController(Dispatcher dispatcher, Action showRequested, Action exitRequested)
         {
             _dispatcher = dispatcher;
@@ -31,11 +39,15 @@ namespace Ven4Tools.Views
         {
             try
             {
+                string exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName
+                                  ?? string.Empty;
+                System.Drawing.Icon icon = string.IsNullOrEmpty(exePath)
+                    ? System.Drawing.SystemIcons.Application
+                    : System.Drawing.Icon.ExtractAssociatedIcon(exePath) ?? System.Drawing.SystemIcons.Application;
+
                 _icon = new Forms.NotifyIcon
                 {
-                    Icon    = System.Drawing.Icon.ExtractAssociatedIcon(
-                                  System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName
-                                  ?? ""),
+                    Icon    = icon,
                     Visible = true,
                     Text    = "Ven4Tools"
                 };
@@ -60,7 +72,10 @@ namespace Ven4Tools.Views
                         catch { }
                     }));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[TrayIconController] Не удалось создать иконку в трее: {ex.Message}");
+            }
         }
 
         public void ShowBalloon(int timeoutMs, string title, string body) =>
