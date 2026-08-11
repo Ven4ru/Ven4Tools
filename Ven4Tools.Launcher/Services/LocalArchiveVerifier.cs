@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -109,11 +108,6 @@ internal static class LocalArchiveVerifier
         catch { return null; }
     }
 
-    private static async Task<string> ComputeWholeFileSha256Async(string path, CancellationToken token)
-    {
-        await using var stream = new FileStream(
-            path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 81920, useAsync: true);
-        byte[] hash = await SHA256.HashDataAsync(stream, token);
-        return Convert.ToHexString(hash).ToLowerInvariant();
-    }
+    private static Task<string> ComputeWholeFileSha256Async(string path, CancellationToken token) =>
+        Helpers.FileHashHelper.ComputeSha256Async(path, token);
 }
