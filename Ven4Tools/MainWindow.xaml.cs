@@ -196,7 +196,7 @@ namespace Ven4Tools
         private void NavigateToDiagnostics(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnDiagnosticsTab);
-            AppLogger.Write("📂 Открыта вкладка: Диагностика");
+            if (sender != null) AppLogger.Write("📂 Открыта вкладка: Диагностика");
             if (_diagnosticsTab == null)
             {
                 _diagnosticsTab = new DiagnosticsTab();
@@ -220,7 +220,7 @@ namespace Ven4Tools
         private void NavigateToWindowsUpdate(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnWindowsUpdateTab);
-            AppLogger.Write("📂 Открыта вкладка: Windows Update");
+            if (sender != null) AppLogger.Write("📂 Открыта вкладка: Windows Update");
             if (_windowsUpdateTab == null)
             {
                 _windowsUpdateTab = new WindowsUpdateTab();
