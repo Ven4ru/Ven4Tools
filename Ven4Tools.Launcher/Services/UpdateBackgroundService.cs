@@ -96,7 +96,7 @@ namespace Ven4Tools.Launcher.Services
                 if (token.IsCancellationRequested) return;
                 try
                 {
-                    var notif = await NotificationService.GetLatestAsync();
+                    var notif = await NotificationService.GetLatestAsync(Log);
                     if (notif != null && notif.Id != LastNotifiedNotificationId && !string.IsNullOrEmpty(notif.Message))
                     {
                         LastNotifiedNotificationId = notif.Id;
