@@ -11,10 +11,7 @@ namespace Ven4Tools.Services
         {
             try
             {
-                var (_, output) = await WingetRunner.RunAsync(new[]
-                {
-                    "list", "--accept-source-agreements", "--disable-interactivity"
-                });
+                var (_, output) = await WingetRunner.RunAsync(WingetArgs.Query("list"));
                 // ANSI-последовательности убираем сразу при получении вывода, а не
                 // в каждом разборе отдельно: без этого escape-код перед идентификатором
                 // ломал границу «слева пробел» в ContainsWhitespaceBoundedToken, а в

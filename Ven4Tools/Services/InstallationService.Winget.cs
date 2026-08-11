@@ -122,9 +122,7 @@ namespace Ven4Tools.Services
                 psi.ArgumentList.Add("--version");
                 psi.ArgumentList.Add(version);
             }
-            psi.ArgumentList.Add("--accept-package-agreements");
-            psi.ArgumentList.Add("--accept-source-agreements");
-            psi.ArgumentList.Add("--disable-interactivity");
+            foreach (var flag in WingetArgs.Modify()) psi.ArgumentList.Add(flag);
             if (profile.SilentInstall) psi.ArgumentList.Add("--silent");
             if (location != null)
             {

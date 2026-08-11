@@ -126,7 +126,7 @@ namespace Ven4Tools.Services
             try
             {
                 var (_, output) = await WingetRunner.RunAsync(
-                    "upgrade --include-unknown --accept-source-agreements --disable-interactivity",
+                    $"upgrade --include-unknown {WingetArgs.NonInteractiveLine}",
                     TimeSpan.FromMinutes(3));
                 ct.ThrowIfCancellationRequested();
 

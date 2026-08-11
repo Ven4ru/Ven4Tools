@@ -14,12 +14,8 @@ namespace Ven4Tools.Views.Tabs
             txtUpdatesLog.Text = "⏳ Проверка...";
             try
             {
-                // --accept-source-agreements --disable-interactivity — как и во всех
-                // остальных read-only запросах к winget (InstalledAppsService,
-                // InstalledTab.List, UpdateBackgroundService). Без них на свежей системе
-                // winget ждёт подтверждения условий источника и упирается в таймаут.
                 var (_, raw) = await WingetRunner.RunAsync(
-                    "upgrade --include-unknown --source winget --accept-source-agreements --disable-interactivity",
+                    $"upgrade --include-unknown --source winget {WingetArgs.NonInteractiveLine}",
                     TimeSpan.FromMinutes(3));
 
                 var upgradable = ParseUpgradableRows(raw);
