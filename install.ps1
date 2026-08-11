@@ -82,20 +82,21 @@ try {
         throw "Загрузка перенаправлена на недоверенный источник: $($finalUri.Scheme)://$($finalUri.Host)$($finalUri.AbsolutePath) — установка прервана"
     }
 
-    # Проверка целостности, если сервер отдаёт хеш. Блок условный — не ломает
-    # установку, если сервер вдруг перестанет отдавать хеш (latest_version.php
-    # оставляет launcher_sha256 пустым, когда не смог сам скачать ассет).
-    # Пропуск проверки не молчаливый: без него пользователь не отличил бы
-    # проверенную загрузку от непроверенной.
-    if ($api.downloads.launcher_sha256) {
-        Write-Host "  Проверка целостности..." -ForegroundColor Gray
-        $actual = (Get-FileHash $tmp -Algorithm SHA256).Hash
-        if ($actual -ne $api.downloads.launcher_sha256.ToUpper()) {
-            Remove-Item $tmp -Force
-            throw "Несовпадение SHA256 — установка прервана"
-        }
-    } else {
-        Write-Host "  ! Сервер не отдал SHA256 — проверка целостности пропущена" -ForegroundColor Yellow
+    # Проверка целостности — fail-closed, как и весь остальной проект
+    # (DownloadValidator/InstallationService в клиенте и лаунчере). Раньше при
+    # пустом хеше (latest_version.php оставляет launcher_sha256 пустым, если
+    # сам не смог скачать и захешировать ассет с GitHub) скрипт всё равно
+    # запускал EXE с жёлтым предупреждением — единственное fail-open место
+    # во всём проекте. Кэш хеша на сервере живёт 24ч, так что это редкий
+    # транзиентный сбой, а не штатный режим — не молча смиряемся с ним.
+    if (-not $api.downloads.launcher_sha256) {
+        throw "Сервер не отдал SHA256 установщика — установка прервана. Попробуйте ещё раз через несколько минут."
+    }
+    Write-Host "  Проверка целостности..." -ForegroundColor Gray
+    $actual = (Get-FileHash $tmp -Algorithm SHA256).Hash
+    if ($actual -ne $api.downloads.launcher_sha256.ToUpper()) {
+        Remove-Item $tmp -Force
+        throw "Несовпадение SHA256 — установка прервана"
     }
 
     # Версия загруженного установщика — из его собственных метаданных exe
