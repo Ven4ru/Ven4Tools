@@ -85,5 +85,24 @@ namespace Ven4Tools.Services.WindowsUpdate
                 .Select(i => i.Item)
                 .DistinctBy(i => i.UpdateId)
                 .Sum(i => i.SizeBytes);
+
+        /// <summary>
+        /// Патчи среди выбранных, у которых есть непринятый EULA — их текст нужно
+        /// показать в диалоге подтверждения перед стартом установки. Раньше жил в
+        /// WindowsUpdateErrorMapper (маппер кодов ошибок) — работает над тем же
+        /// деревом, что и GetSelectedUpdateIds/GetSelectedTotalSizeBytes выше, к
+        /// расшифровке кодов ошибок отношения не имеет.
+        /// </summary>
+        public static IReadOnlyList<WindowsUpdateItem> GetItemsNeedingEula(
+            IReadOnlyList<WindowsUpdateCategoryNode> tree)
+        {
+            return tree
+                .SelectMany(c => c.Items)
+                .Where(i => i.IsChecked)
+                .Select(i => i.Item)
+                .Where(item => !item.EulaAccepted && !string.IsNullOrWhiteSpace(item.EulaText))
+                .DistinctBy(item => item.UpdateId)
+                .ToList();
+        }
     }
 }

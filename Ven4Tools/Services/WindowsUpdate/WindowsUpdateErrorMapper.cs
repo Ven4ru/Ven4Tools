@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Ven4Tools.Services.WindowsUpdate
 {
@@ -21,21 +20,5 @@ namespace Ven4Tools.Services.WindowsUpdate
             KnownHResults.TryGetValue(hresult, out var message)
                 ? message
                 : $"Ошибка Windows Update (код 0x{hresult:X8}). Подробности — в логе.";
-
-        /// <summary>
-        /// Патчи среди выбранных, у которых есть непринятый EULA — их текст нужно
-        /// показать в диалоге подтверждения перед стартом установки.
-        /// </summary>
-        public static IReadOnlyList<WindowsUpdateItem> GetItemsNeedingEula(
-            IReadOnlyList<WindowsUpdateCategoryNode> tree)
-        {
-            return tree
-                .SelectMany(c => c.Items)
-                .Where(i => i.IsChecked)
-                .Select(i => i.Item)
-                .Where(item => !item.EulaAccepted && !string.IsNullOrWhiteSpace(item.EulaText))
-                .DistinctBy(item => item.UpdateId)
-                .ToList();
-        }
     }
 }

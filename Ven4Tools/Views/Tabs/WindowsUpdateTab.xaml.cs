@@ -228,7 +228,7 @@ namespace Ven4Tools.Views.Tabs
             var selectedIds = WindowsUpdateCategoryTreeBuilder.GetSelectedUpdateIds(_tree);
             if (selectedIds.Count == 0) return;
 
-            var eulaItems = WindowsUpdateErrorMapper.GetItemsNeedingEula(_tree);
+            var eulaItems = WindowsUpdateCategoryTreeBuilder.GetItemsNeedingEula(_tree);
             long totalBytes = WindowsUpdateCategoryTreeBuilder.GetSelectedTotalSizeBytes(_tree);
 
             bool confirmed;

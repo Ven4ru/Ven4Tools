@@ -9,10 +9,9 @@ namespace Ven4Tools.Services
     // про ошибку 1618 и общий семафор установки в InstallationService.cs).
     public static class WingetErrorMapper
     {
-        private static readonly Dictionary<int, string> KnownExitCodes = new()
+        private static readonly Dictionary<int, string> KnownExitCodes = new(MsiExitCodes.Known)
         {
             { 0, "Успешно." },
-            { 3010, "Установлено, требуется перезагрузка." },
             { unchecked((int)0x8A15002C), "Установлено, требуется перезагрузка." },
             { unchecked((int)0x8A15002B), "Обновление недоступно — версия в источнике не подходит для данной системы." },
             { unchecked((int)0x8A150014), "Пакет не найден в источнике или недоступен для этой системы." },
@@ -20,11 +19,6 @@ namespace Ven4Tools.Services
             { unchecked((int)0x8A150005), "Отказано в доступе — установка требует прав администратора." },
             { unchecked((int)0x80072EE2), "Ошибка сети — источник недоступен, попробуйте позже." },
             { unchecked((int)0x80072EFE), "Ошибка сети — соединение разорвано, попробуйте позже." },
-            { 1602, "Установка отменена в диалоге установщика." },
-            { 1603, "Установщик пакета завершился с фатальной ошибкой." },
-            { 1618, "Другая установка уже выполняется в системе — повторите позже." },
-            { 1633, "Платформа установщика не поддерживается на этой системе." },
-            { 1638, "Уже установлена другая версия этого продукта." },
         };
 
         public static string MapExitCode(int exitCode) =>
