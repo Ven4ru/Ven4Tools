@@ -38,8 +38,10 @@ namespace Ven4Tools.Views.Tabs
                     {
                         foreach (var obj in searcher.Get())
                         {
-                            long totalMemory = Convert.ToInt64(obj["TotalVisibleMemorySize"]) / 1024 / 1024;
-                            ram = $"{totalMemory} ГБ";
+                            // TotalVisibleMemorySize от WMI приходит в КБ, не в байтах —
+                            // домножаем перед общим байтовым форматтером.
+                            long totalMemoryKB = Convert.ToInt64(obj["TotalVisibleMemorySize"]);
+                            ram = Helpers.SizeFormatter.BytesToGBWhole(totalMemoryKB * 1024L);
                             break;
                         }
                     }
