@@ -152,6 +152,20 @@ namespace Ven4Tools.ViewModels
                     ? $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed} — причины в блоке «Не установлено»"
                     : $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed}";
                 Log(InstallStatusText);
+
+                // Чекбокс "Показывать уведомления о завершении установки" на «Настройках»
+                // раньше сохранялся, но ничего не включал — уведомления не существовало.
+                // Тост идёт через тот же механизм, что и уведомления об обновлениях
+                // (трей-балун либо запись в лог как fallback без трея).
+                if (completed > 0 && ProfileService.Current.NotifyInstallComplete)
+                {
+                    UpdateBackgroundService.ShowNotification(
+                        "Установка завершена",
+                        failed > 0
+                            ? $"Успешно установлено: {completed}, не удалось: {failed}."
+                            : $"Успешно установлено: {completed}.");
+                }
+
                 await UpdateInstalledStatusAsync();
             }
             catch (OperationCanceledException) { InstallStatusText = "⏹️ Установка отменена"; }

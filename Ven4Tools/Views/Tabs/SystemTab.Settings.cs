@@ -18,9 +18,11 @@ namespace Ven4Tools.Views.Tabs
 
         private void LoadSettings()
         {
-            // AppSettings уже загружены из того же файла при старте приложения
-            chkNotifications.IsChecked = AppSettings.Notifications;
-            chkUpdateNotifications.IsChecked = AppSettings.UpdateNotifications;
+            // AppSettings уже загружены из того же файла при старте приложения.
+            // Сами уведомления — не таймауты, а поведение, поэтому живут в профиле
+            // (profile.json), как и остальные функциональные переключатели этой вкладки.
+            chkNotifications.IsChecked = ProfileService.Current.NotifyInstallComplete;
+            chkUpdateNotifications.IsChecked = ProfileService.Current.NotifyAppUpdates;
             sliderCatalogTimeout.Value = Math.Clamp(AppSettings.CatalogTimeout, 3, 30);
             sliderCheckTimeout.Value = Math.Clamp(AppSettings.CheckTimeout, 5, 60);
             txtCatalogTimeout.Text = $"{(int)sliderCatalogTimeout.Value} сек";
@@ -36,10 +38,12 @@ namespace Ven4Tools.Views.Tabs
         private void SaveSettings()
         {
             AppSettings.Save(
-                catalogTimeout:      (int)sliderCatalogTimeout.Value,
-                checkTimeout:        (int)sliderCheckTimeout.Value,
-                notifications:       chkNotifications.IsChecked ?? true,
-                updateNotifications: chkUpdateNotifications.IsChecked ?? true);
+                catalogTimeout: (int)sliderCatalogTimeout.Value,
+                checkTimeout:   (int)sliderCheckTimeout.Value);
+
+            ProfileService.Current.NotifyInstallComplete = chkNotifications.IsChecked ?? true;
+            ProfileService.Current.NotifyAppUpdates = chkUpdateNotifications.IsChecked ?? true;
+            ProfileService.Save();
         }
 
         // ── Установка приложений ──────────────────────────────────────────────────
