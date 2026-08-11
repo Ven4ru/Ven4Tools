@@ -3,12 +3,12 @@ using System.Collections.Generic;
 namespace Ven4Tools.Services
 {
     // Chocolatey либо возвращает свои коды (0/1/2), либо пробрасывает код
-    // выхода установщика пакета внутри (тот же диапазон Windows Installer,
-    // что и у winget) — отдельная таблица от WingetErrorMapper, коды
-    // Chocolatey (1/2) там не имели бы смысла.
+    // выхода установщика пакета внутри — общий диапазон Windows Installer
+    // с WingetErrorMapper вынесен в MsiExitCodes, коды Chocolatey (0/1/2)
+    // добавляются здесь же и в WingetErrorMapper не имели бы смысла.
     public static class ChocoErrorMapper
     {
-        private static readonly Dictionary<int, string> KnownExitCodes = new()
+        private static readonly Dictionary<int, string> KnownExitCodes = new(MsiExitCodes.Known)
         {
             { 0, "Успешно." },
             { 1, "Chocolatey сообщил об ошибке при установке пакета." },
@@ -19,11 +19,6 @@ namespace Ven4Tools.Services
             // (InstallFromChocoAsync) перехватывает -1 ДО вызова MapExitCode именно
             // по этой причине; если он всё же сюда попадёт — честный фолбэк с самим
             // кодом лучше, чем неверное утверждение про конкретную причину.
-            { 1602, "Установка отменена в диалоге установщика." },
-            { 1603, "Установщик пакета завершился с фатальной ошибкой." },
-            { 1618, "Другая установка уже выполняется в системе — повторите позже." },
-            { 1641, "Установлено, инициирована перезагрузка." },
-            { 3010, "Установлено, требуется перезагрузка." },
         };
 
         public static string MapExitCode(int exitCode) =>
