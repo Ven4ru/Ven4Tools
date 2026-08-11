@@ -134,12 +134,8 @@ namespace Ven4Tools.Services
                 if (!CommandLineGuard.ValidateId(appId))
                     return (AvailabilityStatus.Unavailable, 0);
 
-                var (exitCode, output) = await WingetRunner.RunAsync(new[]
-                {
-                    "show", "--id", appId, "--exact",
-                    "--source", "winget", "--accept-source-agreements",
-                    "--disable-interactivity"
-                });
+                var (exitCode, output) = await WingetRunner.RunAsync(
+                    WingetArgs.Query("show", "--id", appId, "--exact", "--source", "winget"));
 
                 bool success = exitCode == 0 &&
                                (output.Contains("Version", StringComparison.OrdinalIgnoreCase) ||

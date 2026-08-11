@@ -41,7 +41,7 @@ namespace Ven4Tools.Views.Tabs
             try
             {
                 int code = await WingetRunner.RunStreamingAsync(
-                    "upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements --disable-interactivity",
+                    $"upgrade --all --silent --include-unknown {WingetArgs.ModifyLine}",
                     msg => AppLogger.Write(msg));
                 var upgrade = DescribeWingetExitCode(code);
                 if (upgrade.Success)
@@ -185,7 +185,7 @@ namespace Ven4Tools.Views.Tabs
                 // RunStreamingAsync: живой прогресс в лог + 15-минутный таймаут
                 // (RunAsync с 120с убивал winget на больших пакетах).
                 // --locale en-US не используется — на части систем даёт пустой вывод (см. agent_context.md).
-                string args = $"upgrade --id \"{app.WingetId}\" --silent --accept-package-agreements --accept-source-agreements --disable-interactivity";
+                string args = $"upgrade --id \"{app.WingetId}\" --silent {WingetArgs.ModifyLine}";
                 int code = await WingetRunner.RunStreamingAsync(args, line => AppLogger.Write($"  {line}"),
                     TimeSpan.FromMinutes(15));
                 var exit = DescribeWingetExitCode(code);

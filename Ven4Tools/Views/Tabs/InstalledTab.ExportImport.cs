@@ -29,7 +29,7 @@ namespace Ven4Tools.Views.Tabs
             AppLogger.Write($"📤 Экспорт в {System.IO.Path.GetFileName(dlg.FileName)}...");
             try
             {
-                var (code, output) = await WingetRunner.RunAsync($"export -o \"{dlg.FileName}\" --accept-source-agreements --disable-interactivity");
+                var (code, output) = await WingetRunner.RunAsync($"export -o \"{dlg.FileName}\" {WingetArgs.NonInteractiveLine}");
                 // Одного File.Exists мало: SaveFileDialog разрешает выбрать уже
                 // существующий файл, и при неудаче winget на диске остаётся СТАРЫЙ файл —
                 // проверка проходила, и пользователь получал «✅ Экспортировано»
@@ -79,7 +79,7 @@ namespace Ven4Tools.Views.Tabs
                 // локали кроме русской и английской удачный импорт объявлялся неудачей
                 // (и список установленных не обновлялся), а неудачный — успехом, если
                 // слово «successfully» попадалось в отчёте по одному из пакетов.
-                var (code, output) = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" --accept-package-agreements --accept-source-agreements --disable-interactivity");
+                var (code, output) = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" {WingetArgs.ModifyLine}");
                 var exit = DescribeWingetExitCode(code);
 
                 if (exit.Success)

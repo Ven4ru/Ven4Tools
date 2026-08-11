@@ -25,7 +25,7 @@ namespace Ven4Tools.Views.Tabs
                     try
                     {
                         var (_, output) = await WingetRunner.RunAsync(
-                            "list --accept-source-agreements --disable-interactivity");
+                            $"list {WingetArgs.NonInteractiveLine}");
                         _cachedRawOutput = output;
                     }
                     catch (Exception ex)
@@ -68,7 +68,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 txtLoadingMsg.Text = "⏳ Получение списка установленных приложений...";
                 var (_, output) = await WingetRunner.RunAsync(
-                    "list --accept-source-agreements --disable-interactivity");
+                    $"list {WingetArgs.NonInteractiveLine}");
                 rawOutput = output;
             }
 
