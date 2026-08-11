@@ -60,7 +60,7 @@ namespace Ven4Tools.ViewModels
                 string disk = SelectedInstallDrive.TrimEnd('\\');
                 var drive = new DriveInfo(disk);
                 if (drive.IsReady)
-                    SpaceStatus = $"💾 Диск {disk} | Свободно: {drive.AvailableFreeSpace / 1024 / 1024 / 1024} ГБ / {drive.TotalSize / 1024 / 1024 / 1024} ГБ";
+                    SpaceStatus = $"💾 Диск {disk} | Свободно: {Helpers.SizeFormatter.BytesToGBWhole(drive.AvailableFreeSpace)} / {Helpers.SizeFormatter.BytesToGBWhole(drive.TotalSize)}";
             }
             catch (Exception ex) { Log($"⚠️ Ошибка обновления информации о диске: {ex.Message}"); }
         }

@@ -192,7 +192,7 @@ namespace Ven4Tools.Views.Tabs
                                   (itemNode.Item.KbArticleIds.Count > 0
                                       ? $" (KB{string.Join(", KB", itemNode.Item.KbArticleIds)})"
                                       : "") +
-                                  $" — {FormatSize(itemNode.Item.SizeBytes)}",
+                                  $" — {Helpers.SizeFormatter.BytesToMB(itemNode.Item.SizeBytes)}",
                         IsChecked = itemNode.IsChecked
                     };
                     itemCheck.Click += (_, _) =>
@@ -216,12 +216,9 @@ namespace Ven4Tools.Views.Tabs
         {
             var selectedIds = WindowsUpdateCategoryTreeBuilder.GetSelectedUpdateIds(_tree);
             long totalBytes = WindowsUpdateCategoryTreeBuilder.GetSelectedTotalSizeBytes(_tree);
-            txtSelectionSummary.Text = $"Выбрано: {selectedIds.Count} патчей, {FormatSize(totalBytes)}";
+            txtSelectionSummary.Text = $"Выбрано: {selectedIds.Count} патчей, {Helpers.SizeFormatter.BytesToMB(totalBytes)}";
             btnInstall.IsEnabled = selectedIds.Count > 0 && !WindowsUpdateService.IsBusy;
         }
-
-        private static string FormatSize(long bytes) =>
-            bytes <= 0 ? "0 МБ" : $"{bytes / 1024.0 / 1024.0:F1} МБ";
 
         private async void BtnInstall_Click(object sender, RoutedEventArgs e)
         {
@@ -236,7 +233,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 // EULA нескольких патчей может быть длинным — показываем в отдельном окне
                 // с прокруткой (раньше склеивалось в один MessageBox и обрезалось по высоте).
-                string header = $"Установить {selectedIds.Count} патчей ({FormatSize(totalBytes)})?\n" +
+                string header = $"Установить {selectedIds.Count} патчей ({Helpers.SizeFormatter.BytesToMB(totalBytes)})?\n" +
                                 "Может потребоваться перезагрузка после установки.";
                 string eulaText = string.Join("\n\n----------------------------------------\n\n",
                     eulaItems.Select(i => $"{i.Title}:\n\n{i.EulaText}"));
@@ -245,7 +242,7 @@ namespace Ven4Tools.Views.Tabs
             }
             else
             {
-                string confirmText = $"Установить {selectedIds.Count} патчей ({FormatSize(totalBytes)})?\n\n" +
+                string confirmText = $"Установить {selectedIds.Count} патчей ({Helpers.SizeFormatter.BytesToMB(totalBytes)})?\n\n" +
                                       "Может потребоваться перезагрузка после установки.";
                 confirmed = MessageBox.Show(confirmText, "Подтверждение установки",
                     MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
