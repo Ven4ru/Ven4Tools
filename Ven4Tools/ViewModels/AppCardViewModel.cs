@@ -59,6 +59,16 @@ namespace Ven4Tools.ViewModels
             InstallCommand   = RelayCommand.FromAsync(async _ => await InstallAsync(),   _ => !IsInstalled && !IsBusy);
             ReinstallCommand = RelayCommand.FromAsync(async _ => await ReinstallAsync(), _ => IsInstalled && !IsBusy);
             UninstallCommand = RelayCommand.FromAsync(async _ => await UninstallAsync(), _ => IsInstalled && !IsBusy);
+
+            TogglePinCommand = new RelayCommand(_ =>
+            {
+                if (IsPinned) PinnedAppsService.Unpin(Row.AppId);
+                else if (!PinnedAppsService.IsFull) PinnedAppsService.Pin(Row.AppId);
+                else return; // лимит достигнут — PinTooltip уже объясняет почему кнопка не действует
+                OnPropertyChanged(nameof(IsPinned));
+                OnPropertyChanged(nameof(PinGlyph));
+                OnPropertyChanged(nameof(PinTooltip));
+            });
         }
 
         public string DisplayName => Row.DisplayName;
@@ -83,6 +93,14 @@ namespace Ven4Tools.ViewModels
 
         public bool IsInstalled => Row.IsInstalled;
         public bool CanLaunch => Row.CanLaunch;
+
+        public bool IsPinned => PinnedAppsService.IsPinned(Row.AppId);
+        public string PinGlyph => IsPinned ? "📌" : "📍";
+        public string PinTooltip => IsPinned
+            ? "Открепить от панели быстрого доступа."
+            : PinnedAppsService.IsFull
+                ? $"Панель быстрого доступа заполнена (максимум {PinnedAppsService.MaxPins})."
+                : "Закрепить на панели быстрого доступа над каталогом.";
 
         // Видимость кнопок карточки. Вынесено в вычисляемые свойства, чтобы во
         // время «Переустановить» (Uninstall→Install) набор кнопок не мигал:
@@ -125,6 +143,7 @@ namespace Ven4Tools.ViewModels
         public RelayCommand InstallCommand { get; }
         public RelayCommand ReinstallCommand { get; }
         public RelayCommand UninstallCommand { get; }
+        public RelayCommand TogglePinCommand { get; }
 
         private void RefreshCommands()
         {

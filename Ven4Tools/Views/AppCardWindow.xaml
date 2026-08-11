@@ -77,11 +77,18 @@
                     Command="{Binding ReinstallCommand}"
                     ToolTip="Повторно установит приложение. Текущая версия может быть заменена."
                     Visibility="{Binding ShowInstalledActions, Converter={StaticResource BoolToVis}}"/>
-            <Button Content="🗑 Удалить" Height="30"
+            <Button Content="🗑 Удалить" Height="30" Margin="0,0,0,6"
                     Command="{Binding UninstallCommand}"
                     ToolTip="После подтверждения удалит приложение с компьютера."
                     Visibility="{Binding ShowInstalledActions, Converter={StaticResource BoolToVis}}"
                     Background="#5a1414" Foreground="#ffb4b4"/>
+            <Button Height="30" Command="{Binding TogglePinCommand}" ToolTip="{Binding PinTooltip}"
+                    Background="Transparent" BorderThickness="1">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding PinGlyph}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Быстрый доступ" Foreground="{DynamicResource TextPrimary}" FontSize="11"/>
+                </StackPanel>
+            </Button>
         </StackPanel>
     </Grid>
 </Window>

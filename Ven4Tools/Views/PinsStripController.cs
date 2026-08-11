@@ -154,8 +154,10 @@ namespace Ven4Tools.Views
         private void PinUnpinBtn_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.Tag is not string id) return;
+            // Refresh() не нужен явно — PinnedAppsService.Unpin поднимает Changed,
+            // на который подписан MainWindow (та же связка, что и у TogglePinCommand
+            // карточки приложения).
             PinnedAppsService.Unpin(id);
-            Refresh();
         }
     }
 }
