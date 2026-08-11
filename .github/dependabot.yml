@@ -10,9 +10,25 @@ updates:
       # v3.x, апгрейд мажора невозможен без покупки лицензии.
       - dependency-name: "SixLabors.ImageSharp"
         update-types: ["version-update:semver-major"]
+    groups:
+      # TestAdapter и TestFramework должны бампиться одним PR — раздельные
+      # версии двух пакетов из одного пакета MSTest не тестировались вместе
+      # (round 36: раздельные PR #25/#26 дублировали друг друга).
+      mstest:
+        patterns:
+          - "MSTest.*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      # init и analyze обязаны бампиться одним PR — CodeQL проверяет, что
+      # версия конфига analyze совпадает с версией, записанной init, и падает
+      # с "Loaded a configuration file for version X, but running version Y",
+      # если раздельные PR смержены не в один момент (round 36: PR #29/#30,
+      # и раньше #24/#27 — падало каждый раз на новом релизе codeql-action).
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
