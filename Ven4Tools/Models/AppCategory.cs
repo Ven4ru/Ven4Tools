@@ -50,8 +50,7 @@ namespace Ven4Tools.Models
         public bool IsUserAdded { get; set; } = false;
         public long RequiredSpaceMB { get; set; } = 500;
         public string? AlternativeId { get; set; }
-        public bool IsInstalled { get; set; } = false;
-        
+
         public string? LocalInstallerPath { get; set; }
 
         public string ChocoId { get; set; } = string.Empty;
