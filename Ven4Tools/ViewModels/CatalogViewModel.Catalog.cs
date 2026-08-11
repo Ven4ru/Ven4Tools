@@ -231,7 +231,7 @@ namespace Ven4Tools.ViewModels
         // можно только тестом, который сам подменяет CurrentCulture на ru-RU.
         internal static int ParseSizeToMB(string size)
         {
-            if (string.IsNullOrEmpty(size)) return 100;
+            if (string.IsNullOrEmpty(size)) return (int)InstallSizeDefaults.UnknownSizeMB;
             try
             {
                 var match = _sizeNumberRegex.Match(size);
@@ -248,8 +248,14 @@ namespace Ven4Tools.ViewModels
                         out double value))
                     return size.Contains("GB", StringComparison.OrdinalIgnoreCase) ? (int)(value * 1024) : (int)value;
             }
-            catch { }
-            return 100;
+            catch (Exception ex)
+            {
+                // Ровно этот catch однажды уже спрятал культурно-зависимый сбой разбора
+                // (см. комментарий выше) — размер подменялся заглушкой, и в журнале не
+                // было ни строки. Тот же класс бага, что чинили в AvailabilityChecker.
+                AppLogger.Write($"[CatalogViewModel] Не удалось разобрать размер «{size}»: {ex.Message}");
+            }
+            return (int)InstallSizeDefaults.UnknownSizeMB;
         }
 
         private void BuildRows()

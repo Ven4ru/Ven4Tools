@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Ven4Tools.Models;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
@@ -79,7 +80,9 @@ namespace Ven4Tools.ViewModels
                     try
                     {
                         var result = await _availabilityChecker.CheckAppAvailabilityWithSize(row.App);
-                        long mb = result.Status == AvailabilityChecker.AvailabilityStatus.Available ? result.SizeMB : 100;
+                        long mb = result.Status == AvailabilityChecker.AvailabilityStatus.Available
+                            ? result.SizeMB
+                            : InstallSizeDefaults.UnknownSizeMB;
                         lock (lockObj) { totalRequired += mb; }
                     }
                     finally { sem.Release(); }

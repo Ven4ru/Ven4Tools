@@ -21,10 +21,7 @@ namespace Ven4Tools.Services
         private readonly ConcurrentDictionary<string, CachedAvailability> cache = new();
         private readonly TimeSpan cacheDuration = TimeSpan.FromMinutes(5);
 
-        // Размер-заглушка, когда приложение доступно, но фактический размер установщика
-        // получить не удалось (winget не сообщил размер, у HEAD/GET нет Content-Length).
-        // Значение чисто индикативное для UI каталога — точным быть не обязано.
-        private const long DefaultUnknownSizeMB = 100;
+        private const long DefaultUnknownSizeMB = InstallSizeDefaults.UnknownSizeMB;
         // Таймаут хранится отдельно и применяется per-request через CancellationTokenSource:
         // менять HttpClient.Timeout после первого запроса нельзя (InvalidOperationException)
         private volatile int _timeoutSeconds;
