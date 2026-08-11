@@ -198,7 +198,7 @@ namespace Ven4Tools.Services
             text = System.Text.RegularExpressions.Regex.Replace(
                 text,
                 @"([A-Za-z]:\\Users\\)[^\\\r\n]+",
-                "$1<user>",
+                "$1<пользователь>",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
             // Тот же путь, но с forward-slash (встречается в URI/некоторых стектрейсах
@@ -206,12 +206,12 @@ namespace Ven4Tools.Services
             text = System.Text.RegularExpressions.Regex.Replace(
                 text,
                 @"([A-Za-z]:/Users/)[^/\r\n]+",
-                "$1<user>",
+                "$1<пользователь>",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             text = System.Text.RegularExpressions.Regex.Replace(
                 text,
                 @"(\\\\[^\\\r\n]+\\Users\\)[^\\\r\n]+",
-                "$1<user>",
+                "$1<пользователь>",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
             // Убираем имя пользователя и имя машины из непутевого контекста (SQL-ошибки, UNC-пути).
@@ -220,11 +220,11 @@ namespace Ven4Tools.Services
             // Короткие значения (< 3 символов) не заменяем — слишком много ложных срабатываний.
             var userName = Environment.UserName;
             if (!string.IsNullOrEmpty(userName) && userName.Length >= 3)
-                text = text.Replace(userName, "<user>", StringComparison.OrdinalIgnoreCase);
+                text = text.Replace(userName, "<пользователь>", StringComparison.OrdinalIgnoreCase);
 
             var machineName = Environment.MachineName;
             if (!string.IsNullOrEmpty(machineName) && machineName.Length >= 3)
-                text = text.Replace(machineName, "<machine>", StringComparison.OrdinalIgnoreCase);
+                text = text.Replace(machineName, "<машина>", StringComparison.OrdinalIgnoreCase);
 
             return text;
         }
