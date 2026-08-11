@@ -24,12 +24,6 @@ namespace Ven4Tools.Services
         private static readonly Regex _allowedId =
             new(@"^[A-Za-z0-9.\-+_]+$", RegexOptions.Compiled);
 
-        // Поисковый запрос — текст пользователя, пробел здесь легитимен
-        // ("visual studio code"), а в командную строку он уходит отдельным
-        // экранированным токеном через ArgumentList.
-        private static readonly Regex _allowedQuery =
-            new(@"^[A-Za-z0-9.\-+_ ]+$", RegexOptions.Compiled);
-
         private static readonly Regex _stripChars =
             new(@"[^A-Za-z0-9.\-+_ ]", RegexOptions.Compiled);
 
@@ -41,16 +35,6 @@ namespace Ven4Tools.Services
         {
             if (string.IsNullOrEmpty(id) || id.Length > 200) return false;
             return _allowedId.IsMatch(id);
-        }
-
-        /// <summary>
-        /// Проверяет поисковый запрос: длина 1–100, только допустимые символы
-        /// (пробел допускается).
-        /// </summary>
-        public static bool ValidateQuery(string? query)
-        {
-            if (string.IsNullOrEmpty(query) || query.Length > 100) return false;
-            return _allowedQuery.IsMatch(query);
         }
 
         /// <summary>

@@ -48,12 +48,5 @@ namespace Ven4Tools.Services
             Changed?.Invoke();
         }
 
-        public static void Reset(bool keepCategorySelection = true)
-        {
-            bool had = Current.HasSelectedCategory;
-            Current = new UserProfile();
-            if (keepCategorySelection) Current.HasSelectedCategory = had;
-            Save();
-        }
     }
 }
