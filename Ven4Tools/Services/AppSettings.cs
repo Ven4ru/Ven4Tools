@@ -13,8 +13,6 @@ namespace Ven4Tools.Services
 
         public static int CatalogTimeout { get; private set; } = 10;
         public static int CheckTimeout { get; private set; } = 15;
-        public static bool Notifications { get; private set; } = true;
-        public static bool UpdateNotifications { get; private set; } = true;
 
         public static event Action? Changed;
 
@@ -35,8 +33,6 @@ namespace Ven4Tools.Services
                 _data = data;
                 CatalogTimeout = data.CatalogTimeout;
                 CheckTimeout = data.CheckTimeout;
-                Notifications = data.Notifications;
-                UpdateNotifications = data.UpdateNotifications;
             }
             catch (Exception ex)
             {
@@ -51,12 +47,10 @@ namespace Ven4Tools.Services
         /// Обновляет статические свойства и вызывает <see cref="Changed"/> без повторного
         /// чтения файла.
         /// </summary>
-        public static void Save(int catalogTimeout, int checkTimeout, bool notifications, bool updateNotifications)
+        public static void Save(int catalogTimeout, int checkTimeout)
         {
-            _data.CatalogTimeout      = CatalogTimeout      = catalogTimeout;
-            _data.CheckTimeout        = CheckTimeout        = checkTimeout;
-            _data.Notifications       = Notifications       = notifications;
-            _data.UpdateNotifications = UpdateNotifications = updateNotifications;
+            _data.CatalogTimeout = CatalogTimeout = catalogTimeout;
+            _data.CheckTimeout   = CheckTimeout   = checkTimeout;
 
             try
             {
@@ -74,8 +68,13 @@ namespace Ven4Tools.Services
         {
             public int CatalogTimeout { get; set; } = 10;
             public int CheckTimeout { get; set; } = 15;
-            public bool Notifications { get; set; } = true;
-            public bool UpdateNotifications { get; set; } = true;
+
+            // Поля файла, которых нет среди известных выше (например Notifications/
+            // UpdateNotifications из старых версий, переехавшие в UserProfile, или записанные
+            // более новой версией клиента) — без этого Newtonsoft отбрасывал бы их
+            // молча при каждом Save(), хотя комментарий у _data всегда обещал обратное.
+            [JsonExtensionData]
+            public System.Collections.Generic.IDictionary<string, Newtonsoft.Json.Linq.JToken>? Extra { get; set; }
         }
 
         public static void NotifyChanged()
