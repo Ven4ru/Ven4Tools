@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.ExceptionServices;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -257,7 +256,7 @@ internal sealed class FallbackDownloader
 
             if (!string.IsNullOrWhiteSpace(expectedSha256))
             {
-                string actualSha256 = await ComputeSha256Async(partialPath, cancellationToken);
+                string actualSha256 = await Helpers.FileHashHelper.ComputeSha256Async(partialPath, cancellationToken);
                 if (!string.Equals(
                     actualSha256,
                     expectedSha256,
@@ -300,18 +299,4 @@ internal sealed class FallbackDownloader
         }
     }
 
-    private static async Task<string> ComputeSha256Async(
-        string path,
-        CancellationToken cancellationToken)
-    {
-        await using var stream = new FileStream(
-            path,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.Read,
-            bufferSize: 81920,
-            useAsync: true);
-        byte[] hash = await SHA256.HashDataAsync(stream, cancellationToken);
-        return Convert.ToHexString(hash);
-    }
 }
