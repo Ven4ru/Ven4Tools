@@ -99,6 +99,13 @@ namespace Ven4Tools.Services
         /// </summary>
         public void Set(string appId, string? wingetId, string? url, bool priority)
         {
+            // Оба аргумента пустые — вызывающий код ничего не задаёт, а не просит
+            // создать пустую запись. Без этой проверки пустой вызов создавал и
+            // сохранял запись вида {WingetId: null, Url: null} — сегодня недостижимо
+            // через UI (AlternativeSourceDialog гарантирует непустоту), но это
+            // defensive-проверка на будущее, а не текущий баг.
+            if (string.IsNullOrEmpty(wingetId) && string.IsNullOrEmpty(url)) return;
+
             try
             {
                 lock (_lock)
