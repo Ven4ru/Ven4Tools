@@ -60,6 +60,11 @@ namespace Ven4Tools
             _mascot    = new MascotController(imgMascot);
             _pins      = new PinsStripController(pnlPins, wrapPins, this,
                              () => _catalogTab?.SelectedInstallDrive ?? "C:\\");
+            // Именованный обработчик — отписываемся в OnClosed. Источник изменения —
+            // либо сама полоса (снятие пина), либо кнопка 📌 в открытой карточке
+            // приложения (AppCardViewModel.TogglePinCommand) — у карточки нет прямой
+            // ссылки на _pins, только на общий сервис.
+            PinnedAppsService.Changed += OnPinsChanged;
             _drop      = new InstallerDropHandler(this, pnlDropOverlay,
                              app => _catalogTab?.AddLocalInstallerApp(app));
             _tray      = new TrayIconController(Dispatcher, ShowFromTray, ForceExit);
@@ -128,6 +133,8 @@ namespace Ven4Tools
         private void OnConnectivityChanged(bool online) =>
             Dispatcher.Invoke(() => UpdateTabVisibility());
 
+        private void OnPinsChanged() => Dispatcher.Invoke(() => _pins.Refresh());
+
         private void OnWindowsUpdateCountChanged() => Dispatcher.Invoke(() =>
         {
             int count = WindowsUpdateBackgroundService.AvailableCount;
@@ -141,6 +148,7 @@ namespace Ven4Tools
             AppLogger.MessageReceived -= _globalLog.Append;
             ConnectivityMonitor.StatusChanged -= OnConnectivityChanged;
             WindowsUpdateBackgroundService.CountChanged -= OnWindowsUpdateCountChanged;
+            PinnedAppsService.Changed -= OnPinsChanged;
             _tray.UnregisterNotifier();
             _activeTasksTimer?.Stop();
             base.OnClosed(e);
