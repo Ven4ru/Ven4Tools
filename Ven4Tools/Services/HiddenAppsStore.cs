@@ -60,5 +60,22 @@ namespace Ven4Tools.Services
         {
             lock (_lock) { return new HashSet<string>(_hidden); }
         }
+
+        /// <summary>Скрывает приложение из каталога и сохраняет файл.</summary>
+        public void Hide(string appId)
+        {
+            lock (_lock) { _hidden.Add(appId); }
+            Save();
+        }
+
+        /// <summary>Количество скрытых приложений — для UI на «Настройках».</summary>
+        public int Count { get { lock (_lock) { return _hidden.Count; } } }
+
+        /// <summary>Возвращает все скрытые приложения обратно в каталог.</summary>
+        public void UnhideAll()
+        {
+            lock (_lock) { _hidden.Clear(); }
+            Save();
+        }
     }
 }

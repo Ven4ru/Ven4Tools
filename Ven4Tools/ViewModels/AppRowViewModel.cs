@@ -182,6 +182,11 @@ namespace Ven4Tools.ViewModels
         public bool IsSelectable => Availability != RowAvailability.Unavailable && !JustInstalled;
         public bool ShowSuggestButton => Availability == RowAvailability.Unavailable && !IsUserAdded;
 
+        // Скрыть можно только каталожные приложения — у пользовательских уже есть
+        // свой способ убрать из списка (кнопка ❌, RemoveUserAppCommand), и это
+        // необратимо, в отличие от скрытия.
+        public bool ShowHideButton => !IsUserAdded;
+
         private bool _isInstalled;
         public bool IsInstalled
         {

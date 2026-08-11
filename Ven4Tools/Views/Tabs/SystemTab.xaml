@@ -433,6 +433,21 @@
                 </StackPanel>
             </GroupBox>
 
+            <!-- Скрытые приложения -->
+            <GroupBox Header="🙈 Скрытые приложения" Margin="0,0,0,15">
+                <StackPanel Margin="10">
+                    <TextBlock Text="Приложения, скрытые из каталога кнопкой 🙈 в строке. Индивидуального списка нет — только массовый возврат всех сразу."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,0,0,10"/>
+                    <Button x:Name="btnUnhideAllApps" Content="👁 Показать скрытые"
+                            ToolTip="Вернёт в каталог все скрытые приложения."
+                            Height="35" Width="180" HorizontalAlignment="Left"
+                            Click="BtnUnhideAllApps_Click"/>
+                    <TextBlock x:Name="txtHiddenAppsStatus" Margin="0,8,0,0"
+                               FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                </StackPanel>
+            </GroupBox>
+
             <!-- Снапшоты конфигурации -->
             <GroupBox Header="📸 Снапшоты конфигурации" Margin="0,0,0,15">
                 <StackPanel Margin="10">

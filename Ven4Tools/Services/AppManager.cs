@@ -175,6 +175,9 @@ namespace Ven4Tools.Services
         // ── Скрытые приложения ───────────────────────────────────────────────────
 
         public bool IsAppHidden(string appId) => hiddenAppsStore.IsHidden(appId);
+        public void HideApp(string appId) => hiddenAppsStore.Hide(appId);
+        public int HiddenAppsCount => hiddenAppsStore.Count;
+        public void UnhideAllApps() => hiddenAppsStore.UnhideAll();
 
         // ── Расположение файлов конфигурации ─────────────────────────────────────
 

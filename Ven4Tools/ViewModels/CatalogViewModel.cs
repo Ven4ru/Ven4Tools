@@ -68,6 +68,7 @@ namespace Ven4Tools.ViewModels
         public RelayCommand SuggestAlternativeCommand { get; }
         public RelayCommand OpenCardCommand { get; }
         public RelayCommand RemoveUserAppCommand { get; }
+        public RelayCommand HideAppCommand { get; }
         public RelayCommand InstallSelectedCommand { get; }
         public RelayCommand CancelInstallCommand { get; }
         public RelayCommand RefreshAvailabilityCommand { get; }
@@ -166,6 +167,11 @@ namespace Ven4Tools.ViewModels
             RemoveUserAppCommand = new RelayCommand(p =>
             {
                 if (p is AppRowViewModel row) RemoveUserApp(row);
+            });
+
+            HideAppCommand = new RelayCommand(p =>
+            {
+                if (p is AppRowViewModel row) HideApp(row);
             });
 
             InstallSelectedCommand = RelayCommand.FromAsync(async _ => await InstallSelectedAsync(),

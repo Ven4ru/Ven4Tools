@@ -96,6 +96,28 @@ namespace Ven4Tools.Views.Tabs
                 : $"Сохранено: {value}";
         }
 
+        // ── Скрытые приложения ─────────────────────────────────────────────────────
+
+        private void BtnUnhideAllApps_Click(object sender, RoutedEventArgs e)
+        {
+            // Отдельный экземпляр AppManager нарочно: он ничего не держит в памяти
+            // кроме файлового состояния (apps.json/alternatives.json/hidden.json),
+            // тот же приём, что и у ProfileService/AppSettings — обращение к диску,
+            // а не к уже загруженному в CatalogViewModel списку строк.
+            var appManager = new AppManager();
+            int count = appManager.HiddenAppsCount;
+            if (count == 0)
+            {
+                txtHiddenAppsStatus.Text = "Скрытых приложений нет.";
+                return;
+            }
+
+            appManager.UnhideAllApps();
+            txtHiddenAppsStatus.Text =
+                $"Показано: {count}. Чтобы увидеть их в списке — «Обновить каталог» на вкладке «Каталог» или перезапустите клиент.";
+            AppLogger.Write($"👁 Показаны скрытые приложения ({count})");
+        }
+
         // ── Перенос настроек (экспорт/импорт) ─────────────────────────────────────
 
         private void BtnExportSettings_Click(object sender, RoutedEventArgs e)
