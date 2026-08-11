@@ -67,6 +67,50 @@ namespace Ven4Tools.ViewModels
             ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 215, 0))
             : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
 
+        // HideInstalled/DefaultSort уже читались в RowFilter/ApplySortOrder ниже, но
+        // задать их было нечем — ни один XAML-элемент их не менял. Обёртки над
+        // ProfileService.Current, тот же Button+Command паттерн, что у избранного.
+        public bool HideInstalled
+        {
+            get => ProfileService.Current.HideInstalled;
+            set
+            {
+                if (ProfileService.Current.HideInstalled == value) return;
+                ProfileService.Current.HideInstalled = value;
+                ProfileService.Save();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HideInstalledBrush));
+                AppsView.Refresh();
+            }
+        }
+
+        public System.Windows.Media.Brush HideInstalledBrush => HideInstalled
+            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 215, 0))
+            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
+
+        // DefaultSort исторически хранит "alpha"/"category" (обе ветки ApplySortOrder
+        // ведут себя одинаково — сортировка по имени внутри категории) — с точки
+        // зрения UI это один переключатель "сортировать по алфавиту вкл/выкл".
+        public bool SortAlphabetically
+        {
+            get => ProfileService.Current.DefaultSort is "alpha" or "category";
+            set
+            {
+                string newValue = value ? "alpha" : "none";
+                if (ProfileService.Current.DefaultSort == newValue) return;
+                ProfileService.Current.DefaultSort = newValue;
+                ProfileService.Save();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SortAlphabeticallyBrush));
+                ApplySortOrder();
+                AppsView.Refresh();
+            }
+        }
+
+        public System.Windows.Media.Brush SortAlphabeticallyBrush => SortAlphabetically
+            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 215, 0))
+            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
+
         private bool _showSuggestionsPanel;
         public bool ShowSuggestionsPanel
         {
