@@ -76,6 +76,8 @@ namespace Ven4Tools.ViewModels
         public RelayCommand ClearAllUserAppsCommand { get; }
         public RelayCommand ClearSearchCommand { get; }
         public RelayCommand ToggleFavoritesOnlyCommand { get; }
+        public RelayCommand ToggleHideInstalledCommand { get; }
+        public RelayCommand ToggleSortAlphabeticallyCommand { get; }
         public RelayCommand ExportListCommand { get; }
         public RelayCommand ImportListCommand { get; }
         public RelayCommand SavePresetCommand { get; }
@@ -198,6 +200,8 @@ namespace Ven4Tools.ViewModels
 
             ClearSearchCommand = new RelayCommand(_ => SearchText = "");
             ToggleFavoritesOnlyCommand = new RelayCommand(_ => ShowFavoritesOnly = !ShowFavoritesOnly);
+            ToggleHideInstalledCommand = new RelayCommand(_ => HideInstalled = !HideInstalled);
+            ToggleSortAlphabeticallyCommand = new RelayCommand(_ => SortAlphabetically = !SortAlphabetically);
 
             ExportListCommand = new RelayCommand(_ => ExportList());
             ImportListCommand = new RelayCommand(_ => ImportList());
