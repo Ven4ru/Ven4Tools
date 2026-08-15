@@ -90,6 +90,22 @@
                 </StackPanel>
             </GroupBox>
 
+            <GroupBox Header="📚 Область каталога" Margin="0,0,0,15">
+                <StackPanel Margin="10">
+                    <TextBlock Text="Сколько приложений показывать в каталоге:"
+                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
+                    <ComboBox x:Name="cmbCatalogMode" Width="260" HorizontalAlignment="Left"
+                              SelectionChanged="CmbCatalogMode_SelectionChanged">
+                        <ComboBoxItem Content="Базовый" Tag="basic"/>
+                        <ComboBoxItem Content="Расширенный" Tag="extended"/>
+                        <ComboBoxItem Content="Полный" Tag="full"/>
+                    </ComboBox>
+                    <TextBlock Text="Выбор при первом запуске сохраняется навсегда, если не поменять его здесь. «Базовый» — только самые ходовые программы, «Полный» — весь каталог."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,4,0,0"/>
+                </StackPanel>
+            </GroupBox>
+
             <!-- Таймауты -->
             <GroupBox Header="⏱️ Таймауты" Margin="0,0,0,15">
                 <Grid Margin="10">
