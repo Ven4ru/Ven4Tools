@@ -20,7 +20,7 @@
     <!-- AssemblyVersion/FileVersion намеренно не заданы отдельно: SDK выводит их из
          Version. Иначе литерал AssemblyVersion перебивает Version и рассинхронизируется
          при релизе (реальный билд показывал/отправлял версию отличную от Version). -->
-    <Version>4.4.4</Version>
+    <Version>4.5.0</Version>
     
     <!-- Явная точка входа -->
     <StartupObject>Ven4Tools.App</StartupObject>
@@ -31,9 +31,9 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="System.Management" Version="10.0.10" />
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.10" />
-    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.10" />
+    <PackageReference Include="System.Management" Version="10.0.11" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.11" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.11" />
   </ItemGroup>
 
   <ItemGroup>

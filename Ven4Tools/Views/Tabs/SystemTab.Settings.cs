@@ -33,6 +33,10 @@ namespace Ven4Tools.Views.Tabs
             chkSilentInstall.IsChecked = ProfileService.Current.SilentInstall;
             txtDefaultInstallFolder.Text = ProfileService.Current.DefaultInstallFolder;
             txtDefaultInstallFolderStatus.Text = "";
+
+            _loadingCatalogMode = true;
+            SelectComboByTag(cmbCatalogMode, ProfileService.Current.CatalogMode);
+            _loadingCatalogMode = false;
         }
 
         private void SaveSettings()
@@ -94,6 +98,15 @@ namespace Ven4Tools.Views.Tabs
             txtDefaultInstallFolderStatus.Text = value.Length == 0
                 ? "Папка не задана — winget выбирает её сам."
                 : $"Сохранено: {value}";
+        }
+
+        // ── Область каталога ───────────────────────────────────────────────────────
+
+        private void CmbCatalogMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loadingCatalogMode || cmbCatalogMode.SelectedItem is not ComboBoxItem item) return;
+            ProfileService.Current.CatalogMode = item.Tag?.ToString() ?? "full";
+            ProfileService.Save();
         }
 
         // ── Скрытые приложения ─────────────────────────────────────────────────────

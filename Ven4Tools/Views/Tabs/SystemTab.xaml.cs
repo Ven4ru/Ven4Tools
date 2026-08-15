@@ -19,6 +19,7 @@ namespace Ven4Tools.Views.Tabs
     {
         private bool _initialized = false;
         private bool _loadingAppearance = true;
+        private bool _loadingCatalogMode = false;
         private bool _connSubscribed = false;
 
         public SystemTab()

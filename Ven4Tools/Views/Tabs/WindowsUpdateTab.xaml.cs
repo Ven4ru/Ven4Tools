@@ -38,19 +38,13 @@ namespace Ven4Tools.Views.Tabs
 
             if (ProfileService.Current.WindowsUpdateMode == "NotSet")
             {
-                var dialog = new WindowsUpdateModeDialog { Owner = Window.GetWindow(this) };
-                if (dialog.ShowDialog() == true)
-                {
-                    ProfileService.Current.WindowsUpdateMode = dialog.SelectedMode;
-                    ProfileService.Save();
-                }
-                else
-                {
-                    // Пользователь закрыл диалог без выбора — считаем "только уведомлять"
-                    // как самый ненавязчивый вариант по умолчанию, не переспрашиваем каждый раз.
-                    ProfileService.Current.WindowsUpdateMode = "NotifyOnly";
-                    ProfileService.Save();
-                }
+                // Диалог выбора режима (WindowsUpdateModeDialog) не показывается: оба
+                // варианта пока работают одинаково ("только уведомлять") — DownloadOnlyAsync
+                // ещё не реализован (см. WindowsUpdateBackgroundService). Спрашивать выбор,
+                // который ни на что не влияет, — чистая фрикция. Вернуть диалог вместе
+                // с реализацией фоновой загрузки.
+                ProfileService.Current.WindowsUpdateMode = "NotifyOnly";
+                ProfileService.Save();
             }
 
             // Автопроверка при первом открытии вкладки — исходящий запрос к серверам

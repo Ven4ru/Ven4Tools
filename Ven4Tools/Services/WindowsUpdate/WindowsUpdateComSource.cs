@@ -242,7 +242,7 @@ namespace Ven4Tools.Services.WindowsUpdate
                             return new WindowsUpdateInstallOutcome
                             {
                                 Success = false,
-                                ErrorMessage = $"Недостаточно места на диске {systemDrive} — нужно ориентировочно {totalDownloadBytes * 2 / 1024 / 1024} МБ свободных, доступно {drive.AvailableFreeSpace / 1024 / 1024} МБ."
+                                ErrorMessage = $"Недостаточно места на диске {systemDrive} — нужно ориентировочно {Helpers.SizeFormatter.BytesToMBWhole(totalDownloadBytes * 2)} свободных, доступно {Helpers.SizeFormatter.BytesToMBWhole(drive.AvailableFreeSpace)}."
                             };
                     }
 

@@ -40,7 +40,7 @@ namespace Ven4Tools.ViewModels
                 var drives = DriveInfo.GetDrives()
                     .Where(d => d.DriveType == DriveType.Fixed && d.IsReady)
                     .Select(d => new DiskOption(d.RootDirectory.FullName.TrimEnd('\\'),
-                        $"{d.Name.TrimEnd('\\')} ({d.AvailableFreeSpace / 1024 / 1024 / 1024:F1} ГБ свободно)"))
+                        $"{d.Name.TrimEnd('\\')} ({Helpers.SizeFormatter.BytesToGBWhole(d.AvailableFreeSpace)} свободно)"))
                     .ToList();
 
                 AvailableDisks.Clear();
@@ -94,8 +94,8 @@ namespace Ven4Tools.ViewModels
                 {
                     long availableMB = drive.AvailableFreeSpace / 1024 / 1024;
                     SpaceStatus = availableMB >= totalRequired
-                        ? $"💾 Диск {disk} | Требуется: ~{totalRequired} МБ | Доступно: {availableMB} МБ ✅"
-                        : $"💾 Диск {disk} | Требуется: ~{totalRequired} МБ | Доступно: {availableMB} МБ ❌ Мало места!";
+                        ? $"💾 Диск {disk} | Требуется: ~{totalRequired} МБ | Доступно: {Helpers.SizeFormatter.BytesToMBWhole(drive.AvailableFreeSpace)} ✅"
+                        : $"💾 Диск {disk} | Требуется: ~{totalRequired} МБ | Доступно: {Helpers.SizeFormatter.BytesToMBWhole(drive.AvailableFreeSpace)} ❌ Мало места!";
                 }
             }
             catch (Exception ex) { Log($"⚠️ Ошибка проверки места: {ex.Message}"); }
