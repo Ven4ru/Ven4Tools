@@ -3,17 +3,14 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 
-namespace Ven4Tools.Services
+namespace Ven4Tools.Shared
 {
     /// <summary>
     /// Проверка Authenticode-подписи файла на издателя "Microsoft Corporation".
-    /// Тот же подход, что и в AuthenticodeVerifier лаунчера — отдельная копия,
-    /// т.к. клиент и лаунчер собираются как независимые проекты (см. WingetRunner).
-    /// Используется как для установщиков (OfficeTab), так и для доверия
-    /// резолвингу winget.exe при подозрительном ACL папки (TrustedExecutablePaths) —
-    /// подделать подпись Microsoft атакующий не может, в отличие от ACL,
-    /// который на живых машинах варьируется шире узкого предположения "только
-    /// SYSTEM/Administrators/TrustedInstaller" (см. аудит 2026-07-17).
+    /// Общая для клиента (устанавливаемые пакеты в OfficeTab, резолвинг winget.exe
+    /// при подозрительном ACL — см. TrustedExecutablePaths) и лаунчера (скачанные
+    /// пакеты Microsoft перед elevated-установкой). До раунда 38 существовала как
+    /// две независимые байт-идентичные копии.
     /// </summary>
     internal static class AuthenticodeVerifier
     {
@@ -32,9 +29,10 @@ namespace Ven4Tools.Services
             // сервер CRL или OCSP недоступен), WinVerifyTrust возвращает
             // CERT_E_REVOCATION_FAILURE либо CRYPT_E_REVOCATION_OFFLINE — при этом
             // сама подпись валидна. Такой случай не считаем провалом: fail-open
-            // только для недоступности проверки отзыва, сама подпись остаётся
-            // fail-closed. Отозванный сертификат вернёт CERT_E_REVOKED и попадёт
-            // в общую ветку отказа ниже.
+            // только для недоступности проверки отзыва (иначе клиент/лаунчер не
+            // смогли бы работать оффлайн), а сама подпись остаётся fail-closed.
+            // Отозванный сертификат вернёт CERT_E_REVOKED и попадёт в общую ветку
+            // отказа ниже.
             const int CERT_E_REVOCATION_FAILURE = unchecked((int)0x80092012);
             const int CRYPT_E_REVOCATION_OFFLINE = unchecked((int)0x80092013);
             if (trustStatus != 0 &&

@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Views.Tabs
 {
