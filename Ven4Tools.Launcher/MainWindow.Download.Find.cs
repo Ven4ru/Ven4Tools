@@ -137,28 +137,8 @@ namespace Ven4Tools.Launcher
             yield return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             yield return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
-            string? downloads = null;
-            try
-            {
-                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                    @"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders");
-                downloads = key?.GetValue("{374DE290-123F-4565-9164-39C4925E467B}")?.ToString();
-            }
-            catch { }
-
-            if (!string.IsNullOrEmpty(downloads) && Directory.Exists(downloads))
-            {
+            foreach (var downloads in DownloadsFolderResolver.GetExistingCandidates())
                 yield return downloads;
-            }
-            else
-            {
-                string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                foreach (var name in new[] { "Downloads", "Загрузки" })
-                {
-                    var path = Path.Combine(userProfile, name);
-                    if (Directory.Exists(path)) yield return path;
-                }
-            }
         }
     }
 }

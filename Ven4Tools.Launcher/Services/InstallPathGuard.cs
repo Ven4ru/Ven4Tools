@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -35,43 +36,19 @@ namespace Ven4Tools.Launcher.Services
 
         private static bool IsProtectedUserRoot(string normalizedClientPath)
         {
-            var roots = new[]
+            var roots = new List<string?>
             {
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                 Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
                 Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-                GetDownloadsFolder(),
             };
+            roots.AddRange(DownloadsFolderResolver.GetExistingCandidates());
 
             return roots
                 .Where(r => !string.IsNullOrEmpty(r))
                 .Any(r => string.Equals(normalizedClientPath, Normalize(r!), StringComparison.OrdinalIgnoreCase));
-        }
-
-        // Тот же способ поиска папки "Загрузки", что и в MainWindow.Download.cs
-        // (GetClientSearchRoots) — реальный путь может быть переопределён
-        // пользователем через реестр, простое Path.Combine(UserProfile, "Downloads")
-        // не всегда совпадает с фактической папкой.
-        private static string? GetDownloadsFolder()
-        {
-            try
-            {
-                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                    @"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders");
-                var downloads = key?.GetValue("{374DE290-123F-4565-9164-39C4925E467B}")?.ToString();
-                if (!string.IsNullOrEmpty(downloads)) return downloads;
-            }
-            catch { }
-
-            string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            foreach (var name in new[] { "Downloads", "Загрузки" })
-            {
-                var path = Path.Combine(userProfile, name);
-                if (Directory.Exists(path)) return path;
-            }
-            return null;
         }
 
         private static string Normalize(string path) =>

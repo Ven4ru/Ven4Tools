@@ -144,20 +144,31 @@ namespace Ven4Tools.Launcher
                     tempZip,
                     token,
                     version.ExpectedSha256,
+                    // FallbackDownloader теперь читает/пишет с ConfigureAwait(false) (не
+                    // маршалит каждую итерацию через WPF-контекст) — эти колбэки поэтому
+                    // могут прилетать с любого потока пула, не только с UI-потока, и обязаны
+                    // маршалить сами. BeginInvoke (асинхронный), а не Invoke — колбэк не
+                    // должен блокировать поток загрузки в ожидании отрисовки.
                     progress: (received, total) =>
                     {
                         if (total is > 0)
                         {
                             int percent = (int)((double)received / total.Value * 100);
-                            progressDownload.Value = percent;
-                            txtDownloadStatus.Text = $"Скачивание: {percent}%";
+                            Dispatcher.BeginInvoke(() =>
+                            {
+                                progressDownload.Value = percent;
+                                txtDownloadStatus.Text = $"Скачивание: {percent}%";
+                            });
                         }
                     },
                     switchingTo: (label, reason) =>
                     {
                         AddLog($"⚠️ Предыдущий источник {reason}, переключаюсь: {label}...");
-                        progressDownload.Value = 0;
-                        txtDownloadStatus.Text = "Скачивание: 0%";
+                        Dispatcher.BeginInvoke(() =>
+                        {
+                            progressDownload.Value = 0;
+                            txtDownloadStatus.Text = "Скачивание: 0%";
+                        });
                     });
                 string usedSource = downloadResult.SourceLabel;
                 AddLog($"📥 Источник загрузки: {usedSource}");

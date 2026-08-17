@@ -62,12 +62,16 @@ internal static class SafeZipExtractor
 
             var buffer = new byte[81920];
             int read;
-            while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
+            // ConfigureAwait(false) — распаковка не трогает UI напрямую (вызывающий код
+            // сам маршалит через Dispatcher после await ExtractAsync), нет смысла
+            // протаскивать WPF SynchronizationContext через каждую из потенциально
+            // тысяч итераций на большом архиве.
+            while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
             {
                 actualTotal += read;
                 if (actualTotal > MaxTotalUncompressedBytes)
                     throw new InvalidDataException("Архив превышает допустимый разжатый размер (фактический при распаковке).");
-                await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
             }
         }
     }
