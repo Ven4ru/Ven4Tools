@@ -22,9 +22,9 @@
                           Unchecked="ChkActivationConsent_Changed">
                     <CheckBox.Content>
                         <TextBlock TextWrapping="Wrap" MaxWidth="560">
-                            <Run Text="Я понимаю, что данная функция использует сторонний скрипт активации, который может нарушать "/>
+                            <Run Text="Я понимаю, что перехожу на сайт стороннего инструмента с открытым кодом, использование которого может нарушать "/>
                             <Run Text="лицензионное соглашение Microsoft." FontWeight="SemiBold"/>
-                            <Run Text=" Принимаю полную ответственность за его использование."/>
+                            <Run Text=" Дальнейшие действия выполняю самостоятельно и принимаю за них ответственность."/>
                         </TextBlock>
                     </CheckBox.Content>
                 </CheckBox>
