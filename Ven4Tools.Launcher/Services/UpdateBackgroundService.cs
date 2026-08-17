@@ -215,8 +215,9 @@ namespace Ven4Tools.Launcher.Services
         private static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
 
         // Строка-разделитель таблицы winget. Держится синхронно с клиентским
-        // WingetRunner.IsTableSeparator (общей библиотеки между проектами намеренно нет):
-        // непустая строка только из дефисов и пробелов, минимум с одним дефисом.
+        // WingetRunner.IsTableSeparator — парсер вывода winget пока не вынесен в
+        // Shared/ (не единственный класс общего кода между проектами, но эта часть
+        // ещё нет): непустая строка только из дефисов и пробелов, минимум с одним дефисом.
         private static bool IsTableSeparator(string line)
         {
             string t = line.Trim();

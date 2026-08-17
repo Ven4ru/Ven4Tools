@@ -36,6 +36,7 @@
     <Compile Include="..\Shared\MotionService.cs" Link="Services\MotionService.cs" />
     <Compile Include="..\Shared\ClientControlChannel.cs" Link="Services\ClientControlChannel.cs" />
     <Compile Include="..\Shared\WindowChromeHelper.cs" Link="Services\WindowChromeHelper.cs" />
+    <Compile Include="..\Shared\AuthenticodeVerifier.cs" Link="Services\AuthenticodeVerifier.cs" />
   </ItemGroup>
 
 

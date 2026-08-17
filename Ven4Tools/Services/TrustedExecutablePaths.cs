@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Services
 {

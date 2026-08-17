@@ -4,13 +4,19 @@ using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Launcher.Services
 {
     /// <summary>
     /// Абсолютные пути системных исполняемых файлов вместо коротких имён.
-    /// Своя копия по образцу клиентского Ven4Tools.Services.TrustedExecutablePaths —
-    /// общей библиотеки между клиентом и лаунчером нет намеренно (см. MainWindow.PackageManagers.cs).
+    /// Своя копия по образцу клиентского Ven4Tools.Services.TrustedExecutablePaths.
+    /// AuthenticodeVerifier (которым оба резолвера winget доверяют) уже вынесен в
+    /// Shared/ (round 38) — этот класс пока не унифицирован: набор системных exe и
+    /// поведение при недоступном ACL (клиент логирует причину отказа, лаунчер молчит)
+    /// расходятся между копиями, вынос общего ядра (ResolveWinget/ResolveChocolatey/
+    /// TryParsePackageVersion — единственные три метода, идентичные байт-в-байт)
+    /// отложен на следующий раунд.
     /// Process.Start с коротким именем ("winget", "choco.exe", "powershell.exe" и т.п.)
     /// ищет файл по порядку Win32 (каталог процесса → текущий каталог → System32 → PATH),
     /// что эксплуатируемо для тех вызовов лаунчера, которые идут в уже-elevated процессе
