@@ -18,7 +18,7 @@ namespace Ven4Tools.Launcher.Services
     /// <see cref="PersonalDataSanitizer"/> (её зовут и те места, где GitHub
     /// вообще не участвует).
     /// </summary>
-    public class GitHubService : IDisposable
+    public class GitHubService
     {
         // Единый HttpClient на весь процесс: пересоздание экземпляра в каждом
         // GitHubService приводит к утечке сокетов (socket exhaustion). Заголовки
@@ -237,12 +237,6 @@ namespace Ven4Tools.Launcher.Services
             {
                 return (false, null, ex.Message);
             }
-        }
-
-        public void Dispose()
-        {
-            // HttpClient — статический singleton, разделяется между всеми
-            // экземплярами и живёт весь процесс. Здесь его не освобождаем.
         }
     }
 }

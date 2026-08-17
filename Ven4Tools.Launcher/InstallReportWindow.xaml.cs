@@ -98,7 +98,7 @@ namespace Ven4Tools.Launcher
 
             try
             {
-                using var github = new GitHubService();
+                var github = new GitHubService();
                 var (ok, url, error) = await github.CreateIssueAsync(
                     title, body, new[] { "bug", "install-failure" });
 

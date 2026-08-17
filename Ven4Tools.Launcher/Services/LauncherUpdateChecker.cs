@@ -83,7 +83,7 @@ namespace Ven4Tools.Launcher.Services
 
             // 2. GitHub Releases — резерв (или CDN не показал обновления / лаг CDN,
             //    когда релиз уже на GitHub, но ещё не задеплоен на CDN).
-            using var gitHub = new GitHubService();
+            var gitHub = new GitHubService();
             var info = await gitHub.CheckLauncherUpdate(currentVersion);
             if (info == null)
             {

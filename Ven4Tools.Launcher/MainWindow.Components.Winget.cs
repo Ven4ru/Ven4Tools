@@ -50,7 +50,7 @@ namespace Ven4Tools.Launcher
 
                 string version = output.Trim().TrimStart('v');
 
-                using var gitHubService   = new GitHubService();
+                var gitHubService = new GitHubService();
                 string? latestVersion     = await gitHubService.GetLatestWingetVersionAsync();
                 bool isOutdated           = false;
                 if (latestVersion != null && Version.TryParse(version, out var current) && Version.TryParse(latestVersion, out var latest))

@@ -20,7 +20,7 @@ namespace Ven4Tools.Launcher.Services
         private readonly string _launcherVersion;
         private readonly Func<string> _getClientPath;
         private readonly Action<string>? _log;
-        private readonly GitHubService _github = new GitHubService();
+        private readonly GitHubService _github = new();
 
         public string LastNotifiedLauncherVersion { get; set; } = "";
         public string LastNotifiedClientVersion { get; set; } = "";
@@ -317,7 +317,6 @@ namespace Ven4Tools.Launcher.Services
         {
             _cts.Cancel();
             _timer?.Dispose();
-            _github.Dispose();
             _checkGate.Dispose();
         }
     }
