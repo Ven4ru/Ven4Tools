@@ -5,6 +5,7 @@ using System.Management;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Threading;
 using System.Threading.Tasks;
 using Ven4Tools.Services;
 
@@ -117,7 +118,7 @@ namespace Ven4Tools.Views.Tabs
                     }
                 });
 
-                await Task.Run(() => CheckOfficeActivation());
+                await Task.Run(() => CheckOfficeActivationAsync());
             }
             catch (Exception ex)
             {
@@ -125,7 +126,9 @@ namespace Ven4Tools.Views.Tabs
             }
         }
 
-        private void CheckOfficeActivation()
+        private static readonly TimeSpan OfficeCheckTimeout = TimeSpan.FromSeconds(30);
+
+        private async Task CheckOfficeActivationAsync()
         {
             try
             {
@@ -155,11 +158,25 @@ namespace Ven4Tools.Views.Tabs
                         CreateNoWindow = true
                     };
 
+                    // Таймаут: раньше WaitForExit() был без ограничения — зависший OSPP.VBS
+                    // (повреждённая установка Office/недоступный KMS-хост) держал вкладку
+                    // в «Проверка...» бесконечно, кнопка «Проверить статус» не разблокировалась.
                     string output;
+                    using var timeoutCts = new CancellationTokenSource(OfficeCheckTimeout);
                     using (var proc = Process.Start(psi)!)
                     {
-                        output = proc.StandardOutput.ReadToEnd();
-                        proc.WaitForExit();
+                        using var reg = timeoutCts.Token.Register(() =>
+                            { try { proc.Kill(entireProcessTree: true); } catch { } });
+                        try
+                        {
+                            output = await proc.StandardOutput.ReadToEndAsync(timeoutCts.Token);
+                            await proc.WaitForExitAsync(timeoutCts.Token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            SetOfficeStatusOnUI("⚠️ Проверка не завершилась", null);
+                            return;
+                        }
                     }
 
                     bool hasProducts = output.Contains("SKU ID") || output.Contains("LICENSE NAME");

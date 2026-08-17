@@ -102,7 +102,7 @@ internal sealed class FallbackDownloader
                     targetPath,
                     cancellationToken,
                     expectedSha256,
-                    progress);
+                    progress).ConfigureAwait(false);
 
                 // Открываем защитный хендл СРАЗУ после успешной проверки хеша/перемещения
                 // файла в DownloadSingleAsync — минимизирует окно TOCTOU до нескольких
@@ -208,7 +208,7 @@ internal sealed class FallbackDownloader
             using HttpResponseMessage response = await client.GetAsync(
                 url,
                 HttpCompletionOption.ResponseHeadersRead,
-                headersCts.Token);
+                headersCts.Token).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             if (!DownloadValidator.IsAllowedDownloadHostAfterRedirect(response))
             {
@@ -226,7 +226,13 @@ internal sealed class FallbackDownloader
             using var idleCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             idleCts.CancelAfter(TimeSpan.FromSeconds(60));
 
-            await using (Stream source = await response.Content.ReadAsStreamAsync(cancellationToken))
+            // ConfigureAwait(false) на весь горячий цикл: на архиве в сотни МБ это
+            // тысячи итераций по 80 КБ, каждая с двумя await — без этого каждая из них
+            // маршалилась через WPF SynchronizationContext лаунчера, хотя сам цикл
+            // никакой UI не трогает (progress?.Invoke ниже сам маршалит на UI-поток
+            // через Dispatcher — см. вызывающий код в MainWindow.Download.cs).
+            var progressStopwatch = System.Diagnostics.Stopwatch.StartNew();
+            await using (Stream source = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
             await using (var destination = new FileStream(
                 partialPath,
                 FileMode.Create,
@@ -236,15 +242,23 @@ internal sealed class FallbackDownloader
                 useAsync: true))
             {
                 int count;
-                while ((count = await source.ReadAsync(buffer.AsMemory(), idleCts.Token)) > 0)
+                while ((count = await source.ReadAsync(buffer.AsMemory(), idleCts.Token).ConfigureAwait(false)) > 0)
                 {
                     idleCts.CancelAfter(TimeSpan.FromSeconds(60));
-                    await destination.WriteAsync(buffer.AsMemory(0, count), cancellationToken);
+                    await destination.WriteAsync(buffer.AsMemory(0, count), cancellationToken).ConfigureAwait(false);
                     bytesRead += count;
-                    progress?.Invoke(bytesRead, totalBytes);
+
+                    // Троттлинг: раньше progress?.Invoke дёргался на каждые 80 КБ (~2300
+                    // раз на 180 МБ архиве вместо ~100 нужных для процентного бара).
+                    // Финальный вызов — без троттла, чтобы 100% гарантированно долетело.
+                    if (progressStopwatch.ElapsedMilliseconds >= 100 || bytesRead == totalBytes)
+                    {
+                        progress?.Invoke(bytesRead, totalBytes);
+                        progressStopwatch.Restart();
+                    }
                 }
 
-                await destination.FlushAsync(cancellationToken);
+                await destination.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -256,7 +270,7 @@ internal sealed class FallbackDownloader
 
             if (!string.IsNullOrWhiteSpace(expectedSha256))
             {
-                string actualSha256 = await Helpers.FileHashHelper.ComputeSha256Async(partialPath, cancellationToken);
+                string actualSha256 = await Helpers.FileHashHelper.ComputeSha256Async(partialPath, cancellationToken).ConfigureAwait(false);
                 if (!string.Equals(
                     actualSha256,
                     expectedSha256,

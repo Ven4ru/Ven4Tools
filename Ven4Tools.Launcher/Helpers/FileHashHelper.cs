@@ -18,7 +18,7 @@ internal static class FileHashHelper
     {
         await using var stream = new FileStream(
             path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 81920, useAsync: true);
-        byte[] hash = await SHA256.HashDataAsync(stream, token);
+        byte[] hash = await SHA256.HashDataAsync(stream, token).ConfigureAwait(false);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }
