@@ -41,7 +41,7 @@ namespace Ven4Tools.Launcher
                 catch { AddLog("⚠️ CDN недоступен, использую GitHub как основной источник"); }
 
                 AddLog("🔍 Загрузка списка версий с GitHub...");
-                using var gitHubService = new GitHubService();
+                var gitHubService = new GitHubService();
 
                 var (releases, error) = await gitHubService.GetAllReleasesWithError();
 
