@@ -78,7 +78,7 @@
 - Единая реализация SHA-256 файла в лаунчере — была продублирована байт-в-байт в `LocalArchiveVerifier` и `FallbackDownloader`.
 - `WindowsUpdateErrorMapper.GetItemsNeedingEula` перенесён в `WindowsUpdateCategoryTreeBuilder` — работал над деревом категорий обновлений, к расшифровке кодов ошибок отношения не имел.
 - Удалены мёртвые публичные члены (0 вызывающих, подтверждено графовым анализом): `AlternativeSource.SuccessCount`/`.Comment`, `CommandLineGuard.ValidateQuery`, `InstallationService.GetLogPath`, `ProfileService.Reset`, `LauncherInstallation.InstalledExePath`, `CdnVersionInfo.ZipFallback`, `AppInfo.IsInstalled`.
-- `.editorconfig` с правилом IDE0005 (неиспользуемые `using`) — сейчас реальных неиспользуемых `using` в кодовой базе не найдено (предыдущая оценка ~82 была основана на нестрогой эвристике, не на анализаторе). `EnforceCodeStyleInBuild` в `.csproj` не добавлен — ломает CI (`-warnaserror` превращает информационное «включите GenerateDocumentationFile» в ошибку сборки); включать имеет смысл только вместе с этим свойством и подавлением CS1591, отдельная задача.
+- `.editorconfig` с правилом IDE0005 — гейт против повторного накопления неиспользуемых `using`. `EnforceCodeStyleInBuild` в `.csproj` не добавлен — ломает CI (`-warnaserror` превращает информационное «включите GenerateDocumentationFile» в ошибку сборки); включать имеет смысл только вместе с этим свойством и подавлением CS1591, отдельная задача.
 - `dependabot.yml`: группировка `codeql-action` и `MSTest` — раздельные PR на `init`/`analyze` гарантированно ломали CodeQL при каждом релизе `codeql-action` из-за рассинхрона версии конфига.
 
 ## [4.4.4] — 2026-08-05 (лаунчер — v3.3.0)
