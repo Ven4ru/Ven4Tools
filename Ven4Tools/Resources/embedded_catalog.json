@@ -1,7 +1,14 @@
 {
-  "version": 14,
-  "lastUpdated": "2026-08-18 00:00:00",
+  "version": 15,
+  "lastUpdated": "2026-08-18 09:00:00",
   "changelog": [
+    {
+      "version": 15,
+      "date": "2026-08-18",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "9 записей с «вечной» ссылкой без версии в URL (firefox, google-chrome, vscode, postman, github-desktop, telegram, element, docker-desktop, malwarebytes) откреплены от sha256: вендор пересобирает файл по тому же адресу, любой зафиксированный хеш протухал за считанные дни и давал ложное «расхождение SHA256» при установке. Ссылка сохранена (карточка берёт из неё «официальный сайт» и запасное определение размера), но прямая загрузка для них теперь штатно пропускается — установка идёт через winget/choco, которые есть у всех девяти."
+    },
     {
       "version": 14,
       "date": "2026-08-18",
@@ -157,7 +164,7 @@
       "iconUrl": "https://cdn.simpleicons.org/firefox",
       "description": "Быстрый, безопасный и приватный браузер с открытым исходным кодом.",
       "profile": "basic",
-      "sha256": "8220bf898a624b769dad193a14154bca5de6bee7acb2f2e272194f2d4d1543be",
+      "sha256": "",
       "chocoId": "firefox"
     },
     {
@@ -171,7 +178,7 @@
       "iconUrl": "https://cdn.simpleicons.org/googlechrome",
       "description": "Самый популярный браузер с интеграцией сервисов Google.",
       "profile": "basic",
-      "sha256": "176f2339339d726c15f0d94e3ebaaf90b15b5b08d368c6c17e7d9b58083af32a",
+      "sha256": "",
       "chocoId": "googlechrome"
     },
     {
@@ -465,7 +472,7 @@
       "iconUrl": "https://www.google.com/s2/favicons?domain=code.visualstudio.com&sz=64",
       "description": "Легкий, но мощный редактор кода от Microsoft.",
       "profile": "extended",
-      "sha256": "de949a8904509a7661b93ea3b25ea312749b869c242938ad082ddc72d6741c3d",
+      "sha256": "",
       "chocoId": "vscode"
     },
     {
@@ -535,7 +542,7 @@
       "iconUrl": "https://cdn.simpleicons.org/docker",
       "description": "Контейнеризация приложений для разработки и тестирования.",
       "profile": "full",
-      "sha256": "9ac03d4e900c0fdee981d4bde083a55fdfb28ffba2cae77726eff2a437254822",
+      "sha256": "",
       "chocoId": "docker-desktop"
     },
     {
@@ -549,7 +556,7 @@
       "iconUrl": "https://cdn.simpleicons.org/postman",
       "description": "Платформа для тестирования API и работы с запросами.",
       "profile": "full",
-      "sha256": "00ae18ffc1b565a3a3bff0cdb54e42fe6f5dc2896feaf02893e075b9b0d8af2d",
+      "sha256": "",
       "chocoId": "postman"
     },
     {
@@ -577,7 +584,7 @@
       "iconUrl": "https://cdn.simpleicons.org/github",
       "description": "Официальный клиент GitHub для работы с репозиториями.",
       "profile": "full",
-      "sha256": "436b928ccef4729b0e37ffcab4cfe3b64662895a3003fd1535aca3301a51dc4a",
+      "sha256": "",
       "chocoId": "github-desktop"
     },
     {
@@ -605,7 +612,7 @@
       "iconUrl": "https://cdn.simpleicons.org/telegram",
       "description": "Быстрый и безопасный мессенджер с облачными хранилищами.",
       "profile": "basic",
-      "sha256": "ad3cb06ad5444b5c599ba3b4023974e1da7630cd392b7e6fc9b6e6fed1e7e404",
+      "sha256": "",
       "chocoId": "telegram"
     },
     {
@@ -675,7 +682,7 @@
       "iconUrl": "https://cdn.simpleicons.org/element",
       "description": "Децентрализованный мессенджер на базе Matrix.",
       "profile": "full",
-      "sha256": "b2fa7e1c51553fb11801ad36c1ebdc0cd4ace888260079e935a50b1ebf9f45fa",
+      "sha256": "",
       "chocoId": "element-desktop"
     },
     {
@@ -1053,7 +1060,7 @@
       "iconUrl": "https://cdn.simpleicons.org/malwarebytes",
       "description": "Антивирус для защиты от вредоносного ПО.",
       "profile": "basic",
-      "sha256": "918a02c8513e819b011ea79ffb5f0a87ddcf1ab108a37efd5959c350fe0e68e4",
+      "sha256": "",
       "chocoId": "malwarebytes"
     },
     {
