@@ -13,6 +13,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.Tests", "tests\Ve
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.ClientUITests", "Ven4Tools.ClientUITests\Ven4Tools.ClientUITests.csproj", "{B0207973-EB65-4D3F-AB7E-EDD8065BEBDA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{48E0BF90-942F-4A56-8481-72E55E47B375}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogSigner", "Tools\CatalogSigner\CatalogSigner.csproj", "{23FD21A0-87FE-4355-9DF5-DEA4FE07E46E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientArchiveSigner", "Tools\ClientArchiveSigner\ClientArchiveSigner.csproj", "{4EED5298-A8BC-4A58-A081-E7D58D55E5DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationsSigner", "Tools\NotificationsSigner\NotificationsSigner.csproj", "{9F00695E-49EF-49FD-A193-A7F16C5FB1D6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpdateManifestSigner", "Tools\UpdateManifestSigner\UpdateManifestSigner.csproj", "{EF20A0D8-68B7-4CD5-942A-4F1435A6D7F8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,11 +49,33 @@ Global
 		{B0207973-EB65-4D3F-AB7E-EDD8065BEBDA}.Debug|Any CPU.Build.0 = Debug|x64
 		{B0207973-EB65-4D3F-AB7E-EDD8065BEBDA}.Release|Any CPU.ActiveCfg = Release|x64
 		{B0207973-EB65-4D3F-AB7E-EDD8065BEBDA}.Release|Any CPU.Build.0 = Release|x64
+		{23FD21A0-87FE-4355-9DF5-DEA4FE07E46E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23FD21A0-87FE-4355-9DF5-DEA4FE07E46E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23FD21A0-87FE-4355-9DF5-DEA4FE07E46E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23FD21A0-87FE-4355-9DF5-DEA4FE07E46E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EED5298-A8BC-4A58-A081-E7D58D55E5DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EED5298-A8BC-4A58-A081-E7D58D55E5DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EED5298-A8BC-4A58-A081-E7D58D55E5DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EED5298-A8BC-4A58-A081-E7D58D55E5DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F00695E-49EF-49FD-A193-A7F16C5FB1D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F00695E-49EF-49FD-A193-A7F16C5FB1D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F00695E-49EF-49FD-A193-A7F16C5FB1D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F00695E-49EF-49FD-A193-A7F16C5FB1D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF20A0D8-68B7-4CD5-942A-4F1435A6D7F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF20A0D8-68B7-4CD5-942A-4F1435A6D7F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF20A0D8-68B7-4CD5-942A-4F1435A6D7F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF20A0D8-68B7-4CD5-942A-4F1435A6D7F8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4960B161-E1EC-4643-A7D5-E9E7EDFEA21E}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{23FD21A0-87FE-4355-9DF5-DEA4FE07E46E} = {48E0BF90-942F-4A56-8481-72E55E47B375}
+		{4EED5298-A8BC-4A58-A081-E7D58D55E5DD} = {48E0BF90-942F-4A56-8481-72E55E47B375}
+		{9F00695E-49EF-49FD-A193-A7F16C5FB1D6} = {48E0BF90-942F-4A56-8481-72E55E47B375}
+		{EF20A0D8-68B7-4CD5-942A-4F1435A6D7F8} = {48E0BF90-942F-4A56-8481-72E55E47B375}
 	EndGlobalSection
 EndGlobal
