@@ -135,6 +135,9 @@ namespace Ven4Tools.ViewModels
             // на экране оставалась висеть красная плашка «Каталог недоступен» от прошлой
             // неудачи — её сбрасывала только кнопка «Повторить загрузку» (LoadAsync).
             CatalogErrorVisible = false;
+            // Кеш версий winget сбрасывается только на явное «Обновить каталог» —
+            // жест пользователя «дай свежее», не на каждую первичную загрузку.
+            WingetVersionsService.ClearCache();
             try
             {
                 var catalogCachePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "master.json");

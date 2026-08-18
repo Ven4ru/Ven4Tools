@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,9 +8,21 @@ namespace Ven4Tools.Services
 {
     public static class WingetVersionsService
     {
+        // Без кеша каждая загрузка/обновление каталога порождала `winget show --versions`
+        // на КАЖДОЕ приложение с AlternativeId (десятки записей в каталоге v13) —
+        // десятки секунд непрерывного порождения процессов на одно нажатие «Обновить
+        // каталог». TTL 30 минут — тот же порядок, что и у соседнего AvailabilityChecker
+        // (5 минут), но версии пакетов меняются реже доступности, поэтому окно шире.
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(30);
+        private static readonly ConcurrentDictionary<string, (DateTime FetchedAt, List<string> Versions)> _cache = new();
+
         public static async Task<List<string>> FetchVersionsAsync(string wingetId, CancellationToken token = default)
         {
             if (!CommandLineGuard.ValidateId(wingetId)) return new List<string>();
+
+            if (_cache.TryGetValue(wingetId, out var cached) && DateTime.UtcNow - cached.FetchedAt < CacheDuration)
+                return cached.Versions;
+
             try
             {
                 // WingetArgs.Query добавляет --accept-source-agreements/--disable-interactivity:
@@ -21,7 +34,9 @@ namespace Ven4Tools.Services
                     WingetArgs.Query("show", "--id", wingetId, "--versions", "-e", "--source", "winget"),
                     token: token);
 
-                return ParseVersions(output);
+                var versions = ParseVersions(output);
+                _cache[wingetId] = (DateTime.UtcNow, versions);
+                return versions;
             }
             catch (Exception ex)
             {
@@ -29,6 +44,10 @@ namespace Ven4Tools.Services
                 return new List<string>();
             }
         }
+
+        // Вызывать только на явное действие пользователя («Обновить каталог»), не
+        // при первичной загрузке — иначе кеш терял бы весь смысл на каждом старте.
+        public static void ClearCache() => _cache.Clear();
 
         private static List<string> ParseVersions(string output)
         {

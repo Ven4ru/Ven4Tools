@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ven4Tools.Launcher.Models;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Launcher.Services
 {
@@ -195,42 +196,18 @@ namespace Ven4Tools.Launcher.Services
             });
         }
 
-        // Убрать ANSI escape-коды из вывода winget перед парсингом.
-        // [0-9;?]* — параметры CSI включая private-mode prefix '?'; lh — cursor hide/show.
-        // Держится синхронно с WingetRunner._ansiRegex в клиенте — там же этот шаблон
-        // уже был ужесточён, а копия лаунчера правку не получила. Отличия, которые
-        // возвращены здесь:
-        //   • OSC закрывается не только BEL (\x07), но и ST (ESC \), а тело OSC больше
-        //     не может проглотить ESC — иначе последовательность смены заголовка окна,
-        //     которую winget шлёт при прогрессе, съедала весь остаток вывода до
-        //     следующего BEL вместе со строками таблицы;
-        //   • добавлен однобайтовый CSI (\x9B) — второй способ закодировать то же самое.
-        // Симптом старого шаблона: в выводе оставался мусор, строка-разделитель «---»
-        // не находилась, CountWingetUpgradesAsync возвращал 0, и лаунчер молча
-        // показывал «обновлений нет».
-        private static readonly System.Text.RegularExpressions.Regex _ansiRegex =
-            new(@"\x1B(?:\[[0-9;?]*[mGKHFABCDsuJhlLM]|\][^\x07\x1B]*(?:\x07|\x1B\\)|[()][0-9A-Za-z])|\x9B[0-9;?]*[mGKHFABCDsuJhlLM]",
-                System.Text.RegularExpressions.RegexOptions.Compiled);
+        // Разбор вывода winget с раунда 39 живёт в общем Ven4Tools.Shared.WingetOutputParser
+        // (один файл, подключён и в клиент, и в лаунчер) — раньше это были две
+        // независимые копии, которые уже разъехались на практике: ужесточение
+        // ANSI-шаблона попало только в клиент, а здесь в выводе оставался мусор,
+        // строка-разделитель «---» не находилась, CountWingetUpgradesAsync возвращал 0
+        // и лаунчер молча показывал «обновлений нет». Ниже — тонкие обёртки, чтобы
+        // вызовы в CountWingetUpgradesAsync читались как прежде.
+        private static string StripAnsi(string s) => WingetOutputParser.StripAnsi(s);
 
-        private static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
+        private static bool IsTableSeparator(string line) => WingetOutputParser.IsTableSeparator(line);
 
-        // Строка-разделитель таблицы winget. Держится синхронно с клиентским
-        // WingetRunner.IsTableSeparator — парсер вывода winget пока не вынесен в
-        // Shared/ (не единственный класс общего кода между проектами, но эта часть
-        // ещё нет): непустая строка только из дефисов и пробелов, минимум с одним дефисом.
-        private static bool IsTableSeparator(string line)
-        {
-            string t = line.Trim();
-            return t.Length > 0 && t.Contains('-') && t.All(c => c == '-' || c == ' ');
-        }
-
-        // Внутренний разрыв в 2+ пробела — признак выравнивания колонок таблицы winget.
-        private static readonly System.Text.RegularExpressions.Regex _columnGapRegex =
-            new(@"\S {2,}\S", System.Text.RegularExpressions.RegexOptions.Compiled);
-
-        // Строка данных таблицы winget, в отличие от строки-суммарника футера.
-        // Держится синхронно с клиентским WingetRunner.IsTableRow.
-        private static bool IsTableRow(string line) => _columnGapRegex.IsMatch(line.Trim());
+        private static bool IsTableRow(string line) => WingetOutputParser.IsTableRow(line);
 
         private async Task<int> CountWingetUpgradesAsync(CancellationToken token)
         {

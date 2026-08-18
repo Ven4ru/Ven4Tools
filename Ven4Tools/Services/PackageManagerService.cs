@@ -263,14 +263,26 @@ namespace Ven4Tools.Services
 
         // ── Search ────────────────────────────────────────────────────────────────
 
-        public static async Task<List<(string Id, string Name, string Version)>> SearchChocoAsync(
+        // Тот же порядок величины, что у WingetService.UiCallTimeout — поиск в
+        // интерактивной панели подсказок не должен ждать дольше нескольких
+        // десятков секунд. Раньше у choco-поиска не было ни внутреннего дедлайна,
+        // ни Kill зависшего процесса (в отличие от WingetService.SearchInternalAsync) —
+        // зависший choco.exe (см. комментарий про 45-минутные зависания выше)
+        // вешал Task.WhenAll(winget, choco) в вызывающем коде навсегда, и каждая
+        // отменённая пользователем итерация (debounce) оставляла осиротевший процесс.
+        private static readonly TimeSpan SearchTimeout = TimeSpan.FromSeconds(30);
+
+        public static async Task<List<(string Id, string Version)>> SearchChocoAsync(
             string query, CancellationToken token = default)
         {
-            var results = new List<(string, string, string)>();
+            var results = new List<(string, string)>();
             query = CommandLineGuard.SanitizeQuery(query);
             if (string.IsNullOrEmpty(query) || !await IsChocoInstalledAsync()) return results;
             var chocoExe = TrustedExecutablePaths.ResolveChocolatey();
             if (chocoExe == null) return results;
+
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            timeoutCts.CancelAfter(SearchTimeout);
             try
             {
                 var psi = new ProcessStartInfo(chocoExe)
@@ -290,17 +302,24 @@ namespace Ven4Tools.Services
                 psi.ArgumentList.Add("8");
                 using var p = Process.Start(psi);
                 if (p == null) return results;
+
+                // Kill(entireProcessTree) по таймауту/отмене — как в
+                // WingetService.SearchInternalAsync, иначе пайп не закрывается и
+                // ReadToEndAsync зависает вместе с самим choco.
+                using var reg = timeoutCts.Token.Register(() =>
+                    { try { p.Kill(entireProcessTree: true); } catch { } });
+
                 // Токен передан в чтение (не только в WaitForExitAsync) — иначе зависший
                 // choco мог бы задержать возврат дольше, чем ожидает вызывающий код.
-                var errTask = p.StandardError.ReadToEndAsync(token);
-                string output = await p.StandardOutput.ReadToEndAsync(token);
-                await p.WaitForExitAsync(token);
+                var errTask = p.StandardError.ReadToEndAsync(timeoutCts.Token);
+                string output = await p.StandardOutput.ReadToEndAsync(timeoutCts.Token);
+                await p.WaitForExitAsync(timeoutCts.Token);
                 await errTask;
                 foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
                 {
                     var parts = line.Trim().Split('|');
                     if (parts.Length >= 2)
-                        results.Add((parts[0].Trim(), parts[0].Trim(), parts[1].Trim()));
+                        results.Add((parts[0].Trim(), parts[1].Trim()));
                 }
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
@@ -309,6 +328,10 @@ namespace Ven4Tools.Services
                 // список: вызывающий код должен отличать «отменено» от «не найдено»
                 // (см. тот же фикс в WingetService).
                 throw;
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+            {
+                throw new TimeoutException($"Поиск в Chocolatey превысил {SearchTimeout.TotalSeconds:F0}с");
             }
             catch (Exception ex) { AppLogger.Write($"[PackageManagerService] Поиск в Chocolatey: {ex.Message}"); }
             return results;

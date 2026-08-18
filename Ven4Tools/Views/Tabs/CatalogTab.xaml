@@ -110,8 +110,12 @@
                                     <Button HorizontalAlignment="Left" Margin="0,1" Height="26" Padding="6,0"
                                             Background="Transparent" BorderThickness="0" Cursor="Hand"
                                             FontSize="12" ToolTip="{Binding SourceLabel}"
+                                            AutomationProperties.Name="{Binding Name}"
+                                            AutomationProperties.HelpText="{Binding SourceLabel}"
                                             Command="{Binding AddCommand}">
                                         <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding SourceLabel}" Foreground="{DynamicResource TextSecondary}"
+                                                       FontSize="10" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                             <TextBlock Text="➕  " Foreground="{DynamicResource AccentColor}" VerticalAlignment="Center"/>
                                             <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                                             <TextBlock Text="{Binding Hint, StringFormat='  {0}'}" Foreground="{DynamicResource TextSecondary}"

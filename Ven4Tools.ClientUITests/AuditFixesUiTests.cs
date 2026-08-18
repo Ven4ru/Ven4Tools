@@ -532,17 +532,6 @@ namespace Ven4Tools.ClientUITests
             string textAfter = search.AsTextBox().Text ?? "";
             Assert.AreNotEqual(query, textAfter,
                 $"#6: поле поиска не сбросилось после клика по Chocolatey-предложению (осталось «{textAfter}») — баг не исправлен.");
-
-            var panelSuggestions = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("pnlWingetSuggestions"));
-            if (panelSuggestions != null)
-            {
-                bool hidden = Retry.WhileFalse(
-                    () => panelSuggestions.Properties.IsOffscreen.ValueOrDefault || !panelSuggestions.Patterns.LegacyIAccessible.IsSupported,
-                    timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200), throwOnTimeout: false).Success;
-                // Не проваливаем тест на этой части жёстко — Visibility.Collapsed не всегда
-                // выставляет IsOffscreen мгновенно/надёжно в UIA; главный, надёжный критерий —
-                // сброс текста поиска, уже проверенный выше.
-            }
         }
     }
 
