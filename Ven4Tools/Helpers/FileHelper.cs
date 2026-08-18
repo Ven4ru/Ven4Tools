@@ -73,4 +73,22 @@ internal static class FileHelper
             throw;
         }
     }
+
+    public static async Task WriteAllBytesAtomicAsync(string path, byte[] content)
+    {
+        var dir = Path.GetDirectoryName(path)!;
+        Directory.CreateDirectory(dir);
+        EnsureNotRedirected(dir, path);
+        var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
+        try
+        {
+            await File.WriteAllBytesAsync(tmp, content);
+            File.Move(tmp, path, overwrite: true);
+        }
+        catch
+        {
+            try { File.Delete(tmp); } catch { }
+            throw;
+        }
+    }
 }

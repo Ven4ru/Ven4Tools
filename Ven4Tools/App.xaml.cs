@@ -57,16 +57,20 @@ namespace Ven4Tools
             SplashWindow? splash = null;
             try
             {
-                // Эти вызовы не должны валить старт — каждый best-effort.
-                try { LocalizationService.Init(); } catch { }
-                try { ThemeService.Apply(ProfileService.Current.Theme); } catch { }
+                // Эти вызовы не должны валить старт — каждый best-effort, но сбой
+                // молча лишает пользователя локализации/темы/восстановленного
+                // региона на весь сеанс — без записи в журнал причину не найти.
+                try { LocalizationService.Init(); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось инициализировать локализацию"); }
+                try { ThemeService.Apply(ProfileService.Current.Theme); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось применить тему"); }
                 try { _heartbeat = new HeartbeatService(); } catch { }
                 // Регион Windows, подменённый вкладкой «Office» на время загрузки
                 // установщика, возвращаем на старте: если прошлый сеанс убили в
                 // середине, штатное восстановление в finally не отработало. Вкладка
                 // создаётся лениво (а без интернета её кнопка вообще скрыта), поэтому
-                // страховка обязана жить здесь, а не в её конструкторе.
-                try { OfficeRegionRecoveryService.Recover(); } catch { }
+                // страховка обязана жить здесь, а не в её конструкторе. Молчаливый
+                // провал здесь = регион пользователя остаётся подменённым без следа
+                // в журнале, диагностировать нечем.
+                try { OfficeRegionRecoveryService.Recover(); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось восстановить регион Windows после Office"); }
                 // Краш-репорт прошлого сеанса отправляется только с явного согласия пользователя
                 try { AskAndSendPendingCrashReport(); } catch { }
                 // Отправка отложенного отзыва — тоже fire-and-forget
@@ -78,7 +82,12 @@ namespace Ven4Tools
                     splash.Show();
                     await splash.RunPreloadAsync();
                 }
-                catch { /* splash/preload — необязательная фаза, продолжаем старт */ }
+                catch (Exception ex)
+                {
+                    // Splash/preload — необязательная фаза, продолжаем старт, но
+                    // без записи причина сбоя (например, повреждённый кеш) не найдётся.
+                    AppLogger.Write(ex, "[App] Splash/предзагрузка завершились с ошибкой, продолжаем старт");
+                }
 
                 var main = new MainWindow();
                 main.Show();

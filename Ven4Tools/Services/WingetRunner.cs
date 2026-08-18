@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Ven4Tools.Shared;
 
 namespace Ven4Tools.Services
 {
@@ -79,14 +80,12 @@ namespace Ven4Tools.Services
                 prev = value;
             }
         }
-        // [0-9;?]* — параметры CSI включая private-mode '?'; lLM — cursor hide/show.
-        // OSC закрывается либо BEL (\x07), либо ST (ESC \). C1 CSI (\x9B) — однобайтовый
-        // вариант ESC[ в наборе C1, тоже вырезаем.
-        private static readonly Regex _ansiRegex =
-            new(@"\x1B(?:\[[0-9;?]*[mGKHFABCDsuJhlLM]|\][^\x07\x1B]*(?:\x07|\x1B\\)|[()][0-9A-Za-z])|\x9B[0-9;?]*[mGKHFABCDsuJhlLM]",
-                RegexOptions.Compiled);
-
-        public static string StripAnsi(string s) => _ansiRegex.Replace(s, "");
+        // Сам разбор вывода winget (ANSI-фильтр и распознавание строк таблицы) живёт
+        // в общем Ven4Tools.Shared.WingetOutputParser — один файл на клиент и лаунчер,
+        // подключён в оба .csproj. Здесь остаются тонкие обёртки: публичный API
+        // WingetRunner не меняется, у него есть внешние вызывающие (WingetService,
+        // WingetVersionsService, InstalledAppsService, вкладки).
+        public static string StripAnsi(string s) => WingetOutputParser.StripAnsi(s);
 
         // ReadToEndAsync/ReadToEnd без токена завершаются только когда пайп закрывается
         // (процесс завершился и освободил хендлы). Kill(true) обычно это гарантирует, но
@@ -100,33 +99,13 @@ namespace Ven4Tools.Services
             return completed == readTask ? await readTask : null;
         }
 
-        // Строка-разделитель таблицы winget: под строкой заголовка колонок winget
-        // печатает строку из дефисов (с пробелами между колонками). Единый строгий
-        // критерий для всех парсеров вывода winget: непустая строка только из дефисов
-        // и пробелов, минимум с одним дефисом. Стро́же прежнего line.Contains("--"),
-        // который ложно срабатывал на строках данных с двойным дефисом.
-        public static bool IsTableSeparator(string line)
-        {
-            string t = line.Trim();
-            return t.Length > 0 && t.Contains('-') && t.All(c => c == '-' || c == ' ');
-        }
+        // Строка-разделитель таблицы winget (строка из дефисов под заголовком колонок).
+        // Реализация — в общем Ven4Tools.Shared.WingetOutputParser.
+        public static bool IsTableSeparator(string line) => WingetOutputParser.IsTableSeparator(line);
 
-        // Внутренний разрыв в 2+ пробела — признак выравнивания колонок таблицы winget.
-        private static readonly Regex _columnGapRegex =
-            new(@"\S {2,}\S", RegexOptions.Compiled);
-
-        /// <summary>
-        /// Строка данных таблицы winget (в отличие от строки-суммарника футера).
-        /// Единый локаленезависимый критерий для парсеров вывода winget: любая строка
-        /// таблицы содержит хотя бы один внутренний разрыв в 2 и более пробела, которым
-        /// winget выравнивает колонки, а футер — одно предложение без таких разрывов.
-        ///
-        /// Прежние парсеры отсекали футер по английским словам («N upgrades available»),
-        /// хотя проект принципиально не передаёт --locale en-US: на русской Windows
-        /// футер «Доступны обновления: 32.» под шаблон не подходил и попадал в таблицу
-        /// как ещё одна строка обновления, завышая счётчик.
-        /// </summary>
-        public static bool IsTableRow(string line) => _columnGapRegex.IsMatch(line.Trim());
+        // Строка данных таблицы winget, в отличие от строки-суммарника футера.
+        // Реализация — в общем Ven4Tools.Shared.WingetOutputParser.
+        public static bool IsTableRow(string line) => WingetOutputParser.IsTableRow(line);
 
         // Фабрика ProcessStartInfo для winget с аргументами через ArgumentList: .NET
         // сам экранирует каждый токен, поэтому пользовательский ввод не может «вырваться»

@@ -25,7 +25,12 @@ namespace Ven4Tools.ViewModels
                 {
                     OnPropertyChanged(nameof(HasSearchText));
                     AppsView.Refresh();
-                    _searchDebounce?.Cancel();
+                    // Cancel + Dispose предыдущего токена — раньше только отменялся,
+                    // объект никогда не освобождался (каждое нажатие клавиши в поиске
+                    // создаёт новый CancellationTokenSource).
+                    var previousDebounce = _searchDebounce;
+                    previousDebounce?.Cancel();
+                    previousDebounce?.Dispose();
                     // AppsView.IsEmpty учитывает текущий фильтр без полного перечисления
                     // представления (сеттер срабатывает на каждое нажатие клавиши в поиске),
                     // в отличие от прежнего Cast<object>().Count() == 0.
@@ -192,19 +197,38 @@ namespace Ven4Tools.ViewModels
                     return;
                 }
 
+                // Winget и choco обрабатываются независимо друг от друга — раньше
+                // Task.WhenAll пробрасывал первое исключение (например, таймаут
+                // winget) и терял уже готовые результаты второго источника,
+                // показывая пользователю пустую панель, хотя половина поиска
+                // отработала успешно.
                 var wingetTask = WingetService.SearchAsync(query, token);
                 var chocoTask = PackageManagerService.SearchChocoAsync(query, token);
-                await Task.WhenAll(wingetTask, chocoTask);
+
+                List<WingetPackage> winget;
+                bool wingetTimedOut = false;
+                try { winget = await wingetTask; }
+                catch (OperationCanceledException) when (token.IsCancellationRequested) { return; }
+                catch (TimeoutException) { winget = new List<WingetPackage>(); wingetTimedOut = true; }
+
+                List<(string Id, string Version)> choco;
+                bool chocoFailed = false;
+                try { choco = await chocoTask; }
+                catch (OperationCanceledException) when (token.IsCancellationRequested) { return; }
+                catch (TimeoutException) { choco = new List<(string, string)>(); chocoFailed = true; }
+
                 if (token.IsCancellationRequested) return;
 
-                var winget = await wingetTask;
-                var choco = await chocoTask;
                 if (winget.Count == 0 && choco.Count == 0)
                 {
-                    SuggestionsStatus = $"😕 Ничего не найдено по запросу «{query}» ни в одном источнике";
+                    SuggestionsStatus = wingetTimedOut
+                        ? "⚠ Winget не ответил вовремя"
+                        : $"😕 Ничего не найдено по запросу «{query}» ни в одном источнике";
                     return;
                 }
-                SuggestionsStatus = "";
+                SuggestionsStatus = wingetTimedOut ? "⚠ Winget не ответил вовремя, показаны результаты Chocolatey"
+                                   : chocoFailed ? "⚠ Chocolatey не ответил вовремя, показаны результаты Winget"
+                                   : "";
 
                 foreach (var pkg in winget)
                 {
@@ -212,19 +236,14 @@ namespace Ven4Tools.ViewModels
                     Suggestions.Add(new SearchSuggestionViewModel(pkg.Name, $"winget:{pkg.Id}", "📦 Winget",
                         () => AddWingetSuggestion(captureName, captureId)));
                 }
-                foreach (var (id, name, ver) in choco)
+                foreach (var (id, ver) in choco)
                 {
                     var captureId = id;
-                    Suggestions.Add(new SearchSuggestionViewModel(name.Length > 0 ? name : id, $"v{ver}", "🍫 Chocolatey",
+                    Suggestions.Add(new SearchSuggestionViewModel(id, $"v{ver}", "🍫 Chocolatey",
                         () => AddChocoSuggestion(captureId)));
                 }
             }
             catch (OperationCanceledException) { }
-            catch (TimeoutException)
-            {
-                if (!token.IsCancellationRequested)
-                    SuggestionsStatus = "⚠ Winget не ответил вовремя";
-            }
         }
 
         // Поиск по тегам категории: winget-вызовы по всем тегам идут параллельно
@@ -260,7 +279,7 @@ namespace Ven4Tools.ViewModels
 
         private void AddWingetSuggestion(string name, string id)
         {
-            if (_appManager.GetAppById(id) != null) { Log($"ℹ️ {name} уже есть в списке"); return; }
+            if (_appManager.GetAppById(id) != null) { Log($"ℹ️ {name} уже есть в списке"); SearchText = ""; return; }
             var app = new AppInfo { Id = id, DisplayName = name, Category = AppCategory.Другое, AlternativeId = id, IsUserAdded = true, SilentArgs = "" };
             AddUserApp(app);
             Log($"➕ Добавлено из winget: {name} ({id})");
@@ -270,7 +289,7 @@ namespace Ven4Tools.ViewModels
         private void AddChocoSuggestion(string id)
         {
             string userId = $"User.{id}";
-            if (_appManager.GetAppById(userId) != null) { Log($"ℹ️ {id} уже есть в списке"); return; }
+            if (_appManager.GetAppById(userId) != null) { Log($"ℹ️ {id} уже есть в списке"); SearchText = ""; return; }
             var app = new AppInfo { Id = userId, DisplayName = id, Category = AppCategory.Другое, ChocoId = id, IsUserAdded = true };
             AddUserApp(app);
             Log($"➕ Добавлено из Chocolatey: {id}");
