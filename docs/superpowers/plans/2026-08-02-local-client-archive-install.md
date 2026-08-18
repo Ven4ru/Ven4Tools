@@ -563,12 +563,12 @@ class SignatureFile
 
 Run:
 ```bash
-cd "C:\Users\Vench\Documents\GitHub\Ven4Tools"
+cd "%USERPROFILE%\Documents\GitHub\Ven4Tools"
 mkdir -p /tmp/casigner-smoke && cd /tmp/casigner-smoke
 echo "dummy" > file.txt
 7z a -tzip smoke.zip file.txt || powershell -Command "Compress-Archive -Path file.txt -DestinationPath smoke.zip"
-dotnet run --project "C:\Users\Vench\Documents\GitHub\Ven4Tools\Tools\ClientArchiveSigner" -- smoke.zip "$USERPROFILE/.ven4tools/client-archive-signing-private.pem" 9.9.9-smoke
-dotnet run --project "C:\Users\Vench\Documents\GitHub\Ven4Tools\Tools\ClientArchiveSigner" -- verify smoke.zip "$USERPROFILE/.ven4tools/client-archive-signing-public.pem"
+dotnet run --project "%USERPROFILE%\Documents\GitHub\Ven4Tools\Tools\ClientArchiveSigner" -- smoke.zip "$USERPROFILE/.ven4tools/client-archive-signing-private.pem" 9.9.9-smoke
+dotnet run --project "%USERPROFILE%\Documents\GitHub\Ven4Tools\Tools\ClientArchiveSigner" -- verify smoke.zip "$USERPROFILE/.ven4tools/client-archive-signing-public.pem"
 ```
 Expected: первая команда печатает `Подписано: .../smoke.zip (версия 9.9.9-smoke, sha256_canonical=...)`; вторая печатает `OK: архив версии 9.9.9-smoke подписан корректно (...)`, код возврата 0.
 
@@ -654,14 +654,14 @@ git commit -m "Tools: утилита подписи архива клиента 
 
 Run:
 ```bash
-cd "C:\Users\Vench\Documents\GitHub\Ven4Tools"
+cd "%USERPROFILE%\Documents\GitHub\Ven4Tools"
 mkdir -p /tmp/casigner-fixture && cd /tmp/casigner-fixture
 mkdir payload && echo "test client payload" > payload/dummy.txt
 powershell -Command "Compress-Archive -Path payload\* -DestinationPath signed.zip -Force"
 powershell -Command "Compress-Archive -Path payload\* -DestinationPath unsigned.zip -Force"
-dotnet run --project "C:\Users\Vench\Documents\GitHub\Ven4Tools\Tools\ClientArchiveSigner" -- signed.zip "$USERPROFILE/.ven4tools/client-archive-signing-private.pem" 9.9.9-fixture
-cp signed.zip "C:\Users\Vench\Documents\GitHub\Ven4Tools\tests\Ven4Tools.Tests\Fixtures\client-archive-signed-sample.zip"
-cp unsigned.zip "C:\Users\Vench\Documents\GitHub\Ven4Tools\tests\Ven4Tools.Tests\Fixtures\client-archive-unsigned-sample.zip"
+dotnet run --project "%USERPROFILE%\Documents\GitHub\Ven4Tools\Tools\ClientArchiveSigner" -- signed.zip "$USERPROFILE/.ven4tools/client-archive-signing-private.pem" 9.9.9-fixture
+cp signed.zip "%USERPROFILE%\Documents\GitHub\Ven4Tools\tests\Ven4Tools.Tests\Fixtures\client-archive-signed-sample.zip"
+cp unsigned.zip "%USERPROFILE%\Documents\GitHub\Ven4Tools\tests\Ven4Tools.Tests\Fixtures\client-archive-unsigned-sample.zip"
 ```
 Expected: два `.zip`-файла скопированы в `Fixtures/`. `unsigned.zip` — байт-в-байт та же полезная нагрузка, но без записи `_ven4tools_signature.json`. Подписание тестовой фикстуры реальным продакшн-приватным ключом безопасно — ECDSA-подпись не раскрывает сам ключ.
 

@@ -17,6 +17,13 @@ updates:
       mstest:
         patterns:
           - "MSTest.*"
+      # Три тестовых проекта в одном решении с разными версиями Test.Sdk/
+      # xunit.runner.visualstudio — риск нестабильного дискавери тестов в CI
+      # (round 39: раздельные PR #32/#34 развели версии по проектам).
+      test-infra:
+        patterns:
+          - "Microsoft.NET.Test.Sdk"
+          - "xunit.runner.visualstudio"
 
   - package-ecosystem: "github-actions"
     directory: "/"

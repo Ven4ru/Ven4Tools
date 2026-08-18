@@ -168,7 +168,7 @@
 ## Продолжение ручного UI-прохода в Windows Sandbox — 02.07.2026
 
 Среда: Windows Sandbox с сетью; каталог
-`C:\Users\Vench\Ven4Tools\_release\gate-2a057fd` подключён как
+`%USERPROFILE%\Ven4Tools\_release\gate-2a057fd` подключён как
 `C:\GateArtifacts` только для чтения.
 
 Проверяемые артефакты:

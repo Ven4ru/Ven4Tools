@@ -13,7 +13,7 @@
 Прототип не публикуется и не смешивается с основной рабочей копией. Он создаётся в
 отдельном Git worktree:
 
-`C:\Users\Vench\Documents\GitHub\Ven4Tools-button-tooltips-prototype`
+`%USERPROFILE%\Documents\GitHub\Ven4Tools-button-tooltips-prototype`
 
 ## Границы
 
@@ -91,7 +91,7 @@
 неотслеживаемые файлы основной рабочей копии в прототип не переносятся.
 
 Все изменения XAML, стилей и тестов выполняются только внутри worktree прототипа.
-Основная папка `C:\Users\Vench\Documents\GitHub\Ven4Tools` после создания worktree
+Основная папка `%USERPROFILE%\Documents\GitHub\Ven4Tools` после создания worktree
 остаётся без продуктовых изменений этой функции.
 
 ### Единый стиль

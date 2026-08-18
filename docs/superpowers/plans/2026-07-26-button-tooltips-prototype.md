@@ -16,7 +16,7 @@
 ## Общие ограничения
 
 - Все продуктовые изменения выполнять только в
-  `C:\Users\Vench\Documents\GitHub\Ven4Tools-button-tooltips-prototype`.
+  `%USERPROFILE%\Documents\GitHub\Ven4Tools-button-tooltips-prototype`.
 - Ветка прототипа: `prototype/button-tooltips-20260726`.
 - Подсказки — только на русском, одно или два коротких предложения, предпочтительно
   не длиннее 140 символов.
@@ -35,7 +35,7 @@
 **Файлы:**
 
 - Создать worktree:
-  `C:\Users\Vench\Documents\GitHub\Ven4Tools-button-tooltips-prototype`
+  `%USERPROFILE%\Documents\GitHub\Ven4Tools-button-tooltips-prototype`
 - Создать:
   `tests/Ven4Tools.Tests/ButtonToolTipCoverageTests.cs`
 
@@ -51,13 +51,13 @@
 
 ```powershell
 git worktree add -b prototype/button-tooltips-20260726 `
-  C:\Users\Vench\Documents\GitHub\Ven4Tools-button-tooltips-prototype HEAD
+  %USERPROFILE%\Documents\GitHub\Ven4Tools-button-tooltips-prototype HEAD
 ```
 
 Проверить:
 
 ```powershell
-git -C C:\Users\Vench\Documents\GitHub\Ven4Tools-button-tooltips-prototype status --short --branch
+git -C %USERPROFILE%\Documents\GitHub\Ven4Tools-button-tooltips-prototype status --short --branch
 ```
 
 Ожидается чистая ветка `prototype/button-tooltips-20260726`; пользовательские
@@ -420,7 +420,7 @@ dotnet test .\tests\Ven4Tools.Tests\Ven4Tools.Tests.csproj -c Release `
 
 ```powershell
 git diff --check
-C:\Users\Vench\Tools\gitleaks\gitleaks.exe dir . --no-banner --redact
+%USERPROFILE%\Tools\gitleaks\gitleaks.exe dir . --no-banner --redact
 git status --short --branch
 git diff --stat b7c8e74..HEAD
 ```
