@@ -63,7 +63,13 @@ try {
     }
 
     Write-Host "  Загрузка..." -ForegroundColor Gray
-    $tmp = Join-Path $env:TEMP 'Ven4Tools.Setup.exe'
+    # Каталог со случайным именем вместо фиксированного пути в %TEMP% — окно
+    # между проверкой хеша и запуском (Start-Process ниже) не должно позволять
+    # другому процессу того же пользователя подменить файл по предсказуемому
+    # имени (тот же класс защиты, что FallbackDownloader.cs в лаунчере).
+    $tmpDir = Join-Path $env:TEMP ([guid]::NewGuid())
+    New-Item -ItemType Directory -Path $tmpDir | Out-Null
+    $tmp = Join-Path $tmpDir 'Ven4Tools.Setup.exe'
     $resp = Invoke-WebRequest $url -OutFile $tmp -UseBasicParsing -PassThru
 
     # Проверка итогового адреса после редиректов: Invoke-WebRequest следует за ними
@@ -78,7 +84,7 @@ try {
     elseif ($base -and $base.RequestMessage -and $base.RequestMessage.RequestUri) { $finalUri = [uri]$base.RequestMessage.RequestUri }
 
     if ($finalUri -and -not (Test-AllowedSource $finalUri)) {
-        if (Test-Path $tmp) { Remove-Item $tmp -Force }
+        if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
         throw "Загрузка перенаправлена на недоверенный источник: $($finalUri.Scheme)://$($finalUri.Host)$($finalUri.AbsolutePath) — установка прервана"
     }
 
@@ -92,10 +98,33 @@ try {
     if (-not $api.downloads.launcher_sha256) {
         throw "Сервер не отдал SHA256 установщика — установка прервана. Попробуйте ещё раз через несколько минут."
     }
+
+    # Сверка с независимым источником: latest_version.php (хостинг, не подписан)
+    # отдаёт и ссылку, и SHA256 из одного места — компрометация хостинга подделала
+    # бы оба контроля целостности разом. version.json на CDN — второй, физически
+    # отдельный сервер (проверка Ven4Tools.Launcher/Services/CdnService.cs
+    # использует именно его, с ECDSA-подписью). Здесь подпись не проверяется
+    # (PowerShell 5.1 без .NET Core не имеет удобного ECDSA-импорта из PEM),
+    # но требование совпадения хеша с двух независимых серверов уже поднимает
+    # планку — тихая подмена требует одновременной компрометации хостинга и CDN.
+    Write-Host "  Сверка с CDN..." -ForegroundColor Gray
+    try {
+        $cdnManifest = Invoke-RestMethod 'https://cdn.ven4tools.ru/version.json' -UseBasicParsing
+    }
+    catch {
+        throw "Не удалось получить version.json с CDN для сверки целостности — установка прервана: $_"
+    }
+    if (-not $cdnManifest.launcher.setup_sha256) {
+        throw "CDN не отдал SHA256 установщика — установка прервана"
+    }
+    if ($api.downloads.launcher_sha256.ToUpper() -ne $cdnManifest.launcher.setup_sha256.ToUpper()) {
+        throw "Хеш установщика с хостинга и с CDN не совпадает — установка прервана (возможна компрометация одного из источников)"
+    }
+
     Write-Host "  Проверка целостности..." -ForegroundColor Gray
     $actual = (Get-FileHash $tmp -Algorithm SHA256).Hash
     if ($actual -ne $api.downloads.launcher_sha256.ToUpper()) {
-        Remove-Item $tmp -Force
+        Remove-Item $tmpDir -Recurse -Force
         throw "Несовпадение SHA256 — установка прервана"
     }
 
@@ -108,7 +137,7 @@ try {
     if ($installedVersion -and ([version]$newVersion -le [version]$installedVersion)) {
         Write-Host "  Установлена актуальная версия: $installedVersion" -ForegroundColor White
         Write-Host "  Обновление не требуется." -ForegroundColor DarkGray
-        Remove-Item $tmp -Force
+        Remove-Item $tmpDir -Recurse -Force
         Write-Host ""
         exit 0
     }
@@ -121,7 +150,7 @@ try {
 
     Write-Host "  Установка..." -ForegroundColor Gray
     $proc = Start-Process $tmp -ArgumentList '/S' -PassThru -Wait
-    if (Test-Path $tmp) { Remove-Item $tmp -Force }
+    if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
 
     if ($proc.ExitCode -ne 0) {
         throw "Установщик завершился с кодом $($proc.ExitCode)"
