@@ -61,6 +61,12 @@ try {
                 $result.finalUrl = [string]$response.RequestMessage.RequestUri
                 $result.contentType = [string]$response.Content.Headers.ContentType
                 $null = $response.EnsureSuccessStatusCode()
+                # Заявленный размер запоминаем до чтения тела: без сверки с ним
+                # оборванная закачка молча хешировалась и попадала в отчёт как
+                # «дрейф sha256». Поймано вживую на microsoft-edge (2026-08-16):
+                # скачалось ровно 28 MiB вместо 194.7 MB, и запись неделю висела
+                # в issue как расхождение, которого на самом деле не было.
+                $expectedBytes = $response.Content.Headers.ContentLength
 
                 $input = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
                 try {
@@ -88,12 +94,33 @@ try {
             $file = Get-Item -LiteralPath $target
             $result.bytes = $file.Length
             $result.size = '{0:F1} MB' -f ($file.Length / 1MB)
+
+            # Недокачанный файл — ошибка загрузки, а не расхождение каталога.
+            # Иначе его хеш уходит в отчёт как «фактический» и провоцирует
+            # правку каталога на мусорное значение.
+            # throw, а не собственный Add+continue: запись кладётся в отчёт единым
+            # способом в конце итерации (ниже по коду), и обход этого места ломал бы
+            # и тип записи, и промежуточное сохранение report.json.
+            if ($null -ne $expectedBytes -and $file.Length -ne [int64]$expectedBytes) {
+                throw "Недокачано: получено $($file.Length) байт из $expectedBytes заявленных (Content-Length)"
+            }
+
             $result.sha256 = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
-            $result.shaChanged = -not [string]::Equals(
-                [string]$result.sha256,
-                [string]$result.previousSha256,
-                [StringComparison]::OrdinalIgnoreCase
-            )
+            # Пустой sha256 в каталоге — осознанное открепление записи с «вечной»
+            # ссылкой без версии в URL (вендор пересобирает файл по тому же адресу,
+            # любой зафиксированный хеш протухает за дни). Клиент такой источник
+            # штатно пропускает и ставит через winget/choco, поэтому расхождением
+            # это не считается — иначе issue переоткрывался бы каждую неделю ровно
+            # по тем записям, которые открепили намеренно.
+            $result.shaChanged = if ([string]::IsNullOrWhiteSpace([string]$result.previousSha256)) {
+                $false
+            } else {
+                -not [string]::Equals(
+                    [string]$result.sha256,
+                    [string]$result.previousSha256,
+                    [StringComparison]::OrdinalIgnoreCase
+                )
+            }
 
             $header = [byte[]]::new(8)
             $headerStream = [System.IO.File]::OpenRead($target)
