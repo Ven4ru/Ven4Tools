@@ -81,6 +81,7 @@ namespace Ven4Tools.ViewModels
         public RelayCommand ToggleSortAlphabeticallyCommand { get; }
         public RelayCommand ExportListCommand { get; }
         public RelayCommand ImportListCommand { get; }
+        public RelayCommand ImportPresetByCodeCommand { get; }
         public RelayCommand SavePresetCommand { get; }
         public RelayCommand ApplyPresetCommand { get; }
         public RelayCommand RenamePresetCommand { get; }
@@ -211,6 +212,7 @@ namespace Ven4Tools.ViewModels
 
             ExportListCommand = new RelayCommand(_ => ExportList());
             ImportListCommand = new RelayCommand(_ => ImportList());
+            ImportPresetByCodeCommand = new RelayCommand(async _ => await ImportPresetByCodeAsync());
 
             SavePresetCommand = RelayCommand.FromAsync(async _ => await SavePresetAsync(),
                 _ => Apps.Any(a => a.IsSelected));
