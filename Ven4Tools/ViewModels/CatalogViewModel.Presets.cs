@@ -155,7 +155,13 @@ namespace Ven4Tools.ViewModels
         /// </summary>
         private void ImportPresetByCode()
         {
-            var dlg = new Views.PresetCodeDialog { Owner = Application.Current?.MainWindow };
+            // Владельца берём тем же способом, что и остальные диалоги этого
+            // класса — через OwnerWindowProvider (реально показанное окно вкладки).
+            // Application.Current.MainWindow здесь не годится: оно может указывать
+            // на окно, которое ещё ни разу не показывали, и присвоение Owner тогда
+            // роняет приложение InvalidOperationException.
+            var owner = OwnerWindowProvider?.Invoke();
+            var dlg = new Views.PresetCodeDialog { Owner = owner };
             if (dlg.ShowDialog() != true) return;
 
             // Диалог не закроется с непригодным кодом, но разбираем ещё раз:
