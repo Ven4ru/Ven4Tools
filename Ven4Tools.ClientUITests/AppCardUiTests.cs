@@ -118,6 +118,18 @@ namespace Ven4Tools.ClientUITests
             return col0?.FindFirstDescendant(cf => cf.ByControlType(ControlType.Text));
         }
 
+        /// <summary>
+        /// Находит подпись приложения по её ТЕКСТУ, а не подъёмом от чекбокса по
+        /// дереву. В виртуализированном списке переход «чекбокс → родитель →
+        /// текст» приводил к подписи чужой строки: элемент находился по верному
+        /// chkApp_&lt;id&gt;, а клик открывал карточку другого приложения
+        /// (поймано вживую: искали 7-Zip, открывался Telegram Desktop).
+        /// </summary>
+        private static AutomationElement? NameTextByAppTitle(AppSession s, string titleFragment) =>
+            s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Text))
+                .FirstOrDefault(t => (t.Name ?? "").Contains(titleFragment, StringComparison.OrdinalIgnoreCase)
+                                     && t.BoundingRectangle.Width > 0);
+
         // Строка каталога (Grid) для чекбокса — StackPanel(кол.0) → Grid.
         private static AutomationElement? RowGridForCheckBox(AutomationElement chk) =>
             chk.Parent?.Parent;
@@ -149,24 +161,32 @@ namespace Ven4Tools.ClientUITests
             CardMarkerButtons.Any(n => w.FindFirstDescendant(cf =>
                 cf.ByControlType(ControlType.Button).And(cf.ByName(n))) != null);
 
-        private static Window? FindCardWindow(AppSession s, TimeSpan timeout) =>
+        private static Window? FindCardWindow(AppSession s, TimeSpan timeout, string? exceptTitle = null) =>
             Retry.WhileNull(() =>
             {
-                var modal = s.MainWindow.ModalWindows.FirstOrDefault(LooksLikeCard);
+                // exceptTitle — заголовок карточки, которая была открыта ДО клика.
+                // Без этого отбора находилась она же, и тест делал выводы о чужом
+                // приложении, будучи уверенным, что смотрит на своё.
+                bool Suitable(AutomationElement w) =>
+                    LooksLikeCard(w) && (exceptTitle == null || (w.AsWindow().Title ?? "") != exceptTitle);
+
+                var modal = s.MainWindow.ModalWindows.FirstOrDefault(Suitable);
                 if (modal != null) return modal;
                 var win = s.Automation.GetDesktop()
                     .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
-                    .FirstOrDefault(LooksLikeCard);
+                    .FirstOrDefault(Suitable);
                 return win?.AsWindow();
             }, timeout: timeout, interval: TimeSpan.FromMilliseconds(400), throwOnTimeout: false).Result;
 
-        private static Window? OpenCard(AppSession s, AutomationElement chk, string? reresolveFragment = null)
+        private static Window? OpenCard(AppSession s, AutomationElement chk, string? reresolveFragment = null, string? expectedTitleFragment = null)
         {
             // Перед самым кликом берём строку заново: между поиском и действием
             // список мог перестроиться и отдать контейнер другому приложению.
             // Молчаливого отката к прежнему элементу быть НЕ должно: он приводит
             // к клику по чужой строке, и разбираться потом приходится по симптому
             // «открылась карточка не того приложения».
+            AutomationElement? name;
+
             if (reresolveFragment != null)
             {
                 var fresh = ResolveRow(s, reresolveFragment);
@@ -174,30 +194,81 @@ namespace Ven4Tools.ClientUITests
                     $"Строка chkApp_{reresolveFragment} исчезла из списка между поиском и открытием " +
                     "карточки (список перестроился или сменился фильтр поиска).");
                 chk = fresh!;
+
+                // Кликаем по подписи, найденной по тексту приложения: навигация от
+                // чекбокса по дереву в виртуализированном списке приводила к подписи
+                // соседней строки.
+                name = NameTextByAppTitle(s, expectedTitleFragment ?? reresolveFragment)
+                       ?? NameTextForCheckBox(chk);
+            }
+            else
+            {
+                name = NameTextForCheckBox(chk);
             }
 
-            var name = NameTextForCheckBox(chk);
             Assert.IsNotNull(name, "Не найден TextBlock имени приложения рядом с чекбоксом.");
+
+            // Остатки прошлых карточек закрываем ДО клика: модальное окно
+            // проглатывает ввод в главное окно, и клик просто не дойдёт.
+            string? staleTitle = OpenCards(s).FirstOrDefault()?.Title;
+            if (staleTitle != null) CloseCard(s);
+
             name!.Click(); // реальный мышиный клик → MouseBinding LeftClick → OpenCardCommand
-            return FindCardWindow(s, T);
+            return FindCardWindow(s, T, staleTitle);
         }
 
-        private static void CloseCard(AppSession s)
+        /// <summary>Все открытые окна-карточки на рабочем столе.</summary>
+        private static List<Window> OpenCards(AppSession s)
         {
             try
             {
-                var win = s.Automation.GetDesktop()
-                    .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
-                    .FirstOrDefault(LooksLikeCard);
-                if (win != null)
+                // Оба пути обязательны: карточка — модальное окно, принадлежащее
+                // главному, и среди детей рабочего стола она может не значиться.
+                // Раньше проверялся только рабочий стол, поэтому остатки карточек
+                // не находились и не закрывались.
+                var result = s.MainWindow.ModalWindows.Where(LooksLikeCard).ToList();
+
+                foreach (var w in s.Automation.GetDesktop()
+                             .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
+                             .Where(LooksLikeCard)
+                             .Select(w => w.AsWindow()))
                 {
-                    win.AsWindow().Focus();
-                    System.Threading.Thread.Sleep(150);
-                    Keyboard.Type(VirtualKeyShort.ESCAPE);
-                    System.Threading.Thread.Sleep(300);
+                    if (!result.Any(x => x.Properties.NativeWindowHandle.ValueOrDefault ==
+                                         w.Properties.NativeWindowHandle.ValueOrDefault))
+                        result.Add(w);
+                }
+
+                return result;
+            }
+            catch { return new List<Window>(); }
+        }
+
+        /// <summary>
+        /// Закрывает ВСЕ карточки, а не первую попавшуюся, и дожидается, что их
+        /// не осталось. Незакрытая карточка — модальное окно: оно не мешает UIA
+        /// читать элементы главного окна, но ВВОД в него блокирует. Именно из-за
+        /// этого «клик по чекбоксу не переключал его» и «открывалась карточка
+        /// чужого приложения» — то была карточка, оставшаяся от прошлого теста.
+        /// </summary>
+        private static void CloseCard(AppSession s)
+        {
+            for (int attempt = 0; attempt < 5; attempt++)
+            {
+                var cards = OpenCards(s);
+                if (cards.Count == 0) return;
+
+                foreach (var card in cards)
+                {
+                    try
+                    {
+                        card.Focus();
+                        System.Threading.Thread.Sleep(120);
+                        Keyboard.Type(VirtualKeyShort.ESCAPE);
+                        System.Threading.Thread.Sleep(250);
+                    }
+                    catch { }
                 }
             }
-            catch { }
         }
 
         private static List<string> CardButtonNames(AutomationElement card) =>
@@ -318,13 +389,16 @@ namespace Ven4Tools.ClientUITests
                     bool rowHasPlay = RowHasPlayButton(chk);
                     if (!rowHasPlay) continue;
 
-                    var card = OpenCard(s, chk, frag);
+                    string rowsBeforeClick = DumpRows(s);
+                    string clickedLabel = DescribeLabelFor(s, query);
+                    var card = OpenCard(s, chk, frag, query);
                     Assert.IsNotNull(card, $"Карточка «{query}» не открылась.");
                     // Заголовок карточки — DisplayName приложения. Если он не тот,
                     // значит открыли карточку соседней строки, и любые выводы о
                     // кнопке запуска были бы про другое приложение.
                     Assert.IsTrue((card!.Title ?? "").Contains(query, StringComparison.OrdinalIgnoreCase),
-                        $"Открыта карточка «{card.Title}», а ожидалась «{query}» — строка и карточка разошлись.");
+                        $"Открыта карточка «{card.Title}», а ожидалась «{query}» — строка и карточка разошлись. " +
+                        $"Состояние списка перед кликом: {rowsBeforeClick}. Кликали по подписи: {clickedLabel}.");
                     var cardBtnsInitial = CardButtonNames(card!);
 
                     // Ждём кнопку опросом, а не фиксированной паузой: путь к exe
@@ -404,6 +478,12 @@ namespace Ven4Tools.ClientUITests
             // Строку берём заново перед самым кликом: список мог перестроиться
             // и отдать контейнер другому приложению.
             chk = ResolveRow(s, "telegram") ?? chk;
+
+            // И убеждаемся, что поверх нет открытой карточки: она модальная и
+            // проглотит клик, оставив впечатление неисправного хитбокса.
+            CloseCard(s);
+            Assert.AreEqual(0, OpenCards(s).Count,
+                "Поверх главного окна осталась карточка приложения — ввод в список заблокирован.");
             Assert.IsTrue(chk!.IsEnabled, "Чекбокс приложения отключён — нельзя проверить переключение.");
 
             var rect = chk.BoundingRectangle;
@@ -415,7 +495,17 @@ namespace Ven4Tools.ClientUITests
             Assert.IsTrue(rect.Width >= 18,
                 $"Ширина хитбокса чекбокса не увеличена Viewbox (фактически {rect.Width}×{rect.Height}px, ожидалось ≥18 по ширине).");
 
-            bool? before = chk.AsCheckBox().IsChecked;
+            // Состояние читаем каждый раз по СВЕЖЕЙ ссылке. Уже доказано, что в
+            // виртуализированном списке контейнеры переиспользуются: держать один
+            // элемент между кликом и проверкой нельзя — он может отвечать за уже
+            // другую строку и возвращать чужое значение.
+            bool? ReadState()
+            {
+                var fresh = ResolveRow(s, "telegram");
+                return fresh?.AsCheckBox().IsChecked;
+            }
+
+            bool? before = ReadState();
             var corner = new Point(rect.Left + 2, rect.Top + 2); // почти угол увеличенной области
 
             // Физический клик по экранным координатам долетает до контрола только
@@ -439,7 +529,7 @@ namespace Ven4Tools.ClientUITests
             Mouse.Click(corner);
             System.Threading.Thread.Sleep(400);
 
-            bool? after = chk.AsCheckBox().IsChecked;
+            bool? after = ReadState();
 
             if (before == after)
             {
@@ -448,18 +538,19 @@ namespace Ven4Tools.ClientUITests
                 // это различает: сработал — проблема в активации окна, не сработал —
                 // контрол к моменту клика стал недоступен (Availability/JustInstalled
                 // меняются асинхронно и гасят IsSelectable).
-                bool enabledAfter = chk.IsEnabled;
-                bool offscreenAfter = chk.IsOffscreen;
+                var freshAfter = ResolveRow(s, "telegram");
+                bool enabledAfter = freshAfter?.IsEnabled ?? false;
+                bool offscreenAfter = freshAfter?.IsOffscreen ?? true;
 
                 Mouse.Click(corner);
                 System.Threading.Thread.Sleep(400);
-                bool? afterSecond = chk.AsCheckBox().IsChecked;
+                bool? afterSecond = ReadState();
 
                 Assert.AreNotEqual(before, afterSecond,
                     $"Клик в угол хитбокса ({rect.Width}×{rect.Height}px) не переключил чекбокс " +
                     $"ни с первой, ни со второй попытки (было {before}, стало {afterSecond}). " +
                     $"Под точкой клика: {underPoint}. После первого клика: IsEnabled={enabledAfter}, " +
-                    $"IsOffscreen={offscreenAfter}.");
+                    $"IsOffscreen={offscreenAfter}. Список: {DumpRows(s)}. Целились в y{rect.Top}-{rect.Bottom}.");
 
                 // Второй клик сработал — состояние вернём и зафиксируем причину.
                 Mouse.Click(corner);
@@ -471,6 +562,36 @@ namespace Ven4Tools.ClientUITests
 
             Mouse.Click(corner); // вернуть состояние
             System.Threading.Thread.Sleep(200);
+        }
+
+        /// <summary>
+        /// Снимок того, что реально видно в списке: текст поиска, строки с их
+        /// прямоугольниками. Нужен, чтобы разбирать промахи фактами, а не версиями.
+        /// </summary>
+        private static string DumpRows(AppSession s)
+        {
+            string query = "";
+            try { query = GetSearchBox(s).AsTextBox().Text ?? ""; } catch { }
+
+            var rows = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.CheckBox))
+                .Where(c => (c.Properties.AutomationId.ValueOrDefault ?? "").StartsWith("chkApp_"))
+                .Select(c =>
+                {
+                    var r = c.BoundingRectangle;
+                    return $"{c.Properties.AutomationId.ValueOrDefault}@y{r.Top}-{r.Bottom}";
+                })
+                .ToList();
+
+            return $"поиск=«{query}», строк={rows.Count}: " + string.Join(", ", rows.Take(8));
+        }
+
+        /// <summary>Какую именно подпись найдёт OpenCard и где она лежит.</summary>
+        private static string DescribeLabelFor(AppSession s, string titleFragment)
+        {
+            var label = NameTextByAppTitle(s, titleFragment);
+            if (label == null) return $"подпись с «{titleFragment}» не найдена";
+            var r = label.BoundingRectangle;
+            return $"«{label.Name}» @ y{r.Top}-{r.Bottom} x{r.Left}-{r.Right}";
         }
 
         /// <summary>Описывает элемент под точкой экрана — для разбора промахов клика.</summary>
