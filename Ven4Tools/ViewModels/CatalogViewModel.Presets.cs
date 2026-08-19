@@ -178,9 +178,9 @@ namespace Ven4Tools.ViewModels
             var missing = new List<string>();
             foreach (var id in result.AppIds)
             {
-                var row = Apps.FirstOrDefault(a => a.AppId == id);
-                if (row != null) { row.IsSelected = true; matched++; }
-                else missing.Add(id);
+                var row = Apps.FirstOrDefault(a => string.Equals(a.AppId, id, StringComparison.OrdinalIgnoreCase));
+                if (row != null && row.IsSelectable) { row.IsSelected = true; matched++; }
+                else if (row == null) missing.Add(id);
             }
 
             Log($"📥 Набор с сайта: отмечено {matched}, не найдено в каталоге: {missing.Count}");

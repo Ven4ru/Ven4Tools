@@ -91,11 +91,17 @@ namespace Ven4Tools.Services
         private static bool TryExtractFromUrl(string text, out string payload)
         {
             payload = "";
-            if (text.IndexOf("set=", StringComparison.OrdinalIgnoreCase) < 0) return false;
             if (text.IndexOf("ven4tools.ru", StringComparison.OrdinalIgnoreCase) < 0) return false;
 
-            var marker = text.IndexOf("set=", StringComparison.OrdinalIgnoreCase);
-            var tail = text.Substring(marker + 4);
+            var marker = -1;
+            foreach (var anchor in new[] { "?set=", "&set=", "#set=" })
+            {
+                var idx = text.IndexOf(anchor, StringComparison.OrdinalIgnoreCase);
+                if (idx >= 0) { marker = idx + anchor.Length; break; }
+            }
+            if (marker < 0) return false;
+
+            var tail = text.Substring(marker);
             var stop = tail.IndexOfAny(new[] { '&', '#', ' ' });
             if (stop >= 0) tail = tail.Substring(0, stop);
 
