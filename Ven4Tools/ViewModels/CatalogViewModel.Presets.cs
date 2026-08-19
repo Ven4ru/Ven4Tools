@@ -147,6 +147,49 @@ namespace Ven4Tools.ViewModels
             }
         }
 
+        /// <summary>
+        /// Импорт набора, собранного на сайте: человек вводит короткий код,
+        /// клиент забирает состав с ven4tools.ru и отмечает те же приложения.
+        /// Ничего не устанавливает сам — выбор остаётся за пользователем.
+        /// </summary>
+        private async Task ImportPresetByCodeAsync()
+        {
+            var dlg = new Views.PresetCodeDialog { Owner = Application.Current?.MainWindow };
+            if (dlg.ShowDialog() != true) return;
+
+            var result = await SitePresetService.FetchAsync(dlg.Code);
+            if (!result.Success)
+            {
+                Log($"📥 Набор с сайта: {result.Error}");
+                MessageBox.Show(result.Error, "Набор не загружен", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            int matched = 0;
+            var missing = new List<string>();
+            foreach (var id in result.AppIds)
+            {
+                var row = Apps.FirstOrDefault(a => a.AppId == id);
+                if (row != null) { row.IsSelected = true; matched++; }
+                else missing.Add(id);
+            }
+
+            Log($"📥 Набор V4T-{result.Code}: отмечено {matched}, не найдено в каталоге: {missing.Count}");
+
+            if (missing.Count > 0)
+            {
+                // Набор мог быть собран при более широкой области каталога, чем
+                // выбрана здесь, — это не ошибка, но человек должен знать, что
+                // отмечено не всё, иначе он решит, что установил весь набор.
+                MessageBox.Show(
+                    $"Отмечено приложений: {matched}{Environment.NewLine}" +
+                    $"Не найдено в текущем каталоге: {missing.Count}{Environment.NewLine}{Environment.NewLine}" +
+                    string.Join(", ", missing) + Environment.NewLine + Environment.NewLine +
+                    "Возможно, набор собран при более широкой области каталога — проверьте её в настройках.",
+                    "Набор загружен частично", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
         private void ImportList()
         {
             var dlg = new Microsoft.Win32.OpenFileDialog { Title = "Импорт списка приложений", Filter = "JSON файлы (*.json)|*.json" };
