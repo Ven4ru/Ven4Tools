@@ -3,90 +3,105 @@ using Ven4Tools.Services;
 namespace Ven4Tools.Tests;
 
 /// <summary>
-/// Разбор кода набора, введённого человеком руками. Сетевую часть здесь
-/// не трогаем — проверяем ровно то, что защищает от опечаток до запроса.
+/// Разбор кода набора, вставленного из буфера обмена. Сети здесь нет
+/// вообще: код самодостаточен, сервер о наборах ничего не знает.
 /// </summary>
 public class SitePresetServiceTests
 {
-    [Theory]
-    [InlineData("V4T-6CRWK", "6CRWK")]
-    [InlineData("v4t-6crwk", "6CRWK")]
-    [InlineData("6CRWK", "6CRWK")]
-    [InlineData("  6crwk  ", "6CRWK")]
-    [InlineData("V4T 6 CRWK", "6CRWK")]
-    [InlineData("v4t-6-crwk", "6CRWK")]
-    [InlineData("V4T6CRWK", "6CRWK")]
-    public void NormalizeCode_ПриводитЛюбуюЗаписьКодаКОдномуВиду(string raw, string expected)
+    [Fact]
+    public void Parse_ОбычныйКодДаётСписокПриложений()
     {
-        Assert.Equal(expected, SitePresetService.NormalizeCode(raw));
+        var result = SitePresetService.Parse("V4T:google-chrome,telegram,vlc");
+
+        Assert.True(result.Success);
+        Assert.Equal(new[] { "google-chrome", "telegram", "vlc" }, result.AppIds);
+    }
+
+    [Theory]
+    [InlineData("v4t:google-chrome")]                    // нижний регистр префикса
+    [InlineData("  V4T:google-chrome  ")]                // лишние пробелы по краям
+    [InlineData("V4T: google-chrome")]                   // пробел после префикса
+    [InlineData("V4T:google-chrome,")]                   // висящая запятая
+    [InlineData("V4T:google-chrome;google-chrome")]      // повтор того же id
+    public void Parse_ТерпитТоЧтоПриезжаетИзБуфера(string raw)
+    {
+        var result = SitePresetService.Parse(raw);
+
+        Assert.True(result.Success);
+        Assert.Equal(new[] { "google-chrome" }, result.AppIds);
     }
 
     [Fact]
-    public void NormalizeCode_КороткийКодНачинающийсяСV4TНеОбрезается()
+    public void Parse_ПринимаетСсылкуССайтаЦеликом()
     {
-        // V, 4 и T входят в алфавит кода, поэтому «V4TQR» — это сам код,
-        // а не префикс с остатком. Срезав префикс здесь, мы бы отправили
-        // на сервер «QR» и получили «набор не найден» на верном коде.
-        Assert.Equal("V4TQR", SitePresetService.NormalizeCode("V4TQR"));
-        Assert.Equal("V4TQR", SitePresetService.NormalizeCode("v4t-V4TQR"));
+        // Человек копирует то, что попалось под руку: код или адресную строку.
+        var result = SitePresetService.Parse("https://ven4tools.ru/?scene=catalog&set=google-chrome,vlc");
+
+        Assert.True(result.Success);
+        Assert.Equal(new[] { "google-chrome", "vlc" }, result.AppIds);
+    }
+
+    [Fact]
+    public void Parse_ОтсекаетХвостПослеСпискаВСсылке()
+    {
+        var result = SitePresetService.Parse("https://ven4tools.ru/?set=vlc&scene=catalog#anchor");
+
+        Assert.True(result.Success);
+        Assert.Equal(new[] { "vlc" }, result.AppIds);
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    [InlineData("V4T-")]
-    public void NormalizeCode_ПустойВводДаётПустуюСтроку(string? raw)
+    public void Parse_ПустойВводОтклоняетсяСПодсказкой(string? raw)
     {
-        Assert.Equal("", SitePresetService.NormalizeCode(raw));
+        var result = SitePresetService.Parse(raw);
+
+        Assert.False(result.Success);
+        Assert.Contains("пуст", result.Error);
+        Assert.Empty(result.AppIds);
     }
 
     [Theory]
-    [InlineData("V4T-6CRWK")]
-    [InlineData("6crwk")]
-    [InlineData("V4T-T9EAN")]
-    public void LooksLikeCode_НастоящийКодПринимается(string raw)
+    [InlineData("google-chrome,telegram")]   // без префикса и не ссылка
+    [InlineData("просто текст")]
+    [InlineData("V4T-6CRWK")]                // старый серверный формат больше не поддерживается
+    public void Parse_ЧужаяСтрокаОтклоняется(string raw)
     {
-        Assert.True(SitePresetService.LooksLikeCode(raw));
-    }
+        var result = SitePresetService.Parse(raw);
 
-    [Theory]
-    // Символы, которых нет в алфавите сайта именно потому, что их путают
-    // при переписывании от руки: 0/O, 1/I/L, 5/S, 8/B.
-    [InlineData("V4T-0CRWK")]
-    [InlineData("V4T-1CRWK")]
-    [InlineData("V4T-5CRWK")]
-    [InlineData("V4T-8CRWK")]
-    [InlineData("V4T-OCRWK")]
-    [InlineData("V4T-ICRWK")]
-    [InlineData("V4T-LCRWK")]
-    [InlineData("V4T-SCRWK")]
-    [InlineData("V4T-BCRWK")]
-    public void LooksLikeCode_СпорныеСимволыОтклоняются(string raw)
-    {
-        Assert.False(SitePresetService.LooksLikeCode(raw));
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData("V4T")]
-    [InlineData("ABC")]                    // короче четырёх знаков
-    [InlineData("V4T-ABCDEFGHIJKLMNOP")]   // длиннее допустимого
-    [InlineData("набор")]                  // кириллица
-    [InlineData("V4T-@#$%^")]
-    public void LooksLikeCode_МусорОтклоняется(string raw)
-    {
-        Assert.False(SitePresetService.LooksLikeCode(raw));
+        Assert.False(result.Success);
+        Assert.Empty(result.AppIds);
     }
 
     [Fact]
-    public async Task FetchAsync_НекорректныйКодНеУходитВСеть()
+    public void Parse_КодБезЕдиногоГодногоIdОтклоняется()
     {
-        // Ожидание: отказ приходит мгновенно и с объяснением, а не таймаутом.
-        var result = await SitePresetService.FetchAsync("V4T-00000");
+        // Из буфера может приехать что угодно; по этим значениям дальше идёт
+        // поиск в каталоге, поэтому мусор не должен доезжать до него вовсе.
+        var result = SitePresetService.Parse("V4T:!!!,@@@,###");
 
         Assert.False(result.Success);
-        Assert.Contains("неправильно", result.Error);
-        Assert.Empty(result.AppIds);
+        Assert.Contains("нет ни одного приложения", result.Error);
+    }
+
+    [Fact]
+    public void Parse_ОтбрасываетНегодныеIdНоОставляетГодные()
+    {
+        var result = SitePresetService.Parse("V4T:google-chrome,пробел тут,vlc");
+
+        Assert.True(result.Success);
+        Assert.Equal(new[] { "google-chrome", "vlc" }, result.AppIds);
+    }
+
+    [Fact]
+    public void Parse_НеТащитВКаталогСлишкомДлинныйId()
+    {
+        var longId = new string('a', 65);
+        var result = SitePresetService.Parse($"V4T:{longId},vlc");
+
+        Assert.True(result.Success);
+        Assert.Equal(new[] { "vlc" }, result.AppIds);
     }
 }

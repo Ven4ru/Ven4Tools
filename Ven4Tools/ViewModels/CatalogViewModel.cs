@@ -212,7 +212,7 @@ namespace Ven4Tools.ViewModels
 
             ExportListCommand = new RelayCommand(_ => ExportList());
             ImportListCommand = new RelayCommand(_ => ImportList());
-            ImportPresetByCodeCommand = new RelayCommand(async _ => await ImportPresetByCodeAsync());
+            ImportPresetByCodeCommand = new RelayCommand(_ => ImportPresetByCode());
 
             SavePresetCommand = RelayCommand.FromAsync(async _ => await SavePresetAsync(),
                 _ => Apps.Any(a => a.IsSelected));
