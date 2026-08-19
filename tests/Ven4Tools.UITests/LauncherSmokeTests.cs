@@ -71,35 +71,16 @@ public sealed class LauncherSmokeTests : IDisposable
 
         IntPtr windowHandle = new(_window.Properties.NativeWindowHandle.Value);
         Assert.NotEqual(IntPtr.Zero, windowHandle);
-        var originalBounds = _window.BoundingRectangle;
-        Assert.True(SetWindowPos(
-            windowHandle,
-            HwndTopmost,
-            100,
-            100,
-            0,
-            0,
-            SwpNoSize | SwpShowWindow));
-        try
+
+        // Снимаем содержимое окна через PrintWindow, а не область экрана.
+        // Захват области зависел от z-порядка: SetWindowPos(HWND_TOPMOST) не
+        // поднимает окно надёжно, и в кадр попадало то, что физически оказалось
+        // сверху — тест краснел при исправном лаунчере (ловилось окно браузера,
+        // окно Проводника, консоль). PrintWindow рисует окно независимо от
+        // перекрытий, поэтому поднимать и двигать окно больше не нужно.
+        using (Image<Rgba32> frame = WindowCapture.Capture(windowHandle))
         {
-            _window.Focus();
-            Thread.Sleep(TimeSpan.FromMilliseconds(250));
-            // Первый захват после смены foreground иногда получает предыдущую
-            // поверхность DWM. Повторный кадр снимается уже с активного HWND.
-            Capture.Element(_window);
-            Thread.Sleep(TimeSpan.FromMilliseconds(250));
-            Capture.Element(_window).ToFile(actual);
-        }
-        finally
-        {
-            SetWindowPos(
-                windowHandle,
-                HwndNotTopmost,
-                (int)originalBounds.X,
-                (int)originalBounds.Y,
-                0,
-                0,
-                SwpNoSize | SwpShowWindow);
+            frame.SaveAsPng(actual);
         }
         using (Image<Rgba32> captured = Image.Load<Rgba32>(actual))
         {
