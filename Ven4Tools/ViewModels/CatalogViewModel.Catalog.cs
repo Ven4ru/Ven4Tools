@@ -264,6 +264,17 @@ namespace Ven4Tools.ViewModels
         private void BuildRows()
         {
             var existingUserRows = Apps.Where(a => a.IsUserAdded).ToList();
+
+            // Отметки пользователя переживают перестроение списка. Строки здесь
+            // создаются заново, и раньше выбор просто исчезал: человек открывал
+            // «Каталог», список показывался из кэша, он начинал отмечать программы —
+            // доезжал свежий каталог с сети, BuildRows() пересоздавал строки, и
+            // галочки молча пропадали. То же самое стирало и набор, применённый
+            // кодом с сайта. Помним выбор по AppId и возвращаем его ниже.
+            var selectedIds = new HashSet<string>(
+                Apps.Where(a => a.IsSelected).Select(a => a.AppId),
+                StringComparer.OrdinalIgnoreCase);
+
             Apps.Clear();
 
             if (_catalog != null)
@@ -291,6 +302,10 @@ namespace Ven4Tools.ViewModels
                         CatalogSizeText = catalogApp.Size
                     };
                     row.IsFavorite = _favoritesService.IsFavorite(row.AppId);
+                    // Отметку возвращаем ДО подписки на SelectionChanged: иначе
+                    // восстановление выбора выглядело бы как действие пользователя
+                    // и лишний раз дёргало пересчёт SelectedCount на каждую строку.
+                    if (selectedIds.Contains(row.AppId) && row.IsSelectable) row.IsSelected = true;
                     row.SelectionChanged += () => OnPropertyChanged(nameof(SelectedCount));
                     Apps.Add(row);
                 }
@@ -301,6 +316,7 @@ namespace Ven4Tools.ViewModels
             {
                 if (Apps.Any(a => a.AppId == appInfo.Id)) continue;
                 var row = new AppRowViewModel(appInfo) { IsFavorite = _favoritesService.IsFavorite(appInfo.Id) };
+                if (selectedIds.Contains(row.AppId) && row.IsSelectable) row.IsSelected = true;
                 row.SelectionChanged += () => OnPropertyChanged(nameof(SelectedCount));
                 Apps.Add(row);
                 if (!string.IsNullOrEmpty(appInfo.AlternativeId))
@@ -308,6 +324,10 @@ namespace Ven4Tools.ViewModels
                         t => AppLogger.Write(t.Exception!, "Ошибка загрузки версий приложения"),
                         TaskContinuationOptions.OnlyOnFaulted);
             }
+
+            // Счётчик выбранного должен отражать восстановленные отметки: подписки
+            // выше навешены уже ПОСЛЕ проставления IsSelected и сами его не поднимут.
+            OnPropertyChanged(nameof(SelectedCount));
         }
 
         private void BuildCategoryHeaders()
