@@ -175,27 +175,49 @@ namespace Ven4Tools.ViewModels
             }
 
             int matched = 0;
-            var missing = new List<string>();
+            var missing = new List<string>();      // нет в каталоге
+            var unavailable = new List<string>();  // есть, но отметить нельзя
             foreach (var id in result.AppIds)
             {
                 var row = Apps.FirstOrDefault(a => string.Equals(a.AppId, id, StringComparison.OrdinalIgnoreCase));
-                if (row != null && row.IsSelectable) { row.IsSelected = true; matched++; }
-                else if (row == null) missing.Add(id);
+                if (row == null) { missing.Add(id); continue; }
+
+                // Недоступные и только что установленные отмечать нельзя (IsSelectable),
+                // но и молчать о них тоже: пропущенное без единого слова — это ровно
+                // то, чего фича должна избегать. Причина у двух списков разная,
+                // поэтому и сообщения разные.
+                if (row.IsSelectable) { row.IsSelected = true; matched++; }
+                else unavailable.Add(row.DisplayName);
             }
 
-            Log($"📥 Набор с сайта: отмечено {matched}, не найдено в каталоге: {missing.Count}");
+            Log($"📥 Набор с сайта: отмечено {matched}, не найдено в каталоге: {missing.Count}, " +
+                $"недоступно для выбора: {unavailable.Count}");
 
-            if (missing.Count > 0)
+            if (missing.Count > 0 || unavailable.Count > 0)
             {
-                // Набор мог быть собран при более широкой области каталога, чем
-                // выбрана здесь, — это не ошибка, но человек должен знать, что
-                // отмечено не всё, иначе он решит, что установил весь набор.
-                MessageBox.Show(
-                    $"Отмечено приложений: {matched}{Environment.NewLine}" +
-                    $"Не найдено в текущем каталоге: {missing.Count}{Environment.NewLine}{Environment.NewLine}" +
-                    string.Join(", ", missing) + Environment.NewLine + Environment.NewLine +
-                    "Возможно, набор собран при более широкой области каталога — проверьте её в настройках.",
-                    "Набор загружен частично", MessageBoxButton.OK, MessageBoxImage.Information);
+                var text = $"Отмечено приложений: {matched}";
+
+                if (missing.Count > 0)
+                {
+                    // Набор мог быть собран при более широкой области каталога, чем
+                    // выбрана здесь, — это не ошибка, но человек должен знать, что
+                    // отмечено не всё, иначе он решит, что установил весь набор.
+                    text += Environment.NewLine + Environment.NewLine +
+                            $"Не найдено в текущем каталоге: {missing.Count}" + Environment.NewLine +
+                            string.Join(", ", missing) + Environment.NewLine +
+                            "Возможно, набор собран при более широкой области каталога — проверьте её в настройках.";
+                }
+
+                if (unavailable.Count > 0)
+                {
+                    text += Environment.NewLine + Environment.NewLine +
+                            $"Сейчас нельзя отметить: {unavailable.Count}" + Environment.NewLine +
+                            string.Join(", ", unavailable) + Environment.NewLine +
+                            "Эти приложения недоступны или только что установлены.";
+                }
+
+                MessageBox.Show(text, "Набор загружен частично",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
