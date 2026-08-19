@@ -148,20 +148,23 @@ namespace Ven4Tools.ViewModels
         }
 
         /// <summary>
-        /// Импорт набора, собранного на сайте: человек вводит короткий код,
-        /// клиент забирает состав с ven4tools.ru и отмечает те же приложения.
+        /// Набор, собранный на сайте: человек вставляет код, клиент разбирает
+        /// его на месте и отмечает те же приложения. Сетевых запросов нет —
+        /// код самодостаточен, сервер о наборах ничего не знает и не хранит.
         /// Ничего не устанавливает сам — выбор остаётся за пользователем.
         /// </summary>
-        private async Task ImportPresetByCodeAsync()
+        private void ImportPresetByCode()
         {
             var dlg = new Views.PresetCodeDialog { Owner = Application.Current?.MainWindow };
             if (dlg.ShowDialog() != true) return;
 
-            var result = await SitePresetService.FetchAsync(dlg.Code);
+            // Диалог не закроется с непригодным кодом, но разбираем ещё раз:
+            // окно отвечает за свой ввод, ViewModel — за свои данные.
+            var result = SitePresetService.Parse(dlg.RawCode);
             if (!result.Success)
             {
                 Log($"📥 Набор с сайта: {result.Error}");
-                MessageBox.Show(result.Error, "Набор не загружен", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(result.Error, "Набор не разобран", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -174,7 +177,7 @@ namespace Ven4Tools.ViewModels
                 else missing.Add(id);
             }
 
-            Log($"📥 Набор V4T-{result.Code}: отмечено {matched}, не найдено в каталоге: {missing.Count}");
+            Log($"📥 Набор с сайта: отмечено {matched}, не найдено в каталоге: {missing.Count}");
 
             if (missing.Count > 0)
             {

@@ -6,7 +6,7 @@ namespace Ven4Tools.Views
 {
     public partial class PresetCodeDialog : Window
     {
-        public string Code => SitePresetService.NormalizeCode(txtCode.Text);
+        public string RawCode => txtCode.Text;
 
         public PresetCodeDialog()
         {
@@ -16,12 +16,12 @@ namespace Ven4Tools.Views
 
         private void Ok_Click(object sender, RoutedEventArgs e)
         {
-            // Форму кода проверяем до закрытия окна: очевидную опечатку показываем
-            // сразу, не гоняя человека через сетевой запрос и его таймаут.
-            if (!SitePresetService.LooksLikeCode(txtCode.Text))
+            // Разбираем прямо здесь: код самодостаточен, ждать нечего, и ошибку
+            // показываем в самом окне, не закрывая его и не теряя вставленное.
+            var parsed = SitePresetService.Parse(txtCode.Text);
+            if (!parsed.Success)
             {
-                txtHint.Text = "Код состоит из 5 знаков после «V4T-», например V4T-6CRWK. " +
-                               "В нём не бывает 0, 1, 5, 8 и букв O, I, L, S, B.";
+                txtHint.Text = parsed.Error;
                 txtHint.Foreground = (System.Windows.Media.Brush)FindResource("StatusDanger");
                 txtCode.Focus();
                 txtCode.SelectAll();

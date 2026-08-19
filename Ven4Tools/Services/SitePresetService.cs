@@ -1,137 +1,108 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace Ven4Tools.Services
 {
     /// <summary>
-    /// Получение набора приложений по короткому коду с сайта.
-    /// Человек собирает подборку на ven4tools.ru, получает код вида V4T-XXXXX
-    /// и вводит его здесь — клиент отмечает те же приложения в каталоге.
+    /// Разбор кода набора, собранного на ven4tools.ru.
+    /// <para>
+    /// Код самодостаточен: он САМ содержит список приложений и не требует
+    /// обращения к серверу. Сервер о наборах ничего не знает и ничего о них
+    /// не хранит — нам не нужны данные о том, кто какие программы себе
+    /// выбирает. Поэтому здесь нет ни одного сетевого вызова, и работает это
+    /// в том числе без интернета.
+    /// </para>
+    /// <para>
+    /// Формат: <c>V4T:id,id,id</c> — настоящие идентификаторы приложений, а не
+    /// их позиции в каталоге. Благодаря этому код переживает любые правки
+    /// каталога, а человек глазами видит, что именно передаёт.
+    /// </para>
     /// </summary>
     public static class SitePresetService
     {
-        // Единый переиспользуемый HttpClient, как во всех прочих сервисах проекта:
-        // пересоздание клиента на каждый вызов исчерпывает сокеты.
-        private static readonly HttpClient _http =
-            new() { Timeout = TimeSpan.FromSeconds(10) };
+        public const string CodePrefix = "V4T:";
 
-        private const string Endpoint = "https://ven4tools.ru/api/db.php?action=get_preset&code=";
+        /// <summary>Больше приложений, чем есть в каталоге, набор содержать не может.</summary>
+        private const int MaxApps = 200;
 
-        /// <summary>Длина кода, который выдаёт сайт (без префикса «V4T-»).</summary>
-        private const int CodeLength = 5;
-
-        // Алфавит кода на сайте — без символов, которые путают при переписывании
-        // от руки (0/O, 1/I/L, 5/S, 8/B). Проверяем форму до сетевого запроса,
-        // чтобы очевидную опечатку показать сразу, а не после таймаута.
-        private static readonly Regex CodePattern =
-            new("^[234679ACDEFGHJKMNPQRTUVWXYZ]{4,12}$", RegexOptions.Compiled);
-
-        /// <summary>
-        /// Приводит введённое к каноническому виду: убирает префикс V4T-,
-        /// пробелы и дефисы, поднимает регистр. Человек может вписать код
-        /// как угодно — «v4t-6crwk», «6CRWK», «V4T 6 CRWK».
-        /// </summary>
-        public static string NormalizeCode(string? raw)
-        {
-            if (string.IsNullOrWhiteSpace(raw)) return "";
-
-            // Сначала выбрасываем всё, что не буква и не цифра: дефисы и пробелы
-            // человек ставит как придётся, и «V4T 6 CRWK» должно работать так же,
-            // как «V4T-6CRWK».
-            var clean = new string(raw.ToUpperInvariant().Where(char.IsLetterOrDigit).ToArray());
-
-            // Префикс срезаем только если после него что-то остаётся сверх самого
-            // кода. Буквы V, T и цифра 4 входят в алфавит кода, поэтому короткий
-            // код вида «V4TQR» — это КОД, а не префикс с остатком, и трогать его
-            // нельзя. Длина кода — 5 знаков, значит префикс есть только у строк
-            // длиннее пяти.
-            if (clean.Length > CodeLength && clean.StartsWith("V4T", StringComparison.Ordinal))
-            {
-                clean = clean.Substring(3);
-            }
-
-            // Один голый префикс — это не код: иначе он дошёл бы до текста ошибки
-            // в виде «набор с кодом V4T-V4T не найден».
-            if (clean == "V4T") return "";
-
-            return clean;
-        }
-
-        public static bool LooksLikeCode(string? raw) => CodePattern.IsMatch(NormalizeCode(raw));
-
-        public sealed class PresetFetchResult
+        public sealed class PresetParseResult
         {
             public bool Success { get; init; }
-            public string Code { get; init; } = "";
             public List<string> AppIds { get; init; } = new();
-            /// <summary>Готовое к показу сообщение, если получить набор не удалось.</summary>
+            /// <summary>Готовое к показу сообщение, если код разобрать не удалось.</summary>
             public string Error { get; init; } = "";
         }
 
         /// <summary>
-        /// Забирает состав набора с сайта. Сетевые ошибки не бросаются наружу —
-        /// возвращается результат с текстом для пользователя.
+        /// Разбирает вставленный код. Принимает и сам код, и ссылку с сайта
+        /// (<c>ven4tools.ru/?scene=catalog&amp;set=...</c>) — человек копирует
+        /// то, что попалось под руку, и обе формы несут один и тот же список.
         /// </summary>
-        public static async Task<PresetFetchResult> FetchAsync(string rawCode)
+        public static PresetParseResult Parse(string? raw)
         {
-            var code = NormalizeCode(rawCode);
-            if (!CodePattern.IsMatch(code))
+            if (string.IsNullOrWhiteSpace(raw))
             {
-                return new PresetFetchResult
-                {
-                    Error = "Код выглядит неправильно. Он состоит из 5 знаков после «V4T-», " +
-                            "например V4T-6CRWK. В коде не бывает цифр 0, 1, 5, 8 и букв O, I, L, S, B."
-                };
+                return Fail("Код пуст. Скопируйте его на ven4tools.ru в разделе «Каталог».");
             }
 
-            try
+            var text = raw.Trim();
+            string payload;
+
+            if (text.StartsWith(CodePrefix, StringComparison.OrdinalIgnoreCase))
             {
-                using var response = await _http.GetAsync(Endpoint + Uri.EscapeDataString(code))
-                                                .ConfigureAwait(false);
-
-                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    return new PresetFetchResult
-                    {
-                        Error = $"Набор с кодом V4T-{code} не найден. Проверьте код или соберите набор заново на ven4tools.ru."
-                    };
-                }
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    return new PresetFetchResult { Error = $"Сервер ответил ошибкой ({(int)response.StatusCode}). Попробуйте позже." };
-                }
-
-                var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                var doc = JObject.Parse(body);
-                var ids = doc["apps"]?.ToObject<List<string>>() ?? new List<string>();
-
-                if (ids.Count == 0)
-                {
-                    return new PresetFetchResult { Error = "Набор пуст — в нём нет приложений." };
-                }
-
-                return new PresetFetchResult
-                {
-                    Success = true,
-                    Code = code,
-                    AppIds = ids
-                };
+                payload = text.Substring(CodePrefix.Length);
             }
-            catch (TaskCanceledException)
+            else if (TryExtractFromUrl(text, out var fromUrl))
             {
-                return new PresetFetchResult { Error = "Сайт не ответил вовремя. Проверьте подключение и попробуйте ещё раз." };
+                payload = fromUrl;
             }
-            catch (Exception ex)
+            else
             {
-                AppLogger.Write($"[SitePresetService] {ex.Message}");
-                return new PresetFetchResult { Error = "Не удалось связаться с сайтом. Проверьте подключение." };
+                return Fail("Это не похоже на код набора. Код начинается с «V4T:» — " +
+                            "например V4T:google-chrome,telegram,vlc.");
             }
+
+            var ids = payload
+                .Split(new[] { ',', ';', ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(id => id.Trim())
+                .Where(id => id.Length > 0 && IsPlausibleId(id))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(MaxApps)
+                .ToList();
+
+            if (ids.Count == 0)
+            {
+                return Fail("В коде нет ни одного приложения. Соберите набор заново на ven4tools.ru.");
+            }
+
+            return new PresetParseResult { Success = true, AppIds = ids };
         }
+
+        /// <summary>
+        /// Идентификаторы каталога — латиница, цифры, дефис и точка. Всё прочее
+        /// отсекаем здесь, чтобы из буфера обмена не приезжала произвольная
+        /// строка: дальше по этим значениям идёт поиск в каталоге.
+        /// </summary>
+        private static bool IsPlausibleId(string id) =>
+            id.Length <= 64 && id.All(c => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                                        || (c >= '0' && c <= '9') || c == '-' || c == '.' || c == '_');
+
+        private static bool TryExtractFromUrl(string text, out string payload)
+        {
+            payload = "";
+            if (text.IndexOf("set=", StringComparison.OrdinalIgnoreCase) < 0) return false;
+            if (text.IndexOf("ven4tools.ru", StringComparison.OrdinalIgnoreCase) < 0) return false;
+
+            var marker = text.IndexOf("set=", StringComparison.OrdinalIgnoreCase);
+            var tail = text.Substring(marker + 4);
+            var stop = tail.IndexOfAny(new[] { '&', '#', ' ' });
+            if (stop >= 0) tail = tail.Substring(0, stop);
+
+            payload = Uri.UnescapeDataString(tail);
+            return payload.Length > 0;
+        }
+
+        private static PresetParseResult Fail(string error) => new() { Error = error };
     }
 }

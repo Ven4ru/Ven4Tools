@@ -335,10 +335,10 @@
                                 Command="{Binding SavePresetCommand}"
                                 ToolTip="Сохранит отмеченные приложения как именованный пресет для повторного выбора."/>
 
-                        <Button x:Name="btnPresetByCode" Content="📥 Набор с сайта по коду"
+                        <Button x:Name="btnPresetByCode" Content="📥 Набор с сайта"
                                 Height="32" Margin="3"
                                 Command="{Binding ImportPresetByCodeCommand}"
-                                ToolTip="Отметит приложения из набора, собранного на ven4tools.ru: введите короткий код вида V4T-6CRWK."/>
+                                ToolTip="Отметит приложения из набора, собранного на ven4tools.ru: вставьте код вида V4T:google-chrome,telegram. Разбирается на месте, без обращения к серверу."/>
 
                         <ItemsControl x:Name="lstPresets" ItemsSource="{Binding Presets}" Margin="3,4,3,2">
                             <ItemsControl.ItemTemplate>
