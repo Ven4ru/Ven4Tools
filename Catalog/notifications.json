@@ -1,4 +1,11 @@
 {
   "version": 1,
-  "notifications": []
+  "notifications": [
+    {
+      "id": "release-4.6.0-preset",
+      "title": "Ven4Tools 4.6.0",
+      "message": "Набор с сайта: отметьте программы на ven4tools.ru, скопируйте код и вставьте в клиенте: «Каталог» → «Пресеты» → «Набор с сайта».",
+      "type": "info"
+    }
+  ]
 }
