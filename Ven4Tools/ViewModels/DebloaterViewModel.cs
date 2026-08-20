@@ -158,6 +158,10 @@ namespace Ven4Tools.ViewModels
             // заблокированными — состояние восстанавливается в любом случае.
             try
             {
+                // Единый диалог: подтверждение действия (Отмена = прервать) + предложение
+                // точки восстановления. Раньше здесь было два подряд диалога с одинаковым
+                // текстом «Будет применено N действий» — предупреждение о рисках свёрнуто
+                // в этот же вопрос.
                 var hasRisky = selected.Any(i => i.Risk is "caution" or "moderate");
                 var rpOutcome = await Views.UiGuards.ConfirmAndCreateRestorePointAsync(
                     $"Будет применено {selected.Count} действий.{(hasRisky ? "\n\n⚠️ Среди них есть умеренные/опасные операции." : "")}\n\nСоздать точку восстановления Windows перед очисткой?",
@@ -170,6 +174,7 @@ namespace Ven4Tools.ViewModels
                 }
 
                 _cts = new CancellationTokenSource();
+                // L10: показываем кнопку отмены на время длинной операции.
                 CancelVisible = Visibility.Visible;
                 CancelEnabled = true;
                 int done = 0;
@@ -206,6 +211,7 @@ namespace Ven4Tools.ViewModels
             }
         }
 
+        // L10: отмена применения твиков — прерывает цикл после текущего элемента.
         private void Cancel()
         {
             _cts?.Cancel();
