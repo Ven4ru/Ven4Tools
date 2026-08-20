@@ -124,7 +124,7 @@
                 <ProgressBar x:Name="progressDebloat" Height="5" Minimum="0" Maximum="100"
                              Foreground="{DynamicResource AccentColor}"
                              Background="{DynamicResource BorderBrush}"
-                             Value="{Binding ProgressValue}"
+                             Value="{Binding ProgressValue, Mode=OneWay}"
                              Visibility="{Binding ProgressVisible}" Margin="0,0,0,5"/>
                 <TextBlock x:Name="txtDebloatStatus" FontSize="11"
                            Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"
