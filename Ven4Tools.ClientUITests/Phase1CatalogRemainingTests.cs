@@ -21,6 +21,21 @@ namespace Ven4Tools.ClientUITests
         private static readonly string SettingsDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
         private static readonly string ProfilePath = Path.Combine(SettingsDir, "profile.json");
+        private static readonly string LogPath = Path.Combine(SettingsDir, "app.log");
+
+        private static long LogTailPosition() { try { return new FileInfo(LogPath).Length; } catch { return 0; } }
+        private static string ReadLogSince(long position)
+        {
+            try
+            {
+                using var fs = new FileStream(LogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                if (fs.Length <= position) return "";
+                fs.Seek(position, SeekOrigin.Begin);
+                using var reader = new StreamReader(fs);
+                return reader.ReadToEnd();
+            }
+            catch { return ""; }
+        }
 
         private static string? _profileBackup; private static bool _profileExisted;
         private static AppSession? _session;
@@ -91,8 +106,19 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
             var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            long tInit = LogTailPosition();
             catalogBtn!.AsButton().Invoke();
-            System.Threading.Thread.Sleep(1000);
+
+            // Дожидаемся конца первичной загрузки каталога: BuildRows() может
+            // перестроить строки ещё раз, пока идут фоновые проверки версий —
+            // отметка чекбокса ДО этого момента гонится с пересозданием строки
+            // и теряется (см. round 40: тест ловил ElementNotEnabledException на
+            // кнопке «Сохранить выбор», т.к. CanExecute видел пустой IsSelected).
+            var loaded = Retry.WhileFalse(
+                () => ReadLogSince(tInit).Contains("Версии загружены", StringComparison.OrdinalIgnoreCase),
+                timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Success;
+            Assert.IsTrue(loaded, "Каталог не завершил первичную загрузку за 15с.");
+            System.Threading.Thread.Sleep(300);
 
             // Отмечаем одно приложение чекбоксом, чтобы было что сохранить в пресет.
             var checkbox = s.MainWindow.FindFirstDescendant(cf => cf.ByControlType(ControlType.CheckBox));
