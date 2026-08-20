@@ -128,7 +128,20 @@ namespace Ven4Tools.ClientUITests
 
             var saveBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnSavePreset"));
             Assert.IsNotNull(saveBtn, "Не найдена кнопка «Сохранить выбор».");
-            saveBtn!.AsButton().Invoke();
+
+            // Чекбокс переключён через UIA TogglePattern, не через реальный клик мышью —
+            // WPF ICommand.CanExecuteChanged (CommandManager.RequerySuggested) переоценивает
+            // состояние по обычным input-событиям и не гарантированно успевает синхронно с
+            // таким переключением. Тот же паттерн уже есть у btnInstall в CatalogInstallTests —
+            // ждём IsEnabled, а не слепой Thread.Sleep (round 40: без этого ловили
+            // ElementNotEnabledException, т.к. кнопка ещё не успела активироваться).
+            Retry.WhileFalse(
+                () => saveBtn!.AsButton().IsEnabled,
+                timeout: TimeSpan.FromSeconds(10), interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false);
+            Assert.IsTrue(saveBtn!.AsButton().IsEnabled,
+                "Кнопка «Сохранить выбор» не стала активной после отметки чекбокса.");
+
+            saveBtn.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);
 
             var dialog = Retry.WhileNull(() => s.MainWindow.ModalWindows.FirstOrDefault(),
