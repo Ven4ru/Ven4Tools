@@ -235,7 +235,10 @@ namespace Ven4Tools.ViewModels
                 foreach (var id in ids)
                 {
                     var row = Apps.FirstOrDefault(a => a.AppId == id);
-                    if (row != null) { row.IsSelected = true; matched++; } else skipped++;
+                    // Тот же guard, что у ApplyPreset/ImportPresetByCode: недоступную или
+                    // только что установленную строку отмечать нельзя (чекбокс всё равно
+                    // IsEnabled=False), иначе IsSelected разойдётся с фактической выбираемостью.
+                    if (row != null && row.IsSelectable) { row.IsSelected = true; matched++; } else skipped++;
                 }
                 Log($"📥 Импорт: отмечено {matched}, не найдено в каталоге: {skipped}");
                 if (skipped > 0)
