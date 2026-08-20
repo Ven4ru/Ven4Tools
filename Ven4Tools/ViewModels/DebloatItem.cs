@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Ven4Tools.Views.Tabs
+namespace Ven4Tools.ViewModels
 {
     /// <summary>
     /// Строка списка на вкладке «Очистка»: описание твика плюс состояние галочки.
