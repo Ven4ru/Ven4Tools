@@ -29,8 +29,19 @@ namespace Ven4Tools.Views.Tabs
         // биндится напрямую (GroupName делает их взаимоисключающими через сам WPF,
         // а не через ViewModel), поэтому читаем состояние трёх именованных элементов,
         // как делал исходный GetFilteredItems().
+        //
+        // rbAll.IsChecked="True" в XAML вызывает Checked синхронно ВНУТРИ
+        // InitializeComponent() — раньше, чем rbApps/rbPrivacy/rbServices (объявлены
+        // в разметке позже) успевают подключиться, отсюда NullReferenceException при
+        // каждом первом открытии вкладки (тот же класс WPF-гонки, что у
+        // Slider.ValueChanged, см. agent_context.md §7). Оригинальный ApplyFilter()
+        // защищался от этого же момента проверкой `if (lstDebloat == null) return;` —
+        // здесь lstDebloat заменён на ViewModel, но гонка со сборкой самого XAML
+        // никуда не делась, поэтому guard переносится сюда явно.
         private void FilterChanged(object sender, RoutedEventArgs e)
         {
+            if (rbApps == null) return;
+
             if (rbApps.IsChecked == true) _viewModel.CategoryFilter = "app";
             else if (rbPrivacy.IsChecked == true) _viewModel.CategoryFilter = "privacy";
             else if (rbServices.IsChecked == true) _viewModel.CategoryFilter = "service";
