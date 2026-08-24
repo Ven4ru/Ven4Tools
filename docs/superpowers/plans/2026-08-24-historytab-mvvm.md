@@ -512,6 +512,7 @@ git commit -m "feat(history): HistoryViewModel + регрессионные юн
 
 ```csharp
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Ven4Tools.Services;
