@@ -1,17 +1,26 @@
-using System.Linq;
-using Ven4Tools.Models;
 using Ven4Tools.ViewModels;
 
 namespace Ven4Tools.Tests;
 
+// Общая коллекция для тестов, которые трогают статический ProfileService.Current.
+// Без неё xUnit может выполнять такие классы параллельно, и сохранение профиля
+// из одного теста запишет на диск чужие промежуточные правки.
+[CollectionDefinition("ProfileService")]
+public class ProfileServiceCollection { }
+
 /// <summary>
 /// Логика вкладки «История», перенесённая из code-behind в ViewModel
 /// (2026-08-24). Реальная переустановка (InstallationService/CatalogLoaderService)
-/// здесь не проверяется — только фильтр/поиск/счётчик, все чистые методы,
-/// данные подставляются напрямую через RefreshAsync недоступен без сервиса,
-/// поэтому фильтр проверяется через публичное состояние после конструктора
-/// (пустой список) и через прямые сеттеры SearchText/SuccessOnly/FailOnly.
+/// здесь не проверяется. Настоящее покрытие предиката фильтрации (совпадение
+/// подстроки при поиске, комбинация SuccessOnly/FailOnly на реальных записях)
+/// этими тестами тоже не достигается: набор _allEntries наполняется только
+/// вызовом InstallHistoryService.GetHistoryAsync() внутри RefreshAsync(), а шва
+/// для подстановки тестовых данных без обращения к реальному файлу истории нет.
+/// Поэтому здесь проверяются конструирование ViewModel, доступность команд и
+/// проброс SaveHistory в ProfileService, а сеттеры SearchText/SuccessOnly/FailOnly
+/// — лишь на отсутствие исключений на пустом списке.
 /// </summary>
+[Collection("ProfileService")]
 public class HistoryViewModelTests
 {
     [Fact]
@@ -70,7 +79,7 @@ public class HistoryViewModelTests
     }
 
     [Fact]
-    public void ReinstallCommand_НеПереустанавливает_БезЗапущеннойОперации()
+    public void ReinstallCommand_ДоступнаКогдаПереустановкаНеИдёт()
     {
         var vm = new HistoryViewModel();
 
