@@ -1,14 +1,18 @@
 using System.Linq;
+using Ven4Tools.Models;
 using Ven4Tools.ViewModels;
 
 namespace Ven4Tools.Tests;
 
 /// <summary>
 /// Логика вкладки «О программе», перенесённая из code-behind в ViewModel
-/// (2026-08-25). Основное внимание — AboutViewModel.FormatLastLines: чистая
-/// функция обрезки хвоста лога, до этого рефакторинга не имевшая ни одного
-/// теста. Реальные кнопки-ссылки (Process.Start открывает браузер) здесь не
-/// проверяются — это открытие внешнего процесса, не логика.
+/// (2026-08-25). Покрыты швы, не требующие ни реального каталога, ни реального
+/// каталога логов: FormatLastLines (обрезка хвоста лога), GetLastLogLines с
+/// переданным каталогом (временная папка), BuildEntries (проекция и сортировка
+/// истории изменений) и сам ChangelogEntryViewModel — форматирование строк
+/// списка, ставшее после перехода на ItemsControl+DataTemplate главным
+/// изменением поведения. Реальные кнопки-ссылки (Process.Start открывает
+/// браузер) здесь не проверяются — это открытие внешнего процесса, не логика.
 /// </summary>
 public class AboutViewModelTests
 {
@@ -73,21 +77,159 @@ public class AboutViewModelTests
     }
 
     [Fact]
-    public void GetLastLogLines_КаталогЛоговНеСуществует_ВозвращаетСообщениеОбОтсутствии()
+    public void GetLastLogLines_КаталогНеСуществует_ВозвращаетСообщениеОбОтсутствии()
     {
-        // Реальный %LocalAppData%\Ven4Tools\logs почти наверняка существует на
-        // машине разработки (клиент туда пишет логи при обычной работе) —
-        // поэтому эта проверка не бьёт по несуществующему пути напрямую, а
-        // проверяет случай через приватную логику GetLastLogLines нельзя без
-        // DI пути каталога, которого в оригинале не было (сохраняем 1:1).
-        // Вместо этого просто убеждаемся, что метод не бросает исключение и
-        // возвращает непустую строку в любом состоянии реальной машины —
-        // содержательное покрытие обрезки уже даёт FormatLastLines выше.
+        // Путь каталога передаётся параметром — случай «каталога нет» проверяется
+        // детерминированно, а не в зависимости от состояния реальной машины.
         var vm = new AboutViewModel();
+        string missingDir = Path.Combine(Path.GetTempPath(), "ven4tools-test-missing-" + Guid.NewGuid());
 
-        string result = vm.GetLastLogLines();
+        string result = vm.GetLastLogLines(logDir: missingDir);
 
-        Assert.False(string.IsNullOrEmpty(result));
+        Assert.Equal("Лог не найден", result);
+    }
+
+    [Fact]
+    public void GetLastLogLines_КаталогБезЛогФайлов_ВозвращаетСообщениеОбОтсутствии()
+    {
+        var vm = new AboutViewModel();
+        string dir = Path.Combine(Path.GetTempPath(), "ven4tools-test-empty-" + Guid.NewGuid());
+        Directory.CreateDirectory(dir);
+        try
+        {
+            string result = vm.GetLastLogLines(logDir: dir);
+
+            Assert.Equal("Лог не найден", result);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void GetLastLogLines_ЕстьЛогФайл_ВозвращаетЕгоСодержимое()
+    {
+        var vm = new AboutViewModel();
+        string dir = Path.Combine(Path.GetTempPath(), "ven4tools-test-log-" + Guid.NewGuid());
+        Directory.CreateDirectory(dir);
+        try
+        {
+            File.WriteAllLines(Path.Combine(dir, "install_test.log"), new[] { "строка1", "строка2" });
+
+            string result = vm.GetLastLogLines(logDir: dir);
+
+            Assert.Equal("строка1\nстрока2", result);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ChangelogEntryViewModel_ФорматируетЗаголовокСВерсиейИДатой()
+    {
+        var entry = new CatalogChangelogEntry { Version = 5, Date = "01.01.2026", Message = "", AddedApps = new() };
+
+        var vm = new ChangelogEntryViewModel(entry);
+
+        Assert.Equal("v5  ·  01.01.2026", vm.HeaderText);
+    }
+
+    [Fact]
+    public void ChangelogEntryViewModel_БезСообщения_HasMessageFalse()
+    {
+        var entry = new CatalogChangelogEntry { Version = 1, Date = "-", Message = "", AddedApps = new() };
+
+        var vm = new ChangelogEntryViewModel(entry);
+
+        Assert.False(vm.HasMessage);
+        Assert.Equal("", vm.Message);
+    }
+
+    [Fact]
+    public void ChangelogEntryViewModel_ССообщением_HasMessageTrue()
+    {
+        var entry = new CatalogChangelogEntry { Version = 1, Date = "-", Message = "Исправлен баг", AddedApps = new() };
+
+        var vm = new ChangelogEntryViewModel(entry);
+
+        Assert.True(vm.HasMessage);
+        Assert.Equal("Исправлен баг", vm.Message);
+    }
+
+    [Fact]
+    public void ChangelogEntryViewModel_БезДобавленныхПриложений_HasAddedAppsFalse()
+    {
+        var entry = new CatalogChangelogEntry { Version = 1, Date = "-", Message = "", AddedApps = new() };
+
+        var vm = new ChangelogEntryViewModel(entry);
+
+        Assert.False(vm.HasAddedApps);
+        Assert.Equal("", vm.AddedAppsText);
+    }
+
+    [Fact]
+    public void ChangelogEntryViewModel_СДобавленнымиПриложениями_ФорматируетСписок()
+    {
+        var entry = new CatalogChangelogEntry { Version = 1, Date = "-", Message = "", AddedApps = new() { "firefox", "vscode" } };
+
+        var vm = new ChangelogEntryViewModel(entry);
+
+        Assert.True(vm.HasAddedApps);
+        Assert.Equal("+ firefox, vscode", vm.AddedAppsText);
+    }
+
+    [Fact]
+    public void BuildEntries_СортируетПоУбываниюВерсии()
+    {
+        var entries = new List<CatalogChangelogEntry>
+        {
+            new() { Version = 1, Date = "-", Message = "", AddedApps = new() },
+            new() { Version = 3, Date = "-", Message = "", AddedApps = new() },
+            new() { Version = 2, Date = "-", Message = "", AddedApps = new() }
+        };
+
+        var result = AboutViewModel.BuildEntries(entries);
+
+        Assert.Equal(3, result.Count);
+        Assert.Equal("v3  ·  -", result[0].HeaderText);
+        Assert.Equal("v2  ·  -", result[1].HeaderText);
+        Assert.Equal("v1  ·  -", result[2].HeaderText);
+    }
+
+    [Fact]
+    public void BuildEntries_ПустойСписок_ВозвращаетПустойСписок()
+    {
+        var result = AboutViewModel.BuildEntries(new List<CatalogChangelogEntry>());
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void BuildEntries_Null_ВозвращаетПустойСписок()
+    {
+        var result = AboutViewModel.BuildEntries(null);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void BuildEntries_ВсегдаВозвращаетНовыйЭкземплярСписка()
+    {
+        // SetField в AboutViewModel сравнивает по ссылке — переиспользование
+        // одного и того же списка молча погасило бы PropertyChanged.
+        var entries = new List<CatalogChangelogEntry>
+        {
+            new() { Version = 1, Date = "-", Message = "", AddedApps = new() }
+        };
+
+        var first = AboutViewModel.BuildEntries(entries);
+        var second = AboutViewModel.BuildEntries(entries);
+
+        Assert.NotSame(first, second);
+        Assert.NotSame(AboutViewModel.BuildEntries(null), AboutViewModel.BuildEntries(null));
     }
 
     [Fact]

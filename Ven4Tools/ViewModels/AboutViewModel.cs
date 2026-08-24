@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using Ven4Tools.Models;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
@@ -55,20 +56,34 @@ namespace Ven4Tools.ViewModels
         /// </summary>
         public void RefreshChangelog()
         {
-            var entries = CatalogLoaderService.State.Catalog?.Changelog;
-
-            ChangelogEntries = entries == null || entries.Count == 0
-                ? new()
-                : entries.OrderByDescending(e => e.Version)
-                         .Select(e => new ChangelogEntryViewModel(e))
-                         .ToList();
+            ChangelogEntries = BuildEntries(CatalogLoaderService.State.Catalog?.Changelog);
 
             // HasChangelog/NoChangelog вычисляются из ChangelogEntries — без явного
             // уведомления привязки видимости панели остались бы в состоянии на момент
             // открытия вкладки (каталог часто догружается уже после этого).
+            //
+            // Уведомление по самому ChangelogEntries держится на том, что BuildEntries
+            // ВСЕГДА возвращает новый экземпляр List: SetField сравнивает по ссылке
+            // (Equals для List — это ReferenceEquals), поэтому «оптимизация» с
+            // переиспользованием или кешированием того же списка молча погасила бы
+            // PropertyChanged и вкладка перестала бы обновляться. Не переиспользовать.
             OnPropertyChanged(nameof(HasChangelog));
             OnPropertyChanged(nameof(NoChangelog));
         }
+
+        /// <summary>
+        /// Проекция записей каталога в строки списка — шов для юнит-тестов
+        /// (сортировка по убыванию версии, пустой и null-каталог) без реального
+        /// загруженного каталога. Всегда возвращает новый экземпляр списка:
+        /// от этого зависит уведомление PropertyChanged в
+        /// <see cref="RefreshChangelog"/> (см. комментарий там).
+        /// </summary>
+        internal static List<ChangelogEntryViewModel> BuildEntries(List<CatalogChangelogEntry>? entries) =>
+            entries == null || entries.Count == 0
+                ? new()
+                : entries.OrderByDescending(e => e.Version)
+                         .Select(e => new ChangelogEntryViewModel(e))
+                         .ToList();
 
         private void OpenGitHub()
         {
@@ -156,17 +171,23 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        internal string GetLastLogLines(int lines = 15)
+        /// <summary>
+        /// Возвращает хвост последнего установочного лога. Параметр
+        /// <paramref name="logDir"/> — шов для юнит-тестов: по умолчанию (null)
+        /// берётся реальный каталог логов в %LocalAppData%, поведение вызовов без
+        /// аргументов не менялось.
+        /// </summary>
+        internal string GetLastLogLines(int lines = 15, string? logDir = null)
         {
             try
             {
-                var logDir = Path.Combine(
+                var dir = logDir ?? Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "Ven4Tools", "logs");
 
-                if (!Directory.Exists(logDir)) return "Лог не найден";
+                if (!Directory.Exists(dir)) return "Лог не найден";
 
-                var logPath = Directory.GetFiles(logDir, "install_*.log")
+                var logPath = Directory.GetFiles(dir, "install_*.log")
                     .OrderByDescending(f => f)
                     .FirstOrDefault();
 
@@ -182,10 +203,14 @@ namespace Ven4Tools.ViewModels
         }
 
         /// <summary>
-        /// Чистая функция форматирования хвоста лога — вынесена из
+        /// Форматирование хвоста лога — вынесено из
         /// <see cref="GetLastLogLines"/>, чтобы дать юнит-тестам шов для
         /// проверки логики обрезки (по числу строк и по числу символов) без
-        /// обращения к реальному файлу на диске. Семантика не менялась: та же
+        /// обращения к реальному файлу на диске. К файловой системе напрямую не
+        /// обращается (в отличие от <see cref="GetLastLogLines"/>), но
+        /// SanitizePath внутри неё читает текущие пути окружения для замены —
+        /// то есть это не строго чистая функция, а детерминированная
+        /// относительно переданного текста. Семантика не менялась: та же
         /// обрезка по количеству строк, тот же лимит символов, та же пометка
         /// "(лог обрезан, ...)" при срабатывании любого из двух лимитов.
         /// </summary>
