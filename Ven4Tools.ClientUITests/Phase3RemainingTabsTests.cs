@@ -26,6 +26,36 @@ namespace Ven4Tools.ClientUITests
 
         private static string? _profileBackup; private static bool _profileExisted;
         private static string? _historyBackup; private static bool _historyExisted;
+
+        // Засев истории установок: без него утверждения теста «История» были
+        // пустыми — на машине с уже пустой историей и поиск, и очистка давали «0»
+        // просто потому, что показывать было нечего. Две записи с известными
+        // названиями и разным результатом дают детерминированную отправную точку
+        // (счётчик «2») и позволяют проверить сужение до «1» и поиском, и каждым
+        // из переключателей. Формат — голый JSON-массив с именами полей из
+        // Models/HistoryEntry.cs, ровно как его пишет InstallHistoryService.
+        private const string SeedSuccessName = "ТестоваяЗаписьУспех";
+        private const string SeedFailName    = "ТестоваяЗаписьОшибка";
+        private const string SeedHistoryJson = """
+            [
+              {
+                "appId": "ven4tools.uitest.seed.ok",
+                "appName": "ТестоваяЗаписьУспех",
+                "source": "winget",
+                "category": "ТестовыйНабор",
+                "installedAt": "2026-08-24T12:00:00",
+                "success": true
+              },
+              {
+                "appId": "ven4tools.uitest.seed.fail",
+                "appName": "ТестоваяЗаписьОшибка",
+                "source": "choco",
+                "category": "ТестовыйНабор",
+                "installedAt": "2026-08-24T11:00:00",
+                "success": false
+              }
+            ]
+            """;
         private static AppSession? _session;
         private static string? _launchError;
         private static readonly TimeSpan T = TimeSpan.FromSeconds(15);
@@ -40,6 +70,9 @@ namespace Ven4Tools.ClientUITests
 
             _historyExisted = File.Exists(HistoryPath);
             if (_historyExisted) _historyBackup = File.ReadAllText(HistoryPath);
+            // Засев пишется строго ПОСЛЕ снятия резервной копии, поэтому в
+            // ClassCleanup восстанавливается настоящая история машины, а не он.
+            File.WriteAllText(HistoryPath, SeedHistoryJson);
 
             try { _session = AppSession.Launch(); }
             catch (Exception ex) { _launchError = ex.Message; _session = null; }
@@ -72,6 +105,20 @@ namespace Ven4Tools.ClientUITests
             btn.Invoke();
             Retry.WhileFalse(() => btn.IsEnabled, timeout: TimeSpan.FromSeconds(timeoutSec),
                 interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false);
+        }
+
+        /// <summary>
+        /// Ждёт, пока счётчик записей истории примет ожидаемое значение, и
+        /// утверждает его. Ожидание нужно потому, что фильтрация во вкладке
+        /// «История» отрабатывает по событию изменения свойства, а не мгновенно
+        /// в момент возврата из UIA-вызова.
+        /// </summary>
+        private static void AssertCount(AutomationElement counter, string expected, string message)
+        {
+            Retry.WhileFalse(() => counter.AsLabel().Text == expected,
+                timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200),
+                throwOnTimeout: false);
+            Assert.AreEqual(expected, counter.AsLabel().Text, message);
         }
 
         /// <summary>
@@ -238,39 +285,53 @@ namespace Ven4Tools.ClientUITests
             var count = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtHistoryCount"));
             Assert.IsNotNull(count, "Не найден счётчик записей (История).");
 
-            // Поиск заведомо несуществующего текста должен обнулить список —
-            // единственное утверждение, не зависящее от того, есть ли реальная
-            // история на тестовой машине.
+            // Отправная точка задана засевом в ClassInitialize: ровно две записи,
+            // одна успешная и одна неудачная. Все утверждения ниже сравниваются
+            // именно с ней, а не с «сколько окажется на машине».
+            AssertCount(count!, "2", "На старте должны быть видны обе засеянные записи истории.");
+
+            // Поиск заведомо несуществующего текста должен обнулить список.
             search!.AsTextBox().Text = "несуществующее-приложение-zzz-12345";
-            Retry.WhileFalse(() => count!.AsLabel().Text == "0",
-                timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200),
-                throwOnTimeout: false);
-            Assert.AreEqual("0", count!.AsLabel().Text, "Поиск по несуществующему тексту должен обнулить счётчик.");
+            AssertCount(count!, "0", "Поиск по несуществующему тексту должен обнулить счётчик.");
+
+            // А поиск по названию засеянной записи — оставить ровно её одну.
+            search.AsTextBox().Text = SeedSuccessName;
+            AssertCount(count!, "1", "Поиск по названию засеянной записи должен оставить одну строку.");
+
+            search.AsTextBox().Text = SeedFailName;
+            AssertCount(count!, "1", "Поиск по названию второй засеянной записи должен оставить одну строку.");
 
             search.AsTextBox().Text = "";
-            Thread.Sleep(300);
+            AssertCount(count!, "2", "После очистки поля поиска должны вернуться обе записи.");
 
             var successOnly = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("togSuccessOnly"));
             Assert.IsNotNull(successOnly, "Не найден переключатель «Успешные» (История).");
-            bool? successWas = successOnly!.AsToggleButton().IsToggled;
-            successOnly.AsToggleButton().Toggle();
-            Thread.Sleep(300);
-
             var failOnly = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("togFailOnly"));
             Assert.IsNotNull(failOnly, "Не найден переключатель «Неудачные» (История).");
+
+            bool? successWas = successOnly!.AsToggleButton().IsToggled;
             bool? failWas = failOnly!.AsToggleButton().IsToggled;
+
+            // Только «Успешные» — остаётся одна успешная запись из двух.
+            successOnly.AsToggleButton().Toggle();
+            AssertCount(count!, "1", "Фильтр «Успешные» должен оставить только успешную засеянную запись.");
+
+            // Обе отметки сразу — намеренное поведение вкладки «показать всё»:
+            // ApplyFilter применяет ветку «только успешные» лишь при !FailOnly и
+            // наоборот, поэтому при двух включённых не работает ни один фильтр.
             failOnly.AsToggleButton().Toggle();
-            Thread.Sleep(300);
+            AssertCount(count!, "2", "Обе отметки одновременно означают «показать всё» — должны вернуться обе записи.");
+
+            // Только «Неудачные» — остаётся одна неудачная запись.
+            successOnly.AsToggleButton().Toggle();
+            AssertCount(count!, "1", "Фильтр «Неудачные» должен оставить только неудачную засеянную запись.");
 
             // Возвращаем оба переключателя ровно в то состояние, в котором они
-            // были до дымовой проверки фильтров — это гигиена теста, чтобы
-            // вкладка осталась чистой для любого будущего теста. На счётчик
-            // после очистки это не влияет: ApplyFilter применяет ветку
-            // «только успешные» лишь при !FailOnly и наоборот, поэтому при двух
-            // включённых переключателях не работает ни один из фильтров.
+            // были до проверки фильтров — это гигиена теста, чтобы вкладка
+            // осталась чистой для любого будущего теста.
             if (successOnly.AsToggleButton().IsToggled != successWas) successOnly.AsToggleButton().Toggle();
             if (failOnly.AsToggleButton().IsToggled != failWas) failOnly.AsToggleButton().Toggle();
-            Thread.Sleep(300);
+            AssertCount(count!, "2", "После снятия обеих отметок должны быть видны обе записи.");
 
             var clearBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnClearHistory"));
             Assert.IsNotNull(clearBtn, "Не найдена кнопка «Очистить» (История).");
@@ -291,10 +352,9 @@ namespace Ven4Tools.ClientUITests
                 Assert.IsNotNull(yesBtn, "Не найдена кнопка подтверждения в диалоге очистки.");
                 yesBtn!.AsButton().Invoke();
 
-                Retry.WhileFalse(() => count.AsLabel().Text == "0",
-                    timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200),
-                    throwOnTimeout: false);
-                Assert.AreEqual("0", count.AsLabel().Text, "После подтверждённой очистки счётчик истории должен быть 0.");
+                // Теперь это утверждение содержательно: очистка идёт от двух
+                // реально существовавших записей к нулю, а не от нуля к нулю.
+                AssertCount(count!, "0", "После подтверждённой очистки счётчик истории должен быть 0.");
             }
             finally
             {
