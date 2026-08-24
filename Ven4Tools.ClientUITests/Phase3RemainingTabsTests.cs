@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
@@ -71,6 +72,33 @@ namespace Ven4Tools.ClientUITests
             btn.Invoke();
             Retry.WhileFalse(() => btn.IsEnabled, timeout: TimeSpan.FromSeconds(timeoutSec),
                 interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false);
+        }
+
+        /// <summary>
+        /// Ищет модальный диалог очистки истории (заголовок «Очистка»). Смотрим
+        /// и среди модальных детей главного окна, и среди верхнеуровневых окон
+        /// рабочего стола: MessageBox не всегда числится дочерним.
+        /// </summary>
+        private static Window? FindClearDialog(AppSession s, TimeSpan timeout)
+        {
+            return Retry.WhileNull(
+                () => s.MainWindow.ModalWindows.FirstOrDefault(w => w.Title.Contains("Очистка"))
+                      ?? s.Automation.GetDesktop()
+                          .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
+                          .FirstOrDefault(w => w.Name.Contains("Очистка"))
+                          ?.AsWindow(),
+                timeout: timeout,
+                interval: TimeSpan.FromMilliseconds(300),
+                throwOnTimeout: false).Result;
+        }
+
+        /// <summary>Закрывает диалог очистки, если он остался открытым: иначе повиснет весь класс тестов.</summary>
+        private static void CloseClearDialogIfAny(AppSession s)
+        {
+            var dlg = FindClearDialog(s, TimeSpan.FromSeconds(1));
+            if (dlg == null) return;
+            dlg.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button))?.AsButton().Invoke();
+            Thread.Sleep(400);
         }
 
         [TestMethod]
@@ -200,7 +228,9 @@ namespace Ven4Tools.ClientUITests
             // единственное утверждение, не зависящее от того, есть ли реальная
             // история на тестовой машине.
             search!.AsTextBox().Text = "несуществующее-приложение-zzz-12345";
-            Thread.Sleep(400);
+            Retry.WhileFalse(() => count!.AsLabel().Text == "0",
+                timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200),
+                throwOnTimeout: false);
             Assert.AreEqual("0", count!.AsLabel().Text, "Поиск по несуществующему тексту должен обнулить счётчик.");
 
             search.AsTextBox().Text = "";
@@ -208,42 +238,53 @@ namespace Ven4Tools.ClientUITests
 
             var successOnly = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("togSuccessOnly"));
             Assert.IsNotNull(successOnly, "Не найден переключатель «Успешные» (История).");
-            successOnly!.AsToggleButton().Toggle();
+            bool? successWas = successOnly!.AsToggleButton().IsToggled;
+            successOnly.AsToggleButton().Toggle();
             Thread.Sleep(300);
 
             var failOnly = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("togFailOnly"));
             Assert.IsNotNull(failOnly, "Не найден переключатель «Неудачные» (История).");
-            failOnly!.AsToggleButton().Toggle();
+            bool? failWas = failOnly!.AsToggleButton().IsToggled;
+            failOnly.AsToggleButton().Toggle();
             Thread.Sleep(300);
 
-            // Вернуть оба переключателя в исходное состояние перед очисткой —
-            // иначе следующая проверка счётчика после очистки видит "0" из-за
-            // фильтра, а не из-за реальной очистки.
-            successOnly.AsToggleButton().Toggle();
-            failOnly.AsToggleButton().Toggle();
+            // Возвращаем оба переключателя ровно в то состояние, в котором они
+            // были до дымовой проверки фильтров — это гигиена теста, чтобы
+            // вкладка осталась чистой для любого будущего теста. На счётчик
+            // после очистки это не влияет: ApplyFilter применяет ветку
+            // «только успешные» лишь при !FailOnly и наоборот, поэтому при двух
+            // включённых переключателях не работает ни один из фильтров.
+            if (successOnly.AsToggleButton().IsToggled != successWas) successOnly.AsToggleButton().Toggle();
+            if (failOnly.AsToggleButton().IsToggled != failWas) failOnly.AsToggleButton().Toggle();
             Thread.Sleep(300);
 
             var clearBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnClearHistory"));
             Assert.IsNotNull(clearBtn, "Не найдена кнопка «Очистить» (История).");
-            clearBtn!.AsButton().Invoke();
+            try
+            {
+                clearBtn!.AsButton().Invoke();
 
-            // Диалог подтверждения — модальный MessageBox, не элемент MainWindow,
-            // ищем его на рабочем столе по заголовку тем же приёмом, что
-            // AppSession.WaitForMainWindow ищет главное окно.
-            var confirmWindow = Retry.WhileNull(
-                () => s.Automation.GetDesktop()
-                    .FindFirstChild(cf => cf.ByControlType(ControlType.Window).And(cf.ByName("Очистка")))
-                    ?.AsWindow(),
-                timeout: TimeSpan.FromSeconds(10),
-                interval: TimeSpan.FromMilliseconds(300),
-                throwOnTimeout: false).Result;
-            Assert.IsNotNull(confirmWindow, "Не найден диалог подтверждения очистки истории.");
-            var yesBtn = confirmWindow!.FindFirstDescendant(cf => cf.ByName("Да"));
-            Assert.IsNotNull(yesBtn, "Не найдена кнопка «Да» в диалоге подтверждения.");
-            yesBtn!.AsButton().Invoke();
-            Thread.Sleep(500);
+                var confirmWindow = FindClearDialog(s, TimeSpan.FromSeconds(10));
+                Assert.IsNotNull(confirmWindow, "Не найден диалог подтверждения очистки истории.");
+                // Кнопку берём по типу, а не по подписи: подписи «Да»/«Yes» в
+                // системном MessageBox зависят от языка Windows, а заголовок
+                // «Очистка» задаёт само приложение. Для MessageBoxButton.YesNo
+                // «Да» — первая кнопка в дереве автоматизации.
+                var yesBtn = confirmWindow!.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button));
+                Assert.IsNotNull(yesBtn, "Не найдена кнопка подтверждения в диалоге очистки.");
+                yesBtn!.AsButton().Invoke();
 
-            Assert.AreEqual("0", count.AsLabel().Text, "После подтверждённой очистки счётчик истории должен быть 0.");
+                Retry.WhileFalse(() => count.AsLabel().Text == "0",
+                    timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200),
+                    throwOnTimeout: false);
+                Assert.AreEqual("0", count.AsLabel().Text, "После подтверждённой очистки счётчик истории должен быть 0.");
+            }
+            finally
+            {
+                // Незакрытая модальная карточка блокирует ввод во всём классе
+                // тестов, поэтому закрываем её даже если утверждение выше упало.
+                CloseClearDialogIfAny(s);
+            }
 
             // btnReinstall (🔄 на строках) НЕ кликаем — реально ставит приложение
             // через сеть, это риск-код-ревью, не безопасная кнопка. После очистки
