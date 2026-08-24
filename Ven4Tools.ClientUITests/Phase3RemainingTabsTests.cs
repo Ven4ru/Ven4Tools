@@ -92,13 +92,27 @@ namespace Ven4Tools.ClientUITests
                 throwOnTimeout: false).Result;
         }
 
-        /// <summary>Закрывает диалог очистки, если он остался открытым: иначе повиснет весь класс тестов.</summary>
+        /// <summary>
+        /// Закрывает диалог очистки, если он остался открытым: иначе повиснет весь
+        /// класс тестов. Вызывается из finally, поэтому тело целиком обёрнуто в
+        /// try/catch: любое исключение отсюда затёрло бы настоящую причину падения
+        /// теста. Кнопку берём по подписи «Да»/«Yes», а при её отсутствии — первую
+        /// доступную кнопку: отключённая кнопка закрытия заголовка (X) у
+        /// MessageBoxButton.YesNo не должна попасть под Invoke().
+        /// </summary>
         private static void CloseClearDialogIfAny(AppSession s)
         {
-            var dlg = FindClearDialog(s, TimeSpan.FromSeconds(1));
-            if (dlg == null) return;
-            dlg.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button))?.AsButton().Invoke();
-            Thread.Sleep(400);
+            try
+            {
+                var dlg = FindClearDialog(s, TimeSpan.FromSeconds(1));
+                if (dlg == null) return;
+                var buttons = dlg.FindAllDescendants(cf => cf.ByControlType(ControlType.Button));
+                var btn = buttons.FirstOrDefault(b => b.Name.Contains("Да") || b.Name.Contains("Yes"))
+                          ?? buttons.FirstOrDefault(b => b.IsEnabled);
+                btn?.AsButton().Invoke();
+                Thread.Sleep(400);
+            }
+            catch { }
         }
 
         [TestMethod]
@@ -266,11 +280,14 @@ namespace Ven4Tools.ClientUITests
 
                 var confirmWindow = FindClearDialog(s, TimeSpan.FromSeconds(10));
                 Assert.IsNotNull(confirmWindow, "Не найден диалог подтверждения очистки истории.");
-                // Кнопку берём по типу, а не по подписи: подписи «Да»/«Yes» в
-                // системном MessageBox зависят от языка Windows, а заголовок
-                // «Очистка» задаёт само приложение. Для MessageBoxButton.YesNo
-                // «Да» — первая кнопка в дереве автоматизации.
-                var yesBtn = confirmWindow!.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button));
+                // Кнопку ищем по подписи, а не «первую по типу»: системный
+                // MessageBox (#32770) отдаёт в дереве автоматизации ещё и кнопку
+                // закрытия заголовка (X), которая для MessageBoxButton.YesNo
+                // отключена, — попав на неё первой, Invoke() бросил бы
+                // ElementNotEnabledException. Машины и тесты проекта
+                // русскоязычные, «Yes» оставлен запасным вариантом.
+                var yesBtn = confirmWindow!.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                    .FirstOrDefault(b => b.Name.Contains("Да") || b.Name.Contains("Yes"));
                 Assert.IsNotNull(yesBtn, "Не найдена кнопка подтверждения в диалоге очистки.");
                 yesBtn!.AsButton().Invoke();
 
