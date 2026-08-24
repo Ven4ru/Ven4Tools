@@ -2,19 +2,22 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource ContentBackground}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="20" HorizontalAlignment="Center">
             <Image Source="/icon.ico" Width="96" Height="96" Margin="0,20,0,20"/>
-            
-            <TextBlock Text="Ven4Tools" FontSize="32" FontWeight="Bold" 
+
+            <TextBlock Text="Ven4Tools" FontSize="32" FontWeight="Bold"
                        Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Center"/>
-            <TextBlock x:Name="txtVersion" FontSize="14" 
+            <TextBlock x:Name="txtVersion" FontSize="14" Text="{Binding VersionText}"
                        Foreground="{DynamicResource TextSecondary}" Margin="0,5,0,20"/>
-            
-            <TextBlock Text="Инструмент для автоматической установки программ" 
+
+            <TextBlock Text="Инструмент для автоматической установки программ"
                        Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"
                        HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-            
+
             <!-- Карточки в стиле лучших вкладок проекта (Каталог/Очистка): единая рамка +
                  скруглённый угол + CardBackground вместо плоского GroupBox с двух-тонной
                  шапкой (визуальный аудит 2026-07-24) — сама вкладка была самой «плоской» в
@@ -63,13 +66,16 @@
                                Foreground="{DynamicResource HeaderForeground}" Margin="0,0,0,10"/>
                     <Button x:Name="btnGitHub" Content="🐙 GitHub репозиторий"
                             ToolTip="Откроет страницу исходного кода и релизов Ven4Tools на GitHub."
-                            Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"/>
+                            Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"
+                            Command="{Binding GitHubCommand}"/>
                     <Button x:Name="btnFeedback" Content="📧 Обратная связь"
                             ToolTip="Откроет форму для оценки и отправки комментария разработчику."
-                            Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"/>
+                            Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"
+                            Command="{Binding FeedbackCommand}"/>
                     <Button x:Name="btnReportIssue" Content="🐛 Сообщить о проблеме"
                             ToolTip="Откроет GitHub с подготовленной формой сообщения о проблеме и данными о версии системы."
-                            Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"/>
+                            Height="35" Margin="0,5" HorizontalAlignment="Left" Width="200"
+                            Command="{Binding ReportIssueCommand}"/>
                 </StackPanel>
             </Border>
 
@@ -79,7 +85,27 @@
                 <StackPanel>
                     <TextBlock Text="📅 История изменений каталога" FontWeight="Bold" FontSize="13"
                                Foreground="{DynamicResource HeaderForeground}" Margin="0,0,0,10"/>
-                    <StackPanel x:Name="pnlChangelog"/>
+                    <TextBlock Text="История изменений будет доступна после загрузки каталога."
+                               Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"
+                               Visibility="{Binding NoChangelog, Converter={StaticResource BoolToVis}}"/>
+                    <ItemsControl x:Name="pnlChangelog" ItemsSource="{Binding ChangelogEntries}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,10">
+                                    <TextBlock Text="{Binding HeaderText}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimary}"/>
+                                    <TextBlock Text="{Binding Message}"
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               TextWrapping="Wrap" Margin="0,2,0,0"
+                                               Visibility="{Binding HasMessage, Converter={StaticResource BoolToVis}}"/>
+                                    <TextBlock Text="{Binding AddedAppsText}"
+                                               Foreground="#64C864"
+                                               TextWrapping="Wrap" Margin="0,2,0,0" FontSize="11"
+                                               Visibility="{Binding HasAddedApps, Converter={StaticResource BoolToVis}}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
 
