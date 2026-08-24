@@ -5,6 +5,9 @@ using Ven4Tools.Tests.Fakes;
 
 namespace Ven4Tools.Tests;
 
+// Класс правит статический ProfileService.Current — общая коллекция с тестами,
+// которые вдобавок сохраняют профиль на диск, исключает параллельный запуск.
+[Collection("ProfileService")]
 public sealed class WindowsUpdateBackgroundServiceTests
 {
     [Fact]
