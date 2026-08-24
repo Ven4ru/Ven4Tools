@@ -1,23 +1,29 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using Ven4Tools.Models;
 using Ven4Tools.Services;
+using Ven4Tools.ViewModels;
 
 namespace Ven4Tools.Views.Tabs
 {
+    /// <summary>
+    /// Вкладка «История» — тонкая обёртка над <see cref="HistoryViewModel"/>.
+    /// Вся логика перенесена в ViewModel при MVVM-миграции (2026-08-24, вторая
+    /// вкладка после пилота DebloaterTab). Публичный контракт (RefreshAsync)
+    /// сохранён без изменений — <c>MainWindow.NavigateToHistory</c> обращается
+    /// к нему напрямую.
+    /// </summary>
     public partial class HistoryTab : UserControl
     {
-        private List<HistoryEntry> _allEntries = new();
+        private readonly HistoryViewModel _viewModel = new();
         private bool _historySubscribed;
 
         public HistoryTab()
         {
             InitializeComponent();
+            DataContext = _viewModel;
+
             // Подписка на Changed — в Loaded с флагом, отписка в Unloaded: вкладка
             // кэшируется в MainWindow и переиспользуется, поэтому после Unloaded нужно
             // подписываться заново при каждом показе (иначе живое обновление истории
@@ -28,20 +34,6 @@ namespace Ven4Tools.Views.Tabs
             txtHistorySearch.GotFocus  += (_, _) => { if (txtHistorySearch.Text == (string)txtHistorySearch.Tag) txtHistorySearch.Text = ""; };
             txtHistorySearch.LostFocus += (_, _) => { if (string.IsNullOrWhiteSpace(txtHistorySearch.Text)) txtHistorySearch.Text = (string)txtHistorySearch.Tag; };
             txtHistorySearch.Text = (string)txtHistorySearch.Tag;
-
-            // Флаг приватности SaveInstallHistory до этого существовал только в
-            // profile.json: отключить запись истории можно было лишь правкой файла
-            // руками. Управление вынесено туда, где история и показывается.
-            chkSaveHistory.IsChecked = ProfileService.Current.SaveInstallHistory;
-        }
-
-        private void ChkSaveHistory_Click(object sender, RoutedEventArgs e)
-        {
-            ProfileService.Current.SaveInstallHistory = chkSaveHistory.IsChecked == true;
-            ProfileService.Save();
-            AppLogger.Write(ProfileService.Current.SaveInstallHistory
-                ? "[История] Запись истории установок включена"
-                : "[История] Запись истории установок отключена");
         }
 
         private async void HistoryTab_Loaded(object sender, RoutedEventArgs e)
@@ -72,121 +64,14 @@ namespace Ven4Tools.Views.Tabs
                 catch (Exception ex) { AppLogger.Write(ex.Message); }
             });
 
-        public async Task RefreshAsync()
+        // Плейсхолдер в txtHistorySearch — не настоящий поиск, форвардим в
+        // ViewModel только реальный запрос пользователя.
+        private void TxtHistorySearch_TextChanged(object sender, TextChangedEventArgs e)
         {
-            _allEntries = await InstallHistoryService.Instance.GetHistoryAsync();
-            ApplyFilter();
+            string text = txtHistorySearch.Text;
+            _viewModel.SearchText = text == (string)txtHistorySearch.Tag ? "" : text;
         }
 
-        private void ApplyFilter()
-        {
-            string q = txtHistorySearch.Text.Trim();
-            bool onlySuccess = togSuccessOnly.IsChecked == true;
-            bool onlyFail    = togFailOnly.IsChecked == true;
-
-            var filtered = _allEntries.AsEnumerable();
-
-            if (!string.IsNullOrEmpty(q) && q != (string)txtHistorySearch.Tag)
-                filtered = filtered.Where(e => e.AppName.Contains(q, StringComparison.OrdinalIgnoreCase)
-                                            || e.Category.Contains(q, StringComparison.OrdinalIgnoreCase));
-
-            if (onlySuccess && !onlyFail) filtered = filtered.Where(e => e.Success);
-            if (onlyFail && !onlySuccess) filtered = filtered.Where(e => !e.Success);
-
-            var list = filtered.ToList();
-            lstHistory.ItemsSource  = list;
-            txtHistoryCount.Text    = list.Count.ToString();
-        }
-
-        private void TxtHistorySearch_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilter();
-
-        private void FilterChanged(object sender, RoutedEventArgs e) => ApplyFilter();
-
-        private async void BtnClearHistory_Click(object sender, RoutedEventArgs e)
-        {
-            var r = MessageBox.Show("Очистить всю историю установок?",
-                "Очистка", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (r != MessageBoxResult.Yes) return;
-            await InstallHistoryService.Instance.ClearAsync();
-            await RefreshAsync();
-        }
-
-        private async void BtnReinstall_Click(object sender, RoutedEventArgs e)
-        {
-            if ((sender as Button)?.Tag is not HistoryEntry entry) return;
-
-            // Проверяем занятость общего семафора установки ДО любых UI-мутаций
-            // (лог "Переустановка...", блокировка кнопки) — семафор общий с
-            // каталогом и Windows Update (Task 8).
-            if (UiGuards.WarnIfInstallBusy()) return;
-
-            var catalog = CatalogLoaderService.State.Catalog;
-            var catalogApp = catalog?.Apps.FirstOrDefault(a => a.Id == entry.AppId);
-            if (catalogApp == null)
-            {
-                MessageBox.Show($"Приложение «{entry.AppName}» не найдено в текущем каталоге.",
-                    "Не найдено", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            var appInfo = new AppInfo
-            {
-                Id            = catalogApp.Id,
-                DisplayName   = catalogApp.Name,
-                Category      = AppCategory.Другое,
-                AlternativeId = catalogApp.WingetId,
-                InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl)
-                    ? new List<string> { catalogApp.DownloadUrl }
-                    : new(),
-                ChocoId = catalogApp.ChocoId,
-                // SHA256 обязателен для установки по прямой ссылке при переустановке.
-                Sha256 = catalogApp.Sha256
-            };
-            // Переопределение тихого флага (напр. AutoHotkey v2: "/silent" вместо "/S") —
-            // без этого переустановка теряет override и падает на дефолтном "/S".
-            if (!string.IsNullOrEmpty(catalogApp.SilentArgs))
-                appInfo.SilentArgs = catalogApp.SilentArgs;
-
-            AppLogger.Write($"🔄 Переустановка: {entry.AppName}...");
-
-            var progress = new Progress<AppInstallProgress>(p =>
-                AppLogger.Write($"  {p.Status}"));
-
-            // Общий семафор: переустановка из истории не должна идти параллельно
-            // с установкой из каталога или пина (конфликт msiexec, ошибка 1618).
-            var btn = sender as Button;
-            if (btn != null) btn.IsEnabled = false;
-            await InstallationService.InstallSemaphore.WaitAsync();
-            try
-            {
-                using var installer = new InstallationService();
-                using var cts = new CancellationTokenSource();
-                var result = await installer.InstallAppAsync(
-                    appInfo, new[] { "winget", "msstore" }, cts.Token, progress, "C:\\", null, UiGuards.ConfirmPackageManagerInstallAsync);
-
-                AppLogger.Write(result.Success
-                    ? $"✅ {entry.AppName} переустановлен"
-                    : $"❌ {entry.AppName}: {result.Message}");
-            }
-            catch (OperationCanceledException)
-            {
-                // InstallAppAsync гасит обычные ошибки и возвращает (false, сообщение),
-                // но отмену пробрасывает наружу намеренно. Сюда же попадает таймаут
-                // HttpClient при прямой загрузке (TaskCanceledException). Без этого
-                // блока исключение вылетало бы из async void-обработчика и роняло
-                // приложение целиком — как уже сделано в каталоге, карточке, Office
-                // и вкладке «Установленные».
-                AppLogger.Write($"⏹️ Переустановка {entry.AppName} прервана");
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write($"❌ Ошибка переустановки {entry.AppName}: {ex.Message}");
-            }
-            finally
-            {
-                InstallationService.InstallSemaphore.Release();
-                if (btn != null) btn.IsEnabled = true;
-            }
-        }
+        public Task RefreshAsync() => _viewModel.RefreshAsync();
     }
 }
