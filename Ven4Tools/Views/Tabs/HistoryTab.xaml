@@ -16,7 +16,7 @@
                            Foreground="{DynamicResource TextPrimary}"/>
                 <Border Background="{DynamicResource AccentColor}" CornerRadius="10"
                         Padding="8,2" Margin="12,4,0,4" VerticalAlignment="Center">
-                    <TextBlock x:Name="txtHistoryCount" Text="0"
+                    <TextBlock x:Name="txtHistoryCount" Text="{Binding HistoryCount}"
                                FontSize="12" FontWeight="Bold" Foreground="White"/>
                 </Border>
             </StackPanel>
@@ -25,12 +25,12 @@
                           VerticalAlignment="Center" Margin="0,0,14,0"
                           Foreground="{DynamicResource TextPrimary}"
                           ToolTip="Когда снято — новые установки не записываются в историю. Уже сохранённые записи остаются, удалить их можно кнопкой «Очистить»."
-                          Click="ChkSaveHistory_Click"/>
+                          IsChecked="{Binding SaveHistory, Mode=TwoWay}"/>
                 <Button x:Name="btnClearHistory" Content="🗑️ Очистить"
                         Style="{StaticResource DangerButtonStyle}"
                         ToolTip="После подтверждения удалит сохранённую историю установок."
                         Height="32" Padding="12,0" Margin="0,0,0,0"
-                        Click="BtnClearHistory_Click"/>
+                        Command="{Binding ClearHistoryCommand}"/>
             </StackPanel>
         </Grid>
 
@@ -50,14 +50,14 @@
                      TextChanged="TxtHistorySearch_TextChanged"/>
             <ToggleButton x:Name="togSuccessOnly" Grid.Column="1" Content="✅ Успешные"
                           Height="32" Padding="10,0" Margin="0,0,6,0"
-                          Checked="FilterChanged" Unchecked="FilterChanged"/>
+                          IsChecked="{Binding SuccessOnly, Mode=TwoWay}"/>
             <ToggleButton x:Name="togFailOnly" Grid.Column="2" Content="❌ Неудачные"
                           Height="32" Padding="10,0"
-                          Checked="FilterChanged" Unchecked="FilterChanged"/>
+                          IsChecked="{Binding FailOnly, Mode=TwoWay}"/>
         </Grid>
 
         <!-- History list -->
-        <ItemsControl x:Name="lstHistory" Grid.Row="2">
+        <ItemsControl x:Name="lstHistory" Grid.Row="2" ItemsSource="{Binding FilteredEntries}">
             <ItemsControl.Template>
                 <ControlTemplate>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -110,8 +110,8 @@
                                     Height="28" Width="36" FontSize="14"
                                     VerticalAlignment="Center"
                                     ToolTip="Повторно установит это приложение из доступного источника."
-                                    Tag="{Binding}"
-                                    Click="BtnReinstall_Click"/>
+                                    Command="{Binding DataContext.ReinstallCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding}"/>
                         </Grid>
                     </Border>
                 </DataTemplate>
