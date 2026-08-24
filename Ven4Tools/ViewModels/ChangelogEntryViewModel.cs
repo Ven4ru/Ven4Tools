@@ -1,4 +1,3 @@
-using System.Linq;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.ViewModels
@@ -12,7 +11,7 @@ namespace Ven4Tools.ViewModels
     /// не меняющихся после создания. Вынесено из code-behind при переходе на
     /// MVVM (2026-08-25, третья вкладка после пилота DebloaterTab и HistoryTab).
     /// </summary>
-    public class ChangelogEntryViewModel
+    public sealed class ChangelogEntryViewModel
     {
         public string HeaderText { get; }
         public string Message { get; }
