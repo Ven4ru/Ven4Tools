@@ -100,19 +100,34 @@ namespace Ven4Tools.ViewModels
             ApplyFilter();
         }
 
-        private void ApplyFilter()
+        /// <summary>
+        /// Чистая функция фильтрации, вынесенная из <see cref="ApplyFilter"/>.
+        /// Смысл выноса — дать юнит-тестам шов для проверки самого предиката на
+        /// реальных записях: набор истории попадает во ViewModel только через
+        /// InstallHistoryService, и без этого метода тесты фильтра проверяли лишь
+        /// отсутствие исключения на пустом списке. Семантика не менялась: поиск по
+        /// подстроке в названии ИЛИ категории без учёта регистра, а два
+        /// одновременно включённых переключателя означают «показать всё».
+        /// </summary>
+        internal static List<HistoryEntry> Filter(IEnumerable<HistoryEntry> source,
+            string query, bool successOnly, bool failOnly)
         {
-            string q = SearchText.Trim();
-            var filtered = _allEntries.AsEnumerable();
+            string q = query.Trim();
+            var filtered = source;
 
             if (!string.IsNullOrEmpty(q))
                 filtered = filtered.Where(e => e.AppName.Contains(q, StringComparison.OrdinalIgnoreCase)
                                             || e.Category.Contains(q, StringComparison.OrdinalIgnoreCase));
 
-            if (SuccessOnly && !FailOnly) filtered = filtered.Where(e => e.Success);
-            if (FailOnly && !SuccessOnly) filtered = filtered.Where(e => !e.Success);
+            if (successOnly && !failOnly) filtered = filtered.Where(e => e.Success);
+            if (failOnly && !successOnly) filtered = filtered.Where(e => !e.Success);
 
-            FilteredEntries = filtered.ToList();
+            return filtered.ToList();
+        }
+
+        private void ApplyFilter()
+        {
+            FilteredEntries = Filter(_allEntries, SearchText, SuccessOnly, FailOnly);
             OnPropertyChanged(nameof(HistoryCount));
         }
 
