@@ -101,6 +101,22 @@ public class AboutViewModelTests
     }
 
     [Fact]
+    public void RefreshChangelog_ПоднимаетPropertyChanged_ДляСпискаИВычисляемыхФлагов()
+    {
+        // Каталог часто догружается уже после открытия вкладки: без уведомления
+        // повторный RefreshChangelog молча не обновил бы привязку ItemsSource.
+        var vm = new AboutViewModel();
+        var raised = new System.Collections.Generic.List<string>();
+        vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName!);
+
+        vm.RefreshChangelog();
+
+        Assert.Contains(nameof(vm.ChangelogEntries), raised);
+        Assert.Contains(nameof(vm.HasChangelog), raised);
+        Assert.Contains(nameof(vm.NoChangelog), raised);
+    }
+
+    [Fact]
     public void VersionText_НачинаетсяСоСлова_Версия()
     {
         var vm = new AboutViewModel();

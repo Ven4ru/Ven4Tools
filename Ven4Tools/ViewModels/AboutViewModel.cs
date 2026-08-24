@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using Ven4Tools.Services;
 
@@ -14,11 +17,16 @@ namespace Ven4Tools.ViewModels
     /// code-behind при переходе на MVVM (2026-08-25, третья вкладка после
     /// пилота DebloaterTab и HistoryTab), поведение не менялось.
     /// </summary>
-    public sealed class AboutViewModel
+    public sealed class AboutViewModel : INotifyPropertyChanged
     {
         public string VersionText { get; }
 
-        public System.Collections.Generic.List<ChangelogEntryViewModel> ChangelogEntries { get; private set; } = new();
+        private List<ChangelogEntryViewModel> _changelogEntries = new();
+        public List<ChangelogEntryViewModel> ChangelogEntries
+        {
+            get => _changelogEntries;
+            private set => SetField(ref _changelogEntries, value);
+        }
 
         public bool HasChangelog => ChangelogEntries.Count > 0;
         public bool NoChangelog => !HasChangelog;
@@ -54,6 +62,12 @@ namespace Ven4Tools.ViewModels
                 : entries.OrderByDescending(e => e.Version)
                          .Select(e => new ChangelogEntryViewModel(e))
                          .ToList();
+
+            // HasChangelog/NoChangelog вычисляются из ChangelogEntries — без явного
+            // уведомления привязки видимости панели остались бы в состоянии на момент
+            // открытия вкладки (каталог часто догружается уже после этого).
+            OnPropertyChanged(nameof(HasChangelog));
+            OnPropertyChanged(nameof(NoChangelog));
         }
 
         private void OpenGitHub()
@@ -193,6 +207,20 @@ namespace Ven4Tools.ViewModels
             if (truncated)
                 body = "… (лог обрезан, показаны только последние строки) …\n" + body;
             return body;
+        }
+
+        // ── INotifyPropertyChanged ───────────────────────────────────────────────
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
+        {
+            if (Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(name);
+            return true;
         }
     }
 }
