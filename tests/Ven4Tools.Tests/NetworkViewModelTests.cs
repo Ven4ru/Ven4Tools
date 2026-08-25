@@ -95,6 +95,65 @@ namespace Ven4Tools.Tests
         }
 
         [Fact]
+        public void ДефолтныйТекст_PingИSvc_РазличаютсяКакВОригинале()
+        {
+            var vm = new NetworkViewModel();
+
+            Assert.Equal("—", vm.Ping1.Text);
+            Assert.Equal("—", vm.Ping2.Text);
+            Assert.Equal("—", vm.Ping3.Text);
+            Assert.Equal("—", vm.Ping4.Text);
+            Assert.Equal("", vm.Svc1.Text);
+            Assert.Equal("", vm.Svc2.Text);
+            Assert.Equal("", vm.Svc3.Text);
+            Assert.Equal("", vm.Svc4.Text);
+            Assert.Equal("", vm.Svc5.Text);
+        }
+
+        [Fact]
+        public void ResetDiagnosticFlags_СбрасываетВсеФлагиИТекстКнопки()
+        {
+            var vm = new NetworkViewModel();
+            vm.IsBusy = true;
+            vm.IsPinging = true;
+            vm.IsCheckingServices = true;
+            vm.IsGettingIp = true;
+            vm.IsCheckingDns = true;
+
+            vm.ResetDiagnosticFlags();
+
+            Assert.False(vm.IsBusy);
+            Assert.False(vm.IsPinging);
+            Assert.False(vm.IsCheckingServices);
+            Assert.False(vm.IsGettingIp);
+            Assert.False(vm.IsCheckingDns);
+            Assert.Equal("🔍 Запустить полную диагностику", vm.RunAllButtonText);
+        }
+
+        [Fact]
+        public void ResetDiagnosticFlags_ВозвращаетCanExecuteВсемКомандам()
+        {
+            var vm = new NetworkViewModel();
+            vm.IsBusy = true;
+            vm.IsPinging = true;
+            vm.IsCheckingServices = true;
+            vm.IsGettingIp = true;
+            vm.IsCheckingDns = true;
+
+            Assert.False(vm.RunAllCommand.CanExecute(null));
+            Assert.False(vm.PingCommand.CanExecute(null));
+
+            vm.ResetDiagnosticFlags();
+
+            Assert.True(vm.RunAllCommand.CanExecute(null));
+            Assert.True(vm.RefreshAdaptersCommand.CanExecute(null));
+            Assert.True(vm.PingCommand.CanExecute(null));
+            Assert.True(vm.CheckServicesCommand.CanExecute(null));
+            Assert.True(vm.GetIpCommand.CanExecute(null));
+            Assert.True(vm.CheckDnsCommand.CanExecute(null));
+        }
+
+        [Fact]
         public void PingRows_СозданыКакНезависимыеЭкземпляры()
         {
             var vm = new NetworkViewModel();
