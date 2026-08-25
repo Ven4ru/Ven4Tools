@@ -119,7 +119,8 @@ namespace Ven4Tools.ViewModels
             {
                 _cancellationTokenSource?.Dispose();
                 _cancellationTokenSource = null;
-                Application.Current.Dispatcher.Invoke(() =>
+                // `?.` — см. комментарий у SetProgress в OfficeViewModel.cs
+                Application.Current?.Dispatcher.Invoke(() =>
                 {
                     IsDownloading = false;
                     CancelEnabled = false;

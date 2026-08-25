@@ -102,7 +102,8 @@ namespace Ven4Tools.ViewModels
                     // M3: elevated-процесс установщика уже запущен — реальную установку
                     // отменить нельзя (регион будет восстановлен только после её завершения).
                     // Прячем «Отмена», чтобы UI не обещал невозможного.
-                    Application.Current.Dispatcher.Invoke(() =>
+                    // `?.` — см. комментарий у SetProgress в OfficeViewModel.cs
+                    Application.Current?.Dispatcher.Invoke(() =>
                     {
                         CancelEnabled = false;
                         CancelVisible = false;
@@ -176,7 +177,8 @@ namespace Ven4Tools.ViewModels
                 }
                 _cancellationTokenSource?.Dispose();
                 _cancellationTokenSource = null;
-                Application.Current.Dispatcher.Invoke(() =>
+                // `?.` — см. комментарий у SetProgress в OfficeViewModel.cs
+                Application.Current?.Dispatcher.Invoke(() =>
                 {
                     IsInstalling = false;
                     CancelEnabled = false;
