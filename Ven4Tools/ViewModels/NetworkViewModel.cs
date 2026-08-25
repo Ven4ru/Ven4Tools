@@ -233,6 +233,12 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunAllAsync()
         {
+            // Явный гейт реентерабельности (эквивалент "if (_busy) return;" оригинального
+            // code-behind). Одного CanExecute мало: CommandManager.InvalidateRequerySuggested()
+            // публикует перезапрос доступности с приоритетом DispatcherPriority.Background,
+            // который НИЖЕ приоритета обработки ввода — между присвоением флага и реальным
+            // отключением кнопки остаётся окно, в которое проходит повторный клик.
+            if (IsBusy) return;
             IsBusy = true;
             RunAllButtonText = "⏳ Диагностика...";
             try
@@ -283,6 +289,10 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunPingAsync()
         {
+            // Гейт реентерабельности — см. пояснение в RunAllAsync. Проверяется СВОЙ флаг,
+            // а не IsBusy: при вызове из полной диагностики IsPinging здесь ещё false,
+            // так что штатный сценарий RunAll не обрывается.
+            if (IsPinging) return;
             IsPinging = true;
             // Параноидальный режим обещает блокировать ВСЕ исходящие запросы, кроме
             // загрузки каталога и установки. Пинг сторонних хостов раскрывает IP —
@@ -334,6 +344,8 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunServicesAsync()
         {
+            // Гейт реентерабельности — см. пояснение в RunAllAsync.
+            if (IsCheckingServices) return;
             IsCheckingServices = true;
             var rows = new[] { Svc1, Svc2, Svc3, Svc4, Svc5 };
             // Параноидальный режим: HEAD-запросы к сторонним сервисам раскрывают IP —
@@ -388,6 +400,8 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunGetIpAsync()
         {
+            // Гейт реентерабельности — см. пояснение в RunAllAsync.
+            if (IsGettingIp) return;
             IsGettingIp = true;
             // Параноидальный режим: сам смысл этого запроса — раскрыть внешний IP
             // стороннему echo-сервису, единственная функция которого — раскрыть его.
@@ -415,6 +429,8 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunDnsAsync()
         {
+            // Гейт реентерабельности — см. пояснение в RunAllAsync.
+            if (IsCheckingDns) return;
             IsCheckingDns = true;
             DnsResultVisible = true;
             // Параноидальный режим: DNS-резолюция через внешний резолвер тоже сетевой
@@ -441,6 +457,10 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunResetNetworkAsync()
         {
+            // Гейт реентерабельности — см. пояснение в RunAllAsync. Здесь он особенно
+            // важен: без него повторный клик до отключения кнопки покажет второй диалог
+            // подтверждения и может запустить вторую цепочку netsh параллельно.
+            if (IsResettingNetwork) return;
             var confirm = MessageBox.Show(
                 "Сброс сетевых настроек:\n\n" +
                 "• netsh winsock reset\n• netsh int ip reset\n• ipconfig /release\n• ipconfig /renew\n\n" +
