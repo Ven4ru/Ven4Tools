@@ -18,8 +18,7 @@
                 <CheckBox x:Name="chkActivationConsent"
                           Foreground="{DynamicResource TextPrimary}"
                           FontSize="12"
-                          Checked="ChkActivationConsent_Changed"
-                          Unchecked="ChkActivationConsent_Changed">
+                          IsChecked="{Binding ConsentGiven, Mode=TwoWay}">
                     <CheckBox.Content>
                         <TextBlock TextWrapping="Wrap" MaxWidth="560">
                             <Run Text="Я понимаю, что перехожу на сайт стороннего инструмента с открытым кодом, использование которого может нарушать "/>
@@ -43,7 +42,8 @@
                             <Button x:Name="btnActivateWindows" Content="🌐 Открыть официальный сайт →"
                                     Height="40" Width="260" HorizontalAlignment="Left"
                                     ToolTip="Откроет официальный сайт стороннего инструмента. Ven4Tools не запускает скрипты автоматически."
-                                    FontWeight="Bold" IsEnabled="False"/>
+                                    FontWeight="Bold" IsEnabled="{Binding ConsentGiven}"
+                                    Command="{Binding ActivateWindowsCommand}"/>
                         </StackPanel>
                     </GroupBox>
 
@@ -57,7 +57,8 @@
                             <Button x:Name="btnActivateOffice" Content="🌐 Открыть официальный сайт →"
                                     Height="40" Width="260" HorizontalAlignment="Left"
                                     ToolTip="Откроет официальный сайт стороннего инструмента. Дальнейшие действия выполняются вручную."
-                                    FontWeight="Bold" IsEnabled="False"/>
+                                    FontWeight="Bold" IsEnabled="{Binding ConsentGiven}"
+                                    Command="{Binding ActivateOfficeCommand}"/>
                         </StackPanel>
                     </GroupBox>
 
@@ -75,7 +76,8 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Windows:" Foreground="{DynamicResource TextSecondary}"/>
                         <TextBlock x:Name="txtWindowsStatus" Grid.Column="1"
-                                   Foreground="{DynamicResource TextPrimary}" Text="Проверка..."/>
+                                   Text="{Binding WindowsStatusText}"
+                                   Foreground="{Binding WindowsStatusBrush}"/>
                     </Grid>
                     <Grid Margin="0,5">
                         <Grid.ColumnDefinitions>
@@ -84,11 +86,13 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Office:" Foreground="{DynamicResource TextSecondary}"/>
                         <TextBlock x:Name="txtOfficeStatus" Grid.Column="1"
-                                   Foreground="{DynamicResource TextPrimary}" Text="Проверка..."/>
+                                   Text="{Binding OfficeStatusText}"
+                                   Foreground="{Binding OfficeStatusBrush}"/>
                     </Grid>
                     <Button x:Name="btnCheckStatus" Content="🔄 Проверить статус"
                             ToolTip="Повторно проверит состояние лицензий Windows и установленного Microsoft Office."
-                            Height="32" Width="150" Margin="0,10,0,0" HorizontalAlignment="Left"/>
+                            Height="32" Width="150" Margin="0,10,0,0" HorizontalAlignment="Left"
+                            Command="{Binding CheckStatusCommand}"/>
                 </StackPanel>
             </GroupBox>
 

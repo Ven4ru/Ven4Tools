@@ -1,283 +1,29 @@
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Management;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Threading;
-using System.Threading.Tasks;
-using Ven4Tools.Services;
+using Ven4Tools.ViewModels;
 
 namespace Ven4Tools.Views.Tabs
 {
+    /// <summary>
+    /// Вкладка «Активация» — тонкая обёртка над <see cref="ActivationViewModel"/>.
+    /// Вся логика перенесена в ViewModel при MVVM-миграции (2026-08-25, четвёртая
+    /// вкладка после DebloaterTab/HistoryTab/AboutTab). Публичного контракта сверх
+    /// конструктора нет.
+    /// </summary>
     public partial class ActivationTab : UserControl
     {
+        private readonly ActivationViewModel _viewModel = new();
+
         public ActivationTab()
         {
             InitializeComponent();
-
-            btnActivateWindows.Click += BtnActivateWindows_Click;
-            btnActivateOffice.Click += BtnActivateOffice_Click;
-            btnCheckStatus.Click += BtnCheckStatus_Click;
-
-            btnActivateWindows.IsEnabled = false;
-            btnActivateOffice.IsEnabled = false;
+            DataContext = _viewModel;
+            _viewModel.OwnerWindowProvider = () => Window.GetWindow(this);
 
             Loaded += async (_, _) =>
             {
-                await CheckActivationStatusAsync();
+                await _viewModel.CheckActivationStatusAsync();
             };
         }
-
-        private void ChkActivationConsent_Changed(object sender, RoutedEventArgs e)
-        {
-            bool agreed = chkActivationConsent.IsChecked == true;
-            btnActivateWindows.IsEnabled = agreed;
-            btnActivateOffice.IsEnabled = agreed;
-        }
-
-        // Открывает сайт и окно-помощник для активации Windows
-        private void BtnActivateWindows_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo("https://massgrave.dev") { UseShellExecute = true });
-                AppLogger.Write("🌐 Открыт сайт для управления лицензией Windows");
-                var guide = new MasGuideWindow("Windows") { Owner = Window.GetWindow(this) };
-                guide.Show();
-            }
-            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
-        }
-
-        // Открывает сайт и окно-помощник для активации Office
-        private void BtnActivateOffice_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo("https://massgrave.dev") { UseShellExecute = true });
-                AppLogger.Write("🌐 Открыт сайт для управления лицензией Office");
-                var guide = new MasGuideWindow("Office") { Owner = Window.GetWindow(this) };
-                guide.Show();
-            }
-            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
-        }
-
-        private async Task CheckActivationStatusAsync()
-        {
-            try
-            {
-                txtWindowsStatus.Text = "Проверка...";
-                txtOfficeStatus.Text = "Проверка...";
-
-                await Task.Run(() =>
-                {
-                    try
-                    {
-                        using (var searcher = CreateLicensingSearcher())
-                        using (var results = searcher.Get())
-                        {
-                            foreach (ManagementBaseObject obj in results)
-                            using (obj)
-                            {
-                                int status = Convert.ToInt32(obj["LicenseStatus"]);
-                                string name = obj["Name"]?.ToString() ?? "";
-
-                                if (name.Contains("Windows", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        txtWindowsStatus.Text = status switch
-                                        {
-                                            1 => "✅ Активирована",
-                                            0 => "❌ Не активирована",
-                                            _ => "⚠️ Неизвестно"
-                                        };
-                                        txtWindowsStatus.Foreground = status == 1 ?
-                                            new SolidColorBrush(Colors.LightGreen) :
-                                            new SolidColorBrush(Colors.LightCoral);
-                                    });
-                                    return;
-                                }
-                            }
-                        }
-                        Dispatcher.Invoke(() =>
-                        {
-                            txtWindowsStatus.Text = "⚠️ Не обнаружена";
-                            txtWindowsStatus.Foreground = new SolidColorBrush(Colors.Orange);
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            txtWindowsStatus.Text = "⚠️ Ошибка";
-                            txtWindowsStatus.Foreground = new SolidColorBrush(Colors.Orange);
-                            AppLogger.Write($"❌ Ошибка проверки Windows: {ex.Message}");
-                        });
-                    }
-                });
-
-                await Task.Run(() => CheckOfficeActivationAsync());
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write($"❌ Ошибка проверки статуса: {ex.Message}");
-            }
-        }
-
-        private static readonly TimeSpan OfficeCheckTimeout = TimeSpan.FromSeconds(30);
-
-        private async Task CheckOfficeActivationAsync()
-        {
-            try
-            {
-                // OSPP.VBS — официальный инструмент проверки лицензии Office (2010–2024, 365)
-                string[] osppPaths =
-                {
-                    @"C:\Program Files\Microsoft Office\Office16\OSPP.VBS",
-                    @"C:\Program Files (x86)\Microsoft Office\Office16\OSPP.VBS",
-                    @"C:\Program Files\Microsoft Office\Office15\OSPP.VBS",
-                    @"C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS",
-                    @"C:\Program Files\Microsoft Office\Office14\OSPP.VBS",
-                    @"C:\Program Files (x86)\Microsoft Office\Office14\OSPP.VBS",
-                };
-
-                string? osppPath = null;
-                foreach (var p in osppPaths)
-                    if (File.Exists(p)) { osppPath = p; break; }
-
-                if (osppPath != null)
-                {
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = Ven4Tools.Services.TrustedExecutablePaths.CScriptExe,
-                        Arguments = $"//NoLogo \"{osppPath}\" /dstatus",
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-
-                    // Таймаут: раньше WaitForExit() был без ограничения — зависший OSPP.VBS
-                    // (повреждённая установка Office/недоступный KMS-хост) держал вкладку
-                    // в «Проверка...» бесконечно, кнопка «Проверить статус» не разблокировалась.
-                    string output;
-                    using var timeoutCts = new CancellationTokenSource(OfficeCheckTimeout);
-                    using (var proc = Process.Start(psi)!)
-                    {
-                        using var reg = timeoutCts.Token.Register(() =>
-                            { try { proc.Kill(entireProcessTree: true); } catch { } });
-                        try
-                        {
-                            output = await proc.StandardOutput.ReadToEndAsync(timeoutCts.Token);
-                            await proc.WaitForExitAsync(timeoutCts.Token);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            SetOfficeStatusOnUI("⚠️ Проверка не завершилась", null);
-                            return;
-                        }
-                    }
-
-                    bool hasProducts = output.Contains("SKU ID") || output.Contains("LICENSE NAME");
-                    if (!hasProducts)
-                    {
-                        SetOfficeStatusOnUI("❓ Office не обнаружен", null);
-                        return;
-                    }
-
-                    if (output.Contains("---LICENSED---"))
-                        SetOfficeStatusOnUI("✅ Активирован", true);
-                    else if (output.Contains("---UNLICENSED---") || output.Contains("NON_GENUINE"))
-                        SetOfficeStatusOnUI("❌ Не активирован", false);
-                    else if (output.Contains("OOB_GRACE") || output.Contains("NOTIFICATION"))
-                        SetOfficeStatusOnUI("⚠️ Пробный период", null);
-                    else
-                        SetOfficeStatusOnUI("⚠️ Статус неопределён", null);
-                    return;
-                }
-
-                // Запасной вариант: WMI SoftwareLicensingProduct
-                using var searcher = CreateLicensingSearcher();
-                using var results = searcher.Get();
-                foreach (ManagementBaseObject obj in results)
-                using (obj)
-                {
-                    string name = obj["Name"]?.ToString() ?? "";
-                    if (name.Contains("Windows", StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    if (name.Contains("Office", StringComparison.OrdinalIgnoreCase) ||
-                        name.Contains("Microsoft 365", StringComparison.OrdinalIgnoreCase))
-                    {
-                        int status = Convert.ToInt32(obj["LicenseStatus"]);
-                        SetOfficeStatusOnUI(status == 1 ? "✅ Активирован" : "❌ Не активирован", status == 1);
-                        return;
-                    }
-                }
-
-                // Финальный фоллбэк: просто проверяем установлен ли Office
-                string[] regPaths =
-                {
-                    @"SOFTWARE\Microsoft\Office\ClickToRun\Configuration",
-                    @"SOFTWARE\Microsoft\Office\16.0\Common\Licensing",
-                    @"SOFTWARE\Microsoft\Office\15.0\Common\Licensing",
-                };
-                bool installed = false;
-                foreach (var regPath in regPaths)
-                {
-                    using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(regPath);
-                    if (key != null) { installed = true; break; }
-                }
-
-                SetOfficeStatusOnUI(installed ? "⚠️ Статус неизвестен" : "❓ Office не обнаружен", null);
-            }
-            catch (Exception ex)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    txtOfficeStatus.Text = "⚠️ Ошибка";
-                    txtOfficeStatus.Foreground = new SolidColorBrush(Colors.Orange);
-                    AppLogger.Write($"❌ Ошибка проверки Office: {ex.Message}");
-                });
-            }
-        }
-
-        private void SetOfficeStatusOnUI(string text, bool? isActivated)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                txtOfficeStatus.Text = text;
-                txtOfficeStatus.Foreground = isActivated switch
-                {
-                    true  => new SolidColorBrush(Colors.LightGreen),
-                    false => new SolidColorBrush(Colors.LightCoral),
-                    null  => new SolidColorBrush(Colors.Orange)
-                };
-            });
-        }
-
-        private async void BtnCheckStatus_Click(object sender, RoutedEventArgs e)
-        {
-            btnCheckStatus.IsEnabled = false;
-            try
-            {
-                await CheckActivationStatusAsync();
-                AppLogger.Write("🔄 Статус активации обновлён");
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write($"❌ Ошибка: {ex.Message}");
-            }
-            finally
-            {
-                btnCheckStatus.IsEnabled = true;
-            }
-        }
-
-        // Единый WMI-запрос лицензий (Windows и Office) — используется при проверке
-        // статуса активации и в запасном варианте для Office.
-        private static ManagementObjectSearcher CreateLicensingSearcher() =>
-            new("SELECT LicenseStatus, Name FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL");
     }
 }
