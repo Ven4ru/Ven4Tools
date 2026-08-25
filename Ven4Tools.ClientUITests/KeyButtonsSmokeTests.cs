@@ -211,6 +211,19 @@ namespace Ven4Tools.ClientUITests
                 "Кнопка «Копировать информацию» не изменила содержимое буфера обмена.");
         }
 
+        /// <summary>
+        /// Полная диагностика вкладки «Сеть». После MVVM-миграции кнопка держится
+        /// на биндингах <c>Command="{Binding RunAllCommand}"</c> и доступности через
+        /// <c>CanExecute</c>, а сломанный биндинг в WPF молча даёт значение по умолчанию
+        /// (<c>IsEnabled=true</c>, клик — no-op). Поэтому проверки «кнопка вернулась
+        /// в активное состояние» мало: она проходит и когда команда вообще не сработала.
+        /// Тест сначала требует, чтобы кнопка реально ЗАДИЗЕЙБЛИЛАСЬ (доказательство,
+        /// что команда выполнилась и CanExecute стал false), и только потом ждёт
+        /// возврата в активное состояние; дополнительно следит за txtPublicIp —
+        /// его текст обязан измениться относительно исходного «не определён»
+        /// (RunGetIpAsync всегда проходит через промежуточное «определяется...»),
+        /// что подтверждает живой биндинг данных, а не только команды.
+        /// </summary>
         [TestMethod]
         public void Сеть_ПолнаяДиагностика_ЗавершаетсяБезЗависания()
         {
@@ -224,13 +237,47 @@ namespace Ven4Tools.ClientUITests
                 timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(runAllBtn, "Не найдена кнопка «Запустить полную диагностику».");
 
+            var publicIp = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtPublicIp"));
+            Assert.IsNotNull(publicIp, "Не найдено поле внешнего IP (txtPublicIp).");
+            // Исходное значение снимаем ДО клика: конкретную строку не хардкодим —
+            // важен сам факт изменения, а исходов у диагностики три легитимных
+            // (реальный IP / «не определён» снова / «отключено (параноидальный режим)»).
+            string ipBefore = publicIp!.AsLabel().Text ?? "";
+            Assert.IsFalse(string.IsNullOrWhiteSpace(ipBefore),
+                "Поле внешнего IP пусто до клика — биндинг PublicIpText не доставил даже начальное значение.");
+
             runAllBtn!.AsButton().Invoke();
 
-            // Диагностика включает сетевые запросы (пинг/DNS/публичный IP) — даём до 60с.
+            // 1. Кнопка обязана сначала выключиться — это и есть доказательство, что
+            //    RunAllCommand реально выполнилась (при сломанном биндинге клик — no-op
+            //    и кнопка остаётся доступной, тест мгновенно «успешно» проходил бы).
+            Retry.WhileTrue(() => runAllBtn.AsButton().IsEnabled,
+                timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(100),
+                throwOnTimeout: false);
+            Assert.IsFalse(runAllBtn.AsButton().IsEnabled,
+                "Кнопка полной диагностики не стала недоступной после клика — команда RunAllCommand не сработала (сломанный биндинг Command/DataContext?).");
+
+            // 2. Диагностика включает сетевые запросы (пинг/DNS/публичный IP) — даём до 60с.
+            //    Параллельно следим за txtPublicIp: значение проходит через
+            //    «определяется...», поэтому хотя бы один отсчёт обязан отличаться от исходного.
+            bool ipChanged = false;
             bool reEnabled = Retry.WhileFalse(
-                () => runAllBtn.AsButton().IsEnabled,
-                timeout: TimeSpan.FromSeconds(60), interval: TimeSpan.FromMilliseconds(500), throwOnTimeout: false).Success;
+                () =>
+                {
+                    if ((publicIp.AsLabel().Text ?? "") != ipBefore) ipChanged = true;
+                    return runAllBtn.AsButton().IsEnabled;
+                },
+                timeout: TimeSpan.FromSeconds(60), interval: TimeSpan.FromMilliseconds(200), throwOnTimeout: false).Success;
             Assert.IsTrue(reEnabled, "Кнопка полной диагностики не вернулась в активное состояние за 60с — возможно зависание.");
+
+            string ipAfter = publicIp.AsLabel().Text ?? "";
+            if (ipAfter != ipBefore) ipChanged = true;
+            // 3. Промежуточное состояние не должно остаться финальным — это значило бы,
+            //    что RunGetIpAsync не довёл работу до конца.
+            Assert.AreNotEqual("определяется...", ipAfter,
+                "Поле внешнего IP осталось в промежуточном состоянии «определяется...» после завершения диагностики.");
+            Assert.IsTrue(ipChanged,
+                $"Поле внешнего IP ни разу не изменилось с исходного «{ipBefore}» — блок определения IP не отработал (либо биндинг PublicIpText мёртв, либо на машине полностью отсутствует сеть).");
         }
 
         [TestMethod]
