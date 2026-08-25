@@ -6,10 +6,11 @@
 
 Работа автономная (ночная сессия, без вопросов пользователю) — решения ниже приняты самостоятельно по аналогии с пятью уже смерженными вкладками.
 
-**Явное ограничение объёма**: чистый рефакторинг, поведение 1:1, с тремя явными механическими адаптациями (все — уже применённый в этой серии паттерн):
+**Явное ограничение объёма**: чистый рефакторинг, поведение 1:1, с четырьмя явными механическими адаптациями (все — уже применённый в этой серии паттерн):
 1. `this.Dispatcher.Invoke(...)` → `System.Windows.Application.Current.Dispatcher.Invoke(...)`.
 2. `Views.UiGuards.WarnIfInstallBusy()` / `InstallationService.InstallSemaphore` вызываются из VM напрямую — уже устоявшийся паттерн в этом кодовом месте (`HistoryViewModel`, `CatalogViewModel.Install.cs`, `AppCardViewModel` уже делают ровно это), никакой новой абстракции не нужно.
 3. Публичное событие `event Action? GoToActivation` остаётся на самом `OfficeTab` (UserControl) — `MainWindow.xaml.cs:250` подписывается на него напрямую (`_officeTab.GoToActivation += ...`), это внешний контракт, который нельзя переносить. VM получает свой собственный `event Action? GoToActivation`, поднимаемый из `GoActivationCommand`; code-behind в конструкторе перепроброcывает `_viewModel.GoToActivation += () => GoToActivation?.Invoke();` — тот же паттерн ретрансляции события, что уже обсуждался (see `DiagnosticsTab`/`WindowsUpdateTab` комментарии, ссылающиеся на этот же приём у OfficeTab).
+4. Достижимые из конструктора VM обращения к WPF-хосту защищены от `Application.Current == null`: в `UpdateRegionDisplay()` используется `Application.Current?.Dispatcher.Invoke(...)` (тот же `?.`-паттерн, что в `ActivationViewModel`/`CatalogViewModel`), а вызов `RecoverRegionFromBackup()` в конструкторе обусловлен `if (Application.Current != null)` — иначе `dotnet test` падал бы с `NullReferenceException` и, что важнее, реально перезаписывал бы `HKCU`-регион на машине разработчика, чего не было раньше, когда этот вызов жил в конструкторе `OfficeTab` (в реальном приложении `Application.Current` никогда не `null`, поведение не меняется).
 
 **Ветка**: `mvvm-officetab` (от `main`), мердж+пуш — сразу после верификации, без доп. вопроса (правило сессии).
 

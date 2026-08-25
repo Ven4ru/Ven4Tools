@@ -11,7 +11,8 @@ namespace Ven4Tools.ViewModels
 
         private void UpdateRegionDisplay()
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            // `?.` — конструктор VM достижим из юнит-тестов, где Application.Current == null
+            Application.Current?.Dispatcher.Invoke(() =>
             {
                 // Windows GeoID — читаем прямо из реестра, чтобы изменения были видны сразу
                 try
