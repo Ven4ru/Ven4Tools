@@ -129,7 +129,7 @@
                                Foreground="{DynamicResource TextPrimary}"
                                Margin="0,0,0,8"/>
                     <ProgressBar x:Name="progressOffice"
-                                 Height="8" Minimum="0" Maximum="100" Value="{Binding ProgressValue}"
+                                 Height="8" Minimum="0" Maximum="100" Value="{Binding ProgressValue, Mode=OneWay}"
                                  IsIndeterminate="{Binding ProgressIndeterminate}"
                                  Foreground="{DynamicResource AccentColor}"
                                  Background="{DynamicResource BorderBrush}"/>
