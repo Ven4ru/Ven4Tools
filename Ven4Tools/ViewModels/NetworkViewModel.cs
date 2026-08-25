@@ -19,9 +19,19 @@ namespace Ven4Tools.ViewModels
     /// </summary>
     public sealed class NetworkCheckResult : INotifyPropertyChanged
     {
-        private string _text = "—";
+        private string _text;
         private string _iconText = "⬜";
         private Brush _iconBrush = ResolveDefaultBrush();
+
+        /// <summary>
+        /// Начальный текст строки. Оригинальный XAML задавал разные дефолты:
+        /// <c>txtPing1..4 Text="—"</c>, но <c>txtSvcMs1..5 Text=""</c> (пусто),
+        /// поэтому дефолт параметризован.
+        /// </summary>
+        public NetworkCheckResult(string initialText = "—")
+        {
+            _text = initialText;
+        }
 
         public string Text
         {
@@ -101,11 +111,13 @@ namespace Ven4Tools.ViewModels
 
         // ── Доступность сервисов ─────────────────────────────────────────────
 
-        public NetworkCheckResult Svc1 { get; } = new();
-        public NetworkCheckResult Svc2 { get; } = new();
-        public NetworkCheckResult Svc3 { get; } = new();
-        public NetworkCheckResult Svc4 { get; } = new();
-        public NetworkCheckResult Svc5 { get; } = new();
+        // Оригинальный XAML давал строкам сервисов пустой Text (txtSvcMs1..5 Text=""),
+        // в отличие от строк пинга с "—" — сохраняем это различие.
+        public NetworkCheckResult Svc1 { get; } = new(initialText: "");
+        public NetworkCheckResult Svc2 { get; } = new(initialText: "");
+        public NetworkCheckResult Svc3 { get; } = new(initialText: "");
+        public NetworkCheckResult Svc4 { get; } = new(initialText: "");
+        public NetworkCheckResult Svc5 { get; } = new(initialText: "");
 
         // ── Внешний IP / DNS ─────────────────────────────────────────────────
 
@@ -132,39 +144,43 @@ namespace Ven4Tools.ViewModels
 
         // ── Состояние занятости ──────────────────────────────────────────────
 
+        // Сеттеры busy-флагов диагностики — internal (а не private) ради тестов:
+        // они позволяют собрать состояние «занято» без реальных сетевых вызовов
+        // и проверить ResetDiagnosticFlags. Доступ открыт только сборке тестов
+        // через InternalsVisibleTo (Properties/AssemblyInfo.cs).
         private bool _isBusy;
         public bool IsBusy
         {
             get => _isBusy;
-            private set { SetField(ref _isBusy, value); RaiseAllCanExecuteChanged(); }
+            internal set { SetField(ref _isBusy, value); RaiseAllCanExecuteChanged(); }
         }
 
         private bool _isPinging;
         public bool IsPinging
         {
             get => _isPinging;
-            private set { SetField(ref _isPinging, value); PingCommand.RaiseCanExecuteChanged(); }
+            internal set { SetField(ref _isPinging, value); PingCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isCheckingServices;
         public bool IsCheckingServices
         {
             get => _isCheckingServices;
-            private set { SetField(ref _isCheckingServices, value); CheckServicesCommand.RaiseCanExecuteChanged(); }
+            internal set { SetField(ref _isCheckingServices, value); CheckServicesCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isGettingIp;
         public bool IsGettingIp
         {
             get => _isGettingIp;
-            private set { SetField(ref _isGettingIp, value); GetIpCommand.RaiseCanExecuteChanged(); }
+            internal set { SetField(ref _isGettingIp, value); GetIpCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isCheckingDns;
         public bool IsCheckingDns
         {
             get => _isCheckingDns;
-            private set { SetField(ref _isCheckingDns, value); CheckDnsCommand.RaiseCanExecuteChanged(); }
+            internal set { SetField(ref _isCheckingDns, value); CheckDnsCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isResettingNetwork;
@@ -229,18 +245,28 @@ namespace Ven4Tools.ViewModels
             }
             finally
             {
-                // Оригинал (SetDiagnosticButtonsEnabled(true) в finally) безусловно
-                // возвращал ВСЕ 7 кнопок в IsEnabled=true, даже если внутренние методы
-                // не сбросили свой busy-флаг сами (условие "if (!_busy)" внутри них было
-                // ложным, пока эта диагностика ещё выполнялась). Явный сброс здесь —
-                // точный эквивалент, см. Global Constraints плана.
-                IsBusy = false;
-                IsPinging = false;
-                IsCheckingServices = false;
-                IsGettingIp = false;
-                IsCheckingDns = false;
-                RunAllButtonText = "🔍 Запустить полную диагностику";
+                ResetDiagnosticFlags();
             }
+        }
+
+        /// <summary>
+        /// Безусловно возвращает все флаги диагностики в исходное состояние.
+        /// Оригинал (<c>SetDiagnosticButtonsEnabled(true)</c> в <c>finally</c>) безусловно
+        /// возвращал ВСЕ 7 кнопок в <c>IsEnabled=true</c>, даже если внутренние методы
+        /// не сбросили свой busy-флаг сами (условие <c>if (!_busy)</c> внутри них было
+        /// ложным, пока эта диагностика ещё выполнялась). Этот безусловный сброс —
+        /// точный эквивалент, см. Global Constraints плана. Удаление любой строки
+        /// отсюда навсегда заблокирует соответствующую кнопку после первой полной
+        /// диагностики, поэтому метод выделен отдельно и покрыт юнит-тестом.
+        /// </summary>
+        internal void ResetDiagnosticFlags()
+        {
+            IsBusy = false;
+            IsPinging = false;
+            IsCheckingServices = false;
+            IsGettingIp = false;
+            IsCheckingDns = false;
+            RunAllButtonText = "🔍 Запустить полную диагностику";
         }
 
         // ── Адаптеры ─────────────────────────────────────────────────────────
