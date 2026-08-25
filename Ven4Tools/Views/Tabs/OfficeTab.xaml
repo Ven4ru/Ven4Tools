@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource ContentBackground}">
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <Style x:Key="VersionCardStyle" TargetType="RadioButton">
             <Setter Property="GroupName" Value="OfficeVersion"/>
             <Setter Property="Margin" Value="0,0,10,10"/>
@@ -55,40 +56,47 @@
             <!-- Выбор версии — карточки -->
             <GroupBox Header="📦 Выбор версии" Margin="0,0,0,15">
                 <WrapPanel Margin="10,10,0,0">
-                    <RadioButton x:Name="rdbO365"  Style="{StaticResource VersionCardStyle}" Content="Office 365&#x0a;ProPlus"       IsChecked="True"/>
-                    <RadioButton x:Name="rdbO2024" Style="{StaticResource VersionCardStyle}" Content="Office 2024&#x0a;ProPlus"/>
-                    <RadioButton x:Name="rdbO2021" Style="{StaticResource VersionCardStyle}" Content="Office 2021&#x0a;Professional"/>
-                    <RadioButton x:Name="rdbO2019" Style="{StaticResource VersionCardStyle}" Content="Office 2019&#x0a;Professional"/>
-                    <RadioButton x:Name="rdbO2016" Style="{StaticResource VersionCardStyle}" Content="Office 2016&#x0a;Professional"/>
+                    <RadioButton x:Name="rdbO365"  Style="{StaticResource VersionCardStyle}" Content="Office 365&#x0a;ProPlus"       IsChecked="{Binding IsO365Selected, Mode=TwoWay}"/>
+                    <RadioButton x:Name="rdbO2024" Style="{StaticResource VersionCardStyle}" Content="Office 2024&#x0a;ProPlus"      IsChecked="{Binding IsO2024Selected, Mode=TwoWay}"/>
+                    <RadioButton x:Name="rdbO2021" Style="{StaticResource VersionCardStyle}" Content="Office 2021&#x0a;Professional" IsChecked="{Binding IsO2021Selected, Mode=TwoWay}"/>
+                    <RadioButton x:Name="rdbO2019" Style="{StaticResource VersionCardStyle}" Content="Office 2019&#x0a;Professional" IsChecked="{Binding IsO2019Selected, Mode=TwoWay}"/>
+                    <RadioButton x:Name="rdbO2016" Style="{StaticResource VersionCardStyle}" Content="Office 2016&#x0a;Professional" IsChecked="{Binding IsO2016Selected, Mode=TwoWay}"/>
                 </WrapPanel>
             </GroupBox>
 
             <!-- Язык -->
             <GroupBox Header="🌐 Язык интерфейса" Margin="0,0,0,15">
                 <Grid Margin="10">
-                    <ComboBox x:Name="cmbOfficeLanguage" Height="35" Background="White" Foreground="Black"/>
+                    <ComboBox x:Name="cmbOfficeLanguage" Height="35" Background="White" Foreground="Black"
+                              ItemsSource="{Binding OfficeLanguages}"
+                              SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
                 </Grid>
             </GroupBox>
 
             <CheckBox x:Name="chkSaveInstaller" Content="Сохранить установщик после установки"
-                      Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10" IsChecked="False"/>
+                      Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10"
+                      IsChecked="{Binding SaveInstaller, Mode=TwoWay}"/>
 
             <WrapPanel Margin="0,10,0,10">
                 <Button x:Name="btnDownloadOffice" Content="📥 Скачать"
                         ToolTip="Скачает установочные файлы выбранной версии и языка Office с серверов Microsoft."
                         Height="45" Width="205"
                         Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="Bold" FontSize="14"
-                        Margin="0,0,10,10"/>
+                        Margin="0,0,10,10"
+                        Command="{Binding DownloadCommand}"/>
                 <Button x:Name="btnInstallOffice" Content="🚀 Установить"
                         ToolTip="Запустит установку Office с выбранными параметрами из ранее скачанных файлов."
                         Height="45" Width="205"
                         Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="Bold" FontSize="14"
-                        IsEnabled="False" Margin="0,0,10,10"/>
+                        Margin="0,0,10,10"
+                        Command="{Binding InstallCommand}"/>
                 <Button x:Name="btnCancelOffice" Content="⏹️ Отмена"
                         ToolTip="Остановит текущую загрузку или подготовку Office. Уже скачанные файлы могут сохраниться."
                         Height="45" Width="120"
                         FontWeight="Bold" FontSize="13"
-                        IsEnabled="False" Margin="0,0,0,10"/>
+                        Margin="0,0,0,10"
+                        Command="{Binding CancelCommand}"
+                        Visibility="{Binding CancelVisible, Converter={StaticResource BoolToVis}}"/>
             </WrapPanel>
 
             <!-- Статус региона -->
@@ -99,32 +107,34 @@
                     <TextBlock Text="🌐 " VerticalAlignment="Center" FontSize="13"/>
                     <TextBlock Text="Регион Windows: " Foreground="{DynamicResource TextSecondary}"
                                VerticalAlignment="Center" FontSize="12"/>
-                    <TextBlock x:Name="txtRegionGeo" Text="—" FontWeight="SemiBold" FontSize="12"
+                    <TextBlock x:Name="txtRegionGeo" Text="{Binding RegionGeoText}" FontWeight="SemiBold" FontSize="12"
                                Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                     <TextBlock Text="   ·   Office CountryCode: " Foreground="{DynamicResource TextSecondary}"
                                VerticalAlignment="Center" FontSize="12" Margin="8,0,0,0"/>
-                    <TextBlock x:Name="txtRegionCC" Text="—" FontWeight="SemiBold" FontSize="12"
+                    <TextBlock x:Name="txtRegionCC" Text="{Binding RegionCCText}" FontWeight="SemiBold" FontSize="12"
                                Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
 
             <!-- Прогресс -->
-            <Border x:Name="pnlProgress" Visibility="Collapsed"
+            <Border x:Name="pnlProgress"
+                    Visibility="{Binding ProgressVisible, Converter={StaticResource BoolToVis}}"
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                     CornerRadius="8" Padding="16,12" Margin="0,0,0,16">
                 <StackPanel>
                     <TextBlock x:Name="txtInstallPhase"
-                               Text="⏳ Подготовка..."
+                               Text="{Binding InstallPhaseText}"
                                FontWeight="Bold" FontSize="13"
                                Foreground="{DynamicResource TextPrimary}"
                                Margin="0,0,0,8"/>
                     <ProgressBar x:Name="progressOffice"
-                                 Height="8" Minimum="0" Maximum="100" Value="0"
+                                 Height="8" Minimum="0" Maximum="100" Value="{Binding ProgressValue}"
+                                 IsIndeterminate="{Binding ProgressIndeterminate}"
                                  Foreground="{DynamicResource AccentColor}"
                                  Background="{DynamicResource BorderBrush}"/>
                     <TextBlock x:Name="txtInstallDetail"
-                               Text=""
+                               Text="{Binding InstallDetailText}"
                                FontSize="11" Margin="0,6,0,0"
                                Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
@@ -138,7 +148,8 @@
                        Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
 
             <!-- Кнопка активации — только для авторизованных -->
-            <Border x:Name="pnlActivationHint" Visibility="Collapsed"
+            <Border x:Name="pnlActivationHint"
+                    Visibility="{Binding ActivationHintVisible, Converter={StaticResource BoolToVis}}"
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource AccentColor}"
                     BorderThickness="1" CornerRadius="8"
@@ -148,7 +159,8 @@
                             Content="🔑 Активация →"
                             ToolTip="Откроет вкладку управления лицензиями Office. Активация автоматически не выполняется."
                             Height="36" Padding="16,0"
-                            FontWeight="Bold" FontSize="13"/>
+                            FontWeight="Bold" FontSize="13"
+                            Command="{Binding GoActivationCommand}"/>
                     <TextBlock Text="Office уже установлен? Перейдите к активации."
                                Foreground="{DynamicResource TextSecondary}"
                                VerticalAlignment="Center" TextWrapping="Wrap"
