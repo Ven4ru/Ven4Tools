@@ -78,6 +78,59 @@ namespace Ven4Tools.Tests
         }
 
         [Fact]
+        public void IsAllFilterSelected_УстановкаВFalse_НеВызываетApplyFilter()
+        {
+            // SetFilterFlag — эквивалент RadioButton.Checked без Unchecked: переход в false
+            // обязан только поднять PropertyChanged, но НЕ пересчитывать фильтр.
+            // ApplyFilter() всегда переустанавливает DisplayedApps новым списком
+            // (SetField сравнивает ссылки → PropertyChanged гарантирован даже на пустом
+            // _allApps) и безусловно поднимает SelectAllState из RecomputeSelectAllState —
+            // по отсутствию этих двух событий и ловим факт, что ApplyFilter не звали.
+            var vm = new InstalledViewModel();
+            var raised = new List<string?>();
+            vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+            vm.IsAllFilterSelected = false;
+
+            Assert.False(vm.IsAllFilterSelected);
+            Assert.Contains(nameof(vm.IsAllFilterSelected), raised);
+            Assert.DoesNotContain(nameof(vm.DisplayedApps), raised);
+            Assert.DoesNotContain(nameof(vm.SelectAllState), raised);
+        }
+
+        [Fact]
+        public void IsUnknownFilterSelected_УстановкаВTrue_ВызываетApplyFilter()
+        {
+            // Вторая половина семантики SetFilterFlag: переход в true фильтр пересчитывает.
+            var vm = new InstalledViewModel();
+            var raised = new List<string?>();
+            vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+            vm.IsUnknownFilterSelected = true;
+
+            Assert.Contains(nameof(vm.IsUnknownFilterSelected), raised);
+            Assert.Contains(nameof(vm.DisplayedApps), raised);
+            Assert.Contains(nameof(vm.SelectAllState), raised);
+        }
+
+        [Fact]
+        public void OnlyUpdates_УстановкаВFalse_ВызываетApplyFilter()
+        {
+            // SetFieldTriggering — иная семантика, чем у SetFilterFlag: ApplyFilter
+            // срабатывает на ЛЮБОЕ реальное изменение, включая переход в false.
+            var vm = new InstalledViewModel();
+            vm.OnlyUpdates = true; // первое включение уже вызвало ApplyFilter один раз
+            var raised = new List<string?>();
+            vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+            vm.OnlyUpdates = false;
+
+            Assert.Contains(nameof(vm.OnlyUpdates), raised);
+            Assert.Contains(nameof(vm.DisplayedApps), raised);
+            Assert.Contains(nameof(vm.SelectAllState), raised);
+        }
+
+        [Fact]
         public void RowSelectionChangedCommand_ПересчитываетCanUpdateSelected()
         {
             var vm = new InstalledViewModel();
@@ -88,6 +141,20 @@ namespace Ven4Tools.Tests
 
             Assert.True(vm.CanUpdateSelected);
             Assert.True(vm.CanUninstallSelected);
+        }
+
+        [Fact]
+        public void RowSelectionChangedCommand_ЧастичныйВыбор_SelectAllStateNull()
+        {
+            // Третье состояние чекбокса «выбрать всё»: выбрана часть подходящих строк.
+            var vm = new InstalledViewModel();
+            var selected   = new InstalledApp { Name = "A", Available = "2.0", IsSelected = true };
+            var unselected = new InstalledApp { Name = "B", Available = "2.0", IsSelected = false };
+            vm.DisplayedApps = new List<InstalledApp> { selected, unselected };
+
+            vm.RowSelectionChangedCommand.Execute(null);
+
+            Assert.Null(vm.SelectAllState);
         }
 
         [Fact]
@@ -107,6 +174,17 @@ namespace Ven4Tools.Tests
 
             Assert.True(success);
             Assert.True(reboot);
+        }
+
+        [Fact]
+        public void DescribeWingetExitCode_КодCOM_УспехСПерезагрузкой()
+        {
+            // Вторая ветка «успех с требованием перезагрузки» — COM-код winget.
+            var (success, reboot, reason) = InstalledViewModel.DescribeWingetExitCode(unchecked((int)0x8A15002C));
+
+            Assert.True(success);
+            Assert.True(reboot);
+            Assert.Equal("", reason);
         }
 
         [Fact]
