@@ -248,6 +248,78 @@ namespace Ven4Tools.ClientUITests
             ClickAndWaitReEnabled(s, checkStatusBtn!.AsButton(), 30);
         }
 
+        /// <summary>
+        /// Юридический барьер вкладки «Активация»: обе кнопки перехода на сайт
+        /// стороннего инструмента доступны только после отметки чекбокса согласия.
+        /// До MVVM-миграции барьер держали три независимых механизма (статический
+        /// <c>IsEnabled="False"</c> в XAML, явное отключение в конструкторе и
+        /// обработчик чекбокса) — все закрытые по умолчанию. После миграции остался
+        /// один биндинг <c>IsEnabled="{Binding ConsentGiven}"</c>, а сломанный
+        /// биндинг в WPF молча даёт значение по умолчанию <c>IsEnabled=true</c>,
+        /// то есть отказ стал fail-open. Этот тест — единственное, что ловит такую
+        /// поломку (переименование свойства, невыставленный DataContext).
+        /// Реальный клик по самим кнопкам НЕ выполняется: они открывают внешний
+        /// сайт и окно-помощник, проверяется только их доступность.
+        /// </summary>
+        [TestMethod]
+        public void ActivationTab_КнопкиАктивацииТребуютСогласия()
+        {
+            var s = Require();
+            var activationBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnActivationTab"));
+            Assert.IsNotNull(activationBtn, "Не найдена кнопка вкладки «Лицензия».");
+            activationBtn!.AsButton().Invoke();
+            Thread.Sleep(500);
+
+            var consent = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("chkActivationConsent"));
+            Assert.IsNotNull(consent, "Не найден чекбокс согласия (Активация).");
+            var winBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnActivateWindows"));
+            Assert.IsNotNull(winBtn, "Не найдена кнопка активации Windows.");
+            var officeBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnActivateOffice"));
+            Assert.IsNotNull(officeBtn, "Не найдена кнопка активации Office.");
+
+            bool? consentWas = consent!.AsCheckBox().IsChecked;
+            try
+            {
+                // Отправная точка: согласие не дано — обе кнопки закрыты.
+                if (consentWas != false) consent.AsCheckBox().IsChecked = false;
+                AssertActivationButtons(winBtn!, officeBtn!, false,
+                    "без отметки согласия кнопки активации должны быть недоступны");
+
+                // Отмечаем согласие — барьер должен открыться.
+                consent.AsCheckBox().IsChecked = true;
+                AssertActivationButtons(winBtn!, officeBtn!, true,
+                    "после отметки согласия кнопки активации должны стать доступны");
+
+                // И снова закрыться при снятии отметки: биндинг обязан работать
+                // в обе стороны, иначе барьер держится только на первой отрисовке.
+                consent.AsCheckBox().IsChecked = false;
+                AssertActivationButtons(winBtn!, officeBtn!, false,
+                    "после снятия отметки согласия кнопки активации должны снова закрыться");
+            }
+            finally
+            {
+                // Гигиена: возвращаем чекбокс ровно в то состояние, в котором он
+                // был до теста — вкладка общая для всего класса тестов.
+                try { if (consent.AsCheckBox().IsChecked != consentWas) consent.AsCheckBox().IsChecked = consentWas; }
+                catch { }
+            }
+        }
+
+        /// <summary>
+        /// Ждёт и утверждает доступность обеих кнопок активации. Ожидание нужно
+        /// потому, что <c>IsEnabled</c> меняется через биндинг на ConsentGiven, а
+        /// не синхронно с возвратом из UIA-вызова переключения чекбокса.
+        /// </summary>
+        private static void AssertActivationButtons(AutomationElement winBtn, AutomationElement officeBtn,
+            bool expected, string message)
+        {
+            Retry.WhileFalse(() => winBtn.IsEnabled == expected && officeBtn.IsEnabled == expected,
+                timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200),
+                throwOnTimeout: false);
+            Assert.AreEqual(expected, winBtn.AsButton().IsEnabled, "btnActivateWindows: " + message + ".");
+            Assert.AreEqual(expected, officeBtn.AsButton().IsEnabled, "btnActivateOffice: " + message + ".");
+        }
+
         [TestMethod]
         public void DebloaterTab_ВыбратьВсеИСброс()
         {
