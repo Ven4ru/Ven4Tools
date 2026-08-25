@@ -76,4 +76,24 @@ public class ActivationViewModelTests
         Assert.True(vm.ActivateWindowsCommand.CanExecute(null));
         Assert.True(vm.ActivateOfficeCommand.CanExecute(null));
     }
+
+    /// <summary>
+    /// Начальная кисть статусов берётся из темы (ресурс TextPrimary), а когда
+    /// WPF-<see cref="System.Windows.Application"/> не поднят — из фолбэка
+    /// <see cref="System.Windows.Media.Brushes.White"/>. Юнит-тестовая среда —
+    /// ровно этот случай: <c>Application.Current == null</c>, ни один тест
+    /// проекта не создаёт Application. Тест закрепляет именно ветку фолбэка:
+    /// без него замена хардкода #FFFFFFFF на ResolveDefaultStatusBrush()
+    /// не покрыта ничем.
+    /// </summary>
+    [Fact]
+    public void СтатусныеКисти_БезApplication_ПадаютВБелыйФолбэк()
+    {
+        Assert.Null(System.Windows.Application.Current);
+
+        var vm = new ActivationViewModel();
+
+        Assert.Same(System.Windows.Media.Brushes.White, vm.WindowsStatusBrush);
+        Assert.Same(System.Windows.Media.Brushes.White, vm.OfficeStatusBrush);
+    }
 }
