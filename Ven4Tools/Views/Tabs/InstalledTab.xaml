@@ -93,7 +93,7 @@
                              Foreground="{DynamicResource TextPrimary}"
                              BorderBrush="{DynamicResource BorderBrush}"
                              BorderThickness="1"
-                             TextChanged="TxtSearch_TextChanged">
+                             Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                         <TextBox.Style>
                             <Style TargetType="TextBox">
                                 <Style.Triggers>
@@ -123,7 +123,7 @@
                                 Background="{DynamicResource CardBackground}"
                                 Foreground="{DynamicResource TextPrimary}"
                                 FontSize="12"
-                                Click="BtnRefresh_Click"/>
+                                Command="{Binding RefreshCommand}"/>
                         <!-- Обновить все приложения через winget -->
                         <Button x:Name="btnUpgradeAll"
                                 Content="Обновить всё"
@@ -133,21 +133,21 @@
                                 FontWeight="Bold"
                                 FontSize="12"
                                 ToolTip="После подтверждения обновит через winget все приложения, для которых доступна новая версия."
-                                Click="BtnUpgradeAll_Click"/>
+                                Command="{Binding UpgradeAllCommand}"/>
                         <Button x:Name="btnExport" Content="Экспорт"
                                 Margin="4,0,0,0" Height="34" Padding="10,0"
                                 Background="{DynamicResource CardBackground}"
                                 Foreground="{DynamicResource TextPrimary}"
                                 FontSize="12"
                                 ToolTip="Сохранит список установленных приложений в файл winget или JSON."
-                                Click="BtnExport_Click"/>
+                                Command="{Binding ExportCommand}"/>
                         <Button x:Name="btnImport" Content="Импорт"
                                 Margin="4,0,0,0" Height="34" Padding="10,0"
                                 Background="{DynamicResource CardBackground}"
                                 Foreground="{DynamicResource TextPrimary}"
                                 FontSize="12"
                                 ToolTip="Выберет файл winget или JSON и установит перечисленные в нём приложения."
-                                Click="BtnImport_Click"/>
+                                Command="{Binding ImportCommand}"/>
                     </StackPanel>
                 </Grid>
             </Grid>
@@ -166,11 +166,11 @@
 
                 <StackPanel Orientation="Horizontal" Grid.Column="0">
                     <RadioButton x:Name="rdbAll" Style="{StaticResource FilterTabStyle}"
-                                 Content="Все" IsChecked="True" Margin="0,0,6,0"
-                                 Checked="FilterChanged"/>
+                                 Content="Все" Margin="0,0,6,0"
+                                 IsChecked="{Binding IsAllFilterSelected, Mode=TwoWay}"/>
                     <RadioButton x:Name="rdbUnknown" Style="{StaticResource FilterTabStyle}"
                                  Content="Неизвестные"
-                                 Checked="FilterChanged"/>
+                                 IsChecked="{Binding IsUnknownFilterSelected, Mode=TwoWay}"/>
 
                     <!-- Разделитель -->
                     <Border Width="1" Margin="10,4" Background="{DynamicResource BorderBrush}"/>
@@ -179,13 +179,13 @@
                     <CheckBox x:Name="chkOnlyUpdates" Content="Только с обновлениями"
                               VerticalAlignment="Center" Margin="0,0,8,0"
                               Foreground="{DynamicResource TextSecondary}" FontSize="12"
-                              Checked="FilterChanged" Unchecked="FilterChanged"/>
+                              IsChecked="{Binding OnlyUpdates, Mode=TwoWay}"/>
 
                     <!-- Сортировка -->
                     <ComboBox x:Name="cmbSort" Width="190" Height="28" VerticalAlignment="Center"
                               FontSize="12"
-                              SelectionChanged="CmbSort_SelectionChanged">
-                        <ComboBoxItem Content="Сортировка: по имени" IsSelected="True"/>
+                              SelectedIndex="{Binding SortIndex, Mode=TwoWay}">
+                        <ComboBoxItem Content="Сортировка: по имени"/>
                         <ComboBoxItem Content="Сортировка: по версии"/>
                         <ComboBoxItem Content="Сортировка: сначала с обновлениями"/>
                     </ComboBox>
@@ -193,6 +193,7 @@
 
                 <!-- Статистика — занимает оставшееся место, обрезается при нехватке -->
                 <TextBlock x:Name="txtStats" Grid.Column="1"
+                           Text="{Binding StatsText}"
                            Foreground="{DynamicResource TextSecondary}"
                            FontSize="12" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis"
@@ -207,16 +208,15 @@
                             Foreground="#06130D"
                             FontWeight="Bold"
                             FontSize="12"
-                            IsEnabled="False"
                             ToolTip="Обновит отмеченные приложения, для которых найдены новые версии."
-                            Click="BtnUpdateSelected_Click"/>
+                            Command="{Binding UpdateSelectedCommand}"/>
                     <Button x:Name="btnUninstallSelected" Content="Удалить"
                             Style="{StaticResource DangerButtonStyle}"
-                            IsEnabled="False" Margin="4,0,0,0"
+                            Margin="4,0,0,0"
                             Height="30" Padding="10,0"
                             FontSize="12"
                             ToolTip="После общего подтверждения удалит все отмеченные приложения по очереди."
-                            Click="BtnUninstallSelected_Click"/>
+                            Command="{Binding UninstallSelectedCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -235,7 +235,7 @@
                     <ColumnDefinition Width="165"/>
                 </Grid.ColumnDefinitions>
                 <CheckBox x:Name="chkSelectAll" Grid.Column="0" VerticalAlignment="Center"
-                          Click="ChkSelectAll_Click"/>
+                          IsChecked="{Binding SelectAllState, Mode=TwoWay}"/>
                 <TextBlock Grid.Column="1" Text="Название" FontSize="11" FontWeight="Bold"
                            Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
                 <TextBlock Grid.Column="2" Text="Версия" FontSize="11" FontWeight="Bold"
@@ -253,8 +253,10 @@
         <Grid Grid.Row="3">
 
             <!-- Loading -->
-            <StackPanel x:Name="pnlLoading" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock x:Name="txtLoadingMsg" Text="⏳ Получение списка установленных приложений..."
+            <StackPanel x:Name="pnlLoading"
+                        Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"
+                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock x:Name="txtLoadingMsg" Text="{Binding LoadingMessage}"
                            Foreground="{DynamicResource TextSecondary}" FontSize="14"
                            HorizontalAlignment="Center"/>
                 <ProgressBar IsIndeterminate="True" Height="4" Margin="0,12,0,0"
@@ -263,16 +265,18 @@
             </StackPanel>
 
             <!-- Empty state -->
-            <TextBlock x:Name="pnlEmpty" Visibility="Collapsed"
+            <TextBlock x:Name="pnlEmpty"
+                       Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}"
                        Text="Приложения не найдены" FontSize="14"
                        Foreground="{DynamicResource TextSecondary}"
                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
 
             <!-- List -->
-            <ScrollViewer x:Name="listScroll" Visibility="Collapsed"
+            <ScrollViewer x:Name="listScroll"
+                          Visibility="{Binding IsListVisible, Converter={StaticResource BoolToVis}}"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl x:Name="lstApps" Margin="0">
+                <ItemsControl x:Name="lstApps" Margin="0" ItemsSource="{Binding DisplayedApps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Padding="16,0"
@@ -302,7 +306,7 @@
                                     <CheckBox Grid.Column="0" VerticalAlignment="Center"
                                               IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                               IsEnabled="{Binding CanAct}"
-                                              Click="ItemCheckBox_Click"/>
+                                              Command="{Binding DataContext.RowSelectionChangedCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
 
                                     <!-- Название -->
                                     <TextBlock Grid.Column="1" Text="{Binding Name}"
@@ -365,16 +369,16 @@
                                                 Height="26" Padding="10,0" Margin="0,0,6,0"
                                                 Background="{StaticResource BrandGreen}" Foreground="#06130D"
                                                 FontSize="12" FontWeight="Bold"
-                                                Tag="{Binding}"
                                                 ToolTip="Обновит это приложение до доступной версии."
-                                                Click="BtnUpdate_Click"/>
+                                                Command="{Binding DataContext.UpdateAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"/>
                                         <Button Content="Удалить"
                                                 Style="{StaticResource DangerButtonStyle}"
                                                 IsEnabled="{Binding CanAct}"
                                                 Height="26" Padding="10,0"
-                                                Tag="{Binding}"
                                                 ToolTip="После подтверждения удалит это приложение с компьютера."
-                                                Click="BtnUninstall_Click"/>
+                                                Command="{Binding DataContext.UninstallAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
