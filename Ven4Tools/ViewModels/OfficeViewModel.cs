@@ -274,7 +274,13 @@ namespace Ven4Tools.ViewModels
             // отработать). Сам маркер и восстановление живут в OfficeRegionRecoveryService —
             // вкладка создаётся лениво, привязанная к её конструктору страховка не
             // срабатывала бы там, где нужна; основной вызов — при старте клиента (App).
-            RecoverRegionFromBackup();
+            // Гейт по Application.Current: восстановление пишет в реальный HKCU, а конструктор
+            // VM (в отличие от прежнего конструктора OfficeTab) достижим из юнит-тестов.
+            if (Application.Current != null)
+            {
+                RecoverRegionFromBackup();
+            }
+
             UpdateRegionDisplay();
         }
 
