@@ -311,9 +311,13 @@ namespace Ven4Tools.ViewModels
             return client;
         }
 
+        // `?.` — тот же паттерн, что и в UpdateRegionDisplay(): Application.Current равен
+        // null и в юнит-тестах (конструктор VM достижим оттуда), и во время
+        // Application.Shutdown(), а установка Office идёт до 60 минут — обновлять UI
+        // на выключенном приложении не нужно и нечем.
         private void SetProgress(bool visible, string phase = "", double value = 0, string detail = "")
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.Invoke(() =>
             {
                 ProgressVisible    = visible;
                 InstallPhaseText   = phase;
@@ -323,9 +327,9 @@ namespace Ven4Tools.ViewModels
         }
 
         private void SetPhase(string text) =>
-            Application.Current.Dispatcher.Invoke(() => InstallPhaseText = text);
+            Application.Current?.Dispatcher.Invoke(() => InstallPhaseText = text);
 
         private void SetDetail(string text) =>
-            Application.Current.Dispatcher.Invoke(() => InstallDetailText = text);
+            Application.Current?.Dispatcher.Invoke(() => InstallDetailText = text);
     }
 }

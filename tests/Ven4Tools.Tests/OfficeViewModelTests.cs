@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Ven4Tools.ViewModels;
 using Xunit;
 
@@ -81,16 +82,81 @@ namespace Ven4Tools.Tests
             Assert.Equal("", vm.InstallDetailText);
             Assert.False(vm.ProgressIndeterminate);
             Assert.True(vm.ActivationHintVisible);
+            // Вне WPF-хоста UpdateRegionDisplay() рано выходит по `Application.Current?.`,
+            // поэтому оба поля региона остаются на XAML-эквивалентном дефолте.
+            Assert.Equal("—", vm.RegionGeoText);
+            Assert.Equal("—", vm.RegionCCText);
         }
 
         [Fact]
-        public void ВыборДругойВерсии_ОбновляетСвойство()
+        public void PropertyChanged_ПоднимаетсяПриИзменении_ДляКлючевыхСвойств()
+        {
+            // Проверяем сам механизм SetField: 10 динамических биндингов OfficeTab.xaml
+            // (RegionGeoText/RegionCCText/InstallPhaseText/ProgressValue/InstallDetailText/
+            // ProgressVisible/ProgressIndeterminate/CancelVisible/SelectedLanguage/SaveInstaller)
+            // молча перестанут обновляться, если SetField перестанет поднимать
+            // PropertyChanged или передаст неверное имя свойства — билд и UI-тесты
+            // такую регрессию не поймают.
+            var vm = new OfficeViewModel();
+            var raised = new List<string?>();
+            vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+            vm.SaveInstaller = true;
+            vm.IsInstalling = true;
+            vm.IsDownloading = true;
+            vm.HasDownloadedInstaller = true;
+            vm.CancelEnabled = true;
+
+            Assert.Contains(nameof(vm.SaveInstaller), raised);
+            Assert.Contains(nameof(vm.IsInstalling), raised);
+            Assert.Contains(nameof(vm.IsDownloading), raised);
+            Assert.Contains(nameof(vm.HasDownloadedInstaller), raised);
+            Assert.Contains(nameof(vm.CancelEnabled), raised);
+        }
+
+        [Fact]
+        public void PropertyChanged_НеПоднимаетсяПриЗаписиТогоЖеЗначения()
+        {
+            // Вторая половина контракта SetField — ранний выход по Equals(field, value).
+            var vm = new OfficeViewModel();
+            vm.SaveInstaller = true;
+
+            var raised = new List<string?>();
+            vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+            vm.SaveInstaller = true;
+
+            Assert.Empty(raised);
+        }
+
+        [Fact]
+        public void ВыборВерсии_ПоднимаетPropertyChanged_ТолькоПриУстановкеВTrue()
         {
             var vm = new OfficeViewModel();
+            var raised = new List<string?>();
+            vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
 
             vm.IsO2021Selected = true;
 
             Assert.True(vm.IsO2021Selected);
+            Assert.Contains(nameof(vm.IsO2021Selected), raised);
+        }
+
+        [Fact]
+        public void ВыборВерсии_УстановкаВFalse_НеПадаетИНеТрогаетДругиеСвойства()
+        {
+            // Оригинал не слушает RadioButton.Unchecked вообще — сеттер обязан безопасно
+            // принимать false, не вызывая OnVersionOrLanguageChanged (которая иначе дошла бы
+            // до Application.Current.Dispatcher и упала бы вне WPF-хоста — см. фикс Task 1).
+            // IsO365Selected по умолчанию true, поэтому это реальный переход true→false.
+            var vm = new OfficeViewModel();
+            var raised = new List<string?>();
+            vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+            vm.IsO365Selected = false;
+
+            Assert.False(vm.IsO365Selected);
+            Assert.Equal(new string?[] { nameof(vm.IsO365Selected) }, raised);
         }
 
         [Fact]
