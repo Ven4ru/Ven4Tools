@@ -132,14 +132,21 @@ namespace Ven4Tools.ViewModels
             set => SetFilterFlag(ref _isUnknownFilterSelected, value);
         }
 
-        // Эквивалент подписки на RadioButton.Checked (не Unchecked) в оригинале —
-        // фильтр пересчитывается только когда сеттер получает true.
+        // ApplyFilter() вызывается на ЛЮБОЕ реальное изменение флага, включая переход
+        // в false. Причина: при TwoWay-биндинге радиокнопок порядок обратный порядку
+        // события RadioButton.Checked — сеттер новой выбранной кнопки получает true
+        // ПЕРВЫМ, а сосед получает false ВТОРЫМ. Пересчёт только на true оставлял бы
+        // список отфильтрованным по старому флагу (клик «Все» после «Неизвестные»
+        // не сбрасывал фильтр). Промежуточный вызов с обоими флагами true невидим:
+        // всё происходит синхронно внутри одного обработчика клика, рендера между
+        // записями нет, а итоговый DisplayedApps задаёт последний вызов — уже с
+        // корректным состоянием.
         private void SetFilterFlag(ref bool field, bool value, [CallerMemberName] string? propertyName = null)
         {
             if (field == value) return;
             field = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            if (value) ApplyFilter();
+            ApplyFilter();
         }
 
         private bool _onlyUpdates;

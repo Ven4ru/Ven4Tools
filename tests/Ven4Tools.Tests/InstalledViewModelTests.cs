@@ -78,14 +78,15 @@ namespace Ven4Tools.Tests
         }
 
         [Fact]
-        public void IsAllFilterSelected_УстановкаВFalse_НеВызываетApplyFilter()
+        public void IsAllFilterSelected_УстановкаВFalse_ВызываетApplyFilter()
         {
-            // SetFilterFlag — эквивалент RadioButton.Checked без Unchecked: переход в false
-            // обязан только поднять PropertyChanged, но НЕ пересчитывать фильтр.
+            // SetFilterFlag пересчитывает фильтр на ЛЮБОЕ реальное изменение, включая
+            // переход в false: при TwoWay-биндинге радиокнопок сосед получает false
+            // ВТОРЫМ, и именно этот вызов задаёт итоговый список.
             // ApplyFilter() всегда переустанавливает DisplayedApps новым списком
             // (SetField сравнивает ссылки → PropertyChanged гарантирован даже на пустом
             // _allApps) и безусловно поднимает SelectAllState из RecomputeSelectAllState —
-            // по отсутствию этих двух событий и ловим факт, что ApplyFilter не звали.
+            // по наличию этих двух событий и ловим факт, что ApplyFilter звали.
             var vm = new InstalledViewModel();
             var raised = new List<string?>();
             vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
@@ -94,8 +95,8 @@ namespace Ven4Tools.Tests
 
             Assert.False(vm.IsAllFilterSelected);
             Assert.Contains(nameof(vm.IsAllFilterSelected), raised);
-            Assert.DoesNotContain(nameof(vm.DisplayedApps), raised);
-            Assert.DoesNotContain(nameof(vm.SelectAllState), raised);
+            Assert.Contains(nameof(vm.DisplayedApps), raised);
+            Assert.Contains(nameof(vm.SelectAllState), raised);
         }
 
         [Fact]
@@ -111,6 +112,35 @@ namespace Ven4Tools.Tests
             Assert.Contains(nameof(vm.IsUnknownFilterSelected), raised);
             Assert.Contains(nameof(vm.DisplayedApps), raised);
             Assert.Contains(nameof(vm.SelectAllState), raised);
+        }
+
+        [Fact]
+        public void ПереключениеФильтра_НеизвестныеЗатемВсе_СбрасываетФильтрКорректно()
+        {
+            // Регрессия: при TwoWay-биндинге радиокнопок сеттер НОВОЙ выбранной кнопки
+            // получает true ПЕРВЫМ, соседа сбрасывают в false ВТОРЫМ. Воспроизводим
+            // ровно этот порядок записей для клика «Неизвестные» → «Все».
+            // _allApps приватное, поэтому наблюдаем не содержимое списка, а СОСТОЯНИЕ
+            // флагов на момент каждого пересчёта: последний ApplyFilter (тот, чей
+            // результат и видит пользователь) обязан отработать при IsAll=true и
+            // IsUnknown=false. До фикса последним был пересчёт по IsUnknown=true.
+            var vm = new InstalledViewModel();
+            var снимки = new List<(bool All, bool Unknown)>();
+            vm.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(vm.DisplayedApps))
+                    снимки.Add((vm.IsAllFilterSelected, vm.IsUnknownFilterSelected));
+            };
+
+            // Клик «Неизвестные»
+            vm.IsUnknownFilterSelected = true;
+            vm.IsAllFilterSelected     = false;
+            // Клик «Все»
+            vm.IsAllFilterSelected     = true;
+            vm.IsUnknownFilterSelected = false;
+
+            Assert.NotEmpty(снимки);
+            Assert.Equal((true, false), снимки[^1]);
         }
 
         [Fact]
