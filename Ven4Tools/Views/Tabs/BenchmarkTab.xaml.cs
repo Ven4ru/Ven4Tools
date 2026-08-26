@@ -1,92 +1,29 @@
-using System.Collections.Generic;
-using System.Threading;
-using System.Windows;
 using System.Windows.Controls;
-using Ven4Tools.Models;
-using Ven4Tools.Services.DiskBenchmark;
+using Ven4Tools.ViewModels;
 
 namespace Ven4Tools.Views.Tabs
 {
     /// <summary>
-    /// Вкладка «Бенчмарк»: измерение скорости накопителя, определение подключения и отчёт.
-    /// Полностью офлайн — сетевых вызовов здесь нет ни одного.
+    /// Вкладка «Бенчмарк» — тонкая обёртка над <see cref="BenchmarkViewModel"/>.
+    /// Вся логика перенесена в ViewModel при MVVM-миграции (2026-08-26, одиннадцатая
+    /// и последняя вкладка серии — после неё клиент Ven4Tools полностью на MVVM).
     /// </summary>
     public partial class BenchmarkTab : UserControl
     {
+        private readonly BenchmarkViewModel _viewModel = new();
         private bool _initialized;
-
-        private List<PhysicalDiskInfo> _disks = new List<PhysicalDiskInfo>();
-        private PhysicalDiskInfo? _selectedDisk;
-        private BenchmarkVolumeInfo? _selectedVolume;
-        private List<string> _warnings = new List<string>();
-
-        /// <summary>Номер последнего запроса предупреждений — защита от наложения вызовов.</summary>
-        private int _warningsToken;
-
-        private BenchmarkRunResult? _lastResult;
-        private CancellationTokenSource? _cancellation;
-        private bool _running;
 
         public BenchmarkTab()
         {
             InitializeComponent();
+            DataContext = _viewModel;
 
-            cmbDisks.SelectionChanged += CmbDisks_SelectionChanged;
-            cmbVolumes.SelectionChanged += CmbVolumes_SelectionChanged;
-            cmbFileSize.SelectionChanged += CmbFileSize_SelectionChanged;
-            btnRunBenchmark.Click += BtnRunBenchmark_Click;
-            btnCopyReport.Click += BtnCopyReport_Click;
-            btnSaveReport.Click += BtnSaveReport_Click;
-
-            Loaded += BenchmarkTab_Loaded;
-        }
-
-        private async void BenchmarkTab_Loaded(object sender, RoutedEventArgs e)
-        {
-            if (_initialized) return;
-            _initialized = true;
-
-            FillFileSizes();
-
-            // Подчистка тестовых файлов, оставшихся от аварийно прерванных прогонов.
-            DiskBenchmarkEngine.CleanupOrphanedFiles();
-
-            await LoadDisksAsync();
-        }
-
-        private void FillFileSizes()
-        {
-            cmbFileSize.Items.Clear();
-            foreach (long size in BenchmarkPresets.FileSizes)
+            Loaded += async (_, _) =>
             {
-                cmbFileSize.Items.Add(new ComboBoxItem
-                {
-                    Content = BenchmarkReportBuilder.FormatBinarySize(size),
-                    Tag = size
-                });
-            }
-            cmbFileSize.SelectedIndex = 0;
-        }
-
-        /// <summary>Размер тестового файла, выбранный пользователем.</summary>
-        private long SelectedFileSize =>
-            cmbFileSize.SelectedItem is ComboBoxItem item && item.Tag is long size
-                ? size
-                : BenchmarkPresets.FileSizes[0];
-
-        /// <summary>Профиль прогона, выбранный пользователем.</summary>
-        private BenchmarkProfile SelectedProfile
-        {
-            get
-            {
-                string tag = (cmbProfile.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Normal";
-                return tag switch
-                {
-                    "Fast" => BenchmarkProfile.Fast,
-                    "Precise" => BenchmarkProfile.Precise,
-                    _ => BenchmarkProfile.Normal
-                };
-            }
+                if (_initialized) return;
+                _initialized = true;
+                await _viewModel.InitializeAsync();
+            };
         }
     }
 }
