@@ -16,6 +16,11 @@ namespace Ven4Tools.Views.Tabs
         private readonly DiagnosticsViewModel _viewModel = new();
         private bool _initialized = false;
 
+        /// <summary>
+        /// Запрос на переход к вкладке «Обновления Windows». Диагностика знает про
+        /// ошибки обновления, но не про навигацию — переключением занимается
+        /// MainWindow, как это уже сделано у OfficeTab.GoToActivation.
+        /// </summary>
         public event Action? GoToWindowsUpdate;
 
         public DiagnosticsTab()
