@@ -33,7 +33,6 @@ public sealed class ButtonToolTipCoverageTests
     [Theory]
     [InlineData("Ven4Tools/Views/PinsStripController.cs", "installBtn")]
     [InlineData("Ven4Tools/Views/PinsStripController.cs", "unpinBtn")]
-    [InlineData("Ven4Tools/Views/Tabs/DiagnosticsTab.RebootHistory.cs", "fixBtn")]
     public void DynamicButtonsHaveExplanations(string relativePath, string variableName)
     {
         string path = Path.Combine(

@@ -2,6 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource ContentBackground}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
     <Grid Margin="20">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
         <StackPanel Margin="0,0,0,16">
@@ -22,12 +25,13 @@
                         </Grid.ColumnDefinitions>
                         <Button x:Name="btnRunDiagnostics" Content="🔍 Запустить диагностику"
                                 ToolTip="Проверит состояние системы, дисков, недавние сбои, Windows Update и аппаратные события. Ничего не исправляет автоматически."
-                                Height="36" Width="220" HorizontalAlignment="Left"/>
+                                Height="36" Width="220" HorizontalAlignment="Left"
+                                Command="{Binding RunDiagnosticsCommand}"/>
                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Ellipse x:Name="dotHealthBadge" Width="10" Height="10" Fill="{DynamicResource TextSecondary}" Margin="0,0,8,0"/>
-                            <TextBlock x:Name="txtHealthBadge" Text="Диагностика ещё не запускалась" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                            <Ellipse x:Name="dotHealthBadge" Width="10" Height="10" Fill="{Binding HealthBadgeBrush}" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="txtHealthBadge" Text="{Binding HealthBadgeText}" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <TextBlock x:Name="txtLastRun" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        <TextBlock x:Name="txtLastRun" Text="{Binding LastRunText}" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                    Margin="0,20,0,0" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
                     </Grid>
                 </Border>
@@ -38,26 +42,27 @@
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock Text="ОС:" Foreground="{DynamicResource TextSecondary}"/>
-                            <TextBlock x:Name="txtOSVersion" Grid.Column="1" Text="Загрузка..." Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtOSVersion" Grid.Column="1" Text="{Binding OSVersionText}" Foreground="{DynamicResource TextPrimary}"/>
                         </Grid>
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock Text="Процессор:" Foreground="{DynamicResource TextSecondary}"/>
-                            <TextBlock x:Name="txtProcessor" Grid.Column="1" Text="Загрузка..." Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtProcessor" Grid.Column="1" Text="{Binding ProcessorText}" Foreground="{DynamicResource TextPrimary}"/>
                         </Grid>
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock Text="ОЗУ:" Foreground="{DynamicResource TextSecondary}"/>
-                            <TextBlock x:Name="txtRAM" Grid.Column="1" Text="Загрузка..." Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtRAM" Grid.Column="1" Text="{Binding RAMText}" Foreground="{DynamicResource TextPrimary}"/>
                         </Grid>
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock Text="Версия Ven4Tools:" Foreground="{DynamicResource TextSecondary}"/>
-                            <TextBlock x:Name="txtAppVersion" Grid.Column="1" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtAppVersion" Grid.Column="1" Text="{Binding AppVersionText}" Foreground="{DynamicResource TextPrimary}"/>
                         </Grid>
                         <Button x:Name="btnCopySystemInfo" Content="📋 Копировать информацию"
                                 ToolTip="Скопирует показанные сведения о Windows, процессоре, памяти и версии Ven4Tools."
-                                Height="30" Width="180" Margin="0,15,0,0" HorizontalAlignment="Left"/>
+                                Height="30" Width="180" Margin="0,15,0,0" HorizontalAlignment="Left"
+                                Command="{Binding CopySystemInfoCommand}"/>
                     </StackPanel>
                 </GroupBox>
 
@@ -65,7 +70,31 @@
                 <GroupBox Header="🔁 История перезагрузок и сбоев (7 дней)" Margin="0,0,0,15">
                     <StackPanel x:Name="pnlRebootHistory" Margin="10">
                         <TextBlock x:Name="txtRebootHistoryPlaceholder" Text="Нажмите «Запустить диагностику»"
-                                   Foreground="{DynamicResource TextSecondary}"/>
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   Visibility="{Binding ShowPlaceholders, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Text="{Binding RebootStatusRow.Text}" Foreground="{Binding RebootStatusRow.Foreground}"
+                                   Visibility="{Binding ShowRebootStatusRow, Converter={StaticResource BoolToVis}}"/>
+                        <ItemsControl ItemsSource="{Binding RebootCards}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Expander Header="{Binding Header}" Margin="0,0,0,6">
+                                        <TextBox Text="{Binding RawDetails}"
+                                                 IsReadOnly="True"
+                                                 TextWrapping="Wrap"
+                                                 FontFamily="Consolas"
+                                                 FontSize="10"
+                                                 Background="{DynamicResource CardBackground}"
+                                                 Foreground="{DynamicResource TextPrimary}"
+                                                 Margin="10,4,10,8"/>
+                                    </Expander>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button x:Name="btnDisableFastStartup" Content="🔧 Отключить быстрый запуск"
+                                ToolTip="После подтверждения отключит быстрый запуск Windows и удалит файл гибернации."
+                                Height="32" Width="240" HorizontalAlignment="Left" Margin="0,10,0,0"
+                                Visibility="{Binding ShowDisableFastStartupButton, Converter={StaticResource BoolToVis}}"
+                                Command="{Binding DisableFastStartupCommand}"/>
                     </StackPanel>
                 </GroupBox>
 
@@ -73,7 +102,15 @@
                 <GroupBox Header="💾 Диски" Margin="0,0,0,15">
                     <StackPanel x:Name="pnlDisks" Margin="10">
                         <TextBlock x:Name="txtDisksPlaceholder" Text="Нажмите «Запустить диагностику»"
-                                   Foreground="{DynamicResource TextSecondary}"/>
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   Visibility="{Binding ShowPlaceholders, Converter={StaticResource BoolToVis}}"/>
+                        <ItemsControl ItemsSource="{Binding DiskRows}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Text}" Foreground="{Binding Foreground}" Margin="0,2,0,2"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </GroupBox>
 
@@ -82,7 +119,15 @@
                     <StackPanel Margin="10">
                         <StackPanel x:Name="pnlWindowsUpdateFailures">
                             <TextBlock x:Name="txtWuPlaceholder" Text="Нажмите «Запустить диагностику»"
-                                       Foreground="{DynamicResource TextSecondary}"/>
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       Visibility="{Binding ShowPlaceholders, Converter={StaticResource BoolToVis}}"/>
+                            <ItemsControl ItemsSource="{Binding WuRows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Text}" Foreground="{Binding Foreground}" TextWrapping="Wrap" Margin="0,2,0,2"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                         <!-- Обе кнопки появляются только когда ошибки обновления реально
                              найдены: чистка кэша лечит частую причину, а переход на вкладку
@@ -90,10 +135,14 @@
                         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                             <Button x:Name="btnClearWuCache" Content="🧹 Очистить кэш Windows Update"
                                     ToolTip="После подтверждения остановит службы обновления, очистит их кэш и снова запустит службы."
-                                    Height="30" Width="240" HorizontalAlignment="Left" Visibility="Collapsed"/>
+                                    Height="30" Width="240" HorizontalAlignment="Left"
+                                    Visibility="{Binding WuButtonsVisible, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding ClearWuCacheCommand}"/>
                             <Button x:Name="btnOpenWindowsUpdate" Content="🪟 Открыть Windows Update →"
                                     ToolTip="Откроет вкладку «Обновления Windows», где можно заново проверить и установить не установившиеся патчи."
-                                    Height="30" Width="240" Margin="10,0,0,0" HorizontalAlignment="Left" Visibility="Collapsed"/>
+                                    Height="30" Width="240" Margin="10,0,0,0" HorizontalAlignment="Left"
+                                    Visibility="{Binding WuButtonsVisible, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding OpenWindowsUpdateCommand}"/>
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>
@@ -101,12 +150,13 @@
                 <!-- Аппаратные и драйверные события -->
                 <GroupBox Header="⚠️ Аппаратные и драйверные события (7 дней)" Margin="0,0,0,15">
                     <StackPanel Margin="10">
-                        <TextBlock x:Name="txtHardwareSummary" Text="Нажмите «Запустить диагностику»"
+                        <TextBlock x:Name="txtHardwareSummary" Text="{Binding HardwareSummaryText}"
                                    Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBox x:Name="txtHardwareRaw" Margin="0,10,0,0" Height="80"
+                        <TextBox x:Name="txtHardwareRaw" Text="{Binding HardwareRawText}" Margin="0,10,0,0" Height="80"
                                  Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
                                  FontFamily="Consolas" FontSize="10" IsReadOnly="True"
-                                 VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Visibility="Collapsed"/>
+                                 VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
+                                 Visibility="{Binding HardwareRawVisible, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                 </GroupBox>
 
@@ -115,16 +165,18 @@
                     <StackPanel>
                         <TextBlock Text="Управление технологией Intel Turbo Boost"
                                    Foreground="{DynamicResource TextSecondary}" Margin="10,5,10,0"/>
-                        <TextBlock x:Name="txtTurboBoostStatus" Text="Текущее состояние: определяется..."
+                        <TextBlock x:Name="txtTurboBoostStatus" Text="{Binding TurboBoostStatusText}"
                                    Foreground="{DynamicResource TextPrimary}" FontWeight="SemiBold"
                                    Margin="10,8,10,0"/>
                         <StackPanel Orientation="Horizontal" Margin="10,10">
                             <Button x:Name="btnDisableTurboBoost" Content="❌ Отключить Turbo Boost"
                                     ToolTip="Изменит параметры электропитания и немедленно отключит Turbo Boost процессора."
-                                    Height="35" Width="180" Margin="0,0,10,0"/>
+                                    Height="35" Width="180" Margin="0,0,10,0"
+                                    Command="{Binding DisableTurboBoostCommand}"/>
                             <Button x:Name="btnEnableTurboBoost" Content="✅ Включить Turbo Boost"
                                     ToolTip="Изменит параметры электропитания и немедленно включит Turbo Boost процессора. Перезагрузка не требуется."
-                                    Height="35" Width="180"/>
+                                    Height="35" Width="180"
+                                    Command="{Binding EnableTurboBoostCommand}"/>
                         </StackPanel>
                         <TextBlock Text="ℹ️ Изменение применяется немедленно, перезагрузка не требуется"
                                    Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="10,5,10,10"/>
@@ -137,26 +189,29 @@
                         <StackPanel Orientation="Horizontal" Margin="10,10,10,5">
                             <Button x:Name="btnOpenLogs" Content="📁 Открыть папку"
                                     ToolTip="Откроет в Проводнике папку, где Ven4Tools хранит диагностические журналы."
-                                    Height="35" Width="150" Margin="0,0,10,0"/>
+                                    Height="35" Width="150" Margin="0,0,10,0"
+                                    Command="{Binding OpenLogsCommand}"/>
                             <Button x:Name="btnOpenLatestLog" Content="📄 Последний лог"
                                     ToolTip="Загрузит содержимое самого свежего журнала в поле просмотра ниже."
-                                    Height="35" Width="155" Margin="0,0,10,0"/>
+                                    Height="35" Width="155" Margin="0,0,10,0"
+                                    Command="{Binding OpenLatestLogCommand}"/>
                             <Button x:Name="btnClearLogs" Content="🗑️ Очистить"
                                     ToolTip="После подтверждения удалит сохранённые файлы журналов Ven4Tools."
-                                    Height="35" Width="100"/>
+                                    Height="35" Width="100"
+                                    Command="{Binding ClearLogsCommand}"/>
                         </StackPanel>
-                        <TextBox x:Name="txtLatestLog" Margin="10,0,10,10" Height="100"
+                        <TextBox x:Name="txtLatestLog" Text="{Binding LatestLogText}" Margin="10,0,10,10" Height="100"
                                  Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
                                  FontFamily="Consolas" FontSize="10" IsReadOnly="True"
-                                 VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
-                                 Text="Нажмите «Последний лог» для просмотра..."/>
+                                 VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
                     </StackPanel>
                 </GroupBox>
 
                 <!-- Экспорт отчёта -->
                 <Button x:Name="btnCopyFullReport" Content="📤 Скопировать полный отчёт"
                         ToolTip="Соберёт результаты диагностики в текстовый отчёт и скопирует его в буфер обмена."
-                        Height="34" Width="240" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                        Height="34" Width="240" HorizontalAlignment="Left" Margin="0,0,0,10"
+                        Command="{Binding CopyFullReportCommand}"/>
 
             </StackPanel>
         </ScrollViewer>
