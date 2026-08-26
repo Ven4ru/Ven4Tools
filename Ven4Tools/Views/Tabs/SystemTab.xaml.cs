@@ -1,64 +1,44 @@
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Management;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.Win32;
-using Ven4Tools.Models;
 using Ven4Tools.Services;
 using Ven4Tools.Shared;
+using Ven4Tools.ViewModels;
 
 namespace Ven4Tools.Views.Tabs
 {
+    /// <summary>
+    /// Вкладка «Настройки» — тонкая обёртка над <see cref="SystemViewModel"/>.
+    /// Вся логика перенесена в ViewModel при MVVM-миграции (2026-08-26, девятая
+    /// вкладка после Debloater/History/About/Activation/Network/Office/Installed/
+    /// Diagnostics). Три делегата (OwnerWindowProvider/DebloaterTabProvider/
+    /// RefreshTabVisibility) и подписки на события ThemeApplied/
+    /// ConnectivityStatusUpdated/CacheLogAppended — единственное, что остаётся
+    /// здесь, потому что требует живой Window/UIElement, которого у VM нет.
+    /// </summary>
     public partial class SystemTab : UserControl
     {
+        private readonly SystemViewModel _viewModel = new();
         private bool _initialized = false;
-        private bool _loadingAppearance = true;
-        private bool _loadingCatalogMode = false;
         private bool _connSubscribed = false;
 
         public SystemTab()
         {
             InitializeComponent();
+            DataContext = _viewModel;
 
-            SelectComboByTag(cmbTheme, ProfileService.Current.Theme);
-            SelectComboByTag(cmbLanguage, ProfileService.Current.Language);
-            chkCompactMode.IsChecked = ProfileService.Current.CompactMode;
-            chkReduceMotion.IsChecked = ProfileService.Current.ReduceMotion;
-            MotionService.Enabled = !ProfileService.Current.ReduceMotion;
-            _loadingAppearance = false;
+            _viewModel.OwnerWindowProvider = () => Window.GetWindow(this);
+            _viewModel.DebloaterTabProvider = () => Window.GetWindow(this) is MainWindow mw ? mw.EnsureDebloaterTab() : null;
+            _viewModel.RefreshTabVisibility = () => { if (Window.GetWindow(this) is MainWindow mw) mw.UpdateTabVisibility(); };
+
+            _viewModel.ThemeApplied += () => MotionService.CrossFade((UIElement?)Window.GetWindow(this) ?? this, 220);
+            _viewModel.ConnectivityStatusUpdated += () => MotionService.Pulse(pnlConnStatus, 1.015, 160);
+            _viewModel.CacheLogAppended += () => txtCacheLog.ScrollToEnd();
 
             Loaded += SystemTab_Loaded;
-
-            chkMinimizeToTray.IsChecked = ProfileService.Current.MinimizeToTray;
-            chkNotifications.Click += (_, _) => SaveSettings();
-            chkUpdateNotifications.Click += (_, _) => SaveSettings();
-            sliderCatalogTimeout.ValueChanged += (_, e) => { txtCatalogTimeout.Text = $"{(int)e.NewValue} сек"; SaveSettings(); };
-            sliderCheckTimeout.ValueChanged += (_, e) => { txtCheckTimeout.Text = $"{(int)e.NewValue} сек"; SaveSettings(); };
-            btnCheckUpdates.Click += BtnCheckUpdates_Click;
-            // Подписка на btnSaveSnapshot задаётся в XAML (Click="BtnSaveSnapshot_Click"),
-            // повторная подписка в code-behind вызывала двойной вызов обработчика.
-
-            // Офлайн-режим
-            chkOfflineMode.Click      += ChkOfflineMode_Click;
-            chkForceOnlineMode.Click  += ChkForceOnlineMode_Click;
-            chkParanoidMode.Click     += ChkParanoidMode_Click;
-            txtOfflineCachePath.LostFocus += (_, _) => SaveOfflineSettings();
-
-            // Подписка на ConnectivityMonitor — в Loaded: вкладка кэшируется и переиспользуется,
-            // поэтому после Unloaded нужно подписываться заново при каждом показе
             Unloaded += SystemTab_Unloaded;
-
-            LoadSettings();
-            LoadOfflineSettings();
         }
 
-        private void OnConnectivityChanged(bool online) => Dispatcher.Invoke(UpdateConnectivityStatus);
+        private void OnConnectivityChanged(bool online) => Dispatcher.Invoke(_viewModel.UpdateConnectivityStatus);
 
         private void SystemTab_Unloaded(object sender, RoutedEventArgs e)
         {
@@ -77,16 +57,12 @@ namespace Ven4Tools.Views.Tabs
                 ConnectivityMonitor.StatusChanged += OnConnectivityChanged;
                 _connSubscribed = true;
             }
-            UpdateConnectivityStatus();
+            _viewModel.UpdateConnectivityStatus();
 
             if (_initialized) return;
             _initialized = true;
 
-            LoadSourceOrderUI();
-            UpdateCacheStats();
-            LoadCacheAppsList();
-            LoadSnapshotsList();
+            _viewModel.Initialize();
         }
-
     }
 }
