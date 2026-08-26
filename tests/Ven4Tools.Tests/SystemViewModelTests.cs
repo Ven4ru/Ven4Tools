@@ -29,6 +29,20 @@ namespace Ven4Tools.Tests
         }
 
         [Fact]
+        public void DefaultInstallFolderText_ОтклонённыйПуть_ОткатываетЗначениеСУведомлением()
+        {
+            var vm = new SystemViewModel();
+            string before = vm.DefaultInstallFolderText;
+            bool raised = false;
+            vm.PropertyChanged += (_, e) => raised |= e.PropertyName == nameof(SystemViewModel.DefaultInstallFolderText);
+
+            vm.DefaultInstallFolderText = @"\\server\share";
+
+            Assert.Equal(before, vm.DefaultInstallFolderText);
+            Assert.True(raised);
+        }
+
+        [Fact]
         public void Конструктор_УстанавливаетДефолтОбновленийПриложений()
         {
             var vm = new SystemViewModel();
@@ -134,6 +148,27 @@ namespace Ven4Tools.Tests
 
             Assert.False(vm.ShowGlobalOrderPanel);
             Assert.True(vm.ShowPerCategoryHint);
+        }
+
+        [Fact]
+        public void IsPerCategorySourceMode_УстановкаВTrue_СбрасываетIsGlobalSourceMode()
+        {
+            var vm = new SystemViewModel();
+
+            vm.IsPerCategorySourceMode = true;
+
+            Assert.False(vm.IsGlobalSourceMode);
+        }
+
+        [Fact]
+        public void IsGlobalSourceMode_УстановкаВTrue_СбрасываетIsPerCategorySourceMode()
+        {
+            var vm = new SystemViewModel();
+            vm.IsPerCategorySourceMode = true;
+
+            vm.IsGlobalSourceMode = true;
+
+            Assert.False(vm.IsPerCategorySourceMode);
         }
 
         [Fact]

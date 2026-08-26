@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Windows;
 using Microsoft.Win32;
 using Ven4Tools.Services;
@@ -146,7 +147,13 @@ namespace Ven4Tools.ViewModels
 
             if (!CommandLineGuard.ValidateInstallFolder(value))
             {
-                SetField(ref _defaultInstallFolderText, ProfileService.Current.DefaultInstallFolder, nameof(DefaultInstallFolderText));
+                // Поле _defaultInstallFolderText не менялось (запись в него — ниже, после
+                // проверки), поэтому оно уже равно ProfileService.Current.DefaultInstallFolder —
+                // SetField молча отфильтровал бы это как "значение не изменилось" и не поднял
+                // бы PropertyChanged, а без него биндинг TextBox.Text не перечитает старое
+                // значение обратно, и отклонённый ввод остался бы висеть на экране. Поднимаем
+                // уведомление безусловно — сама пара "поле/профиль" не расходится.
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DefaultInstallFolderText)));
                 DefaultInstallFolderStatusText =
                     "⚠ Путь не принят: нужен абсолютный локальный путь без сетевых имён и кавычек. Оставлено прежнее значение.";
                 return;
