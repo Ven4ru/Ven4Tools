@@ -18,7 +18,7 @@ namespace Ven4Tools.Tests
             Assert.Equal("Обновления ещё не проверялись", vm.LastCheckedText);
             Assert.Equal("", vm.StatusText);
             Assert.Empty(vm.Tree);
-            Assert.False(vm.ShowEmptyState);
+            Assert.True(vm.ShowEmptyState);
             Assert.Equal("Список обновлений пуст", vm.EmptyStateTitle);
             Assert.Equal("Нажмите «Проверить обновления», чтобы начать проверку", vm.EmptyStateSubtitle);
             Assert.False(vm.ShowOpenDiagnosticsButton);
