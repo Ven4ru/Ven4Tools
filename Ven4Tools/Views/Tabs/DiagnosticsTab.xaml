@@ -78,7 +78,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Expander Header="{Binding Header}" Margin="0,0,0,6">
-                                        <TextBox Text="{Binding RawDetails}"
+                                        <TextBox Text="{Binding RawDetails, Mode=OneWay}"
                                                  IsReadOnly="True"
                                                  TextWrapping="Wrap"
                                                  FontFamily="Consolas"
@@ -152,7 +152,7 @@
                     <StackPanel Margin="10">
                         <TextBlock x:Name="txtHardwareSummary" Text="{Binding HardwareSummaryText}"
                                    Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBox x:Name="txtHardwareRaw" Text="{Binding HardwareRawText}" Margin="0,10,0,0" Height="80"
+                        <TextBox x:Name="txtHardwareRaw" Text="{Binding HardwareRawText, Mode=OneWay}" Margin="0,10,0,0" Height="80"
                                  Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
                                  FontFamily="Consolas" FontSize="10" IsReadOnly="True"
                                  VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
@@ -200,7 +200,7 @@
                                     Height="35" Width="100"
                                     Command="{Binding ClearLogsCommand}"/>
                         </StackPanel>
-                        <TextBox x:Name="txtLatestLog" Text="{Binding LatestLogText}" Margin="10,0,10,10" Height="100"
+                        <TextBox x:Name="txtLatestLog" Text="{Binding LatestLogText, Mode=OneWay}" Margin="10,0,10,10" Height="100"
                                  Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
                                  FontFamily="Consolas" FontSize="10" IsReadOnly="True"
                                  VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>

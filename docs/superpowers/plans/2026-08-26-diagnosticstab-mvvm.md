@@ -20,6 +20,7 @@
 - **Обязательная правка теста, не относящаяся к XAML/VM напрямую**: `tests/Ven4Tools.Tests/ButtonToolTipCoverageTests.cs` содержит `[InlineData("Ven4Tools/Views/Tabs/DiagnosticsTab.RebootHistory.cs", "fixBtn")]` — тест, специально написанный под то, что кнопка «Отключить быстрый запуск» раньше создавалась программно в C#. После миграции она становится обычной XAML-кнопкой с `ToolTip` и покрывается общим тестом `AllFunctionalXamlButtonsHaveExplanations` — эту строку `InlineData` нужно УДАЛИТЬ (Task 2), иначе тест падает (файла/переменной с таким содержимым там больше нет).
 - Все `x:Name`, участвующие в UI-тестах, сохраняются дословно: `btnDiagnosticsTab` (в MainWindow, не эта вкладка), `btnRunDiagnostics`, `btnCopyFullReport`, `btnCopySystemInfo`, `btnOpenWindowsUpdate`.
 - Никакой статический `IsEnabled` на кнопках не нужен — `CanExecute` + `CommandManager`.
+- **Обнаружено ревью Task 2 (тот же класс бага, что уже ронял OfficeTab, коммит `29c2609`): `TextBox.Text` — TwoWay-биндинг по умолчанию.** `txtLatestLog`/`txtHardwareRaw`/карточка `RebootCards` в исходном тексте плана были без `Mode=OneWay`, хотя биндятся на `private set`/`{ get; init; }` свойства VM — WPF бросает `InvalidOperationException` при АКТИВАЦИИ биндинга (не при попытке записи), и `IsReadOnly="True"`/`Visibility="Collapsed"` от этого не спасают (проверено эмпирически на throwaway WPF-пробе). Исправлено на этапе Task 2 фикс-раунда: у всех трёх добавлен `Mode=OneWay`. Код ниже в этом плане уже приведён в исправленном виде.
 - Коммиты — на русском, без Claude/AI-атрибуции.
 - Ветка `mvvm-diagnosticstab` уже создана от `main`, спека закоммичена (`0004a0f`).
 
@@ -1121,7 +1122,7 @@ git commit -m "feat(diagnostics): DiagnosticsViewModel (6 файлов) + юни
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Expander Header="{Binding Header}" Margin="0,0,0,6">
-                                        <TextBox Text="{Binding RawDetails}"
+                                        <TextBox Text="{Binding RawDetails, Mode=OneWay}"
                                                  IsReadOnly="True"
                                                  TextWrapping="Wrap"
                                                  FontFamily="Consolas"
@@ -1195,7 +1196,7 @@ git commit -m "feat(diagnostics): DiagnosticsViewModel (6 файлов) + юни
                     <StackPanel Margin="10">
                         <TextBlock x:Name="txtHardwareSummary" Text="{Binding HardwareSummaryText}"
                                    Foreground="{DynamicResource TextSecondary}"/>
-                        <TextBox x:Name="txtHardwareRaw" Text="{Binding HardwareRawText}" Margin="0,10,0,0" Height="80"
+                        <TextBox x:Name="txtHardwareRaw" Text="{Binding HardwareRawText, Mode=OneWay}" Margin="0,10,0,0" Height="80"
                                  Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
                                  FontFamily="Consolas" FontSize="10" IsReadOnly="True"
                                  VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"
@@ -1243,7 +1244,7 @@ git commit -m "feat(diagnostics): DiagnosticsViewModel (6 файлов) + юни
                                     Height="35" Width="100"
                                     Command="{Binding ClearLogsCommand}"/>
                         </StackPanel>
-                        <TextBox x:Name="txtLatestLog" Text="{Binding LatestLogText}" Margin="10,0,10,10" Height="100"
+                        <TextBox x:Name="txtLatestLog" Text="{Binding LatestLogText, Mode=OneWay}" Margin="10,0,10,10" Height="100"
                                  Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
                                  FontFamily="Consolas" FontSize="10" IsReadOnly="True"
                                  VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
