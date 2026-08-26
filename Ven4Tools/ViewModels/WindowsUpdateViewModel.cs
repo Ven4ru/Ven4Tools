@@ -67,7 +67,13 @@ namespace Ven4Tools.ViewModels
         private IReadOnlyList<WindowsUpdateCategoryNode> _tree = Array.Empty<WindowsUpdateCategoryNode>();
         public IReadOnlyList<WindowsUpdateCategoryNode> Tree { get => _tree; private set => SetField(ref _tree, value); }
 
-        private bool _showEmptyState;
+        // Дефолт true — в оригинальном XAML у pnlUpdatesEmpty нет атрибута Visibility,
+        // то есть подсказка видна сразу поверх пустого дерева, пока не начался первый
+        // поиск (RunSearchAsync явно скрывает её первой строкой, как и оригинал делал
+        // через pnlUpdatesEmpty.Visibility = Collapsed). Без этого дефолта сценарий
+        // ParanoidMode (InitializeAsync выходит раньше RunSearchAsync) оставлял бы
+        // пользователя перед пустым прямоугольником без объясняющей подсказки.
+        private bool _showEmptyState = true;
         public bool ShowEmptyState { get => _showEmptyState; private set => SetField(ref _showEmptyState, value); }
 
         private string _emptyStateTitle = "Список обновлений пуст";
