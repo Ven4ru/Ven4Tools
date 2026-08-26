@@ -1,21 +1,57 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using Ven4Tools.Helpers;
 
 namespace Ven4Tools.Services.WindowsUpdate
 {
-    public sealed class WindowsUpdateItemNode
+    public sealed class WindowsUpdateItemNode : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler? PropertyChanged;
+
         public WindowsUpdateItem Item { get; init; } = null!;
-        public bool IsChecked { get; set; }
+
+        private bool _isChecked;
+        public bool IsChecked
+        {
+            get => _isChecked;
+            set
+            {
+                if (_isChecked == value) return;
+                _isChecked = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsChecked)));
+            }
+        }
+
+        /// <summary>Текст строки патча для UI — раньше собирался в WindowsUpdateTab.RenderTree().</summary>
+        public string DisplayText =>
+            $"{Item.Title}" +
+            (Item.KbArticleIds.Count > 0 ? $" (KB{string.Join(", KB", Item.KbArticleIds)})" : "") +
+            $" — {SizeFormatter.BytesToMB(Item.SizeBytes)}";
     }
 
-    public sealed class WindowsUpdateCategoryNode
+    public sealed class WindowsUpdateCategoryNode : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler? PropertyChanged;
+
         public string Name { get; init; } = "";
         public List<WindowsUpdateItemNode> Items { get; init; } = new();
 
         // null = частично выбрано (tri-state), true = все выбраны, false = ни одного.
-        public bool? IsChecked { get; set; } = false;
+        private bool? _isChecked = false;
+        public bool? IsChecked
+        {
+            get => _isChecked;
+            set
+            {
+                if (_isChecked == value) return;
+                _isChecked = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsChecked)));
+            }
+        }
+
+        /// <summary>Текст заголовка категории для UI — раньше собирался в WindowsUpdateTab.RenderTree().</summary>
+        public string HeaderText => $"{Name} ({Items.Count})";
     }
 
     /// <summary>
