@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
+using Ven4Tools.Views;
 
 namespace Ven4Tools
 {
@@ -26,7 +27,12 @@ namespace Ven4Tools
         {
             InitializeComponent();
             _appName = appName;
-            this.Loaded += async (s, e) => await LoadWingetResultsAsync();
+            // Через общий перехватчик, а не голой async void-лямбдой: сейчас
+            // LoadWingetResultsAsync гасит всё сама, но любая будущая правка выше её
+            // try сделает исключение неперехватываемым и уронит приложение.
+            this.Loaded += (_, _) => TabInitGuard.Run(
+                LoadWingetResultsAsync,
+                "[AlternativeSourceDialog] Ошибка поиска пакетов winget");
             chkPriorityWinget.IsEnabled = false;
         }
 
