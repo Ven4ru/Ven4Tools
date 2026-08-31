@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
 using Ven4Tools.Services.DiskBenchmark;
@@ -120,7 +121,7 @@ namespace Ven4Tools.ViewModels
             ResultRows = BuildEmptyResultRows();
             ConclusionLines = new[]
             {
-                new ConclusionLine { Text = "Идёт измерение...", Foreground = ResolveBrush("TextSecondary") }
+                new ConclusionLine { Text = "Идёт измерение...", Foreground = BrushResolver.Resolve("TextSecondary") }
             };
         }
 
@@ -206,6 +207,6 @@ namespace Ven4Tools.ViewModels
         }
 
         private static ConclusionLine MakeConclusion(string text) =>
-            new() { Text = "• " + text, Foreground = ResolveBrush("TextPrimary") };
+            new() { Text = "• " + text, Foreground = BrushResolver.Resolve("TextPrimary") };
     }
 }

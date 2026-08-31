@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
@@ -29,14 +30,14 @@ namespace Ven4Tools.ViewModels
             catch (Exception ex)
             {
                 AppLogger.Write(ex, "DiagnosticsViewModel.RunRebootHistoryCheckAsync");
-                RebootStatusRow = new DiagnosticsTextRow { Text = "Недоступно: не удалось прочитать журнал событий.", Foreground = ResolveBrush("StatusWarning") };
+                RebootStatusRow = new DiagnosticsTextRow { Text = "Недоступно: не удалось прочитать журнал событий.", Foreground = BrushResolver.Resolve("StatusWarning") };
                 ShowRebootStatusRow = true;
                 return new List<RebootDiagnosis>();
             }
 
             if (diagnoses.Count == 0)
             {
-                RebootStatusRow = new DiagnosticsTextRow { Text = "За последние 7 дней нештатных завершений работы не найдено.", Foreground = ResolveBrush("StatusSuccess") };
+                RebootStatusRow = new DiagnosticsTextRow { Text = "За последние 7 дней нештатных завершений работы не найдено.", Foreground = BrushResolver.Resolve("StatusSuccess") };
                 ShowRebootStatusRow = true;
                 return diagnoses;
             }

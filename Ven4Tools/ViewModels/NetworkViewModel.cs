@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
@@ -19,7 +20,12 @@ namespace Ven4Tools.ViewModels
     {
         private string _text;
         private string _iconText = "⬜";
-        private Brush _iconBrush = ResolveDefaultBrush();
+        // Оригинальные txtPingIcon*/txtSvc* не задавали Foreground в XAML явно —
+        // цвет наследовался от глобального Style TargetType="TextBlock" (App.xaml:60),
+        // который ставит DynamicResource TextPrimary. Явный биндинг на IconBrush
+        // заменяет этот неявный канал, поэтому дефолт берётся из того же ресурса
+        // с фолбэком на замороженный (frozen, потокобезопасный) Brushes.White.
+        private Brush _iconBrush = BrushResolver.Resolve("TextPrimary");
 
         /// <summary>
         /// Начальный текст строки. Оригинальный XAML задавал разные дефолты:
@@ -48,15 +54,6 @@ namespace Ven4Tools.ViewModels
             get => _iconBrush;
             set => SetField(ref _iconBrush, value);
         }
-
-        // Оригинальные txtPingIcon*/txtSvc* не задавали Foreground в XAML явно —
-        // цвет наследовался от глобального Style TargetType="TextBlock" (App.xaml:60),
-        // который ставит DynamicResource TextPrimary. Явный биндинг на IconBrush
-        // заменяет этот неявный канал, поэтому дефолт вычисляется тем же способом,
-        // что уже проверен ревью ActivationViewModel — TryFindResource с фолбэком
-        // на замороженный (frozen, потокобезопасный) Brushes.White.
-        internal static Brush ResolveDefaultBrush() =>
-            (Application.Current?.TryFindResource("TextPrimary") as Brush) ?? Brushes.White;
     }
 
     /// <summary>
@@ -167,7 +164,7 @@ namespace Ven4Tools.ViewModels
         public bool IsResettingNetwork
         {
             get => _isResettingNetwork;
-            private set { if (SetField(ref _isResettingNetwork, value)) ResetNetworkCommand.RaiseCanExecuteChanged(); }
+            internal set { if (SetField(ref _isResettingNetwork, value)) ResetNetworkCommand.RaiseCanExecuteChanged(); }
         }
 
         private string _runAllButtonText = "🔍 Запустить полную диагностику";

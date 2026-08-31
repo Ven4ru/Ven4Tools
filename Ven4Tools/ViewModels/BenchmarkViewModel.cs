@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 using Ven4Tools.Services.DiskBenchmark;
 
@@ -64,9 +65,6 @@ namespace Ven4Tools.ViewModels
     /// </summary>
     public sealed partial class BenchmarkViewModel : ViewModelBase
     {
-        internal static Brush ResolveBrush(string resourceKey) =>
-            (Application.Current?.TryFindResource(resourceKey) as Brush) ?? Brushes.White;
-
         // ── Внутреннее состояние (не биндится напрямую) ─────────────────────────
 
         private List<PhysicalDiskInfo> _disks = new();
@@ -101,7 +99,7 @@ namespace Ven4Tools.ViewModels
         private string _ceilingText = "—";
         public string CeilingText { get => _ceilingText; private set => SetField(ref _ceilingText, value); }
 
-        private Brush _ceilingBrush = ResolveBrush("TextPrimary");
+        private Brush _ceilingBrush = BrushResolver.Resolve("TextPrimary");
         public Brush CeilingBrush { get => _ceilingBrush; private set => SetField(ref _ceilingBrush, value); }
 
         private IReadOnlyList<DiskOptionItem> _diskOptions = Array.Empty<DiskOptionItem>();
@@ -218,7 +216,7 @@ namespace Ven4Tools.ViewModels
             _resultRows = BuildEmptyResultRows();
             _conclusionLines = new[]
             {
-                new ConclusionLine { Text = "Запустите тест, чтобы увидеть разбор результата", Foreground = ResolveBrush("TextSecondary") }
+                new ConclusionLine { Text = "Запустите тест, чтобы увидеть разбор результата", Foreground = BrushResolver.Resolve("TextSecondary") }
             };
 
             RunBenchmarkCommand = RelayCommand.FromAsync(_ => RunBenchmarkAsync());

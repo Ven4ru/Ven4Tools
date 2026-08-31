@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
@@ -17,7 +18,7 @@ namespace Ven4Tools.ViewModels
                 var disks = await SystemHealthService.GetDiskHealthAsync();
                 if (disks.Count == 0)
                 {
-                    DiskRows = new[] { new DiagnosticsTextRow { Text = "Диски не найдены.", Foreground = ResolveBrush("TextSecondary") } };
+                    DiskRows = new[] { new DiagnosticsTextRow { Text = "Диски не найдены.", Foreground = BrushResolver.Resolve("TextSecondary") } };
                     return;
                 }
                 var rows = new List<DiagnosticsTextRow>();
@@ -41,7 +42,7 @@ namespace Ven4Tools.ViewModels
                     rows.Add(new DiagnosticsTextRow
                     {
                         Text = $"{icon} {disk.Name} — {label}",
-                        Foreground = ResolveBrush("TextPrimary")
+                        Foreground = BrushResolver.Resolve("TextPrimary")
                     });
                 }
                 DiskRows = rows;
@@ -49,7 +50,7 @@ namespace Ven4Tools.ViewModels
             catch (Exception ex)
             {
                 AppLogger.Write(ex, "DiagnosticsViewModel.RunDiskCheckAsync");
-                DiskRows = new[] { new DiagnosticsTextRow { Text = "Недоступно: не удалось получить состояние дисков.", Foreground = ResolveBrush("StatusWarning") } };
+                DiskRows = new[] { new DiagnosticsTextRow { Text = "Недоступно: не удалось получить состояние дисков.", Foreground = BrushResolver.Resolve("StatusWarning") } };
             }
         }
 
@@ -62,13 +63,13 @@ namespace Ven4Tools.ViewModels
                 var failures = await SystemHealthService.GetWindowsUpdateFailuresAsync();
                 if (failures.Count == 0)
                 {
-                    WuRows = new[] { new DiagnosticsTextRow { Text = "За последние 7 дней ошибок обновления Windows не найдено.", Foreground = ResolveBrush("StatusSuccess") } };
+                    WuRows = new[] { new DiagnosticsTextRow { Text = "За последние 7 дней ошибок обновления Windows не найдено.", Foreground = BrushResolver.Resolve("StatusSuccess") } };
                     return;
                 }
 
                 _lastRunHadWarning = true;
                 WuRows = failures.Take(20)
-                    .Select(f => new DiagnosticsTextRow { Text = $"🟡 {f.TimeCreated:g} — {f.Message}", Foreground = ResolveBrush("TextPrimary") })
+                    .Select(f => new DiagnosticsTextRow { Text = $"🟡 {f.TimeCreated:g} — {f.Message}", Foreground = BrushResolver.Resolve("TextPrimary") })
                     .ToList();
                 // Ошибки есть — предлагаем сразу перейти туда, где патчи можно
                 // переустановить, не заставляя искать вкладку в меню вручную.
@@ -77,7 +78,7 @@ namespace Ven4Tools.ViewModels
             catch (Exception ex)
             {
                 AppLogger.Write(ex, "DiagnosticsViewModel.RunWindowsUpdateCheckAsync");
-                WuRows = new[] { new DiagnosticsTextRow { Text = "Недоступно: не удалось прочитать журнал Windows Update.", Foreground = ResolveBrush("StatusWarning") } };
+                WuRows = new[] { new DiagnosticsTextRow { Text = "Недоступно: не удалось прочитать журнал Windows Update.", Foreground = BrushResolver.Resolve("StatusWarning") } };
             }
         }
 
