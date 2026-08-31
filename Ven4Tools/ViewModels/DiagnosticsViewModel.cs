@@ -127,9 +127,11 @@ namespace Ven4Tools.ViewModels
             get => _isApplyingTurboBoost;
             internal set
             {
-                SetField(ref _isApplyingTurboBoost, value);
-                DisableTurboBoostCommand.RaiseCanExecuteChanged();
-                EnableTurboBoostCommand.RaiseCanExecuteChanged();
+                if (SetField(ref _isApplyingTurboBoost, value))
+                {
+                    DisableTurboBoostCommand.RaiseCanExecuteChanged();
+                    EnableTurboBoostCommand.RaiseCanExecuteChanged();
+                }
             }
         }
 
