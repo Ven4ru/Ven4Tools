@@ -95,6 +95,18 @@ namespace Ven4Tools.Launcher.Services
                 catch (Exception ex) { Log($"Ошибка подсчёта обновлений winget: {ex.Message}"); }
 
                 if (token.IsCancellationRequested) return;
+                // Параноидальный режим клиента: уведомления владельца — единственное
+                // фоновое обращение лаунчера, которое ничего не даёт пользователю
+                // технически (не проверка версии, не установка), но каждые 3 часа
+                // раскрывает его IP серверам проекта. Тот же гейт, что у публикации
+                // отчётов (ShowStartupReports/ShowCrashReport), тем же способом —
+                // чтением флага из profile.json клиента.
+                if (ClientPrivacySettings.IsParanoidMode())
+                {
+                    Log("Уведомления не запрашиваются: в клиенте включён параноидальный режим.");
+                    return;
+                }
+
                 try
                 {
                     var notif = await NotificationService.GetLatestAsync(Log);
