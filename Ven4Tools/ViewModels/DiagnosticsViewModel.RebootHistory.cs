@@ -82,13 +82,19 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunDisableFastStartupAsync()
         {
-            var confirm = MessageBox.Show(
-                "Отключить «Быстрый запуск»? Это уберёт файл гибернации и механизм резюме — «Завершение работы» станет полным холодным выключением.",
-                "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (confirm != MessageBoxResult.Yes) return;
-
+            // Гейт реентерабельности — см. пояснение в RunDisableTurboBoostAsync:
+            // без него двойное нажатие запускало два powercfg с правами администратора
+            // одновременно. Флаг взводится до диалога подтверждения, иначе второе
+            // нажатие успевало открыть второе такое же окно.
+            if (IsDisablingFastStartup) return;
+            IsDisablingFastStartup = true;
             try
             {
+                var confirm = MessageBox.Show(
+                    "Отключить «Быстрый запуск»? Это уберёт файл гибернации и механизм резюме — «Завершение работы» станет полным холодным выключением.",
+                    "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (confirm != MessageBoxResult.Yes) return;
+
                 await SystemHealthService.DisableFastStartupAsync();
                 AppLogger.Write("🔧 Быстрый запуск отключён");
                 MessageBox.Show("✅ Быстрый запуск отключён.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -98,6 +104,10 @@ namespace Ven4Tools.ViewModels
                 AppLogger.Write($"❌ Ошибка при отключении быстрого запуска: {ex.Message}");
                 MessageBox.Show("Не удалось отключить быстрый запуск. Запустите приложение от имени администратора и попробуйте ещё раз.",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsDisablingFastStartup = false;
             }
         }
     }

@@ -13,35 +13,39 @@ namespace Ven4Tools.ViewModels
         {
             ShowState("loading");
 
-            string rawOutput;
-            Task? preload;
-            lock (_preloadLock) { preload = _preloadTask; }
-            if (preload != null)
-            {
-                LoadingMessage = preload.IsCompleted
-                    ? "⏳ Загрузка списка приложений..."
-                    : "⏳ Почти готово, дожидаемся предзагрузки...";
-                // Сбой предзагрузки уже записан в журнал внутри самой задачи — здесь только
-                // не даём ему всплыть повторно, кэш в этом случае просто пуст.
-                try { await preload; } catch { }
-                // Чтение и обнуление кэша — атомарно под блокировкой
-                lock (_preloadLock)
-                {
-                    rawOutput = _cachedRawOutput ?? string.Empty;
-                    _preloadTask = null;
-                    _cachedRawOutput = null;
-                }
-            }
-            else
-            {
-                LoadingMessage = "⏳ Получение списка установленных приложений...";
-                var (_, output) = await WingetRunner.RunAsync(
-                    $"list {WingetArgs.NonInteractiveLine}");
-                rawOutput = output;
-            }
-
+            // Под try — и сам запуск winget, а не только разбор его вывода: при
+            // отсутствующем winget RunAsync бросает InvalidOperationException, и раньше
+            // это исключение вылетало мимо обработчика. Вызов из Loaded его никому не
+            // показывал, и вкладка навсегда оставалась на «Получение списка...».
             try
             {
+                string rawOutput;
+                Task? preload;
+                lock (_preloadLock) { preload = _preloadTask; }
+                if (preload != null)
+                {
+                    LoadingMessage = preload.IsCompleted
+                        ? "⏳ Загрузка списка приложений..."
+                        : "⏳ Почти готово, дожидаемся предзагрузки...";
+                    // Сбой предзагрузки уже записан в журнал внутри самой задачи — здесь только
+                    // не даём ему всплыть повторно, кэш в этом случае просто пуст.
+                    try { await preload; } catch { }
+                    // Чтение и обнуление кэша — атомарно под блокировкой
+                    lock (_preloadLock)
+                    {
+                        rawOutput = _cachedRawOutput ?? string.Empty;
+                        _preloadTask = null;
+                        _cachedRawOutput = null;
+                    }
+                }
+                else
+                {
+                    LoadingMessage = "⏳ Получение списка установленных приложений...";
+                    var (_, output) = await WingetRunner.RunAsync(
+                        $"list {WingetArgs.NonInteractiveLine}");
+                    rawOutput = output;
+                }
+
                 _allApps = ParseWingetList(rawOutput);
                 ApplyFilter();
                 ShowState(_allApps.Count == 0 ? "empty" : "list");
@@ -49,6 +53,9 @@ namespace Ven4Tools.ViewModels
             }
             catch (Exception ex)
             {
+                // Причина нужна в журнале: на экране остаётся одна строка сообщения,
+                // а у сбоя winget бывает содержательный внутренний текст.
+                AppLogger.Write(ex, "[InstalledTab] Не удалось получить список установленных приложений");
                 ShowState("loading");
                 LoadingMessage = $"❌ Ошибка: {ex.Message}";
             }

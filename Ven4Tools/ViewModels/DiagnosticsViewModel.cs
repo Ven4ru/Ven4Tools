@@ -128,6 +128,35 @@ namespace Ven4Tools.ViewModels
             private set { SetField(ref _isClearingWuCache, value); ClearWuCacheCommand.RaiseCanExecuteChanged(); }
         }
 
+        /// <summary>
+        /// Общий флаг для «Отключить»/«Включить» турбобуст: обе кнопки правят одну и ту
+        /// же настройку схемы электропитания через powercfg, поэтому взаимно исключают
+        /// друг друга, а не только сами себя. internal set — тем же способом, что у
+        /// <c>NetworkViewModel</c>, флаг доступен юнит-тестам.
+        /// </summary>
+        private bool _isApplyingTurboBoost;
+        public bool IsApplyingTurboBoost
+        {
+            get => _isApplyingTurboBoost;
+            internal set
+            {
+                SetField(ref _isApplyingTurboBoost, value);
+                DisableTurboBoostCommand.RaiseCanExecuteChanged();
+                EnableTurboBoostCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        /// <summary>
+        /// Отключение быстрого запуска — отдельная операция (powercfg /h off),
+        /// с турбобустом не пересекается, поэтому и флаг у неё свой.
+        /// </summary>
+        private bool _isDisablingFastStartup;
+        public bool IsDisablingFastStartup
+        {
+            get => _isDisablingFastStartup;
+            internal set { SetField(ref _isDisablingFastStartup, value); DisableFastStartupCommand.RaiseCanExecuteChanged(); }
+        }
+
         // ── Команды ──────────────────────────────────────────────────────────────
 
         public RelayCommand RunDiagnosticsCommand { get; }
@@ -149,12 +178,12 @@ namespace Ven4Tools.ViewModels
             OpenLogsCommand           = new RelayCommand(_ => OpenLogs());
             OpenLatestLogCommand      = new RelayCommand(_ => OpenLatestLog());
             ClearLogsCommand          = new RelayCommand(_ => ClearLogs());
-            DisableTurboBoostCommand  = RelayCommand.FromAsync(_ => RunDisableTurboBoostAsync());
-            EnableTurboBoostCommand   = RelayCommand.FromAsync(_ => RunEnableTurboBoostAsync());
+            DisableTurboBoostCommand  = RelayCommand.FromAsync(_ => RunDisableTurboBoostAsync(), _ => !IsApplyingTurboBoost);
+            EnableTurboBoostCommand   = RelayCommand.FromAsync(_ => RunEnableTurboBoostAsync(),  _ => !IsApplyingTurboBoost);
             ClearWuCacheCommand       = RelayCommand.FromAsync(_ => RunClearWuCacheAsync(),    _ => !IsClearingWuCache);
             OpenWindowsUpdateCommand  = new RelayCommand(_ => GoToWindowsUpdate?.Invoke());
             CopyFullReportCommand     = new RelayCommand(_ => CopyFullReport());
-            DisableFastStartupCommand = RelayCommand.FromAsync(_ => RunDisableFastStartupAsync());
+            DisableFastStartupCommand = RelayCommand.FromAsync(_ => RunDisableFastStartupAsync(), _ => !IsDisablingFastStartup);
         }
 
         public async Task InitializeAsync()

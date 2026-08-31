@@ -102,7 +102,9 @@ namespace Ven4Tools.ViewModels
             }
             catch (Exception ex)
             {
-                AppLogger.Write($"❌ Ошибка копирования отчёта: {ex.Message}");
+                AppLogger.Write(ex, "DiagnosticsViewModel.CopyFullReport");
+                MessageBox.Show("Не удалось скопировать отчёт: " + ex.Message, "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

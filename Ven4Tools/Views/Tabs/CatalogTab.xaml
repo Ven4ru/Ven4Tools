@@ -399,8 +399,13 @@
                                   ItemsSource="{Binding AvailableDisks}" DisplayMemberPath="Space"
                                   SelectedItem="{Binding SelectedDisk}"/>
                         <TextBlock Text="{Binding SpaceStatus}" FontSize="10" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                        <!-- Mode=OneWay проставлен явно: RangeBase.Value связывается TwoWay
+                             по умолчанию, и как только сеттер свойства сузят до private,
+                             заход на вкладку начнёт ронять приложение — этот класс сбоя уже
+                             ловили на вкладках Office, «Диагностика» и «Настройки».
+                             То же и у Percentage в шаблоне строки прогресса ниже. -->
                         <ProgressBar x:Name="installProgressBar" Height="8" Margin="0,5,0,0" Minimum="0" Maximum="100"
-                                     Value="{Binding OverallProgressPercentage}"/>
+                                     Value="{Binding OverallProgressPercentage, Mode=OneWay}"/>
                         <TextBlock x:Name="txtOverallStatus" Text="{Binding InstallStatusText}" FontSize="10" HorizontalAlignment="Center" Margin="0,5,0,0"/>
                     </StackPanel>
                 </GroupBox>
@@ -437,7 +442,7 @@
                                                Margin="6,0,0,0"/>
                                     <ProgressBar Grid.Row="1" Grid.ColumnSpan="2"
                                                  Height="4" Margin="0,3,0,0"
-                                                 Value="{Binding Percentage}"
+                                                 Value="{Binding Percentage, Mode=OneWay}"
                                                  IsIndeterminate="{Binding IsIndeterminate}"
                                                  Background="{DynamicResource BorderBrush}"
                                                  Foreground="{Binding Phase, Converter={StaticResource PhaseToBrush}}"/>

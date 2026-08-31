@@ -56,6 +56,46 @@ namespace Ven4Tools.Tests
 
             Assert.True(vm.RunDiagnosticsCommand.CanExecute(null));
             Assert.True(vm.ClearWuCacheCommand.CanExecute(null));
+            Assert.False(vm.IsApplyingTurboBoost);
+            Assert.False(vm.IsDisablingFastStartup);
+        }
+
+        // Обе кнопки турбобуста правят одну настройку схемы электропитания через
+        // powercfg — быстрый двойной клик запускал два процесса с правами администратора
+        // параллельно. Флаг общий: занятость одной кнопки закрывает и вторую.
+        [Fact]
+        public void IsApplyingTurboBoost_ЗакрываетОбеКнопкиТурбобуста()
+        {
+            var vm = new DiagnosticsViewModel { IsApplyingTurboBoost = true };
+
+            Assert.False(vm.DisableTurboBoostCommand.CanExecute(null));
+            Assert.False(vm.EnableTurboBoostCommand.CanExecute(null));
+            // Соседние операции к турбобусту отношения не имеют и блокироваться не должны.
+            Assert.True(vm.DisableFastStartupCommand.CanExecute(null));
+            Assert.True(vm.RunDiagnosticsCommand.CanExecute(null));
+        }
+
+        [Fact]
+        public void IsDisablingFastStartup_ЗакрываетТолькоСвоюКоманду()
+        {
+            var vm = new DiagnosticsViewModel { IsDisablingFastStartup = true };
+
+            Assert.False(vm.DisableFastStartupCommand.CanExecute(null));
+            Assert.True(vm.DisableTurboBoostCommand.CanExecute(null));
+            Assert.True(vm.EnableTurboBoostCommand.CanExecute(null));
+        }
+
+        [Fact]
+        public void ФлагиДлительныхОпераций_СнятыеВозвращаютCanExecute()
+        {
+            var vm = new DiagnosticsViewModel { IsApplyingTurboBoost = true, IsDisablingFastStartup = true };
+
+            vm.IsApplyingTurboBoost = false;
+            vm.IsDisablingFastStartup = false;
+
+            Assert.True(vm.DisableTurboBoostCommand.CanExecute(null));
+            Assert.True(vm.EnableTurboBoostCommand.CanExecute(null));
+            Assert.True(vm.DisableFastStartupCommand.CanExecute(null));
         }
 
         [Fact]

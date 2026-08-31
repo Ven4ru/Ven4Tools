@@ -71,7 +71,9 @@ namespace Ven4Tools.ViewModels
             }
             catch (Exception ex)
             {
-                AppLogger.Write($"❌ Ошибка копирования: {ex.Message}");
+                AppLogger.Write(ex, "DiagnosticsViewModel.CopySystemInfo");
+                MessageBox.Show("Не удалось скопировать информацию о системе: " + ex.Message, "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

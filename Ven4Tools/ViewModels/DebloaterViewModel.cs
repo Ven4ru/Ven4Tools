@@ -48,8 +48,12 @@ namespace Ven4Tools.ViewModels
         private string _statusText = "";
         public string StatusText { get => _statusText; private set => SetField(ref _statusText, value); }
 
+        // Общий гейт занятости обоих входов в DebloatTweakExecutor: кнопки «Применить»
+        // и восстановления снапшота конфигурации. internal set — тем же способом, что у
+        // NetworkViewModel, состояние доступно юнит-тестам; разметка привязывается к
+        // свойству только на чтение (IsEnabled).
         private bool _applyEnabled = true;
-        public bool ApplyEnabled { get => _applyEnabled; private set => SetField(ref _applyEnabled, value); }
+        public bool ApplyEnabled { get => _applyEnabled; internal set => SetField(ref _applyEnabled, value); }
 
         private Visibility _cancelVisible = Visibility.Collapsed;
         public Visibility CancelVisible { get => _cancelVisible; private set => SetField(ref _cancelVisible, value); }
@@ -119,28 +123,55 @@ namespace Ven4Tools.ViewModels
         /// Применяет твики по идентификаторам тем же путём, что и обычная «Применить»
         /// (удаление Appx, реестр, службы). Используется восстановлением снапшота
         /// конфигурации. Неизвестные идентификаторы пропускаются.
+        /// <para>Второй, отдельный вход в <see cref="DebloatTweakExecutor.ApplyItemAsync"/>,
+        /// поэтому он обязан считаться с тем же гейтом <see cref="ApplyEnabled"/>, что и
+        /// <c>ApplyAsync</c>: восстановление снапшота во время идущей «Применить»
+        /// запускало две пачки правок реестра и служб внахлёст (кнопка «Восстановить»
+        /// гейтится только флагом своей строки снапшота и про «Очистку» ничего не знает).</para>
         /// </summary>
+        /// <exception cref="InvalidOperationException">Очистка уже выполняется.</exception>
         public async Task<(int Succeeded, int Total)> ApplyTweaksByIdsAsync(
             IReadOnlyCollection<string> ids,
             IProgress<string>? progress = null,
             CancellationToken ct = default)
         {
-            var items = _allItems.Where(i => ids.Contains(i.Id)).ToList();
-            int succeeded = 0;
-            foreach (var item in items)
+            // Исключение, а не тихий возврат (0, 0): вызывающий (восстановление снапшота)
+            // показал бы «восстановлено твиков 0/0» как успех и скрыл бы отказ.
+            if (!ApplyEnabled)
+                throw new InvalidOperationException(
+                    "Очистка системы уже выполняется — дождитесь её завершения.");
+
+            ApplyEnabled = false;
+            try
             {
-                progress?.Report(item.Name);
-                bool ok = await DebloatTweakExecutor.ApplyItemAsync(item.Category, item.Id, item.Name, ct);
-                AppLogger.Write($"{(ok ? "✅" : "❌")} {item.Name} (из снапшота)");
-                if (ok) succeeded++;
+                var items = _allItems.Where(i => ids.Contains(i.Id)).ToList();
+                int succeeded = 0;
+                foreach (var item in items)
+                {
+                    progress?.Report(item.Name);
+                    bool ok = await DebloatTweakExecutor.ApplyItemAsync(item.Category, item.Id, item.Name, ct);
+                    AppLogger.Write($"{(ok ? "✅" : "❌")} {item.Name} (из снапшота)");
+                    if (ok) succeeded++;
+                }
+                return (succeeded, items.Count);
             }
-            return (succeeded, items.Count);
+            finally
+            {
+                ApplyEnabled = true;
+            }
         }
 
         // ── Apply ────────────────────────────────────────────────────────────────
 
         private async Task ApplyAsync()
         {
+            // Явный гейт реентерабельности, а не только IsEnabled="{Binding ApplyEnabled}"
+            // в разметке: обновление привязки идёт через диспетчер и отстаёт от обработки
+            // ввода, поэтому между снятием флага и реальным отключением кнопки остаётся
+            // окно для повторного нажатия. Тот же гейт закрывает и вход со стороны
+            // восстановления снапшота (ApplyTweaksByIdsAsync).
+            if (!ApplyEnabled) return;
+
             var selected = _allItems.Where(i => i.IsSelected).ToList();
             if (selected.Count == 0)
             {
