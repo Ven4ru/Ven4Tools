@@ -2,9 +2,8 @@ namespace Ven4Tools.Launcher.Services;
 
 /// <summary>
 /// Проверка офлайн-подписи архива клиента (Ven4Tools.ClientArchive.v1).
-/// Публичный ключ ниже сгенерирован при внедрении фичи локальной установки —
-/// см. docs/superpowers/plans/2026-08-02-local-client-archive-install.md, Task 3.
-/// Приватный ключ никогда не публикуется, хранится вне репозитория на машине
+/// Публичный ключ ниже сгенерирован при внедрении фичи локальной установки
+/// (2026-08-02). Приватный ключ никогда не публикуется, хранится вне репозитория на машине
 /// разработчика (Tools/sign-client-archive.ps1).
 /// </summary>
 internal static class ClientArchiveVerifier

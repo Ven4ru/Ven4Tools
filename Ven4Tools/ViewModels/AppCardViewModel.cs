@@ -10,10 +10,9 @@ using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
 {
-    // Обёртка над AppRowViewModel для карточки приложения (прототип, см.
-    // docs/superpowers/specs/2026-07-17-app-cards-prototype-design.md). Не
-    // дублирует состояние строки каталога — читает его напрямую и вызывает
-    // существующие/новые сервисы установки.
+    // Обёртка над AppRowViewModel для карточки приложения (прототип,
+    // 2026-07-17). Не дублирует состояние строки каталога — читает его
+    // напрямую и вызывает существующие/новые сервисы установки.
     public sealed class AppCardViewModel : INotifyPropertyChanged
     {
         public AppRowViewModel Row { get; }

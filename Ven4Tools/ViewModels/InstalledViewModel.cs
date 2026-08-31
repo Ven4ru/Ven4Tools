@@ -11,8 +11,7 @@ namespace Ven4Tools.ViewModels
     /// <summary>
     /// ViewModel вкладки «Установленные». Логика перенесена из code-behind при
     /// MVVM-миграции (2026-08-26, седьмая вкладка после Debloater/History/About/
-    /// Activation/Network/Office) без изменения поведения — см.
-    /// docs/superpowers/specs/2026-08-26-installedtab-mvvm-design.md.
+    /// Activation/Network/Office) без изменения поведения.
     /// Разбит на partial-файлы по образцу OfficeViewModel.*/CatalogViewModel.*.
     /// </summary>
     public sealed partial class InstalledViewModel : ViewModelBase

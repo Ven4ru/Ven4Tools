@@ -27,8 +27,7 @@ internal readonly struct LocalArchiveVerificationResult
 /// офлайн-подпись (CanonicalArchiveHasher + ClientArchiveVerifier), при её
 /// отсутствии — обязательная сетевая сверка с historicalClientArchives
 /// (архивы, выпущенные до появления офлайн-подписи). В обоих случаях —
-/// best-effort сверка с revokedClientHashes. См.
-/// docs/superpowers/specs/2026-08-02-local-client-archive-install-design.md.
+/// best-effort сверка с revokedClientHashes.
 /// </summary>
 internal static class LocalArchiveVerifier
 {

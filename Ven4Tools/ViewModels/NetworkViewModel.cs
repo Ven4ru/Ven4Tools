@@ -54,7 +54,7 @@ namespace Ven4Tools.ViewModels
     /// <summary>
     /// ViewModel вкладки «Сеть». Логика перенесена из code-behind при MVVM-миграции
     /// (2026-08-25, пятая вкладка после Debloater/History/About/Activation) без
-    /// изменения поведения — см. docs/superpowers/specs/2026-08-25-networktab-mvvm-design.md.
+    /// изменения поведения.
     /// Разбит на partial-файлы по образцу SystemViewModel.*/BenchmarkViewModel.*:
     /// здесь ядро (флаги занятости, команды, полная диагностика), отдельно
     /// .Adapters.cs, .Checks.cs (пинг/сервисы/внешний IP/DNS) и .Reset.cs.

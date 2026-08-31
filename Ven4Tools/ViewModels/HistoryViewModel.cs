@@ -13,8 +13,7 @@ namespace Ven4Tools.ViewModels
     /// Вкладка «История» — поиск, фильтры, флаг сохранения истории, очистка,
     /// переустановка. Перенесено из code-behind при MVVM-миграции клиента
     /// (2026-08-24, вторая вкладка после пилота DebloaterTab). Поведение не
-    /// менялось, кроме <see cref="IsReinstalling"/> — см. спек
-    /// docs/superpowers/specs/2026-08-24-historytab-mvvm-design.md.
+    /// менялось, кроме <see cref="IsReinstalling"/>.
     /// </summary>
     public sealed class HistoryViewModel : ViewModelBase
     {

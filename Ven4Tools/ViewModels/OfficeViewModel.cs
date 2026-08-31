@@ -11,7 +11,7 @@ namespace Ven4Tools.ViewModels
     /// <summary>
     /// ViewModel вкладки «Office». Логика перенесена из code-behind при MVVM-миграции
     /// (2026-08-25, шестая вкладка после Debloater/History/About/Activation/Network)
-    /// без изменения поведения — см. docs/superpowers/specs/2026-08-25-officetab-mvvm-design.md.
+    /// без изменения поведения.
     /// Класс разбит на partial-файлы по образцу CatalogViewModel.Install.cs/.Presets.cs,
     /// повторяя структуру мигрируемого code-behind (Download/Install/Region).
     /// </summary>

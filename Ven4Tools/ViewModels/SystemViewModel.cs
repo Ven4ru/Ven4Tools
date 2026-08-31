@@ -10,8 +10,7 @@ namespace Ven4Tools.ViewModels
     /// <summary>
     /// ViewModel вкладки «Настройки». Логика перенесена из code-behind при
     /// MVVM-миграции (2026-08-26, девятая вкладка после Debloater/History/About/
-    /// Activation/Network/Office/Installed/Diagnostics) без изменения поведения —
-    /// см. docs/superpowers/specs/2026-08-26-systemtab-mvvm-design.md.
+    /// Activation/Network/Office/Installed/Diagnostics) без изменения поведения.
     /// Разбит на partial-файлы по образцу DiagnosticsViewModel.*.
     /// </summary>
     public sealed partial class SystemViewModel : ViewModelBase

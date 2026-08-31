@@ -15,7 +15,7 @@ namespace Ven4Tools.ViewModels
     /// ViewModel вкладки «Обновления Windows». Логика перенесена из code-behind при
     /// MVVM-миграции (2026-08-26, десятая вкладка после Debloater/History/About/
     /// Activation/Network/Office/Installed/Diagnostics/System) без изменения
-    /// поведения — см. docs/superpowers/specs/2026-08-26-windowsupdatetab-mvvm-design.md.
+    /// поведения.
     /// </summary>
     public sealed class WindowsUpdateViewModel : ViewModelBase
     {

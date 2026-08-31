@@ -24,8 +24,7 @@ namespace Ven4Tools.ViewModels
     /// <summary>
     /// ViewModel вкладки «Диагностика». Логика перенесена из code-behind при
     /// MVVM-миграции (2026-08-26, восьмая вкладка после Debloater/History/About/
-    /// Activation/Network/Office/Installed) без изменения поведения — см.
-    /// docs/superpowers/specs/2026-08-26-diagnosticstab-mvvm-design.md.
+    /// Activation/Network/Office/Installed) без изменения поведения.
     /// Разбит на partial-файлы по образцу OfficeViewModel.*/InstalledViewModel.*.
     /// </summary>
     public sealed partial class DiagnosticsViewModel : ViewModelBase

@@ -59,8 +59,7 @@ namespace Ven4Tools.ViewModels
     /// <summary>
     /// ViewModel вкладки «Бенчмарк». Логика перенесена из code-behind при
     /// MVVM-миграции (2026-08-26, одиннадцатая и последняя вкладка серии) без
-    /// изменения поведения — см.
-    /// docs/superpowers/specs/2026-08-26-benchmarktab-mvvm-design.md.
+    /// изменения поведения.
     /// Разбит на partial-файлы по образцу code-behind: .cs/.Disks.cs/.Run.cs/.Report.cs.
     /// </summary>
     public sealed partial class BenchmarkViewModel : ViewModelBase
