@@ -17,6 +17,12 @@
         <SolidColorBrush x:Key="TextSecondary"     Color="#AAB8CE"/>
         <SolidColorBrush x:Key="BorderBrush"       Color="#1E2A38"/>
         <SolidColorBrush x:Key="HeaderForeground"  Color="#E2E8F0"/>
+        <!-- Оттенки акцента для общего PillStatusStyle (Shared/DesignTokens.xaml).
+             В клиенте их пересчитывает ThemeService под выбранную тему, у лаунчера
+             переключателя тем нет — значения зафиксированы и в точности повторяют
+             те, что были зашиты в стиле до вынесения (#164ADE80/#404ADE80). -->
+        <SolidColorBrush x:Key="AccentSoftBackground" Color="#164ADE80"/>
+        <SolidColorBrush x:Key="AccentSoftBorder"     Color="#404ADE80"/>
 
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>

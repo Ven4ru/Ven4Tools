@@ -46,7 +46,7 @@
                    FontSize="11" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
 
         <Button Grid.Row="6" x:Name="btnOk" Content="Готово" Height="36" HorizontalAlignment="Right"
-                Padding="24,0" Background="{DynamicResource AccentColor}" Foreground="White"
+                Padding="24,0" Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
                 FontWeight="SemiBold" BorderThickness="0" Click="BtnOk_Click"/>
     </Grid>
 </Window>

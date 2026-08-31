@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
 
@@ -262,14 +263,11 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        // Замороженные кисти для трёх фирменных цветов строки: свойство RowBrush
-        // перечитывается биндингом при каждой смене статуса (доступность/установлено/
-        // обновление) для сотен строк при массовой проверке — общие Freeze()-кисти
-        // избавляют от аллокации нового SolidColorBrush на каждый вызов и рендерятся
-        // быстрее. Brushes.LightGreen/LightCoral/Gray уже статические и замороженные.
-        private static readonly Brush _justInstalledBrush = CreateFrozen(Color.FromRgb(136, 136, 136));
-        private static readonly Brush _hasUpdateBrush = CreateFrozen(Color.FromRgb(255, 165, 0));
-        private static readonly Brush _installedBrush = CreateFrozen(Color.FromRgb(100, 149, 237));
+        // Резервные кисти на случай, если словарь ресурсов недоступен (юнит-тесты,
+        // дизайнер): те же цвета, что были зашиты в строке до перехода на темы.
+        private static readonly Brush _fallbackMuted = CreateFrozen(Color.FromRgb(136, 136, 136));
+        private static readonly Brush _fallbackUpdate = CreateFrozen(Color.FromRgb(255, 165, 0));
+        private static readonly Brush _fallbackInstalled = CreateFrozen(Color.FromRgb(100, 149, 237));
 
         private static Brush CreateFrozen(Color color)
         {
@@ -281,18 +279,26 @@ namespace Ven4Tools.ViewModels
         // Тот же набор цветов, что в CatalogTab.Availability.cs/Install.cs — сведено
         // в одно вычисляемое свойство вместо императивной установки Foreground
         // в десятке разных мест.
+        //
+        // Цвета берутся из темы, а не из зашитых констант: пастельные LightGreen/
+        // LightCoral на белой карточке «Светлой» темы давали контраст около 1.5:1 —
+        // строка каталога буквально не читалась. Аллокации это не добавляет: кисти
+        // тем заморожены в ThemeService и возвращаются по ссылке, а свойство
+        // перечитывается биндингом для сотен строк при массовой проверке.
         public Brush RowBrush
         {
             get
             {
-                if (JustInstalled) return _justInstalledBrush;
+                if (JustInstalled) return BrushResolver.Resolve("TextSecondary", _fallbackMuted);
                 if (IsInstalled)
-                    return (HasUpdate && !IsUpdateIgnored) ? _hasUpdateBrush : _installedBrush;
+                    return (HasUpdate && !IsUpdateIgnored)
+                        ? BrushResolver.Resolve("StatusWarning", _fallbackUpdate)
+                        : BrushResolver.Resolve("StatusInfo", _fallbackInstalled);
                 return Availability switch
                 {
-                    RowAvailability.Available   => Brushes.LightGreen,
-                    RowAvailability.Unavailable => Brushes.LightCoral,
-                    _                           => Brushes.Gray
+                    RowAvailability.Available   => BrushResolver.Resolve("StatusSuccess", Brushes.LightGreen),
+                    RowAvailability.Unavailable => BrushResolver.Resolve("StatusDanger", Brushes.LightCoral),
+                    _                           => BrushResolver.Resolve("TextSecondary", Brushes.Gray)
                 };
             }
         }

@@ -7,16 +7,39 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/DesignTokens.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-        <!-- Цвета для тёмной темы — Teal/Mascot palette -->
-        <SolidColorBrush x:Key="WindowBackground" Color="#0A0A14"/>
-        <SolidColorBrush x:Key="SidebarBackground" Color="#0D1018"/>
-        <SolidColorBrush x:Key="ContentBackground" Color="#0A0A14"/>
-        <SolidColorBrush x:Key="CardBackground" Color="#11161F"/>
+        <!-- Стартовые значения темизируемых ключей: соответствуют теме «Как на
+             ven4tools.ru» — она выбрана по умолчанию.
+             Реальные значения проставляет ThemeService.Apply() при запуске и при
+             каждом переключении темы (Services/ThemeService.cs — там же полный
+             список ключей и правила вывода производных оттенков). Значения здесь
+             нужны, чтобы разметка отрисовалась в конструкторе и в короткий момент
+             между разбором XAML и применением темы.
+             ⚠️ Все ссылки на эти ключи в разметке — только DynamicResource:
+             StaticResource запоминает цвет на этапе загрузки и к переключателю
+             темы уже не относится. -->
+        <SolidColorBrush x:Key="WindowBackground" Color="#0A1628"/>
+        <SolidColorBrush x:Key="SidebarBackground" Color="#0D1F35"/>
+        <SolidColorBrush x:Key="ContentBackground" Color="#081220"/>
+        <SolidColorBrush x:Key="CardBackground" Color="#101E34"/>
+        <SolidColorBrush x:Key="SurfaceRaised" Color="#16294A"/>
+        <SolidColorBrush x:Key="OverlayBackground" Color="#E60A1628"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#E8F0FE"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#8A9BB5"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#1E3250"/>
+        <SolidColorBrush x:Key="HeaderForeground" Color="#E8F0FE"/>
         <SolidColorBrush x:Key="AccentColor" Color="#4ADE80"/>
-        <SolidColorBrush x:Key="TextPrimary" Color="#E2E8F0"/>
-        <SolidColorBrush x:Key="TextSecondary" Color="#AAB8CE"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#1E2A38"/>
-        <SolidColorBrush x:Key="HeaderForeground" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="AccentForeground" Color="#06130D"/>
+        <SolidColorBrush x:Key="AccentPressed" Color="#3CB569"/>
+        <SolidColorBrush x:Key="AccentHoverBackground" Color="#144ADE80"/>
+        <SolidColorBrush x:Key="AccentSoftBackground" Color="#244ADE80"/>
+        <SolidColorBrush x:Key="AccentSoftBorder" Color="#404ADE80"/>
+        <SolidColorBrush x:Key="StatusSuccess" Color="#4ADE80"/>
+        <SolidColorBrush x:Key="StatusWarning" Color="#FBBF24"/>
+        <SolidColorBrush x:Key="StatusDanger" Color="#F87171"/>
+        <SolidColorBrush x:Key="StatusInfo" Color="#38BDF8"/>
+        <SolidColorBrush x:Key="StatusSuccessForeground" Color="#06130D"/>
+        <SolidColorBrush x:Key="StatusWarningForeground" Color="#06130D"/>
+        <SolidColorBrush x:Key="StatusDangerForeground" Color="#06130D"/>
 
         <!-- Стиль для GroupBox -->
         <Style TargetType="GroupBox">
@@ -67,7 +90,7 @@
              десятков повторяющихся кнопок не выглядел «стеной предупреждений». -->
         <Style x:Key="DangerButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#F87171"/>
+            <Setter Property="Foreground" Value="{DynamicResource StatusDanger}"/>
             <Setter Property="BorderBrush" Value="#7A2B2B"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontWeight" Value="Bold"/>
@@ -182,7 +205,7 @@
             <Style.Triggers>
                 <Trigger Property="IsHighlighted" Value="True">
                     <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
-                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccentForeground}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -261,7 +284,7 @@
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Background" Value="{StaticResource SurfaceRaised}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceRaised}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -280,10 +303,10 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
-                                <Setter Property="Foreground" Value="#06130D"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentForeground}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#22C55E"/>
+                                <Setter Property="Background" Value="{DynamicResource AccentPressed}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.5"/>
@@ -348,7 +371,7 @@
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
-                                <Setter Property="Foreground" Value="#0A1420"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentForeground}"/>
                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
@@ -413,9 +436,9 @@
                             <Track x:Name="PART_Track" VerticalAlignment="Center"
                                    Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}"
                                    Value="{TemplateBinding Value}" IsDirectionReversed="{TemplateBinding IsDirectionReversed}">
-                                <Track.DecreaseRepeatButton><RepeatButton Command="Slider.DecreaseLarge" Background="{StaticResource BrandGreen}" BorderThickness="0"/></Track.DecreaseRepeatButton>
+                                <Track.DecreaseRepeatButton><RepeatButton Command="Slider.DecreaseLarge" Background="{DynamicResource AccentColor}" BorderThickness="0"/></Track.DecreaseRepeatButton>
                                 <Track.IncreaseRepeatButton><RepeatButton Command="Slider.IncreaseLarge" Background="Transparent" BorderThickness="0"/></Track.IncreaseRepeatButton>
-                                <Track.Thumb><Thumb Width="14" Height="14" Background="{StaticResource BrandGreen}" BorderBrush="{StaticResource BrandGreen}"/></Track.Thumb>
+                                <Track.Thumb><Thumb Width="14" Height="14" Background="{DynamicResource AccentColor}" BorderBrush="{DynamicResource AccentColor}"/></Track.Thumb>
                             </Track>
                         </Grid>
                     </ControlTemplate>
@@ -444,7 +467,7 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsHighlighted" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentColor}"/>
-                                <Setter Property="Foreground" Value="#0A1420"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentForeground}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -484,8 +507,8 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#244ADE80"/>
-                    <Setter Property="Foreground" Value="{StaticResource BrandGreen}"/>
+                    <Setter Property="Background" Value="{DynamicResource AccentSoftBackground}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>

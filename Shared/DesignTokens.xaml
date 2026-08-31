@@ -3,25 +3,29 @@
     <!-- Shared desktop interpretation of the ven4tools.ru visual language. -->
 
     <!--
-        Правило цвета кнопок действий (визуальный аудит 2026-07-24) — единая роль = единый цвет
-        во всех вкладках клиента:
+        Правило цвета кнопок действий (визуальный аудит 2026-07-24, пересмотрено в 5.0) —
+        единая роль = единый цвет во всех вкладках клиента:
 
         • Primary (Установить/Скачать/Обновить/Сохранить — главное действие, двигающее
-          пользователя вперёд по сценарию экрана): Background="{StaticResource BrandGreen}",
-          Foreground="#06130D". Намеренно StaticResource BrandGreen, а НЕ DynamicResource
-          AccentColor — AccentColor переопределяется ThemeService на каждую тему (в теме
-          «Тёмная»/«Светлая» это стандартный синий Windows #0078D4, в «Бирюзовой» — циан
-          #00BCD4, и только в «Как на сайте» — зелёный), то есть при следовании AccentColor
-          главная кнопка "Установить" меняла бы цвет вместе с темой интерфейса и теряла
-          узнаваемость бренда. Установить (Каталог) уже красили в BrandGreen до этого аудита —
-          это и есть эталон, остальные Primary-кнопки приведены к нему.
+          пользователя вперёд по сценарию экрана): Background="{DynamicResource AccentColor}",
+          Foreground="{DynamicResource AccentForeground}".
+          ⚠️ Изменение 5.0. Аудит 2026-07-24 требовал ровно обратного — StaticResource
+          BrandGreen, чтобы главная кнопка не меняла цвет вместе с темой и держала
+          узнаваемость бренда. От этого правила отказались сознательно: обещание версии
+          5.0 в README — «переключатель темы красит весь интерфейс без исключений», а
+          зелёная кнопка посреди синей «Тёмной» темы была самым заметным исключением.
+          Узнаваемость бренда теперь держит тема «Как на ven4tools.ru» (она же по
+          умолчанию), где акцент — тот самый фирменный зелёный.
+          BrandGreen остаётся в этом словаре для ЛАУНЧЕРА: там переключателя тем нет,
+          и его AccentColor равен #4ADE80. В клиенте ссылок на BrandGreen быть не должно.
         • Danger (Удалить/Применить твик службы/Очистить — необратимое или рискованное
-          действие): единый цвет StatusDanger (#F87171). Для повторяющихся кнопок в списках
+          действие): единый цвет StatusDanger. Для повторяющихся кнопок в списках
           (десятки строк) — DangerButtonStyle (контур по умолчанию, сплошная заливка только
           на hover, см. App.xaml) — не создаёт «стену красного». Для одиночной крупной
           CTA-кнопки экрана (например «Применить выбранное» в Очистке) — сплошная заливка
-          Background="{StaticResource StatusDanger}", Foreground="#06130D" (тот же принцип
-          тёмного текста на светлой заливке, что и у Primary).
+          Background="{DynamicResource StatusDanger}",
+          Foreground="{DynamicResource StatusDangerForeground}" (тот же принцип
+          контрастной надписи на цветной заливке, что и у Primary).
         • Secondary (второстепенное действие: Отмена/Обновить каталог/Проверить доступность/
           Проверить обновления/Запустить диагностику/переход на внешний ресурс): без
           Background/Foreground-оverride — обычная кнопка (SurfaceRaised/CardBackground +
@@ -60,7 +64,10 @@
         <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{StaticResource BrandGreen}"/>
+        <!-- Подпись категории («ПРИЛОЖЕНИЯ», «ВЫБРАННЫЕ ПРИЛОЖЕНИЯ», «LAUNCHER»).
+             DynamicResource, а не BrandGreen: в клиенте подписи следуют за темой
+             (обещание 5.0), в лаунчере AccentColor и есть фирменный зелёный. -->
+        <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
     </Style>
 
     <Style x:Key="IconButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -72,8 +79,8 @@
     </Style>
 
     <Style x:Key="PillStatusStyle" TargetType="Border">
-        <Setter Property="Background" Value="#164ADE80"/>
-        <Setter Property="BorderBrush" Value="#404ADE80"/>
+        <Setter Property="Background" Value="{DynamicResource AccentSoftBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentSoftBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="8,4"/>

@@ -141,9 +141,9 @@ namespace Ven4Tools.ViewModels
                                             0 => "❌ Не активирована",
                                             _ => "⚠️ Неизвестно"
                                         };
-                                        WindowsStatusBrush = status == 1 ?
-                                            new SolidColorBrush(Colors.LightGreen) :
-                                            new SolidColorBrush(Colors.LightCoral);
+                                        WindowsStatusBrush = status == 1
+                                            ? BrushResolver.Resolve("StatusSuccess", Brushes.LightGreen)
+                                            : BrushResolver.Resolve("StatusDanger", Brushes.LightCoral);
                                     });
                                     return;
                                 }
@@ -152,7 +152,7 @@ namespace Ven4Tools.ViewModels
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             WindowsStatusText = "⚠️ Не обнаружена";
-                            WindowsStatusBrush = new SolidColorBrush(Colors.Orange);
+                            WindowsStatusBrush = BrushResolver.Resolve("StatusWarning", Brushes.Orange);
                         });
                     }
                     catch (Exception ex)
@@ -160,7 +160,7 @@ namespace Ven4Tools.ViewModels
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             WindowsStatusText = "⚠️ Ошибка";
-                            WindowsStatusBrush = new SolidColorBrush(Colors.Orange);
+                            WindowsStatusBrush = BrushResolver.Resolve("StatusWarning", Brushes.Orange);
                             AppLogger.Write($"❌ Ошибка проверки Windows: {ex.Message}");
                         });
                     }
@@ -283,7 +283,7 @@ namespace Ven4Tools.ViewModels
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     OfficeStatusText = "⚠️ Ошибка";
-                    OfficeStatusBrush = new SolidColorBrush(Colors.Orange);
+                    OfficeStatusBrush = BrushResolver.Resolve("StatusWarning", Brushes.Orange);
                     AppLogger.Write($"❌ Ошибка проверки Office: {ex.Message}");
                 });
             }
@@ -296,9 +296,9 @@ namespace Ven4Tools.ViewModels
                 OfficeStatusText = text;
                 OfficeStatusBrush = isActivated switch
                 {
-                    true  => new SolidColorBrush(Colors.LightGreen),
-                    false => new SolidColorBrush(Colors.LightCoral),
-                    null  => new SolidColorBrush(Colors.Orange)
+                    true  => BrushResolver.Resolve("StatusSuccess", Brushes.LightGreen),
+                    false => BrushResolver.Resolve("StatusDanger", Brushes.LightCoral),
+                    null  => BrushResolver.Resolve("StatusWarning", Brushes.Orange)
                 };
             });
         }

@@ -17,7 +17,7 @@
                 <Border Background="{DynamicResource AccentColor}" CornerRadius="10"
                         Padding="8,2" Margin="12,4,0,4" VerticalAlignment="Center">
                     <TextBlock x:Name="txtHistoryCount" Text="{Binding HistoryCount}"
-                               FontSize="12" FontWeight="Bold" Foreground="White"/>
+                               FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentForeground}"/>
                 </Border>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

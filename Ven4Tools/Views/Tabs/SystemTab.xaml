@@ -40,8 +40,8 @@
                     <CheckBox x:Name="chkReduceMotion" Grid.Row="3" Grid.Column="1" Content="Уменьшить анимации"
                               Margin="3,10,3,3" IsChecked="{Binding ReduceMotion, Mode=TwoWay}"/>
                     <StackPanel Grid.Column="2" Grid.RowSpan="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
-                        <Ellipse Width="18" Height="18" Fill="#4ADE80" Margin="3"/><Ellipse Width="18" Height="18" Fill="#38BDF8" Margin="3"/>
-                        <Ellipse Width="18" Height="18" Fill="#FBBF24" Margin="3"/><Ellipse Width="18" Height="18" Fill="#F87171" Margin="3"/>
+                        <Ellipse Width="18" Height="18" Fill="{DynamicResource StatusSuccess}" Margin="3"/><Ellipse Width="18" Height="18" Fill="{DynamicResource StatusInfo}" Margin="3"/>
+                        <Ellipse Width="18" Height="18" Fill="{DynamicResource StatusWarning}" Margin="3"/><Ellipse Width="18" Height="18" Fill="{DynamicResource StatusDanger}" Margin="3"/>
                     </StackPanel>
                 </Grid>
             </GroupBox>
@@ -413,7 +413,7 @@
                                  Visibility="{Binding ShowCacheProgress, Converter={StaticResource BoolToVis}}"/>
                     <TextBox x:Name="txtCacheLog" Text="{Binding CacheLogText, Mode=OneWay}" Height="80" Margin="0,0,0,0"
                              Background="{DynamicResource ContentBackground}"
-                             Foreground="#00FF00" FontFamily="Consolas" FontSize="10"
+                             Foreground="{DynamicResource StatusSuccess}" FontFamily="Consolas" FontSize="10"
                              IsReadOnly="True" TextWrapping="Wrap"
                              VerticalScrollBarVisibility="Auto"
                              Visibility="{Binding ShowCacheLog, Converter={StaticResource BoolToVis}}"/>

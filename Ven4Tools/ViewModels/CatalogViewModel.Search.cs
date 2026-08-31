@@ -69,8 +69,8 @@ namespace Ven4Tools.ViewModels
         // который требует Invoke-паттерн UIA, а не Toggle. Состояние переключается
         // командой, а не IsChecked.
         public System.Windows.Media.Brush FavoritesOnlyBrush => ShowFavoritesOnly
-            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 215, 0))
-            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
+            ? Helpers.BrushResolver.Resolve("AccentColor")
+            : Helpers.BrushResolver.Resolve("TextSecondary");
 
         // HideInstalled/DefaultSort уже читались в RowFilter/ApplySortOrder ниже, но
         // задать их было нечем — ни один XAML-элемент их не менял. Обёртки над
@@ -90,8 +90,8 @@ namespace Ven4Tools.ViewModels
         }
 
         public System.Windows.Media.Brush HideInstalledBrush => HideInstalled
-            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 215, 0))
-            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
+            ? Helpers.BrushResolver.Resolve("AccentColor")
+            : Helpers.BrushResolver.Resolve("TextSecondary");
 
         // DefaultSort исторически хранит "alpha"/"category" (обе ветки ApplySortOrder
         // ведут себя одинаково — сортировка по имени внутри категории) — с точки
@@ -113,8 +113,8 @@ namespace Ven4Tools.ViewModels
         }
 
         public System.Windows.Media.Brush SortAlphabeticallyBrush => SortAlphabetically
-            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 215, 0))
-            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
+            ? Helpers.BrushResolver.Resolve("AccentColor")
+            : Helpers.BrushResolver.Resolve("TextSecondary");
 
         private bool _showSuggestionsPanel;
         public bool ShowSuggestionsPanel

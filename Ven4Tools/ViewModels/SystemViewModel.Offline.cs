@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
@@ -100,27 +101,46 @@ namespace Ven4Tools.ViewModels
             {
                 ConnIconText = "🟡";
                 ConnStatusText = "Принудительный офлайн — вкладки скрыты вручную";
-                ConnStatusBackground = new SolidColorBrush(Color.FromRgb(70, 55, 10));
+                ConnStatusBackground = StatusTint("StatusWarning");
             }
             else if (!online && onlineForced)
             {
                 ConnIconText = "🟠";
                 ConnStatusText = "Соединение не обнаружено, но онлайн-режим принудительно включён";
-                ConnStatusBackground = new SolidColorBrush(Color.FromRgb(80, 45, 5));
+                ConnStatusBackground = StatusTint("StatusWarning");
             }
             else if (!online)
             {
                 ConnIconText = "🔴";
                 ConnStatusText = "Интернет недоступен — онлайн-вкладки скрыты";
-                ConnStatusBackground = new SolidColorBrush(Color.FromRgb(80, 20, 20));
+                ConnStatusBackground = StatusTint("StatusDanger");
             }
             else
             {
                 ConnIconText = "🟢";
                 ConnStatusText = "Интернет доступен — все вкладки активны";
-                ConnStatusBackground = new SolidColorBrush(Color.FromRgb(15, 50, 20));
+                ConnStatusBackground = StatusTint("StatusSuccess");
             }
             ConnectivityStatusUpdated?.Invoke();
+        }
+
+        /// <summary>
+        /// Полупрозрачная подложка плашки состояния сети. Раньше здесь были четыре
+        /// зашитых тёмных цвета (тёмно-жёлтый/оранжевый/красный/зелёный) — на белой
+        /// карточке «Светлой» темы тёмная плашка с тёмным текстом не читалась.
+        /// Теперь берётся цвет статуса текущей темы и разбавляется до подложки:
+        /// поверх тёмного фона получается приглушённый оттенок, поверх светлого —
+        /// пастельный, а текст сверху в обоих случаях остаётся контрастным.
+        /// </summary>
+        private static Brush StatusTint(string statusResourceKey)
+        {
+            if (BrushResolver.Resolve(statusResourceKey, Brushes.Transparent) is not SolidColorBrush status)
+                return Brushes.Transparent;
+
+            Color c = status.Color;
+            var brush = new SolidColorBrush(Color.FromArgb(0x2E, c.R, c.G, c.B));
+            brush.Freeze();
+            return brush;
         }
     }
 }

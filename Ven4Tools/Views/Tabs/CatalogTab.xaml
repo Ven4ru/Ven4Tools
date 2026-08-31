@@ -73,13 +73,13 @@
                 <!-- Заглушка при ошибке загрузки каталога -->
                 <Border DockPanel.Dock="Top"
                         Background="{DynamicResource CardBackground}"
-                        BorderBrush="#C0392B"
+                        BorderBrush="{DynamicResource StatusDanger}"
                         BorderThickness="1" CornerRadius="3"
                         Margin="0,0,0,6"
                         Visibility="{Binding CatalogErrorVisible, Converter={StaticResource BoolToVis}}">
                     <StackPanel Margin="8,6">
                         <TextBlock Text="❌ Каталог недоступен"
-                                   Foreground="#C0392B"
+                                   Foreground="{DynamicResource StatusDanger}"
                                    FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3"/>
                         <TextBlock Text="{Binding CatalogErrorDetail}"
                                    Foreground="{DynamicResource TextSecondary}"
@@ -308,21 +308,21 @@
                                         <Button Content="▶" Width="22" Height="22" Margin="4,0,0,0"
                                                 Command="{Binding LaunchCommand}"
                                                 Visibility="{Binding CanLaunch, Converter={StaticResource BoolToVis}}"
-                                                Background="{StaticResource BrandGreen}" Foreground="#06130D"
+                                                Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
                                                 ToolTip="Запустит установленное приложение."/>
 
                                         <Button Content="🔄" Width="24" Height="24" Margin="4,0,0,0"
                                                 Command="{Binding DataContext.SuggestAlternativeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"
                                                 Visibility="{Binding ShowSuggestButton, Converter={StaticResource BoolToVis}}"
-                                                Background="#FF8C00" Foreground="White" FontSize="12"
+                                                Background="{DynamicResource StatusWarning}" Foreground="{DynamicResource StatusWarningForeground}" FontSize="12"
                                                 ToolTip="Откроет выбор другого источника установки для этого приложения."/>
 
                                         <Button Content="❌" Width="20" Height="20" Margin="4,0,0,0"
                                                 Command="{Binding DataContext.RemoveUserAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"
                                                 Visibility="{Binding IsUserAdded, Converter={StaticResource BoolToVis}}"
-                                                Background="#640000" Foreground="White" FontSize="10" Padding="0"
+                                                Background="{DynamicResource StatusDanger}" Foreground="{DynamicResource StatusDangerForeground}" FontSize="10" Padding="0"
                                                 ToolTip="После подтверждения уберёт это добавленное вручную приложение из каталога. С компьютера оно не удаляется."/>
 
                                         <Button Content="🙈" Width="20" Height="20" Margin="4,0,0,0"
@@ -356,7 +356,7 @@
                                 ToolTip="Повторно проверит, из каких источников сейчас можно скачать приложения."
                                 Command="{Binding RefreshAvailabilityCommand}"/>
                         <Button x:Name="btnClearAllUserApps" Content="Очистить добавленные" Height="35" Margin="3"
-                                Foreground="{StaticResource StatusDanger}"
+                                Foreground="{DynamicResource StatusDanger}"
                                 ToolTip="После подтверждения удалит из каталога все приложения, добавленные пользователем."
                                 Command="{Binding ClearAllUserAppsCommand}"/>
                         <Separator Margin="3,4"/>
@@ -511,7 +511,7 @@
                                     <DataTemplate DataType="{x:Type vm:FailedInstallViewModel}">
                                         <Border Margin="0,2" Padding="8,6" CornerRadius="6"
                                                 Background="{DynamicResource CardBackground}"
-                                                BorderBrush="{StaticResource StatusDanger}" BorderThickness="1">
+                                                BorderBrush="{DynamicResource StatusDanger}" BorderThickness="1">
                                             <StackPanel>
                                                 <TextBlock Text="{Binding DisplayName}"
                                                            FontSize="12" FontWeight="SemiBold"
@@ -525,7 +525,7 @@
                                                 <TextBlock Text="{Binding Error}" ToolTip="{Binding Error}"
                                                            FontSize="10" Margin="0,2,0,0" MaxHeight="52"
                                                            TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
-                                                           Foreground="{StaticResource StatusDanger}"/>
+                                                           Foreground="{DynamicResource StatusDanger}"/>
                                                 <TextBlock Text="{Binding RetryStatus}"
                                                            FontSize="10" Margin="0,4,0,0" TextWrapping="Wrap"
                                                            Foreground="{DynamicResource AccentColor}"
@@ -546,7 +546,7 @@
         </ScrollViewer>
 
         <Border Grid.Row="1" Grid.ColumnSpan="2" Margin="0,12,0,0" Padding="14,10"
-                Background="{StaticResource SurfaceCard}" BorderBrush="{DynamicResource BorderBrush}"
+                Background="{DynamicResource CardBackground}" BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1" CornerRadius="7" Effect="{StaticResource PanelShadowEffect}">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -563,8 +563,8 @@
                         Command="{Binding CancelInstallCommand}"/>
                 <Button x:Name="btnInstall" Grid.Column="2"
                         Height="38" MinWidth="190"
-                        Background="{StaticResource BrandGreen}" Foreground="#06130D"
-                        Effect="{StaticResource BrandAuraEffect}"
+                        Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
+                        Effect="{DynamicResource BrandAuraEffect}"
                         ToolTip="Установит все отмеченные приложения по очереди. Для нескольких приложений будет предложена точка восстановления."
                         Command="{Binding InstallSelectedCommand}">
                     <!-- StringFormat молча игнорируется, когда целевое свойство биндинга —

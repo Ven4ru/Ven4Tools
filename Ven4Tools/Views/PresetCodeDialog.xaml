@@ -42,7 +42,7 @@
                     HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="Отмена" Width="70" Height="30" Margin="0,0,8,0" Click="Cancel_Click"/>
             <Button x:Name="btnOk" Content="Отметить" Width="90" Height="30"
-                    Background="{DynamicResource AccentColor}" Foreground="White"
+                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
                     ToolTip="Разберёт код и отметит найденные в каталоге приложения. Сетевых запросов не делает."
                     BorderThickness="0" Click="Ok_Click"/>
         </StackPanel>

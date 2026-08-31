@@ -31,7 +31,7 @@
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Click="BtnClose_Click"/>
             <Button x:Name="btnRestartNow" Grid.Column="2" Content="Перезагрузить сейчас" Height="36" Padding="20,0"
                     Visibility="Collapsed"
-                    Background="{DynamicResource AccentColor}" Foreground="White" FontWeight="SemiBold"
+                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold"
                     ToolTip="Немедленно перезагрузит Windows, чтобы завершить установку обновлений."
                     BorderThickness="0" Click="BtnRestartNow_Click"/>
         </Grid>

@@ -33,7 +33,7 @@
 
         <!-- Заголовок -->
         <TextBlock Grid.Row="0" Text="Выберите альтернативный источник"
-                   Foreground="{StaticResource StatusWarning}" FontSize="14" FontWeight="Bold"
+                   Foreground="{DynamicResource StatusWarning}" FontSize="14" FontWeight="Bold"
                    HorizontalAlignment="Center" Margin="0,0,0,15"/>
 
         <!-- Результаты поиска в winget -->
@@ -64,7 +64,7 @@
                             <TextBlock Text="{Binding Id}" Foreground="{DynamicResource AccentColor}" FontFamily="Consolas"/>
                             <TextBlock Text=")" Foreground="{DynamicResource TextSecondary}"/>
                             <TextBlock Text=" — " Foreground="{DynamicResource TextSecondary}" Margin="5,0"/>
-                            <TextBlock Text="{Binding Version}" Foreground="{StaticResource BrandGreen}" FontFamily="Consolas"/>
+                            <TextBlock Text="{Binding Version}" Foreground="{DynamicResource AccentColor}" FontFamily="Consolas"/>
                         </StackPanel>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
@@ -114,14 +114,14 @@
 
         <!-- Подсказка по приоритету -->
         <TextBlock Grid.Row="8" Text="Источник с галочкой «Приоритет» будет использоваться первым"
-                   Foreground="{StaticResource StatusWarning}" FontSize="10"
+                   Foreground="{DynamicResource StatusWarning}" FontSize="10"
                    TextWrapping="Wrap"
                    HorizontalAlignment="Center" Margin="0,12,0,8"/>
 
         <!-- Кнопки -->
         <StackPanel Grid.Row="9" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button x:Name="btnOk" Content="Сохранить" Width="120"
-                    Background="{DynamicResource AccentColor}" Foreground="White"
+                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
                     ToolTip="Сохранит выбранный альтернативный источник установки для этого приложения."
                     Click="BtnOk_Click" IsEnabled="False"/>
             <Button x:Name="btnCancel" Content="Отмена" Width="120"
