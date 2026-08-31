@@ -251,9 +251,11 @@ namespace Ven4Tools.ViewModels
             get => _isUpgradingAll;
             private set
             {
-                SetField(ref _isUpgradingAll, value);
-                RefreshCommand.RaiseCanExecuteChanged();
-                UpgradeAllCommand.RaiseCanExecuteChanged();
+                if (SetField(ref _isUpgradingAll, value))
+                {
+                    RefreshCommand.RaiseCanExecuteChanged();
+                    UpgradeAllCommand.RaiseCanExecuteChanged();
+                }
             }
         }
 
