@@ -132,42 +132,42 @@ namespace Ven4Tools.ViewModels
         public bool IsBusy
         {
             get => _isBusy;
-            internal set { SetField(ref _isBusy, value); RaiseAllCanExecuteChanged(); }
+            internal set { if (SetField(ref _isBusy, value)) RaiseAllCanExecuteChanged(); }
         }
 
         private bool _isPinging;
         public bool IsPinging
         {
             get => _isPinging;
-            internal set { SetField(ref _isPinging, value); PingCommand.RaiseCanExecuteChanged(); }
+            internal set { if (SetField(ref _isPinging, value)) PingCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isCheckingServices;
         public bool IsCheckingServices
         {
             get => _isCheckingServices;
-            internal set { SetField(ref _isCheckingServices, value); CheckServicesCommand.RaiseCanExecuteChanged(); }
+            internal set { if (SetField(ref _isCheckingServices, value)) CheckServicesCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isGettingIp;
         public bool IsGettingIp
         {
             get => _isGettingIp;
-            internal set { SetField(ref _isGettingIp, value); GetIpCommand.RaiseCanExecuteChanged(); }
+            internal set { if (SetField(ref _isGettingIp, value)) GetIpCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isCheckingDns;
         public bool IsCheckingDns
         {
             get => _isCheckingDns;
-            internal set { SetField(ref _isCheckingDns, value); CheckDnsCommand.RaiseCanExecuteChanged(); }
+            internal set { if (SetField(ref _isCheckingDns, value)) CheckDnsCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isResettingNetwork;
         public bool IsResettingNetwork
         {
             get => _isResettingNetwork;
-            private set { SetField(ref _isResettingNetwork, value); ResetNetworkCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isResettingNetwork, value)) ResetNetworkCommand.RaiseCanExecuteChanged(); }
         }
 
         private string _runAllButtonText = "🔍 Запустить полную диагностику";

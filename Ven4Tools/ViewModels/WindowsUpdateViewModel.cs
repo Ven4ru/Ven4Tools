@@ -84,14 +84,14 @@ namespace Ven4Tools.ViewModels
         public bool IsSearching
         {
             get => _isSearching;
-            private set { SetField(ref _isSearching, value); CheckCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isSearching, value)) CheckCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isInstalling;
         public bool IsInstalling
         {
             get => _isInstalling;
-            private set { SetField(ref _isInstalling, value); CheckCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isInstalling, value)) CheckCommand.RaiseCanExecuteChanged(); }
         }
 
         // ── Первый запуск / поиск обновлений ────────────────────────────────────
