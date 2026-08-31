@@ -26,12 +26,9 @@ namespace Ven4Tools.Views.Tabs
             _viewModel.OwnerWindowProvider = () => Window.GetWindow(this);
             _viewModel.GoToDiagnostics += () => GoToDiagnostics?.Invoke();
 
-            Loaded += async (_, _) =>
-            {
-                if (_firstRunHandled) return;
-                _firstRunHandled = true;
-                await _viewModel.InitializeAsync();
-            };
+            Loaded += (_, _) => TabInitGuard.RunOnce(
+                ref _firstRunHandled, _viewModel.InitializeAsync,
+                "[WindowsUpdateTab] Ошибка инициализации вкладки");
         }
     }
 }

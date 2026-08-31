@@ -43,42 +43,8 @@ namespace Ven4Tools.Views.Tabs
 
             _profileChangedHandler = () => Dispatcher.Invoke(_viewModel.ApplyProfileFilters);
 
-            Loaded += async (s, e) =>
-            {
-                // Loaded может срабатывать многократно (переключение вкладок) —
-                // подписываемся только один раз, иначе обработчики дублируются.
-                if (!_eventsSubscribed)
-                {
-                    ProfileService.Changed     += _profileChangedHandler;
-                    AppSettings.Changed        += OnAppSettingsChanged;
-                    SourceOrderService.Changed += _viewModel.OnSourceOrderChanged;
-                    _eventsSubscribed = true;
-                }
-                // Отменяем ретраи доступности при закрытии окна (вкладка кэшируется и
-                // переиспользуется, поэтому привязываемся к закрытию окна, а не к Unloaded).
-                if (!_availabilityShutdownHooked)
-                {
-                    var window = Window.GetWindow(this);
-                    if (window != null)
-                    {
-                        window.Closed += (_, _) => _viewModel.CancelAvailabilityRetries();
-                        _availabilityShutdownHooked = true;
-                    }
-                }
-                if (!_initialized)
-                {
-                    _initialized = true;
-                    await _viewModel.LoadAsync();
-                    _lastSourceOrderVersion = SourceOrderService.Version;
-                }
-                else if (_lastSourceOrderVersion != SourceOrderService.Version)
-                {
-                    // Порядок источников меняли, пока вкладка была выгружена — запускаем
-                    // обещанную перепроверку доступности сейчас, при открытии вкладки.
-                    _viewModel.OnSourceOrderChanged();
-                    _lastSourceOrderVersion = SourceOrderService.Version;
-                }
-            };
+            Loaded += (_, _) => TabInitGuard.RunSync(OnTabLoaded,
+                "[CatalogTab] Ошибка при открытии вкладки");
             Unloaded += (_, _) =>
             {
                 if (_eventsSubscribed)
@@ -89,6 +55,46 @@ namespace Ven4Tools.Views.Tabs
                     _eventsSubscribed = false;
                 }
             };
+        }
+
+        private void OnTabLoaded()
+        {
+            // Loaded может срабатывать многократно (переключение вкладок) —
+            // подписываемся только один раз, иначе обработчики дублируются.
+            if (!_eventsSubscribed)
+            {
+                ProfileService.Changed     += _profileChangedHandler;
+                AppSettings.Changed        += OnAppSettingsChanged;
+                SourceOrderService.Changed += _viewModel.OnSourceOrderChanged;
+                _eventsSubscribed = true;
+            }
+            // Отменяем ретраи доступности при закрытии окна (вкладка кэшируется и
+            // переиспользуется, поэтому привязываемся к закрытию окна, а не к Unloaded).
+            if (!_availabilityShutdownHooked)
+            {
+                var window = Window.GetWindow(this);
+                if (window != null)
+                {
+                    window.Closed += (_, _) => _viewModel.CancelAvailabilityRetries();
+                    _availabilityShutdownHooked = true;
+                }
+            }
+            if (!_initialized)
+            {
+                _initialized = true;
+                TabInitGuard.Run(async () =>
+                {
+                    await _viewModel.LoadAsync();
+                    _lastSourceOrderVersion = SourceOrderService.Version;
+                }, "[CatalogTab] Ошибка загрузки каталога");
+            }
+            else if (_lastSourceOrderVersion != SourceOrderService.Version)
+            {
+                // Порядок источников меняли, пока вкладка была выгружена — запускаем
+                // обещанную перепроверку доступности сейчас, при открытии вкладки.
+                _viewModel.OnSourceOrderChanged();
+                _lastSourceOrderVersion = SourceOrderService.Version;
+            }
         }
 
         private void OnAppSettingsChanged() => _viewModel.UpdateTimeouts();

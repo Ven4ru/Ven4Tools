@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using Ven4Tools.Services;
 using Ven4Tools.Shared;
@@ -108,15 +109,24 @@ namespace Ven4Tools.ViewModels
         }
 
         /// <summary>
-        /// Вызывается из code-behind при первом Loaded (гейт _initialized остался
-        /// в SystemTab.xaml.cs — WPF-lifecycle забота, не VM-концерн).
+        /// Первичное заполнение вкладки. Вызывается из code-behind при первом Loaded
+        /// (гейт _initialized остался в SystemTab.xaml.cs — WPF-lifecycle забота, не
+        /// VM-концерн). Обход каталога кэша и папки снапшотов — это
+        /// обращения к диску: на медленном носителе с большим кэшем они подвешивали
+        /// UI-поток на всё первое открытие вкладки. Сами чтения вынесены в пул потоков,
+        /// а применение результатов остаётся здесь — коллекции SourceItems/Snapshots
+        /// привязаны к разметке и меняются только из потока UI.
         /// </summary>
-        public void Initialize()
+        public async Task InitializeAsync()
         {
             LoadSourceOrderUI();
-            UpdateCacheStats();
+
+            var cacheStats = await Task.Run(OfflineService.GetCacheStats);
+            var snapshots  = await Task.Run(ConfigSnapshotService.GetSnapshots);
+
+            ApplyCacheStats(cacheStats);
             LoadCacheAppsList();
-            LoadSnapshotsList();
+            ApplySnapshots(snapshots);
         }
     }
 }

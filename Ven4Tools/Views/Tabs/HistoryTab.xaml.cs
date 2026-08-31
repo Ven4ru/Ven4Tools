@@ -36,7 +36,7 @@ namespace Ven4Tools.Views.Tabs
             txtHistorySearch.Text = (string)txtHistorySearch.Tag;
         }
 
-        private async void HistoryTab_Loaded(object sender, RoutedEventArgs e)
+        private void HistoryTab_Loaded(object sender, RoutedEventArgs e)
         {
             // Переподписка при каждом показе (после Unloaded подписка снимается).
             // Флаг защищает от повторной подписки, если Loaded сработает дважды подряд.
@@ -45,7 +45,9 @@ namespace Ven4Tools.Views.Tabs
                 InstallHistoryService.Instance.Changed += OnHistoryChanged;
                 _historySubscribed = true;
             }
-            await RefreshAsync();
+            // Без флага «только один раз» намеренно: история обязана быть свежей при
+            // каждом показе вкладки.
+            TabInitGuard.Run(RefreshAsync, "[HistoryTab] Ошибка обновления истории установок");
         }
 
         private void HistoryTab_Unloaded(object sender, RoutedEventArgs e)
