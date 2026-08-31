@@ -1,4 +1,6 @@
+using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Ven4Tools.ViewModels;
 
 namespace Ven4Tools.Tests;
@@ -88,5 +90,36 @@ public class DebloaterViewModelTests
         vm.SetSelectedTweakIds(new[] { "не-существующий-id-12345" });
 
         Assert.Empty(vm.GetSelectedTweakIds());
+    }
+
+    // Восстановление снапшота конфигурации — второй, отдельный вход в
+    // DebloatTweakExecutor: до этой правки оно не считалось с гейтом «Применить»,
+    // и снапшот, восстановленный во время идущей очистки, запускал две пачки правок
+    // реестра и служб внахлёст.
+    [Fact]
+    public async Task ApplyTweaksByIdsAsync_ВоВремяОчистки_Отказывает()
+    {
+        var vm = new DebloaterViewModel();
+        vm.ApplyEnabled = false;
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => vm.ApplyTweaksByIdsAsync(new[] { "не-существующий-id-12345" }));
+
+        Assert.Contains("уже выполняется", ex.Message);
+    }
+
+    // Обратная сторона гейта: если бы флаг не возвращался в finally, кнопка
+    // «Применить» оставалась бы заблокированной навсегда после первого же
+    // восстановления снапшота.
+    [Fact]
+    public async Task ApplyTweaksByIdsAsync_ПоЗавершении_ВозвращаетApplyEnabled()
+    {
+        var vm = new DebloaterViewModel();
+
+        var (succeeded, total) = await vm.ApplyTweaksByIdsAsync(new[] { "не-существующий-id-12345" });
+
+        Assert.Equal(0, succeeded);
+        Assert.Equal(0, total);
+        Assert.True(vm.ApplyEnabled);
     }
 }

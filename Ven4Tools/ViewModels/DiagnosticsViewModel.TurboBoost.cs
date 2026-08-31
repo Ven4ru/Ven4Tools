@@ -33,6 +33,13 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunDisableTurboBoostAsync()
         {
+            // Гейт реентерабельности — одного CanExecute мало: перезапрос доступности
+            // публикуется с приоритетом ниже обработки ввода, и между снятием флага и
+            // реальным отключением кнопки проходит повторный клик. Здесь это означало бы
+            // два параллельных powercfg, правящих одну и ту же схему электропитания
+            // (та же схема защиты, что в NetworkViewModel).
+            if (IsApplyingTurboBoost) return;
+            IsApplyingTurboBoost = true;
             try
             {
                 await ApplyTurboBoostAsync(false);
@@ -47,10 +54,18 @@ namespace Ven4Tools.ViewModels
                 MessageBox.Show("Не удалось отключить турбобуст. Запустите приложение от имени администратора и попробуйте ещё раз.",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            finally
+            {
+                IsApplyingTurboBoost = false;
+            }
         }
 
         private async Task RunEnableTurboBoostAsync()
         {
+            // Гейт реентерабельности — см. пояснение в RunDisableTurboBoostAsync.
+            // Флаг общий с «Отключить»: обе кнопки правят одну настройку схемы питания.
+            if (IsApplyingTurboBoost) return;
+            IsApplyingTurboBoost = true;
             try
             {
                 await ApplyTurboBoostAsync(true);
@@ -64,6 +79,10 @@ namespace Ven4Tools.ViewModels
                 AppLogger.Write($"❌ Ошибка при включении турбобуста: {ex.Message}");
                 MessageBox.Show("Не удалось включить турбобуст. Запустите приложение от имени администратора и попробуйте ещё раз.",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsApplyingTurboBoost = false;
             }
         }
 
