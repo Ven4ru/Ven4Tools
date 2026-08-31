@@ -229,7 +229,11 @@ namespace Ven4Tools.ViewModels
             FillFileSizeOptions();
 
             // Подчистка тестовых файлов, оставшихся от аварийно прерванных прогонов.
-            DiskBenchmarkEngine.CleanupOrphanedFiles();
+            // Через Task.Run, а не напрямую: метод вызывается до первого await, то есть
+            // на UI-потоке, а внутри он опрашивает DriveInfo.IsReady по каждому тому —
+            // на отключённом сетевом диске или пустом приводе это блокирует поток
+            // на секунды, и вкладка открывается «зависшей».
+            await Task.Run(DiskBenchmarkEngine.CleanupOrphanedFiles);
 
             await LoadDisksAsync();
         }

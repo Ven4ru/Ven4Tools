@@ -142,13 +142,23 @@ namespace Ven4Tools.ViewModels
                 var startNow = MessageBox.Show(
                     "Служба Windows Update не запущена. Запустить её сейчас?",
                     "Служба остановлена", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (startNow == MessageBoxResult.Yes && !_service.TryStartService())
+                if (startNow == MessageBoxResult.Yes)
                 {
-                    StatusText = "❌ Не удалось запустить службу Windows Update.";
-                    IsSearching = false;
-                    ShowEmptyStateInfo("Служба Windows Update недоступна",
-                        "Не удалось запустить службу — подробности в сообщении выше");
-                    return;
+                    // Через Task.Run: TryStartService ждёт запуска службы до 30 секунд
+                    // (ServiceController.WaitForStatus), на UI-потоке это полностью
+                    // замороженное окно «не отвечает». Сюда попадают не только по кнопке
+                    // «Проверить», но и автоматически при первом открытии вкладки, а
+                    // остановленный wuauserv — обычное дело после твиков вкладки «Очистка».
+                    // Сам поиск обновлений уже уводится в пул тем же способом
+                    // (WindowsUpdateComSource.SearchAsync).
+                    if (!await Task.Run(_service.TryStartService))
+                    {
+                        StatusText = "❌ Не удалось запустить службу Windows Update.";
+                        IsSearching = false;
+                        ShowEmptyStateInfo("Служба Windows Update недоступна",
+                            "Не удалось запустить службу — подробности в сообщении выше");
+                        return;
+                    }
                 }
                 if (startNow == MessageBoxResult.No)
                 {
