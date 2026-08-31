@@ -99,7 +99,7 @@
                                                TextWrapping="Wrap" Margin="0,2,0,0"
                                                Visibility="{Binding HasMessage, Converter={StaticResource BoolToVis}}"/>
                                     <TextBlock Text="{Binding AddedAppsText}"
-                                               Foreground="#64C864"
+                                               Foreground="{DynamicResource StatusSuccess}"
                                                TextWrapping="Wrap" Margin="0,2,0,0" FontSize="11"
                                                Visibility="{Binding HasAddedApps, Converter={StaticResource BoolToVis}}"/>
                                 </StackPanel>

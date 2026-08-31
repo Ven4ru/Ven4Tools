@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
@@ -96,12 +97,23 @@ namespace Ven4Tools.ViewModels
             if (!IsBusy) IsPinging = false;
         }
 
+        // Значки строк берут цвета из темы. Фолбэк нужен, когда приложения WPF нет
+        // (юнит-тесты) — это тот же зелёный, что был зашит здесь до перехода на темы.
+        private static readonly Brush _fallbackSuccess = CreateFrozenFallback(74, 222, 128);
+
+        private static Brush CreateFrozenFallback(byte r, byte g, byte b)
+        {
+            var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+            brush.Freeze();
+            return brush;
+        }
+
         internal static void SetRow(NetworkCheckResult row, string text, bool? ok)
         {
             row.Text = text;
-            if (ok == null) { row.IconText = "⬜"; row.IconBrush = Brushes.Gray; return; }
-            if (ok == true) { row.IconText = "✅"; row.IconBrush = new SolidColorBrush(Color.FromRgb(74, 222, 128)); }
-            else            { row.IconText = "❌"; row.IconBrush = new SolidColorBrush(Colors.LightCoral); }
+            if (ok == null) { row.IconText = "⬜"; row.IconBrush = BrushResolver.Resolve("TextSecondary", Brushes.Gray); return; }
+            if (ok == true) { row.IconText = "✅"; row.IconBrush = BrushResolver.Resolve("StatusSuccess", _fallbackSuccess); }
+            else            { row.IconText = "❌"; row.IconBrush = BrushResolver.Resolve("StatusDanger", Brushes.LightCoral); }
         }
 
         // ── Доступность сервисов ─────────────────────────────────────────────
@@ -119,14 +131,14 @@ namespace Ven4Tools.ViewModels
                 foreach (var row in rows)
                 {
                     row.IconText = "🚫";
-                    row.IconBrush = Brushes.Gray;
+                    row.IconBrush = BrushResolver.Resolve("TextSecondary", Brushes.Gray);
                     row.Text = "отключено";
                 }
                 AppLogger.Write("[Сеть] Проверка сервисов пропущена: параноидальный режим");
                 if (!IsBusy) IsCheckingServices = false;
                 return;
             }
-            foreach (var row in rows) { row.IconText = "⏳"; row.IconBrush = Brushes.Gray; }
+            foreach (var row in rows) { row.IconText = "⏳"; row.IconBrush = BrushResolver.Resolve("TextSecondary", Brushes.Gray); }
 
             var checks = new[]
             {
@@ -149,8 +161,8 @@ namespace Ven4Tools.ViewModels
                     {
                         row.IconText = r.Available ? "✅" : "❌";
                         row.IconBrush = r.Available
-                            ? new SolidColorBrush(Color.FromRgb(74, 222, 128))
-                            : new SolidColorBrush(Colors.LightCoral);
+                            ? BrushResolver.Resolve("StatusSuccess", _fallbackSuccess)
+                            : BrushResolver.Resolve("StatusDanger", Brushes.LightCoral);
                         row.Text = r.Available ? $"{r.Ms} мс" : "таймаут";
                     });
                     AppLogger.Write($"[Сеть] {name}: {(r.Available ? "✅" : "❌")} {r.Ms}мс");

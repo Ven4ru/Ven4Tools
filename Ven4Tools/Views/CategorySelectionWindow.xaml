@@ -128,7 +128,7 @@
                 HorizontalAlignment="Center"
                 IsEnabled="False"
                 Background="{DynamicResource AccentColor}"
-                Foreground="White" FontSize="14" FontWeight="Bold"
+                Foreground="{DynamicResource AccentForeground}" FontSize="14" FontWeight="Bold"
                 Click="BtnContinue_Click"/>
     </Grid>
 </Window>

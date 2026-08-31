@@ -11,10 +11,9 @@ namespace Ven4Tools.ViewModels
     // Красит полоску прогресса установки по фазе (AppInstallProgress.Phase), чтобы
     // «Загрузка» и «Установка» визуально различались (пользовательский фидбог
     // 2026-07-24: единая полоска одного цвета не давала понять, на каком этапе
-    // процесс). Используются уже существующие в проекте статичные кисти палитры
-    // (Shared/DesignTokens.xaml) — те же, что красят статусные индикаторы в
-    // MainWindow/DiagnosticsTab (StatusSuccess/StatusDanger/StatusWarning), а не
-    // новая произвольная палитра.
+    // процесс). Используются уже существующие ключи палитры — те же, что красят
+    // статусные индикаторы в MainWindow/DiagnosticsTab (StatusSuccess/StatusDanger/
+    // StatusWarning), а не новая произвольная палитра.
     public sealed class InstallPhaseToBrushConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -23,16 +22,15 @@ namespace Ven4Tools.ViewModels
                 ? phase switch
                 {
                     InstallPhase.Download => "StatusInfo",     // скачивание — синий
-                    InstallPhase.Installing => "BrandGreen",   // установка — зелёный
-                    InstallPhase.Done => "BrandGreen",         // готово — тот же зелёный
+                    InstallPhase.Installing => "AccentColor",  // установка — акцент темы
+                    InstallPhase.Done => "AccentColor",        // готово — тот же акцент
                     InstallPhase.Error => "StatusDanger",      // ошибка/отмена — красный
                     _ => "AccentColor"
                 }
                 : "AccentColor";
 
-            // StaticResource-кисти из DesignTokens.xaml не зависят от темы (в отличие
-            // от AccentColor, который ThemeService переопределяет на лету) — ищем через
-            // TryFindResource, чтобы не падать, если ресурс почему-то не подключён.
+            // Ключи ищутся через TryFindResource, чтобы не падать, если словарь
+            // ресурсов почему-то не подключён (юнит-тесты, дизайнер).
             // Фолбэк серый, а не белый как у ViewModel-ей: это цвет самой полоски прогресса.
             return BrushResolver.Resolve(resourceKey, "AccentColor", Brushes.Gray);
         }

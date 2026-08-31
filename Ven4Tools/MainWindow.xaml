@@ -33,7 +33,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="#144ADE80"/>
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource AccentHoverBackground}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -42,8 +42,8 @@
             </Setter>
         </Style>
         <Style x:Key="ActiveNavButtonStyle" TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
-            <Setter Property="Background" Value="#1E4ADE80"/>
-            <Setter Property="Foreground" Value="{StaticResource BrandGreen}"/>
+            <Setter Property="Background" Value="{DynamicResource AccentSoftBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
         </Style>
         <Style x:Key="SectionLabel" TargetType="TextBlock" BasedOn="{StaticResource EyebrowStyle}">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
@@ -60,10 +60,15 @@
             <Grid Margin="12,0">
                 <Grid.RowDefinitions><RowDefinition Height="80"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                 <Grid Grid.Row="0">
-                    <Border Width="3" Height="40" HorizontalAlignment="Left" Background="{StaticResource BrandGreen}"
-                            CornerRadius="2" Effect="{StaticResource BrandAuraEffect}"/>
+                    <!-- Логотип. С 5.0 фирменная планка и слово «Tools» следуют за акцентом темы:
+                         README обещает переключатель темы «без исключений», а логотип
+                         назван там первым примером застрявшего зелёного. Растрового
+                         логотипа у клиента нет — знак рисуется разметкой, поэтому
+                         перекрашивается тем же способом, что и остальной интерфейс. -->
+                    <Border Width="3" Height="40" HorizontalAlignment="Left" Background="{DynamicResource AccentColor}"
+                            CornerRadius="2" Effect="{DynamicResource BrandAuraEffect}"/>
                     <StackPanel VerticalAlignment="Center" Margin="15,0,0,0">
-                        <TextBlock FontSize="19" FontWeight="Bold"><Run Text="Ven4"/><Run Text="Tools" Foreground="{StaticResource BrandGreen}"/></TextBlock>
+                        <TextBlock FontSize="19" FontWeight="Bold"><Run Text="Ven4"/><Run Text="Tools" Foreground="{DynamicResource AccentColor}"/></TextBlock>
                         <TextBlock Text="WINDOWS TOOLKIT" Style="{StaticResource EyebrowStyle}" Margin="0,3,0,0"/>
                     </StackPanel>
                 </Grid>
@@ -80,10 +85,10 @@
                         <Button x:Name="btnBenchmarkTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE916;" Content="Бенчмарк" Click="NavigateToBenchmark"/>
                         <Grid>
                             <Button x:Name="btnWindowsUpdateTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE72E;" Content="Windows Update" Click="NavigateToWindowsUpdate"/>
-                            <Border x:Name="badgeWindowsUpdateCount" Background="{StaticResource StatusDanger}" CornerRadius="7"
+                            <Border x:Name="badgeWindowsUpdateCount" Background="{DynamicResource StatusDanger}" CornerRadius="7"
                                     MinWidth="16" Height="15" HorizontalAlignment="Right" VerticalAlignment="Center"
                                     Margin="0,0,8,0" Visibility="Collapsed">
-                                <TextBlock x:Name="txtWindowsUpdateBadge" Text="0" FontSize="9" FontWeight="Bold" Foreground="White"
+                                <TextBlock x:Name="txtWindowsUpdateBadge" Text="0" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource StatusDangerForeground}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4,0"/>
                             </Border>
                         </Grid>
@@ -103,8 +108,8 @@
                     <Border Style="{StaticResource PillStatusStyle}" Margin="0,0,0,6">
                         <Grid>
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse x:Name="dotConnectionStatus" Width="7" Height="7" Fill="{StaticResource StatusSuccess}" Margin="0,0,7,0"/>
-                                <TextBlock x:Name="txtConnectionStatus" Text="Интернет доступен" FontSize="10" Foreground="{StaticResource StatusSuccess}"/>
+                                <Ellipse x:Name="dotConnectionStatus" Width="7" Height="7" Fill="{DynamicResource StatusSuccess}" Margin="0,0,7,0"/>
+                                <TextBlock x:Name="txtConnectionStatus" Text="Интернет доступен" FontSize="10" Foreground="{DynamicResource StatusSuccess}"/>
                             </StackPanel>
                             <TextBlock x:Name="txtSidebarVersion" HorizontalAlignment="Right" FontFamily="Cascadia Mono, Consolas" FontSize="9" Foreground="{DynamicResource TextSecondary}"/>
                         </Grid>
@@ -117,7 +122,7 @@
               DragEnter="MainArea_DragEnter" DragOver="MainArea_DragOver" DragLeave="MainArea_DragLeave" Drop="MainArea_Drop">
             <Grid.RowDefinitions><RowDefinition Height="58"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
-            <Border Grid.Row="0" Background="#B80D1018" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,0">
+            <Border Grid.Row="0" Background="{DynamicResource SidebarBackground}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,0">
                 <Grid>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Рабочее пространство" FontSize="16" FontWeight="SemiBold"/>
@@ -140,7 +145,7 @@
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
                     Padding="14,7" Visibility="Collapsed">
                 <DockPanel>
-                    <TextBlock Text="&#xE840;" FontFamily="Segoe Fluent Icons" Margin="0,0,8,0" Foreground="{StaticResource BrandGreen}"/>
+                    <TextBlock Text="&#xE840;" FontFamily="Segoe Fluent Icons" Margin="0,0,8,0" Foreground="{DynamicResource AccentColor}"/>
                     <WrapPanel x:Name="wrapPins"/>
                 </DockPanel>
             </Border>
@@ -148,7 +153,7 @@
             <ContentControl x:Name="MainFrame" Grid.Row="2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
 
             <Expander Grid.Row="3" Header="Центр активности" IsExpanded="False" Margin="16,8,16,12">
-                <Border Height="150" Margin="0,7,0,0" Background="{StaticResource SurfaceCard}"
+                <Border Height="150" Margin="0,7,0,0" Background="{DynamicResource CardBackground}"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6">
                     <Grid>
                         <Button x:Name="btnClearGlobalLog" Content="&#xE74D;" Style="{StaticResource IconButtonStyle}"
@@ -178,9 +183,9 @@
             </Expander>
 
             <Border x:Name="pnlDropOverlay" Grid.Row="0" Grid.RowSpan="4" Visibility="Collapsed" Panel.ZIndex="99"
-                    Background="#E60A0A14" BorderBrush="{StaticResource BrandGreen}" BorderThickness="2" CornerRadius="8" Margin="12">
+                    Background="{DynamicResource OverlayBackground}" BorderBrush="{DynamicResource AccentColor}" BorderThickness="2" CornerRadius="8" Margin="12">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons" FontSize="44" Foreground="{StaticResource BrandGreen}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons" FontSize="44" Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center"/>
                     <TextBlock Text="Добавить локальный установщик" FontSize="19" FontWeight="SemiBold" Margin="0,14,0,0"/>
                     <TextBlock Text="Отпустите файл, чтобы продолжить" Foreground="{DynamicResource TextSecondary}" Margin="0,5,0,0"/>
                 </StackPanel>

@@ -67,12 +67,12 @@
                     Command="{Binding LaunchCommand}"
                     ToolTip="Запустит установленное приложение."
                     Visibility="{Binding ShowLaunchButton, Converter={StaticResource BoolToVis}}"
-                    Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="Bold"/>
+                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="Bold"/>
             <Button Content="Установить" Height="34" Margin="0,0,0,6"
                     Command="{Binding InstallCommand}"
                     ToolTip="Скачает и установит приложение из доступного доверенного источника."
                     Visibility="{Binding ShowInstallButton, Converter={StaticResource BoolToVis}}"
-                    Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="Bold"/>
+                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="Bold"/>
             <Button Content="🔄 Переустановить" Height="30" Margin="0,0,0,6"
                     Command="{Binding ReinstallCommand}"
                     ToolTip="Повторно установит приложение. Текущая версия может быть заменена."
@@ -81,7 +81,7 @@
                     Command="{Binding UninstallCommand}"
                     ToolTip="После подтверждения удалит приложение с компьютера."
                     Visibility="{Binding ShowInstalledActions, Converter={StaticResource BoolToVis}}"
-                    Background="#5a1414" Foreground="#ffb4b4"/>
+                    Background="{DynamicResource StatusDanger}" Foreground="{DynamicResource StatusDangerForeground}"/>
             <Button Height="30" Command="{Binding TogglePinCommand}" ToolTip="{Binding PinTooltip}"
                     Background="Transparent" BorderThickness="1">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

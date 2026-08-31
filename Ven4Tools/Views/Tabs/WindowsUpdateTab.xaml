@@ -85,7 +85,7 @@
         </Grid>
 
         <!-- Footer: выбор + установка -->
-        <Border Grid.Row="3" Margin="0,12,0,0" Padding="12,8" Background="{StaticResource SurfaceCard}"
+        <Border Grid.Row="3" Margin="0,12,0,0" Padding="12,8" Background="{DynamicResource CardBackground}"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -97,7 +97,7 @@
             <Button x:Name="btnInstall" Grid.Column="1" Content="Установить выбранные" Height="38"
                     Padding="24,0" IsEnabled="{Binding IsInstallEnabled}"
                     ToolTip="Скачает и установит отмеченные обновления Windows. После установки может потребоваться перезагрузка."
-                    Background="{StaticResource BrandGreen}" Foreground="#06130D" FontWeight="SemiBold"
+                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold"
                     BorderThickness="0" Command="{Binding InstallCommand}"/>
         </Grid>
         </Border>

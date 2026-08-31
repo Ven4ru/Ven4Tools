@@ -125,7 +125,7 @@ namespace Ven4Tools
             _lastActiveTasksBusy = busy;
 
             txtActiveTasks.Text = busy ? "Выполняется установка" : "Нет активных задач";
-            var brush = busy ? (Brush)FindResource("BrandGreen") : (Brush)FindResource("TextSecondary");
+            var brush = busy ? (Brush)FindResource("AccentColor") : (Brush)FindResource("TextSecondary");
             txtActiveTasks.Foreground = brush;
             dotActiveTasks.Fill = brush;
         }

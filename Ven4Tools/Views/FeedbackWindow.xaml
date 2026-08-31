@@ -40,19 +40,19 @@
             <StackPanel x:Name="pnlStars" Orientation="Horizontal">
                 <Button x:Name="star1" Content="★" Tag="1" FontSize="28" Width="44"
                         Background="Transparent" BorderThickness="0" Cursor="Hand"
-                        Foreground="#444" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
+                        Foreground="{DynamicResource TextSecondary}" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
                 <Button x:Name="star2" Content="★" Tag="2" FontSize="28" Width="44"
                         Background="Transparent" BorderThickness="0" Cursor="Hand"
-                        Foreground="#444" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
+                        Foreground="{DynamicResource TextSecondary}" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
                 <Button x:Name="star3" Content="★" Tag="3" FontSize="28" Width="44"
                         Background="Transparent" BorderThickness="0" Cursor="Hand"
-                        Foreground="#444" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
+                        Foreground="{DynamicResource TextSecondary}" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
                 <Button x:Name="star4" Content="★" Tag="4" FontSize="28" Width="44"
                         Background="Transparent" BorderThickness="0" Cursor="Hand"
-                        Foreground="#444" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
+                        Foreground="{DynamicResource TextSecondary}" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
                 <Button x:Name="star5" Content="★" Tag="5" FontSize="28" Width="44"
                         Background="Transparent" BorderThickness="0" Cursor="Hand"
-                        Foreground="#444" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
+                        Foreground="{DynamicResource TextSecondary}" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
             </StackPanel>
         </StackPanel>
 
@@ -88,7 +88,7 @@
             <Button Grid.Column="2" x:Name="btnSend"
                     Content="📨 Отправить отзыв" Height="36" Padding="20,0"
                     Background="{DynamicResource AccentColor}"
-                    Foreground="White" FontWeight="SemiBold" BorderThickness="0"
+                    Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold" BorderThickness="0"
                     IsEnabled="False"
                     ToolTip="Отправит выбранную оценку и введённый комментарий разработчику."
                     Click="BtnSend_Click"/>

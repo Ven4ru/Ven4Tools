@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.Views
@@ -38,16 +39,29 @@ namespace Ven4Tools.Views
             PaintStars(_rating);
         }
 
+        // Золото звезды рейтинга — конвенция, а не цвет интерфейса: оно одинаково
+        // читается на подложке любой темы и узнаётся как «оценка». А вот погашенная
+        // звезда обязана следовать теме: зашитый тёмно-серый #444 на светлой подложке
+        // «Светлой» темы выглядел контрастнее золотой — невыбранные звёзды казались
+        // выбранными.
+        private static readonly Brush StarActive = FrozenStar(0xFF, 0xC1, 0x07);
+        private static readonly Brush StarPreview = FrozenStar(0xFF, 0xB3, 0x00);
+        private static readonly Brush StarDimFallback = FrozenStar(0x44, 0x44, 0x44);
+
+        private static Brush FrozenStar(byte r, byte g, byte b)
+        {
+            var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+            brush.Freeze();
+            return brush;
+        }
+
         private void PaintStars(int count, bool preview = false)
         {
-            var color = preview
-                ? Color.FromRgb(0xFF, 0xB3, 0x00)
-                : Color.FromRgb(0xFF, 0xC1, 0x07);
-            var dim = Color.FromRgb(0x44, 0x44, 0x44);
+            Brush lit = preview ? StarPreview : StarActive;
+            Brush dim = BrushResolver.Resolve("TextSecondary", StarDimFallback);
 
             for (int i = 0; i < _stars.Count; i++)
-                _stars[i].Foreground = new SolidColorBrush(
-                    i < count ? color : dim);
+                _stars[i].Foreground = i < count ? lit : dim;
         }
 
         private void BtnSend_Click(object sender, RoutedEventArgs e)

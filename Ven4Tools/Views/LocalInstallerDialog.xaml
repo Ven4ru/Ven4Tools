@@ -32,7 +32,7 @@
             <Button x:Name="btnCancel" Content="Отмена" Width="90" Height="32"
                     Margin="0,0,10,0" Click="BtnCancel_Click"/>
             <Button x:Name="btnOk" Content="✅ Добавить" Width="110" Height="32"
-                    Background="{DynamicResource AccentColor}" Foreground="White"
+                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
                     ToolTip="Добавит выбранный установочный файл в текущую очередь установки."
                     FontWeight="SemiBold" Click="BtnOk_Click"/>
         </StackPanel>

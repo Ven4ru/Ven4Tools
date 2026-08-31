@@ -28,7 +28,7 @@
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentColor}"/>
                                 <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                                <Setter TargetName="lbl" Property="Foreground" Value="White"/>
+                                <Setter TargetName="lbl" Property="Foreground" Value="{DynamicResource AccentForeground}"/>
                                 <Setter TargetName="lbl" Property="FontWeight" Value="Bold"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -128,8 +128,8 @@
                         <Button x:Name="btnUpgradeAll"
                                 Content="Обновить всё"
                                 Margin="4,0,0,0" Height="34" Padding="14,0"
-                                Background="{StaticResource BrandGreen}"
-                                Foreground="#06130D"
+                                Background="{DynamicResource AccentColor}"
+                                Foreground="{DynamicResource AccentForeground}"
                                 FontWeight="Bold"
                                 FontSize="12"
                                 ToolTip="После подтверждения обновит через winget все приложения, для которых доступна новая версия."
@@ -204,8 +204,8 @@
                     <Button x:Name="btnUpdateSelected"
                             Content="Обновить"
                             Height="30" Padding="12,0"
-                            Background="{StaticResource BrandGreen}"
-                            Foreground="#06130D"
+                            Background="{DynamicResource AccentColor}"
+                            Foreground="{DynamicResource AccentForeground}"
                             FontWeight="Bold"
                             FontSize="12"
                             ToolTip="Обновит отмеченные приложения, для которых найдены новые версии."
@@ -335,7 +335,7 @@
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding HasUpdate}" Value="True">
                                                         <Setter Property="Text" Value="{Binding Available}"/>
-                                                        <Setter Property="Foreground" Value="#E6820E"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource StatusWarning}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -351,10 +351,10 @@
                                                 <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsVerified}" Value="True">
-                                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource StatusSuccess}"/>
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsUnknownSource}" Value="True">
-                                                        <Setter Property="Foreground" Value="#E6820E"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource StatusWarning}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -368,7 +368,7 @@
                                                 Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
                                                 IsEnabled="{Binding CanAct}"
                                                 Height="26" Padding="10,0" Margin="0,0,6,0"
-                                                Background="{StaticResource BrandGreen}" Foreground="#06130D"
+                                                Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
                                                 FontSize="12" FontWeight="Bold"
                                                 ToolTip="Обновит это приложение до доступной версии."
                                                 Command="{Binding DataContext.UpdateAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"

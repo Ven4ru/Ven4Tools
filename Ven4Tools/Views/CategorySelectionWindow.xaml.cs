@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.Views
@@ -9,8 +10,6 @@ namespace Ven4Tools.Views
     public partial class CategorySelectionWindow : Window
     {
         private string _selected = "";
-        private static readonly SolidColorBrush AccentBorder =
-            new SolidColorBrush(Color.FromRgb(0, 120, 212));
 
         public CategorySelectionWindow()
         {
@@ -30,8 +29,9 @@ namespace Ven4Tools.Views
                 c.BorderThickness = new Thickness(2);
             }
 
-            // Подсвечиваем выбранную
-            card.BorderBrush = AccentBorder;
+            // Подсвечиваем выбранную акцентом текущей темы, а не зашитым синим:
+            // окно выбора профиля каталога открывается уже после ThemeService.Apply().
+            card.BorderBrush = BrushResolver.Resolve("AccentColor");
             card.BorderThickness = new Thickness(3);
 
             btnContinue.IsEnabled = true;
