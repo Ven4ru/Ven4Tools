@@ -1,7 +1,14 @@
 {
-  "version": 15,
-  "lastUpdated": "2026-08-18 09:00:00",
+  "version": 16,
+  "lastUpdated": "2026-09-01 00:00:00",
   "changelog": [
+    {
+      "version": 16,
+      "date": "2026-09-01",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "Правило «вечной» ссылки из версии 15 распространено ещё на 3 записи (lunacy, xnview, steam): их downloadUrl не содержит версии, вендор пересобирает файл по тому же адресу, поэтому sha256 откреплён (пустая строка) — у lunacy зафиксированный хеш уже успел протухнуть. Ссылки сохранены: из них берётся «официальный сайт» в карточке и запасное определение размера. Отдельно устранён дрейф version/size у 5 записей с уже пустым sha256 — vscode (1.133.0 → 1.135.0), postman (12.23.8 → 12.26.0), docker-desktop (4.87.0 → 4.88.1), telegram (7.0.9 → 7.1.3), element (1.12.25 → 1.12.26); значения сверены с текущими сборками вендоров. 7zip/sharex/autohotkey по-прежнему без Authenticode-подписи — проверено на актуальных сборках, это осознанная позиция издателей, а не смена издателя."
+    },
     {
       "version": 15,
       "date": "2026-08-18",
@@ -444,7 +451,7 @@
       "iconUrl": "https://www.google.com/s2/favicons?domain=icons8.com&sz=64",
       "description": "Российский аналог Figma от Icons8. Дизайн интерфейсов, прототипирование, работает офлайн.",
       "profile": "full",
-      "sha256": "115550663360ace09d4ee5a149ea245a6a483fc74a9c4ad93ab6696e0a741ab7",
+      "sha256": "",
       "chocoId": "lunacy"
     },
     {
@@ -458,7 +465,7 @@
       "iconUrl": "https://www.google.com/s2/favicons?domain=xnview.com&sz=64",
       "description": "Просмотрщик и конвертер изображений с поддержкой 500+ форматов.",
       "profile": "extended",
-      "sha256": "4ebdcb6d87f5bfc21ed31e70f88515701fe8e489148555c36c6bd4e4ea2ec5f7",
+      "sha256": "",
       "chocoId": "xnviewmp"
     },
     {
@@ -467,8 +474,8 @@
       "category": "Разработка",
       "wingetId": "Microsoft.VisualStudioCode",
       "downloadUrl": "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64",
-      "version": "1.133.0",
-      "size": "225.7 MB",
+      "version": "1.135.0",
+      "size": "220.9 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=code.visualstudio.com&sz=64",
       "description": "Легкий, но мощный редактор кода от Microsoft.",
       "profile": "extended",
@@ -537,8 +544,8 @@
       "category": "Разработка",
       "wingetId": "Docker.DockerDesktop",
       "downloadUrl": "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe",
-      "version": "4.87.0",
-      "size": "628.7 MB",
+      "version": "4.88.1",
+      "size": "601.9 MB",
       "iconUrl": "https://cdn.simpleicons.org/docker",
       "description": "Контейнеризация приложений для разработки и тестирования.",
       "profile": "full",
@@ -551,8 +558,8 @@
       "category": "Разработка",
       "wingetId": "Postman.Postman",
       "downloadUrl": "https://dl.pstmn.io/download/latest/win64",
-      "version": "12.23.8",
-      "size": "168.7 MB",
+      "version": "12.26.0",
+      "size": "170.7 MB",
       "iconUrl": "https://cdn.simpleicons.org/postman",
       "description": "Платформа для тестирования API и работы с запросами.",
       "profile": "full",
@@ -607,8 +614,8 @@
       "category": "Мессенджеры",
       "wingetId": "Telegram.TelegramDesktop",
       "downloadUrl": "https://telegram.org/dl/desktop/win64",
-      "version": "7.0.9",
-      "size": "52.0 MB",
+      "version": "7.1.3",
+      "size": "52.7 MB",
       "iconUrl": "https://cdn.simpleicons.org/telegram",
       "description": "Быстрый и безопасный мессенджер с облачными хранилищами.",
       "profile": "basic",
@@ -677,8 +684,8 @@
       "category": "Мессенджеры",
       "wingetId": "Element.Element",
       "downloadUrl": "https://packages.element.io/desktop/install/win32/x64/Element%20Setup.exe",
-      "version": "1.12.25",
-      "size": "183.1 MB",
+      "version": "1.12.26",
+      "size": "183.7 MB",
       "iconUrl": "https://cdn.simpleicons.org/element",
       "description": "Децентрализованный мессенджер на базе Matrix.",
       "profile": "full",
@@ -962,7 +969,7 @@
       "iconUrl": "https://cdn.simpleicons.org/steam",
       "description": "Крупнейший игровой магазин и платформа для игр.",
       "profile": "basic",
-      "sha256": "7d3654531c32d941b8cae81c4137fc542172bfa9635f169cb392f245a0a12bcb",
+      "sha256": "",
       "chocoId": "steam"
     },
     {
