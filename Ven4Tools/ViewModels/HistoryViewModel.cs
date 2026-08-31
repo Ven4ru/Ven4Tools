@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,7 +16,7 @@ namespace Ven4Tools.ViewModels
     /// менялось, кроме <see cref="IsReinstalling"/> — см. спек
     /// docs/superpowers/specs/2026-08-24-historytab-mvvm-design.md.
     /// </summary>
-    public sealed class HistoryViewModel : INotifyPropertyChanged
+    public sealed class HistoryViewModel : ViewModelBase
     {
         private List<HistoryEntry> _allEntries = new();
 
@@ -209,18 +207,6 @@ namespace Ven4Tools.ViewModels
                 InstallationService.InstallSemaphore.Release();
                 IsReinstalling = false;
             }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(name);
-            return true;
         }
     }
 }

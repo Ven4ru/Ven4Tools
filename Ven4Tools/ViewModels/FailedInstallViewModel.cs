@@ -1,6 +1,4 @@
 using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Ven4Tools.Services;
 
@@ -14,7 +12,7 @@ namespace Ven4Tools.ViewModels
     /// тем же <c>InstallationService.InstallAppAsync</c>, что и обычная установка;
     /// эта модель только хранит текст, состояние и гейт занятости.</para>
     /// </summary>
-    public sealed class FailedInstallViewModel : INotifyPropertyChanged
+    public sealed class FailedInstallViewModel : ViewModelBase
     {
         private readonly Func<FailedInstallViewModel, Task> _retry;
 
@@ -103,19 +101,6 @@ namespace Ven4Tools.ViewModels
             {
                 IsRetrying = false;
             }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void OnPropertyChanged([CallerMemberName] string? name = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(name);
-            return true;
         }
     }
 }

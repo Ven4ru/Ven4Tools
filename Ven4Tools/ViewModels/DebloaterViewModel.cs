@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,7 +16,7 @@ namespace Ven4Tools.ViewModels
     /// <see cref="DebloatTweakExecutor"/>. Перенесено из code-behind при переходе
     /// на MVVM (2026-08-21, пилот перед остальными вкладками), поведение не менялось.
     /// </summary>
-    public sealed class DebloaterViewModel : INotifyPropertyChanged
+    public sealed class DebloaterViewModel : ViewModelBase
     {
         private readonly List<DebloatItem> _allItems = DebloatCatalog.BuildItems();
         private CancellationTokenSource? _cts;
@@ -248,20 +246,6 @@ namespace Ven4Tools.ViewModels
             _cts?.Cancel();
             CancelEnabled = false;
             StatusText = "⏹ Останавливаю...";
-        }
-
-        // ── INotifyPropertyChanged ───────────────────────────────────────────────
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(name);
-            return true;
         }
     }
 }

@@ -153,7 +153,7 @@ namespace Ven4Tools.ViewModels
                 // бы PropertyChanged, а без него биндинг TextBox.Text не перечитает старое
                 // значение обратно, и отклонённый ввод остался бы висеть на экране. Поднимаем
                 // уведомление безусловно — сама пара "поле/профиль" не расходится.
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DefaultInstallFolderText)));
+                OnPropertyChanged(nameof(DefaultInstallFolderText));
                 DefaultInstallFolderStatusText =
                     "⚠ Путь не принят: нужен абсолютный локальный путь без сетевых имён и кавычек. Оставлено прежнее значение.";
                 return;

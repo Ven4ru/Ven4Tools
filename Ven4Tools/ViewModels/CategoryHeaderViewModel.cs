@@ -1,6 +1,4 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
 
@@ -17,7 +15,7 @@ namespace Ven4Tools.ViewModels
     // в режиме SourceOrderService.Mode == "per_category" — ещё и комбобокс выбора
     // приоритетного источника для этой категории (раньше строился императивно в
     // CatalogTab.Catalog.cs → ApplyCategorySourceHeaders).
-    public sealed class CategoryHeaderViewModel : INotifyPropertyChanged
+    public sealed class CategoryHeaderViewModel : ViewModelBase
     {
         public string CategoryName { get; }
         // Ключ для SourceOrderService.Get/SetCategoryPrimary — голое имя категории
@@ -65,18 +63,6 @@ namespace Ven4Tools.ViewModels
                     SourceOrderService.Save();
                 }
             }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(name);
-            return true;
         }
     }
 }

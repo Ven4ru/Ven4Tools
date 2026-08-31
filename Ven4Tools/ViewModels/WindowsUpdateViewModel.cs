@@ -3,8 +3,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using Ven4Tools.Helpers;
 using Ven4Tools.Services;
@@ -19,10 +17,8 @@ namespace Ven4Tools.ViewModels
     /// Activation/Network/Office/Installed/Diagnostics/System) без изменения
     /// поведения — см. docs/superpowers/specs/2026-08-26-windowsupdatetab-mvvm-design.md.
     /// </summary>
-    public sealed class WindowsUpdateViewModel : INotifyPropertyChanged
+    public sealed class WindowsUpdateViewModel : ViewModelBase
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         /// <summary>Окно-владелец для EulaConfirmWindow/WindowsUpdateResultWindow.</summary>
         public Func<Window?>? OwnerWindowProvider { get; set; }
 
@@ -32,13 +28,6 @@ namespace Ven4Tools.ViewModels
         /// сделано у OfficeTab.GoToActivation/DiagnosticsTab.GoToWindowsUpdate.
         /// </summary>
         public event Action? GoToDiagnostics;
-
-        private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
 
         private readonly WindowsUpdateService _service = new();
         private CancellationTokenSource? _searchCts;

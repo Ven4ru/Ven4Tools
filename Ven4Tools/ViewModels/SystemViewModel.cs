@@ -1,6 +1,4 @@
 using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using Ven4Tools.Services;
@@ -16,10 +14,8 @@ namespace Ven4Tools.ViewModels
     /// см. docs/superpowers/specs/2026-08-26-systemtab-mvvm-design.md.
     /// Разбит на partial-файлы по образцу DiagnosticsViewModel.*.
     /// </summary>
-    public sealed partial class SystemViewModel : INotifyPropertyChanged
+    public sealed partial class SystemViewModel : ViewModelBase
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         /// <summary>Окно-владелец для модальных диалогов (SnapshotNameDialog).</summary>
         public Func<Window?>? OwnerWindowProvider { get; set; }
 
@@ -40,13 +36,6 @@ namespace Ven4Tools.ViewModels
 
         /// <summary>Строка добавлена в лог кэширования — code-behind прокручивает txtCacheLog вниз.</summary>
         public event Action? CacheLogAppended;
-
-        private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
 
         private bool _loadingAppearance = true;
         private bool _loadingCatalogMode;

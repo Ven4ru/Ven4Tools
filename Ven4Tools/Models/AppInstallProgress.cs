@@ -1,5 +1,4 @@
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using Ven4Tools.ViewModels;
 
 namespace Ven4Tools.Models
 {
@@ -12,7 +11,7 @@ namespace Ven4Tools.Models
     // хотя установка по факту продолжается и завершается. В императивном
     // коде до MVVM-переноса это компенсировалось явным Items.Refresh() —
     // при переносе на биндинг эквивалент потерялся.
-    public class AppInstallProgress : INotifyPropertyChanged
+    public class AppInstallProgress : ViewModelBase
     {
         public string AppId { get; set; } = string.Empty;
         public string AppName { get; set; } = string.Empty;
@@ -84,17 +83,5 @@ namespace Ven4Tools.Models
             InstallPhase.Error => 100.0,
             _ => Percentage
         };
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(name);
-            return true;
-        }
     }
 }

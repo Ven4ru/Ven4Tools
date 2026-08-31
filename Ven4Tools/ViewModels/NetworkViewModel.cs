@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -17,7 +15,7 @@ namespace Ven4Tools.ViewModels
     /// (<c>SetPingRow</c> и инлайн-лямбда в <c>RunServicesAsync</c>), здесь эта
     /// логика едина (см. <see cref="NetworkViewModel.SetRow"/>).
     /// </summary>
-    public sealed class NetworkCheckResult : INotifyPropertyChanged
+    public sealed class NetworkCheckResult : ViewModelBase
     {
         private string _text;
         private string _iconText = "⬜";
@@ -59,15 +57,6 @@ namespace Ven4Tools.ViewModels
         // на замороженный (frozen, потокобезопасный) Brushes.White.
         internal static Brush ResolveDefaultBrush() =>
             (Application.Current?.TryFindResource("TextPrimary") as Brush) ?? Brushes.White;
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
 
     /// <summary>
@@ -75,17 +64,8 @@ namespace Ven4Tools.ViewModels
     /// (2026-08-25, пятая вкладка после Debloater/History/About/Activation) без
     /// изменения поведения — см. docs/superpowers/specs/2026-08-25-networktab-mvvm-design.md.
     /// </summary>
-    public sealed class NetworkViewModel : INotifyPropertyChanged
+    public sealed class NetworkViewModel : ViewModelBase
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         // ── Адаптеры ─────────────────────────────────────────────────────────
 
         private IReadOnlyList<AdapterInfo> _adapters = Array.Empty<AdapterInfo>();

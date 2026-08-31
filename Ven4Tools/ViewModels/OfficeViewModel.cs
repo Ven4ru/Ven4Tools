@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -16,17 +15,9 @@ namespace Ven4Tools.ViewModels
     /// Класс разбит на partial-файлы по образцу CatalogViewModel.Install.cs/.Presets.cs,
     /// повторяя структуру мигрируемого code-behind (Download/Install/Region).
     /// </summary>
-    public sealed partial class OfficeViewModel : INotifyPropertyChanged
+    public sealed partial class OfficeViewModel : ViewModelBase
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
         public event Action? GoToActivation;
-
-        private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
 
         private static readonly HttpClient _httpClient = CreateHttpClient();
         private CancellationTokenSource? _cancellationTokenSource;
@@ -94,7 +85,7 @@ namespace Ven4Tools.ViewModels
         {
             if (field == value) return;
             field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            OnPropertyChanged(propertyName);
             if (value) OnVersionOrLanguageChanged();
         }
 
@@ -120,7 +111,7 @@ namespace Ven4Tools.ViewModels
             {
                 if (Equals(_selectedLanguage, value)) return;
                 _selectedLanguage = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedLanguage)));
+                OnPropertyChanged(nameof(SelectedLanguage));
                 OnVersionOrLanguageChanged();
             }
         }

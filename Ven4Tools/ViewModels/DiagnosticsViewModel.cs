@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -29,17 +27,9 @@ namespace Ven4Tools.ViewModels
     /// docs/superpowers/specs/2026-08-26-diagnosticstab-mvvm-design.md.
     /// Разбит на partial-файлы по образцу OfficeViewModel.*/InstalledViewModel.*.
     /// </summary>
-    public sealed partial class DiagnosticsViewModel : INotifyPropertyChanged
+    public sealed partial class DiagnosticsViewModel : ViewModelBase
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
         public event Action? GoToWindowsUpdate;
-
-        private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
 
         internal static Brush ResolveBrush(string resourceKey) =>
             (Application.Current?.TryFindResource(resourceKey) as Brush) ?? Brushes.White;

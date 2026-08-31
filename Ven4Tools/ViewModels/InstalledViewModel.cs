@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -16,17 +15,8 @@ namespace Ven4Tools.ViewModels
     /// docs/superpowers/specs/2026-08-26-installedtab-mvvm-design.md.
     /// Разбит на partial-файлы по образцу OfficeViewModel.*/CatalogViewModel.*.
     /// </summary>
-    public sealed partial class InstalledViewModel : INotifyPropertyChanged
+    public sealed partial class InstalledViewModel : ViewModelBase
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         private List<InstalledApp> _allApps = new();
 
         // Фоновая предзагрузка — запускается статически из MainWindow.Loaded, до
@@ -159,7 +149,7 @@ namespace Ven4Tools.ViewModels
         {
             if (field == value) return;
             field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            OnPropertyChanged(propertyName);
             ApplyFilter();
         }
 
@@ -167,31 +157,21 @@ namespace Ven4Tools.ViewModels
         public bool OnlyUpdates
         {
             get => _onlyUpdates;
-            set { if (SetFieldTriggering(ref _onlyUpdates, value)) ApplyFilter(); }
+            set { if (SetField(ref _onlyUpdates, value)) ApplyFilter(); }
         }
 
         private string _searchText = "";
         public string SearchText
         {
             get => _searchText;
-            set { if (SetFieldTriggering(ref _searchText, value)) ApplyFilter(); }
+            set { if (SetField(ref _searchText, value)) ApplyFilter(); }
         }
 
         private int _sortIndex;
         public int SortIndex
         {
             get => _sortIndex;
-            set { if (SetFieldTriggering(ref _sortIndex, value)) ApplyFilter(); }
-        }
-
-        // В отличие от SetField — сообщает вызывающему, было ли реальное изменение,
-        // чтобы ApplyFilter() вызывался ровно один раз на реальное изменение значения.
-        private bool SetFieldTriggering<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            return true;
+            set { if (SetField(ref _sortIndex, value)) ApplyFilter(); }
         }
 
         private string _statsText = "";
@@ -210,7 +190,7 @@ namespace Ven4Tools.ViewModels
             set
             {
                 _selectAllState = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectAllState)));
+                OnPropertyChanged(nameof(SelectAllState));
                 bool check = value == true;
                 foreach (var app in DisplayedApps)
                     if (app.CanAct && app.HasUpdate)
@@ -254,7 +234,7 @@ namespace Ven4Tools.ViewModels
                 int selected = visible.Count(a => a.IsSelected);
                 _selectAllState = selected == visible.Count ? true : selected == 0 ? false : (bool?)null;
             }
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectAllState)));
+            OnPropertyChanged(nameof(SelectAllState));
         }
 
         // ── Busy-флаги команд ────────────────────────────────────────────────────

@@ -146,8 +146,9 @@ namespace Ven4Tools.Tests
         [Fact]
         public void OnlyUpdates_УстановкаВFalse_ВызываетApplyFilter()
         {
-            // SetFieldTriggering — иная семантика, чем у SetFilterFlag: ApplyFilter
-            // срабатывает на ЛЮБОЕ реальное изменение, включая переход в false.
+            // Гейт по возвращаемому значению SetField — иная семантика, чем у
+            // SetFilterFlag: ApplyFilter срабатывает на ЛЮБОЕ реальное изменение,
+            // включая переход в false.
             var vm = new InstalledViewModel();
             vm.OnlyUpdates = true; // первое включение уже вызвало ApplyFilter один раз
             var raised = new List<string?>();

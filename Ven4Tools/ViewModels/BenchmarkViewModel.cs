@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -64,17 +62,8 @@ namespace Ven4Tools.ViewModels
     /// docs/superpowers/specs/2026-08-26-benchmarktab-mvvm-design.md.
     /// Разбит на partial-файлы по образцу code-behind: .cs/.Disks.cs/.Run.cs/.Report.cs.
     /// </summary>
-    public sealed partial class BenchmarkViewModel : INotifyPropertyChanged
+    public sealed partial class BenchmarkViewModel : ViewModelBase
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         internal static Brush ResolveBrush(string resourceKey) =>
             (Application.Current?.TryFindResource(resourceKey) as Brush) ?? Brushes.White;
 
