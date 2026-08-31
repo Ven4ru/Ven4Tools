@@ -1,7 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -16,7 +14,7 @@ namespace Ven4Tools.ViewModels
     // сам решает, как их отрисовать. Это разделение позволяет добавлять новые
     // действия (см. LaunchCommand ниже) без хирургии над кодом построения UI —
     // проверено прототипом в scratch-проекте перед переносом сюда.
-    public sealed class AppRowViewModel : INotifyPropertyChanged
+    public sealed class AppRowViewModel : ViewModelBase
     {
         public AppInfo App { get; }
         public string AppId => App.Id;
@@ -396,18 +394,6 @@ namespace Ven4Tools.ViewModels
                 AppLogger.Write($"❌ Не удалось запустить {DisplayName}: {ex.Message}");
                 LaunchPath = null;
             }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(name);
-            return true;
         }
     }
 }

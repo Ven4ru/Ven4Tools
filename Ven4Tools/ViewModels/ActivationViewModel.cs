@@ -1,9 +1,7 @@
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Management;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -20,7 +18,7 @@ namespace Ven4Tools.ViewModels
     /// поведение не менялось — кроме способа попасть в UI-поток: у ViewModel нет
     /// собственного Dispatcher, используется Application.Current.Dispatcher.
     /// </summary>
-    public sealed class ActivationViewModel : INotifyPropertyChanged
+    public sealed class ActivationViewModel : ViewModelBase
     {
         private static readonly TimeSpan OfficeCheckTimeout = TimeSpan.FromSeconds(30);
 
@@ -311,17 +309,5 @@ namespace Ven4Tools.ViewModels
         // статуса активации и в запасном варианте для Office.
         internal static ManagementObjectSearcher CreateLicensingSearcher() =>
             new("SELECT LicenseStatus, Name FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL");
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(name);
-            return true;
-        }
     }
 }

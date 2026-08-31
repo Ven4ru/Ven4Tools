@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Data;
@@ -31,7 +30,7 @@ namespace Ven4Tools.ViewModels
     //   • CatalogViewModel.Install.cs   — установка, отмена, прогресс, неудачные установки;
     //   • CatalogViewModel.Presets.cs   — пресеты и экспорт/импорт списка;
     //   • CatalogViewModel.Disks.cs     — диск установки и проверка свободного места.
-    public sealed partial class CatalogViewModel : INotifyPropertyChanged
+    public sealed partial class CatalogViewModel : ViewModelBase
     {
         private readonly AppManager _appManager = new();
         private CatalogLoaderService? _catalogLoader;
@@ -246,18 +245,6 @@ namespace Ven4Tools.ViewModels
         {
             AppLogger.Write(message);
             Application.Current?.Dispatcher.BeginInvoke(() => LogLines.Add(message));
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        private bool SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(name);
-            return true;
         }
     }
 }
