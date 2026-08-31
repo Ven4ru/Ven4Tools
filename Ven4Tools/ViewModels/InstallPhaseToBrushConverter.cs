@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.ViewModels
@@ -32,9 +33,8 @@ namespace Ven4Tools.ViewModels
             // StaticResource-кисти из DesignTokens.xaml не зависят от темы (в отличие
             // от AccentColor, который ThemeService переопределяет на лету) — ищем через
             // TryFindResource, чтобы не падать, если ресурс почему-то не подключён.
-            return Application.Current.TryFindResource(resourceKey) as Brush
-                ?? Application.Current.TryFindResource("AccentColor") as Brush
-                ?? Brushes.Gray;
+            // Фолбэк серый, а не белый как у ViewModel-ей: это цвет самой полоски прогресса.
+            return BrushResolver.Resolve(resourceKey, "AccentColor", Brushes.Gray);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>

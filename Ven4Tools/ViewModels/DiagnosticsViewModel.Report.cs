@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
@@ -18,7 +19,7 @@ namespace Ven4Tools.ViewModels
 
             IsRunningDiagnostics = true;
             HealthBadgeText = "Диагностика выполняется...";
-            HealthBadgeBrush = ResolveBrush("TextSecondary");
+            HealthBadgeBrush = BrushResolver.Resolve("TextSecondary");
             _lastRunHadCritical = false;
             _lastRunHadWarning = false;
             ShowPlaceholders = false;
@@ -33,17 +34,17 @@ namespace Ven4Tools.ViewModels
                 if (_lastRunHadCritical)
                 {
                     HealthBadgeText = "🔴 Критично — есть находки, требующие внимания";
-                    HealthBadgeBrush = ResolveBrush("StatusDanger");
+                    HealthBadgeBrush = BrushResolver.Resolve("StatusDanger");
                 }
                 else if (_lastRunHadWarning)
                 {
                     HealthBadgeText = "🟡 Есть на что посмотреть";
-                    HealthBadgeBrush = ResolveBrush("StatusWarning");
+                    HealthBadgeBrush = BrushResolver.Resolve("StatusWarning");
                 }
                 else
                 {
                     HealthBadgeText = "🟢 Всё в порядке";
-                    HealthBadgeBrush = ResolveBrush("StatusSuccess");
+                    HealthBadgeBrush = BrushResolver.Resolve("StatusSuccess");
                 }
                 LastRunText = $"Последний запуск: {DateTime.Now:g}";
                 AppLogger.Write("🔍 Диагностика ПК выполнена");

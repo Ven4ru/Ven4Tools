@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using Ven4Tools.Helpers;
 
 namespace Ven4Tools.ViewModels
 {
@@ -31,9 +32,6 @@ namespace Ven4Tools.ViewModels
     {
         public event Action? GoToWindowsUpdate;
 
-        internal static Brush ResolveBrush(string resourceKey) =>
-            (Application.Current?.TryFindResource(resourceKey) as Brush) ?? Brushes.White;
-
         // ── Информация о системе / логи ─────────────────────────────────────────
 
         private string _osVersionText = "Загрузка...";
@@ -56,7 +54,7 @@ namespace Ven4Tools.ViewModels
         private string _healthBadgeText = "Диагностика ещё не запускалась";
         public string HealthBadgeText { get => _healthBadgeText; private set => SetField(ref _healthBadgeText, value); }
 
-        private Brush _healthBadgeBrush = ResolveBrush("TextSecondary");
+        private Brush _healthBadgeBrush = BrushResolver.Resolve("TextSecondary");
         public Brush HealthBadgeBrush { get => _healthBadgeBrush; private set => SetField(ref _healthBadgeBrush, value); }
 
         private string _lastRunText = "";

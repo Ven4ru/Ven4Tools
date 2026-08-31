@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 using Ven4Tools.Views;
 
@@ -22,14 +23,6 @@ namespace Ven4Tools.ViewModels
     {
         private static readonly TimeSpan OfficeCheckTimeout = TimeSpan.FromSeconds(30);
 
-        // Цвет статуса до первой реальной проверки. Раньше был захардкожен белым (#FFFFFFFF),
-        // из-за чего «Проверка...» становилась невидимой в светлой теме — в XAML вкладки
-        // статусы всегда были Foreground="{DynamicResource TextPrimary}". Берём тот же
-        // темизированный ресурс; белый остаётся фолбэком, если Application ещё нет
-        // (юнит-тесты) или ресурс не задан.
-        private static Brush ResolveDefaultStatusBrush() =>
-            (Application.Current?.TryFindResource("TextPrimary") as Brush) ?? Brushes.White;
-
         public Func<Window?>? OwnerWindowProvider { get; set; }
 
         private bool _consentGiven;
@@ -42,13 +35,18 @@ namespace Ven4Tools.ViewModels
         private string _windowsStatusText = "Проверка...";
         public string WindowsStatusText { get => _windowsStatusText; private set => SetField(ref _windowsStatusText, value); }
 
-        private Brush _windowsStatusBrush = ResolveDefaultStatusBrush();
+        // Цвет статуса до первой реальной проверки. Раньше был захардкожен белым (#FFFFFFFF),
+        // из-за чего «Проверка...» становилась невидимой в светлой теме — в XAML вкладки
+        // статусы всегда были Foreground="{DynamicResource TextPrimary}". Берём тот же
+        // темизированный ресурс; белый остаётся фолбэком, если Application ещё нет
+        // (юнит-тесты) или ресурс не задан.
+        private Brush _windowsStatusBrush = BrushResolver.Resolve("TextPrimary");
         public Brush WindowsStatusBrush { get => _windowsStatusBrush; private set => SetField(ref _windowsStatusBrush, value); }
 
         private string _officeStatusText = "Проверка...";
         public string OfficeStatusText { get => _officeStatusText; private set => SetField(ref _officeStatusText, value); }
 
-        private Brush _officeStatusBrush = ResolveDefaultStatusBrush();
+        private Brush _officeStatusBrush = BrushResolver.Resolve("TextPrimary");
         public Brush OfficeStatusBrush { get => _officeStatusBrush; private set => SetField(ref _officeStatusBrush, value); }
 
         private bool _isCheckingStatus;

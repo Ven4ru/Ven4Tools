@@ -29,7 +29,7 @@ namespace Ven4Tools.ViewModels
         public bool IsSelected
         {
             get => _isSelected;
-            set { _isSelected = value; OnPropertyChanged(); }
+            set { if (_isSelected == value) return; _isSelected = value; OnPropertyChanged(); }
         }
 
         private bool _isProcessing;

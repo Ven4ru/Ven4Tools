@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.ViewModels
@@ -33,9 +34,9 @@ namespace Ven4Tools.ViewModels
                 }
                 : "TextSecondary";
 
-            return Application.Current.TryFindResource(resourceKey) as Brush
-                ?? Application.Current.TryFindResource("TextSecondary") as Brush
-                ?? Brushes.Gray;
+            // Фолбэк серый, а не белый как у ViewModel-ей: строка прогресса рисуется
+            // на светлом фоне списка, белый текст на нём был бы невидим.
+            return BrushResolver.Resolve(resourceKey, "TextSecondary", Brushes.Gray);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>

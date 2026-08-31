@@ -115,7 +115,7 @@ namespace Ven4Tools.Tests
         {
             Assert.Null(System.Windows.Application.Current);
 
-            var brush = DiagnosticsViewModel.ResolveBrush("TextSecondary");
+            var brush = Ven4Tools.Helpers.BrushResolver.Resolve("TextSecondary");
 
             Assert.Same(System.Windows.Media.Brushes.White, brush);
         }
