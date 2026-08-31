@@ -108,14 +108,14 @@ namespace Ven4Tools.ViewModels
         public bool IsRunningDiagnostics
         {
             get => _isRunningDiagnostics;
-            private set { SetField(ref _isRunningDiagnostics, value); RunDiagnosticsCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isRunningDiagnostics, value)) RunDiagnosticsCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isClearingWuCache;
         public bool IsClearingWuCache
         {
             get => _isClearingWuCache;
-            private set { SetField(ref _isClearingWuCache, value); ClearWuCacheCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isClearingWuCache, value)) ClearWuCacheCommand.RaiseCanExecuteChanged(); }
         }
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace Ven4Tools.ViewModels
         public bool IsDisablingFastStartup
         {
             get => _isDisablingFastStartup;
-            internal set { SetField(ref _isDisablingFastStartup, value); DisableFastStartupCommand.RaiseCanExecuteChanged(); }
+            internal set { if (SetField(ref _isDisablingFastStartup, value)) DisableFastStartupCommand.RaiseCanExecuteChanged(); }
         }
 
         // ── Команды ──────────────────────────────────────────────────────────────

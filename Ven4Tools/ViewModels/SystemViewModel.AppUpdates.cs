@@ -11,7 +11,7 @@ namespace Ven4Tools.ViewModels
         public bool IsCheckingUpdates
         {
             get => _isCheckingUpdates;
-            private set { SetField(ref _isCheckingUpdates, value); CheckUpdatesCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isCheckingUpdates, value)) CheckUpdatesCommand.RaiseCanExecuteChanged(); }
         }
 
         private string _updatesLogText = "Нажмите «Проверить обновления» для проверки...";

@@ -183,7 +183,7 @@ namespace Ven4Tools.ViewModels
         public bool IsDownloadingToCache
         {
             get => _isDownloadingToCache;
-            private set { SetField(ref _isDownloadingToCache, value); DownloadToCacheCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isDownloadingToCache, value)) DownloadToCacheCommand.RaiseCanExecuteChanged(); }
         }
 
         private string _cacheLogText = "";

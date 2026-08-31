@@ -146,28 +146,28 @@ namespace Ven4Tools.ViewModels
         public bool HasDownloadedInstaller
         {
             get => _hasDownloadedInstaller;
-            internal set { SetField(ref _hasDownloadedInstaller, value); InstallCommand.RaiseCanExecuteChanged(); }
+            internal set { if (SetField(ref _hasDownloadedInstaller, value)) InstallCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isDownloading;
         public bool IsDownloading
         {
             get => _isDownloading;
-            internal set { SetField(ref _isDownloading, value); RaiseAllCanExecuteChanged(); }
+            internal set { if (SetField(ref _isDownloading, value)) RaiseAllCanExecuteChanged(); }
         }
 
         private bool _isInstalling;
         public bool IsInstalling
         {
             get => _isInstalling;
-            internal set { SetField(ref _isInstalling, value); RaiseAllCanExecuteChanged(); }
+            internal set { if (SetField(ref _isInstalling, value)) RaiseAllCanExecuteChanged(); }
         }
 
         private bool _cancelEnabled;
         public bool CancelEnabled
         {
             get => _cancelEnabled;
-            internal set { SetField(ref _cancelEnabled, value); CancelCommand.RaiseCanExecuteChanged(); }
+            internal set { if (SetField(ref _cancelEnabled, value)) CancelCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _cancelVisible = true;

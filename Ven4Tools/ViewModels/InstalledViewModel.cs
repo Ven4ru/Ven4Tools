@@ -203,14 +203,14 @@ namespace Ven4Tools.ViewModels
         public bool CanUpdateSelected
         {
             get => _canUpdateSelected;
-            private set { SetField(ref _canUpdateSelected, value); UpdateSelectedCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _canUpdateSelected, value)) UpdateSelectedCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _canUninstallSelected;
         public bool CanUninstallSelected
         {
             get => _canUninstallSelected;
-            private set { SetField(ref _canUninstallSelected, value); UninstallSelectedCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _canUninstallSelected, value)) UninstallSelectedCommand.RaiseCanExecuteChanged(); }
         }
 
         public RelayCommand RowSelectionChangedCommand { get; }
@@ -243,7 +243,7 @@ namespace Ven4Tools.ViewModels
         public bool IsRefreshing
         {
             get => _isRefreshing;
-            private set { SetField(ref _isRefreshing, value); RefreshCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isRefreshing, value)) RefreshCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isUpgradingAll;
@@ -262,28 +262,28 @@ namespace Ven4Tools.ViewModels
         public bool IsExporting
         {
             get => _isExporting;
-            private set { SetField(ref _isExporting, value); ExportCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isExporting, value)) ExportCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isImporting;
         public bool IsImporting
         {
             get => _isImporting;
-            private set { SetField(ref _isImporting, value); ImportCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isImporting, value)) ImportCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isUpdatingSelected;
         public bool IsUpdatingSelected
         {
             get => _isUpdatingSelected;
-            private set { SetField(ref _isUpdatingSelected, value); UpdateSelectedCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isUpdatingSelected, value)) UpdateSelectedCommand.RaiseCanExecuteChanged(); }
         }
 
         private bool _isUninstallingSelected;
         public bool IsUninstallingSelected
         {
             get => _isUninstallingSelected;
-            private set { SetField(ref _isUninstallingSelected, value); UninstallSelectedCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isUninstallingSelected, value)) UninstallSelectedCommand.RaiseCanExecuteChanged(); }
         }
 
         // ── Команды ──────────────────────────────────────────────────────────────

@@ -23,7 +23,7 @@ namespace Ven4Tools.ViewModels
         public bool IsSavingSnapshot
         {
             get => _isSavingSnapshot;
-            private set { SetField(ref _isSavingSnapshot, value); SaveSnapshotCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isSavingSnapshot, value)) SaveSnapshotCommand.RaiseCanExecuteChanged(); }
         }
 
         private void LoadSnapshotsList() => ApplySnapshots(ConfigSnapshotService.GetSnapshots());
