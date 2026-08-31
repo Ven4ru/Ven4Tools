@@ -55,6 +55,15 @@ namespace Ven4Tools.Views.Tabs
 
         // ── Публичный доступ для снапшотов конфигурации (SystemTab.Snapshots.cs) ──
 
+        /// <summary>
+        /// Идёт ли прямо сейчас применение твиков (кнопка «Применить» или предыдущее
+        /// восстановление снапшота). Нужно восстановлению снапшота, чтобы отказать
+        /// сразу, а не после подтверждения и создания точки восстановления:
+        /// <see cref="DebloaterViewModel.ApplyTweaksByIdsAsync"/> в этом состоянии
+        /// бросает исключение.
+        /// </summary>
+        public bool IsApplyBusy => !_viewModel.ApplyEnabled;
+
         public IReadOnlyList<string> GetSelectedTweakIds() => _viewModel.GetSelectedTweakIds();
 
         public void SetSelectedTweakIds(IReadOnlyCollection<string> ids) => _viewModel.SetSelectedTweakIds(ids);

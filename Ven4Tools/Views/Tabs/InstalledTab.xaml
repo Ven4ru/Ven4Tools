@@ -267,7 +267,8 @@
             <!-- Empty state -->
             <TextBlock x:Name="pnlEmpty"
                        Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}"
-                       Text="Приложения не найдены" FontSize="14"
+                       Text="{Binding EmptyMessage, Mode=OneWay}" FontSize="14"
+                       TextWrapping="Wrap" TextAlignment="Center" MaxWidth="600"
                        Foreground="{DynamicResource TextSecondary}"
                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
 

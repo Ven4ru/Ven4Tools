@@ -26,7 +26,7 @@ namespace Ven4Tools.Views.Tabs
             // по времени (WMI + OSPP.VBS с таймаутом).
             Loaded += (_, _) => TabInitGuard.Run(
                 _viewModel.CheckActivationStatusAsync,
-                "[ActivationTab] Ошибка проверки статуса активации");
+                "ActivationTab.CheckActivationStatusAsync");
         }
     }
 }

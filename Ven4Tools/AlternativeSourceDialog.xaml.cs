@@ -32,7 +32,7 @@ namespace Ven4Tools
             // try сделает исключение неперехватываемым и уронит приложение.
             this.Loaded += (_, _) => TabInitGuard.Run(
                 LoadWingetResultsAsync,
-                "[AlternativeSourceDialog] Ошибка поиска пакетов winget");
+                "AlternativeSourceDialog.LoadWingetResultsAsync");
             chkPriorityWinget.IsEnabled = false;
         }
 

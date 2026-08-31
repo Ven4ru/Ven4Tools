@@ -111,11 +111,13 @@ namespace Ven4Tools.ViewModels
         /// <summary>
         /// Первичное заполнение вкладки. Вызывается из code-behind при первом Loaded
         /// (гейт _initialized остался в SystemTab.xaml.cs — WPF-lifecycle забота, не
-        /// VM-концерн). Обход каталога кэша и папки снапшотов — это
-        /// обращения к диску: на медленном носителе с большим кэшем они подвешивали
-        /// UI-поток на всё первое открытие вкладки. Сами чтения вынесены в пул потоков,
-        /// а применение результатов остаётся здесь — коллекции SourceItems/Snapshots
-        /// привязаны к разметке и меняются только из потока UI.
+        /// VM-концерн). Все три источника данных читаются с диска: размер кэша, папка
+        /// снапшотов и проверка «этот установщик уже скачан» по каждому приложению
+        /// каталога (последнее — самое дорогое, порядка сотни File.Exists). На медленном
+        /// носителе с большим кэшем они подвешивали UI-поток на всё первое открытие
+        /// вкладки, поэтому каждое чтение вынесено в пул потоков. В потоке UI остаётся
+        /// только применение готовых результатов: коллекции SourceItems/Snapshots и
+        /// список кэша привязаны к разметке и меняются исключительно отсюда.
         /// </summary>
         public async Task InitializeAsync()
         {
@@ -123,9 +125,10 @@ namespace Ven4Tools.ViewModels
 
             var cacheStats = await Task.Run(OfflineService.GetCacheStats);
             var snapshots  = await Task.Run(ConfigSnapshotService.GetSnapshots);
+            var cachedIds  = await Task.Run(ScanCachedAppIds);
 
             ApplyCacheStats(cacheStats);
-            LoadCacheAppsList();
+            LoadCacheAppsList(cachedIds);
             ApplySnapshots(snapshots);
         }
     }

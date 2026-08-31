@@ -44,7 +44,7 @@ namespace Ven4Tools.Views.Tabs
             _profileChangedHandler = () => Dispatcher.Invoke(_viewModel.ApplyProfileFilters);
 
             Loaded += (_, _) => TabInitGuard.RunSync(OnTabLoaded,
-                "[CatalogTab] Ошибка при открытии вкладки");
+                "CatalogTab.OnTabLoaded");
             Unloaded += (_, _) =>
             {
                 if (_eventsSubscribed)
@@ -86,7 +86,7 @@ namespace Ven4Tools.Views.Tabs
                 {
                     await _viewModel.LoadAsync();
                     _lastSourceOrderVersion = SourceOrderService.Version;
-                }, "[CatalogTab] Ошибка загрузки каталога");
+                }, "CatalogTab.LoadAsync");
             }
             else if (_lastSourceOrderVersion != SourceOrderService.Version)
             {

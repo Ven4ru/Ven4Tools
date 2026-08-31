@@ -26,7 +26,7 @@ namespace Ven4Tools.Views.Tabs
             {
                 if (_viewModel.RefreshAdaptersCommand.CanExecute(null))
                     _viewModel.RefreshAdaptersCommand.Execute(null);
-            }, "[NetworkTab] Ошибка обновления списка адаптеров");
+            }, "NetworkTab.RefreshAdapters");
         }
     }
 }

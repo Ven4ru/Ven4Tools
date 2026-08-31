@@ -48,6 +48,9 @@ namespace Ven4Tools.ViewModels
 
                 _allApps = ParseWingetList(rawOutput);
                 ApplyFilter();
+                // Сообщение пустого состояния возвращаем к обычному: предыдущая попытка
+                // могла оставить в нём текст ошибки.
+                EmptyMessage = EmptyMessageDefault;
                 ShowState(_allApps.Count == 0 ? "empty" : "list");
                 RecomputeStats();
             }
@@ -55,9 +58,12 @@ namespace Ven4Tools.ViewModels
             {
                 // Причина нужна в журнале: на экране остаётся одна строка сообщения,
                 // а у сбоя winget бывает содержательный внутренний текст.
-                AppLogger.Write(ex, "[InstalledTab] Не удалось получить список установленных приложений");
-                ShowState("loading");
-                LoadingMessage = $"❌ Ошибка: {ex.Message}";
+                AppLogger.Write(ex, "InstalledViewModel.LoadAppsAsync");
+                // Именно «пусто», а не «загрузка»: состояние загрузки рисует бесконечную
+                // полосу прогресса, и сообщение об ошибке под крутящейся полосой читалось
+                // так, будто работа всё ещё идёт.
+                EmptyMessage = $"❌ Ошибка: {ex.Message}";
+                ShowState("empty");
             }
         }
 
