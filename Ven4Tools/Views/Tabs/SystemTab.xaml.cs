@@ -60,7 +60,7 @@ namespace Ven4Tools.Views.Tabs
             _viewModel.UpdateConnectivityStatus();
 
             TabInitGuard.RunOnce(ref _initialized, _viewModel.InitializeAsync,
-                "[SystemTab] Ошибка инициализации вкладки");
+                "SystemTab.InitializeAsync");
         }
     }
 }

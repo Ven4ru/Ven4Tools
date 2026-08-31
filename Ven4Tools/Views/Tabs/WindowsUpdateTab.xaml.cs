@@ -28,7 +28,7 @@ namespace Ven4Tools.Views.Tabs
 
             Loaded += (_, _) => TabInitGuard.RunOnce(
                 ref _firstRunHandled, _viewModel.InitializeAsync,
-                "[WindowsUpdateTab] Ошибка инициализации вкладки");
+                "WindowsUpdateTab.InitializeAsync");
         }
     }
 }

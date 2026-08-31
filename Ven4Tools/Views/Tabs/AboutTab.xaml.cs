@@ -30,8 +30,12 @@ namespace Ven4Tools.Views.Tabs
                     CatalogLoaderService.CatalogReady += OnCatalogReady;
                     _catalogReadySubscribed = true;
                 }
-                // Обновляем changelog если каталог уже был загружен до открытия вкладки
-                _viewModel.RefreshChangelog();
+                // Обновляем changelog если каталог уже был загружен до открытия вкладки.
+                // Через общий перехватчик, а не голым вызовом: инициализация по Loaded
+                // идёт мимо команд, и исключение отсюда упало бы в
+                // DispatcherUnhandledException — тот же класс сбоя, ради которого
+                // остальные вкладки переведены на TabInitGuard.
+                TabInitGuard.RunSync(_viewModel.RefreshChangelog, "AboutTab.RefreshChangelog");
             };
             Unloaded += (_, _) =>
             {

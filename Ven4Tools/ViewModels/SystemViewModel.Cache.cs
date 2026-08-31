@@ -63,7 +63,43 @@ namespace Ven4Tools.ViewModels
                 : $"{stats.count} файлов · {stats.sizeMB} МБ  ({OfflineService.CachePath})";
         }
 
-        private void LoadCacheAppsList()
+        // Проверка «этот установщик уже в кэше» — самое дорогое место первичного
+        // заполнения вкладки: на каждое подходящее приложение каталога (в поставляемом
+        // каталоге их порядка сорока) OfflineService.HasCachedInstaller делает
+        // Directory.Exists и до двух File.Exists, то есть больше сотни синхронных
+        // обращений к диску суммарно. Обход отделён от построения списка, чтобы
+        // InitializeAsync могла выполнить его в пуле потоков и создать сами элементы
+        // уже в потоке UI. Метод статический и ничего в ViewModel не читает и не
+        // меняет — это и есть гарантия того, что его безопасно звать из Task.Run.
+        private static HashSet<string> ScanCachedAppIds()
+        {
+            var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var catalog = CatalogLoaderService.State.UsableCatalog;
+            if (catalog == null) return ids;
+
+            foreach (var app in catalog.Apps)
+            {
+                // Тот же отбор, что и в LoadCacheAppsList: опрашивать кэш у приложений,
+                // которые в список всё равно не попадут, — лишние обращения к диску.
+                if (!HashHelper.HasExpectedHash(app.Sha256) || string.IsNullOrEmpty(app.DownloadUrl))
+                    continue;
+                if (OfflineService.HasCachedInstaller(app.Id)) ids.Add(app.Id);
+            }
+
+            return ids;
+        }
+
+        /// <summary>
+        /// Строит список приложений, доступных для докачивания в кэш.
+        /// </summary>
+        /// <param name="cachedIds">
+        /// Готовый набор идентификаторов уже закэшированных приложений, посчитанный
+        /// заранее методом <see cref="ScanCachedAppIds"/> (первое открытие вкладки —
+        /// счёт идёт в пуле потоков). Если не передан, кэш опрашивается прямо здесь:
+        /// это путь для перестроений после очистки кэша и после докачки, когда вкладка
+        /// уже открыта, каталог кэша только что перебран и диск прогрет.
+        /// </param>
+        private void LoadCacheAppsList(HashSet<string>? cachedIds = null)
         {
             // UsableCatalog отдаёт каталог только со статусом Loaded — прежняя проверка
             // «null или пусто» теперь выражена самим состоянием загрузки.
@@ -75,6 +111,9 @@ namespace Ven4Tools.ViewModels
                 return;
             }
 
+            bool IsCached(string id) =>
+                cachedIds != null ? cachedIds.Contains(id) : OfflineService.HasCachedInstaller(id);
+
             // Кэшируются только приложения с прямой ссылкой и контрольной суммой SHA256.
             // Источник winget не поддерживает докачивание установщика в кэш, поэтому
             // winget-only приложения в этот список не попадают.
@@ -85,7 +124,7 @@ namespace Ven4Tools.ViewModels
                 .Select(a => new CacheAppItem
                 {
                     Id          = a.Id,
-                    DisplayName = $"{a.Name}  [{a.Category}]{(OfflineService.HasCachedInstaller(a.Id) ? " ✅" : "")}",
+                    DisplayName = $"{a.Name}  [{a.Category}]{(IsCached(a.Id) ? " ✅" : "")}",
                     DownloadUrl = a.DownloadUrl,
                     Sha256      = a.Sha256!
                 })

@@ -47,7 +47,7 @@ namespace Ven4Tools.Views.Tabs
             }
             // Без флага «только один раз» намеренно: история обязана быть свежей при
             // каждом показе вкладки.
-            TabInitGuard.Run(RefreshAsync, "[HistoryTab] Ошибка обновления истории установок");
+            TabInitGuard.Run(RefreshAsync, "HistoryTab.RefreshAsync");
         }
 
         private void HistoryTab_Unloaded(object sender, RoutedEventArgs e)

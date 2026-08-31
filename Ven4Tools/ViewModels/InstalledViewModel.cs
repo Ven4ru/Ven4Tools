@@ -106,6 +106,20 @@ namespace Ven4Tools.ViewModels
             private set => SetField(ref _loadingMessage, value);
         }
 
+        /// <summary>
+        /// Текст состояния «список пуст». Раньше был зашит в разметке, теперь
+        /// привязан: сбой winget показывается тем же состоянием, а не «загрузкой»
+        /// с крутящейся полосой прогресса под сообщением об ошибке.
+        /// </summary>
+        public const string EmptyMessageDefault = "Приложения не найдены";
+
+        private string _emptyMessage = EmptyMessageDefault;
+        public string EmptyMessage
+        {
+            get => _emptyMessage;
+            private set => SetField(ref _emptyMessage, value);
+        }
+
         private void ShowState(string state)
         {
             Application.Current.Dispatcher.Invoke(() =>

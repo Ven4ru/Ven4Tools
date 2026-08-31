@@ -24,7 +24,7 @@ namespace Ven4Tools.Views.Tabs
             // удалить на вкладке «Каталог»).
             Loaded += (_, _) => TabInitGuard.Run(
                 _viewModel.LoadAppsAsync,
-                "[InstalledTab] Ошибка загрузки списка установленных приложений");
+                "InstalledTab.LoadAppsAsync");
         }
 
         public static void StartPreload() => InstalledViewModel.StartPreload();
