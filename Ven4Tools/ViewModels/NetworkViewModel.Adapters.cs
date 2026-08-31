@@ -22,8 +22,6 @@ namespace Ven4Tools.ViewModels
             private set => SetField(ref _adaptersEmpty, value);
         }
 
-        // ── Адаптеры ─────────────────────────────────────────────────────────
-
         private void RefreshAdapters()
         {
             var adapters = DiagnosticsService.GetAdapters();

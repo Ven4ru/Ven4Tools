@@ -20,9 +20,9 @@ Ven4Tools распространяется в виде самодостаточ�
 | Компонент | Версия | Лицензия |
 |-----------|--------|----------|
 | Newtonsoft.Json | 13.0.4 | MIT |
-| System.Management | 10.0.10 | MIT |
-| System.Security.Cryptography.ProtectedData | 10.0.10 | MIT |
-| System.ServiceProcess.ServiceController | 10.0.10 | MIT |
+| System.Management | 10.0.11 | MIT |
+| System.Security.Cryptography.ProtectedData | 10.0.11 | MIT |
+| System.ServiceProcess.ServiceController | 10.0.11 | MIT |
 | Среда выполнения .NET 8 (self-contained) | 8.x | MIT |
 
 ## Лаунчер (Ven4Tools.Launcher.exe)
