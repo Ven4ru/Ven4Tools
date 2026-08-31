@@ -328,7 +328,15 @@ namespace Ven4Tools.Services
                         PathHelper.IsReparsePoint(_logPath))
                         return;
 
-                    File.AppendAllText(_logPath, $"{DateTime.Now:HH:mm:ss} - {message}\n");
+                    // Время — ВСЕГДА UTC, а не местное. Хвост именно этого журнала
+                    // подставляется в тело issue кнопкой «Сообщить о проблеме»
+                    // (AboutViewModel.OpenReportIssue), а issue уходит в публичный
+                    // репозиторий: местное время выдаёт часовой пояс пользователя, то
+                    // есть грубую геолокацию. Лаунчер свои отчёты перевёл на UTC ещё
+                    // раньше (CrashReportWindow/InstallReportWindow), клиент отставал.
+                    // Суффикс Z оставлен явно, чтобы читающий свой лог не принял UTC
+                    // за местное время.
+                    File.AppendAllText(_logPath, $"{DateTime.UtcNow:HH:mm:ss}Z - {message}\n");
                 }
             }
             catch { }

@@ -75,8 +75,13 @@ namespace Ven4Tools.ViewModels
                 }
                 else
                 {
+                    // RawDetails — сырое описание события из журнала Windows: там
+                    // регулярно встречаются полные пути профиля и имя пользователя.
+                    // Отчёт копируется в буфер обмена и обычно уходит дальше (issue,
+                    // чат поддержки), поэтому проходит ту же очистку, что краш-отчёты
+                    // и отзывы (CrashReportService.SanitizePath).
                     foreach (var d in _lastRebootDiagnoses)
-                        sb.AppendLine($"[{d.Category}] {d.TimeCreated:g} — {d.Summary} | {d.RawDetails}");
+                        sb.AppendLine($"[{d.Category}] {d.TimeCreated:g} — {d.Summary} | {CrashReportService.SanitizePath(d.RawDetails)}");
                 }
                 sb.AppendLine();
                 sb.AppendLine("--- Диски ---");
@@ -95,7 +100,8 @@ namespace Ven4Tools.ViewModels
                 sb.AppendLine("--- Аппаратные и драйверные события ---");
                 sb.AppendLine(HardwareSummaryText);
                 if (HardwareRawVisible)
-                    sb.AppendLine(HardwareRawText);
+                    // Тот же сырой дамп журнала Windows — та же очистка, что выше.
+                    sb.AppendLine(CrashReportService.SanitizePath(HardwareRawText));
 
                 Clipboard.SetText(sb.ToString());
                 AppLogger.Write("📤 Полный отчёт диагностики скопирован в буфер обмена");
