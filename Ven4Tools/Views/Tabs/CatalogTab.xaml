@@ -141,14 +141,17 @@
                             <GroupStyle>
                                 <GroupStyle.ContainerStyle>
                                     <Style TargetType="{x:Type GroupItem}">
+                                        <!-- Имя категории для средств автоматизации и программ чтения с экрана.
+                                             Строки лежат рядом с Expander'ом, а не внутри него (см. комментарий
+                                             в шаблоне ниже), поэтому связь «строка принадлежит категории X»
+                                             держится на самом GroupItem: это единственный собственный узел
+                                             дерева UI Automation в этом шаблоне (ни Border, ни StackPanel, ни
+                                             ItemsPresenter своих узлов не создают), и все строки категории
+                                             остаются его потомками при любой раскладке внутри шаблона. -->
+                                        <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type GroupItem}">
-                                                    <!-- DataContext контейнера — CollectionViewGroup; Name — ключ
-                                                         группировки (AppRowViewModel.CategoryString). Конвертер
-                                                         превращает его в готовую CategoryHeaderViewModel — так же,
-                                                         как раньше ApplyCategorySourceHeaders строил заголовок
-                                                         Expander'а императивно в CatalogTab.Catalog.cs. -->
                                                     <!-- Строки категории лежат РЯДОМ с Expander'ом, а не внутри него.
                                                          Так и должно остаться: пока ItemsPresenter был содержимым
                                                          Expander'а, WPF терял узлы автоматизации всех строк списка
@@ -164,30 +167,51 @@
                                                          Проявлялось только при группировке по категориям: без
                                                          GroupStyle или без Expander'а дерево оставалось целым.
                                                          Поведение сворачивания сохранено: видимость списка привязана
-                                                         к IsExpanded того же Expander'а. -->
-                                                    <StackPanel Margin="0,0,0,3">
-                                                        <Expander x:Name="expCategory" IsExpanded="True"
-                                                                  Header="{Binding Name, Converter={StaticResource CategoryHeaderConverter}}">
-                                                        <Expander.HeaderTemplate>
-                                                            <DataTemplate DataType="{x:Type vm:CategoryHeaderViewModel}">
-                                                                <Grid Margin="0,4,0,2">
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="*"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                    </Grid.ColumnDefinitions>
-                                                                    <TextBlock Text="{Binding HeaderText}" FontWeight="SemiBold" FontSize="13"
-                                                                               Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
-                                                                    <ComboBox Grid.Column="1" Width="160" Height="24" FontSize="11" Margin="8,0,4,0"
-                                                                              Visibility="{Binding ShowCombo, Converter={StaticResource BoolToVis}}"
-                                                                              ItemsSource="{Binding Options}" DisplayMemberPath="Label"
-                                                                              SelectedItem="{Binding Selected}"/>
-                                                                </Grid>
-                                                            </DataTemplate>
-                                                        </Expander.HeaderTemplate>
-                                                        </Expander>
-                                                        <ItemsPresenter Margin="15,3,0,3"
-                                                                        Visibility="{Binding IsExpanded, ElementName=expCategory, Converter={StaticResource BoolToVis}}"/>
-                                                    </StackPanel>
+                                                         к IsExpanded того же Expander'а.
+
+                                                         Карточку категории (фон, рамку, скругление и отступ снизу)
+                                                         рисует Border ниже, а не сам Expander: в стандартном шаблоне
+                                                         Expander'а содержимое лежит ВНУТРИ его собственной рамки,
+                                                         поэтому вынесенные наружу строки оказались бы за пределами
+                                                         карточки — на фоне страницы вместо CardBackground. Значения
+                                                         повторяют стиль Expander'а из App.xaml (CardBackground,
+                                                         BorderBrush, толщина 1) и скругление 3, как у остальных
+                                                         карточек этого файла. Самому Expander'у фон, рамка и отступ
+                                                         отключены — иначе он рисовал бы вторую рамку вокруг шапки
+                                                         и добавлял к карточке лишние 3 px отступа из стиля. -->
+                                                    <Border Background="{DynamicResource CardBackground}"
+                                                            BorderBrush="{DynamicResource BorderBrush}"
+                                                            BorderThickness="1" CornerRadius="3" Margin="0,0,0,3">
+                                                        <StackPanel>
+                                                            <!-- DataContext контейнера — CollectionViewGroup; Name — ключ
+                                                                 группировки (AppRowViewModel.CategoryString). Конвертер
+                                                                 превращает его в готовую CategoryHeaderViewModel — так же,
+                                                                 как раньше ApplyCategorySourceHeaders строил заголовок
+                                                                 Expander'а императивно в CatalogTab.Catalog.cs. -->
+                                                            <Expander x:Name="expCategory" IsExpanded="True"
+                                                                      Margin="0" Background="Transparent" BorderThickness="0"
+                                                                      Header="{Binding Name, Converter={StaticResource CategoryHeaderConverter}}">
+                                                                <Expander.HeaderTemplate>
+                                                                    <DataTemplate DataType="{x:Type vm:CategoryHeaderViewModel}">
+                                                                        <Grid Margin="0,4,0,2">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <TextBlock Text="{Binding HeaderText}" FontWeight="SemiBold" FontSize="13"
+                                                                                       Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                                                            <ComboBox Grid.Column="1" Width="160" Height="24" FontSize="11" Margin="8,0,4,0"
+                                                                                      Visibility="{Binding ShowCombo, Converter={StaticResource BoolToVis}}"
+                                                                                      ItemsSource="{Binding Options}" DisplayMemberPath="Label"
+                                                                                      SelectedItem="{Binding Selected}"/>
+                                                                        </Grid>
+                                                                    </DataTemplate>
+                                                                </Expander.HeaderTemplate>
+                                                            </Expander>
+                                                            <ItemsPresenter Margin="15,3,0,3"
+                                                                            Visibility="{Binding IsExpanded, ElementName=expCategory, Converter={StaticResource BoolToVis}}"/>
+                                                        </StackPanel>
+                                                    </Border>
                                                 </ControlTemplate>
                                             </Setter.Value>
                                         </Setter>
