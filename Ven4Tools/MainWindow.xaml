@@ -103,8 +103,8 @@
                     <Border Style="{StaticResource PillStatusStyle}" Margin="0,0,0,6">
                         <Grid>
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="7" Height="7" Fill="{StaticResource StatusSuccess}" Margin="0,0,7,0"/>
-                                <TextBlock Text="Интернет доступен" FontSize="10" Foreground="{StaticResource StatusSuccess}"/>
+                                <Ellipse x:Name="dotConnectionStatus" Width="7" Height="7" Fill="{StaticResource StatusSuccess}" Margin="0,0,7,0"/>
+                                <TextBlock x:Name="txtConnectionStatus" Text="Интернет доступен" FontSize="10" Foreground="{StaticResource StatusSuccess}"/>
                             </StackPanel>
                             <TextBlock x:Name="txtSidebarVersion" HorizontalAlignment="Right" FontFamily="Cascadia Mono, Consolas" FontSize="9" Foreground="{DynamicResource TextSecondary}"/>
                         </Grid>

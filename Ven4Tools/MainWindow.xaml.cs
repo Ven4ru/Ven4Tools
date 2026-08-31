@@ -271,9 +271,59 @@ namespace Ven4Tools
             UpdateMascot("about");
         }
 
+        /// <summary>
+        /// Индикатор соединения в боковой панели. Текст и цвет были захардкожены в
+        /// разметке («Интернет доступен», зелёный) и не менялись никогда — при
+        /// пропаже сети или включённом принудительном офлайне панель продолжала
+        /// уверять, что интернет есть, хотя вкладки в этот же момент скрывались.
+        /// Формулировки и цветовая логика повторяют индикатор на вкладке
+        /// «Настройки» (<see cref="ViewModels.SystemViewModel.UpdateConnectivityStatus"/>),
+        /// только короче — пилюля в панели узкая.
+        /// </summary>
+        private void UpdateConnectionIndicator()
+        {
+            bool offlineForced = ProfileService.Current.OfflineMode;
+            bool onlineForced  = ProfileService.Current.ForceOnlineMode;
+            bool online        = ConnectivityMonitor.IsOnline;
+
+            string text;
+            string brushKey;
+            if (offlineForced)
+            {
+                text = "Принудительный офлайн";
+                brushKey = "StatusWarning";
+            }
+            else if (!online && onlineForced)
+            {
+                text = "Онлайн-режим принудительно";
+                brushKey = "StatusWarning";
+            }
+            else if (!online)
+            {
+                text = "Интернет недоступен";
+                brushKey = "StatusDanger";
+            }
+            else
+            {
+                text = "Интернет доступен";
+                brushKey = "StatusSuccess";
+            }
+
+            var brush = (Brush)FindResource(brushKey);
+            txtConnectionStatus.Text = text;
+            txtConnectionStatus.Foreground = brush;
+            dotConnectionStatus.Fill = brush;
+        }
+
         public void UpdateTabVisibility()
         {
             bool online    = ConnectivityMonitor.IsEffectivelyOnline && !ProfileService.Current.OfflineMode;
+
+            // Индикатор соединения обновляем здесь же: этот метод вызывается на смену
+            // статуса сети (OnConnectivityChanged), при старте и при переключении
+            // офлайн/принудительно-онлайн на вкладке «Настройки» — ровно тот же набор
+            // событий, от которого зависит и текст индикатора.
+            UpdateConnectionIndicator();
 
             // Вкладки, работающие только при наличии сети
             btnOfficeTab.Visibility     = online ? Visibility.Visible : Visibility.Collapsed;
