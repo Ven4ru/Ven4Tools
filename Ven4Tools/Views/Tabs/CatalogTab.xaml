@@ -149,8 +149,25 @@
                                                          превращает его в готовую CategoryHeaderViewModel — так же,
                                                          как раньше ApplyCategorySourceHeaders строил заголовок
                                                          Expander'а императивно в CatalogTab.Catalog.cs. -->
-                                                    <Expander IsExpanded="True" Margin="0,0,0,3"
-                                                              Header="{Binding Name, Converter={StaticResource CategoryHeaderConverter}}">
+                                                    <!-- Строки категории лежат РЯДОМ с Expander'ом, а не внутри него.
+                                                         Так и должно остаться: пока ItemsPresenter был содержимым
+                                                         Expander'а, WPF терял узлы автоматизации всех строк списка
+                                                         разом, стоило любой кнопке внутри строки перейти из
+                                                         Visibility=Collapsed в Visible («🔕 Пропустить обновление»,
+                                                         «▶ Запустить», «🔄 Предложить другой источник» — все три
+                                                         появляются по результату фоновых проверок через несколько
+                                                         секунд после открытия вкладки). В дереве UI Automation у
+                                                         каждой строки оставался только значок: ни чекбокса, ни
+                                                         названия, ни кнопок. Визуально каталог при этом выглядел
+                                                         нормально — ломалась именно доступность, то есть для программ
+                                                         чтения с экрана (и для UI-тестов) каталог становился пустым.
+                                                         Проявлялось только при группировке по категориям: без
+                                                         GroupStyle или без Expander'а дерево оставалось целым.
+                                                         Поведение сворачивания сохранено: видимость списка привязана
+                                                         к IsExpanded того же Expander'а. -->
+                                                    <StackPanel Margin="0,0,0,3">
+                                                        <Expander x:Name="expCategory" IsExpanded="True"
+                                                                  Header="{Binding Name, Converter={StaticResource CategoryHeaderConverter}}">
                                                         <Expander.HeaderTemplate>
                                                             <DataTemplate DataType="{x:Type vm:CategoryHeaderViewModel}">
                                                                 <Grid Margin="0,4,0,2">
@@ -167,8 +184,10 @@
                                                                 </Grid>
                                                             </DataTemplate>
                                                         </Expander.HeaderTemplate>
-                                                        <ItemsPresenter Margin="15,3,0,3"/>
-                                                    </Expander>
+                                                        </Expander>
+                                                        <ItemsPresenter Margin="15,3,0,3"
+                                                                        Visibility="{Binding IsExpanded, ElementName=expCategory, Converter={StaticResource BoolToVis}}"/>
+                                                    </StackPanel>
                                                 </ControlTemplate>
                                             </Setter.Value>
                                         </Setter>
