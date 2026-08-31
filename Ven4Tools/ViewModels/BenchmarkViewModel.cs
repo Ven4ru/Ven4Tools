@@ -169,7 +169,7 @@ namespace Ven4Tools.ViewModels
 
         private long SelectedFileSize => SelectedFileSizeOption?.Bytes ?? BenchmarkPresets.FileSizes[0];
 
-        private BenchmarkProfile SelectedProfile => ProfileTag switch
+        internal BenchmarkProfile SelectedProfile => ProfileTag switch
         {
             "Fast" => BenchmarkProfile.Fast,
             "Precise" => BenchmarkProfile.Precise,

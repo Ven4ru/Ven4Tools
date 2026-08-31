@@ -200,5 +200,82 @@ namespace Ven4Tools.Tests
             Assert.Single(vm.ConclusionLines);
             Assert.Equal("• Замеры не выполнены.", vm.ConclusionLines[0].Text);
         }
+
+        [Theory]
+        [InlineData("Fast", BenchmarkProfile.Fast)]
+        [InlineData("Precise", BenchmarkProfile.Precise)]
+        [InlineData("Normal", BenchmarkProfile.Normal)]
+        [InlineData("НеизвестныйТег", BenchmarkProfile.Normal)]
+        public void SelectedProfile_МапитПоТегуСДефолтомNormal(string tag, BenchmarkProfile expected)
+        {
+            var vm = new BenchmarkViewModel { ProfileTag = tag };
+
+            Assert.Equal(expected, vm.SelectedProfile);
+        }
+
+        private static PhysicalDiskInfo MakeDisk(params BenchmarkVolumeInfo[] volumes)
+        {
+            var disk = new PhysicalDiskInfo { Index = 0, FriendlyName = "Тестовый диск", SizeBytes = 1024L * 1024 * 1024 };
+            foreach (var volume in volumes) disk.Volumes.Add(volume);
+            return disk;
+        }
+
+        [Fact]
+        public void SelectedDiskOption_ПредпочитаетНесистемныйТом()
+        {
+            var vm = new BenchmarkViewModel();
+            var system = new BenchmarkVolumeInfo { Letter = "C:", IsReady = true, IsSystem = true, TotalBytes = 100, FreeBytes = 50 };
+            var data = new BenchmarkVolumeInfo { Letter = "D:", IsReady = true, IsSystem = false, TotalBytes = 100, FreeBytes = 50 };
+            var disk = MakeDisk(system, data);
+
+            vm.SelectedDiskOption = new DiskOptionItem { Label = "Диск 0", Disk = disk, CanBenchmark = true };
+
+            Assert.Equal(2, vm.VolumeOptions.Count);
+            Assert.NotNull(vm.SelectedVolumeOption);
+            Assert.Same(data, vm.SelectedVolumeOption!.Volume);
+        }
+
+        [Fact]
+        public void SelectedDiskOption_ФильтруетНеготовыеТома()
+        {
+            var vm = new BenchmarkViewModel();
+            var notReady = new BenchmarkVolumeInfo { Letter = "E:", IsReady = false, TotalBytes = 100, FreeBytes = 50 };
+            var ready = new BenchmarkVolumeInfo { Letter = "F:", IsReady = true, TotalBytes = 100, FreeBytes = 50 };
+            var disk = MakeDisk(notReady, ready);
+
+            vm.SelectedDiskOption = new DiskOptionItem { Label = "Диск 0", Disk = disk, CanBenchmark = true };
+
+            Assert.Single(vm.VolumeOptions);
+            Assert.Same(ready, vm.VolumeOptions[0].Volume);
+        }
+
+        [Fact]
+        public void SelectedDiskOption_БезГотовыхТомов_БлокируетЗапуск()
+        {
+            var vm = new BenchmarkViewModel();
+            var notReady = new BenchmarkVolumeInfo { Letter = "E:", IsReady = false, TotalBytes = 100, FreeBytes = 50 };
+            var disk = MakeDisk(notReady);
+
+            vm.SelectedDiskOption = new DiskOptionItem { Label = "Диск 0", Disk = disk, CanBenchmark = false };
+
+            Assert.Empty(vm.VolumeOptions);
+            Assert.Null(vm.SelectedVolumeOption);
+            Assert.False(vm.IsRunEnabled);
+            Assert.Contains("нет тома, пригодного для теста", vm.DiskHintText);
+        }
+
+        [Fact]
+        public void SelectedDiskOption_Null_СбрасываетДеталиИТома()
+        {
+            var vm = new BenchmarkViewModel();
+            var data = new BenchmarkVolumeInfo { Letter = "D:", IsReady = true, IsSystem = false, TotalBytes = 100, FreeBytes = 50 };
+            vm.SelectedDiskOption = new DiskOptionItem { Label = "Диск 0", Disk = MakeDisk(data), CanBenchmark = true };
+
+            vm.SelectedDiskOption = null;
+
+            Assert.Equal("—", vm.ModelText);
+            Assert.Empty(vm.VolumeOptions);
+            Assert.Null(vm.SelectedVolumeOption);
+        }
     }
 }
