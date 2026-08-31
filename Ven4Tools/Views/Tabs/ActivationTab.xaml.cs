@@ -20,10 +20,13 @@ namespace Ven4Tools.Views.Tabs
             DataContext = _viewModel;
             _viewModel.OwnerWindowProvider = () => Window.GetWindow(this);
 
-            Loaded += async (_, _) =>
-            {
-                await _viewModel.CheckActivationStatusAsync();
-            };
+            // Без флага «только один раз» намеренно: пользователь уходит с вкладки к
+            // внешнему средству активации и возвращается — статус обязан быть свежим,
+            // ровно как у вкладки «История». Проверка дешёвая и сама себя ограничивает
+            // по времени (WMI + OSPP.VBS с таймаутом).
+            Loaded += (_, _) => TabInitGuard.Run(
+                _viewModel.CheckActivationStatusAsync,
+                "[ActivationTab] Ошибка проверки статуса активации");
         }
     }
 }

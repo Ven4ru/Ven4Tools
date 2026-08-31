@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
+using Ven4Tools.Models;
 using Ven4Tools.Services;
 using Ven4Tools.Views;
 
@@ -25,10 +26,14 @@ namespace Ven4Tools.ViewModels
             private set { SetField(ref _isSavingSnapshot, value); SaveSnapshotCommand.RaiseCanExecuteChanged(); }
         }
 
-        private void LoadSnapshotsList()
+        private void LoadSnapshotsList() => ApplySnapshots(ConfigSnapshotService.GetSnapshots());
+
+        // Отделено от чтения диска, чтобы InitializeAsync могла выполнить обход папки
+        // снапшотов в пуле потоков и наполнить коллекцию уже в потоке UI.
+        private void ApplySnapshots(List<ConfigSnapshotInfo> infos)
         {
             Snapshots.Clear();
-            foreach (var s in ConfigSnapshotService.GetSnapshots())
+            foreach (var s in infos)
                 Snapshots.Add(new SnapshotRow(s));
 
             ShowSnapshotsEmpty = Snapshots.Count == 0;

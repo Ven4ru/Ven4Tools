@@ -17,7 +17,16 @@ namespace Ven4Tools.Views.Tabs
             InitializeComponent();
             DataContext = _viewModel;
 
-            Loaded += (_, _) => _viewModel.RefreshAdaptersCommand.Execute(null);
+            // Без флага «только один раз» намеренно: список адаптеров обязан быть свежим
+            // при каждом показе (кабель могли подключить, пока вкладка была закрыта).
+            // Но CanExecute (_ => !IsBusy) обязан соблюдаться и здесь: прямой
+            // Execute(null) его обходил, и возврат на вкладку посреди полной диагностики
+            // перечитывал адаптеры параллельно с ней.
+            Loaded += (_, _) => TabInitGuard.RunSync(() =>
+            {
+                if (_viewModel.RefreshAdaptersCommand.CanExecute(null))
+                    _viewModel.RefreshAdaptersCommand.Execute(null);
+            }, "[NetworkTab] Ошибка обновления списка адаптеров");
         }
     }
 }

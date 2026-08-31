@@ -29,12 +29,9 @@ namespace Ven4Tools.Views.Tabs
             DataContext = _viewModel;
             _viewModel.GoToWindowsUpdate += () => GoToWindowsUpdate?.Invoke();
 
-            Loaded += async (_, _) =>
-            {
-                if (_initialized) return;
-                _initialized = true;
-                await _viewModel.InitializeAsync();
-            };
+            Loaded += (_, _) => TabInitGuard.RunOnce(
+                ref _initialized, _viewModel.InitializeAsync,
+                "[DiagnosticsTab] Ошибка инициализации вкладки");
         }
     }
 }

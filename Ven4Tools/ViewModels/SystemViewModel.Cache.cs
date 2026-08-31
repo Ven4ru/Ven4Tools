@@ -52,12 +52,15 @@ namespace Ven4Tools.ViewModels
                 : _cacheAppItems.Where(a => a.DisplayName.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
-        private void UpdateCacheStats()
+        private void UpdateCacheStats() => ApplyCacheStats(OfflineService.GetCacheStats());
+
+        // Отделено от чтения диска, чтобы InitializeAsync могла выполнить сам обход
+        // каталога кэша в пуле потоков и применить готовые цифры уже в потоке UI.
+        private void ApplyCacheStats((int count, long sizeMB) stats)
         {
-            var (count, sizeMB) = OfflineService.GetCacheStats();
-            CacheStatsText = count == 0
+            CacheStatsText = stats.count == 0
                 ? "Кэш пуст"
-                : $"{count} файлов · {sizeMB} МБ  ({OfflineService.CachePath})";
+                : $"{stats.count} файлов · {stats.sizeMB} МБ  ({OfflineService.CachePath})";
         }
 
         private void LoadCacheAppsList()

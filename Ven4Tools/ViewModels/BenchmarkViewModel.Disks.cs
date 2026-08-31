@@ -25,54 +25,61 @@ namespace Ven4Tools.ViewModels
             DiskHintText = "Определение накопителей...";
             DiskOptions = Array.Empty<DiskOptionItem>();
 
+            // Под try — не только опрос WMI, но и построение списка с выбором первого
+            // пригодного накопителя: выставление SelectedDiskOption тянет за собой
+            // FillVolumeOptions и опрос томов, то есть тот же слой WMI/BitLocker.
+            // Раньше сбой на этом участке уходил вверх по стеку из обработчика Loaded.
             try
             {
                 _disks = await DiskInventoryService.GetDisksAsync();
+
+                var options = new List<DiskOptionItem>();
+                foreach (var disk in _disks)
+                {
+                    string capacity = disk.SizeBytes > 0
+                        ? " — " + BenchmarkReportBuilder.FormatCapacity(disk.SizeBytes)
+                        : "";
+                    string suffix = disk.CanBenchmark ? "" : " (нет тома для теста)";
+
+                    options.Add(new DiskOptionItem
+                    {
+                        Label = $"Диск {disk.Index}: {disk.FriendlyName}{capacity}{suffix}",
+                        Disk = disk,
+                        CanBenchmark = disk.CanBenchmark
+                    });
+                }
+                DiskOptions = options;
+
+                if (options.Count == 0)
+                {
+                    DiskHintText = "Накопители не обнаружены. Подробности — в журнале приложения.";
+                    IsRunEnabled = false;
+                    return;
+                }
+
+                // Выбираем первый накопитель, на котором есть куда положить тестовый файл.
+                int selectIndex = -1;
+                for (int index = 0; index < _disks.Count; index++)
+                {
+                    if (_disks[index].CanBenchmark) { selectIndex = index; break; }
+                }
+
+                if (selectIndex >= 0)
+                {
+                    SelectedDiskOption = options[selectIndex];
+                }
+                else
+                {
+                    DiskHintText = "Ни на одном накопителе нет тома, пригодного для теста.";
+                    IsRunEnabled = false;
+                }
             }
             catch (Exception ex)
             {
                 AppLogger.Write(ex, "BenchmarkViewModel.LoadDisksAsync");
                 _disks.Clear();
-            }
-
-            var options = new List<DiskOptionItem>();
-            foreach (var disk in _disks)
-            {
-                string capacity = disk.SizeBytes > 0
-                    ? " — " + BenchmarkReportBuilder.FormatCapacity(disk.SizeBytes)
-                    : "";
-                string suffix = disk.CanBenchmark ? "" : " (нет тома для теста)";
-
-                options.Add(new DiskOptionItem
-                {
-                    Label = $"Диск {disk.Index}: {disk.FriendlyName}{capacity}{suffix}",
-                    Disk = disk,
-                    CanBenchmark = disk.CanBenchmark
-                });
-            }
-            DiskOptions = options;
-
-            if (options.Count == 0)
-            {
-                DiskHintText = "Накопители не обнаружены. Подробности — в журнале приложения.";
-                IsRunEnabled = false;
-                return;
-            }
-
-            // Выбираем первый накопитель, на котором есть куда положить тестовый файл.
-            int selectIndex = -1;
-            for (int index = 0; index < _disks.Count; index++)
-            {
-                if (_disks[index].CanBenchmark) { selectIndex = index; break; }
-            }
-
-            if (selectIndex >= 0)
-            {
-                SelectedDiskOption = options[selectIndex];
-            }
-            else
-            {
-                DiskHintText = "Ни на одном накопителе нет тома, пригодного для теста.";
+                DiskOptions = Array.Empty<DiskOptionItem>();
+                DiskHintText = "Не удалось определить накопители. Подробности — в журнале приложения.";
                 IsRunEnabled = false;
             }
         }
