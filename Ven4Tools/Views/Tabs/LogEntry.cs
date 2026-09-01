@@ -38,17 +38,19 @@ namespace Ven4Tools.Views.Tabs
         private static Brush BrushMuted  => BrushResolver.Resolve(KeyMuted,   FallbackMuted);
         private static Brush BrushPurple => BrushResolver.Resolve(KeyAccent,  FallbackAccent);
 
-        public string Time        { get; }
-        public string Icon        { get; }
-        public string Message     { get; }
-        public Brush IconBrush   { get; }
-        public Brush AccentBrush { get; }
+        public string Time      { get; }
+        public string Icon      { get; }
+        public string Message   { get; }
+        // Красится только значок: текст сообщения наследует TextPrimary напрямую
+        // через DynamicResource (MainWindow.xaml, шаблон строки журнала). Парная
+        // кисть AccentBrush была ровно копией IconBrush и не биндилась нигде —
+        // убрана как мёртвая.
+        public Brush IconBrush  { get; }
 
-        private LogEntry(string time, string icon, string message,
-                         Brush iconBrush, Brush accentBrush)
+        private LogEntry(string time, string icon, string message, Brush iconBrush)
         {
             Time = time; Icon = icon; Message = message;
-            IconBrush = iconBrush; AccentBrush = accentBrush;
+            IconBrush = iconBrush;
         }
 
         public static LogEntry Parse(string raw)
@@ -56,34 +58,34 @@ namespace Ven4Tools.Views.Tabs
             string time = DateTime.Now.ToString("HH:mm:ss");
             string text = raw.TrimStart();
 
-            (string icon, string msg, Brush iconBrush, Brush accent) =
+            (string icon, string msg, Brush iconBrush) =
                 text switch
                 {
-                    _ when text.StartsWith("✅") => ("✅", text[2..].TrimStart(), BrushGreen,  BrushGreen),
-                    _ when text.StartsWith("❌") => ("❌", text[2..].TrimStart(), BrushRed,    BrushRed),
-                    _ when text.StartsWith("⚠️") => ("⚠️", text[3..].TrimStart(), BrushOrange, BrushOrange),
-                    _ when text.StartsWith("➕") => ("➕", text[2..].TrimStart(), BrushOrange, BrushOrange),
-                    _ when text.StartsWith("🗑️") => ("🗑️", text[3..].TrimStart(), BrushOrange, BrushOrange),
-                    _ when text.StartsWith("📦") => ("📦", text[2..].TrimStart(), BrushTeal,   BrushTeal),
-                    _ when text.StartsWith("📡") => ("📡", text[2..].TrimStart(), BrushTeal,   BrushTeal),
-                    _ when text.StartsWith("💾") => ("💾", text[2..].TrimStart(), BrushTeal,   BrushTeal),
-                    _ when text.StartsWith("📅") => ("📅", text[2..].TrimStart(), BrushTeal,   BrushTeal),
-                    _ when text.StartsWith("📋") => ("📋", text[2..].TrimStart(), BrushTeal,   BrushTeal),
-                    _ when text.StartsWith("📥") => ("📥", text[2..].TrimStart(), BrushTeal,   BrushTeal),
-                    _ when text.StartsWith("📤") => ("📤", text[2..].TrimStart(), BrushTeal,   BrushTeal),
-                    _ when text.StartsWith("🔍") => ("🔍", text[2..].TrimStart(), BrushTeal,   BrushTeal),
-                    _ when text.StartsWith("ℹ️") => ("ℹ️", text[3..].TrimStart(), BrushTeal,   BrushTeal),
-                    _ when text.StartsWith("☁️") => ("☁️", text[3..].TrimStart(), BrushTeal,   BrushTeal),
-                    _ when text.StartsWith("🔄") => ("🔄", text[2..].TrimStart(), BrushMuted,  BrushMuted),
-                    _ when text.StartsWith("⏳") => ("⏳", text[2..].TrimStart(), BrushMuted,  BrushMuted),
-                    _ when text.StartsWith("🔔") => ("🔔", text[2..].TrimStart(), BrushMuted,  BrushMuted),
-                    _ when text.StartsWith("🆙") => ("🆙", text[2..].TrimStart(), BrushGreen,  BrushGreen),
-                    _ when text.StartsWith("🛡️") => ("🛡️", text[3..].TrimStart(), BrushPurple, BrushPurple),
-                    _ when text.StartsWith("🔑") => ("🔑", text[2..].TrimStart(), BrushPurple, BrushPurple),
-                    _                            => ("·",  text,                  BrushMuted,  BrushMuted),
+                    _ when text.StartsWith("✅") => ("✅", text[2..].TrimStart(), BrushGreen),
+                    _ when text.StartsWith("❌") => ("❌", text[2..].TrimStart(), BrushRed),
+                    _ when text.StartsWith("⚠️") => ("⚠️", text[3..].TrimStart(), BrushOrange),
+                    _ when text.StartsWith("➕") => ("➕", text[2..].TrimStart(), BrushOrange),
+                    _ when text.StartsWith("🗑️") => ("🗑️", text[3..].TrimStart(), BrushOrange),
+                    _ when text.StartsWith("📦") => ("📦", text[2..].TrimStart(), BrushTeal),
+                    _ when text.StartsWith("📡") => ("📡", text[2..].TrimStart(), BrushTeal),
+                    _ when text.StartsWith("💾") => ("💾", text[2..].TrimStart(), BrushTeal),
+                    _ when text.StartsWith("📅") => ("📅", text[2..].TrimStart(), BrushTeal),
+                    _ when text.StartsWith("📋") => ("📋", text[2..].TrimStart(), BrushTeal),
+                    _ when text.StartsWith("📥") => ("📥", text[2..].TrimStart(), BrushTeal),
+                    _ when text.StartsWith("📤") => ("📤", text[2..].TrimStart(), BrushTeal),
+                    _ when text.StartsWith("🔍") => ("🔍", text[2..].TrimStart(), BrushTeal),
+                    _ when text.StartsWith("ℹ️") => ("ℹ️", text[3..].TrimStart(), BrushTeal),
+                    _ when text.StartsWith("☁️") => ("☁️", text[3..].TrimStart(), BrushTeal),
+                    _ when text.StartsWith("🔄") => ("🔄", text[2..].TrimStart(), BrushMuted),
+                    _ when text.StartsWith("⏳") => ("⏳", text[2..].TrimStart(), BrushMuted),
+                    _ when text.StartsWith("🔔") => ("🔔", text[2..].TrimStart(), BrushMuted),
+                    _ when text.StartsWith("🆙") => ("🆙", text[2..].TrimStart(), BrushGreen),
+                    _ when text.StartsWith("🛡️") => ("🛡️", text[3..].TrimStart(), BrushPurple),
+                    _ when text.StartsWith("🔑") => ("🔑", text[2..].TrimStart(), BrushPurple),
+                    _                            => ("·",  text,                  BrushMuted),
                 };
 
-            return new LogEntry(time, icon, msg, iconBrush, accent);
+            return new LogEntry(time, icon, msg, iconBrush);
         }
 
         private static SolidColorBrush Frozen(byte r, byte g, byte b)

@@ -40,14 +40,43 @@ namespace Ven4Tools.ViewModels
         // статусы всегда были Foreground="{DynamicResource TextPrimary}". Берём тот же
         // темизированный ресурс; белый остаётся фолбэком, если Application ещё нет
         // (юнит-тесты) или ресурс не задан.
-        private Brush _windowsStatusBrush = BrushResolver.Resolve("TextPrimary");
-        public Brush WindowsStatusBrush { get => _windowsStatusBrush; private set => SetField(ref _windowsStatusBrush, value); }
+        //
+        // Хранится КЛЮЧ темы, а не готовая кисть: BrushResolver делает разовый
+        // TryFindResource, и запомненная кисть осталась бы цвета той темы, что была
+        // активна в момент проверки статуса. Проверка выполняется один раз при
+        // открытии вкладки, поэтому без ключа надпись «✅ Активирована» пережила бы
+        // любое число переключений темы в исходном цвете.
+        private string _windowsStatusBrushKey = "TextPrimary";
+        private Brush _windowsStatusBrushFallback = Brushes.White;
+        public Brush WindowsStatusBrush => BrushResolver.Resolve(_windowsStatusBrushKey, _windowsStatusBrushFallback);
 
         private string _officeStatusText = "Проверка...";
         public string OfficeStatusText { get => _officeStatusText; private set => SetField(ref _officeStatusText, value); }
 
-        private Brush _officeStatusBrush = BrushResolver.Resolve("TextPrimary");
-        public Brush OfficeStatusBrush { get => _officeStatusBrush; private set => SetField(ref _officeStatusBrush, value); }
+        private string _officeStatusBrushKey = "TextPrimary";
+        private Brush _officeStatusBrushFallback = Brushes.White;
+        public Brush OfficeStatusBrush => BrushResolver.Resolve(_officeStatusBrushKey, _officeStatusBrushFallback);
+
+        private void SetWindowsStatusBrush(string themeKey, Brush fallback)
+        {
+            _windowsStatusBrushKey = themeKey;
+            _windowsStatusBrushFallback = fallback;
+            OnPropertyChanged(nameof(WindowsStatusBrush));
+        }
+
+        private void SetOfficeStatusBrush(string themeKey, Brush fallback)
+        {
+            _officeStatusBrushKey = themeKey;
+            _officeStatusBrushFallback = fallback;
+            OnPropertyChanged(nameof(OfficeStatusBrush));
+        }
+
+        /// <summary>Перечитать оба цвета статуса по прежним ключам после смены темы.</summary>
+        private void RefreshThemeBrushes()
+        {
+            OnPropertyChanged(nameof(WindowsStatusBrush));
+            OnPropertyChanged(nameof(OfficeStatusBrush));
+        }
 
         private bool _isCheckingStatus;
         public bool IsCheckingStatus
@@ -65,6 +94,10 @@ namespace Ven4Tools.ViewModels
             ActivateWindowsCommand = new RelayCommand(_ => ActivateWindows());
             ActivateOfficeCommand = new RelayCommand(_ => ActivateOffice());
             CheckStatusCommand = RelayCommand.FromAsync(async _ => await RunCheckStatusAsync(), _ => !IsCheckingStatus);
+
+            // Цвета статусов держат ключ темы, но перечитать его должен кто-то
+            // извне. Отписки нет: экземпляр ViewModel вкладки один на весь сеанс.
+            ThemeService.ThemeChanged += RefreshThemeBrushes;
         }
 
         // Открывает сайт и окно-помощник для активации Windows
@@ -141,9 +174,8 @@ namespace Ven4Tools.ViewModels
                                             0 => "❌ Не активирована",
                                             _ => "⚠️ Неизвестно"
                                         };
-                                        WindowsStatusBrush = status == 1
-                                            ? BrushResolver.Resolve("StatusSuccess", Brushes.LightGreen)
-                                            : BrushResolver.Resolve("StatusDanger", Brushes.LightCoral);
+                                        if (status == 1) SetWindowsStatusBrush("StatusSuccess", Brushes.LightGreen);
+                                        else             SetWindowsStatusBrush("StatusDanger", Brushes.LightCoral);
                                     });
                                     return;
                                 }
@@ -152,7 +184,7 @@ namespace Ven4Tools.ViewModels
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             WindowsStatusText = "⚠️ Не обнаружена";
-                            WindowsStatusBrush = BrushResolver.Resolve("StatusWarning", Brushes.Orange);
+                            SetWindowsStatusBrush("StatusWarning", Brushes.Orange);
                         });
                     }
                     catch (Exception ex)
@@ -160,7 +192,7 @@ namespace Ven4Tools.ViewModels
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             WindowsStatusText = "⚠️ Ошибка";
-                            WindowsStatusBrush = BrushResolver.Resolve("StatusWarning", Brushes.Orange);
+                            SetWindowsStatusBrush("StatusWarning", Brushes.Orange);
                             AppLogger.Write($"❌ Ошибка проверки Windows: {ex.Message}");
                         });
                     }
@@ -283,7 +315,7 @@ namespace Ven4Tools.ViewModels
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     OfficeStatusText = "⚠️ Ошибка";
-                    OfficeStatusBrush = BrushResolver.Resolve("StatusWarning", Brushes.Orange);
+                    SetOfficeStatusBrush("StatusWarning", Brushes.Orange);
                     AppLogger.Write($"❌ Ошибка проверки Office: {ex.Message}");
                 });
             }
@@ -294,12 +326,12 @@ namespace Ven4Tools.ViewModels
             Application.Current.Dispatcher.Invoke(() =>
             {
                 OfficeStatusText = text;
-                OfficeStatusBrush = isActivated switch
+                switch (isActivated)
                 {
-                    true  => BrushResolver.Resolve("StatusSuccess", Brushes.LightGreen),
-                    false => BrushResolver.Resolve("StatusDanger", Brushes.LightCoral),
-                    null  => BrushResolver.Resolve("StatusWarning", Brushes.Orange)
-                };
+                    case true:  SetOfficeStatusBrush("StatusSuccess", Brushes.LightGreen); break;
+                    case false: SetOfficeStatusBrush("StatusDanger", Brushes.LightCoral); break;
+                    default:    SetOfficeStatusBrush("StatusWarning", Brushes.Orange); break;
+                }
             });
         }
 

@@ -94,6 +94,12 @@ namespace Ven4Tools.ViewModels
 
             LoadSettings();
             LoadOfflineSettings();
+
+            // Подложка плашки состояния сети замешивается из цвета статуса текущей
+            // темы и запоминается по ключу — перечитать её после переключения темы
+            // некому, кроме этого обработчика. Отписки нет: экземпляр ViewModel
+            // «Настроек» один на весь сеанс приложения.
+            ThemeService.ThemeChanged += RefreshThemeBrushes;
         }
 
         /// <summary>

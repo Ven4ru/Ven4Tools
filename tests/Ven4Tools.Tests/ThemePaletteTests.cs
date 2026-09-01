@@ -79,6 +79,7 @@ public sealed class ThemePaletteTests
             ("StatusSuccess", "StatusSuccessForeground"),
             ("StatusWarning", "StatusWarningForeground"),
             ("StatusDanger", "StatusDangerForeground"),
+            ("StatusInfo", "StatusInfoForeground"),
         };
 
         foreach ((string fill, string foreground) in pairs)
@@ -131,16 +132,39 @@ public sealed class ThemePaletteTests
         }
     }
 
+    /// <summary>
+    /// Общий с лаунчером словарь: клиент подключает его как <c>Resources/DesignTokens.xaml</c>
+    /// (Ven4Tools.csproj), поэтому он входит в область проверок наравне с <c>Ven4Tools/</c>.
+    /// Здесь же объявлены BrandGreen/BrandGreenDeep — они нужны ЛАУНЧЕРУ, у которого
+    /// переключателя тем нет, и само объявление ссылкой клиента не является.
+    /// </summary>
+    private const string SharedTokensFile = "Shared/DesignTokens.xaml";
+
     [Fact]
     public void РазметкаКлиентаНеСсылаетсяНаФирменныйЗелёный()
     {
         // BrandGreen/BrandGreenDeep остаются в Shared/DesignTokens.xaml ради
         // лаунчера — у него переключателя тем нет. В клиенте ссылка на них
         // означала бы элемент, который темой не красится.
-        List<string> hits = EnumerateClientSources()
-            .SelectMany(path => Lines(path).Where(line => line.Text.Contains("BrandGreen", StringComparison.Ordinal))
-                                           .Select(line => $"{Relative(path)}:{line.Number}"))
-            .ToList();
+        List<string> hits = new();
+        foreach (string path in EnumerateClientSources())
+        {
+            string relative = Relative(path);
+            // Комментарии не считаются ссылкой: и здесь, и в ThemeService они как раз
+            // объясняют, почему от BrandGreen ушли (у .cs комментарии не вырезаются —
+            // поэтому ThemeService.cs исключён целиком, см. EnumerateClientSources).
+            foreach ((string text, int number) in LinesWithoutComments(path))
+            {
+                if (!text.Contains("BrandGreen", StringComparison.Ordinal)) continue;
+                if (relative.Equals(SharedTokensFile, StringComparison.OrdinalIgnoreCase)
+                    && text.Contains("x:Key=", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                hits.Add($"{relative}:{number}");
+            }
+        }
 
         Assert.True(
             hits.Count == 0,
@@ -198,7 +222,32 @@ public sealed class ThemePaletteTests
         // TextSecondary нельзя надёжно — TextBlock живёт внутри VisualBrush.Visual,
         // вне дерева, и наследование ресурсов там не работает как обычно.
         ["Ven4Tools/Views/Tabs/InstalledTab.xaml"] = new[] { "Gray" },
+
+        // Общий с лаунчером словарь. Объявления кистей палитры отсекаются отдельно
+        // (см. PaletteDefinitionFiles), сюда попадают только два эффекта, у которых
+        // литерал стоит на второй строке объявления: свечение фирменного зелёного —
+        // акцент ЛАУНЧЕРА (в клиенте BrandAuraEffect пересобирает ThemeService.Apply
+        // под акцент темы), чёрная тень панели одинакова в любой теме.
+        [SharedTokensFile] = new[] { "#4ADE80", "#000000" },
     };
+
+    /// <summary>
+    /// Файлы, чья работа — ОБЪЯВЛЯТЬ палитру: стартовые значения App.xaml (до первого
+    /// <c>ThemeService.Apply()</c>) и общий с лаунчером словарь. Цветовой литерал в
+    /// объявлении ресурса там уместен по назначению файла.
+    /// <para>
+    /// Проверка по ПУТИ, а не по одному виду строки: прежний безусловный пропуск
+    /// строк с «<c>&lt;SolidColorBrush x:Key=</c>» освобождал от проверки такую строку
+    /// в ЛЮБОМ файле разметки клиента, хотя задумывался только под App.xaml.
+    /// </para>
+    /// </summary>
+    private static readonly string[] PaletteDefinitionFiles =
+    {
+        "Ven4Tools/App.xaml",
+        SharedTokensFile,
+    };
+
+    private const string PaletteBrushDeclaration = "<SolidColorBrush x:Key=";
 
     /// <summary>
     /// Именованные цвета WPF. «Прозрачный» в список не входит — он не цвет, а
@@ -227,12 +276,12 @@ public sealed class ThemePaletteTests
         {
             string relative = Relative(path);
             AllowedLiterals.TryGetValue(relative, out string[]? allowed);
+            bool isPaletteFile = PaletteDefinitionFiles.Contains(relative, StringComparer.OrdinalIgnoreCase);
 
             foreach ((string text, int number) in LinesWithoutComments(path))
             {
-                // Объявления ключей палитры в App.xaml — стартовые значения до
-                // первого ThemeService.Apply(), цветовой литерал там уместен.
-                if (text.Contains("<SolidColorBrush x:Key=", StringComparison.Ordinal)) continue;
+                // Объявление ключа палитры — но только в файле, который её и объявляет.
+                if (isPaletteFile && text.Contains(PaletteBrushDeclaration, StringComparison.Ordinal)) continue;
 
                 foreach (Match match in literal.Matches(text))
                 {
@@ -290,18 +339,30 @@ public sealed class ThemePaletteTests
             // не используется, — это не ссылка на ресурс.
             .Where(path => !path.EndsWith("ThemeService.cs", StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// Файлы, из которых собирается клиент. Кроме собственного каталога сюда входит
+    /// <c>Shared/</c>: клиент подключает оттуда и разметку (<c>DesignTokens.xaml</c>
+    /// как <c>Resources/DesignTokens.xaml</c>), и код — см. Ven4Tools.csproj. Пока
+    /// <c>Shared/</c> был вне проверки, StaticResource на темизируемый ключ или
+    /// новый цветовой литерал в общем словаре проходили в клиент незамеченными.
+    /// </summary>
+    private static readonly string[] ClientDirectories = { "Ven4Tools", "Shared" };
+
     private static IEnumerable<string> EnumerateClientFiles(string pattern)
     {
-        string directory = Path.Combine(FindRepositoryRoot(), "Ven4Tools");
-        foreach (string path in Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories))
+        foreach (string name in ClientDirectories)
         {
-            if (path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) ||
-                path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+            string directory = Path.Combine(FindRepositoryRoot(), name);
+            foreach (string path in Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories))
             {
-                continue;
-            }
+                if (path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) ||
+                    path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
 
-            yield return path;
+                yield return path;
+            }
         }
     }
 

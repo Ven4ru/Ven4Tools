@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
-using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
@@ -111,9 +110,9 @@ namespace Ven4Tools.ViewModels
         internal static void SetRow(NetworkCheckResult row, string text, bool? ok)
         {
             row.Text = text;
-            if (ok == null) { row.IconText = "⬜"; row.IconBrush = BrushResolver.Resolve("TextSecondary", Brushes.Gray); return; }
-            if (ok == true) { row.IconText = "✅"; row.IconBrush = BrushResolver.Resolve("StatusSuccess", _fallbackSuccess); }
-            else            { row.IconText = "❌"; row.IconBrush = BrushResolver.Resolve("StatusDanger", Brushes.LightCoral); }
+            if (ok == null) { row.IconText = "⬜"; row.SetIconBrush("TextSecondary", Brushes.Gray); return; }
+            if (ok == true) { row.IconText = "✅"; row.SetIconBrush("StatusSuccess", _fallbackSuccess); }
+            else            { row.IconText = "❌"; row.SetIconBrush("StatusDanger", Brushes.LightCoral); }
         }
 
         // ── Доступность сервисов ─────────────────────────────────────────────
@@ -131,14 +130,14 @@ namespace Ven4Tools.ViewModels
                 foreach (var row in rows)
                 {
                     row.IconText = "🚫";
-                    row.IconBrush = BrushResolver.Resolve("TextSecondary", Brushes.Gray);
+                    row.SetIconBrush("TextSecondary", Brushes.Gray);
                     row.Text = "отключено";
                 }
                 AppLogger.Write("[Сеть] Проверка сервисов пропущена: параноидальный режим");
                 if (!IsBusy) IsCheckingServices = false;
                 return;
             }
-            foreach (var row in rows) { row.IconText = "⏳"; row.IconBrush = BrushResolver.Resolve("TextSecondary", Brushes.Gray); }
+            foreach (var row in rows) { row.IconText = "⏳"; row.SetIconBrush("TextSecondary", Brushes.Gray); }
 
             var checks = new[]
             {
@@ -160,9 +159,8 @@ namespace Ven4Tools.ViewModels
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         row.IconText = r.Available ? "✅" : "❌";
-                        row.IconBrush = r.Available
-                            ? BrushResolver.Resolve("StatusSuccess", _fallbackSuccess)
-                            : BrushResolver.Resolve("StatusDanger", Brushes.LightCoral);
+                        if (r.Available) row.SetIconBrush("StatusSuccess", _fallbackSuccess);
+                        else             row.SetIconBrush("StatusDanger", Brushes.LightCoral);
                         row.Text = r.Available ? $"{r.Ms} мс" : "таймаут";
                     });
                     AppLogger.Write($"[Сеть] {name}: {(r.Available ? "✅" : "❌")} {r.Ms}мс");

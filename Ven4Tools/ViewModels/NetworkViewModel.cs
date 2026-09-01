@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using System.Windows.Media;
 using Ven4Tools.Helpers;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
 {
@@ -20,7 +21,13 @@ namespace Ven4Tools.ViewModels
         // который ставит DynamicResource TextPrimary. Явный биндинг на IconBrush
         // заменяет этот неявный канал, поэтому дефолт берётся из того же ресурса
         // с фолбэком на замороженный (frozen, потокобезопасный) Brushes.White.
-        private Brush _iconBrush = BrushResolver.Resolve("TextPrimary");
+        //
+        // Хранится КЛЮЧ темы, а не готовая кисть: кисть добывается разовым
+        // TryFindResource, и запомнить её значило бы навсегда оставить значок в
+        // цвете темы, активной в момент проверки. Ключ переживает переключение
+        // темы, а RefreshThemeBrushes() заставляет перечитать по нему цвет.
+        private string _iconBrushKey = "TextPrimary";
+        private Brush _iconBrushFallback = Brushes.White;
 
         /// <summary>
         /// Начальный текст строки. Оригинальный XAML задавал разные дефолты:
@@ -44,11 +51,22 @@ namespace Ven4Tools.ViewModels
             set => SetField(ref _iconText, value);
         }
 
-        public Brush IconBrush
+        public Brush IconBrush => BrushResolver.Resolve(_iconBrushKey, _iconBrushFallback);
+
+        /// <summary>
+        /// Задать цвет значка ключом темы (а не готовой кистью) с фолбэком на случай,
+        /// когда словаря ресурсов нет — юнит-тесты, дизайнер.
+        /// </summary>
+        internal void SetIconBrush(string themeKey, Brush fallback)
         {
-            get => _iconBrush;
-            set => SetField(ref _iconBrush, value);
+            if (_iconBrushKey == themeKey && ReferenceEquals(_iconBrushFallback, fallback)) return;
+            _iconBrushKey = themeKey;
+            _iconBrushFallback = fallback;
+            OnPropertyChanged(nameof(IconBrush));
         }
+
+        /// <summary>Перечитать цвет значка по прежнему ключу после смены темы.</summary>
+        internal void RefreshThemeBrushes() => OnPropertyChanged(nameof(IconBrush));
     }
 
     /// <summary>
@@ -146,6 +164,22 @@ namespace Ven4Tools.ViewModels
             GetIpCommand            = RelayCommand.FromAsync(_ => RunGetIpAsync(),    _ => !IsBusy && !IsGettingIp);
             CheckDnsCommand         = RelayCommand.FromAsync(_ => RunDnsAsync(),      _ => !IsBusy && !IsCheckingDns);
             ResetNetworkCommand     = RelayCommand.FromAsync(_ => RunResetNetworkAsync(), _ => !IsBusy && !IsResettingNetwork);
+
+            // Значки строк держат ключ темы, а не кисть, но перечитать его должен
+            // кто-то извне: сама строка о смене темы не узнаёт. Отписки нет —
+            // ViewModel вкладки одна на весь сеанс приложения.
+            ThemeService.ThemeChanged += OnThemeChanged;
+        }
+
+        /// <summary>
+        /// Перекрасить значки всех девяти строк (4 пинга + 5 сервисов) под новую тему.
+        /// Без этого результат уже выполненной проверки оставался в цветах прежней
+        /// темы: «✅» цвета тёмной темы на белой карточке «Светлой» не читался.
+        /// </summary>
+        private void OnThemeChanged()
+        {
+            foreach (NetworkCheckResult row in new[] { Ping1, Ping2, Ping3, Ping4, Svc1, Svc2, Svc3, Svc4, Svc5 })
+                row.RefreshThemeBrushes();
         }
 
         // ── Полная диагностика ───────────────────────────────────────────────
