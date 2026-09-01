@@ -108,7 +108,8 @@ public sealed class WindowsUpdateServiceTests
         release.SetResult(true);
         var outcome = await download;
 
-        Assert.True(outcome.Success);
+        Assert.NotEmpty(outcome.Items);
+        Assert.All(outcome.Items, i => Assert.True(i.Success));
         Assert.False(WindowsUpdateService.IsWindowsUpdateBusy);
         Assert.False(WindowsUpdateService.IsDownloadingInBackground);
     }
@@ -131,7 +132,8 @@ public sealed class WindowsUpdateServiceTests
             var outcome = await service.DownloadOnlyAsync(
                 new[] { "1" }, new Progress<WindowsUpdateProgress>(), CancellationToken.None);
 
-            Assert.True(outcome.Success);
+            Assert.NotEmpty(outcome.Items);
+            Assert.All(outcome.Items, i => Assert.True(i.Success));
             Assert.Equal(1, fake.DownloadCallCount);
         }
         finally

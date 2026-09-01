@@ -117,7 +117,7 @@ namespace Ven4Tools.Services.WindowsUpdate
             CancellationToken ct)
         {
             if (updateIds.Count == 0)
-                return new WindowsUpdateDownloadOutcome { Success = false, ErrorMessage = "Нечего скачивать." };
+                return new WindowsUpdateDownloadOutcome { ErrorMessage = "Нечего скачивать." };
 
             // Проверка IsRebootPending здесь намеренно НЕ делается (в отличие от
             // InstallSelectedAsync): незавершённая перезагрузка мешает ставить патчи,
@@ -135,7 +135,6 @@ namespace Ven4Tools.Services.WindowsUpdate
             if (!await WuSemaphore.WaitAsync(0, ct))
                 return new WindowsUpdateDownloadOutcome
                 {
-                    Success = false,
                     ErrorMessage = "Идёт другая операция с обновлениями Windows — фоновое скачивание отложено до следующей проверки."
                 };
 
