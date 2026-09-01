@@ -23,11 +23,19 @@ namespace Ven4Tools.Services.WindowsUpdate
             }
         }
 
-        /// <summary>Текст строки патча для UI — раньше собирался в WindowsUpdateTab.RenderTree().</summary>
+        /// <summary>
+        /// Текст строки патча для UI — раньше собирался в WindowsUpdateTab.RenderTree().
+        /// Хвост «✅ Скачан» показывается для патчей, которые Windows Update уже положил
+        /// в кэш (сам, по расписанию системы, или наш фоновый режим «Уведомлять и
+        /// скачивать в фоне»): их установка начнётся сразу, без ожидания загрузки, и
+        /// заявленный размер уже не будет качаться из сети. Формат «| статус» — тот же,
+        /// что у строк каталога (AppRowViewModel.StatusText).
+        /// </summary>
         public string DisplayText =>
             $"{Item.Title}" +
             (Item.KbArticleIds.Count > 0 ? $" (KB{string.Join(", KB", Item.KbArticleIds)})" : "") +
-            $" — {SizeFormatter.BytesToMB(Item.SizeBytes)}";
+            $" — {SizeFormatter.BytesToMB(Item.SizeBytes)}" +
+            (Item.IsDownloaded ? " | ✅ Скачан, готов к установке" : "");
     }
 
     public sealed class WindowsUpdateCategoryNode : INotifyPropertyChanged
