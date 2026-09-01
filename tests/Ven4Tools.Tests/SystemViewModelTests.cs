@@ -29,6 +29,19 @@ namespace Ven4Tools.Tests
         }
 
         [Fact]
+        public void WindowsUpdateModeTag_ВсегдаОдинИзДвухПунктовСписка()
+        {
+            // В профиле режим может лежать как "NotSet" (вкладку обновлений ещё не
+            // открывали) — такого пункта в ComboBox нет, и SelectedValue тогда не нашёл
+            // бы совпадения, оставив список пустым. LoadSettings обязан свести значение
+            // к одному из реальных тегов. Тест намеренно ничего не пишет в профиль:
+            // класс не входит в коллекцию "ProfileService".
+            var vm = new SystemViewModel();
+
+            Assert.Contains(vm.WindowsUpdateModeTag, new[] { "NotifyOnly", "NotifyAndDownload" });
+        }
+
+        [Fact]
         public void DefaultInstallFolderText_ОтклонённыйПуть_ОткатываетЗначениеСУведомлением()
         {
             var vm = new SystemViewModel();
