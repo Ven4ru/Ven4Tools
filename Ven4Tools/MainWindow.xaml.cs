@@ -119,7 +119,9 @@ namespace Ven4Tools
 
             // Пилюля активных задач красится императивно (см. UpdateActiveTasksIndicator),
             // а не DynamicResource-биндингом, и обновляется только при смене busy-состояния —
-            // сама о переключении темы она не узнает. Именованный обработчик: отписываемся
+            // сама о переключении темы она не узнает. Тем же обработчиком перекрашивается
+            // и «Центр активности»: значки уже написанных строк журнала — разовые снимки
+            // ресурса (см. LogEntry.IconBrush). Именованный обработчик: отписываемся
             // в OnClosed, иначе статическое событие удержит окно от сборки мусора.
             ThemeService.ThemeChanged += OnThemeChanged;
         }
@@ -142,8 +144,11 @@ namespace Ven4Tools
 
         // Состояние не изменилось — изменились цвета, поэтому перекрашиваем напрямую,
         // не сбрасывая _lastActiveTasksBusy (сброс полагался бы на следующий тик таймера).
-        private void OnThemeChanged() =>
-            Dispatcher.Invoke(() => PaintActiveTasksIndicator(InstallationService.IsBusy));
+        private void OnThemeChanged() => Dispatcher.Invoke(() =>
+        {
+            PaintActiveTasksIndicator(InstallationService.IsBusy);
+            _globalLog.RefreshThemeBrushes();
+        });
 
         private void OnConnectivityChanged(bool online) =>
             Dispatcher.Invoke(() => UpdateTabVisibility());
