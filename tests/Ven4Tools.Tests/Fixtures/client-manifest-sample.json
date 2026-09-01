@@ -1,0 +1,21 @@
+{
+  "version": "5.1.0",
+  "generatedAt": "2026-09-01T19:29:48Z",
+  "files": [
+    {
+      "path": "Resources/Fonts/Inter.ttf",
+      "sha256": "7f299be070baad6cb1ccd833e2e216908734ca208d5fe0d62f6e2a41edc8989f",
+      "size": 34
+    },
+    {
+      "path": "Ven4Tools.dll",
+      "sha256": "508c6eb4b4646ef348bc46f5d52c1f612a0f984ce8b723e4b1460f6ef6516e4c",
+      "size": 27
+    },
+    {
+      "path": "Ven4Tools.exe",
+      "sha256": "8abfe524ea1a7ef3dd147bed19c6d1053f4959ad342ce850b92523f5d5a604b6",
+      "size": 27
+    }
+  ]
+}

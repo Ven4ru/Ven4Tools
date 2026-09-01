@@ -82,6 +82,38 @@ namespace Ven4Tools.Launcher
                     try { Directory.Delete(dir, recursive: true); }
                     catch { /* занято/уже удалено — не мешаем запуску лаунчера */ }
                 }
+
+                // Остатки прерванного блочного (дельта-) обновления — «файл.new-{id}»
+                // и «файл.old-{id}» ВНУТРИ папки клиента. Транзакция InstallPartial
+                // убирает их сама, но убитый посреди работы процесс мог не успеть.
+                // Опознаются по строгому шаблону (см. IsTransientArtifactName), поэтому
+                // настоящие файлы публикации задеть невозможно.
+                if (Directory.Exists(fullClientPath))
+                {
+                    foreach (string file in Directory.EnumerateFiles(fullClientPath, "*", SearchOption.AllDirectories).ToList())
+                    {
+                        string name = Path.GetFileName(file);
+                        if (!TransactionalDirectoryInstaller.TryParseTransientArtifactName(
+                                name, out string originalName, out bool isBackup))
+                            continue;
+
+                        // «.old-{id}» — сохранённый оригинал. Если файла под штатным
+                        // именем рядом нет, значит процесс убили между переименованием
+                        // оригинала и установкой нового файла: в остатке лежит
+                        // ЕДИНСТВЕННАЯ копия, её надо вернуть на место, а не удалить
+                        // (тот же случай, что и с ".backup-*" выше).
+                        string original = Path.Combine(Path.GetDirectoryName(file)!, originalName);
+                        if (isBackup && !File.Exists(original))
+                        {
+                            try { File.Move(file, original); }
+                            catch { /* не удалось вернуть — остаток оставляем, не удаляя */ }
+                            continue;
+                        }
+
+                        try { File.Delete(file); }
+                        catch { /* занято/уже удалено */ }
+                    }
+                }
             }
             catch { /* зачистка необязательна для работы лаунчера */ }
         }
@@ -135,6 +167,24 @@ namespace Ven4Tools.Launcher
 
             try
             {
+                // Попытка блочного (дельта-) обновления ДО полной загрузки: если CDN
+                // отдал подписанный файловый манифест и на диске есть подтверждённый
+                // состав установленной версии — качаем только изменившиеся файлы.
+                // Любая неудача здесь означает переход к полному пути ниже, а не
+                // ошибку для пользователя; отказ пользователя закрыть клиент и
+                // небезопасный путь установки (Aborted) полный путь тоже не спасёт —
+                // он упёрся бы в те же проверки, только после лишних сотен мегабайт.
+                var deltaOutcome = await TryDeltaUpdateAsync(version, token, silent);
+                if (deltaOutcome == DeltaUpdateOutcome.Installed)
+                {
+                    if (!silent)
+                        System.Windows.MessageBox.Show(
+                            $"Клиент {version.Version} успешно обновлён в:\n{_clientPath}",
+                            "Обновление завершено", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+                if (deltaOutcome == DeltaUpdateOutcome.Aborted) return;
+
                 var downloader = new FallbackDownloader();
                 // using держит FileShare.Read-хендл на tempZip открытым до конца метода
                 // (в т.ч. через SafeZipExtractor.ExtractAsync ниже) — закрывает окно TOCTOU
@@ -254,6 +304,78 @@ namespace Ven4Tools.Launcher
             }
         }
 
+        // Общие предустановочные проверки, обязательные для ЛЮБОГО способа положить
+        // файлы в папку клиента: клиент не должен быть запущен (иначе его файлы
+        // залочены и обновление окажется наполовину применённым) и путь установки
+        // не должен пересекаться с папкой данных (иначе установка сотрёт настройки).
+        //
+        // Вынесены из ExtractAndInstallClientAsync без изменения поведения: блочное
+        // (дельта-) обновление подменяет файлы в той же папке и несёт ровно те же
+        // риски, а вторая копия этих проверок неизбежно разошлась бы с первой.
+        // Возвращает false, если установку продолжать нельзя (сообщение пользователю
+        // и запись в журнал уже сделаны).
+        private async Task<bool> EnsureClientClosedAndPathSafeAsync(bool silent)
+        {
+            if (IsClientRunning())
+            {
+                Dispatcher.Invoke(() => txtDownloadStatus.Text = "Клиент запущен");
+
+                if (silent)
+                {
+                    Dispatcher.Invoke(() => SetOperationStage(0));
+                    AddLog("⏸ Установка отложена: клиент запущен");
+                    return false;
+                }
+
+                var answer = Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                    "Ven4Tools сейчас запущен.\n\nЗакрыть клиент сейчас, чтобы установить эту версию?",
+                    "Клиент запущен", MessageBoxButton.YesNo, MessageBoxImage.Question));
+
+                if (answer != MessageBoxResult.Yes)
+                {
+                    Dispatcher.Invoke(() => SetOperationStage(0));
+                    AddLog("⏹ Установка отменена — клиент не закрыт");
+                    return false;
+                }
+
+                AddLog("🔒 Закрываю клиент перед установкой...");
+                if (!await TryCloseRunningClientAsync())
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        txtDownloadStatus.Text = "Клиент запущен";
+                        SetOperationStage(0);
+                    });
+                    AddLog("⚠️ Клиент не закрылся за отведённое время — установка отменена");
+                    if (!silent)
+                        Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                            "Не удалось закрыть клиент автоматически (возможно, он свёрнут в трей).\n\n" +
+                            "Закройте его вручную и повторите установку.",
+                            "Клиент не закрылся", MessageBoxButton.OK, MessageBoxImage.Warning));
+                    return false;
+                }
+                AddLog("✅ Клиент закрыт, продолжаю установку");
+            }
+
+            if (!InstallPathGuard.IsClientPathSafe(_clientPath, _dataFolderPath))
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    txtDownloadStatus.Text = "Ошибка пути";
+                    SetOperationStage(0);
+                });
+                AddLog($"⛔ Папка установки клиента пересекается с папкой данных — установка отменена: {_clientPath}");
+                if (!silent)
+                    Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                        $"Папка установки клиента:\n{_clientPath}\n\nсовпадает или вложена в папку данных Ven4Tools. " +
+                        "Установка отменена во избежание потери настроек.\n\nВыберите другую папку установки.",
+                        "Небезопасный путь установки", MessageBoxButton.OK, MessageBoxImage.Error));
+                return false;
+            }
+
+            return true;
+        }
+
         // Общий хвост «распаковка → закрыть запущенный клиент → проверка пути →
         // атомарная установка», используемый и сетевой загрузкой (DownloadVersionAsync),
         // и локальной установкой из файла (InstallFromLocalArchiveAsync), и CLI
@@ -283,62 +405,7 @@ namespace Ven4Tools.Launcher
 
                 token.ThrowIfCancellationRequested();
 
-                if (IsClientRunning())
-                {
-                    Dispatcher.Invoke(() => txtDownloadStatus.Text = "Клиент запущен");
-
-                    if (silent)
-                    {
-                        Dispatcher.Invoke(() => SetOperationStage(0));
-                        AddLog("⏸ Установка отложена: клиент запущен");
-                        return false;
-                    }
-
-                    var answer = Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
-                        "Ven4Tools сейчас запущен.\n\nЗакрыть клиент сейчас, чтобы установить эту версию?",
-                        "Клиент запущен", MessageBoxButton.YesNo, MessageBoxImage.Question));
-
-                    if (answer != MessageBoxResult.Yes)
-                    {
-                        Dispatcher.Invoke(() => SetOperationStage(0));
-                        AddLog("⏹ Установка отменена — клиент не закрыт");
-                        return false;
-                    }
-
-                    AddLog("🔒 Закрываю клиент перед установкой...");
-                    if (!await TryCloseRunningClientAsync())
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            txtDownloadStatus.Text = "Клиент запущен";
-                            SetOperationStage(0);
-                        });
-                        AddLog("⚠️ Клиент не закрылся за отведённое время — установка отменена");
-                        if (!silent)
-                            Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
-                                "Не удалось закрыть клиент автоматически (возможно, он свёрнут в трей).\n\n" +
-                                "Закройте его вручную и повторите установку.",
-                                "Клиент не закрылся", MessageBoxButton.OK, MessageBoxImage.Warning));
-                        return false;
-                    }
-                    AddLog("✅ Клиент закрыт, продолжаю установку");
-                }
-
-                if (!InstallPathGuard.IsClientPathSafe(_clientPath, _dataFolderPath))
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        txtDownloadStatus.Text = "Ошибка пути";
-                        SetOperationStage(0);
-                    });
-                    AddLog($"⛔ Папка установки клиента пересекается с папкой данных — установка отменена: {_clientPath}");
-                    if (!silent)
-                        Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
-                            $"Папка установки клиента:\n{_clientPath}\n\nсовпадает или вложена в папку данных Ven4Tools. " +
-                            "Установка отменена во избежание потери настроек.\n\nВыберите другую папку установки.",
-                            "Небезопасный путь установки", MessageBoxButton.OK, MessageBoxImage.Error));
-                    return false;
-                }
+                if (!await EnsureClientClosedAndPathSafeAsync(silent)) return false;
 
                 Dispatcher.Invoke(() =>
                 {
@@ -355,6 +422,14 @@ namespace Ven4Tools.Launcher
                     progressDownload.Value = 100;
                 });
                 AddLog($"✅ Клиент {versionLabel} установлен");
+
+                // Пересчёт локального манифеста установленной версии — состав папки
+                // клиента только что заменён целиком, и прежний кэш ей больше не
+                // соответствует. Без этого шага блочное (дельта-) обновление не
+                // включилось бы никогда: ему нужен подтверждённый состав того, что
+                // стоит на диске, а появиться он может только здесь — дельта сама
+                // без него невозможна.
+                await RefreshInstalledManifestAsync(versionLabel, token);
 
                 Dispatcher.Invoke(() => SetLaunchButtonState(LaunchButtonState.Launch));
                 _clientUpdateAvailable = false;

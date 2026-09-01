@@ -50,6 +50,37 @@ namespace Ven4Tools.Launcher.Models
         // SHA256 zip-архива клиента для проверки целостности после скачивания.
         [JsonPropertyName("zip_sha256")]
         public string? ZipSha256 { get; set; }
+
+        // --- Блочное (дельта-) обновление клиента ---
+        // Все четыре поля опциональны и заполняются только начиная с релизов, для
+        // которых на CDN выложен файловый манифест публикации. Старый version.json
+        // без них полностью работоспособен: дельта в этом случае просто недоступна и
+        // обновление идёт обычным полным путём (архив целиком). Обратная совместимость
+        // здесь обязательна — version.json на CDN обновляется независимо от лаунчера,
+        // и лаунчер новой версии обязан работать со старым манифестом, и наоборот.
+
+        // Подписанный файловый манифест публикации (client-manifest.json): список
+        // «относительный путь → SHA256 → размер» для каждого файла версии.
+        [JsonPropertyName("manifest_url")]
+        public string? ManifestUrl { get; set; }
+
+        // ECDSA-подпись манифеста (client-manifest.json.sig), домен
+        // «Ven4Tools.ClientManifest.v1» — см. ClientManifestVerifier.
+        [JsonPropertyName("manifest_signature_url")]
+        public string? ManifestSignatureUrl { get; set; }
+
+        // Базовый URL, под которым лежат ОТДЕЛЬНЫЕ файлы публикации этой версии:
+        // https://cdn.ven4tools.ru/client-files/<версия>/. К нему дописывается
+        // относительный путь файла из манифеста.
+        [JsonPropertyName("files_base_url")]
+        public string? FilesBaseUrl { get; set; }
+
+        // Зеркало тех же отдельных файлов на хостинге (независимый провайдер,
+        // только путь /releases/): https://ven4tools.ru/releases/client-files/<версия>/.
+        // Если поле не задано, цепочка источников дельты вырождается в
+        // «CDN-домен → CDN прямой IP» — это рабочий, просто менее живучий вариант.
+        [JsonPropertyName("files_base_mirror_hosting")]
+        public string? FilesBaseMirrorHosting { get; set; }
     }
 
     // Самообновление лаунчера идёт только через установщик Ven4Tools.Setup-X.Y.Z.exe,
