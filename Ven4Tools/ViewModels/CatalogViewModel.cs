@@ -223,6 +223,27 @@ namespace Ven4Tools.ViewModels
             CheckUpdatesCommand = new RelayCommand(_ => SwitchToUpdatesRequested?.Invoke());
 
             LoadAvailableDisks();
+
+            // Каталог — единственный долгоживущий владелец строк, поэтому обход
+            // коллекции при смене темы делает он, а не сами строки (см.
+            // AppRowViewModel.RefreshThemeBrushes). Отписки нет намеренно:
+            // экземпляр ViewModel каталога один на весь сеанс приложения.
+            ThemeService.ThemeChanged += OnThemeChanged;
+        }
+
+        /// <summary>
+        /// Перечитать все кисти вкладки после смены темы. Ни одна из них не биндится
+        /// на <c>DynamicResource</c> — это разовые снимки ресурса (см.
+        /// <see cref="AppRowViewModel.RowBrush"/> и кисти переключателей фильтров
+        /// в CatalogViewModel.Search.cs), поэтому без явного уведомления они
+        /// оставались в цветах темы, активной на момент вычисления.
+        /// </summary>
+        private void OnThemeChanged()
+        {
+            OnPropertyChanged(nameof(FavoritesOnlyBrush));
+            OnPropertyChanged(nameof(HideInstalledBrush));
+            OnPropertyChanged(nameof(SortAlphabeticallyBrush));
+            foreach (AppRowViewModel row in Apps) row.RefreshThemeBrushes();
         }
 
         // ── Прочее ───────────────────────────────────────────────────────────────

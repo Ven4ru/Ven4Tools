@@ -86,10 +86,17 @@ namespace Ven4Tools.ViewModels
         private string _connStatusText = "Интернет доступен";
         public string ConnStatusText { get => _connStatusText; private set => SetField(ref _connStatusText, value); }
 
-        // Дефолт — прозрачная кисть: в оригинальном XAML у pnlConnStatus нет статичного
-        // Background, цвет всегда выставлялся программно из UpdateConnectivityStatus().
-        private Brush _connStatusBackground = Brushes.Transparent;
-        public Brush ConnStatusBackground { get => _connStatusBackground; private set => SetField(ref _connStatusBackground, value); }
+        // Дефолт — прозрачная подложка: в оригинальном XAML у pnlConnStatus нет
+        // статичного Background, цвет всегда выставлялся программно из
+        // UpdateConnectivityStatus().
+        //
+        // Хранится КЛЮЧ статуса, а не готовая кисть: кисть замешивается из цвета
+        // текущей темы разовым TryFindResource (см. StatusTint), и запомнить её
+        // значило бы оставить плашку в цвете темы, активной на момент последней
+        // смены состояния сети. Ключ переживает переключение темы.
+        private string? _connStatusTintKey;
+        public Brush ConnStatusBackground =>
+            _connStatusTintKey is null ? Brushes.Transparent : StatusTint(_connStatusTintKey);
 
         public void UpdateConnectivityStatus()
         {
@@ -101,28 +108,37 @@ namespace Ven4Tools.ViewModels
             {
                 ConnIconText = "🟡";
                 ConnStatusText = "Принудительный офлайн — вкладки скрыты вручную";
-                ConnStatusBackground = StatusTint("StatusWarning");
+                SetConnStatusTint("StatusWarning");
             }
             else if (!online && onlineForced)
             {
                 ConnIconText = "🟠";
                 ConnStatusText = "Соединение не обнаружено, но онлайн-режим принудительно включён";
-                ConnStatusBackground = StatusTint("StatusWarning");
+                SetConnStatusTint("StatusWarning");
             }
             else if (!online)
             {
                 ConnIconText = "🔴";
                 ConnStatusText = "Интернет недоступен — онлайн-вкладки скрыты";
-                ConnStatusBackground = StatusTint("StatusDanger");
+                SetConnStatusTint("StatusDanger");
             }
             else
             {
                 ConnIconText = "🟢";
                 ConnStatusText = "Интернет доступен — все вкладки активны";
-                ConnStatusBackground = StatusTint("StatusSuccess");
+                SetConnStatusTint("StatusSuccess");
             }
             ConnectivityStatusUpdated?.Invoke();
         }
+
+        private void SetConnStatusTint(string statusResourceKey)
+        {
+            _connStatusTintKey = statusResourceKey;
+            OnPropertyChanged(nameof(ConnStatusBackground));
+        }
+
+        /// <summary>Перечитать подложку плашки состояния сети после смены темы.</summary>
+        private void RefreshThemeBrushes() => OnPropertyChanged(nameof(ConnStatusBackground));
 
         /// <summary>
         /// Полупрозрачная подложка плашки состояния сети. Раньше здесь были четыре

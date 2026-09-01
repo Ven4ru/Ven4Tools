@@ -116,6 +116,12 @@ namespace Ven4Tools
                 _activeTasksTimer.Start();
                 UpdateActiveTasksIndicator();
             };
+
+            // Пилюля активных задач красится императивно (см. UpdateActiveTasksIndicator),
+            // а не DynamicResource-биндингом, и обновляется только при смене busy-состояния —
+            // сама о переключении темы она не узнает. Именованный обработчик: отписываемся
+            // в OnClosed, иначе статическое событие удержит окно от сборки мусора.
+            ThemeService.ThemeChanged += OnThemeChanged;
         }
 
         private void UpdateActiveTasksIndicator()
@@ -123,12 +129,21 @@ namespace Ven4Tools
             bool busy = InstallationService.IsBusy;
             if (_lastActiveTasksBusy == busy) return;
             _lastActiveTasksBusy = busy;
+            PaintActiveTasksIndicator(busy);
+        }
 
+        private void PaintActiveTasksIndicator(bool busy)
+        {
             txtActiveTasks.Text = busy ? "Выполняется установка" : "Нет активных задач";
             var brush = busy ? (Brush)FindResource("AccentColor") : (Brush)FindResource("TextSecondary");
             txtActiveTasks.Foreground = brush;
             dotActiveTasks.Fill = brush;
         }
+
+        // Состояние не изменилось — изменились цвета, поэтому перекрашиваем напрямую,
+        // не сбрасывая _lastActiveTasksBusy (сброс полагался бы на следующий тик таймера).
+        private void OnThemeChanged() =>
+            Dispatcher.Invoke(() => PaintActiveTasksIndicator(InstallationService.IsBusy));
 
         private void OnConnectivityChanged(bool online) =>
             Dispatcher.Invoke(() => UpdateTabVisibility());
@@ -149,6 +164,7 @@ namespace Ven4Tools
             ConnectivityMonitor.StatusChanged -= OnConnectivityChanged;
             WindowsUpdateBackgroundService.CountChanged -= OnWindowsUpdateCountChanged;
             PinnedAppsService.Changed -= OnPinsChanged;
+            ThemeService.ThemeChanged -= OnThemeChanged;
             _tray.UnregisterNotifier();
             _activeTasksTimer?.Stop();
             base.OnClosed(e);
