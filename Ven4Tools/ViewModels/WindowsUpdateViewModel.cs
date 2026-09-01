@@ -198,8 +198,16 @@ namespace Ven4Tools.ViewModels
                     return;
                 }
 
-                StatusText = $"Найдено патчей: {result.Items.Count}";
-                AppLogger.Write($"🛡️ Windows Update: найдено патчей — {result.Items.Count}");
+                // Отдельно называем уже скачанные: в режиме «Уведомлять и скачивать в
+                // фоне» это главный видимый признак, что режим отработал — установка
+                // таких патчей стартует сразу, размер из сети повторно не тянется.
+                // Windows и сам мог скачать часть патчей по своему расписанию, поэтому
+                // строка появляется независимо от выбранного режима.
+                int downloadedCount = result.Items.Count(i => i.IsDownloaded);
+                StatusText = downloadedCount > 0
+                    ? $"Найдено патчей: {result.Items.Count} (из них {downloadedCount} уже скачано и готово к установке)"
+                    : $"Найдено патчей: {result.Items.Count}";
+                AppLogger.Write($"🛡️ Windows Update: найдено патчей — {result.Items.Count}, из них скачано — {downloadedCount}");
                 SetTree(WindowsUpdateCategoryTreeBuilder.Build(result.Items));
                 UpdateSelectionSummary();
             }

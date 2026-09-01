@@ -123,5 +123,24 @@ namespace Ven4Tools.Tests
 
             Assert.Contains("Патч 1", node.DisplayText);
         }
+
+        [Fact]
+        public void WindowsUpdateItemNode_DisplayText_ПоказываетОтметкуСкачанного()
+        {
+            var node = new WindowsUpdateItemNode
+            {
+                Item = new WindowsUpdateItem { UpdateId = "1", Title = "Патч 1", SizeBytes = 100, IsDownloaded = true }
+            };
+
+            Assert.Contains("✅ Скачан, готов к установке", node.DisplayText);
+        }
+
+        [Fact]
+        public void WindowsUpdateItemNode_DisplayText_БезОтметкиУНеСкачанного()
+        {
+            var node = new WindowsUpdateItemNode { Item = MakeItem("1") }; // IsDownloaded = false
+
+            Assert.DoesNotContain("Скачан", node.DisplayText);
+        }
     }
 }
