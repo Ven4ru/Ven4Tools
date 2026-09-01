@@ -4,14 +4,33 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using Ven4Tools.Helpers;
+using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
 {
     /// <summary>Одна строка-результат (диски / ошибки Windows Update) — текст и цвет.</summary>
-    public sealed class DiagnosticsTextRow
+    public sealed class DiagnosticsTextRow : ViewModelBase
     {
         public required string Text { get; init; }
-        public required Brush Foreground { get; init; }
+
+        /// <summary>
+        /// Ключ темы, а не готовая кисть: <c>BrushResolver</c> делает разовый
+        /// <c>TryFindResource</c>, и запомненная кисть навсегда оставила бы строку
+        /// в цвете темы, активной в момент диагностики. Результаты живут на вкладке
+        /// до следующего запуска — то есть переживают любое число переключений темы.
+        /// </summary>
+        public required string ForegroundKey { get; init; }
+
+        public Brush Foreground => BrushResolver.Resolve(ForegroundKey);
+
+        /// <summary>
+        /// Перечитать цвет по прежнему ключу после смены темы. Строка подписывается
+        /// на <c>ThemeService.ThemeChanged</c> не сама: строки пересоздаются при
+        /// каждом запуске диагностики, и подписка каждой на статическое событие
+        /// удерживала бы их все от сборки мусора. Обходит коллекции единственный
+        /// долгоживущий владелец — <see cref="DiagnosticsViewModel"/>.
+        /// </summary>
+        internal void RefreshThemeBrushes() => OnPropertyChanged(nameof(Foreground));
     }
 
     /// <summary>Одна карточка нештатного завершения работы (история перезагрузок).</summary>
@@ -53,8 +72,18 @@ namespace Ven4Tools.ViewModels
         private string _healthBadgeText = "Диагностика ещё не запускалась";
         public string HealthBadgeText { get => _healthBadgeText; private set => SetField(ref _healthBadgeText, value); }
 
-        private Brush _healthBadgeBrush = BrushResolver.Resolve("TextSecondary");
-        public Brush HealthBadgeBrush { get => _healthBadgeBrush; private set => SetField(ref _healthBadgeBrush, value); }
+        // Тот же приём, что у ActivationViewModel.*StatusBrush: хранится ключ темы,
+        // цвет вычисляется в геттере. Бейдж выставляется один раз за запуск
+        // диагностики и до следующего запуска не трогается — запомненная кисть
+        // пережила бы переключение темы в исходном цвете.
+        private string _healthBadgeBrushKey = "TextSecondary";
+        public Brush HealthBadgeBrush => BrushResolver.Resolve(_healthBadgeBrushKey);
+
+        private void SetHealthBadgeBrush(string themeKey)
+        {
+            _healthBadgeBrushKey = themeKey;
+            OnPropertyChanged(nameof(HealthBadgeBrush));
+        }
 
         private string _lastRunText = "";
         public string LastRunText { get => _lastRunText; private set => SetField(ref _lastRunText, value); }
@@ -173,6 +202,26 @@ namespace Ven4Tools.ViewModels
             OpenWindowsUpdateCommand  = new RelayCommand(_ => GoToWindowsUpdate?.Invoke());
             CopyFullReportCommand     = new RelayCommand(_ => CopyFullReport());
             DisableFastStartupCommand = RelayCommand.FromAsync(_ => RunDisableFastStartupAsync(), _ => !IsDisablingFastStartup);
+
+            // Результаты диагностики держат ключи темы, но перечитать их должен
+            // кто-то извне. Отписки нет: экземпляр ViewModel вкладки один на весь
+            // сеанс приложения.
+            ThemeService.ThemeChanged += RefreshThemeBrushes;
+        }
+
+        /// <summary>
+        /// Перечитать все кисти вкладки после смены темы: бейдж состояния и цвета
+        /// строк дисков, ошибок Windows Update и истории перезагрузок. Ни одна из
+        /// них не биндится на <c>DynamicResource</c> — это разовые снимки ресурса,
+        /// поэтому без явного уведомления отчёт последней диагностики оставался в
+        /// цветах темы, активной на момент её запуска.
+        /// </summary>
+        private void RefreshThemeBrushes()
+        {
+            OnPropertyChanged(nameof(HealthBadgeBrush));
+            foreach (DiagnosticsTextRow row in DiskRows) row.RefreshThemeBrushes();
+            foreach (DiagnosticsTextRow row in WuRows) row.RefreshThemeBrushes();
+            RebootStatusRow?.RefreshThemeBrushes();
         }
 
         public async Task InitializeAsync()

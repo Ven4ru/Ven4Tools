@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
 using Ven4Tools.Services.DiskBenchmark;
@@ -109,12 +108,12 @@ namespace Ven4Tools.ViewModels
             if (disk.Link.IsKnown && disk.Link.CeilingMegabytesPerSecond > 0)
             {
                 CeilingText = BenchmarkReportBuilder.FormatSpeedRounded(disk.Link.CeilingMegabytesPerSecond) + " МБ/с";
-                CeilingBrush = BrushResolver.Resolve("TextPrimary");
+                SetCeilingBrush("TextPrimary");
             }
             else
             {
                 CeilingText = "неизвестно — параметры интерфейса недоступны";
-                CeilingBrush = BrushResolver.Resolve("TextSecondary");
+                SetCeilingBrush("TextSecondary");
             }
         }
 

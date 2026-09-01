@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Media;
 using Ven4Tools.Helpers;
 using Ven4Tools.Models;
+using Ven4Tools.Services;
 using Ven4Tools.Services.DiskBenchmark;
 
 namespace Ven4Tools.ViewModels
@@ -28,10 +29,28 @@ namespace Ven4Tools.ViewModels
     }
 
     /// <summary>Одна строка текстового вывода («Что это значит»).</summary>
-    public sealed class ConclusionLine
+    public sealed class ConclusionLine : ViewModelBase
     {
         public required string Text { get; init; }
-        public required Brush Foreground { get; init; }
+
+        /// <summary>
+        /// Ключ темы, а не готовая кисть: <c>BrushResolver</c> делает разовый
+        /// <c>TryFindResource</c>, и запомненная кисть оставила бы разбор результата
+        /// в цвете темы, активной в момент прогона теста. Разбор висит на вкладке до
+        /// следующего запуска — то есть переживает любое число переключений темы.
+        /// </summary>
+        public required string ForegroundKey { get; init; }
+
+        public Brush Foreground => BrushResolver.Resolve(ForegroundKey);
+
+        /// <summary>
+        /// Перечитать цвет по прежнему ключу после смены темы. Строка не
+        /// подписывается на <c>ThemeService.ThemeChanged</c> сама: строки
+        /// пересоздаются при каждом прогоне, и подписка каждой на статическое
+        /// событие удерживала бы их все от сборки мусора. Обходит коллекцию
+        /// единственный долгоживущий владелец — <see cref="BenchmarkViewModel"/>.
+        /// </summary>
+        internal void RefreshThemeBrushes() => OnPropertyChanged(nameof(Foreground));
     }
 
     /// <summary>Пункт выпадающего списка накопителей.</summary>
@@ -98,8 +117,18 @@ namespace Ven4Tools.ViewModels
         private string _ceilingText = "—";
         public string CeilingText { get => _ceilingText; private set => SetField(ref _ceilingText, value); }
 
-        private Brush _ceilingBrush = BrushResolver.Resolve("TextPrimary");
-        public Brush CeilingBrush { get => _ceilingBrush; private set => SetField(ref _ceilingBrush, value); }
+        // Тот же приём, что у ActivationViewModel.*StatusBrush: хранится ключ темы,
+        // цвет вычисляется в геттере. Потолок интерфейса пишется один раз при выборе
+        // накопителя и дальше не трогается — запомненная кисть пережила бы
+        // переключение темы в исходном цвете.
+        private string _ceilingBrushKey = "TextPrimary";
+        public Brush CeilingBrush => BrushResolver.Resolve(_ceilingBrushKey);
+
+        private void SetCeilingBrush(string themeKey)
+        {
+            _ceilingBrushKey = themeKey;
+            OnPropertyChanged(nameof(CeilingBrush));
+        }
 
         private IReadOnlyList<DiskOptionItem> _diskOptions = Array.Empty<DiskOptionItem>();
         public IReadOnlyList<DiskOptionItem> DiskOptions { get => _diskOptions; private set => SetField(ref _diskOptions, value); }
@@ -215,12 +244,29 @@ namespace Ven4Tools.ViewModels
             _resultRows = BuildEmptyResultRows();
             _conclusionLines = new[]
             {
-                new ConclusionLine { Text = "Запустите тест, чтобы увидеть разбор результата", Foreground = BrushResolver.Resolve("TextSecondary") }
+                new ConclusionLine { Text = "Запустите тест, чтобы увидеть разбор результата", ForegroundKey = "TextSecondary" }
             };
 
             RunBenchmarkCommand = RelayCommand.FromAsync(_ => RunBenchmarkAsync());
             CopyReportCommand   = new RelayCommand(_ => CopyReport());
             SaveReportCommand   = new RelayCommand(_ => SaveReport());
+
+            // Цвет потолка интерфейса и строки разбора держат ключи темы, но
+            // перечитать их должен кто-то извне. Отписки нет: экземпляр ViewModel
+            // вкладки один на весь сеанс приложения.
+            ThemeService.ThemeChanged += RefreshThemeBrushes;
+        }
+
+        /// <summary>
+        /// Перечитать кисти вкладки после смены темы. Ни одна из них не биндится на
+        /// <c>DynamicResource</c> — это разовые снимки ресурса, поэтому без явного
+        /// уведомления результат последнего прогона и подпись потолка интерфейса
+        /// оставались в цветах темы, активной на момент их вычисления.
+        /// </summary>
+        private void RefreshThemeBrushes()
+        {
+            OnPropertyChanged(nameof(CeilingBrush));
+            foreach (ConclusionLine line in ConclusionLines) line.RefreshThemeBrushes();
         }
 
         public async Task InitializeAsync()
