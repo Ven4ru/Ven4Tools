@@ -26,13 +26,26 @@ public sealed class ClientDeltaPlannerTests
     [Fact]
     public void Plan_DownloadsOnlyChangedAndNewFiles()
     {
+        // Реалистичное соотношение "сотни файлов рантайма не меняются, единицы меняются"
+        // (см. ClientDeltaPlanner.MinimumUnchangedShare) — четыре дополнительных
+        // неизменившихся рантайм-файла нужны, чтобы доля совпадений (5 из 7 ≈ 71%)
+        // прошла 50%-й порог; без них тест проверял бы неизбежное "дельта невыгодна"
+        // на нереалистично маленьком манифесте, а не саму логику диффа.
         var remote = Manifest(
             ("Ven4Tools.exe", HashA),
             ("Ven4Tools.dll", HashB),   // изменился
-            ("Resources/new.dat", HashC)); // новый
+            ("Resources/new.dat", HashC), // новый
+            ("PresentationFramework.dll", HashA),
+            ("System.Private.CoreLib.dll", HashA),
+            ("coreclr.dll", HashA),
+            ("hostfxr.dll", HashA));
         var local = Manifest(
             ("Ven4Tools.exe", HashA),
-            ("Ven4Tools.dll", HashA));
+            ("Ven4Tools.dll", HashA),
+            ("PresentationFramework.dll", HashA),
+            ("System.Private.CoreLib.dll", HashA),
+            ("coreclr.dll", HashA),
+            ("hostfxr.dll", HashA));
 
         var plan = ClientDeltaPlanner.Plan(remote, local);
 
@@ -40,7 +53,9 @@ public sealed class ClientDeltaPlannerTests
         Assert.Equal(
             new[] { "Ven4Tools.dll", "Resources/new.dat" },
             plan.ToDownload.Select(e => e.Path));
-        Assert.Equal(new[] { "Ven4Tools.exe" }, plan.Unchanged.Select(e => e.Path));
+        Assert.Equal(
+            new[] { "Ven4Tools.exe", "PresentationFramework.dll", "System.Private.CoreLib.dll", "coreclr.dll", "hostfxr.dll" },
+            plan.Unchanged.Select(e => e.Path));
         Assert.Empty(plan.ToDelete);
         Assert.Equal(200, plan.DownloadBytes);
     }
