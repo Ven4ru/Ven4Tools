@@ -51,6 +51,15 @@ namespace Ven4Tools.Launcher.Models
         public string? CdnUrl { get; set; }
         public string? MirrorHostingUrl { get; set; }
         public string? GithubUrl { get; set; }
+        // Ссылки блочного (дельта-) обновления из того же подписанного version.json:
+        // подписанный файловый манифест публикации, его подпись и базовые URL, под
+        // которыми лежат отдельные файлы версии (CDN и зеркало на хостинге). Пусты,
+        // если CDN не знает эту версию либо релиз выпущен без файлового манифеста —
+        // тогда обновление идёт обычным полным путём (см. MainWindow.Download.Delta.cs).
+        public string? ManifestUrl { get; set; }
+        public string? ManifestSignatureUrl { get; set; }
+        public string? FilesBaseUrl { get; set; }
+        public string? FilesBaseMirrorHostingUrl { get; set; }
         public DateTime ReleaseDate { get; set; }
         public string? ReleaseNotes { get; set; }
         public bool IsLatest { get; set; }

@@ -105,6 +105,15 @@ namespace Ven4Tools.Launcher
                             // проверкой целостности — см. защиту от перезаписи ассета
                             // в .github/workflows/release.yml.
                             info.ExpectedSha256 = cdnInfo.Client.ZipSha256;
+
+                            // Ссылки блочного (дельта-) обновления. Опциональны: релиз
+                            // мог быть выпущен без файлового манифеста — тогда поля
+                            // останутся пустыми и обновление пойдёт полным путём.
+                            info.ManifestUrl = cdnInfo.Client.ManifestUrl;
+                            info.ManifestSignatureUrl = cdnInfo.Client.ManifestSignatureUrl;
+                            info.FilesBaseUrl = cdnInfo.Client.FilesBaseUrl;
+                            info.FilesBaseMirrorHostingUrl = cdnInfo.Client.FilesBaseMirrorHosting;
+
                             AddLog($"   ⚡ {version} → CDN (резерв: прямой IP, хостинг, GitHub)");
                         }
 
