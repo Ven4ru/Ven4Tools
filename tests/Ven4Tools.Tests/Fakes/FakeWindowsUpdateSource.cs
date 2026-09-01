@@ -27,6 +27,13 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
     public bool DownloadShouldFailOutright { get; set; }
     public string DownloadFailureMessage { get; set; } = "тестовый отказ скачивания";
 
+    // Задвижка для тестов состояния семафоров: DownloadStarted сигналит, что вызов
+    // уже внутри метода, DownloadRelease держит его там, пока тест не отпустит.
+    // Без этого проверить «что видно снаружи ВО ВРЕМЯ скачивания» невозможно —
+    // фейк отрабатывает мгновенно.
+    public TaskCompletionSource<bool>? DownloadStarted { get; set; }
+    public Task? DownloadRelease { get; set; }
+
     public bool IsServiceRunning() => ServiceRunning;
     public bool TryStartService() { ServiceRunning = true; return true; }
     public bool IsRebootPending() => RebootPending;
@@ -74,7 +81,7 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
         });
     }
 
-    public Task<WindowsUpdateDownloadOutcome> DownloadOnlyAsync(
+    public async Task<WindowsUpdateDownloadOutcome> DownloadOnlyAsync(
         IReadOnlyList<string> updateIds,
         IProgress<WindowsUpdateProgress> progress,
         CancellationToken ct)
@@ -82,12 +89,15 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
         DownloadCallCount++;
         DownloadCallsReceived.AddRange(updateIds);
 
+        DownloadStarted?.TrySetResult(true);
+        if (DownloadRelease != null) await DownloadRelease;
+
         if (DownloadShouldFailOutright)
-            return Task.FromResult(new WindowsUpdateDownloadOutcome
+            return new WindowsUpdateDownloadOutcome
             {
                 Success = false,
                 ErrorMessage = DownloadFailureMessage
-            });
+            };
 
         var outcomes = updateIds.Select(id =>
         {
@@ -110,10 +120,10 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
             };
         }).ToList();
 
-        return Task.FromResult(new WindowsUpdateDownloadOutcome
+        return new WindowsUpdateDownloadOutcome
         {
             Success = outcomes.All(o => o.Success),
             Items = outcomes
-        });
+        };
     }
 }

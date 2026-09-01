@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Ven4Tools.Services;
+using Ven4Tools.Services.WindowsUpdate;
 using Ven4Tools.Shared;
 using Ven4Tools.Views;
 using Ven4Tools.Views.Tabs;
@@ -45,7 +46,15 @@ namespace Ven4Tools
         private readonly TrayIconController _tray;
 
         private DispatcherTimer? _activeTasksTimer;
-        private bool? _lastActiveTasksBusy;
+        private ActiveTasksState? _lastActiveTasksState;
+
+        /// <summary>
+        /// Что показывает пилюля активных задач. Фоновое скачивание обновлений Windows —
+        /// отдельное состояние, а не «выполняется установка»: оно ничего не устанавливает
+        /// и ничего не блокирует, но идти может десятки минут, и пользователь должен
+        /// видеть, что клиент в это время занят сетью и диском.
+        /// </summary>
+        private enum ActiveTasksState { Idle, Installing, DownloadingWindowsUpdates }
 
         public MainWindow()
         {
@@ -108,7 +117,8 @@ namespace Ven4Tools
             {
                 // Пилюля «Нет активных задач» отражает общий семафор установки
                 // (InstallationService.IsBusy) — тот же, что используют каталог,
-                // история, «Установленные» и Windows Update. Поллинг, а не событие:
+                // история, «Установленные» и установка патчей Windows Update, — плюс
+                // отдельным состоянием фоновое скачивание патчей. Поллинг, а не событие:
                 // WaitAsync/Release разбросаны по многим местам, событие пришлось бы
                 // добавлять в каждое — таймер безопаснее и ничего не трогает.
                 _activeTasksTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
@@ -126,18 +136,34 @@ namespace Ven4Tools
             ThemeService.ThemeChanged += OnThemeChanged;
         }
 
-        private void UpdateActiveTasksIndicator()
+        // Установка приоритетнее скачивания: одновременно они возможны (разные
+        // семафоры), но установка — то, что пользователь запустил сам и ждёт.
+        private static ActiveTasksState CurrentActiveTasksState()
         {
-            bool busy = InstallationService.IsBusy;
-            if (_lastActiveTasksBusy == busy) return;
-            _lastActiveTasksBusy = busy;
-            PaintActiveTasksIndicator(busy);
+            if (InstallationService.IsBusy) return ActiveTasksState.Installing;
+            if (WindowsUpdateService.IsDownloadingInBackground) return ActiveTasksState.DownloadingWindowsUpdates;
+            return ActiveTasksState.Idle;
         }
 
-        private void PaintActiveTasksIndicator(bool busy)
+        private void UpdateActiveTasksIndicator()
         {
-            txtActiveTasks.Text = busy ? "Выполняется установка" : "Нет активных задач";
-            var brush = busy ? (Brush)FindResource("AccentColor") : (Brush)FindResource("TextSecondary");
+            var state = CurrentActiveTasksState();
+            if (_lastActiveTasksState == state) return;
+            _lastActiveTasksState = state;
+            PaintActiveTasksIndicator(state);
+        }
+
+        private void PaintActiveTasksIndicator(ActiveTasksState state)
+        {
+            txtActiveTasks.Text = state switch
+            {
+                ActiveTasksState.Installing => "Выполняется установка",
+                ActiveTasksState.DownloadingWindowsUpdates => "Скачиваются обновления Windows",
+                _ => "Нет активных задач"
+            };
+            var brush = state != ActiveTasksState.Idle
+                ? (Brush)FindResource("AccentColor")
+                : (Brush)FindResource("TextSecondary");
             txtActiveTasks.Foreground = brush;
             dotActiveTasks.Fill = brush;
         }
@@ -151,7 +177,7 @@ namespace Ven4Tools
         // FindResource) — тем же вызовом, что и на PinnedAppsService.Changed.
         private void OnThemeChanged() => Dispatcher.Invoke(() =>
         {
-            PaintActiveTasksIndicator(InstallationService.IsBusy);
+            PaintActiveTasksIndicator(CurrentActiveTasksState());
             UpdateConnectionIndicator();
             _pins.Refresh();
             _globalLog.RefreshThemeBrushes();
