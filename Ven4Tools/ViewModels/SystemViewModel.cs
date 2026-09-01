@@ -38,6 +38,7 @@ namespace Ven4Tools.ViewModels
 
         private bool _loadingAppearance = true;
         private bool _loadingCatalogMode;
+        private bool _loadingWindowsUpdateMode;
 
         public RelayCommand CheckUpdatesCommand { get; }
         public RelayCommand BrowseDefaultInstallFolderCommand { get; }

@@ -109,6 +109,22 @@
                 </StackPanel>
             </GroupBox>
 
+            <GroupBox Header="🛡️ Обновления Windows" Margin="0,0,0,15">
+                <StackPanel Margin="10">
+                    <TextBlock Text="Что делать с найденными обновлениями Windows:"
+                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
+                    <ComboBox x:Name="cmbWindowsUpdateMode" Width="300" HorizontalAlignment="Left"
+                              ToolTip="Фоновая проверка обновлений Windows раз в 6 часов. Установка ни в одном из режимов автоматически не запускается."
+                              SelectedValuePath="Tag" SelectedValue="{Binding WindowsUpdateModeTag, Mode=TwoWay}">
+                        <ComboBoxItem Content="Только уведомлять" Tag="NotifyOnly"/>
+                        <ComboBoxItem Content="Уведомлять и скачивать в фоне" Tag="NotifyAndDownload"/>
+                    </ComboBox>
+                    <TextBlock Text="«Только уведомлять» — клиент сообщает о найденных патчах, ничего не скачивая. «Уведомлять и скачивать в фоне» — патчи заранее загружаются в кэш Windows, и установка по кнопке на вкладке «Обновления Windows» стартует сразу, без ожидания загрузки. Устанавливаются патчи в обоих режимах только вручную."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,4,0,0"/>
+                </StackPanel>
+            </GroupBox>
+
             <!-- Таймауты -->
             <GroupBox Header="⏱️ Таймауты" Margin="0,0,0,15">
                 <Grid Margin="10">

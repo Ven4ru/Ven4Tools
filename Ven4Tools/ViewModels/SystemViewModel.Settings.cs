@@ -27,6 +27,18 @@ namespace Ven4Tools.ViewModels
             _loadingCatalogMode = true;
             SetField(ref _catalogModeTag, ProfileService.Current.CatalogMode, nameof(CatalogModeTag));
             _loadingCatalogMode = false;
+
+            _loadingWindowsUpdateMode = true;
+            // "NotSet" в профиле означает «вкладку обновлений ещё не открывали»; в
+            // выпадающем списке такого пункта нет, поэтому показываем фактическое
+            // поведение до первого открытия — фоновая проверка не идёт вовсе, что
+            // ближе всего к «Только уведомлять». Сам профиль при этом не трогаем:
+            // запись NotifyOnly делает вкладка обновлений при первом открытии.
+            string wuMode = ProfileService.Current.WindowsUpdateMode;
+            SetField(ref _windowsUpdateModeTag,
+                wuMode == "NotifyAndDownload" ? "NotifyAndDownload" : "NotifyOnly",
+                nameof(WindowsUpdateModeTag));
+            _loadingWindowsUpdateMode = false;
         }
 
         private void SaveSettings()
@@ -179,6 +191,29 @@ namespace Ven4Tools.ViewModels
                 if (_loadingCatalogMode || _catalogModeTag == value) return;
                 SetField(ref _catalogModeTag, value);
                 ProfileService.Current.CatalogMode = value;
+                ProfileService.Save();
+            }
+        }
+
+        // ── Обновления Windows ─────────────────────────────────────────────────────
+
+        private string _windowsUpdateModeTag = "NotifyOnly";
+        /// <summary>
+        /// Режим фоновой работы с обновлениями Windows: "NotifyOnly" —
+        /// только уведомление о найденных патчах, "NotifyAndDownload" — плюс тихое
+        /// скачивание их в фоне, чтобы установка по клику стартовала мгновенно.
+        /// Установка в обоих случаях запускается только вручную.
+        /// Тот же приём, что у CatalogModeTag выше (гейт _loading* против записи в
+        /// профиль при начальной простановке SelectedValue из XAML).
+        /// </summary>
+        public string WindowsUpdateModeTag
+        {
+            get => _windowsUpdateModeTag;
+            set
+            {
+                if (_loadingWindowsUpdateMode || _windowsUpdateModeTag == value) return;
+                SetField(ref _windowsUpdateModeTag, value);
+                ProfileService.Current.WindowsUpdateMode = value;
                 ProfileService.Save();
             }
         }
