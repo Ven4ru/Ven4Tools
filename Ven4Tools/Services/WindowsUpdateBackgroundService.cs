@@ -100,7 +100,10 @@ namespace Ven4Tools.Services
             }
             _lastNotifiedCount = result.Items.Count;
 
-            if (mode == "NotifyAndDownload" && result.Items.Count > 0 && !WindowsUpdateService.IsBusy)
+            // Гейт только по своим WU-операциям: идущая установка приложений из
+            // каталога скачиванию патчей в кэш Windows Update не мешает и мешать
+            // не должна (msiexec и загрузчик WUA — разные подсистемы).
+            if (mode == "NotifyAndDownload" && result.Items.Count > 0 && !WindowsUpdateService.IsWindowsUpdateBusy)
                 await DownloadInBackgroundAsync(result.Items, ct);
         }
 
