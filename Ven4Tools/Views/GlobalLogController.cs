@@ -51,6 +51,20 @@ namespace Ven4Tools.Views
         public void Clear() => _entries.Clear();
 
         /// <summary>
+        /// Перечитать цвета значков всех накопленных строк после смены темы.
+        /// <para>
+        /// Контроллер — единственный долгоживущий владелец коллекции, поэтому обход
+        /// делает он, а не сами записи (см. <see cref="LogEntry.RefreshThemeBrushes"/>).
+        /// Не <c>Items.Refresh()</c>: тот пересобирает контейнеры списка и сбрасывает
+        /// выделение, а выделение здесь рабочее — по нему копируются выбранные строки.
+        /// </para>
+        /// </summary>
+        public void RefreshThemeBrushes()
+        {
+            foreach (LogEntry entry in _entries) entry.RefreshThemeBrushes();
+        }
+
+        /// <summary>
         /// Копирует выделенные строки, а если выделения нет — весь журнал.
         /// </summary>
         public void CopySelectedOrAll()
