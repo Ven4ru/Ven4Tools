@@ -75,6 +75,28 @@ namespace Ven4Tools.Models
         /// данных о ходе фазы) берётся середина её диапазона — честная оценка
         /// «примерно на этом этапе», а не выдуманный точный процент.
         /// </summary>
+        /// <summary>
+        /// Заново прогнать конвертеры цвета строки после смены темы.
+        /// <para>
+        /// Цвета строки прогресса даёт не свойство ViewModel, а конвертеры
+        /// (<see cref="ViewModels.InstallPhaseToBrushConverter"/> и
+        /// <see cref="ViewModels.InstallOutcomeToBrushConverter"/>) — они берут кисть
+        /// разовым <c>TryFindResource</c> и потому отдают цвет темы, активной на
+        /// момент вызова. Сам по себе конвертер вызывается только при изменении
+        /// источника, то есть <see cref="Phase"/>/<see cref="Outcome"/>, а после
+        /// завершения пачки они больше не меняются: список установки очищается
+        /// только в начале СЛЕДУЮЩЕЙ установки, а панель «Прогресс установки» на
+        /// вкладке каталога видна всегда. Из-за этого итог последней установки
+        /// оставался в цветах прежней темы. Уведомление без изменения значения —
+        /// единственный способ заставить биндинг перевызвать конвертер.
+        /// </para>
+        /// </summary>
+        internal void RefreshThemeBrushes()
+        {
+            OnPropertyChanged(nameof(Phase));
+            OnPropertyChanged(nameof(Outcome));
+        }
+
         public double EffectiveProgress => Phase switch
         {
             InstallPhase.Download => IsIndeterminate ? 25.0 : Percentage * 0.5,

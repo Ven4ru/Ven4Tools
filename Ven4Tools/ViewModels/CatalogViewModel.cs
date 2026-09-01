@@ -236,7 +236,9 @@ namespace Ven4Tools.ViewModels
         /// на <c>DynamicResource</c> — это разовые снимки ресурса (см.
         /// <see cref="AppRowViewModel.RowBrush"/> и кисти переключателей фильтров
         /// в CatalogViewModel.Search.cs), поэтому без явного уведомления они
-        /// оставались в цветах темы, активной на момент вычисления.
+        /// оставались в цветах темы, активной на момент вычисления. Строки панели
+        /// «Прогресс установки» — тот же случай, только цвет им даёт конвертер:
+        /// см. <see cref="Models.AppInstallProgress.RefreshThemeBrushes"/>.
         /// </summary>
         private void OnThemeChanged()
         {
@@ -244,6 +246,7 @@ namespace Ven4Tools.ViewModels
             OnPropertyChanged(nameof(HideInstalledBrush));
             OnPropertyChanged(nameof(SortAlphabeticallyBrush));
             foreach (AppRowViewModel row in Apps) row.RefreshThemeBrushes();
+            foreach (Models.AppInstallProgress item in InstallProgress) item.RefreshThemeBrushes();
         }
 
         // ── Прочее ───────────────────────────────────────────────────────────────
