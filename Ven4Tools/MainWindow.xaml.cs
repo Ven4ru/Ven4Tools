@@ -144,9 +144,16 @@ namespace Ven4Tools
 
         // Состояние не изменилось — изменились цвета, поэтому перекрашиваем напрямую,
         // не сбрасывая _lastActiveTasksBusy (сброс полагался бы на следующий тик таймера).
+        // Индикатор соединения перекрашиваем по той же причине: он присваивает кисть
+        // локальным значением, а локальное значение в WPF перекрывает DynamicResource
+        // из разметки — сам по себе он новую тему не увидит. Полоса закреплённых
+        // приложений пересобирается целиком (карточки строятся в C# разовым
+        // FindResource) — тем же вызовом, что и на PinnedAppsService.Changed.
         private void OnThemeChanged() => Dispatcher.Invoke(() =>
         {
             PaintActiveTasksIndicator(InstallationService.IsBusy);
+            UpdateConnectionIndicator();
+            _pins.Refresh();
             _globalLog.RefreshThemeBrushes();
         });
 

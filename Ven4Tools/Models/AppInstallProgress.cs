@@ -67,15 +67,6 @@ namespace Ven4Tools.Models
         }
 
         /// <summary>
-        /// Сквозная оценка прогресса (0-100) для агрегированной шкалы по всей
-        /// очереди установки (CatalogViewModel.OverallProgressPercentage). Без
-        /// неё агрегат «прыгал» бы назад в момент переключения Download →
-        /// Installing, когда Percentage сбрасывается на 0 для новой фазы.
-        /// Взвешено 50/50 между фазами; для IsIndeterminate (нет гранулярных
-        /// данных о ходе фазы) берётся середина её диапазона — честная оценка
-        /// «примерно на этом этапе», а не выдуманный точный процент.
-        /// </summary>
-        /// <summary>
         /// Заново прогнать конвертеры цвета строки после смены темы.
         /// <para>
         /// Цвета строки прогресса даёт не свойство ViewModel, а конвертеры
@@ -97,6 +88,15 @@ namespace Ven4Tools.Models
             OnPropertyChanged(nameof(Outcome));
         }
 
+        /// <summary>
+        /// Сквозная оценка прогресса (0-100) для агрегированной шкалы по всей
+        /// очереди установки (CatalogViewModel.OverallProgressPercentage). Без
+        /// неё агрегат «прыгал» бы назад в момент переключения Download →
+        /// Installing, когда Percentage сбрасывается на 0 для новой фазы.
+        /// Взвешено 50/50 между фазами; для IsIndeterminate (нет гранулярных
+        /// данных о ходе фазы) берётся середина её диапазона — честная оценка
+        /// «примерно на этом этапе», а не выдуманный точный процент.
+        /// </summary>
         public double EffectiveProgress => Phase switch
         {
             InstallPhase.Download => IsIndeterminate ? 25.0 : Percentage * 0.5,
