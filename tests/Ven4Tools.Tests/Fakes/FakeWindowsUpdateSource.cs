@@ -18,6 +18,15 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
     public HashSet<string> ItemIdsThatFailInstall { get; } = new();
     public int SearchCallCount { get; private set; }
 
+    // ── Фоновое скачивание (DownloadOnlyAsync) ────────────────────────────────
+    // Отдельные счётчики от установочных: главная проверка фонового режима —
+    // что скачивание случилось, а установка при этом НЕ случилась.
+    public List<string> DownloadCallsReceived { get; } = new();
+    public int DownloadCallCount { get; private set; }
+    public HashSet<string> ItemIdsThatFailDownload { get; } = new();
+    public bool DownloadShouldFailOutright { get; set; }
+    public string DownloadFailureMessage { get; set; } = "тестовый отказ скачивания";
+
     public bool IsServiceRunning() => ServiceRunning;
     public bool TryStartService() { ServiceRunning = true; return true; }
     public bool IsRebootPending() => RebootPending;
@@ -62,6 +71,49 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
             Success = outcomes.All(o => o.Success),
             Items = outcomes,
             RebootRequired = RebootPending
+        });
+    }
+
+    public Task<WindowsUpdateDownloadOutcome> DownloadOnlyAsync(
+        IReadOnlyList<string> updateIds,
+        IProgress<WindowsUpdateProgress> progress,
+        CancellationToken ct)
+    {
+        DownloadCallCount++;
+        DownloadCallsReceived.AddRange(updateIds);
+
+        if (DownloadShouldFailOutright)
+            return Task.FromResult(new WindowsUpdateDownloadOutcome
+            {
+                Success = false,
+                ErrorMessage = DownloadFailureMessage
+            });
+
+        var outcomes = updateIds.Select(id =>
+        {
+            var item = Items.FirstOrDefault(i => i.UpdateId == id);
+            bool fails = ItemIdsThatFailDownload.Contains(id);
+            progress.Report(new WindowsUpdateProgress
+            {
+                CurrentTitle = item?.Title ?? id,
+                Phase = "Скачивание",
+                CompletedCount = 1,
+                TotalCount = updateIds.Count,
+                PercentComplete = 100
+            });
+            return new WindowsUpdateItemOutcome
+            {
+                UpdateId = id,
+                Title = item?.Title ?? id,
+                Success = !fails,
+                ErrorMessage = fails ? "тестовая ошибка скачивания" : ""
+            };
+        }).ToList();
+
+        return Task.FromResult(new WindowsUpdateDownloadOutcome
+        {
+            Success = outcomes.All(o => o.Success),
+            Items = outcomes
         });
     }
 }

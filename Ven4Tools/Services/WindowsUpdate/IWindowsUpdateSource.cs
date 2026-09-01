@@ -31,5 +31,18 @@ namespace Ven4Tools.Services.WindowsUpdate
             IReadOnlyList<string> updateIds,
             IProgress<WindowsUpdateProgress> progress,
             CancellationToken ct);
+
+        /// <summary>
+        /// Скачивает патчи по UpdateId, НЕ устанавливая их — файлы просто ложатся в кэш
+        /// Windows Update, чтобы последующая установка по клику пользователя стартовала
+        /// сразу, без ожидания загрузки. Как и InstallAsync, реализация обязана заново
+        /// найти патчи актуальным поиском, а не доверять списку ID вслепую.
+        /// Реализация НИКОГДА не должна вызывать установщик (CreateUpdateInstaller/Install) —
+        /// железное правило приложения: патчи ставятся только по явному клику пользователя.
+        /// </summary>
+        Task<WindowsUpdateDownloadOutcome> DownloadOnlyAsync(
+            IReadOnlyList<string> updateIds,
+            IProgress<WindowsUpdateProgress> progress,
+            CancellationToken ct);
     }
 }
