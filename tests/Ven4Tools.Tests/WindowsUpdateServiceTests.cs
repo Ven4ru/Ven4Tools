@@ -97,15 +97,24 @@ public sealed class WindowsUpdateServiceTests
             new[] { "1" }, new Progress<WindowsUpdateProgress>(), CancellationToken.None);
         await started.Task;
 
-        Assert.False(InstallationService.IsBusy);
-        Assert.True(await InstallationService.InstallSemaphore.WaitAsync(0)); // реально свободен
-        InstallationService.InstallSemaphore.Release();
+        // try/finally обязателен: без него упавшая проверка оставила бы фейк
+        // висеть навсегда, WU-семафор — захваченным до конца прогона, и все
+        // последующие WU-тесты падали бы по ложной причине.
+        try
+        {
+            Assert.False(InstallationService.IsBusy);
+            Assert.True(await InstallationService.InstallSemaphore.WaitAsync(0)); // реально свободен
+            InstallationService.InstallSemaphore.Release();
 
-        // При этом сама WU-подсистема занята — установку патчей начинать нельзя.
-        Assert.True(WindowsUpdateService.IsWindowsUpdateBusy);
-        Assert.True(WindowsUpdateService.IsDownloadingInBackground);
+            // При этом сама WU-подсистема занята — установку патчей начинать нельзя.
+            Assert.True(WindowsUpdateService.IsWindowsUpdateBusy);
+            Assert.True(WindowsUpdateService.IsDownloadingInBackground);
+        }
+        finally
+        {
+            release.TrySetResult(true);
+        }
 
-        release.SetResult(true);
         var outcome = await download;
 
         Assert.NotEmpty(outcome.Items);
@@ -175,8 +184,67 @@ public sealed class WindowsUpdateServiceTests
         }
         finally
         {
-            release.SetResult(true);
+            release.TrySetResult(true);
             await download;
+        }
+    }
+
+    /// <summary>
+    /// Гонка «проверил — а занялось после»: фоновое скачивание захватывает WU-семафор
+    /// уже ПОСЛЕ проверки занятости в <see cref="WindowsUpdateService.InstallSelectedAsync"/>,
+    /// но ещё до захвата семафоров. Установка обязана отказать сразу, а не встать в
+    /// блокирующее ожидание, удерживая при этом общий семафор приложения: иначе каталог,
+    /// история и пины на всё время загрузки патча получают ложное «дождитесь завершения
+    /// текущей установки» — ровно та регрессия, ради устранения которой семафоры разводились.
+    /// </summary>
+    [Fact]
+    public async Task InstallSelectedAsync_DownloadStartsAfterBusyCheck_FailsFastWithoutHoldingInstallSemaphore()
+    {
+        var downloadFake = new FakeWindowsUpdateSource();
+        downloadFake.Items.Add(new WindowsUpdateItem { UpdateId = "1", Title = "A" });
+        var started = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        downloadFake.DownloadStarted = started;
+        downloadFake.DownloadRelease = release.Task;
+
+        var installFake = new FakeWindowsUpdateSource();
+        installFake.Items.Add(new WindowsUpdateItem { UpdateId = "2", Title = "B" });
+
+        Task<WindowsUpdateDownloadOutcome>? download = null;
+        installFake.OnRebootPendingChecked = () =>
+        {
+            if (download != null) return;
+            download = new WindowsUpdateService(downloadFake).DownloadOnlyAsync(
+                new[] { "1" }, new Progress<WindowsUpdateProgress>(), CancellationToken.None);
+            started.Task.GetAwaiter().GetResult(); // скачивание уже держит WU-семафор
+        };
+
+        try
+        {
+            // Таймаут, а не бесконечное ожидание: при возврате блокирующего захвата
+            // WU-семафора этот вызов не завершился бы никогда, и падение теста должно
+            // быть внятным, а не зависанием всего прогона.
+            var result = await new WindowsUpdateService(installFake)
+                .InstallSelectedAsync(
+                    new[] { "2" }, new Progress<WindowsUpdateProgress>(), CancellationToken.None)
+                .WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.False(result.Success);
+            Assert.Contains("скачивание", result.ErrorMessage);
+            Assert.Empty(installFake.InstallCallsReceived);
+
+            // Скачивание всё ещё идёт — значит отказ случился ВО ВРЕМЯ него, а не после.
+            Assert.True(WindowsUpdateService.IsDownloadingInBackground);
+
+            // И главное: общий семафор приложения отпущен, каталог/история/пины свободны.
+            Assert.False(InstallationService.IsBusy);
+            Assert.True(await InstallationService.InstallSemaphore.WaitAsync(0));
+            InstallationService.InstallSemaphore.Release();
+        }
+        finally
+        {
+            release.TrySetResult(true);
+            if (download != null) await download;
         }
     }
 }

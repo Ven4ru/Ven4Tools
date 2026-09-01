@@ -34,9 +34,21 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
     public TaskCompletionSource<bool>? DownloadStarted { get; set; }
     public Task? DownloadRelease { get; set; }
 
+    // Точка вклинивания для теста гонки: IsRebootPending вызывается в
+    // InstallSelectedAsync ПОСЛЕ проверки занятости WU и ДО захвата семафоров —
+    // то есть ровно внутри того зазора, в который реально может влезть фоновое
+    // скачивание с пула потоков. Другого детерминированного способа воспроизвести
+    // этот зазор нет: WU-семафор приватный, а гонка субмиллисекундная.
+    public Action? OnRebootPendingChecked { get; set; }
+
     public bool IsServiceRunning() => ServiceRunning;
     public bool TryStartService() { ServiceRunning = true; return true; }
-    public bool IsRebootPending() => RebootPending;
+
+    public bool IsRebootPending()
+    {
+        OnRebootPendingChecked?.Invoke();
+        return RebootPending;
+    }
 
     public Task<WindowsUpdateSearchResult> SearchAsync(CancellationToken ct)
     {

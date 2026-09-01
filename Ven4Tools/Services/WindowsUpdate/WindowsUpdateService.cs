@@ -30,6 +30,9 @@ namespace Ven4Tools.Services.WindowsUpdate
         // другого (пилюля активных задач в шапке главного окна).
         private static int _backgroundDownloadActive;
 
+        private const string BackgroundDownloadBusyMessage =
+            "Сейчас идёт фоновое скачивание обновлений Windows — дождитесь его завершения, затем повторите попытку.";
+
         /// <summary>
         /// true, пока идёт тихое фоновое скачивание патчей
         /// (<see cref="DownloadOnlyAsync"/>). Установку приложений не блокирует —
@@ -74,7 +77,7 @@ namespace Ven4Tools.Services.WindowsUpdate
                 return new WindowsUpdateInstallOutcome
                 {
                     Success = false,
-                    ErrorMessage = "Сейчас идёт фоновое скачивание обновлений Windows — дождитесь его завершения, затем повторите попытку."
+                    ErrorMessage = BackgroundDownloadBusyMessage
                 };
 
             if (_source.IsRebootPending())
@@ -86,12 +89,27 @@ namespace Ven4Tools.Services.WindowsUpdate
 
             // Установка патчей, в отличие от скачивания, общую MSI-подсистему
             // затрагивает — поэтому берётся и общий семафор приложения, и свой
-            // WU-семафор. Порядок захвата всегда такой: скачивание берёт только
-            // WU-семафор (неблокирующей попыткой), поэтому цикла ожидания не возникает.
+            // WU-семафор.
+            //
+            // WU-семафор берётся ТОЛЬКО неблокирующей попыткой, и это принципиально.
+            // Проверка IsWindowsUpdateBusy выше — подсказка для сообщения, а не защёлка:
+            // фоновое скачивание живёт на пуле потоков и может занять WU-семафор в зазоре
+            // между этой проверкой и захватом. Блокирующее ожидание в этот момент означало
+            // бы стоять десятки минут (пока качается накопительный пакет) УДЕРЖИВАЯ общий
+            // семафор приложения — то есть ровно та ложная блокировка каталога/пинов/истории
+            // сообщением «дождитесь завершения текущей установки», ради устранения которой
+            // семафоры и разводились. Поэтому: не получилось занять WU-семафор сразу —
+            // сразу же отпускаем общий семафор (через finally ниже) и честно отказываем.
             await InstallationService.InstallSemaphore.WaitAsync(ct);
             try
             {
-                await WuSemaphore.WaitAsync(ct);
+                if (!await WuSemaphore.WaitAsync(0, ct))
+                    return new WindowsUpdateInstallOutcome
+                    {
+                        Success = false,
+                        ErrorMessage = BackgroundDownloadBusyMessage
+                    };
+
                 try
                 {
                     return await _source.InstallAsync(updateIds, progress, ct);
