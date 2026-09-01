@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ven4Tools.Services.WindowsUpdate;
@@ -10,10 +12,16 @@ namespace Ven4Tools.Services
     /// (приложения из winget). Режим поведения — из ProfileService.Current.WindowsUpdateMode:
     ///   "NotSet"            — проверка не выполняется вообще (первый вход ещё не пройден).
     ///   "NotifyOnly"        — только уведомление + бейдж-счётчик.
-    ///   "NotifyAndDownload" — зарезервировано на будущее (тихое скачивание в фоне);
-    ///                         пока полностью эквивалентно "NotifyOnly", т.к.
-    ///                         IWindowsUpdateSource.DownloadOnlyAsync не реализован.
+    ///   "NotifyAndDownload" — то же уведомление плюс тихое скачивание найденных патчей
+    ///                         в фоне (WindowsUpdateService.DownloadOnlyAsync): файлы
+    ///                         ложатся в кэш Windows Update, и последующая установка по
+    ///                         клику пользователя стартует сразу, без ожидания загрузки.
+    ///                         Скачиваются только ещё не скачанные патчи (IsDownloaded),
+    ///                         так что повторные проверки каждые 6 часов не качают одно
+    ///                         и то же заново. По завершении показывается отдельное
+    ///                         уведомление «скачаны и готовы к установке».
     /// Никогда не устанавливает патчи автоматически — это всегда явный клик пользователя.
+    /// Скачивание системы не меняет: DownloadOnlyAsync по контракту не вызывает установщик.
     /// </summary>
     public sealed class WindowsUpdateBackgroundService : IDisposable
     {
@@ -93,14 +101,64 @@ namespace Ven4Tools.Services
             _lastNotifiedCount = result.Items.Count;
 
             if (mode == "NotifyAndDownload" && result.Items.Count > 0 && !WindowsUpdateService.IsBusy)
+                await DownloadInBackgroundAsync(result.Items, ct);
+        }
+
+        /// <summary>
+        /// Тихо скачивает найденные патчи, ничего не устанавливая. Вызывается только в
+        /// режиме "NotifyAndDownload". InstallSelectedAsync здесь не используется
+        /// принципиально — он и скачивает, и ставит; фоновому режиму разрешено только
+        /// первое, установка остаётся за явным кликом пользователя.
+        /// </summary>
+        private async Task DownloadInBackgroundAsync(
+            IReadOnlyList<WindowsUpdateItem> items, CancellationToken ct)
+        {
+            // Уже скачанные патчи (WUA помечает их IsDownloaded на уровне ОС, пометка
+            // переживает перезапуск клиента) исключаются из списка — иначе каждая
+            // проверка раз в 6 часов запускала бы бессмысленный проход по кэшу.
+            var pending = items.Where(i => !i.IsDownloaded).Select(i => i.UpdateId).Distinct().ToList();
+            if (pending.Count == 0)
             {
-                // Тихое скачивание без установки: захватываем прогресс, но не показываем UI.
-                // InstallSelectedAsync тут не используется намеренно — он и скачивает, и ставит;
-                // отдельного "только скачать" метода источник (Task 6/7) пока не предоставляет,
-                // поэтому в первой версии фоновый режим ограничивается уведомлением до тех пор,
-                // пока IWindowsUpdateSource не получит DownloadOnlyAsync (см. заметку ниже).
-                AppLogger.Write("[WindowsUpdateBg] Режим NotifyAndDownload: фоновое скачивание запланировано, но метод DownloadOnlyAsync ещё не реализован — пока только уведомление.");
+                AppLogger.Write("[WindowsUpdateBg] Все найденные патчи уже скачаны — фоновая загрузка не требуется.");
+                return;
             }
+
+            AppLogger.Write($"[WindowsUpdateBg] Фоновое скачивание: {pending.Count} патчей.");
+            var outcome = await _service.DownloadOnlyAsync(pending, NoProgress.Instance, ct);
+
+            int downloaded = outcome.Items.Count(o => o.Success);
+            if (downloaded == 0)
+            {
+                // Фоновая операция не должна тревожить пользователя своими сбоями: он о
+                // ней не просил в этот момент и ничего исправить не может. Пишем в лог и
+                // ждём следующей проверки — она повторит попытку с теми же патчами.
+                // Уведомление «Доступны обновления Windows» выше пользователь уже получил,
+                // так что без информации он не остался.
+                AppLogger.Write($"[WindowsUpdateBg] Фоновое скачивание не удалось: {outcome.ErrorMessage}");
+                return;
+            }
+
+            // Отдельное уведомление от «Доступны обновления Windows»: смысл другой —
+            // патчи уже лежат на диске, установка пойдёт мгновенно. Повторов не будет:
+            // на следующей проверке эти патчи придут с IsDownloaded=true и в pending
+            // не попадут, то есть сообщение появляется ровно один раз на партию.
+            UpdateBackgroundService.ShowNotification(
+                "Обновления Windows скачаны в фоне",
+                $"{downloaded} патчей загружены и готовы к установке. Откройте вкладку «Windows Update» — установка начнётся сразу, без ожидания загрузки.");
+
+            if (downloaded < outcome.Items.Count)
+                AppLogger.Write($"[WindowsUpdateBg] Скачано {downloaded} из {outcome.Items.Count} патчей — остальные будут повторены при следующей проверке.");
+        }
+
+        /// <summary>
+        /// Заглушка IProgress для фоновой загрузки: прогресс скачивания никуда не
+        /// выводится (UI вкладки в этот момент не задействован), а обычный Progress&lt;T&gt;
+        /// без обработчика всё равно планировал бы задачу в пул на каждый отчёт.
+        /// </summary>
+        private sealed class NoProgress : IProgress<WindowsUpdateProgress>
+        {
+            public static readonly NoProgress Instance = new();
+            public void Report(WindowsUpdateProgress value) { }
         }
 
         private static void SetCount(int count)
