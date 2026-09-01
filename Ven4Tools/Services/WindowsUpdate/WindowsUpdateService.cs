@@ -57,5 +57,44 @@ namespace Ven4Tools.Services.WindowsUpdate
                 InstallationService.InstallSemaphore.Release();
             }
         }
+
+        /// <summary>
+        /// Тихо скачивает патчи, ничего не устанавливая — фоновый режим
+        /// «Уведомлять и скачивать в фоне». Установку не запускает ни при каких условиях.
+        /// </summary>
+        public async Task<WindowsUpdateDownloadOutcome> DownloadOnlyAsync(
+            IReadOnlyList<string> updateIds,
+            IProgress<WindowsUpdateProgress> progress,
+            CancellationToken ct)
+        {
+            if (updateIds.Count == 0)
+                return new WindowsUpdateDownloadOutcome { Success = false, ErrorMessage = "Нечего скачивать." };
+
+            // Проверка IsRebootPending здесь намеренно НЕ делается (в отличие от
+            // InstallSelectedAsync): незавершённая перезагрузка мешает ставить патчи,
+            // но не мешает складывать их в кэш. Наоборот — именно в этот момент полезно
+            // скачать заранее, чтобы после перезагрузки установка стартовала мгновенно.
+
+            // Семафор берётся неблокирующей попыткой, а не WaitAsync: фоновое скачивание
+            // может идти десятки минут, и обычное ожидание отдало бы ему очередь раньше
+            // пользовательской установки из каталога, которая ждёт тот же семафор.
+            // Не получилось занять — молча пропускаем цикл, следующая фоновая проверка
+            // через 6 часов повторит.
+            if (!await InstallationService.InstallSemaphore.WaitAsync(0, ct))
+                return new WindowsUpdateDownloadOutcome
+                {
+                    Success = false,
+                    ErrorMessage = "Идёт установка приложений — фоновое скачивание отложено до следующей проверки."
+                };
+
+            try
+            {
+                return await _source.DownloadOnlyAsync(updateIds, progress, ct);
+            }
+            finally
+            {
+                InstallationService.InstallSemaphore.Release();
+            }
+        }
     }
 }

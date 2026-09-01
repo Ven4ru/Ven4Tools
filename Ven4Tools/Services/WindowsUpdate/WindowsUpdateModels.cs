@@ -60,4 +60,21 @@ namespace Ven4Tools.Services.WindowsUpdate
         public IReadOnlyList<WindowsUpdateItemOutcome> Items { get; init; } = Array.Empty<WindowsUpdateItemOutcome>();
         public bool RebootRequired { get; init; }
     }
+
+    /// <summary>
+    /// Итог всей партии фонового скачивания (без установки). Отдельный тип, а не
+    /// переиспользование WindowsUpdateInstallOutcome: у скачивания принципиально нет
+    /// RebootRequired — файлы просто ложатся в кэш Windows Update, система при этом
+    /// не меняется. Поле, которое всегда false, читалось бы как «перезагрузка не нужна
+    /// именно по итогу проверки», хотя вопрос вообще не задавался; отдельный тип не
+    /// оставляет места для такой ошибки на стороне вызывающего кода. Поэлементный
+    /// WindowsUpdateItemOutcome переиспользуется как есть — «патч X, успех/ошибка,
+    /// текст ошибки» одинаково осмысленно и для скачивания, и для установки.
+    /// </summary>
+    public sealed class WindowsUpdateDownloadOutcome
+    {
+        public bool Success { get; init; }
+        public string ErrorMessage { get; init; } = "";
+        public IReadOnlyList<WindowsUpdateItemOutcome> Items { get; init; } = Array.Empty<WindowsUpdateItemOutcome>();
+    }
 }
