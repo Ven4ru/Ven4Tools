@@ -95,7 +95,6 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
         if (DownloadShouldFailOutright)
             return new WindowsUpdateDownloadOutcome
             {
-                Success = false,
                 ErrorMessage = DownloadFailureMessage
             };
 
@@ -122,7 +121,6 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
 
         return new WindowsUpdateDownloadOutcome
         {
-            Success = outcomes.All(o => o.Success),
             Items = outcomes
         };
     }

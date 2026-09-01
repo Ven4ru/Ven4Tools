@@ -1,9 +1,16 @@
 using Ven4Tools.Models;
+using Ven4Tools.Services;
 using Ven4Tools.ViewModels;
 using Xunit;
 
 namespace Ven4Tools.Tests
 {
+    // Конструктор SystemViewModel вызывает LoadSettings(), а тот при режиме обновлений
+    // "NotSet" дописывает в профиль "NotifyOnly" и сохраняет его. Значит класс трогает
+    // статический ProfileService и обязан идти в общей коллекции: иначе он выполнялся бы
+    // параллельно с WindowsUpdateBackgroundServiceTests, который выставляет "NotSet" и
+    // проверяет, что фоновый поиск не пошёл — чужая нормализация ломала бы этот тест.
+    [Collection("ProfileService")]
     public class SystemViewModelTests
     {
         [Fact]
@@ -34,11 +41,52 @@ namespace Ven4Tools.Tests
             // В профиле режим может лежать как "NotSet" (вкладку обновлений ещё не
             // открывали) — такого пункта в ComboBox нет, и SelectedValue тогда не нашёл
             // бы совпадения, оставив список пустым. LoadSettings обязан свести значение
-            // к одному из реальных тегов. Тест намеренно ничего не пишет в профиль:
-            // класс не входит в коллекцию "ProfileService".
+            // к одному из реальных тегов.
             var vm = new SystemViewModel();
 
             Assert.Contains(vm.WindowsUpdateModeTag, new[] { "NotifyOnly", "NotifyAndDownload" });
+        }
+
+        [Fact]
+        public void Конструктор_РежимОбновленийNotSet_ЗакрепляетNotifyOnlyВПрофиле()
+        {
+            // Мало показать «Только уведомлять» в списке: пока в профиле лежит "NotSet",
+            // фоновая проверка не идёт вообще, и пользователь, открывший «Настройки» и
+            // ничего не тронувший, остался бы без уведомлений об обновлениях Windows,
+            // видя выбранным работающий на вид режим.
+            string original = ProfileService.Current.WindowsUpdateMode;
+            try
+            {
+                ProfileService.Current.WindowsUpdateMode = "NotSet";
+
+                var vm = new SystemViewModel();
+
+                Assert.Equal("NotifyOnly", ProfileService.Current.WindowsUpdateMode);
+                Assert.Equal("NotifyOnly", vm.WindowsUpdateModeTag);
+            }
+            finally
+            {
+                ProfileService.Current.WindowsUpdateMode = original;
+            }
+        }
+
+        [Fact]
+        public void Конструктор_ВыбранныйРежимОбновлений_НеПерезаписывается()
+        {
+            string original = ProfileService.Current.WindowsUpdateMode;
+            try
+            {
+                ProfileService.Current.WindowsUpdateMode = "NotifyAndDownload";
+
+                var vm = new SystemViewModel();
+
+                Assert.Equal("NotifyAndDownload", ProfileService.Current.WindowsUpdateMode);
+                Assert.Equal("NotifyAndDownload", vm.WindowsUpdateModeTag);
+            }
+            finally
+            {
+                ProfileService.Current.WindowsUpdateMode = original;
+            }
         }
 
         [Fact]

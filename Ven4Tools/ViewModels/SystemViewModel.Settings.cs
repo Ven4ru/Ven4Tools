@@ -29,15 +29,23 @@ namespace Ven4Tools.ViewModels
             _loadingCatalogMode = false;
 
             _loadingWindowsUpdateMode = true;
-            // "NotSet" в профиле означает «вкладку обновлений ещё не открывали»; в
-            // выпадающем списке такого пункта нет, поэтому показываем фактическое
-            // поведение до первого открытия — фоновая проверка не идёт вовсе, что
-            // ближе всего к «Только уведомлять». Сам профиль при этом не трогаем:
-            // запись NotifyOnly делает вкладка обновлений при первом открытии.
+            // "NotSet" в профиле означает «вкладку обновлений ещё не открывали», и в этом
+            // состоянии фоновая проверка не идёт вообще — даже уведомлений нет
+            // (WindowsUpdateBackgroundService.CheckOnceAsync выходит сразу). Пункта
+            // "NotSet" в списке нет, поэтому просто показать «Только уведомлять» было бы
+            // враньём: пользователь увидел бы уже выбранный режим, ничего не менял и
+            // остался бы без фоновой проверки, будучи уверенным в обратном. Поэтому
+            // значение сводится к реальному режиму и сразу закрепляется в профиле — тем
+            // же способом и с тем же консервативным дефолтом, что и при первом открытии
+            // вкладки обновлений (WindowsUpdateViewModel.InitializeAsync).
             string wuMode = ProfileService.Current.WindowsUpdateMode;
-            SetField(ref _windowsUpdateModeTag,
-                wuMode == "NotifyAndDownload" ? "NotifyAndDownload" : "NotifyOnly",
-                nameof(WindowsUpdateModeTag));
+            if (wuMode != "NotifyOnly" && wuMode != "NotifyAndDownload")
+            {
+                wuMode = "NotifyOnly";
+                ProfileService.Current.WindowsUpdateMode = wuMode;
+                ProfileService.Save();
+            }
+            SetField(ref _windowsUpdateModeTag, wuMode, nameof(WindowsUpdateModeTag));
             _loadingWindowsUpdateMode = false;
         }
 

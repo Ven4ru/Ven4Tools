@@ -403,7 +403,6 @@ namespace Ven4Tools.Services.WindowsUpdate
                     if (!phase.Success)
                         return new WindowsUpdateDownloadOutcome
                         {
-                            Success = false,
                             ErrorMessage = phase.ErrorMessage
                         };
 
@@ -436,19 +435,18 @@ namespace Ven4Tools.Services.WindowsUpdate
 
                     return new WindowsUpdateDownloadOutcome
                     {
-                        Success = itemOutcomes.All(o => o.Success),
                         Items = itemOutcomes
                     };
                 }
                 catch (OperationCanceledException) { throw; }
                 catch (Exception ex) when (TryGetHResult(ex, out int hr))
                 {
-                    return new WindowsUpdateDownloadOutcome { Success = false, ErrorMessage = WindowsUpdateErrorMapper.MapHResult(hr) };
+                    return new WindowsUpdateDownloadOutcome { ErrorMessage = WindowsUpdateErrorMapper.MapHResult(hr) };
                 }
                 catch (Exception ex)
                 {
                     AppLogger.Write($"[WindowsUpdateComSource] DownloadOnlyAsync: {ex}");
-                    return new WindowsUpdateDownloadOutcome { Success = false, ErrorMessage = $"Ошибка скачивания: {ex.Message}" };
+                    return new WindowsUpdateDownloadOutcome { ErrorMessage = $"Ошибка скачивания: {ex.Message}" };
                 }
             }, ct);
         }

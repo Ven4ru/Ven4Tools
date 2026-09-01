@@ -29,7 +29,7 @@ namespace Ven4Tools.Services.WindowsUpdate
         /// в кэш (сам, по расписанию системы, или наш фоновый режим «Уведомлять и
         /// скачивать в фоне»): их установка начнётся сразу, без ожидания загрузки, и
         /// заявленный размер уже не будет качаться из сети. Формат «| статус» — тот же,
-        /// что у строк каталога (AppRowViewModel.StatusText).
+        /// что у строк каталога (AppRowViewModel.StatusTooltip).
         /// </summary>
         public string DisplayText =>
             $"{Item.Title}" +
