@@ -112,6 +112,32 @@ public sealed class ClientIntegrityCheckerTests
     }
 
     [Fact]
+    public async Task Check_UnreadableVersion_ReportsExecutableCorrupted_NotManifestUnavailable()
+    {
+        // Так выглядит exe, у которого антивирус выкусил кусок или запись
+        // оборвалась: FileVersionInfo не бросает исключение, а тихо возвращает
+        // FileVersion = null — MainWindow.Repair.cs передаёт это сюда как есть,
+        // без фиктивного "0.0.0". Прежде чем этот фикс появился, такая ситуация
+        // молча превращалась в ManifestUnavailable («не с чем сверять для версии
+        // 0.0.0»), которое UI показывал как «сервер недоступен» — неверный
+        // диагноз, ведь проблема целиком локальная.
+        var environment = new FakeEnvironment { Acl = true };
+
+        var report = await Checker(environment)
+            .CheckAsync(ClientPath, null, FullSources(), CancellationToken.None);
+
+        Assert.Equal(ClientIntegrityStatus.ExecutableCorrupted, report.Status);
+        Assert.True(report.IsClientInstalled);
+        Assert.False(report.ManifestAvailable);
+        Assert.Null(report.Plan);
+        // ACL — независимая находка, обязана дойти даже при нечитаемой версии.
+        Assert.True(report.AclCompromised);
+        // Без версии сравнивать не с чем: ни хеширования папки, ни похода в сеть.
+        Assert.Equal(0, environment.BuildCalls);
+        Assert.Equal(0, environment.FetchCalls);
+    }
+
+    [Fact]
     public async Task Check_AllFilesMatch_ReportsHealthy()
     {
         var files = Publication(HashA, HashA, HashA, HashA);

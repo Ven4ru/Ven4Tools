@@ -39,6 +39,16 @@ internal enum ClientIntegrityStatus
     /// всю публикацию пофайлово медленнее и хрупче, чем один архив штатным путём.
     /// </summary>
     FullReinstallRecommended,
+
+    /// <summary>
+    /// Исполняемый файл клиента физически есть, но у него не читаются сведения о
+    /// версии (повреждён PE — антивирус выкусил кусок, обрыв записи и т.п.). Это
+    /// гарантированно локальная поломка, а не «эталон недоступен»: у настоящего
+    /// собранного проектом exe версия есть всегда. Не должно превращаться в
+    /// ManifestUnavailable — та формулировка звучит как проблема сервера/сети,
+    /// хотя проблема здесь целиком на диске пользователя.
+    /// </summary>
+    ExecutableCorrupted,
 }
 
 /// <summary>
@@ -157,6 +167,11 @@ internal sealed class ClientIntegrityReport
     internal static ClientIntegrityReport ManifestUnavailable(string reason, bool aclCompromised) =>
         new(ClientIntegrityStatus.ManifestUnavailable, true, false, null, aclCompromised,
             $"не с чем сверять: {reason}", null, null);
+
+    internal static ClientIntegrityReport ExecutableCorrupted(bool aclCompromised) =>
+        new(ClientIntegrityStatus.ExecutableCorrupted, true, false, null, aclCompromised,
+            "исполняемый файл клиента повреждён — версия не читается, переустановите клиент полностью",
+            null, null);
 
     internal static ClientIntegrityReport FromPlan(
         ClientDeltaPlan plan,

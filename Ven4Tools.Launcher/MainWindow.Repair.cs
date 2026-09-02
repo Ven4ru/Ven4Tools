@@ -48,7 +48,13 @@ namespace Ven4Tools.Launcher
                     return absent;
                 }
 
-                string installedVersion = FileVersionInfo.GetVersionInfo(clientExe).FileVersion ?? "0.0.0";
+                // Пустой/null FileVersion — не «версия неизвестна, но клиент цел»,
+                // а прямая улика повреждения: у настоящего собранного проектом exe
+                // версия читается всегда. Подставлять здесь фиктивное «0.0.0» и
+                // отправлять его дальше по обычному пути (поиск манифеста, сеть)
+                // раньше приводило к ложному «сервер недоступен» — на самом деле
+                // проблема целиком локальная. Решение принимает CheckAsync.
+                string? installedVersion = FileVersionInfo.GetVersionInfo(clientExe).FileVersion;
 
                 // Список версий обычно уже загружен при старте. Если нет (лаунчер был
                 // офлайн), тянем его сейчас: иначе отсутствие адреса манифеста выглядело
@@ -60,9 +66,12 @@ namespace Ven4Tools.Launcher
 
                 // Эталон нужен именно для УСТАНОВЛЕННОЙ версии, а не для последней:
                 // сравнение с манифестом другого релиза объявило бы «повреждённым»
-                // весь клиент у любого, кто просто не обновился.
-                var installedRelease = _availableVersions
-                    .FirstOrDefault(v => VersionComparer.Compare(v.Version, installedVersion) == 0);
+                // весь клиент у любого, кто просто не обновился. При нечитаемой версии
+                // сравнивать всё равно не с чем — CheckAsync сам вернёт диагноз ниже.
+                var installedRelease = installedVersion == null
+                    ? null
+                    : _availableVersions.FirstOrDefault(
+                        v => VersionComparer.Compare(v.Version, installedVersion) == 0);
 
                 var sources = new ClientIntegritySources
                 {
@@ -75,7 +84,7 @@ namespace Ven4Tools.Launcher
                 var checker = new ClientIntegrityChecker(_httpClient, this);
                 var report = await checker.CheckAsync(_clientPath, installedVersion, sources, token);
 
-                AddLog($"🩺 Проверка версии {installedVersion}: {report.Summary}");
+                AddLog($"🩺 Проверка версии {installedVersion ?? "не читается"}: {report.Summary}");
                 if (report.AclCompromised)
                 {
                     AddLog("⚠️ Права доступа к папке клиента ослаблены — файлы может изменить любой пользователь этого компьютера");

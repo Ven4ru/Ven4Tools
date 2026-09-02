@@ -178,6 +178,13 @@ namespace Ven4Tools.Launcher
                     ShowIntegrityDetail(report.Summary);
                     break;
 
+                case ClientIntegrityStatus.ExecutableCorrupted:
+                    ShowIntegrityStatus(
+                        "Клиент повреждён — переустановите его полностью через обычное обновление",
+                        "StatusDanger");
+                    ShowIntegrityDetail(report.Summary);
+                    break;
+
                 case ClientIntegrityStatus.FullReinstallRecommended:
                     ShowIntegrityStatus(
                         "Слишком много расхождений с опубликованной версией — переустановите клиент " +
