@@ -123,7 +123,7 @@ internal sealed class ClientIntegrityChecker
     /// </summary>
     public async Task<ClientIntegrityReport> CheckAsync(
         string clientPath,
-        string installedVersionLabel,
+        string? installedVersionLabel,
         ClientIntegritySources sources,
         CancellationToken cancellationToken)
     {
@@ -137,6 +137,16 @@ internal sealed class ClientIntegrityChecker
         // 2. ACL — независимая проверка, и она обязана отработать даже если ниже
         //    всё сорвётся: недоступный CDN не повод молчать про ослабленные права.
         bool aclCompromised = _environment.IsAclCompromised(clientPath);
+
+        // 2.5. Версия не читается — exe физически есть, но не PE с версией (антивирус
+        //      выкусил кусок, оборвалась запись и т.п.). У настоящего собранного
+        //      проектом exe версия есть всегда, так что это гарантированно локальная
+        //      поломка, а не «эталон недоступен» — дальше по коду сети касаться нечем:
+        //      без версии не с чем и манифест искать.
+        if (string.IsNullOrWhiteSpace(installedVersionLabel))
+        {
+            return ClientIntegrityReport.ExecutableCorrupted(aclCompromised);
+        }
 
         // 3. Реальный состав папки клиента: хеш каждого файла, посчитанный сейчас.
         //    Это и есть то, чего не делает обычное обновление — оно верит кэшу.

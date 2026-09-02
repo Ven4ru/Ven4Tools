@@ -184,32 +184,9 @@ public sealed class LauncherSmokeTests : IDisposable
         }
     }
 
-    private static string FindLauncher()
-    {
-        string? explicitPath = Environment.GetEnvironmentVariable("LAUNCHER_UNDER_TEST");
-        if (!string.IsNullOrWhiteSpace(explicitPath))
-        {
-            string resolvedPath = Path.GetFullPath(explicitPath);
-            return File.Exists(resolvedPath)
-                ? resolvedPath
-                : throw new FileNotFoundException(
-                    "Указанный launcher для UI-теста не найден.",
-                    resolvedPath);
-        }
-
-        string root = FindRepositoryRoot();
-        string path = Path.Combine(
-            root,
-            "Ven4Tools.Launcher",
-            "bin",
-            "Release",
-            "net8.0-windows",
-            "win-x64",
-            "Ven4Tools.Launcher.exe");
-        return File.Exists(path)
-            ? path
-            : throw new FileNotFoundException("Сначала соберите solution в Release.", path);
-    }
+    // Поиск лаунчера и корня репозитория общий с LauncherIntegrityScenarioTests —
+    // см. LauncherTestEnvironment.
+    private static string FindLauncher() => LauncherTestEnvironment.FindLauncher();
 
     private void AssertPrimaryControlsAreAvailable()
     {
@@ -326,6 +303,8 @@ public sealed class LauncherSmokeTests : IDisposable
         // установлен (VEN4TOOLS_UI_TEST_ROOT — пустая песочница), поэтому проверка
         // обязана быстро сообщить «не установлен», без сетевых обращений и без
         // падения лаунчера — тот же класс риска, что и у остальных кнопок выше.
+        // Исходы на РЕАЛЬНО лежащей на диске установке (повреждённый клиент и т.д.)
+        // проверяются отдельно — см. LauncherIntegrityScenarioTests.
         settingsWindow.FindFirstDescendant(condition => condition.ByAutomationId("btnCheckIntegrity"))!
             .AsButton()
             .Invoke();
@@ -344,17 +323,7 @@ public sealed class LauncherSmokeTests : IDisposable
             .Invoke();
     }
 
-    private static string FindRepositoryRoot()
-    {
-        DirectoryInfo? directory = new(AppContext.BaseDirectory);
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Ven4Tools.sln")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-            ?? throw new DirectoryNotFoundException("Корень репозитория не найден.");
-    }
+    private static string FindRepositoryRoot() => LauncherTestEnvironment.FindRepositoryRoot();
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
