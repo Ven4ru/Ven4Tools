@@ -349,6 +349,7 @@ namespace Ven4Tools.ViewModels
             AppCategory.Офис             => "📁 Офис",
             AppCategory.Графика          => "🎨 Графика",
             AppCategory.Разработка       => "💻 Разработка",
+            AppCategory.ИИ               => "🤖 ИИ",
             AppCategory.Мессенджеры      => "💬 Мессенджеры",
             AppCategory.Мультимедиа      => "🎵 Мультимедиа",
             AppCategory.Системные        => "⚙️ Системные",

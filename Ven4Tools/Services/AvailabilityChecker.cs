@@ -111,6 +111,14 @@ namespace Ven4Tools.Services
                 }
             }
 
+            // Choco — последний в цепочке, а не первый: winget и прямая ссылка
+            // не требуют стороннего пакетного менеджера, choco в некоторых случаях
+            // требует его установки первым (см. InstallFromChocoAsync). Без этой
+            // проверки приложения без winget/URL (только chocoId) навсегда
+            // помечались бы недоступными, хотя реально ставятся через choco.
+            if (result.Status != AvailabilityStatus.Available && !string.IsNullOrWhiteSpace(app.ChocoId))
+                result = await GetChocoPackageInfo(app.ChocoId);
+
             CacheResult(cacheKey, new AppAvailabilityResult { Status = result.Status, SizeMB = result.SizeMB });
             return result;
         }
@@ -246,6 +254,33 @@ namespace Ven4Tools.Services
                 }
             }
             catch (Exception ex) { AppLogger.Write($"[AvailabilityChecker] HEAD/GET ошибка для {url}: {ex.Message}"); }
+
+            return (AvailabilityStatus.Unavailable, 0);
+        }
+
+        // community.chocolatey.org не поддерживает HEAD (всегда 501, независимо от
+        // наличия пакета — проверено вручную, тот же вывод для существующего и
+        // фейкового ID). GET с Range: bytes=0-1 даёт настоящий код ответа (206 —
+        // пакет есть, 404 — нет), не скачивая nupkg целиком. Тот же приём уже
+        // проверен на реальных chocoId в сканере ven4admin.
+        private async Task<(AvailabilityStatus Status, long SizeMB)> GetChocoPackageInfo(string chocoId)
+        {
+            try
+            {
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
+                string url = $"https://community.chocolatey.org/api/v2/package/{Uri.EscapeDataString(chocoId)}";
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 1);
+                using var response = await httpClient.SendAsync(
+                    request, HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
+
+                // Размер .nupkg не отражает реальный размер устанавливаемого ПО
+                // (choco-обёртка обычно в разы меньше самого инсталлятора внутри) —
+                // честнее показать «размер неизвестен», чем ввести в заблуждение.
+                if ((int)response.StatusCode < 400)
+                    return (AvailabilityStatus.Available, DefaultUnknownSizeMB);
+            }
+            catch (Exception ex) { AppLogger.Write($"[AvailabilityChecker] Chocolatey-проверка ошибка для {chocoId}: {ex.Message}"); }
 
             return (AvailabilityStatus.Unavailable, 0);
         }
