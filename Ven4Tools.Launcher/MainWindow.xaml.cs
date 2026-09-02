@@ -107,7 +107,17 @@ namespace Ven4Tools.Launcher
             // Cleanup — ДО CreateDirectory: иначе target уже существует (пустым) к моменту
             // проверки, и восстановление .backup-* при прерванной установке никогда не сработает.
             if (!_isUiTestMode)
-                CleanupStaleInstallArtifacts(_clientPath);
+            {
+                var cleanup = CleanupStaleInstallArtifacts(_clientPath);
+                // Молчим, когда чистить было нечего (обычный запуск), — иначе строка
+                // висела бы в журнале каждый раз и обесценивала бы сама себя. Зато
+                // после прерванной установки пользователь наконец видит, что именно
+                // лаунчер сделал с остатками, вместо необъяснимой тишины.
+                if (cleanup.AnythingHappened)
+                {
+                    AddLog($"🧹 Остатки прерванной установки: восстановлено {cleanup.Restored}, удалено {cleanup.Removed}");
+                }
+            }
             Directory.CreateDirectory(_clientPath);
             txtInstallPath.Text = _isUiTestMode ? @"C:\Ven4Tools-Test\Client" : _clientPath;
 
