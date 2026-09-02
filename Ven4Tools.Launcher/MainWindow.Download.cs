@@ -39,18 +39,43 @@ namespace Ven4Tools.Launcher
             }
         }
 
+        // Что именно сделала зачистка остатков прерванной установки. Нужен только для
+        // journal-строки при старте: сама зачистка молчала, и пользователь не имел
+        // никакого способа узнать, что его установку когда-то прервали и что лаунчер
+        // вернул на место единственную сохранившуюся копию файлов.
+        private readonly struct StaleArtifactCleanupResult
+        {
+            public StaleArtifactCleanupResult(int restored, int removed)
+            {
+                Restored = restored;
+                Removed = removed;
+            }
+
+            /// <summary>Возвращено на штатное место (каталогов и файлов суммарно).</summary>
+            public int Restored { get; }
+
+            /// <summary>Удалено осиротевших остатков (каталогов и файлов суммарно).</summary>
+            public int Removed { get; }
+
+            public bool AnythingHappened => Restored > 0 || Removed > 0;
+        }
+
         // Осиротевшие ".Ven4Tools_Client.staging-*" / "Ven4Tools_Client.backup-*" — остаются
         // рядом с папкой клиента, если процесс убит посреди DownloadVersionAsync/
         // TransactionalDirectoryInstaller.Install. Однократная зачистка при старте:
         // единственный экземпляр лаунчера (см. App.SingleInstance) гарантирует, что
         // на момент запуска эти каталоги не могут принадлежать активной операции.
-        private static void CleanupStaleInstallArtifacts(string clientPath)
+        //
+        // Логика зачистки не менялась — добавлен только подсчёт сделанного.
+        private static StaleArtifactCleanupResult CleanupStaleInstallArtifacts(string clientPath)
         {
+            int restored = 0;
+            int removed = 0;
             try
             {
                 string fullClientPath = Path.GetFullPath(clientPath);
                 string? parent = Path.GetDirectoryName(fullClientPath);
-                if (parent == null || !Directory.Exists(parent)) return;
+                if (parent == null || !Directory.Exists(parent)) return default;
 
                 string clientName = Path.GetFileName(fullClientPath);
                 string stagingPrefix = $".{clientName}.staging-";
@@ -72,14 +97,14 @@ namespace Ven4Tools.Launcher
                     // восстанавливаем её обратно в target, а не удаляем.
                     if (isBackup && !Directory.Exists(fullClientPath))
                     {
-                        try { Directory.Move(dir, fullClientPath); }
+                        try { Directory.Move(dir, fullClientPath); restored++; }
                         catch { /* не удалось восстановить — оставляем бэкап на месте, не удаляя */ }
                         continue;
                     }
 
                     // target на месте (установка завершилась) либо это staging —
                     // такой каталог действительно осиротевший, его можно удалить.
-                    try { Directory.Delete(dir, recursive: true); }
+                    try { Directory.Delete(dir, recursive: true); removed++; }
                     catch { /* занято/уже удалено — не мешаем запуску лаунчера */ }
                 }
 
@@ -105,17 +130,21 @@ namespace Ven4Tools.Launcher
                         string original = Path.Combine(Path.GetDirectoryName(file)!, originalName);
                         if (isBackup && !File.Exists(original))
                         {
-                            try { File.Move(file, original); }
+                            try { File.Move(file, original); restored++; }
                             catch { /* не удалось вернуть — остаток оставляем, не удаляя */ }
                             continue;
                         }
 
-                        try { File.Delete(file); }
+                        try { File.Delete(file); removed++; }
                         catch { /* занято/уже удалено */ }
                     }
                 }
             }
             catch { /* зачистка необязательна для работы лаунчера */ }
+
+            // Счётчики возвращаются и при исключении: то, что успели сделать до сбоя,
+            // уже сделано, и умалчивать об этом было бы неверно.
+            return new StaleArtifactCleanupResult(restored, removed);
         }
 
         // Строит цепочку источников для скачивания клиента: CDN-домен → CDN прямой IP →

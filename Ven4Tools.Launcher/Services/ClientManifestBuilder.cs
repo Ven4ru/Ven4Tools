@@ -46,6 +46,21 @@ internal static class ClientManifestBuilder
             // Служебные остатки прерванной дельты (см. TransactionalDirectoryInstaller)
             // не являются частью публикации и в манифест попадать не должны.
             if (TransactionalDirectoryInstaller.IsTransientArtifactName(Path.GetFileName(file))) continue;
+            // Кэш каталога, который сам клиент пишет в СВОЮ папку установки во время
+            // работы (Ven4Tools/Services/CatalogLoaderService.cs — Data/master.json +
+            // .sig, путь через AppDomain.CurrentDomain.BaseDirectory, безусловно, не
+            // только в портативном режиме). Он не входит в публикацию и в подписанном
+            // client-manifest.json никогда не будет — сразу после установки, пока
+            // клиент ни разу не запускался, его и на диске ещё нет, поэтому кэш
+            // InstalledManifestStore (вызывается сразу после установки) этот файл
+            // никогда не видел. Но «Проверка и восстановление клиента» строит манифест
+            // по РЕАЛЬНОМУ состоянию папки в произвольный момент — после того как
+            // клиент уже поработал и скачал каталог. Без этого исключения проверка
+            // видела бы легитимный кэш как «лишний файл» и чинила бы работающую
+            // установку удалением её собственного кеша у каждого пользователя.
+            if (string.Equals(relative, "Data/master.json", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(relative, "Data/master.json.sig", StringComparison.OrdinalIgnoreCase))
+                continue;
 
             files.Add(new ClientManifestFileEntry
             {
