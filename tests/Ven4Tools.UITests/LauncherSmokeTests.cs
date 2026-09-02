@@ -322,6 +322,23 @@ public sealed class LauncherSmokeTests : IDisposable
         Assert.True(manual.IsChecked);
         if (!wasManual) auto.Click();
 
+        // «Проверить и восстановить клиент»: в тестовом окружении клиент не
+        // установлен (VEN4TOOLS_UI_TEST_ROOT — пустая песочница), поэтому проверка
+        // обязана быстро сообщить «не установлен», без сетевых обращений и без
+        // падения лаунчера — тот же класс риска, что и у остальных кнопок выше.
+        settingsWindow.FindFirstDescendant(condition => condition.ByAutomationId("btnCheckIntegrity"))!
+            .AsButton()
+            .Invoke();
+        Label integrityStatus = Retry.WhileNull(
+            () => settingsWindow.FindFirstDescendant(
+                    condition => condition.ByAutomationId("txtIntegrityStatus"))?
+                .AsLabel(),
+            timeout: TimeSpan.FromSeconds(10),
+            interval: TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new InvalidOperationException("Статус проверки целостности не появился.");
+        Assert.False(_application.HasExited, "Кнопка btnCheckIntegrity завершила launcher.");
+        Assert.Contains("не установлен", integrityStatus.Text, StringComparison.OrdinalIgnoreCase);
+
         settingsWindow.FindFirstDescendant(condition => condition.ByAutomationId("btnCloseSettings"))!
             .AsButton()
             .Invoke();
