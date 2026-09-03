@@ -1,7 +1,16 @@
 {
-  "version": 17,
-  "lastUpdated": "2026-09-02 00:00:00",
+  "version": 18,
+  "lastUpdated": "2026-09-04 00:00:00",
   "changelog": [
+    {
+      "version": 18,
+      "date": "2026-09-04",
+      "addedApps": [
+        "furmark"
+      ],
+      "removedApps": [],
+      "message": "Добавлен FurMark 2 (Geeks3D) — стресс-тест/бенчмарк видеокарты, по запросу пользователя. Через winget (Geeks3D.FurMark.2), проверено вживую на этой машине."
+    },
     {
       "version": 17,
       "date": "2026-09-02",
@@ -1314,6 +1323,20 @@
       "profile": "extended",
       "sha256": "",
       "chocoId": "msiafterburner"
+    },
+    {
+      "id": "furmark",
+      "name": "FurMark 2",
+      "category": "Другое",
+      "wingetId": "Geeks3D.FurMark.2",
+      "downloadUrl": "",
+      "version": "2.10.2.0",
+      "size": "",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=geeks3d.com&sz=64",
+      "description": "Стресс-тест и бенчмарк видеокарты (OpenGL/Vulkan) — проверка стабильности, температур и троттлинга под максимальной нагрузкой.",
+      "profile": "extended",
+      "sha256": "",
+      "chocoId": ""
     },
     {
       "id": "claude-code",
