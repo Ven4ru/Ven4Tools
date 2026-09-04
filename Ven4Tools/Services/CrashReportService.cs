@@ -126,7 +126,9 @@ namespace Ven4Tools.Services
                     new KeyValuePair<string, string>("trace",      report.StackTrace ?? ""),
                 });
 
-                var response = await _http.PostAsync(ApiConfig.DbApi, payload);
+                // using: ответ освобождается вместе с буфером тела (см. тот же фикс
+                // в FeedbackService — единственные два места без освобождения).
+                using var response = await _http.PostAsync(ApiConfig.DbApi, payload);
 
                 // Сервер всегда отвечает HTTP 200 — даже при ошибке или
                 // несуществующем action. Поэтому проверяем не статус,

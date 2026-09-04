@@ -107,7 +107,10 @@ namespace Ven4Tools.Services
                     new KeyValuePair<string, string>("timestamp",  record.Timestamp),
                 });
 
-                var response = await _http.PostAsync(ApiConfig.DbApi, payload);
+                // using: ответ освобождается вместе с буфером тела. Остальные сетевые
+                // вызовы проекта делают это последовательно, эти два (здесь и в
+                // CrashReportService) оставались единственными без освобождения.
+                using var response = await _http.PostAsync(ApiConfig.DbApi, payload);
 
                 // Сервер всегда отвечает HTTP 200 — успех определяем по телу ответа
                 if (!response.IsSuccessStatusCode) return;

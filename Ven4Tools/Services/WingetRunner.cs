@@ -267,7 +267,13 @@ namespace Ven4Tools.Services
                 await ReadWithGraceAsync(stderrTask, TimeSpan.FromSeconds(5));
                 return -1;
             }
-            string stderrOutput = await stderrTask;
+            // Ограниченное ожидание и на успешном пути тоже. Прямой `await stderrTask`
+            // здесь мог зависнуть навсегда ровно по той же причине, что описана выше для
+            // пути отмены: ReadToEnd завершается только с закрытием пайпа, а пайп держит
+            // любой унаследовавший его потомок winget — переживший родителя дочерний
+            // процесс подвешивал бы возврат из метода уже после нормального завершения
+            // самого winget. Тайм-аут стоял только на ветке отмены, хотя риск общий.
+            string stderrOutput = await ReadWithGraceAsync(stderrTask, TimeSpan.FromSeconds(5)) ?? string.Empty;
             if (p.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderrOutput))
                 onLine($"[stderr] {stderrOutput.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l)) ?? ""}");
             return p.ExitCode;
