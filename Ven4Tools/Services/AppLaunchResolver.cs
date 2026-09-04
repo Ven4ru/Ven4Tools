@@ -238,15 +238,29 @@ namespace Ven4Tools.Services
         }
 
         // COM-позднее связывание с WScript.Shell — без добавления COM-ссылки в csproj.
+        //
+        // Сам объект ярлыка тоже обязателен к освобождению. Выше для WScript.Shell это
+        // уже сделано («сотни висящих COM-объектов при большом системном Start Menu»),
+        // но CreateShortcut возвращает ОТДЕЛЬНЫЙ COM-объект на каждый .lnk, и он не
+        // освобождался — ровно тот же самый леак, просто уровнем ниже: один общий Shell
+        // вместо сотен, но по-прежнему сотни объектов ярлыков, живущих до финализатора.
         private static string? ResolveShortcutTarget(dynamic shell, string lnkPath)
         {
+            object? shortcut = null;
             try
             {
-                dynamic shortcut = shell.CreateShortcut(lnkPath);
-                string target = shortcut.TargetPath;
+                shortcut = shell.CreateShortcut(lnkPath);
+                string target = ((dynamic)shortcut!).TargetPath;
                 return string.IsNullOrWhiteSpace(target) ? null : target;
             }
             catch { return null; }
+            finally
+            {
+                if (shortcut != null && Marshal.IsComObject(shortcut))
+                {
+                    try { Marshal.FinalReleaseComObject(shortcut); } catch { }
+                }
+            }
         }
 
         // 3) HKLM Uninstall → InstallLocation + эвристический поиск exe в папке,
@@ -305,7 +319,10 @@ namespace Ven4Tools.Services
             @"unins(tall)?|setup|update|crashpad|helper|uninst",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static string? FindBestExeInDirectory(string installLocation, string displayName)
+        // internal, а не private: выбор основного exe среди нескольких — чистая
+        // функция от содержимого каталога, и проверить её можно на временной папке
+        // (тест живёт в Ven4Tools.Tests, см. InternalsVisibleTo).
+        internal static string? FindBestExeInDirectory(string installLocation, string displayName)
         {
             try
             {
@@ -319,8 +336,15 @@ namespace Ven4Tools.Services
                 // с названием продукта, иначе берём крупнейший (обычно основной exe,
                 // а не служебные утилиты рядом).
                 string normalizedName = Normalize(displayName);
+                // Пустое нормализованное имя отсекается явно: Normalize возвращает ""
+                // для файла без единой буквы или цифры в имени («-.exe», «_.exe»), а
+                // string.Contains("") истинно ВСЕГДА — такой файл выигрывал сопоставление
+                // по имени у любого настоящего кандидата и запускался вместо приложения.
                 var byNameMatch = exeFiles.FirstOrDefault(f =>
-                    normalizedName.Contains(Normalize(Path.GetFileNameWithoutExtension(f))));
+                {
+                    string exeName = Normalize(Path.GetFileNameWithoutExtension(f));
+                    return exeName.Length > 0 && normalizedName.Contains(exeName);
+                });
                 if (byNameMatch != null) return byNameMatch;
 
                 return exeFiles.OrderByDescending(f => new FileInfo(f).Length).First();
