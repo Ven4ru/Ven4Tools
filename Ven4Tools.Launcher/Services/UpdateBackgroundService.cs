@@ -49,7 +49,12 @@ namespace Ven4Tools.Launcher.Services
 
         public void Start()
         {
-            // Сбрасываем токен отмены (мог быть отменён через Stop)
+            // Сбрасываем токен отмены (мог быть отменён через Stop). Прежний источник
+            // здесь НЕ освобождается намеренно: фоновая проверка могла уже прочитать
+            // ссылку на него и вот-вот обратится к .Token — Dispose в этот момент дал бы
+            // ObjectDisposedException в задаче, которую никто не наблюдает (таймер
+            // запускает CheckAllAsync через `_ = ...`). Освобождение отложено до Dispose,
+            // где обращение к освобождённому источнику уже обработано явно.
             if (_cts.IsCancellationRequested)
                 _cts = new CancellationTokenSource();
 
@@ -77,7 +82,16 @@ namespace Ven4Tools.Launcher.Services
 
             try
             {
-                var token = _cts.Token;
+                CancellationToken token;
+                try
+                {
+                    token = _cts.Token;
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Сервис освобождён, пока проверка ждала семафор — работать не над чем.
+                    return;
+                }
                 if (token.IsCancellationRequested) return;
                 try { await CheckLauncherAsync(); }
                 catch (Exception ex) { Log($"Ошибка проверки обновления лаунчера: {ex.Message}"); }
@@ -308,6 +322,11 @@ namespace Ven4Tools.Launcher.Services
             _cts.Cancel();
             _timer?.Dispose();
             _checkGate.Dispose();
+            // Источник отмены раньше только отменялся, но не освобождался — вместе с ним
+            // оставалась висеть и регистрация отмены. Освобождаем последним: к этому
+            // моменту таймер уже остановлен, а фоновая проверка, если она ещё идёт,
+            // переживает освобождение (см. чтение .Token в CheckAllAsync).
+            _cts.Dispose();
         }
     }
 }

@@ -129,7 +129,14 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunSearchAsync()
         {
-            _searchCts?.Cancel();
+            // Cancel + Dispose предыдущего токена — раньше он только отменялся, а сам
+            // объект не освобождался: каждая проверка обновлений (кнопка «Проверить»
+            // плюс автопроверка при открытии вкладки) оставляла после себя
+            // неосвобождённый CancellationTokenSource. Тот же фикс уже сделан в
+            // CatalogViewModel.SearchText — сюда он не доехал.
+            var previousSearch = _searchCts;
+            previousSearch?.Cancel();
+            previousSearch?.Dispose();
             _searchCts = new CancellationTokenSource();
             var ct = _searchCts.Token;
 
