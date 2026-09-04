@@ -251,17 +251,33 @@ namespace Ven4Tools.Services
         // Стартует процесс с Verb=runas, ждёт завершения (убивая всё дерево при отмене)
         // и интерпретирует код выхода. Возвращает null, если процесс не запустился;
         // иначе Ok (0 или 3010) и Reboot (3010 = требуется перезагрузка) плюс код выхода.
-        private static async Task<(bool Ok, bool Reboot, int ExitCode)?> RunElevatedInstallerAsync(
+        //
+        // internal, а не private: отмену установки нельзя проверить иначе как реальным
+        // процессом, а тест живёт в Ven4Tools.Tests (см. InternalsVisibleTo).
+        internal static async Task<(bool Ok, bool Reboot, int ExitCode)?> RunElevatedInstallerAsync(
             ProcessStartInfo psi, CancellationToken token, Action<int>? onStarted = null)
         {
             using var proc = Process.Start(psi);
             if (proc == null) return null;
             onStarted?.Invoke(proc.Id);
 
+            // Ожидание намеренно НЕ передаёт token в Task.Delay. Раньше передавало — и
+            // отмена, пришедшая во время паузы (а это практически всё время ожидания:
+            // проверка вверху цикла занимает микросекунды, пауза — 100 мс), выбрасывала
+            // OperationCanceledException прямо из Task.Delay, минуя Kill. Ветка Kill
+            // оказывалась фактически недостижимой: `using` освобождал лишь обёртку
+            // Process, а сам elevated-установщик (msiexec и его дерево) продолжал ставить
+            // приложение уже после того, как интерфейс отчитался «Отменено».
+            // Теперь пауза непрерываемая, и цикл гарантированно возвращается к проверке
+            // вверху — единственной точке, где отмена обрабатывается вместе с Kill.
             while (!proc.HasExited)
             {
-                if (token.IsCancellationRequested) { try { proc.Kill(entireProcessTree: true); } catch { } token.ThrowIfCancellationRequested(); }
-                await Task.Delay(100, token);
+                if (token.IsCancellationRequested)
+                {
+                    try { proc.Kill(entireProcessTree: true); } catch { }
+                    token.ThrowIfCancellationRequested();
+                }
+                await Task.Delay(100, CancellationToken.None);
             }
 
             // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
