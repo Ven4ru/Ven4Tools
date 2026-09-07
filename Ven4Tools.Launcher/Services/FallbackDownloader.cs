@@ -18,11 +18,12 @@ internal readonly record struct DownloadCandidate(string Url, HttpClient Client,
 
 /// <summary>
 /// Результат успешной загрузки: метка сработавшего источника + открытый
-/// FileShare.Read-хендл на итоговый файл. Хендл открыт сразу после проверки
-/// SHA256/перемещения файла — держать его в вызывающем коде (using) до конца
-/// использования файла (запуск/распаковка), иначе между проверкой хеша и
-/// использованием остаётся окно TOCTOU для подмены файла другим процессом
-/// того же пользователя. Dispose закрывает хендл.
+/// FileShare.Read-хендл на итоговый файл. Хендл открывается сразу после
+/// перемещения файла на место и ДО сверки SHA256, а сама сверка читает из него —
+/// значит проверен ровно тот файл, который держит хендл. Держать его в вызывающем
+/// коде (using) до конца использования файла (запуск/распаковка), иначе между
+/// проверкой хеша и использованием откроется окно TOCTOU для подмены файла другим
+/// процессом того же пользователя. Dispose закрывает хендл.
 /// </summary>
 internal sealed class DownloadResult : IDisposable
 {
@@ -96,7 +97,11 @@ internal sealed class FallbackDownloader
                     switchingTo?.Invoke(candidate.SourceLabel, DescribeFailure(lastError));
                 }
 
-                await DownloadSingleAsync(
+                // Защитный хендл открывается внутри DownloadSingleAsync — ДО вычисления
+                // SHA256 и из него же: проверенным оказывается ровно тот файл, который
+                // вызывающий код потом использует, окна между проверкой и использованием
+                // не остаётся вовсе.
+                FileStream guard = await DownloadSingleAsync(
                     candidate.Client,
                     candidate.Url,
                     targetPath,
@@ -104,10 +109,6 @@ internal sealed class FallbackDownloader
                     expectedSha256,
                     progress).ConfigureAwait(false);
 
-                // Открываем защитный хендл СРАЗУ после успешной проверки хеша/перемещения
-                // файла в DownloadSingleAsync — минимизирует окно TOCTOU до нескольких
-                // инструкций вместо произвольного времени в вызывающем коде.
-                var guard = new FileStream(targetPath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 return new DownloadResult(candidate.SourceLabel, guard);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -184,7 +185,16 @@ internal sealed class FallbackDownloader
         return result;
     }
 
-    private static async Task DownloadSingleAsync(
+    /// <summary>
+    /// Скачивает один источник и возвращает ОТКРЫТЫЙ защитный хендл итогового файла
+    /// (FileShare.Read). Хендл открывается сразу после перемещения .partial на место
+    /// и ДО сверки SHA256, а сама сверка читает из него же — поэтому подмена файла
+    /// между проверкой и использованием невозможна: с момента открытия хендла никто
+    /// не может ни записать в файл, ни удалить, ни переименовать его. Подмена ДО
+    /// открытия хендла безвредна — она попадёт под тот же хеш и будет отвергнута.
+    /// Идиома та же, что в клиентской прямой загрузке (InstallationService).
+    /// </summary>
+    private static async Task<FileStream> DownloadSingleAsync(
         HttpClient client,
         string url,
         string targetPath,
@@ -194,6 +204,9 @@ internal sealed class FallbackDownloader
     {
         string partialPath = targetPath + ".partial";
         TryDelete(partialPath);
+
+        FileStream? guard = null;
+        bool committed = false;
 
         try
         {
@@ -268,9 +281,19 @@ internal sealed class FallbackDownloader
                     $"Загрузка неполная: получено {bytesRead} из {totalBytes.Value} байт.");
             }
 
+            File.Move(partialPath, targetPath, overwrite: true);
+            committed = true;
+
+            // Защита включается ПЕРВОЙ операцией после перемещения: следующей строкой,
+            // без единого await между Move и открытием хендла.
+            guard = new FileStream(
+                targetPath, FileMode.Open, FileAccess.Read, FileShare.Read,
+                bufferSize: 81920, useAsync: true);
+
             if (!string.IsNullOrWhiteSpace(expectedSha256))
             {
-                string actualSha256 = await Helpers.FileHashHelper.ComputeSha256Async(partialPath, cancellationToken).ConfigureAwait(false);
+                string actualSha256 = await Helpers.FileHashHelper
+                    .ComputeSha256Async(guard, cancellationToken).ConfigureAwait(false);
                 if (!string.Equals(
                     actualSha256,
                     expectedSha256,
@@ -279,13 +302,24 @@ internal sealed class FallbackDownloader
                     throw new IntegrityCheckFailedException(
                         "Контрольная сумма загруженного файла не совпала.");
                 }
+
+                // Хендл отдаётся вызывающему коду — оставляем его в начале файла,
+                // а не на позиции конца после хеширования.
+                guard.Position = 0;
             }
 
-            File.Move(partialPath, targetPath, overwrite: true);
+            return guard;
         }
         catch
         {
+            // Хендл закрывается ДО удаления файла: FileShare.Read не даёт удалить
+            // файл, пока он открыт.
+            guard?.Dispose();
             TryDelete(partialPath);
+            // Файл уже переехал на итоговое место, но не прошёл проверку — оставлять
+            // непроверенное содержимое под целевым именем нельзя. До Move целевой файл
+            // не трогаем: он мог существовать до нас и к этой попытке отношения не имеет.
+            if (committed) TryDelete(targetPath);
             throw;
         }
     }

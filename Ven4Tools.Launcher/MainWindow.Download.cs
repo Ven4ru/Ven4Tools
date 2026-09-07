@@ -432,6 +432,14 @@ namespace Ven4Tools.Launcher
                 await SafeZipExtractor.ExtractAsync(sourceArchivePath, extractPath, token);
                 AddLog("✅ Архив безопасно распакован");
 
+                // Слепок распакованного состава снимается ДО любого ожидания:
+                // ниже EnsureClientClosedAndPathSafeAsync может держать диалог
+                // «клиент запущен, закрыть?» сколь угодно долго, а staging всё это
+                // время лежит в каталоге, доступном на запись процессам того же
+                // пользователя. Хеш архива подтверждал архив, но не распакованные
+                // из него файлы — см. StagingIntegritySnapshot.
+                var stagingSnapshot = await StagingIntegritySnapshot.CaptureAsync(extractPath, token);
+
                 token.ThrowIfCancellationRequested();
 
                 if (!await EnsureClientClosedAndPathSafeAsync(silent)) return false;
@@ -441,6 +449,27 @@ namespace Ven4Tools.Launcher
                     SetOperationStage(4); // Установка файлов
                     txtDownloadStatus.Text = "Установка файлов...";
                 });
+
+                // Сверка вплотную к Install: между ней и переносом каталога не
+                // должно быть ни ожидания пользователя, ни сетевых операций.
+                string? difference = await stagingSnapshot.FindDifferenceAsync(extractPath, token);
+                if (difference != null)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        txtDownloadStatus.Text = "Ошибка целостности";
+                        SetOperationStage(0);
+                    });
+                    AddLog($"⛔ Распакованные файлы изменились после проверки архива — установка отменена: {difference}");
+                    if (!silent)
+                        Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                            "Содержимое распакованного архива изменилось между проверкой и установкой " +
+                            $"({difference}).\n\nУстановка отменена. Проверьте компьютер антивирусом и " +
+                            "повторите установку.",
+                            "Целостность нарушена", MessageBoxButton.OK, MessageBoxImage.Error));
+                    return false;
+                }
+
                 var installer = new TransactionalDirectoryInstaller();
                 installer.Install(extractPath, _clientPath, token);
 

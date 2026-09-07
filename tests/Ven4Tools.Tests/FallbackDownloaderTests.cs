@@ -266,6 +266,57 @@ public sealed class FallbackDownloaderTests
     }
 
     [Fact]
+    public async Task DownloadAsync_GuardBlocksTamperingWithVerifiedFile()
+    {
+        // Смысл защитного хендла: с момента, когда загрузчик его открыл (а хеш
+        // считается уже из него), файл нельзя ни переписать, ни удалить, ни
+        // переименовать — то есть вызывающий код гарантированно использует именно
+        // проверенное содержимое.
+        using var area = new TemporaryDirectory();
+        const string body = "проверенный архив";
+        string expectedHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(body)));
+        using var http = new HttpClient(new DelegateHandler(request => Response(request.RequestUri, body)));
+        string target = Path.Combine(area.Path, "client.zip");
+
+        using (var downloadResult = await new FallbackDownloader().DownloadAsync(
+            One(http), target, CancellationToken.None, expectedHash))
+        {
+            Assert.Throws<IOException>(
+                () => new FileStream(target, FileMode.Open, FileAccess.Write, FileShare.None).Dispose());
+            Assert.Throws<IOException>(() => File.Delete(target));
+            Assert.Throws<IOException>(() => File.Move(target, target + ".moved"));
+
+            // Хендл отдаётся с начала файла, а не с позиции после хеширования.
+            Assert.Equal(0, downloadResult.Guard.Position);
+            using var reader = new StreamReader(downloadResult.Guard, Encoding.UTF8, leaveOpen: true);
+            Assert.Equal(body, await reader.ReadToEndAsync());
+        }
+
+        // После освобождения хендла файл снова обычный.
+        Assert.Equal(body, await File.ReadAllTextAsync(target));
+    }
+
+    [Fact]
+    public async Task DownloadAsync_LeavesNoUnverifiedFileWhenEverySourceFailsHash()
+    {
+        // Файл переезжает на итоговое имя до сверки (чтобы хеш считался из уже
+        // защищённого хендла) — значит непрошедшее проверку содержимое обязано
+        // быть удалено, а не остаться лежать под целевым именем.
+        using var area = new TemporaryDirectory();
+        using var http = new HttpClient(new DelegateHandler(
+            request => Response(request.RequestUri, "подменённый архив")));
+        string expectedHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("ожидаемый архив")));
+        string target = Path.Combine(area.Path, "client.zip");
+
+        await Assert.ThrowsAsync<IntegrityCheckFailedException>(
+            () => new FallbackDownloader().DownloadAsync(
+                Two(http), target, CancellationToken.None, expectedHash));
+
+        Assert.False(File.Exists(target));
+        Assert.False(File.Exists(target + ".partial"));
+    }
+
+    [Fact]
     public async Task DownloadAsync_ThrowsWhenNoCandidates()
     {
         using var area = new TemporaryDirectory();
