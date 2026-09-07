@@ -18,6 +18,17 @@ internal static class FileHashHelper
     {
         await using var stream = new FileStream(
             path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 81920, useAsync: true);
+        return await ComputeSha256Async(stream, token).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Хеш содержимого УЖЕ ОТКРЫТОГО потока — с текущей позиции до конца.
+    /// Нужен там, где файл нельзя закрывать между проверкой и использованием:
+    /// хендл, из которого посчитан хеш, и есть защита от подмены файла между
+    /// этими двумя моментами (TOCTOU). Позицию вызывающий код выставляет сам.
+    /// </summary>
+    public static async Task<string> ComputeSha256Async(Stream stream, CancellationToken token)
+    {
         byte[] hash = await SHA256.HashDataAsync(stream, token).ConfigureAwait(false);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
