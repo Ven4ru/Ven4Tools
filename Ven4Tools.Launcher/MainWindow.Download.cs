@@ -192,6 +192,10 @@ namespace Ven4Tools.Launcher
             // Та же блокировка, что и у «Установить Ven4Tools»: иначе кнопка остаётся
             // нажимаемой во время загрузки и запускает вторую установку в тот же каталог.
             btnInstallFromFile.IsEnabled = false;
+            // «Установить компоненты» раньше в этот список не входила, хотя её
+            // обработчик — такая же долгая операция с тем же прогрессом и той же
+            // кнопкой «Отмена».
+            btnInstallMissing.IsEnabled = false;
             SetOperationStage(1); // Загрузка
 
             try
@@ -328,8 +332,11 @@ namespace Ven4Tools.Launcher
                 btnCancelDownload.IsEnabled  = true;
                 btnLaunchApp.IsEnabled       = true;
                 btnInstallFromFile.IsEnabled = true;
-                _downloadCts?.Dispose();
-                _downloadCts = null;
+                btnInstallMissing.IsEnabled  = true;
+                // Источник отмены здесь больше не освобождается: им владеет аренда
+                // слота операций у вызывающего кода (OperationGate). Раньше этот метод
+                // диспоузил общее поле — в том числе когда оно уже принадлежало другой,
+                // ещё работающей операции.
             }
         }
 

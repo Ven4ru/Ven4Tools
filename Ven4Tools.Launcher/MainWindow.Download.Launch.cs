@@ -31,9 +31,15 @@ namespace Ven4Tools.Launcher
                 _selectedVersion ??= _availableVersions.FirstOrDefault(v => v.IsLatest);
                 if (_selectedVersion != null)
                 {
+                    // Слот занимаем ДО записи в журнал: раньше эта ветка вообще не
+                    // проверяла занятость и перехватывала источник отмены у идущей
+                    // операции (например, у тихого автообновления из трея).
+                    using var updateLease = TryBeginOperation(
+                        "Обновление клиента", TimeSpan.FromMinutes(30));
+                    if (updateLease == null) return;
+
                     AddLog($"⬆ Обновление клиента до {_selectedVersion.Version}...");
-                    _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
-                    await DownloadVersionAsync(_selectedVersion, _downloadCts.Token);
+                    await DownloadVersionAsync(_selectedVersion, updateLease.Token);
                     return;
                 }
                 AddLog("⚠️ Обновление недоступно (нет списка версий) — запускаю установленный клиент");
@@ -56,12 +62,15 @@ namespace Ven4Tools.Launcher
                 UpdateVersionDisplay(latest);
             }
 
-            AddLog($"📥 Загрузка клиента {_selectedVersion.Version}...");
-            // Таймаут страхует от подвисшего (не оборванного) соединения: без него
+            // Таймаут аренды страхует от подвисшего (не оборванного) соединения: без него
             // HttpClient с Timeout=Infinite может ждать байты бесконечно, и кнопка
             // «Отмена» — единственный выход. См. тот же паттерн в LauncherUpdateService.
-            _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
-            await DownloadVersionAsync(_selectedVersion, _downloadCts.Token);
+            using var downloadLease = TryBeginOperation(
+                "Загрузка клиента", TimeSpan.FromMinutes(30));
+            if (downloadLease == null) return;
+
+            AddLog($"📥 Загрузка клиента {_selectedVersion.Version}...");
+            await DownloadVersionAsync(_selectedVersion, downloadLease.Token);
         }
 
         // Запуск установленного на диске клиента с подключением watchdog-а.
@@ -139,8 +148,11 @@ namespace Ven4Tools.Launcher
 
         private void BtnCancelDownload_Click(object sender, RoutedEventArgs e)
         {
-            _downloadCts?.Cancel();
-            btnCancelDownload.IsEnabled = false;
+            // Отменяется ровно та операция, которая сейчас держит слот. Раньше кнопка
+            // работала по общему полю, которое к этому моменту могла перезаписать другая
+            // операция, — и «Отмена» отменяла не то, что видел пользователь.
+            if (_operations.CancelCurrent())
+                btnCancelDownload.IsEnabled = false;
         }
     }
 }

@@ -17,6 +17,26 @@ internal static class SetupComponentRequestService
         (SetupComponent.Chocolatey, "install-chocolatey.pending")
     ];
 
+    /// <summary>
+    /// Есть ли непрочитанные запросы. Ничего не удаляет: нужно, чтобы не занимать слот
+    /// долгих операций (и не писать в журнал об отказе) там, где ставить нечего.
+    /// Решение о фактической установке принимает <see cref="Consume"/> — только он
+    /// гарантирует одноразовость запроса.
+    /// </summary>
+    public static bool HasPending(string launcherDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(launcherDirectory))
+            return false;
+
+        foreach (var marker in Markers)
+        {
+            if (File.Exists(Path.Combine(launcherDirectory, marker.MarkerName)))
+                return true;
+        }
+
+        return false;
+    }
+
     public static IReadOnlyList<SetupComponent> Consume(string launcherDirectory)
     {
         var requested = new List<SetupComponent>();
