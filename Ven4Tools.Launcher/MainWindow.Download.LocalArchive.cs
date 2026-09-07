@@ -16,18 +16,15 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
-            // Тот же признак занятости, по которому страхуется тихое автообновление
-            // (см. TriggerAutoClientUpdateAsync). Кнопка «Установить из файла...» была
-            // единственной точкой входа без этой проверки: во время идущей загрузки
-            // (ручной, тихой из трея или установки компонента) клик перезаписывал общий
-            // _downloadCts. Прежний токен при этом терялся неотменяемым — кнопка
-            // «Отмена» с этого момента отменяла уже другую операцию, — а две установки
-            // клиента шли параллельно в один и тот же каталог.
-            if (_downloadCts != null)
+            // Быстрая проверка ДО открытия диалога — чтобы не заставлять выбирать файл
+            // впустую, когда лаунчер очевидно занят. Решение принимает не она, а
+            // атомарный TryBeginOperation ниже: слот нельзя занимать на всё время
+            // модального диалога (он может провисеть дольше бюджета операции).
+            if (_operations.IsBusy)
             {
                 AddLog("⏳ Уже идёт другая операция — установка из файла отложена до её завершения");
                 System.Windows.MessageBox.Show(
-                    "Сейчас выполняется другая операция (загрузка или установка). " +
+                    $"Сейчас выполняется другая операция: {_operations.CurrentOperation ?? "загрузка или установка"}.\n\n" +
                     "Дождитесь её завершения и повторите.",
                     "Лаунчер занят", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
@@ -41,16 +38,21 @@ namespace Ven4Tools.Launcher
             if (dialog.ShowDialog() != true) return;
 
             // Диалог мог провисеть сколько угодно — за это время фоновая проверка
-            // обновлений могла начать тихую установку. Проверяем повторно, как это
-            // делает TriggerAutoClientUpdateAsync после LoadVersionsAsync.
-            if (_downloadCts != null)
-            {
-                AddLog("⏳ Пока был открыт выбор файла, началась другая операция — установка из файла отменена");
-                return;
-            }
+            // обновлений могла начать тихую установку. Занять слот и убедиться, что он
+            // свободен, — теперь одно неделимое действие.
+            var lease = TryBeginOperation("Установка клиента из файла", TimeSpan.FromMinutes(10));
+            if (lease == null) return;
 
-            _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-            _ = InstallFromLocalArchiveAsync(dialog.FileName, _downloadCts.Token, silent: false);
+            _ = RunLocalArchiveInstallAsync(dialog.FileName, lease);
+        }
+
+        // Аренду держит вся операция целиком, поэтому освобождается она здесь, а не в
+        // обработчике клика: установка запускается «в фоне» (fire-and-forget) и
+        // переживает возврат из обработчика.
+        private async Task RunLocalArchiveInstallAsync(string archivePath, OperationLease lease)
+        {
+            using (lease)
+                await InstallFromLocalArchiveAsync(archivePath, lease.Token, silent: false);
         }
 
         internal async Task<bool> InstallFromLocalArchiveAsync(string archivePath, CancellationToken token, bool silent)
@@ -62,6 +64,10 @@ namespace Ven4Tools.Launcher
                 btnCancelDownload.Visibility = silent ? Visibility.Collapsed : Visibility.Visible;
                 btnLaunchApp.IsEnabled = false;
                 btnInstallFromFile.IsEnabled = false;
+                // «Установить компоненты» тоже блокируем на время установки клиента:
+                // её обработчик — такая же долгая операция, конкурирующая за тот же
+                // прогресс и ту же кнопку «Отмена».
+                btnInstallMissing.IsEnabled = false;
             });
             Dispatcher.Invoke(() => SetOperationStage(2)); // Проверка целостности
 
@@ -141,9 +147,8 @@ namespace Ven4Tools.Launcher
                     btnCancelDownload.IsEnabled = true;
                     btnLaunchApp.IsEnabled = true;
                     btnInstallFromFile.IsEnabled = true;
+                    btnInstallMissing.IsEnabled = true;
                 });
-                _downloadCts?.Dispose();
-                _downloadCts = null;
             }
         }
     }
