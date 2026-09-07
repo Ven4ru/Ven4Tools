@@ -41,18 +41,22 @@ namespace Ven4Tools.Services
         private static bool IsVerifiableId(string outcomeCheckId) =>
             !string.IsNullOrEmpty(outcomeCheckId) && !outcomeCheckId.StartsWith("User.", StringComparison.Ordinal);
 
+        // Сверка идёт по ОДНОМУ идентификатору, поэтому и запрашивается ровно один
+        // пакет (InstalledAppsService.QuerySinglePackageAsync → `winget list --id ...`),
+        // а не весь список установленного. Раньше и baseline, и каждая итерация ретраев
+        // поднимали полный `winget list` — до четырёх полных выгрузок на КАЖДОЕ
+        // приложение, причём на строго последовательном критическом пути установки
+        // (InstallSemaphore допускает одну установку за раз).
         private static async Task<InstalledBaseline> CaptureInstalledBaselineAsync(string outcomeCheckId)
         {
             if (!IsVerifiableId(outcomeCheckId)) return InstalledBaseline.Unsupported;
 
-            var checker = new InstalledAppsService();
-            await checker.RefreshAsync();
-            bool found = checker.IsInstalled(outcomeCheckId);
+            var (found, version) = await InstalledAppsService.QuerySinglePackageAsync(outcomeCheckId);
             return new InstalledBaseline
             {
                 VerificationSupported = true,
                 WasInstalled = found,
-                Version = found ? checker.GetInstalledVersion(outcomeCheckId) : null
+                Version = found ? version : null
             };
         }
 
@@ -74,14 +78,17 @@ namespace Ven4Tools.Services
                     }
                 }
 
-                var checker = new InstalledAppsService();
-                await checker.RefreshAsync();
-                if (checker.IsInstalled(outcomeCheckId))
+                // Каждая итерация — это НОВЫЙ запрос к winget (в том и смысл ретраев:
+                // индекс winget мог ещё не отразить установку), но теперь без объекта
+                // с кэшем на итерацию: QuerySinglePackageAsync ничего между вызовами
+                // не сохраняет и запрашивает ровно один пакет вместо всего списка.
+                var (found, version) = await InstalledAppsService.QuerySinglePackageAsync(outcomeCheckId);
+                if (found)
                     return new InstalledBaseline
                     {
                         VerificationSupported = true,
                         WasInstalled = true,
-                        Version = checker.GetInstalledVersion(outcomeCheckId)
+                        Version = version
                     };
             }
             return new InstalledBaseline { VerificationSupported = true, WasInstalled = false };
