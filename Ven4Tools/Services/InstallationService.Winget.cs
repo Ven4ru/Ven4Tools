@@ -169,16 +169,9 @@ namespace Ven4Tools.Services
                 process.BeginErrorReadLine();
                 AppLogger.Write($"▶ Запущен процесс установки PID {process.Id}: winget install {appId}");
 
-                while (!process.HasExited)
-                {
-                    if (token.IsCancellationRequested)
-                    {
-                        // Kill(true) — убиваем winget и все дочерние процессы (msiexec, setup.exe и др.)
-                        try { process.Kill(entireProcessTree: true); } catch { }
-                        token.ThrowIfCancellationRequested();
-                    }
-                    await Task.Delay(100, token);
-                }
+                // Общий хелпер (см. InstallationService.cs) — killает всё дерево процессов
+                // при отмене вместо того, чтобы выбросить исключение прямо из паузы.
+                await WaitForExitRespectingCancellationAsync(process, token);
 
                 // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — установка прошла успешно
                 bool reboot = process.ExitCode == 3010;

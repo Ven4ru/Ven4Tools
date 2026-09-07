@@ -16,6 +16,12 @@ namespace Ven4Tools.Tests;
 // Тест работает на настоящем процессе (обычном, без повышения прав — метод
 // принимает готовый ProcessStartInfo и про Verb=runas ничего не знает), потому что
 // проверяемое поведение — это именно взаимодействие отмены с живым процессом.
+//
+// Цикл ожидания вынесен в отдельный WaitForExitRespectingCancellationAsync — до
+// выноса точно такая же ошибка жила ещё и в RunWingetAsync (InstallationService.
+// Winget.cs), скопированная отдельно и не получившая фикс 452a9f0. Тесты ниже
+// покрывают RunElevatedInstallerAsync, который теперь вызывает общий хелпер —
+// RunWingetAsync использует тот же хелпер и отдельного покрытия не требует.
 public sealed class InstallationServiceCancellationTests
 {
     // Достаточно долгий безобидный процесс: если Kill не сработает, он переживёт

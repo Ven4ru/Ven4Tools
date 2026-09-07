@@ -144,7 +144,9 @@ namespace Ven4Tools.ViewModels
                 _selectedDisk = value?.Disk;
                 ShowDiskDetails(_selectedDisk);
                 FillVolumeOptions(_selectedDisk);
-                _ = RefreshWarningsAsync();
+                _ = RefreshWarningsAsync().ContinueWith(
+                    t => AppLogger.Write(t.Exception!, "Ошибка обновления предупреждений теста диска"),
+                    TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 
@@ -160,7 +162,9 @@ namespace Ven4Tools.ViewModels
                 if (_selectedVolumeOption == value) return;
                 SetField(ref _selectedVolumeOption, value);
                 _selectedVolume = value?.Volume;
-                _ = RefreshWarningsAsync();
+                _ = RefreshWarningsAsync().ContinueWith(
+                    t => AppLogger.Write(t.Exception!, "Ошибка обновления предупреждений теста диска"),
+                    TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 
@@ -175,7 +179,9 @@ namespace Ven4Tools.ViewModels
             {
                 if (_selectedFileSizeOption == value) return;
                 SetField(ref _selectedFileSizeOption, value);
-                _ = RefreshWarningsAsync();
+                _ = RefreshWarningsAsync().ContinueWith(
+                    t => AppLogger.Write(t.Exception!, "Ошибка обновления предупреждений теста диска"),
+                    TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 

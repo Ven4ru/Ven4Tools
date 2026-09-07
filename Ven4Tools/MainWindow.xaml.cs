@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -429,7 +430,9 @@ namespace Ven4Tools
             AppLogger.Write("📂 Открыта вкладка: История");
             if (_historyTab == null) _historyTab = new HistoryTab();
             MainFrame.Content = (_historyTab);
-            _ = _historyTab.RefreshAsync();
+            _ = _historyTab.RefreshAsync().ContinueWith(
+                t => AppLogger.Write(t.Exception!, "Ошибка обновления вкладки истории"),
+                TaskContinuationOptions.OnlyOnFaulted);
             UpdateMascot("history");
         }
 

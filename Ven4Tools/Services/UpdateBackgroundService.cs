@@ -118,9 +118,10 @@ namespace Ven4Tools.Services
             _lastUpgradeCount = count;
         }
 
-        // Запускает winget upgrade и считает строки таблицы. Логика парсинга
-        // повторяет ту, что используется в лаунчере: считаем строки между
-        // разделителем «---» и футером «N upgrades available».
+        // Запускает winget upgrade и считает строки таблицы. Сам разбор — общий
+        // Ven4Tools.Shared.WingetOutputParser.ParseUpgradeTableRows (та же петля,
+        // что и в SystemViewModel.AppUpdates.ParseUpgradableRows и в лаунчере) —
+        // раньше была продублирована здесь отдельной копией цикла.
         private async Task<int> CountWingetUpgradesAsync(CancellationToken ct)
         {
             try
@@ -130,25 +131,7 @@ namespace Ven4Tools.Services
                     TimeSpan.FromMinutes(3));
                 ct.ThrowIfCancellationRequested();
 
-                var lines = WingetRunner.StripAnsi(output).Replace("\r", "").Split('\n');
-                int sepIdx = Array.FindIndex(lines, WingetRunner.IsTableSeparator);
-                if (sepIdx < 0) return 0;
-
-                int count = 0;
-                for (int i = sepIdx + 1; i < lines.Length; i++)
-                {
-                    string line = lines[i];
-                    if (string.IsNullOrWhiteSpace(line)) break; // начался футер
-                    if (WingetRunner.IsTableSeparator(line)) continue;
-                    // Строка-суммарник футера winget («32 upgrades available.»,
-                    // «Доступны обновления: 32.») — не строка таблицы. Отсекаем по
-                    // локаленезависимому признаку выравнивания колонок, а не по
-                    // английским словам: на русской Windows футер под прежний шаблон
-                    // не подходил и считался ещё одним доступным обновлением.
-                    if (!WingetRunner.IsTableRow(line)) break;
-                    count++;
-                }
-                return count;
+                return Ven4Tools.Shared.WingetOutputParser.ParseUpgradeTableRows(output).Count;
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception ex) { AppLogger.Write($"[UpdateBg] Ошибка winget upgrade: {ex.Message}"); return 0; }

@@ -217,14 +217,23 @@ namespace Ven4Tools.ViewModels
             while (DateTime.UtcNow < deadline && !token.IsCancellationRequested)
             {
                 foreach (var name in names)
+                {
+                    // Найденный процесс возвращаем (его освобождает вызывающий),
+                    // остальные снимки процессов освобождаем сразу — включая те,
+                    // что идут в массиве ПОСЛЕ найденного совпадения: ранний return
+                    // прямо из внутреннего foreach (как было раньше) оставлял их
+                    // висеть до финализатора, если тот же вызов GetProcessesByName
+                    // вернул больше одного снимка.
+                    System.Diagnostics.Process? match = null;
                     foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
                     {
-                        // Найденный процесс возвращаем (его освобождает вызывающий),
-                        // остальные снимки процессов освобождаем сразу.
-                        if (!existingPids.Contains(p.Id))
-                            return p;
-                        p.Dispose();
+                        if (match == null && !existingPids.Contains(p.Id))
+                            match = p;
+                        else
+                            p.Dispose();
                     }
+                    if (match != null) return match;
+                }
 
                 await Task.Delay(2000, token);
             }

@@ -166,12 +166,22 @@ namespace Ven4Tools.ViewModels
             // получит IsInstalled/InstalledVersion/HasUpdate. Ловим здесь и продолжаем:
             // при падении row.LaunchPath останется null у всех строк, кнопка «▶ Запустить»
             // в этот раз просто не покажется (ShowPlayButton/CanLaunch завязаны на LaunchPath).
+            // indexReady=false запрещает цикл ниже вызывать TryResolve вообще: при
+            // сбое построения фонового индекса _index остаётся null, а TryResolve сам
+            // строит его внутри GetOrBuildIndex — уже СИНХРОННО и на потоке вызывающего.
+            // Раньше при сбое EnsureIndexBuiltAsync цикл ниже всё равно звал TryResolve
+            // на первой попавшейся строке, воспроизводя тот самый фриз UI (полное
+            // перечисление реестра + .lnk Start Menu + COM на каждый ярлык), который
+            // EnsureIndexBuiltAsync существует, чтобы предотвратить — вопреки
+            // собственному логу ниже, обещающему, что кнопка просто будет недоступна.
+            bool indexReady = true;
             try
             {
                 await AppLaunchResolver.EnsureIndexBuiltAsync();
             }
             catch (Exception ex)
             {
+                indexReady = false;
                 Log($"⚠️ Не удалось построить индекс для кнопки запуска — сама проверка установленных приложений продолжится, но кнопка «▶ Запустить» в этот раз недоступна: {ex.Message}");
             }
 
@@ -194,7 +204,7 @@ namespace Ven4Tools.ViewModels
                     string? ignoredVersion = _ignoredUpdatesService.GetIgnoredVersion(row.AppId);
                     row.IsUpdateIgnored = row.HasUpdate && ignoredVersion != null
                         && ignoredVersion == row.VersionOptions[1];
-                    row.LaunchPath = AppLaunchResolver.TryResolve(row.DisplayName);
+                    row.LaunchPath = indexReady ? AppLaunchResolver.TryResolve(row.DisplayName) : null;
                     installed++;
                     if (row.HasUpdate) outdated++;
                     if (row.LaunchPath != null) launchable++;

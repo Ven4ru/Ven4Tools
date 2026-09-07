@@ -87,7 +87,7 @@ namespace Ven4Tools.ViewModels
                 tasks.Add(Task.Run(async () =>
                 {
                     var r = await DiagnosticsService.PingHostAsync(host);
-                    Application.Current.Dispatcher.Invoke(() => SetRow(row, r.Display, r.Reachable));
+                    Application.Current?.Dispatcher.Invoke(() => SetRow(row, r.Display, r.Reachable));
                     AppLogger.Write($"[Сеть] Пинг {host}: {r.Display}");
                 }));
             }
@@ -156,7 +156,7 @@ namespace Ven4Tools.ViewModels
                 tasks.Add(Task.Run(async () =>
                 {
                     var r = await DiagnosticsService.CheckServiceAsync(name, url);
-                    Application.Current.Dispatcher.Invoke(() =>
+                    Application.Current?.Dispatcher.Invoke(() =>
                     {
                         row.IconText = r.Available ? "✅" : "❌";
                         if (r.Available) row.SetIconBrush("StatusSuccess", _fallbackSuccess);

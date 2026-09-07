@@ -133,7 +133,9 @@ namespace Ven4Tools.ViewModels
         {
             SetField(ref _selectedVolumeOption, null, nameof(SelectedVolumeOption));
             _selectedVolume = null;
-            _ = RefreshWarningsAsync();
+            _ = RefreshWarningsAsync().ContinueWith(
+                t => AppLogger.Write(t.Exception!, "Ошибка обновления предупреждений теста диска"),
+                TaskContinuationOptions.OnlyOnFaulted);
 
             var options = new List<VolumeOptionItem>();
 

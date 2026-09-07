@@ -259,6 +259,18 @@ namespace Ven4Tools.ViewModels
                 success = result.Success;
                 message = result.Message;
             }
+            catch (OperationCanceledException)
+            {
+                // CancellationToken.None исключает отмену пользователем именно ЗДЕСЬ —
+                // долетевшее исключение это внутренний таймаут (например HttpClient.
+                // Timeout на прямой загрузке), не связанный с переданным токеном. Раньше
+                // этот путь не ловился: строка на весь оставшийся сеанс замирала на
+                // "⏳ Повторная установка...", а исключение тихо гасилось центральным
+                // RelayCommand.FromAsync без всякого следа для пользователя.
+                item.RetryStatus = "❌ Повтор не удался (таймаут)";
+                Log($"❌ Повторная установка не удалась (таймаут): {row.DisplayName}");
+                return;
+            }
             finally
             {
                 InstallationService.InstallSemaphore.Release();

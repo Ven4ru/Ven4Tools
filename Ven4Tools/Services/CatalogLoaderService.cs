@@ -393,8 +393,11 @@ namespace Ven4Tools.Services
             catch (Exception ex)
             {
                 AppLogger.Write($"[CatalogLoaderService] Повреждён кэш каталога — файл удалён: {ex.Message}");
-                // Битый кэш — удаляем, чтобы при следующем запуске не споткнуться снова
+                // Битый кэш — удаляем, чтобы при следующем запуске не споткнуться снова.
+                // .sig удаляем вместе с ним — иначе следующая запись валидного master.json
+                // на диск временно окажется рядом со старой (уже отвязанной) подписью.
                 try { File.Delete(_localCatalogPath); } catch { }
+                try { File.Delete(LocalSignaturePath); } catch { }
                 return null;
             }
         }

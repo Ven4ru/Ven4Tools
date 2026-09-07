@@ -143,7 +143,7 @@ namespace Ven4Tools.ViewModels
                 {
                     // Успех, в т.ч. коды «требуется перезагрузка» (3010 / 0x8A15002C)
                     app.Available = "";
-                    Application.Current.Dispatcher.Invoke(() => { ApplyFilter(); RecomputeStats(); });
+                    Application.Current?.Dispatcher.Invoke(() => { ApplyFilter(); RecomputeStats(); });
                     AppLogger.Write(exit.Reboot
                         ? $"✅ {app.Name} обновлён (требуется перезагрузка для завершения)"
                         : $"✅ {app.Name} обновлён");

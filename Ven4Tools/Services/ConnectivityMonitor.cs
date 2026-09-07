@@ -63,18 +63,21 @@ namespace Ven4Tools.Services
             try
             {
                 // Заголовки передаём через HttpRequestMessage — не трогаем DefaultRequestHeaders (не thread-safe)
-                var req = new HttpRequestMessage(HttpMethod.Head, "https://one.one.one.one");
+                using var req = new HttpRequestMessage(HttpMethod.Head, "https://one.one.one.one");
                 req.Headers.Add("User-Agent", "ven4-ping");
                 using var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
                 return true;
             }
             catch { }
 
-            // Запасной путь: пробуем чистое TCP-соединение
+            // Запасной путь: пробуем чистое TCP-соединение. Явный таймаут — у
+            // TcpClient.ConnectAsync его нет по умолчанию, и без ограничения соединение
+            // полагалось на таймаут ОС (~21 с) при 30-секундном тике таймера проверки.
             try
             {
                 using var tcp = new System.Net.Sockets.TcpClient();
-                await tcp.ConnectAsync("8.8.8.8", 53);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await tcp.ConnectAsync("8.8.8.8", 53, cts.Token);
                 return true;
             }
             catch { return false; }
