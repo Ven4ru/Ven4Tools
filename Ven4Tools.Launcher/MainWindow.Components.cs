@@ -148,11 +148,23 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
+            // Единственная точка входа, у которой раньше не было вообще никакой защиты:
+            // клик во время идущей загрузки перехватывал общий источник отмены у
+            // работающей операции. Аренда одна на всю сессию устранения проблем — она
+            // может состоять из нескольких установок подряд, и разрывать её между ними
+            // означало бы впускать в промежутки тихое автообновление.
+            // Бюджет времени — бесконечный: сессия идёт через модальные диалоги и ждёт
+            // пользователя; ограничение по времени задаётся каждой установке отдельно
+            // (OperationLease.CreateStep).
+            using var lease = TryBeginOperation(
+                "Устранение проблем с компонентами", Timeout.InfiniteTimeSpan);
+            if (lease == null) return;
+
             btnInstallMissing.Visibility = Visibility.Collapsed;
-            await CheckComponentsInteractiveAsync();
+            await CheckComponentsInteractiveAsync(lease);
         }
 
-        private async Task CheckComponentsInteractiveAsync()
+        private async Task CheckComponentsInteractiveAsync(OperationLease lease)
         {
             AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             AddLog("🔧 Устранение проблем...");
@@ -188,7 +200,7 @@ namespace Ven4Tools.Launcher
                     "Требуется winget", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (installResult == MessageBoxResult.Yes)
                 {
-                    await InstallWingetAsync();
+                    await InstallWingetAsync(lease);
                     wingetInfo = await CheckWingetWithVersionAsync();
                     AddLog(wingetInfo.IsInstalled
                         ? $"   ✅ Winget {wingetInfo.Version}"
@@ -202,7 +214,7 @@ namespace Ven4Tools.Launcher
                     "Обновление winget", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (updateResult == MessageBoxResult.Yes)
                 {
-                    await InstallWingetAsync();
+                    await InstallWingetAsync(lease);
                     wingetInfo = await CheckWingetWithVersionAsync();
                     AddLog(wingetInfo.IsInstalled
                         ? $"   ✅ Winget {wingetInfo.Version}"
@@ -220,7 +232,7 @@ namespace Ven4Tools.Launcher
                     "WebView2 Runtime (опционально)", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (r == MessageBoxResult.Yes)
                 {
-                    await InstallWebView2Async();
+                    await InstallWebView2Async(lease);
                     AddLog(IsWebView2Installed()
                         ? "   ✅ WebView2 установлен"
                         : "   ⚠️ WebView2 не обнаружен после установки. Возможно, требуется перезагрузка.");
@@ -234,7 +246,7 @@ namespace Ven4Tools.Launcher
                     "Требуется Visual C++ Redistributable", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (r == MessageBoxResult.Yes)
                 {
-                    await InstallVcRedistAsync();
+                    await InstallVcRedistAsync(lease);
                     AddLog(IsVcRedistInstalled()
                         ? "   ✅ Visual C++ Redistributable установлен"
                         : "   ⚠️ VC++ не обнаружен после установки. Возможно, требуется перезагрузка.");
@@ -243,7 +255,7 @@ namespace Ven4Tools.Launcher
 
             // Опциональные менеджеры пакетов — предлагаем, но не настаиваем:
             // отказ ничем не грозит, клиент работает и без них
-            await OfferOptionalPackageManagersAsync();
+            await OfferOptionalPackageManagersAsync(lease);
 
             if (!CheckWindowsVersionOk())
             {

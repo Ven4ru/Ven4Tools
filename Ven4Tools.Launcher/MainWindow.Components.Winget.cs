@@ -65,7 +65,7 @@ namespace Ven4Tools.Launcher
         // interactive = false — автоматический (marker-driven) вызов из setup:
         // не показываем модальные диалоги и не предлагаем перезагрузку, чтобы
         // ничего не всплывало из скрытого/фонового окна (только запись в лог).
-        private async Task InstallWingetAsync(bool interactive = true)
+        private async Task InstallWingetAsync(OperationLease lease, bool interactive = true)
         {
             AddLog("📦 Получение информации о winget с GitHub...");
 
@@ -88,11 +88,13 @@ namespace Ven4Tools.Launcher
 
             try
             {
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-                _downloadCts = interactive
-                    ? CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token)
-                    : null;
-                var ct = interactive ? _downloadCts!.Token : timeoutCts.Token;
+                // Шаг сессии: отменяется и кнопкой «Отмена» (через аренду), и по
+                // собственному бюджету времени. Раньше при interactive == false общее
+                // поле CTS специально обнулялось — и лаунчер выглядел свободным для
+                // тихого автообновления прямо посреди установки winget из setup; затем
+                // finally этой установки диспоузил уже чужой токен.
+                using var step = lease.CreateStep(TimeSpan.FromMinutes(10));
+                var ct = step.Token;
 
                 string? msixUrl = await ResolveWingetMsixUrlAsync(ct);
                 if (msixUrl == null) return;
@@ -151,8 +153,6 @@ namespace Ven4Tools.Launcher
                 try { if (File.Exists(tempVcLibs)) File.Delete(tempVcLibs); } catch { }
                 try { if (File.Exists(tempUiXaml)) File.Delete(tempUiXaml); } catch { }
                 try { if (File.Exists(tempAppRuntime)) File.Delete(tempAppRuntime); } catch { }
-                _downloadCts?.Dispose();
-                _downloadCts = null;
                 Dispatcher.Invoke(() =>
                 {
                     progressDownload.Value = 0;

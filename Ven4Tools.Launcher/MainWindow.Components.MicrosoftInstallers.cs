@@ -20,15 +20,18 @@ namespace Ven4Tools.Launcher
         // те же строительные блоки (DownloadTrustedFileAsync), но ставится отдельным
         // multi-package PowerShell-скриптом, поэтому идёт своим путём.
         private async Task DownloadVerifyAndRunElevatedAsync(
-            string url, string fileName, string args, string label, CancellationToken ct)
+            string url, string fileName, string args, string label,
+            OperationLease lease, TimeSpan timeout)
         {
             string tempFile = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_{fileName}");
             AddLog($"⬇️ Скачивание {label}...");
             // L4: раньше отменить зависшую загрузку/установку WebView2/VC++ было нечем —
             // кнопка «Отмена» показывалась только для скачивания клиента. Переиспользуем
-            // ту же кнопку и CTS-поле, связав его с переданным таймаут-токеном.
-            _downloadCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            ct = _downloadCts.Token;
+            // ту же кнопку: шаг связан с арендой сессии (её отменяет «Отмена») и
+            // добавляет собственный бюджет времени. Источник шага освобождается здесь же
+            // (using) и никому больше не принадлежит — в отличие от прежнего общего поля.
+            using var step = lease.CreateStep(timeout);
+            CancellationToken ct = step.Token;
             Dispatcher.Invoke(() =>
             {
                 progressDownload.Value = 0;
@@ -96,8 +99,6 @@ namespace Ven4Tools.Launcher
             finally
             {
                 try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
-                _downloadCts?.Dispose();
-                _downloadCts = null;
                 Dispatcher.Invoke(() =>
                 {
                     progressDownload.Value = 0;
@@ -142,26 +143,22 @@ namespace Ven4Tools.Launcher
             return false;
         }
 
-        private async Task InstallWebView2Async()
-        {
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-            await DownloadVerifyAndRunElevatedAsync(
+        private Task InstallWebView2Async(OperationLease lease) =>
+            DownloadVerifyAndRunElevatedAsync(
                 "https://go.microsoft.com/fwlink/p/?LinkId=2124703",
                 "MicrosoftEdgeWebview2Setup.exe",
                 "/silent /install",
                 "WebView2",
-                timeoutCts.Token);
-        }
+                lease,
+                TimeSpan.FromMinutes(5));
 
-        private async Task InstallVcRedistAsync()
-        {
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-            await DownloadVerifyAndRunElevatedAsync(
+        private Task InstallVcRedistAsync(OperationLease lease) =>
+            DownloadVerifyAndRunElevatedAsync(
                 "https://aka.ms/vs/17/release/vc_redist.x64.exe",
                 "vc_redist.x64.exe",
                 "/install /quiet /norestart",
                 "VC++",
-                timeoutCts.Token);
-        }
+                lease,
+                TimeSpan.FromMinutes(5));
     }
 }

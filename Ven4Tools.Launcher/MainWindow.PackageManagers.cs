@@ -18,6 +18,19 @@ namespace Ven4Tools.Launcher
     {
         private async Task ProcessSetupComponentRequestsAsync()
         {
+            // Ставить нечего — не занимаем слот и молчим в журнале (обычный запуск).
+            if (!SetupComponentRequestService.HasPending(AppDomain.CurrentDomain.BaseDirectory))
+                return;
+
+            // Слот занимаем ДО чтения маркера: Consume удаляет запрос безвозвратно, и
+            // отказ занятого лаунчера после Consume означал бы молча потерянные
+            // компоненты. Не получилось сейчас — маркер цел, повторим при следующем
+            // показе окна из трея.
+            using var lease = TryBeginOperation(
+                "Установка компонентов из setup", Timeout.InfiniteTimeSpan, silent: true);
+            if (lease == null)
+                return;
+
             var requested = SetupComponentRequestService.Consume(
                 AppDomain.CurrentDomain.BaseDirectory);
             if (requested.Count == 0)
@@ -36,7 +49,7 @@ namespace Ven4Tools.Launcher
                         if (info.IsInstalled)
                             AddLog($"✅ Winget {info.Version} уже установлен");
                         else
-                            await InstallWingetAsync(interactive: false);
+                            await InstallWingetAsync(lease, interactive: false);
                         break;
                     }
 
@@ -46,7 +59,7 @@ namespace Ven4Tools.Launcher
                         if (info.IsInstalled)
                             AddLog($"✅ Chocolatey {info.Version} уже установлен");
                         else
-                            await InstallChocoAsync();
+                            await InstallChocoAsync(lease);
                         break;
                     }
                 }
@@ -104,14 +117,13 @@ namespace Ven4Tools.Launcher
             catch { return (false, null); }
         }
 
-        private async Task InstallChocoAsync()
+        private async Task InstallChocoAsync(OperationLease lease)
         {
             AddLog("📦 Установка Chocolatey...");
             // L4: как и для winget/WebView2/VC++, даём возможность прервать зависшую
-            // установку — переиспользуем ту же кнопку и CTS-поле.
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
-            _downloadCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token);
-            var ct = _downloadCts.Token;
+            // установку — переиспользуем ту же кнопку через аренду слота операций.
+            using var step = lease.CreateStep(TimeSpan.FromMinutes(10));
+            var ct = step.Token;
             Dispatcher.Invoke(() =>
             {
                 progressDownload.Value = 0;
@@ -214,8 +226,6 @@ namespace Ven4Tools.Launcher
             }
             finally
             {
-                _downloadCts?.Dispose();
-                _downloadCts = null;
                 Dispatcher.Invoke(() =>
                 {
                     progressDownload.Value = 0;
@@ -228,7 +238,7 @@ namespace Ven4Tools.Launcher
 
         // Диалог «Установить сейчас?» для опционального менеджера — вызывается из
         // интерактивной проверки компонентов. Не навязываемся: отказ ничего не блокирует.
-        private async Task OfferOptionalPackageManagersAsync()
+        private async Task OfferOptionalPackageManagersAsync(OperationLease lease)
         {
             var chocoInfo = await CheckChocoInstalledAsync();
             if (!chocoInfo.IsInstalled)
@@ -240,7 +250,7 @@ namespace Ven4Tools.Launcher
                     "Установить Chocolatey сейчас?",
                     "Chocolatey (опционально)", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (r == MessageBoxResult.Yes)
-                    await InstallChocoAsync();
+                    await InstallChocoAsync(lease);
             }
         }
     }
