@@ -115,8 +115,8 @@ namespace Ven4Tools.Launcher.Services
         /// </summary>
         private static async Task<CdnVersionInfo?> FetchAndVerifyAsync(HttpClient client, CancellationToken token)
         {
-            string json = await client.GetStringAsync(VersionUrl, token);
-            string signature = await client.GetStringAsync(VersionSignatureUrl, token);
+            string json = await BoundedHttpText.GetStringAsync(client, VersionUrl, token);
+            string signature = await BoundedHttpText.GetStringAsync(client, VersionSignatureUrl, token);
             if (!UpdateManifestVerifier.Verify(json, signature))
                 return null;
             return JsonSerializer.Deserialize<CdnVersionInfo>(json);

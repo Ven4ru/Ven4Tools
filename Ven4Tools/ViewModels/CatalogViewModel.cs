@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using Ven4Tools.Models;
@@ -254,7 +255,9 @@ namespace Ven4Tools.ViewModels
         public void OnSourceOrderChanged()
         {
             ApplyCategorySourceHeaders();
-            _ = RefreshAvailabilityAsync();
+            _ = RefreshAvailabilityAsync().ContinueWith(
+                t => Log($"❌ Ошибка обновления доступности после смены порядка источников: {t.Exception?.GetBaseException().Message}"),
+                TaskContinuationOptions.OnlyOnFaulted);
         }
 
         public void UpdateTimeouts()

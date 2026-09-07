@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -57,5 +59,35 @@ namespace Ven4Tools.Shared
         /// как ещё одна строка обновления, завышая счётчик.
         /// </summary>
         public static bool IsTableRow(string line) => _columnGapRegex.IsMatch(line.Trim());
+
+        /// <summary>
+        /// Извлекает строки таблицы «winget upgrade» (между разделителем «---» и
+        /// футером-суммарником) из сырого вывода. Раньше эта петля — не сами
+        /// примитивы StripAnsi/IsTableSeparator/IsTableRow, а именно цикл, который ими
+        /// пользуется — была продублирована ТРИЖДЫ: SystemViewModel.AppUpdates
+        /// (клиент, единственная с юнит-тестами), UpdateBackgroundService клиента и
+        /// UpdateBackgroundService лаунчера. Три места, где при следующем ужесточении
+        /// критерия (как уже случилось однажды с ANSI-шаблоном в раунде 39) можно
+        /// снова поправить не все копии разом.
+        /// </summary>
+        public static List<string> ParseUpgradeTableRows(string rawOutput)
+        {
+            var rows = new List<string>();
+            if (string.IsNullOrWhiteSpace(rawOutput)) return rows;
+
+            var lines = StripAnsi(rawOutput).Replace("\r", "").Split('\n');
+            int sepIdx = Array.FindIndex(lines, IsTableSeparator);
+            if (sepIdx < 0) return rows;
+
+            for (int i = sepIdx + 1; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                if (string.IsNullOrWhiteSpace(line)) break;
+                if (IsTableSeparator(line)) continue;
+                if (!IsTableRow(line)) break;
+                rows.Add(line.Trim());
+            }
+            return rows;
+        }
     }
 }

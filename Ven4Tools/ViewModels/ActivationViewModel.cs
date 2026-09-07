@@ -166,7 +166,7 @@ namespace Ven4Tools.ViewModels
 
                                 if (name.Contains("Windows", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    Application.Current.Dispatcher.Invoke(() =>
+                                    Application.Current?.Dispatcher.Invoke(() =>
                                     {
                                         WindowsStatusText = status switch
                                         {
@@ -181,7 +181,7 @@ namespace Ven4Tools.ViewModels
                                 }
                             }
                         }
-                        Application.Current.Dispatcher.Invoke(() =>
+                        Application.Current?.Dispatcher.Invoke(() =>
                         {
                             WindowsStatusText = "⚠️ Не обнаружена";
                             SetWindowsStatusBrush("StatusWarning", Brushes.Orange);
@@ -189,7 +189,7 @@ namespace Ven4Tools.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        Application.Current.Dispatcher.Invoke(() =>
+                        Application.Current?.Dispatcher.Invoke(() =>
                         {
                             WindowsStatusText = "⚠️ Ошибка";
                             SetWindowsStatusBrush("StatusWarning", Brushes.Orange);
@@ -198,7 +198,9 @@ namespace Ven4Tools.ViewModels
                     }
                 });
 
-                await Task.Run(() => CheckOfficeActivationAsync());
+                // CheckOfficeActivationAsync уже async — Task.Run вокруг нею добавлял
+                // лишний прыжок на пул потоков без всякой пользы.
+                await CheckOfficeActivationAsync();
             }
             catch (Exception ex)
             {
@@ -312,7 +314,7 @@ namespace Ven4Tools.ViewModels
             }
             catch (Exception ex)
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                Application.Current?.Dispatcher.Invoke(() =>
                 {
                     OfficeStatusText = "⚠️ Ошибка";
                     SetOfficeStatusBrush("StatusWarning", Brushes.Orange);
@@ -323,7 +325,7 @@ namespace Ven4Tools.ViewModels
 
         private void SetOfficeStatusOnUI(string text, bool? isActivated)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.Invoke(() =>
             {
                 OfficeStatusText = text;
                 switch (isActivated)

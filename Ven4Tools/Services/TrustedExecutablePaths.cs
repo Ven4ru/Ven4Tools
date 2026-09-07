@@ -246,8 +246,14 @@ namespace Ven4Tools.Services
         /// три легитимно должны иметь право записи в такую папку.
         /// Результат кэшируется на процесс: ACL каталога не меняется на лету.
         /// </summary>
-        private static readonly System.Collections.Generic.Dictionary<string, bool> _compromisedCache = new();
+        // OrdinalIgnoreCase + нормализация ключа (см. NormalizeDirKey) — без этого
+        // "C:\Program Files\Foo" и "C:\Program Files\Foo\" (частый разнобой из
+        // InstallLocation в реестре) занимали бы разные слоты и каждый платил бы
+        // за отдельный GetAccessControl, хотя это один и тот же каталог.
+        private static readonly System.Collections.Generic.Dictionary<string, bool> _compromisedCache = new(StringComparer.OrdinalIgnoreCase);
         private static readonly object _compromisedCacheLock = new();
+
+        private static string NormalizeDirKey(string dirPath) => dirPath.TrimEnd('\\', '/');
 
         /// <summary>
         /// Внутри сборки используется также AppLaunchResolver — Play-кнопка резолвит
@@ -256,9 +262,10 @@ namespace Ven4Tools.Services
         /// </summary>
         internal static bool IsDirectoryAclCompromised(string dirPath)
         {
+            string key = NormalizeDirKey(dirPath);
             lock (_compromisedCacheLock)
             {
-                if (_compromisedCache.TryGetValue(dirPath, out var cached)) return cached;
+                if (_compromisedCache.TryGetValue(key, out var cached)) return cached;
 
                 bool compromised = false;
                 try
@@ -294,7 +301,7 @@ namespace Ven4Tools.Services
                     compromised = true;
                 }
 
-                _compromisedCache[dirPath] = compromised;
+                _compromisedCache[key] = compromised;
                 return compromised;
             }
         }
@@ -312,7 +319,7 @@ namespace Ven4Tools.Services
         {
             lock (_compromisedCacheLock)
             {
-                _compromisedCache.Remove(dirPath);
+                _compromisedCache.Remove(NormalizeDirKey(dirPath));
             }
         }
 
@@ -329,7 +336,7 @@ namespace Ven4Tools.Services
         {
             lock (_compromisedCacheLock)
             {
-                return _compromisedCache.ContainsKey(dirPath);
+                return _compromisedCache.ContainsKey(NormalizeDirKey(dirPath));
             }
         }
     }

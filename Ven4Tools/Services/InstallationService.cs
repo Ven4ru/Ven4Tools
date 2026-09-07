@@ -37,6 +37,7 @@ namespace Ven4Tools.Services
         };
         private readonly string _logPath;
         private readonly object _logLock = new object();
+        private readonly bool _logTreeRedirected;
 
         // Сколько журналов установки хранить. Каждый запуск установки создаёт свой файл,
         // и без ограничения папка logs росла бесконечно: единственной уборкой была
@@ -48,10 +49,24 @@ namespace Ven4Tools.Services
         public InstallationService()
         {
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var logsFolder = Path.Combine(appData, "Ven4Tools", "logs");
-            Directory.CreateDirectory(logsFolder);
+            var baseDir = Path.Combine(appData, "Ven4Tools");
+            var logsFolder = Path.Combine(baseDir, "logs");
 
-            TrimOldInstallLogs(logsFolder);
+            // Проверяем БАЗОВЫЙ каталог (…\Ven4Tools) раньше, чем что-либо в нём
+            // создаём — тот же класс проверки, что уже есть у OfflineService.
+            // EnsureCacheNotRedirected для офлайн-кэша. Раньше guard проверял только
+            // logsFolder/_logPath: обычный процесс того же пользователя мог подменить
+            // САМ БАЗОВЫЙ "Ven4Tools" junction'ом на защищённую цель — "…\Ven4Tools\logs"
+            // тогда резолвился бы через junction и НЕ являлся бы reparse point'ом сам по
+            // себе, guard такую подмену пропускал. Клиент работает elevated, поэтому
+            // подмена базового каталога перенаправила бы elevated Directory.CreateDirectory/
+            // File.AppendAllText в произвольное защищённое место.
+            _logTreeRedirected = PathHelper.IsReparsePoint(baseDir);
+            if (!_logTreeRedirected)
+            {
+                Directory.CreateDirectory(logsFolder);
+                TrimOldInstallLogs(logsFolder);
+            }
 
             _logPath = Path.Combine(logsFolder, $"install_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
         }
@@ -261,15 +276,26 @@ namespace Ven4Tools.Services
             if (proc == null) return null;
             onStarted?.Invoke(proc.Id);
 
-            // Ожидание намеренно НЕ передаёт token в Task.Delay. Раньше передавало — и
-            // отмена, пришедшая во время паузы (а это практически всё время ожидания:
-            // проверка вверху цикла занимает микросекунды, пауза — 100 мс), выбрасывала
-            // OperationCanceledException прямо из Task.Delay, минуя Kill. Ветка Kill
-            // оказывалась фактически недостижимой: `using` освобождал лишь обёртку
-            // Process, а сам elevated-установщик (msiexec и его дерево) продолжал ставить
-            // приложение уже после того, как интерфейс отчитался «Отменено».
-            // Теперь пауза непрерываемая, и цикл гарантированно возвращается к проверке
-            // вверху — единственной точке, где отмена обрабатывается вместе с Kill.
+            await WaitForExitRespectingCancellationAsync(proc, token);
+
+            // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
+            return (proc.ExitCode == 0 || proc.ExitCode == 3010, proc.ExitCode == 3010, proc.ExitCode);
+        }
+
+        // Единая точка ожидания процесса с обработкой отмены — вынесена из
+        // RunElevatedInstallerAsync, чтобы фикс 452a9f0 не пришлось повторять
+        // копипастом в каждом месте, которое ждёт свой процесс (см. RunWingetAsync
+        // в InstallationService.Winget.cs — до выноса там жила точно та же ошибка).
+        //
+        // Пауза намеренно НЕ передаёт token в Task.Delay. Если токен передать —
+        // отмена, пришедшая во время паузы (а это практически всё время ожидания:
+        // проверка вверху цикла занимает микросекунды, пауза — 100 мс), выбрасывает
+        // OperationCanceledException прямо из Task.Delay, минуя ветку Kill. Ветка Kill
+        // оказывается фактически недостижимой: `using` у вызывающего освобождает лишь
+        // обёртку Process, а сам установщик (msiexec/winget и его дерево) продолжает
+        // работу уже после того, как интерфейс отчитался «Отменено».
+        internal static async Task WaitForExitRespectingCancellationAsync(Process proc, CancellationToken token)
+        {
             while (!proc.HasExited)
             {
                 if (token.IsCancellationRequested)
@@ -279,9 +305,6 @@ namespace Ven4Tools.Services
                 }
                 await Task.Delay(100, CancellationToken.None);
             }
-
-            // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
-            return (proc.ExitCode == 0 || proc.ExitCode == 3010, proc.ExitCode == 3010, proc.ExitCode);
         }
 
         // ── Помощники для выбора диска установки ───────────────────────────────
@@ -342,9 +365,11 @@ namespace Ven4Tools.Services
                     // Тот же guard, что у AppLogger: журнал установки лежит в том же
                     // доступном пользователю дереве %LocalAppData%\Ven4Tools, а клиент
                     // работает elevated — без проверки подмена каталога/файла junction'ом
-                    // перенаправила бы elevated-дозапись в защищённую цель. Раньше guard
-                    // стоял только у AppLogger, хотя оба пишут в одно и то же дерево.
-                    if (PathHelper.IsReparsePoint(Path.GetDirectoryName(_logPath)!) ||
+                    // перенаправила бы elevated-дозапись в защищённую цель. _logTreeRedirected
+                    // покрывает подмену БАЗОВОГО "Ven4Tools" (см. конструктор) — без неё
+                    // проверялись только logsFolder/_logPath, а не их общий родитель.
+                    if (_logTreeRedirected ||
+                        PathHelper.IsReparsePoint(Path.GetDirectoryName(_logPath)!) ||
                         PathHelper.IsReparsePoint(_logPath))
                         return;
 

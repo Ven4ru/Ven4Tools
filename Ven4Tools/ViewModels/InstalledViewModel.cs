@@ -111,7 +111,7 @@ namespace Ven4Tools.ViewModels
 
         private void ShowState(string state)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.Invoke(() =>
             {
                 IsLoading     = state == "loading";
                 IsEmpty       = state == "empty";

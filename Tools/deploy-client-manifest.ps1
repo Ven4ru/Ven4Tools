@@ -93,17 +93,32 @@ try {
 
     Write-Host "Заливаю файлы публикации на CDN ($remoteDir)..."
     ssh jump "mkdir -p $remoteDir"
-    # Рекурсивно всю папку публикации: манифест описывает именно её содержимое,
-    # и любой недолитый файл сделает дельту неработоспособной для этой версии.
-    scp -r "$PublishPath/*" "jump:$remoteDir/"
+    if ($LASTEXITCODE -ne 0) { throw "Не удалось создать каталог на CDN ($remoteDir) — ssh завершился с кодом $LASTEXITCODE." }
+
+    # $ErrorActionPreference=Stop не распространяется на нативные exe (scp/ssh) —
+    # без явной проверки $LASTEXITCODE упавшая заливка молча продолжает выполнение,
+    # а сообщение "OK" ниже выборочно проверяет лишь 3 файла из нескольких сотен и
+    # может дать ложноположительный результат при частично недолитой папке.
+    #
+    # Join-Path вместо строковой интерполяции "$PublishPath/*": PublishPath на
+    # Windows содержит обратные слэши, а старый код добавлял к нему "/*" — смешение
+    # разделителей в одном пути, которое ранее уже приводило к тому, что scp молча
+    # не находил ни одного файла по такому шаблону (0 переданных файлов — не ошибка
+    # с точки зрения exit-кода scp, поэтому предыдущая проверка её и не заметила бы).
+    $publishGlob = Join-Path $PublishPath "*"
+    scp -r $publishGlob "jump:$remoteDir/"
+    if ($LASTEXITCODE -ne 0) { throw "Заливка файлов публикации на CDN не удалась — scp завершился с кодом $LASTEXITCODE." }
 
     Write-Host "Заливаю манифест и подпись..."
     scp $manifestPath "jump:/tmp/client-manifest.json.new"
+    if ($LASTEXITCODE -ne 0) { throw "Заливка манифеста на CDN не удалась — scp завершился с кодом $LASTEXITCODE." }
     scp $sigPath "jump:/tmp/client-manifest.json.sig.new"
+    if ($LASTEXITCODE -ne 0) { throw "Заливка подписи манифеста на CDN не удалась — scp завершился с кодом $LASTEXITCODE." }
     # mv на удалённой стороне — атомарная замена обоих файлов разом, без окна
     # «манифест уже новый, подпись ещё старая» (или наоборот).
     $remoteCmd = "mv /tmp/client-manifest.json.new $remoteDir/client-manifest.json && mv /tmp/client-manifest.json.sig.new $remoteDir/client-manifest.json.sig && chown -R root:root $remoteDir && chmod -R a+r $remoteDir"
     ssh jump $remoteCmd
+    if ($LASTEXITCODE -ne 0) { throw "Публикация манифеста/подписи на CDN не удалась — ssh завершился с кодом $LASTEXITCODE." }
 
     Write-Host "Проверка публичной доступности..."
     # Сверяем то, что реально отдаёт CDN, а не локальные файлы — единственный способ

@@ -37,7 +37,9 @@ namespace Ven4Tools.ViewModels
                     if (value.Length >= 2 && AppsView.IsEmpty)
                     {
                         _searchDebounce = new CancellationTokenSource();
-                        _ = RunSearchSuggestionsAsync(value, _searchDebounce.Token);
+                        _ = RunSearchSuggestionsAsync(value, _searchDebounce.Token).ContinueWith(
+                            t => AppLogger.Write(t.Exception!, "Ошибка подсказок поиска по каталогу"),
+                            TaskContinuationOptions.OnlyOnFaulted);
                     }
                     else
                     {
@@ -68,9 +70,14 @@ namespace Ven4Tools.ViewModels
         // (Phase1CatalogRemainingTests) вызывает её через AsButton().Invoke(),
         // который требует Invoke-паттерн UIA, а не Toggle. Состояние переключается
         // командой, а не IsChecked.
-        public System.Windows.Media.Brush FavoritesOnlyBrush => ShowFavoritesOnly
+        // Общее тело трёх переключателей ниже (Favorites/HideInstalled/SortAlphabetically) —
+        // один и тот же ternary Resolve("AccentColor")/Resolve("TextSecondary"), раньше
+        // повторённый в каждом геттере по отдельности.
+        private static System.Windows.Media.Brush ToggleBrush(bool on) => on
             ? Helpers.BrushResolver.Resolve("AccentColor")
             : Helpers.BrushResolver.Resolve("TextSecondary");
+
+        public System.Windows.Media.Brush FavoritesOnlyBrush => ToggleBrush(ShowFavoritesOnly);
 
         // HideInstalled/DefaultSort уже читались в RowFilter/ApplySortOrder ниже, но
         // задать их было нечем — ни один XAML-элемент их не менял. Обёртки над
@@ -89,9 +96,7 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        public System.Windows.Media.Brush HideInstalledBrush => HideInstalled
-            ? Helpers.BrushResolver.Resolve("AccentColor")
-            : Helpers.BrushResolver.Resolve("TextSecondary");
+        public System.Windows.Media.Brush HideInstalledBrush => ToggleBrush(HideInstalled);
 
         // DefaultSort исторически хранит "alpha"/"category" (обе ветки ApplySortOrder
         // ведут себя одинаково — сортировка по имени внутри категории) — с точки
@@ -112,9 +117,7 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        public System.Windows.Media.Brush SortAlphabeticallyBrush => SortAlphabetically
-            ? Helpers.BrushResolver.Resolve("AccentColor")
-            : Helpers.BrushResolver.Resolve("TextSecondary");
+        public System.Windows.Media.Brush SortAlphabeticallyBrush => ToggleBrush(SortAlphabetically);
 
         private bool _showSuggestionsPanel;
         public bool ShowSuggestionsPanel

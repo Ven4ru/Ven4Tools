@@ -227,14 +227,8 @@ namespace Ven4Tools.Launcher.Services
         // независимые копии, которые уже разъехались на практике: ужесточение
         // ANSI-шаблона попало только в клиент, а здесь в выводе оставался мусор,
         // строка-разделитель «---» не находилась, CountWingetUpgradesAsync возвращал 0
-        // и лаунчер молча показывал «обновлений нет». Ниже — тонкие обёртки, чтобы
-        // вызовы в CountWingetUpgradesAsync читались как прежде.
-        private static string StripAnsi(string s) => WingetOutputParser.StripAnsi(s);
-
-        private static bool IsTableSeparator(string line) => WingetOutputParser.IsTableSeparator(line);
-
-        private static bool IsTableRow(string line) => WingetOutputParser.IsTableRow(line);
-
+        // и лаунчер молча показывал «обновлений нет». Сама петля подсчёта строк теперь
+        // тоже там же (ParseUpgradeTableRows) — раньше была продублирована и здесь.
         private async Task<int> CountWingetUpgradesAsync(CancellationToken token)
         {
             System.Diagnostics.Process? p = null;
@@ -263,28 +257,10 @@ namespace Ven4Tools.Launcher.Services
                 string output = await p.StandardOutput.ReadToEndAsync(timeoutCts.Token);
                 await p.WaitForExitAsync(timeoutCts.Token);
                 await errTask;
-                // Считаем только строки таблицы между разделителем «---» и футером.
-                // Футер winget пустой строкой НЕ отделён (проверено на живом выводе):
-                // сразу после последней строки таблицы идёт «32 upgrades available.» /
-                // «Доступны обновления: 32.», поэтому отсекаем его по локаленезависимому
-                // признаку выравнивания колонок. Прежний шаблон искал английские
-                // package/upgrade — на русской Windows футер под него не подходил и
-                // считался ещё одним доступным обновлением (счётчик завышался на 1).
-                output = StripAnsi(output);
-                var lines = output.Replace("\r", "").Split('\n');
-                int sepIdx = Array.FindIndex(lines, IsTableSeparator);
-                if (sepIdx < 0) return 0;
-
-                int count = 0;
-                for (int i = sepIdx + 1; i < lines.Length; i++)
-                {
-                    string line = lines[i];
-                    if (string.IsNullOrWhiteSpace(line)) break; // начался футер
-                    if (IsTableSeparator(line)) continue;       // ещё один разделитель
-                    if (!IsTableRow(line)) break;               // строка-суммарник футера
-                    count++;
-                }
-                return count;
+                // Сам разбор — общий WingetOutputParser.ParseUpgradeTableRows (та же
+                // петля, что и в SystemViewModel.AppUpdates/UpdateBackgroundService
+                // клиента) — раньше была продублирована здесь отдельной копией цикла.
+                return WingetOutputParser.ParseUpgradeTableRows(output).Count;
             }
             catch (OperationCanceledException)
             {

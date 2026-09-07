@@ -148,7 +148,7 @@ namespace Ven4Tools.Services
             cts.CancelAfter(timeout ?? TimeSpan.FromSeconds(120));
 
             var outputTask = p.StandardOutput.ReadToEndAsync();
-            var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
+            var stderrTask = p.StandardError.ReadToEndAsync();
             int exitCode = -1;
             try
             {
@@ -187,20 +187,24 @@ namespace Ven4Tools.Services
         public static async Task<(int ExitCode, string Output)> RunAsync(string args, TimeSpan? timeout = null)
         {
             ValidateArgs(args);
+            var wingetPath = TrustedExecutablePaths.ResolveWinget();
+            if (wingetPath == null) return (-1, string.Empty);
             var psi = new ProcessStartInfo
             {
-                FileName               = TrustedExecutablePaths.ResolveWinget() ?? throw new InvalidOperationException("winget не найден"),
+                FileName               = wingetPath,
                 Arguments              = args,
                 UseShellExecute        = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError  = true,
                 CreateNoWindow         = true,
-                StandardOutputEncoding = System.Text.Encoding.UTF8
+                StandardOutputEncoding = System.Text.Encoding.UTF8,
+                StandardErrorEncoding  = System.Text.Encoding.UTF8
             };
-            using var p = Process.Start(psi) ?? throw new InvalidOperationException("winget не найден");
+            using var p = Process.Start(psi);
+            if (p == null) return (-1, string.Empty);
             using var cts = new System.Threading.CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(120));
             var outputTask = p.StandardOutput.ReadToEndAsync();
-            var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
+            var stderrTask = p.StandardError.ReadToEndAsync();
             int exitCode = -1;
             try
             {
@@ -223,19 +227,23 @@ namespace Ven4Tools.Services
         public static async Task<int> RunStreamingAsync(string args, Action<string> onLine, TimeSpan? timeout = null)
         {
             ValidateArgs(args);
+            var wingetPath = TrustedExecutablePaths.ResolveWinget();
+            if (wingetPath == null) { onLine("❌ winget не найден"); return -1; }
             var psi = new ProcessStartInfo
             {
-                FileName               = TrustedExecutablePaths.ResolveWinget() ?? throw new InvalidOperationException("winget не найден"),
+                FileName               = wingetPath,
                 Arguments              = args,
                 UseShellExecute        = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError  = true,
                 CreateNoWindow         = true,
-                StandardOutputEncoding = System.Text.Encoding.UTF8
+                StandardOutputEncoding = System.Text.Encoding.UTF8,
+                StandardErrorEncoding  = System.Text.Encoding.UTF8
             };
-            using var p = Process.Start(psi) ?? throw new InvalidOperationException("winget не найден");
+            using var p = Process.Start(psi);
+            if (p == null) { onLine("❌ winget не найден"); return -1; }
             using var cts = new System.Threading.CancellationTokenSource(timeout ?? TimeSpan.FromMinutes(45));
-            var stderrTask = Task.Run(() => p.StandardError.ReadToEnd());
+            var stderrTask = p.StandardError.ReadToEndAsync();
 
             string? raw;
             string last = "";
@@ -275,7 +283,10 @@ namespace Ven4Tools.Services
             // самого winget. Тайм-аут стоял только на ветке отмены, хотя риск общий.
             string stderrOutput = await ReadWithGraceAsync(stderrTask, TimeSpan.FromSeconds(5)) ?? string.Empty;
             if (p.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderrOutput))
-                onLine($"[stderr] {stderrOutput.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l)) ?? ""}");
+            {
+                string lastLine = stderrOutput.Trim().Split('\n').LastOrDefault(l => !string.IsNullOrWhiteSpace(l)) ?? "";
+                onLine($"[stderr] {TryFixMojibake(lastLine)}");
+            }
             return p.ExitCode;
         }
     }

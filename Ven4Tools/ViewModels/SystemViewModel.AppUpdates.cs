@@ -53,30 +53,11 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        // Разбор таблицы winget upgrade: строки между разделителем «---» и футером,
-        // локаленезависимый критерий (WingetRunner.IsTableSeparator/IsTableRow —
-        // внутренний разрыв в 2+ пробела = строка таблицы), не английские префиксы —
-        // проект принципиально не передаёт winget --locale en-US, и на русской Windows
-        // такие префиксы не совпадали, из-за чего заголовок и футер попадали в список
-        // «доступных обновлений», завышая счётчик.
-        internal static List<string> ParseUpgradableRows(string raw)
-        {
-            var rows = new List<string>();
-            if (string.IsNullOrWhiteSpace(raw)) return rows;
-
-            var lines = WingetRunner.StripAnsi(raw).Replace("\r", "").Split('\n');
-            int sepIdx = Array.FindIndex(lines, WingetRunner.IsTableSeparator);
-            if (sepIdx < 0) return rows;
-
-            for (int i = sepIdx + 1; i < lines.Length; i++)
-            {
-                string line = lines[i];
-                if (string.IsNullOrWhiteSpace(line)) break;
-                if (WingetRunner.IsTableSeparator(line)) continue;
-                if (!WingetRunner.IsTableRow(line)) break;
-                rows.Add(line.Trim());
-            }
-            return rows;
-        }
+        // Тонкая обёртка над общим Ven4Tools.Shared.WingetOutputParser.ParseUpgradeTableRows
+        // (та же петля раньше была продублирована здесь, в UpdateBackgroundService
+        // клиента и в UpdateBackgroundService лаунчера) — оставлена под прежним именем/
+        // сигнатурой, т.к. на неё завязаны существующие юнит-тесты этого класса.
+        internal static List<string> ParseUpgradableRows(string raw) =>
+            Ven4Tools.Shared.WingetOutputParser.ParseUpgradeTableRows(raw);
     }
 }

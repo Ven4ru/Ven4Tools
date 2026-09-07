@@ -41,8 +41,8 @@ internal static class ClientManifestFetcher
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(Timeout);
 
-            string json = await client.GetStringAsync(manifestUrl, timeoutCts.Token).ConfigureAwait(false);
-            string signature = await client.GetStringAsync(signatureUrl, timeoutCts.Token).ConfigureAwait(false);
+            string json = await BoundedHttpText.GetStringAsync(client, manifestUrl, timeoutCts.Token).ConfigureAwait(false);
+            string signature = await BoundedHttpText.GetStringAsync(client, signatureUrl, timeoutCts.Token).ConfigureAwait(false);
 
             if (!ClientManifestVerifier.Verify(json, signature)) return null;
 
