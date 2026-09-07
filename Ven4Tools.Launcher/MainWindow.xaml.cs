@@ -35,7 +35,11 @@ namespace Ven4Tools.Launcher
         private bool                 _clientUpdateAvailable = false;
         private bool                 _detailsPanelOpen = false;
         private System.Diagnostics.Process? _clientProcess;
-        private CancellationTokenSource? _downloadCts;
+        // Слот долгих операций: скачивание/обновление клиента, тихое автообновление,
+        // установка из локального архива, установка компонентов. Все они делят одну
+        // полосу прогресса, одну строку статуса, одну кнопку «Отмена» и один каталог
+        // установки, поэтому выполняются строго по одной — см. OperationGate.
+        private readonly OperationGate _operations = new OperationGate();
         private UpdateBackgroundService? _updateService;
         private bool                 _backgroundUpdates = true;
         private bool                 _autostart         = false;
@@ -209,6 +213,29 @@ namespace Ven4Tools.Launcher
                 var win = new InstallReportWindow(failures) { Owner = this };
                 win.ShowDialog();
             }
+        }
+
+        // Единая точка входа во все долгие операции: либо занимаем слот, либо объясняем,
+        // какая именно операция сейчас выполняется. Раньше каждая точка входа решала это
+        // сама (а «Установить компоненты» и «Загрузить/Обновить клиент» — не решали
+        // вовсе), из-за чего вторая операция перехватывала общий источник отмены у
+        // первой. Возвращённую аренду обязан освободить вызывающий (using).
+        // silent — путь без пользователя (тихое автообновление, установка компонентов из
+        // setup): модальное окно там показывать нельзя, ограничиваемся журналом.
+        private OperationLease? TryBeginOperation(string name, TimeSpan timeout, bool silent = false)
+        {
+            var lease = _operations.TryBegin(name, timeout);
+            if (lease != null)
+                return lease;
+
+            string busy = _operations.CurrentOperation ?? "другая операция";
+            AddLog($"⏳ «{name}»: сейчас выполняется «{busy}» — операция отложена");
+            if (!silent)
+                System.Windows.MessageBox.Show(
+                    $"Сейчас выполняется другая операция: {busy}.\n\n" +
+                    "Дождитесь её завершения и повторите.",
+                    "Лаунчер занят", MessageBoxButton.OK, MessageBoxImage.Information);
+            return null;
         }
 
         private void LogExpander_Expanded(object sender, RoutedEventArgs e) =>

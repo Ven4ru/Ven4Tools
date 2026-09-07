@@ -186,7 +186,14 @@ namespace Ven4Tools.Launcher
         private async Task TriggerAutoClientUpdateAsync(string latestVersion)
         {
             if (!_autoUpdateClient) return;
-            if (_downloadCts != null) return; // уже идёт другая загрузка — попробуем на следующем тике
+
+            // Слот занимаем сразу и держим до конца: раньше здесь была проверка
+            // «занято?» БЕЗ резервирования, и в окно между ней, перезагрузкой списка
+            // версий и стартом скачивания успевала влезть другая операция. Отказ —
+            // не ошибка: попробуем на следующем тике фоновой проверки.
+            using var lease = TryBeginOperation(
+                "Автоматическое обновление клиента", TimeSpan.FromMinutes(30), silent: true);
+            if (lease == null) return;
 
             // Тихое автообновление не должно показывать модальные диалоги «ниоткуда»,
             // пока лаунчер свёрнут в трей. Если клиент запущен — переустановить его
@@ -200,8 +207,10 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
+            // Повторная проверка занятости здесь больше не нужна: слот уже наш, ручной
+            // клик за время перезагрузки списка получит понятный отказ, а не перехватит
+            // операцию.
             await LoadVersionsAsync();
-            if (_downloadCts != null) return; // за время перезагрузки списка мог стартовать ручной клик — не гоняем вторую параллельную установку
 
             var match = _availableVersions.FirstOrDefault(v => v.Version == latestVersion);
             if (match == null)
@@ -211,8 +220,7 @@ namespace Ven4Tools.Launcher
             }
 
             AddLog($"🤖 Автоматическое обновление клиента до {latestVersion}...");
-            _downloadCts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
-            await DownloadVersionAsync(match, _downloadCts.Token, silent: true);
+            await DownloadVersionAsync(match, lease.Token, silent: true);
         }
 
         private void ShowWindow()
