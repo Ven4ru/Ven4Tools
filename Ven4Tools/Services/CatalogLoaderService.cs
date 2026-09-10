@@ -234,6 +234,34 @@ namespace Ven4Tools.Services
         // или MITM-источнику устроить OOM ещё до того, как подпись успеет отклонить подделку.
         private const long MaxCatalogResponseBytes = 16 * 1024 * 1024; // 16 МБ
 
+        /// <summary>
+        /// Декодирует скачанные байты каталога/подписи в текст — с распознаванием BOM,
+        /// ровно так же, как это делает <c>HttpClient.GetStringAsync</c>, вместо которого
+        /// здесь ручное чтение потока (нужен предел размера ДО буферизации).
+        ///
+        /// <c>Encoding.UTF8.GetString</c> оставляет BOM (EF BB BF) первым символом строки,
+        /// а ECDSA-подпись каталога считается по содержимому БЕЗ него. Любой master.json,
+        /// выложенный с BOM, не прошёл бы проверку ни на одном источнике, и клиент отверг
+        /// бы каталог целиком (fail-closed) — а выглядело бы это как «каталог недоступен».
+        /// Подписи это касается ещё жёстче: лишний символ в начале base64 роняет
+        /// <c>Convert.FromBase64String</c> исключением, а не «подпись не совпала».
+        ///
+        /// Не гипотеза: ровно на этом лаунчер потерял CDN (см. BoundedHttpText в
+        /// Ven4Tools.Launcher, исправлено 2026-09-10). BOM туда добавил PowerShell при
+        /// выкладке version.json, а master.json выкладывается той же машиной и теми же
+        /// средствами — на момент правки он BOM ещё не получил, и это единственная
+        /// причина, по которой каталог продолжал работать.
+        ///
+        /// internal — покрыт тестом (см. InternalsVisibleTo в Properties/AssemblyInfo.cs).
+        /// </summary>
+        internal static string DecodeDownloadedText(byte[] bytes)
+        {
+            using var buffer = new System.IO.MemoryStream(bytes, writable: false);
+            using var reader = new System.IO.StreamReader(
+                buffer, System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            return reader.ReadToEnd();
+        }
+
         private async Task<string?> TryDownloadAsync(string url, int timeoutSeconds, CancellationToken ct)
         {
             try
@@ -261,7 +289,8 @@ namespace Ven4Tools.Services
                     if (total > MaxCatalogResponseBytes) return null;
                     await ms.WriteAsync(buffer.AsMemory(0, read), timeoutCts.Token);
                 }
-                return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+
+                return DecodeDownloadedText(ms.ToArray());
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {

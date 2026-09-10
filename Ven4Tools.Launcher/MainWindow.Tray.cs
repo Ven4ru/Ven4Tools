@@ -277,6 +277,12 @@ namespace Ven4Tools.Launcher
 
         private void AddLog(string message)
         {
+            // В файл пишем ДО Dispatcher.Invoke и вне его: запись на диск на UI-потоке
+            // подвешивала бы отрисовку, а строка нужна на диске даже тогда, когда окна
+            // нет вовсе (автозапуск в трее, тихое автообновление) — ровно там, где
+            // журнал в TextBox никто никогда не увидит.
+            Services.LauncherLog.Write(message);
+
             Dispatcher.Invoke(() =>
             {
                 txtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");

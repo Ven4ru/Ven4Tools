@@ -103,7 +103,7 @@ namespace Ven4Tools.Services
         private static readonly string ProgramFilesDir =
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 
-        private static readonly System.Collections.Generic.Dictionary<string, string?> _packageWingetCache = new();
+        private static readonly System.Collections.Generic.Dictionary<string, string> _packageWingetCache = new();
         private static readonly object _packageWingetCacheLock = new();
 
         /// <summary>
@@ -128,58 +128,170 @@ namespace Ven4Tools.Services
             };
             if (arch.Length == 0) return null;
 
-            string windowsAppsRoot = Path.Combine(ProgramFilesDir, "WindowsApps");
-
             lock (_packageWingetCacheLock)
             {
-                if (_packageWingetCache.TryGetValue(arch, out var cached)) return cached;
+                // Кэшируем ТОЛЬКО успех: отсутствие winget на живой машине меняется
+                // (его ставят), а найденный файл для конкретной версии пакета — нет.
+                // Файл мог исчезнуть вместе с обновлением пакета — тогда ищем заново.
+                if (_packageWingetCache.TryGetValue(arch, out var cached) && File.Exists(cached))
+                    return cached;
+                _packageWingetCache.Remove(arch);
 
-                string? result = null;
-                try
+                foreach (var dir in EnumeratePackageDirectories(arch))
                 {
-                    // Публикатор "8wekyb3d8bbwe" — фиксированный хеш издателя Microsoft
-                    // для App Installer, одинаков на всех машинах и версиях пакета.
-                    var candidates = Directory.GetDirectories(
-                        windowsAppsRoot, $"Microsoft.DesktopAppInstaller_*_{arch}__8wekyb3d8bbwe");
-                    // Может встретиться больше одной версии пакета (например, в окне
-                    // между авто-обновлением из Store и очисткой старой) — берём
-                    // самую свежую. Сортировка СТРОКОЙ здесь некорректна: "1.9..."
-                    // лексически больше "1.27...", можно выбрать более старый пакет.
-                    // Парсим версию из имени папки и сравниваем как System.Version;
-                    // если формат имени неожиданный (парсинг не удался для обеих
-                    // сторон) — откат на строковую сортировку, не хуже прежнего.
-                    Array.Sort(candidates, (a, b) =>
+                    string exePath = Path.Combine(dir, "winget.exe");
+                    try
                     {
-                        var va = TryParsePackageVersion(a);
-                        var vb = TryParsePackageVersion(b);
-                        if (va != null && vb != null) return vb.CompareTo(va);
-                        return string.Compare(b, a, StringComparison.OrdinalIgnoreCase);
-                    });
-
-                    foreach (var dir in candidates)
-                    {
-                        var exePath = Path.Combine(dir, "winget.exe");
                         if (!File.Exists(exePath)) continue;
-
-                        if (AuthenticodeVerifier.IsSignedByMicrosoft(exePath, out string error))
-                        {
-                            result = exePath;
-                            break;
-                        }
-                        AppLogger.Write($"[TrustedExecutablePaths] ⚠ {exePath}: подпись не подтверждена ({error}) — пропускаю эту версию пакета");
                     }
-                }
-                catch (Exception ex)
-                {
-                    // Доступ к Program Files\WindowsApps ограничен на этой сборке
-                    // Windows, пакет не найден и т.п. — не фатально, вызывающий
-                    // код перейдёт на alias-путь.
-                    AppLogger.Write($"[TrustedExecutablePaths] ⚠ Program Files\\WindowsApps недоступен ({ex.GetType().Name}) — резолвинг через пакет пропущен, пробую alias");
+                    catch { continue; }
+
+                    if (AuthenticodeVerifier.IsSignedByMicrosoft(exePath, out string error))
+                    {
+                        _packageWingetCache[arch] = exePath;
+                        return exePath;
+                    }
+                    AppLogger.Write($"[TrustedExecutablePaths] ⚠ {exePath}: подпись не подтверждена ({error}) — пропускаю эту версию пакета");
                 }
 
-                _packageWingetCache[arch] = result;
-                return result;
+                return null;
             }
+        }
+
+        /// <summary>
+        /// Каталоги пакета App Installer от свежей версии к старой, без дубликатов.
+        ///
+        /// Основной источник — реестр развёртывания AppX: перечислять
+        /// Program Files\WindowsApps Windows разрешает не всякому процессу (обычному
+        /// пользователю — нет, там UnauthorizedAccessException), а пройти по уже
+        /// известному пути внутрь, прочитать winget.exe и проверить его подпись —
+        /// разрешает всегда. Клиент работает elevated, и перечисление ему доступно,
+        /// но полагаться на это как на единственный путь не стоит: ровно на таком
+        /// допущении лаунчер (он asInvoker) не видел winget вообще — см. одноимённый
+        /// класс в Ven4Tools.Launcher, исправлено 2026-09-10. Копии этого класса
+        /// намеренно держатся поведенчески одинаковыми.
+        ///
+        /// Перечисление каталога остаётся вторым источником — на случай, если записи
+        /// в реестре почему-то нет.
+        /// </summary>
+        private static System.Collections.Generic.IEnumerable<string> EnumeratePackageDirectories(string arch)
+        {
+            var seen = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var dir in ReadPackageDirectoriesFromRegistry(arch))
+                if (seen.Add(dir)) yield return dir;
+            foreach (var dir in ReadPackageDirectoriesFromDisk(arch))
+                if (seen.Add(dir)) yield return dir;
+        }
+
+        private const string AppModelPackagesKey =
+            @"Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages";
+
+        /// <summary>
+        /// Пути каталогов пакета App Installer из реестра развёртывания AppX
+        /// (значение PackageRootFolder). Ветка HKCU доступна пользователю на запись,
+        /// поэтому путь оттуда — только подсказка, где искать: принимаются
+        /// исключительно каталоги внутри Program Files\WindowsApps (заблокирован
+        /// TrustedInstaller на уровне ОС), а доверие даёт Authenticode-проверка самого
+        /// winget.exe. Подменить exe через реестр так нельзя.
+        /// </summary>
+        private static System.Collections.Generic.List<string> ReadPackageDirectoriesFromRegistry(string arch)
+        {
+            var result = new System.Collections.Generic.List<string>();
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(AppModelPackagesKey);
+                if (key == null) return result;
+
+                // Публикатор "8wekyb3d8bbwe" — фиксированный хеш издателя Microsoft
+                // для App Installer, одинаков на всех машинах и версиях пакета.
+                string suffix = $"_{arch}__8wekyb3d8bbwe";
+                foreach (string name in key.GetSubKeyNames())
+                {
+                    if (!name.StartsWith("Microsoft.DesktopAppInstaller_", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    using var sub = key.OpenSubKey(name);
+                    if (sub?.GetValue("PackageRootFolder") is not string root || root.Length == 0) continue;
+                    if (!IsInsideWindowsApps(root)) continue;
+
+                    result.Add(NormalizePath(root));
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[TrustedExecutablePaths] ⚠ Реестр AppModel недоступен ({ex.GetType().Name}) — пробую перечисление каталога");
+            }
+
+            SortByPackageVersionDescending(result);
+            return result;
+        }
+
+        private static System.Collections.Generic.List<string> ReadPackageDirectoriesFromDisk(string arch)
+        {
+            var result = new System.Collections.Generic.List<string>();
+            try
+            {
+                foreach (string dir in Directory.GetDirectories(
+                    Path.Combine(ProgramFilesDir, "WindowsApps"),
+                    $"Microsoft.DesktopAppInstaller_*_{arch}__8wekyb3d8bbwe"))
+                {
+                    result.Add(NormalizePath(dir));
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[TrustedExecutablePaths] ⚠ Program Files\\WindowsApps недоступен ({ex.GetType().Name}) — остаются реестр и alias");
+            }
+
+            SortByPackageVersionDescending(result);
+            return result;
+        }
+
+        /// <summary>Путь лежит внутри %ProgramFiles%\WindowsApps (сам корень не считается).</summary>
+        internal static bool IsInsideWindowsApps(string path)
+        {
+            try
+            {
+                string root = Path.GetFullPath(Path.Combine(ProgramFilesDir, "WindowsApps"))
+                    .TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                return Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase);
+            }
+            catch { return false; }
+        }
+
+        private static string NormalizePath(string path)
+        {
+            try { return Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar); }
+            catch { return path.TrimEnd(Path.DirectorySeparatorChar); }
+        }
+
+        /// <summary>
+        /// Сбрасывает найденный путь winget. Нужен после установки winget: до неё
+        /// пакета не было, и закэшированный «не найден» пережил бы установку.
+        /// Симметрично одноимённому методу в лаунчере.
+        /// </summary>
+        internal static void InvalidateWingetCache()
+        {
+            lock (_packageWingetCacheLock)
+            {
+                _packageWingetCache.Clear();
+            }
+            InvalidateAclCache(Path.Combine(LocalAppDataDir, "Microsoft", "WindowsApps"));
+        }
+
+        // Может встретиться больше одной версии пакета (например, в окне между
+        // авто-обновлением из Store и очисткой старой) — берём самую свежую.
+        // Сортировка СТРОКОЙ некорректна: "1.9..." лексически больше "1.27...".
+        // Откат на строковую сортировку, если формат имени неожиданный.
+        private static void SortByPackageVersionDescending(System.Collections.Generic.List<string> directories)
+        {
+            directories.Sort((a, b) =>
+            {
+                var va = TryParsePackageVersion(a);
+                var vb = TryParsePackageVersion(b);
+                if (va != null && vb != null) return vb.CompareTo(va);
+                return string.Compare(b, a, StringComparison.OrdinalIgnoreCase);
+            });
         }
 
         private static readonly Regex _packageVersionRegex =

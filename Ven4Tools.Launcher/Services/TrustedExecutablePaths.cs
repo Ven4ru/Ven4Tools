@@ -296,10 +296,17 @@ namespace Ven4Tools.Launcher.Services
         private const string TrustedInstallerSid =
             "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464";
 
-        private static readonly Dictionary<string, bool> _compromisedCache = new();
+        // OrdinalIgnoreCase + нормализация ключа (NormalizeDirKey) — перенесено из
+        // клиентской копии этого класса, где так было изначально: без этого
+        // "C:\Program Files\Foo" и "C:\Program Files\Foo\" занимают разные слоты и
+        // каждый платит за отдельный GetAccessControl, а InvalidateAclCache по одному
+        // написанию не сбрасывает вердикт, закэшированный по другому.
+        private static readonly Dictionary<string, bool> _compromisedCache = new(StringComparer.OrdinalIgnoreCase);
         // Отдельный кэш для «мягкой» проверки: у неё другой набор допустимых SID,
         // поэтому один словарь на две проверки давал бы ответ от чужого вопроса.
-        private static readonly Dictionary<string, bool> _foreignWriteCache = new();
+        private static readonly Dictionary<string, bool> _foreignWriteCache = new(StringComparer.OrdinalIgnoreCase);
+
+        private static string NormalizeDirKey(string dirPath) => dirPath.TrimEnd('\\', '/');
         private static readonly object _compromisedCacheLock = new();
 
         private static readonly SecurityIdentifier? CurrentUserSid = TryGetCurrentUserSid();
@@ -338,9 +345,10 @@ namespace Ven4Tools.Launcher.Services
 
         private static bool EvaluateAcl(string dirPath, Dictionary<string, bool> cache, bool allowCurrentUser)
         {
+            string key = NormalizeDirKey(dirPath);
             lock (_compromisedCacheLock)
             {
-                if (cache.TryGetValue(dirPath, out var cached)) return cached;
+                if (cache.TryGetValue(key, out var cached)) return cached;
 
                 bool compromised = false;
                 try
@@ -369,7 +377,7 @@ namespace Ven4Tools.Launcher.Services
                     compromised = true;
                 }
 
-                cache[dirPath] = compromised;
+                cache[key] = compromised;
                 return compromised;
             }
         }
@@ -382,10 +390,11 @@ namespace Ven4Tools.Launcher.Services
         /// </summary>
         internal static void InvalidateAclCache(string dirPath)
         {
+            string key = NormalizeDirKey(dirPath);
             lock (_compromisedCacheLock)
             {
-                _compromisedCache.Remove(dirPath);
-                _foreignWriteCache.Remove(dirPath);
+                _compromisedCache.Remove(key);
+                _foreignWriteCache.Remove(key);
             }
         }
 
@@ -415,9 +424,10 @@ namespace Ven4Tools.Launcher.Services
         // отсутствует/присутствует, не меняя поведение резолвинга.
         internal static bool IsAclCacheEntryCached(string dirPath)
         {
+            string key = NormalizeDirKey(dirPath);
             lock (_compromisedCacheLock)
             {
-                return _compromisedCache.ContainsKey(dirPath) || _foreignWriteCache.ContainsKey(dirPath);
+                return _compromisedCache.ContainsKey(key) || _foreignWriteCache.ContainsKey(key);
             }
         }
     }

@@ -100,6 +100,11 @@ VIAddVersionKey /LANG=1049 "LegalCopyright"  "© ${PUBLISHER}"
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
+; Свою .onGUIInit объявить нельзя — её определяет сам MUI2. Штатная точка
+; расширения: MUI_CUSTOMFUNCTION_GUIINIT, MUI вызовет её из своей .onGUIInit.
+; Определение обязано идти ДО MUI_LANGUAGE, сама функция описана ниже, после секций.
+!define MUI_CUSTOMFUNCTION_GUIINIT Ven4GuiInit
+
 !insertmacro MUI_LANGUAGE "Russian"
 
 ; ============================================================================
@@ -143,6 +148,48 @@ Function .onInit
   StrCmp $R2 $WaitPid pid_checked
   StrCpy $WaitPid ""
   pid_checked:
+FunctionEnd
+
+; ----------------------------------------------------------------------------
+; Обнаружение установленного winget. Результат — "1"/"0" в $R3.
+;
+; Два независимых признака, как и в самом лаунчере:
+;   1. псевдоним %LOCALAPPDATA%\Microsoft\WindowsApps\winget.exe — есть на
+;      обычной машине, но его может не быть сразу после установки winget (до
+;      перезахода в систему) или когда псевдонимы отключены в параметрах Windows;
+;   2. пакет Microsoft.DesktopAppInstaller_* в реестре развёртывания AppX —
+;      читается обычным пользователем и не зависит от псевдонима.
+; Каталог Program Files\WindowsApps не трогаем: перечислять его установщику,
+; работающему без прав администратора, Windows не даёт.
+; ----------------------------------------------------------------------------
+Function IsWingetInstalled
+  Push $0
+  Push $1
+  Push $2
+  StrCpy $R3 "0"
+
+  IfFileExists "$LOCALAPPDATA\Microsoft\WindowsApps\winget.exe" 0 check_registry
+    StrCpy $R3 "1"
+    Goto winget_detect_done
+
+  check_registry:
+  StrCpy $0 0
+  registry_loop:
+    EnumRegKey $1 HKCU       "Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages" $0
+    StrCmp $1 "" winget_detect_done
+    ; 30 символов — длина префикса "Microsoft.DesktopAppInstaller_"
+    StrCpy $2 $1 30
+    StrCmp $2 "Microsoft.DesktopAppInstaller_" 0 registry_next
+      StrCpy $R3 "1"
+      Goto winget_detect_done
+    registry_next:
+    IntOp $0 $0 + 1
+    Goto registry_loop
+
+  winget_detect_done:
+  Pop $2
+  Pop $1
+  Pop $0
 FunctionEnd
 
 ; ============================================================================
@@ -340,6 +387,24 @@ Section /o "Установить Chocolatey (опционально)" SEC_CHOCO
   FileClose $0
   choco_section_done:
 SectionEnd
+
+; Состояние галок на странице компонентов. Именно .onGUIInit, а не .onInit:
+; NSIS разбирает скрипт линейно, и в .onInit индекс ${SEC_WINGET} ещё не определён
+; (секции идут ниже по файлу). В тихом режиме самообновления графики нет и эта
+; функция не вызывается — там секции и так ничего не делают (проверка $UpdateMode).
+Function Ven4GuiInit
+  ; Winget уже стоит — снимаем галку и говорим об этом прямо на странице компонентов.
+  ; Раньше проверки не было вообще: секция всегда была отмечена, и страница выглядела
+  ; так, будто winget надо ставить заново, — при том что её же описание обещало
+  ; «если Winget уже установлен, действие будет безопасно пропущено» (пропускал его
+  ; лаунчер, но уже после установки и молча). Секцию не блокируем: переустановить
+  ; winget поверх — законное желание.
+  Call IsWingetInstalled
+  StrCmp $R3 "1" 0 winget_check_done
+  SectionSetFlags ${SEC_WINGET} 0
+  SectionSetText  ${SEC_WINGET} "Переустановить Winget (уже установлен)"
+  winget_check_done:
+FunctionEnd
 
 ; --- Описания секций на странице компонентов ---
 LangString DESC_SecMain    ${LANG_RUSSIAN} "Файлы лаунчера, ярлыки и регистрация в «Программы и компоненты». Обязательный компонент."

@@ -40,7 +40,8 @@ namespace Ven4Tools.Launcher
             {
                 _installPath = dialog.SelectedPath;
                 _clientPath  = Path.Combine(_installPath, "Ven4Tools_Client");
-                Directory.CreateDirectory(_clientPath);
+                // Заранее не создаём — выбор папки ещё не означает установку;
+                // каталог появится вместе с первой установкой клиента.
                 txtInstallPath.Text = _clientPath;
                 SaveSettings();
                 AddLog($"📁 Папка установки изменена: {_clientPath}");

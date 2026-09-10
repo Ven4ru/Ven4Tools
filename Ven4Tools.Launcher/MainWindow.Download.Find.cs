@@ -20,21 +20,37 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
+            // Поиск делит с остальными долгими операциями строку статуса и кнопку
+            // «Отмена», поэтому идёт через общий слот — иначе он и идущая загрузка
+            // перетягивали бы эти элементы друг у друга.
+            using var lease = TryBeginOperation("Поиск клиента на диске", TimeSpan.FromMinutes(30));
+            if (lease == null) return;
+
             btnFindClient.IsEnabled = false;
             AddLog("🔍 Поиск Ven4Tools.exe на диске...");
+            // Обход рекурсивный и по обоим Program Files: на забитом диске это минуты.
+            // Раньше кнопка просто гасла без прогресса и без возможности прервать —
+            // отличить «ищет» от «повис» было нечем.
+            btnCancelDownload.Visibility = Visibility.Visible;
+            txtDownloadStatus.Text = "Поиск клиента...";
 
             try
             {
+                using var step = lease.CreateStep(TimeSpan.FromMinutes(30));
+                var token = step.Token;
+
                 var found = await Task.Run(() =>
                 {
                     var results = new List<string>();
                     foreach (var root in GetClientSearchRoots())
                     {
+                        token.ThrowIfCancellationRequested();
                         if (!Directory.Exists(root)) continue;
-                        results.AddRange(EnumerateFilesSafe(root, LauncherPaths.ClientExeName));
+                        Dispatcher.Invoke(() => txtDownloadStatus.Text = $"Поиск: {ShortenPath(root)}");
+                        results.AddRange(EnumerateFilesSafe(root, LauncherPaths.ClientExeName, token));
                     }
                     return results;
-                });
+                }, token);
 
                 if (found.Count == 0)
                 {
@@ -103,6 +119,10 @@ namespace Ven4Tools.Launcher
                 AddLog($"✅ Папка установки: {_clientPath}");
                 CheckExistingClient();
             }
+            catch (OperationCanceledException)
+            {
+                AddLog("⏹ Поиск клиента отменён");
+            }
             catch (Exception ex)
             {
                 AddLog($"❌ Ошибка поиска: {ex.Message}");
@@ -110,7 +130,22 @@ namespace Ven4Tools.Launcher
             finally
             {
                 btnFindClient.IsEnabled = true;
+                btnCancelDownload.Visibility = Visibility.Collapsed;
+                txtDownloadStatus.Text = "Готов";
             }
+        }
+
+        // Длинный путь в строке статуса переносил бы разметку — показываем корень и
+        // последний сегмент, этого достаточно, чтобы понять, где сейчас идёт обход.
+        private static string ShortenPath(string path)
+        {
+            try
+            {
+                string root = Path.GetPathRoot(path) ?? "";
+                string leaf = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar));
+                return string.IsNullOrEmpty(leaf) ? path : $"{root}...\\{leaf}";
+            }
+            catch { return path; }
         }
 
         /// <summary>
@@ -184,13 +219,19 @@ namespace Ven4Tools.Launcher
         // вокруг них ловит недоступность каждой папки отдельно, а остальное дерево
         // продолжает сканироваться (тот же паттерн, что AppLaunchResolver.EnumerateLnkFilesSafe
         // в клиенте). Пропуск недоступной папки — штатная ситуация, не логируется.
-        private static IEnumerable<string> EnumerateFilesSafe(string root, string searchPattern)
+        private static IEnumerable<string> EnumerateFilesSafe(
+            string root, string searchPattern, CancellationToken token = default)
         {
             var result = new List<string>();
             var stack = new Stack<string>();
             stack.Push(root);
             while (stack.Count > 0)
             {
+                // Проверка на каждом каталоге, а не на каждом корне: обход одного
+                // Program Files сам по себе может идти минуты, и отмена обязана
+                // сработать внутри него, а не после.
+                token.ThrowIfCancellationRequested();
+
                 string dir = stack.Pop();
 
                 string[] files;
