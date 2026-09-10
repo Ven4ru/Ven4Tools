@@ -122,7 +122,12 @@ namespace Ven4Tools.Launcher
                     AddLog($"🧹 Остатки прерванной установки: восстановлено {cleanup.Restored}, удалено {cleanup.Removed}");
                 }
             }
-            Directory.CreateDirectory(_clientPath);
+            // Папку клиента здесь НЕ создаём. Раньше конструктор делал это
+            // безусловно, и у каждого, кто лаунчер только запустил, появлялся пустой
+            // каталог Ven4Tools_Client — с переездом умолчания в «Документы» этот
+            // мусор стал попадать пользователю на глаза. Каталог создаётся тем, кто в
+            // него пишет: TransactionalDirectoryInstaller при установке сам переносит
+            // туда staging и корректно работает с несуществующим target.
             txtInstallPath.Text = _isUiTestMode ? @"C:\Ven4Tools-Test\Client" : _clientPath;
 
             // Начальное состояние главной кнопки выставляем синхронно по наличию клиента
@@ -268,15 +273,26 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
+            // Раньше этот метод не оставлял о себе ни строчки: показал окна или нет,
+            // почему нет — узнать было нечем. Отчёты о сбоях появляются у пользователя
+            // редко и не по команде, поэтому «ничего не произошло» тут неотличимо от
+            // «файл не разобрался» без единого следа.
             var crash = ReadCrashReport();
             if (crash != null && !crash.Reported)
             {
+                AddLog($"🐛 Клиент завершился с ошибкой ({crash.ExceptionType}) — показываю отчёт");
                 var win = new CrashReportWindow(crash) { Owner = this };
                 win.ShowDialog();
             }
+            else if (crash != null)
+            {
+                AddLog("🐛 Отчёт о сбое клиента уже был показан ранее — пропускаю");
+            }
+
             var failures = ReadInstallFailures();
             if (failures.Count > 0)
             {
+                AddLog($"📋 Неудачных установок в журнале клиента: {failures.Count} — показываю отчёт");
                 var win = new InstallReportWindow(failures) { Owner = this };
                 win.ShowDialog();
             }

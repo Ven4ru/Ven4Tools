@@ -98,6 +98,33 @@ namespace Ven4Tools.Launcher
 
         private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
 
+        /// <summary>
+        /// Открывает проводник с выделенным launcher.log. Именно выделение файла, а не
+        /// просто папки: рядом лежат краш-отчёты и журналы установки, и «откройте папку
+        /// и найдите нужный файл» — заведомо худшая инструкция, чем готовое выделение.
+        /// Если журнал ещё не создан (первый запуск, запись отключена ошибкой диска) —
+        /// открываем саму папку.
+        /// </summary>
+        private void BtnOpenLogFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.IO.Directory.CreateDirectory(LauncherLog.LogDirectory);
+
+                var psi = System.IO.File.Exists(LauncherLog.LogPath)
+                    ? new System.Diagnostics.ProcessStartInfo("explorer.exe", $"/select,\"{LauncherLog.LogPath}\"")
+                    : new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{LauncherLog.LogDirectory}\"");
+                psi.UseShellExecute = true;
+                System.Diagnostics.Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Не удалось открыть папку журнала:\n{ex.Message}\n\nПуть: {LauncherLog.LogDirectory}",
+                    "Журнал лаунчера", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
         // --- Диагностика клиента ---
 
         // async void обработчик обязан ловить всё сам: необработанное исключение из

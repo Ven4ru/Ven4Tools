@@ -23,7 +23,11 @@ param(
 
     [string]$PrivateKeyPath = "$env:USERPROFILE\.ven4tools\update-manifest-signing-private.pem",
     [string]$PublicKeyPath = "$env:USERPROFILE\.ven4tools\update-manifest-signing-public.pem",
-    [string]$SignerDll = "$PSScriptRoot\UpdateManifestSigner\bin\Release\net8.0\UpdateManifestSigner.dll"
+    [string]$SignerDll = "$PSScriptRoot\UpdateManifestSigner\bin\Release\net8.0\UpdateManifestSigner.dll",
+
+    # Разрешить публикацию манифеста, в котором версия клиента или лаунчера СТАРШЕ
+    # уже опубликованной на CDN. Нужен только для осознанного отката релиза.
+    [switch]$AllowClientDowngrade
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,6 +40,45 @@ if (-not (Test-Path $PrivateKeyPath)) {
 if (-not (Test-Path $SignerDll)) {
     Write-Host "UpdateManifestSigner не собран — собираю..."
     dotnet build "$PSScriptRoot\UpdateManifestSigner\UpdateManifestSigner.csproj" -c Release --nologo | Out-Null
+}
+
+# ----------------------------------------------------------------------------
+# Защита от отката манифеста
+# ----------------------------------------------------------------------------
+# version.json лежит в .gitignore: он не версионируется, никем не синхронизируется
+# после деплоя и потому спокойно отстаёт от того, что реально опубликовано. Живой
+# случай 2026-09-10: локальная копия несла клиент 5.1.0, тогда как на CDN уже был
+# 5.1.1 вместе с полями files_base_mirror_hosting/updated_at и расширенным
+# historicalClientArchives — деплой лаунчерного релиза из неё откатил бы всю
+# клиентскую часть манифеста, и клиенты 5.1.1 остались бы без манифеста своей версии.
+# Поймали руками, но полагаться на внимательность здесь нельзя.
+if (-not $AllowClientDowngrade) {
+    try {
+        $liveRaw = (Invoke-WebRequest "https://cdn.ven4tools.ru/version.json" -UseBasicParsing -TimeoutSec 20).Content
+        $live = $liveRaw | ConvertFrom-Json
+        $local = Get-Content $VersionJsonPath -Raw | ConvertFrom-Json
+
+        foreach ($part in @(
+            @{ Name = "клиента";  Live = $live.client.version;   Local = $local.client.version },
+            @{ Name = "лаунчера"; Live = $live.launcher.version; Local = $local.launcher.version }
+        )) {
+            if (-not $part.Live -or -not $part.Local) { continue }
+            $liveVer = [version]$part.Live
+            $localVer = [version]$part.Local
+            if ($localVer -lt $liveVer) {
+                throw "Отказ: версия $($part.Name) в локальном манифесте ($($part.Local)) СТАРШЕ той, " +
+                      "что уже опубликована на CDN ($($part.Live)). Локальный version.json отстал — " +
+                      "возьмите за основу живой манифест (https://cdn.ven4tools.ru/version.json) и " +
+                      "правьте в нём только нужный блок. Осознанный откат — ключ -AllowClientDowngrade."
+            }
+        }
+        Write-Host "Проверка отката: ок (CDN client=$($live.client.version) launcher=$($live.launcher.version))"
+    }
+    catch [System.Net.WebException] {
+        # CDN недоступен — сверять не с чем. Это не повод блокировать деплой:
+        # именно ради недоступного CDN манифест и переливают.
+        Write-Warning "CDN недоступен, проверка отката пропущена: $($_.Exception.Message)"
+    }
 }
 
 $sigPath = "$VersionJsonPath.sig"

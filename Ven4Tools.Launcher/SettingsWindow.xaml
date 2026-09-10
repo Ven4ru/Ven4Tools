@@ -92,6 +92,14 @@
                     Margin="0,8,0,0" Visibility="Collapsed" Click="BtnRepairIntegrity_Click"
                     ToolTip="Докачает повреждённые или отсутствующие файлы и удалит лишние — по списку, который показала проверка выше."/>
 
+            <TextBlock Text="ЖУРНАЛ ЛАУНЧЕРА" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
+            <TextBlock Text="Ход работы лаунчера пишется в файл — его удобно приложить к обращению. Имя пользователя, имя компьютера и пути профиля из журнала вычищаются при записи."
+                       TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+            <Button x:Name="btnOpenLogFolder" Content="Открыть папку журнала" Height="34" Margin="0,4"
+                    Click="BtnOpenLogFolder_Click"
+                    ToolTip="Откроет проводник на файле launcher.log. Журнал предыдущей сессии лежит рядом как launcher.old.log."/>
+
             <Button x:Name="btnCloseSettings" Content="Закрыть" Height="34" Margin="0,24,0,0"
                     HorizontalAlignment="Right" Width="100" Click="BtnClose_Click"/>
         </StackPanel>

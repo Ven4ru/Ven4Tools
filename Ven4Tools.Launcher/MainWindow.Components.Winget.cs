@@ -214,6 +214,43 @@ namespace Ven4Tools.Launcher
         private const string WindowsAppRuntimeInstallerUrl =
             "https://aka.ms/windowsappsdk/1.8/1.8.260710003/windowsappruntimeinstall-x64.exe";
 
+        // Второй такой же пин. Держим рядом с первым, чтобы обновлять их одним заходом:
+        // раньше он был закопан в теле метода загрузки и о нём легко было забыть.
+        private const string UiXamlPackageUrl =
+            "https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx";
+
+        // VCLibs — единственная зависимость с вечной ссылкой «latest» у Microsoft,
+        // версия в URL не фигурирует и протухнуть не может.
+        private const string VcLibsPackageUrl =
+            "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx";
+
+        /// <summary>
+        /// Скачивание зависимости winget с пояснением, ЧТО именно сломалось. Два URL выше
+        /// содержат жёстко зашитые версии, и в день, когда Microsoft уберёт их с раздачи,
+        /// установка winget упадёт с обычной сетевой ошибкой вида «404 (Not Found)» —
+        /// по такому сообщению никто не догадается, что чинить надо пин в коде лаунчера,
+        /// а не сеть у пользователя. Отмену и таймаут пробрасываем как есть: их
+        /// обрабатывает InstallWingetAsync.
+        /// </summary>
+        private async Task DownloadWingetDependencyAsync(
+            string url, string destPath, string label, bool pinnedVersion, CancellationToken ct)
+        {
+            try
+            {
+                await DownloadTrustedFileAsync(url, destPath, label, reportProgress: false, ct);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                string hint = pinnedVersion
+                    ? $" Ссылка содержит зафиксированную версию ({url}) — возможно, Microsoft её больше не раздаёт " +
+                      "и пин в лаунчере нужно обновить."
+                    : "";
+                throw new InvalidOperationException(
+                    $"не удалось скачать зависимость «{label}»: {ex.Message}.{hint}", ex);
+            }
+        }
+
         // Скачивание пакетов winget: зависимости (VCLibs + UI.Xaml + установщик
         // Windows App Runtime) параллельно и без индивидуального прогресса (иначе
         // загрузки перебивали бы полосу друг у друга), затем основной msixbundle —
@@ -224,13 +261,12 @@ namespace Ven4Tools.Launcher
             AddLog("⬇️ Скачивание зависимостей...");
             Dispatcher.Invoke(() => txtDownloadStatus.Text = "Скачивание зависимостей...");
 
-            var vcLibsTask = DownloadTrustedFileAsync(
-                "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx", tempVcLibs, "VCLibs", reportProgress: false, ct);
-            var uiXamlTask = DownloadTrustedFileAsync(
-                "https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx",
-                tempUiXaml, "UI.Xaml", reportProgress: false, ct);
-            var appRuntimeTask = DownloadTrustedFileAsync(
-                WindowsAppRuntimeInstallerUrl, tempAppRuntime, "Windows App Runtime", reportProgress: false, ct);
+            var vcLibsTask = DownloadWingetDependencyAsync(
+                VcLibsPackageUrl, tempVcLibs, "VCLibs", pinnedVersion: false, ct);
+            var uiXamlTask = DownloadWingetDependencyAsync(
+                UiXamlPackageUrl, tempUiXaml, "UI.Xaml 2.8.6", pinnedVersion: true, ct);
+            var appRuntimeTask = DownloadWingetDependencyAsync(
+                WindowsAppRuntimeInstallerUrl, tempAppRuntime, "Windows App Runtime 1.8", pinnedVersion: true, ct);
 
             await Task.WhenAll(vcLibsTask, uiXamlTask, appRuntimeTask);
 
