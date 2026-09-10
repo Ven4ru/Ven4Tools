@@ -311,6 +311,18 @@
                                                 Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
                                                 ToolTip="Запустит установленное приложение."/>
 
+                                        <!-- Замок вместо кнопки запуска: exe найден, но его папка
+                                             доступна на запись обычному пользователю, а клиент работает
+                                             с правами администратора. Отказ правильный, но раньше он был
+                                             молчаливым — причина писалась только в app.log. -->
+                                        <TextBlock Text="🔒" Width="22" Height="22" Margin="4,0,0,0"
+                                                   VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                   TextAlignment="Center" FontSize="12" Opacity="0.65"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   Visibility="{Binding ShowLaunchBlocked, Converter={StaticResource BoolToVis}}"
+                                                   ToolTip="{Binding LaunchBlockedReason}"
+                                                   ToolTipService.ShowDuration="20000"/>
+
                                         <Button Content="🔄" Width="24" Height="24" Margin="4,0,0,0"
                                                 Command="{Binding DataContext.SuggestAlternativeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"

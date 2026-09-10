@@ -403,6 +403,21 @@ namespace Ven4Tools.ViewModels
 
         public bool CanLaunch => IsInstalled && !string.IsNullOrEmpty(LaunchPath);
 
+        private string? _launchBlockedReason;
+        /// <summary>
+        /// Почему у установленного приложения нет кнопки «Запустить». Заполняется, только
+        /// когда exe найден, но его каталог отклонён проверкой прав (AppLaunchResolver);
+        /// когда exe не нашёлся вовсе — null, объяснять нечего.
+        /// </summary>
+        public string? LaunchBlockedReason
+        {
+            get => _launchBlockedReason;
+            set { if (SetField(ref _launchBlockedReason, value)) OnPropertyChanged(nameof(ShowLaunchBlocked)); }
+        }
+
+        /// <summary>Показывать значок с пояснением вместо кнопки запуска.</summary>
+        public bool ShowLaunchBlocked => IsInstalled && !CanLaunch && !string.IsNullOrEmpty(LaunchBlockedReason);
+
         public RelayCommand LaunchCommand => _launchCommand ??= new RelayCommand(_ => Launch());
         private RelayCommand? _launchCommand;
 
