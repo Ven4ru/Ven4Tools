@@ -25,7 +25,16 @@ namespace Ven4Tools.Launcher
             using var dialog = new FolderBrowserDialog
             {
                 Description      = "Выберите папку для установки Ven4Tools",
-                ShowNewFolderButton = true
+                ShowNewFolderButton = true,
+                // Открываем диалог на текущей папке установки. Без этого он каждый раз
+                // стартовал с «Рабочего стола», и пользователь заново искал место,
+                // которое лаунчер тут же показывает ему в карточке пути.
+                //
+                // Нужны ОБА свойства: SelectedPath лишь выделяет элемент (диалог при
+                // этом открывается в родительской папке — проверено живьём), а внутрь
+                // самой папки заходит только InitialDirectory.
+                InitialDirectory = Directory.Exists(_installPath) ? _installPath : "",
+                SelectedPath     = Directory.Exists(_installPath) ? _installPath : ""
             };
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
@@ -496,7 +505,13 @@ namespace Ven4Tools.Launcher
                 // без него невозможна.
                 await RefreshInstalledManifestAsync(versionLabel, token);
 
-                Dispatcher.Invoke(() => SetLaunchButtonState(LaunchButtonState.Launch));
+                // CheckExistingClient, а не голый SetLaunchButtonState: он перечитывает
+                // версию с диска и обновляет подпись «Текущая версия». Раньше после
+                // успешной установки кнопка становилась «Запустить», а рядом
+                // продолжало висеть «Текущая версия: не установлена» — состояние,
+                // которое было верным ровно до этого момента. quiet — отчёт об
+                // установке в журнале уже есть.
+                Dispatcher.Invoke(() => CheckExistingClient(quiet: true));
                 _clientUpdateAvailable = false;
                 return true;
             }

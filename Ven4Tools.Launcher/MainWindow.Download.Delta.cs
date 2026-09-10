@@ -151,7 +151,10 @@ namespace Ven4Tools.Launcher
                     SetOperationStage(5); // Готово
                     txtDownloadStatus.Text = "Готово";
                     progressDownload.Value = 100;
-                    SetLaunchButtonState(LaunchButtonState.Launch);
+                    // Перечитываем версию с диска вместе с переключением кнопки —
+                    // иначе подпись «Текущая версия» осталась бы от предыдущей
+                    // версии клиента (тот же дефект, что на полной установке).
+                    CheckExistingClient(quiet: true);
                 });
                 AddLog($"✅ Клиент обновлён до {version.Version} блочным обновлением " +
                        $"({plan.ToDownload.Count} файлов, {FormatBytes(plan.DownloadBytes)})");

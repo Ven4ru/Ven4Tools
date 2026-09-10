@@ -11,28 +11,34 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="20">
             <TextBlock Text="ПОВЕДЕНИЕ ЛАУНЧЕРА" Style="{StaticResource EyebrowStyle}" Margin="0,0,0,8"/>
-            <CheckBox x:Name="chkBackgroundUpdates" Margin="0,4" Click="ChkBackgroundUpdates_Click">
+            <CheckBox x:Name="chkBackgroundUpdates" Margin="0,4"
+                      Checked="ChkBackgroundUpdates_Changed" Unchecked="ChkBackgroundUpdates_Changed">
                 <TextBlock Text="Проверять обновления в фоне" TextWrapping="Wrap"/>
             </CheckBox>
-            <CheckBox x:Name="chkStartMinimized" Margin="0,4" Click="ChkStartMinimized_Click">
+            <CheckBox x:Name="chkStartMinimized" Margin="0,4"
+                      Checked="ChkStartMinimized_Changed" Unchecked="ChkStartMinimized_Changed">
                 <TextBlock Text="Запускать свёрнутым в трей" TextWrapping="Wrap"/>
             </CheckBox>
-            <CheckBox x:Name="chkAutostart" Margin="0,4" Click="ChkAutostart_Click">
+            <CheckBox x:Name="chkAutostart" Margin="0,4"
+                      Checked="ChkAutostart_Changed" Unchecked="ChkAutostart_Changed">
                 <TextBlock Text="Запускать при старте Windows" TextWrapping="Wrap"/>
             </CheckBox>
 
             <TextBlock Text="ОБНОВЛЕНИЕ КЛИЕНТА" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
             <RadioButton x:Name="rbAutoUpdateManual" GroupName="AutoUpdateMode" Margin="0,4"
-                         Foreground="{DynamicResource TextPrimary}" Click="RbAutoUpdateMode_Click">
+                         Foreground="{DynamicResource TextPrimary}"
+                         Checked="RbAutoUpdateMode_Changed">
                 <TextBlock Text="Вручную"/>
             </RadioButton>
             <RadioButton x:Name="rbAutoUpdateAuto" GroupName="AutoUpdateMode" Margin="0,4"
-                         Foreground="{DynamicResource TextPrimary}" Click="RbAutoUpdateMode_Click">
+                         Foreground="{DynamicResource TextPrimary}"
+                         Checked="RbAutoUpdateMode_Changed">
                 <TextBlock Text="Автоматически"/>
             </RadioButton>
 
             <TextBlock Text="ИСТОЧНИК ЗАГРУЗКИ" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
             <ComboBox x:Name="cmbDownloadSource" Margin="0,4"
+                      AutomationProperties.Name="Источник загрузки"
                       SelectionChanged="CmbDownloadSource_SelectionChanged">
                 <ComboBoxItem Content="Авто (рекомендуется)"/>
                 <ComboBoxItem Content="GitHub"/>

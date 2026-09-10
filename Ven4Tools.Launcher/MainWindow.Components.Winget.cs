@@ -13,12 +13,21 @@ namespace Ven4Tools.Launcher
 {
     public partial class MainWindow
     {
-        private async Task<(bool IsInstalled, string? Version, bool IsOutdated)> CheckWingetWithVersionAsync()
+        // Diagnostic заполняется только при неудаче и объясняет, ПОЧЕМУ winget считается
+        // не установленным. Без него единственным следом в журнале было «❌ Winget не
+        // установлен!», одинаковое и для отсутствующего пакета, и для запрета доступа,
+        // и для зависшего процесса — разобраться, что именно происходит на конкретной
+        // машине, было нечем.
+        private async Task<(bool IsInstalled, string? Version, bool IsOutdated, string? Diagnostic)>
+            CheckWingetWithVersionAsync()
         {
             try
             {
                 var wingetPath = Services.TrustedExecutablePaths.ResolveWinget();
-                if (wingetPath == null) return (false, null, false);
+                if (wingetPath == null)
+                    return (false, null, false,
+                        "исполняемый файл не найден: нет пакета App Installer в Program Files\\WindowsApps " +
+                        "и нет псевдонима %LocalAppData%\\Microsoft\\WindowsApps\\winget.exe");
 
                 var psi = new ProcessStartInfo
                 {
@@ -30,7 +39,7 @@ namespace Ven4Tools.Launcher
                     CreateNoWindow         = true
                 };
                 using var process = Process.Start(psi);
-                if (process == null) return (false, null, false);
+                if (process == null) return (false, null, false, $"не удалось запустить {wingetPath}");
 
                 var stderrTask = process.StandardError.ReadToEndAsync();
                 var stdoutTask = process.StandardOutput.ReadToEndAsync();
@@ -40,14 +49,16 @@ namespace Ven4Tools.Launcher
                 catch (OperationCanceledException)
                 {
                     try { process.Kill(); } catch { }
-                    return (false, null, false);
+                    return (false, null, false, $"{wingetPath} --version не ответил за 10 секунд");
                 }
 
                 string output = await stdoutTask;
-                await stderrTask;
+                string errors = await stderrTask;
 
                 if (process.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
-                    return (false, null, false);
+                    return (false, null, false,
+                        $"{wingetPath} --version вернул код {process.ExitCode}" +
+                        (string.IsNullOrWhiteSpace(errors) ? "" : $": {errors.Trim()}"));
 
                 string version = output.Trim().TrimStart('v');
 
@@ -57,9 +68,9 @@ namespace Ven4Tools.Launcher
                 if (latestVersion != null && Version.TryParse(version, out var current) && Version.TryParse(latestVersion, out var latest))
                     isOutdated = current < latest;
 
-                return (true, version, isOutdated);
+                return (true, version, isOutdated, null);
             }
-            catch { return (false, null, false); }
+            catch (Exception ex) { return (false, null, false, $"{ex.GetType().Name}: {ex.Message}"); }
         }
 
         // interactive = false — автоматический (marker-driven) вызов из setup:
@@ -109,6 +120,12 @@ namespace Ven4Tools.Launcher
 
                 if (!await RunWingetInstallScriptAsync(tempVcLibs, tempUiXaml, tempMsix, ct))
                     return;
+
+                // Пакет только что появился — всё, что резолвер успел закэшировать до
+                // установки (в т.ч. fail-closed вердикт по ACL каталога псевдонимов),
+                // устарело и должно быть перечитано, иначе проверка ниже сообщит
+                // «не найден» о только что установленном winget.
+                Services.TrustedExecutablePaths.InvalidateWingetCache();
 
                 var result = await CheckWingetWithVersionAsync();
                 if (result.IsInstalled)

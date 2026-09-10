@@ -105,9 +105,9 @@ namespace Ven4Tools.Launcher
             if (string.IsNullOrEmpty(_installPath))
                 _installPath = _isUiTestMode
                     ? Path.Combine(appData, "Install")
-                    : AppDomain.CurrentDomain.BaseDirectory;
+                    : ResolveInitialInstallRoot();
 
-            _clientPath = Path.Combine(_installPath, "Ven4Tools_Client");
+            _clientPath = ResolveClientPath();
             // Cleanup — ДО CreateDirectory: иначе target уже существует (пустым) к моменту
             // проверки, и восстановление .backup-* при прерванной установке никогда не сработает.
             if (!_isUiTestMode)
@@ -173,6 +173,73 @@ namespace Ven4Tools.Launcher
                 else
                     ShowStartupReports();
             };
+        }
+
+        /// <summary>
+        /// Папка установленного клиента. Обычно это <c>&lt;папка установки&gt;\Ven4Tools_Client</c>,
+        /// но «Найти клиент на диске» умеет привязать лаунчер к папке с любым именем
+        /// (скажем, <c>D:\Games\MyVen4Tools</c>). Раньше в настройки писалась только папка
+        /// установки, а этот путь пересобирался при каждом старте по шаблону — то есть
+        /// привязка жила ровно до перезапуска лаунчера, после чего клиент «пропадал» и
+        /// его предлагалось скачать заново.
+        ///
+        /// Сохранённый путь всё равно перепроверяется: файл настроек можно отредактировать
+        /// руками, а по этому пути идут рекурсивное удаление («Удалить клиент») и
+        /// транзакционная установка, которая целиком заменяет каталог.
+        /// </summary>
+        private string ResolveClientPath()
+        {
+            string derived = Path.Combine(_installPath, "Ven4Tools_Client");
+            if (_isUiTestMode || string.IsNullOrWhiteSpace(_clientPath)) return derived;
+
+            if (!InstallPathGuard.IsClientPathSafe(_clientPath, _dataFolderPath))
+            {
+                AddLog($"⚠️ Сохранённая папка клиента небезопасна ({_clientPath}) — возвращаюсь к {derived}");
+                return derived;
+            }
+
+            return _clientPath;
+        }
+
+        /// <summary>
+        /// Куда ставить клиент, когда в настройках пути ещё нет (первый запуск).
+        /// По умолчанию — «Документы» пользователя: раньше здесь стояла папка самого
+        /// лаунчера (<c>%LocalAppData%\Ven4Tools\Launcher</c>), и клиент разворачивался
+        /// внутри служебного каталога профиля, куда пользователь не заглядывает и где
+        /// его не ожидает найти.
+        ///
+        /// Исключение — уже установленный клиент рядом с exe лаунчера: так работали
+        /// все версии до этой, и смена умолчания не должна «терять» рабочую копию у
+        /// того, у кого настройки не сохранились (битый или удалённый
+        /// launcher_settings.json). Такой пользователь остаётся на своём месте, а
+        /// перенести папку может кнопкой «Изменить…» в карточке пути.
+        /// </summary>
+        private static string ResolveInitialInstallRoot()
+        {
+            string legacyRoot = AppDomain.CurrentDomain.BaseDirectory;
+            try
+            {
+                if (File.Exists(Path.Combine(legacyRoot, "Ven4Tools_Client", "Ven4Tools.exe")))
+                    return legacyRoot;
+            }
+            catch { /* путь недоступен — просто идём за «Документами» */ }
+
+            try
+            {
+                // SpecialFolderOption.Create: папка «Документы» может быть перенаправлена
+                // (OneDrive, сетевой профиль) и физически ещё не существовать — тогда её
+                // создаёт сама ОС по актуальному пути перенаправления.
+                string documents = Environment.GetFolderPath(
+                    Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.Create);
+                if (!string.IsNullOrWhiteSpace(documents) && Directory.Exists(documents))
+                    return documents;
+            }
+            catch { /* перенаправление на недоступный диск и т.п. — откат ниже */ }
+
+            // Крайний случай: «Документы» недоступны. Профиль пользователя есть всегда,
+            // и он точно доступен на запись — лучше, чем вернуться в каталог лаунчера.
+            string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            return string.IsNullOrWhiteSpace(profile) ? legacyRoot : profile;
         }
 
         // Показ отложенных модальных отчётов при старте: крэш клиента и неуспешные
@@ -245,6 +312,9 @@ namespace Ven4Tools.Launcher
         {
             public bool    MinimizeToTray              { get; set; } = true;
             public string? InstallPath                 { get; set; }
+            // Папка клиента отдельно от папки установки: «Найти клиент на диске»
+            // может привязать лаунчер к каталогу с произвольным именем (см. ResolveClientPath).
+            public string? ClientPath                  { get; set; }
             public bool    BackgroundUpdates           { get; set; } = true;
             public bool    Autostart                   { get; set; }
             public bool    StartMinimized              { get; set; }

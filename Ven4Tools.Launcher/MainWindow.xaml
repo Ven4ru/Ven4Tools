@@ -13,6 +13,47 @@
             <Setter Property="Padding" Value="12,0"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
+        <!-- Карточка «ПАПКА УСТАНОВКИ» как кнопка: выглядит панелью, ведёт себя как
+             элемент управления (курсор-рука, подсветка при наведении, фокус с клавиатуры,
+             доступна автоматизации под тем же именем btnSelectFolder). Базовый стиль
+             Button намеренно не наследуем: он задаёт фиксированную высоту 35 и
+             центрирование, а карточке нужна высота по содержимому. -->
+        <Style x:Key="InstallPathCard" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
+            <Setter Property="ToolTipService.BetweenShowDelay" Value="100"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="cardBorder" Background="#660A0A14"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="5" Padding="12,9">
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="cardBorder" Property="Background"
+                                        Value="{DynamicResource AccentSoftBackground}"/>
+                                <Setter TargetName="cardBorder" Property="BorderBrush"
+                                        Value="{DynamicResource AccentSoftBorder}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="cardBorder" Property="BorderBrush"
+                                        Value="{StaticResource BrandGreen}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="cardBorder" Property="Background" Value="#332F855A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="StageDot" TargetType="Border">
             <Setter Property="Width" Value="24"/>
             <Setter Property="Height" Value="24"/>
@@ -73,9 +114,12 @@
                     <StackPanel>
                         <Expander Header="Параметры установки" IsExpanded="True" Margin="0,0,0,8">
                             <StackPanel Margin="0,8,0,4">
-                                <Button x:Name="btnSelectFolder" Content="Выбрать папку"
-                                        ToolTip="Откроет выбор безопасной папки, куда лаунчер будет устанавливать и обновлять клиент."
-                                        Style="{StaticResource SideCommand}" Click="BtnSelectFolder_Click"/>
+                                <!-- «Выбрать папку» отсюда убрана: выбор папки живёт прямо
+                                     в карточке «ПАПКА УСТАНОВКИ» на главном экране, рядом
+                                     с показом текущего пути (btnSelectFolder ниже). Две
+                                     точки входа в один и тот же диалог только прятали
+                                     действие: в сайдбаре его никто не связывал с путём,
+                                     который виден в другом месте окна. -->
                                 <Button x:Name="btnFindClient" Content="Найти клиент на диске"
                                         ToolTip="Найдёт Ven4Tools.exe в стандартных папках и предложит привязать лаунчер к найденной копии."
                                         Style="{StaticResource SideCommand}" Click="BtnFindClient_Click"/>
@@ -165,14 +209,33 @@
                             <TextBlock Text="Готов к установке" FontSize="22" FontWeight="SemiBold" Margin="0,7,0,6"/>
                             <TextBlock Text="Лаунчер автоматически выберет актуальную версию, проверит целостность и установит клиент без лишних шагов."
                                        Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" MaxWidth="520"/>
-                            <Border Margin="0,14,0,0" Padding="10,7" Background="#660A0A14"
-                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5">
-                                <StackPanel>
-                                    <TextBlock Text="ПАПКА УСТАНОВКИ" FontSize="9" Foreground="{DynamicResource TextSecondary}"/>
-                                    <TextBlock x:Name="txtInstallPath" Text="Не выбрана" FontFamily="Cascadia Mono, Consolas"
-                                               FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"/>
-                                </StackPanel>
-                            </Border>
+                            <!-- Папка установки: не просто подпись, а точка входа в её выбор.
+                                 Кликабельна вся карточка, плюс явная кнопка-подсказка справа —
+                                 путь и способ его изменить теперь в одном месте. -->
+                            <Button x:Name="btnSelectFolder" Style="{StaticResource InstallPathCard}"
+                                    Margin="0,14,0,0" HorizontalAlignment="Stretch" MaxWidth="520"
+                                    AutomationProperties.Name="Изменить папку установки"
+                                    ToolTip="Откроет выбор папки, куда лаунчер установит и будет обновлять клиент. Текущая папка показана здесь же."
+                                    Click="BtnSelectFolder_Click">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="ПАПКА УСТАНОВКИ" FontSize="9" Foreground="{DynamicResource TextSecondary}"/>
+                                        <TextBlock x:Name="txtInstallPath" Text="Не выбрана" FontFamily="Cascadia Mono, Consolas"
+                                                   FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center"
+                                            Background="{DynamicResource AccentSoftBackground}"
+                                            BorderBrush="{DynamicResource AccentSoftBorder}"
+                                            BorderThickness="1" CornerRadius="4" Padding="12,6">
+                                        <TextBlock Text="📁 Изменить…" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource BrandGreen}"/>
+                                    </Border>
+                                </Grid>
+                            </Button>
                         </StackPanel>
                         <Border Grid.Column="1" Height="130" Margin="18,0,0,0" CornerRadius="6"
                                 Background="#880A0A14" BorderBrush="#334ADE80" BorderThickness="1">
@@ -229,7 +292,10 @@
                     <Grid Margin="14">
                         <TextBlock Text="Что нового" FontWeight="SemiBold" FontSize="15"/>
                         <Button x:Name="btnCloseDetails" Content="" Style="{StaticResource IconButtonStyle}"
-                                HorizontalAlignment="Right" Background="Transparent" Click="BtnCloseDetails_Click"/>
+                                HorizontalAlignment="Right" Background="Transparent"
+                                AutomationProperties.Name="Закрыть панель «Что нового»"
+                                ToolTip="Скроет панель с описанием изменений выбранной версии клиента."
+                                Click="BtnCloseDetails_Click"/>
                     </Grid>
                     <FlowDocumentScrollViewer x:Name="fdvReleaseNotes" Grid.Row="1"
                                               VerticalScrollBarVisibility="Auto" Margin="14"
