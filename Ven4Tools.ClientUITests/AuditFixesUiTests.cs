@@ -28,12 +28,34 @@ namespace Ven4Tools.ClientUITests
         private static readonly string AlternativesPath = Path.Combine(SettingsDir, "alternatives.json");
         private static readonly string LogPath = Path.Combine(SettingsDir, "app.log");
 
-        // "cpu-z" — реальный Id из каталога (Catalog/master.json). CheckAppAvailabilityFromCatalog
-        // сперва ищет override через appManager.GetAppById(catalogApp.Id) — если он есть,
-        // используется ВМЕСТО построения AppInfo из каталога. Подсовываем сюда заведомо
-        // несуществующий AlternativeId, чтобы winget гарантированно не нашёл пакет и
-        // приложение стало Unavailable — тогда появляется кнопка «Предложить альтернативу».
-        private const string RealCatalogAppId = "cpu-z";
+        // Приложение каталога, которому подменяется winget-идентификатор на заведомо
+        // несуществующий: winget пакет не находит, приложение становится Unavailable,
+        // и появляется кнопка «Предложить альтернативный источник» (#1).
+        //
+        // Две ошибки прежней версии теста, из-за которых он числился «предсуществующим
+        // багом» с 2026-09-03 и падал 100% прогонов:
+        //
+        // 1. Подмена писалась прямо в apps.json. SyncCatalogToAppManager при каждой
+        //    загрузке каталога синхронизирует AlternativeId записи каталога обратно на
+        //    настоящий catalogApp.WingetId (CatalogViewModel.Catalog.cs, ветка
+        //    !existing.IsUserAdded) — подставленный id молча заменялся настоящим.
+        //    Настоящий путь продукта — alternatives.json: пользовательский выбор
+        //    накладывается отдельным хранилищем и переживает синхронизацию. Тест теперь
+        //    идёт тем же путём, что живой пользователь через диалог «Предложить
+        //    альтернативный источник».
+        //
+        // 2. Приложением был «cpu-z», а у него в каталоге есть ChocoId. С тех пор как
+        //    AvailabilityChecker научился фоллбэку на Chocolatey (2026-09-02, каталог
+        //    v17), сломанный winget-id больше НЕ делает такое приложение недоступным —
+        //    оно остаётся доступным через Chocolatey, и вся посылка теста рушится.
+        //    Нужен ровно тот случай, где winget — единственный источник.
+        //
+        // «nvcleanstall» выбран потому, что в каталоге у него есть WingetId и НЕТ ни
+        // DownloadUrl, ни ChocoId (проверено по Catalog/master.json 2026-09-10). Если
+        // каталог когда-нибудь добавит ему второй источник, тест начнёт падать снова —
+        // тогда надо взять другое приложение из списка «только winget», а не чинить
+        // симптом.
+        private const string RealCatalogAppId = "nvcleanstall";
         private const string BogusAlternativeId = "Ven4ToolsTest.НесуществующийПакетZZZ";
 
         private static readonly TimeSpan ElementTimeout = TimeSpan.FromSeconds(15);
@@ -61,33 +83,31 @@ namespace Ven4Tools.ClientUITests
 
             _appsExisted = File.Exists(AppsPath);
             if (_appsExisted) _appsBackup = File.ReadAllText(AppsPath);
-            // Пользовательское приложение с заведомо несуществующим Id — при первой же
-            // проверке доступности winget его не найдёт, статус станет Unavailable,
-            // и появится кнопка «Предложить альтернативный источник» (#1). Имя подобрано
-            // так, чтобы поиск winget внутри диалога тоже не дал результатов — ровно
-            // тот путь, который был сломан (пустые результаты + ручной ввод).
-            var overrideApp = new[]
-            {
-                new
-                {
-                    Id = RealCatalogAppId,
-                    DisplayName = "CPU-Z",
-                    Category = 9, // AppCategory.Другое
-                    InstallerUrls = Array.Empty<string>(),
-                    SilentArgs = "/S",
-                    IsUserAdded = false,
-                    RequiredSpaceMB = 10,
-                    AlternativeId = BogusAlternativeId,
-                    IsInstalled = false,
-                    LocalInstallerPath = (string?)null,
-                    ChocoId = ""
-                }
-            };
-            File.WriteAllText(AppsPath, JsonSerializer.Serialize(overrideApp));
+            // apps.json чистим: запись каталога построится из самого каталога, а
+            // подмену источника даёт alternatives.json ниже. Прежняя версия теста
+            // писала AlternativeId сюда — см. комментарий у BogusAlternativeId, почему
+            // это не работало.
+            if (File.Exists(AppsPath)) File.Delete(AppsPath);
 
             _alternativesExisted = File.Exists(AlternativesPath);
             if (_alternativesExisted) _alternativesBackup = File.ReadAllText(AlternativesPath);
-            if (File.Exists(AlternativesPath)) File.Delete(AlternativesPath);
+            // Тот же формат, что пишет AlternativeSourceStore.Save (словарь по Id
+            // приложения). Ссылку не задаём: нужен ровно случай «winget-пакет не
+            // находится, прямой ссылки нет» — тогда приложение становится Unavailable
+            // и появляется кнопка «Предложить альтернативный источник». Имя пакета
+            // подобрано так, чтобы поиск winget внутри диалога тоже не дал результатов —
+            // ровно тот путь, который когда-то был сломан (пустые результаты + ручной ввод).
+            var alternatives = new Dictionary<string, object>
+            {
+                [RealCatalogAppId] = new
+                {
+                    WingetId = BogusAlternativeId,
+                    Url = (string?)null,
+                    LastUpdated = DateTime.UtcNow,
+                    UrlPriority = false
+                }
+            };
+            File.WriteAllText(AlternativesPath, JsonSerializer.Serialize(alternatives));
 
             try { _session = AppSession.Launch(); }
             catch (Exception ex) { _launchError = ex.Message; _session = null; }
@@ -630,8 +650,15 @@ namespace Ven4Tools.ClientUITests
             // Ловим реальный процесс winget.exe и читаем его командную строку через WMI,
             // пока он ещё жив — это единственный надёжный способ увидеть, какой --location
             // реально передан (в UI-логе аргументы не печатаются, только stdout/stderr).
+            //
+            // Фильтр обязан требовать именно `install`. Клиент параллельно гоняет
+            // `winget list --id CPUID.CPU-Z ...` для проверки доступности, и она
+            // подходила под прежнее условие «в командной строке есть CPU-Z» — тест
+            // хватал её, не находил в ней --location (у list его и не может быть) и
+            // падал, хотя установка ещё даже не стартовала. Продукт при этом
+            // --location передаёт правильно (InstallationService.Winget.cs).
             string? commandLine = null;
-            var deadline = DateTime.UtcNow.AddSeconds(20);
+            var deadline = DateTime.UtcNow.AddSeconds(40);
             while (DateTime.UtcNow < deadline && commandLine == null)
             {
                 using var searcher = new System.Management.ManagementObjectSearcher(
@@ -641,18 +668,22 @@ namespace Ven4Tools.ClientUITests
                     using (mo)
                     {
                         var cl = mo["CommandLine"] as string;
-                        if (!string.IsNullOrEmpty(cl) && cl.Contains("CPU-Z", StringComparison.OrdinalIgnoreCase))
-                        {
-                            commandLine = cl;
-                            break;
-                        }
+                        if (string.IsNullOrEmpty(cl)) continue;
+                        if (!cl.Contains("CPU-Z", StringComparison.OrdinalIgnoreCase)) continue;
+                        // Именно установка, а не list/show/search той же программы.
+                        if (!System.Text.RegularExpressions.Regex.IsMatch(
+                                cl, @"winget\.exe""?\s+install\b",
+                                System.Text.RegularExpressions.RegexOptions.IgnoreCase)) continue;
+
+                        commandLine = cl;
+                        break;
                     }
                 }
                 if (commandLine == null) System.Threading.Thread.Sleep(300);
             }
 
             Assert.IsNotNull(commandLine,
-                "#8: не удалось поймать процесс winget.exe для CPU-Z за 20с — установка не запустилась вовсе.");
+                "#8: не удалось поймать `winget install` для CPU-Z за 40с — установка не запустилась вовсе.");
             Assert.IsTrue(commandLine!.Contains("--location", StringComparison.OrdinalIgnoreCase),
                 $"#8: в командной строке winget нет --location — диск не передаётся вовсе. Командная строка: {commandLine}");
             Assert.IsTrue(commandLine.Contains("D:\\", StringComparison.OrdinalIgnoreCase),

@@ -26,9 +26,14 @@ namespace Ven4Tools.Services
     // кнопка просто не показывается, никогда не гадаем.
     public static class AppLaunchResolver
     {
-        private sealed record Candidate(string NormalizedName, string ExePath);
+        // Refused — кандидат найден, но отклонён ACL-проверкой каталога (см. три
+        // сканера ниже). Такие в индекс запуска не попадают, но запоминаются отдельно:
+        // без них пользователь видел лишь отсутствие кнопки «Запустить» и не имел ни
+        // одного способа узнать, почему её нет (причина писалась только в app.log).
+        private sealed record Candidate(string NormalizedName, string ExePath, bool Refused = false);
 
         private static List<Candidate>? _index;
+        private static List<Candidate>? _refused;
         private static readonly object _lock = new();
 
         public static string? TryResolve(string displayName)
@@ -40,20 +45,62 @@ namespace Ven4Tools.Services
             // Точное совпадение сначала, затем совпадение по вхождению (в обе стороны),
             // только если совпадающая часть достаточно длинная — иначе слишком много
             // ложных срабатываний на коротких названиях вроде "Notes"/"Mail".
-            var exact = index.FirstOrDefault(c => c.NormalizedName == target);
-            if (exact != null) return File.Exists(exact.ExePath) ? exact.ExePath : null;
+            var best = MatchBest(index, target);
+            return best != null && File.Exists(best.ExePath) ? best.ExePath : null;
+        }
+
+        /// <summary>
+        /// Почему у установленного приложения нет кнопки «Запустить». Возвращает текст
+        /// причины, если exe был найден, но отклонён проверкой прав на его каталог;
+        /// null — если подходящего exe не нашлось вовсе (тогда объяснять нечего).
+        ///
+        /// Отказ сам по себе правильный: клиент работает с правами администратора, и
+        /// запуск из каталога, доступного на запись обычному пользователю, позволил бы
+        /// подменить бинарник и получить повышение прав. Но молчаливое исчезновение
+        /// кнопки выглядит как поломка — у 17 из 37 установленных приложений на живой
+        /// машине (Steam, Battle.net, PowerToys и т.п.) её просто нет, и единственный
+        /// след — строка в app.log, которую пользователь не читает.
+        /// </summary>
+        public static string? TryExplainMissing(string displayName)
+        {
+            GetOrBuildIndex();
+            List<Candidate> refused;
+            lock (_lock) { refused = _refused ?? new List<Candidate>(); }
+            if (refused.Count == 0) return null;
+
+            var match = MatchBest(refused, Normalize(displayName));
+            if (match == null) return null;
+
+            string? dir = null;
+            try { dir = Path.GetDirectoryName(match.ExePath); } catch { }
+
+            return "Запуск отсюда отключён: папка программы доступна на запись обычному " +
+                   "пользователю, поэтому запускать её с правами администратора небезопасно — " +
+                   "файл можно подменить." + Environment.NewLine + Environment.NewLine +
+                   "Запустите приложение обычным способом (ярлык, меню «Пуск»)." +
+                   (string.IsNullOrEmpty(dir)
+                       ? ""
+                       : Environment.NewLine + Environment.NewLine + "Папка: " + dir);
+        }
+
+        // Общий подбор кандидата по имени — один и тот же для индекса запуска и для
+        // списка отклонённых, чтобы объяснение относилось ровно к тому приложению,
+        // которому не досталось кнопки.
+        private static Candidate? MatchBest(List<Candidate> candidates, string target)
+        {
+            if (target.Length == 0) return null;
+
+            var exact = candidates.FirstOrDefault(c => c.NormalizedName == target);
+            if (exact != null) return exact;
 
             Candidate? best = null;
-            foreach (var c in index)
+            foreach (var c in candidates)
             {
                 if (c.NormalizedName.Length < 4 || target.Length < 4) continue;
-                bool contains = c.NormalizedName.Contains(target) || target.Contains(c.NormalizedName);
-                if (!contains) continue;
-                if (best == null || c.NormalizedName.Length < best.NormalizedName.Length)
-                    best = c; // предпочитаем более короткое/точное совпадение
+                if (!c.NormalizedName.Contains(target) && !target.Contains(c.NormalizedName)) continue;
+                if (best == null || c.NormalizedName.Length < best.NormalizedName.Length) best = c;
             }
-
-            return best != null && File.Exists(best.ExePath) ? best.ExePath : null;
+            return best;
         }
 
         // Сбрасывает кэш индекса — вызвать после свежей установки/удаления приложения,
@@ -61,7 +108,7 @@ namespace Ven4Tools.Services
         // первого запроса в рамках текущего процесса.
         public static void InvalidateCache()
         {
-            lock (_lock) { _index = null; }
+            lock (_lock) { _index = null; _refused = null; }
         }
 
         // Прогревает индекс на фоновом потоке. Первый вызов TryResolve после
@@ -102,7 +149,8 @@ namespace Ven4Tools.Services
                 candidates.AddRange(ScanStartMenuShortcuts());
                 candidates.AddRange(ScanUninstallInstallLocations());
 
-                _index = candidates;
+                _index = candidates.Where(c => !c.Refused).ToList();
+                _refused = candidates.Where(c => c.Refused).ToList();
                 return _index;
             }
         }
@@ -137,12 +185,14 @@ namespace Ven4Tools.Services
                             // пользователю, бинарник можно подменить. Проверяем каталог exe
                             // ДО принятия пути; каталог не определить — тоже отклоняем.
                             string? appPathDir = Path.GetDirectoryName(path);
-                            if (string.IsNullOrEmpty(appPathDir) ||
-                                TrustedExecutablePaths.IsDirectoryAclCompromised(appPathDir))
-                                continue;
+                            if (string.IsNullOrEmpty(appPathDir)) continue;
 
                             string nameHint = GetExeNameHint(path) ?? Path.GetFileNameWithoutExtension(path);
-                            result.Add(new Candidate(Normalize(nameHint), path));
+                            // Отклонённого кандидата не выбрасываем, а помечаем: он не
+                            // попадёт в индекс запуска, но позволит объяснить пользователю,
+                            // почему кнопки «Запустить» нет (см. TryExplainMissing).
+                            bool refused = TrustedExecutablePaths.IsDirectoryAclCompromised(appPathDir);
+                            result.Add(new Candidate(Normalize(nameHint), path, refused));
                         }
                         catch { /* один битый ключ не должен рушить весь скан */ }
                     }
@@ -193,12 +243,11 @@ namespace Ven4Tools.Services
                         // каталоге со слабой ACL; иначе exe в нём можно подменить перед
                         // запуском в elevated-клиенте. Проверяем каталог цели до принятия.
                         string? targetDir = Path.GetDirectoryName(targetPath);
-                        if (string.IsNullOrEmpty(targetDir) ||
-                            TrustedExecutablePaths.IsDirectoryAclCompromised(targetDir))
-                            continue;
+                        if (string.IsNullOrEmpty(targetDir)) continue;
 
                         string nameHint = Path.GetFileNameWithoutExtension(lnk);
-                        result.Add(new Candidate(Normalize(nameHint), targetPath));
+                        bool refused = TrustedExecutablePaths.IsDirectoryAclCompromised(targetDir);
+                        result.Add(new Candidate(Normalize(nameHint), targetPath, refused));
                     }
                     catch { /* один битый ярлык не должен рушить весь скан */ }
                 }
@@ -300,12 +349,11 @@ namespace Ven4Tools.Services
                             // в elevated-клиенте — тот же класс риска, что и у System32-
                             // бинарников в TrustedExecutablePaths: fail-closed, если каталог
                             // разрешает запись кому-то, кроме SYSTEM/Administrators/TrustedInstaller.
-                            if (TrustedExecutablePaths.IsDirectoryAclCompromised(installLocation))
-                                continue;
+                            bool refused = TrustedExecutablePaths.IsDirectoryAclCompromised(installLocation);
 
                             string? exe = FindBestExeInDirectory(installLocation, displayName);
                             if (exe != null)
-                                result.Add(new Candidate(Normalize(displayName), exe));
+                                result.Add(new Candidate(Normalize(displayName), exe, refused));
                         }
                         catch { /* один битый ключ не должен рушить весь скан */ }
                     }

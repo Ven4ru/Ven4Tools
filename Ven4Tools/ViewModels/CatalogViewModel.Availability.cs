@@ -205,6 +205,12 @@ namespace Ven4Tools.ViewModels
                     row.IsUpdateIgnored = row.HasUpdate && ignoredVersion != null
                         && ignoredVersion == row.VersionOptions[1];
                     row.LaunchPath = indexReady ? AppLaunchResolver.TryResolve(row.DisplayName) : null;
+                    // Кнопки запуска нет — выясняем, отклонён ли exe проверкой прав на
+                    // каталог. Раньше причина уходила только в app.log, и отсутствие
+                    // кнопки у Steam/Battle.net/PowerToys выглядело как поломка клиента.
+                    row.LaunchBlockedReason = (indexReady && row.LaunchPath == null)
+                        ? AppLaunchResolver.TryExplainMissing(row.DisplayName)
+                        : null;
                     installed++;
                     if (row.HasUpdate) outdated++;
                     if (row.LaunchPath != null) launchable++;
@@ -215,6 +221,7 @@ namespace Ven4Tools.ViewModels
                     row.HasUpdate = false;
                     row.IsUpdateIgnored = false;
                     row.LaunchPath = null;
+                    row.LaunchBlockedReason = null;
                 }
             }
 
