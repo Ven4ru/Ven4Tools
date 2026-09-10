@@ -13,10 +13,16 @@ namespace Ven4Tools.Launcher
     {
         private readonly MainWindow _owner;
 
-        // Программная установка SelectedIndex (в Sync) поднимает SelectionChanged, в
-        // отличие от Click у чекбоксов — глушим обработчик на время синхронизации,
-        // чтобы не было каскада Save/обратной записи того же значения.
+        // Программная установка значений в Sync поднимает и SelectionChanged у
+        // ComboBox, и Checked/Unchecked у флажков-переключателей — глушим обработчики
+        // на время синхронизации, чтобы не было каскада Save/обратной записи того же
+        // значения. Раньше флажки слушали Click, который программной установкой не
+        // поднимается, и глушить было нечего — но вместе с этим не поднимался он и при
+        // переключении через средства автоматизации/экранного диктора (UIA-паттерн
+        // Toggle вызывает OnToggle, а не Click): галка вставала в новое положение, а
+        // настройка молча не сохранялась. Checked/Unchecked покрывают все три способа.
         private bool _suppressSourceChange;
+        private bool _suppressToggleChange;
 
         // Отчёт последней проверки: по нему работает кнопка «Исправить». Хранится
         // именно отчёт, а не флаг «есть что чинить» — починка обязана применять тот
@@ -35,16 +41,19 @@ namespace Ven4Tools.Launcher
             Sync(backgroundUpdates, startMinimized, autostart, autoUpdateClient, downloadSource);
         }
 
-        // Programmatic IsChecked assignment does not raise Click — безопасно
-        // вызывать в любой момент, не вызовет каскад Save.
+        // Значения расставляет владелец (в т.ч. из меню трея, пока окно открыто) —
+        // обработчики на это время заглушены, иначе Sync тут же записал бы обратно
+        // то, что только что прочитал.
         internal void Sync(bool backgroundUpdates, bool startMinimized, bool autostart,
             bool autoUpdateClient, DownloadSource downloadSource)
         {
+            _suppressToggleChange = true;
             chkBackgroundUpdates.IsChecked = backgroundUpdates;
             chkStartMinimized.IsChecked    = startMinimized;
             chkAutostart.IsChecked         = autostart;
             rbAutoUpdateManual.IsChecked   = !autoUpdateClient;
             rbAutoUpdateAuto.IsChecked     = autoUpdateClient;
+            _suppressToggleChange = false;
 
             // Порядок пунктов ComboBox совпадает с порядком членов enum DownloadSource:
             // индекс == (int)значение.
@@ -53,17 +62,32 @@ namespace Ven4Tools.Launcher
             _suppressSourceChange = false;
         }
 
-        private void ChkBackgroundUpdates_Click(object sender, RoutedEventArgs e) =>
+        private void ChkBackgroundUpdates_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_suppressToggleChange) return;
             _owner.OnBackgroundUpdatesChanged(chkBackgroundUpdates.IsChecked == true);
+        }
 
-        private void ChkStartMinimized_Click(object sender, RoutedEventArgs e) =>
+        private void ChkStartMinimized_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_suppressToggleChange) return;
             _owner.OnStartMinimizedChanged(chkStartMinimized.IsChecked == true);
+        }
 
-        private void ChkAutostart_Click(object sender, RoutedEventArgs e) =>
+        private void ChkAutostart_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_suppressToggleChange) return;
             _owner.OnAutostartChanged(chkAutostart.IsChecked == true);
+        }
 
-        private void RbAutoUpdateMode_Click(object sender, RoutedEventArgs e) =>
+        // Только Checked: в группе переключателей снятие галки со старого варианта и
+        // установка на новый — одно действие пользователя, и обрабатывать его дважды
+        // (второй раз с ещё не обновлённым состоянием) незачем.
+        private void RbAutoUpdateMode_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_suppressToggleChange) return;
             _owner.OnAutoUpdateClientChanged(rbAutoUpdateAuto.IsChecked == true);
+        }
 
         private void CmbDownloadSource_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

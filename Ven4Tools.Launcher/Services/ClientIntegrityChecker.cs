@@ -60,7 +60,11 @@ internal sealed class ClientIntegrityEnvironment : IClientIntegrityEnvironment
         // права поправил. Сбрасываем запись, чтобы кнопка показывала состояние
         // диска сейчас, а не на момент первого обращения.
         TrustedExecutablePaths.InvalidateAclCache(clientPath);
-        return TrustedExecutablePaths.IsDirectoryAclCompromised(clientPath);
+        // Именно «кто-то ещё», а не строгая проверка системных каталогов: клиент
+        // стоит внутри профиля пользователя, где его собственный SID имеет
+        // FullControl всегда — строгая проверка жаловалась на это у каждого
+        // пользователя без исключения. См. IsDirectoryWritableByOtherUsers.
+        return TrustedExecutablePaths.IsDirectoryWritableByOtherUsers(clientPath);
     }
 }
 

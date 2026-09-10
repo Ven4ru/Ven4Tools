@@ -44,6 +44,20 @@ internal static class BoundedHttpText
                 throw new InvalidOperationException($"Ответ {url} превышает допустимый размер (>{MaxResponseBytes} байт)");
             await ms.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
         }
-        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+
+        // Декодируем ровно так же, как заменённый здесь HttpClient.GetStringAsync:
+        // с распознаванием BOM. Encoding.UTF8.GetString отдаёт BOM (EF BB BF) первым
+        // символом строки — а подпись считается по содержимому без него, и любой
+        // манифест, выложенный с BOM, не проходил проверку ECDSA.
+        //
+        // Это не гипотетический случай: version.json на CDN выкладывается
+        // PowerShell-скриптом и BOM у него есть. Лаунчер после появления этого класса
+        // молча считал CDN недоступным (и тем же путём отваливались дельта-обновление
+        // и «Проверить и восстановить клиент» — они читают client-manifest.json тем же
+        // методом). Fail-closed сработал ровно так, как задуман, но по ложной причине.
+        ms.Position = 0;
+        using var reader = new StreamReader(
+            ms, System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        return await reader.ReadToEndAsync(ct).ConfigureAwait(false);
     }
 }

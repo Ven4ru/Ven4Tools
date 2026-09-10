@@ -22,12 +22,21 @@ namespace Ven4Tools.Launcher
                 CdnVersionInfo? cdnInfo = null;
                 try
                 {
-                    using var cdnService = new CdnService();
+                    // Причину отказа пишем в журнал: «CDN недоступен» одинаково
+                    // покрывало и сеть, и отклонённую подпись, и из-за этого реальный
+                    // дефект (BOM в манифесте ломал проверку ECDSA) выглядел как
+                    // недоступность сервера.
+                    string? cdnFailure = null;
+                    using var cdnService = new CdnService(reason => cdnFailure = reason);
                     cdnInfo = await cdnService.GetVersionInfoAsync();
                     if (cdnInfo?.Client?.ZipUrl != null)
                         AddLog($"🌐 CDN доступен: клиент {cdnInfo.Client.Version}");
                     else
+                    {
                         AddLog("⚠️ CDN недоступен, использую GitHub как основной источник");
+                        if (!string.IsNullOrEmpty(cdnFailure))
+                            AddLog($"   ↳ {cdnFailure}");
+                    }
 
                     // Свежий подписанный cdn_ip сохраняем для IP-pinning на будущее
                     // (следующий запуск при блокировке домена по DNS пойдёт по этому IP).

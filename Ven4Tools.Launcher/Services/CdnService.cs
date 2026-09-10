@@ -51,8 +51,16 @@ namespace Ven4Tools.Launcher.Services
             return client;
         }
 
-        public CdnService()
+        // Куда сообщать причину отказа. Раньше её не было вовсе: и сетевая ошибка, и
+        // отклонённая подпись возвращали null, а вызывающий код писал в журнал одно и
+        // то же «CDN недоступен». Именно это скрыло реальный дефект — манифест
+        // скачивался за 100 мс, но не проходил проверку подписи из-за BOM
+        // (см. BoundedHttpText), и понять это по журналу было нельзя.
+        private readonly Action<string>? _log;
+
+        public CdnService(Action<string>? log = null)
         {
+            _log = log;
         }
 
         /// <summary>
@@ -80,16 +88,23 @@ namespace Ven4Tools.Launcher.Services
             {
                 var info = await FetchAndVerifyAsync(_httpClient, token);
                 CacheCdnIp(info?.CdnIp);
+                if (info == null)
+                    _log?.Invoke("подпись манифеста CDN не подтверждена (version.json.sig)");
                 return info;
             }
             catch (OperationCanceledException)
             {
+                _log?.Invoke("запрос к CDN отменён или истёк таймаут");
                 return null;
             }
             catch (Exception ex)
             {
                 // Не ошибка резолвинга DNS — обычный тихий fallback на GitHub.
-                if (!IsDnsResolutionFailure(ex)) return null;
+                if (!IsDnsResolutionFailure(ex))
+                {
+                    _log?.Invoke($"{ex.GetType().Name}: {ex.Message}");
+                    return null;
+                }
             }
 
             // Сюда попадаем только при ошибке резолвинга DNS домена cdn.ven4tools.ru:
@@ -100,10 +115,13 @@ namespace Ven4Tools.Launcher.Services
                 var pinned = IpPinnedHttpClientFactory.GetOrCreate(ip, TimeSpan.FromSeconds(TimeoutSeconds));
                 var info = await FetchAndVerifyAsync(pinned, token);
                 CacheCdnIp(info?.CdnIp);
+                if (info == null)
+                    _log?.Invoke($"домен не резолвится, по прямому IP {ip} подпись манифеста не подтверждена");
                 return info;
             }
-            catch
+            catch (Exception ex)
             {
+                _log?.Invoke($"домен не резолвится, обход по прямому IP не удался — {ex.GetType().Name}: {ex.Message}");
                 return null;
             }
         }

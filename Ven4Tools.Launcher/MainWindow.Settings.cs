@@ -20,6 +20,7 @@ namespace Ven4Tools.Launcher
                     {
                         _minimizeToTray              = settings.MinimizeToTray;
                         _installPath                 = settings.InstallPath ?? "";
+                        _clientPath                  = settings.ClientPath  ?? "";
                         _backgroundUpdates           = settings.BackgroundUpdates;
                         _autostart                   = settings.Autostart;
                         _startMinimized              = settings.StartMinimized;
@@ -53,6 +54,7 @@ namespace Ven4Tools.Launcher
                 {
                     MinimizeToTray              = _minimizeToTray,
                     InstallPath                 = _installPath,
+                    ClientPath                  = _clientPath,
                     BackgroundUpdates           = _backgroundUpdates,
                     Autostart                   = _autostart,
                     StartMinimized              = _startMinimized,

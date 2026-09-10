@@ -34,6 +34,10 @@ namespace Ven4Tools.Launcher
             else
             {
                 AddLog("   ❌ Winget не установлен!");
+                // Причина отказа — единственный способ отличить «пакета действительно
+                // нет» от «есть, но резолвер до него не дотянулся».
+                if (!string.IsNullOrEmpty(wingetInfo.Diagnostic))
+                    AddLog($"      ↳ {wingetInfo.Diagnostic}");
                 hasIssues = true;
             }
 
@@ -202,9 +206,14 @@ namespace Ven4Tools.Launcher
                 {
                     await InstallWingetAsync(lease);
                     wingetInfo = await CheckWingetWithVersionAsync();
-                    AddLog(wingetInfo.IsInstalled
-                        ? $"   ✅ Winget {wingetInfo.Version}"
-                        : "   ⚠️ Winget всё ещё не найден. Возможно, требуется перезагрузка.");
+                    if (wingetInfo.IsInstalled)
+                        AddLog($"   ✅ Winget {wingetInfo.Version}");
+                    else
+                    {
+                        AddLog("   ⚠️ Winget всё ещё не найден. Возможно, требуется перезагрузка.");
+                        if (!string.IsNullOrEmpty(wingetInfo.Diagnostic))
+                            AddLog($"      ↳ {wingetInfo.Diagnostic}");
+                    }
                 }
             }
             else if (wingetInfo.IsOutdated)

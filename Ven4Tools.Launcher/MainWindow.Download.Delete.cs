@@ -89,7 +89,14 @@ namespace Ven4Tools.Launcher
 
             Dispatcher.Invoke(() =>
             {
-                SetLaunchButtonState(LaunchButtonState.Download);
+                // Не просто переключаем кнопку: CheckExistingClient обновляет ЕЩЁ и
+                // подпись «Текущая версия». Раньше здесь стоял голый
+                // SetLaunchButtonState — кнопка честно становилась «Загрузить», а рядом
+                // продолжала висеть версия только что удалённого клиента.
+                // quiet — строку «клиент не найден» в журнал не пишем, там уже есть
+                // отчёт об удалении.
+                CheckExistingClient(quiet: true);
+                _clientUpdateAvailable = false;
                 btnDeleteClient.IsEnabled = true;
             });
 
