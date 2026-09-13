@@ -105,4 +105,37 @@ public sealed class OfficeInstallationServiceTests
 
         Assert.Equal(OfficeInstallationKind.NotFound, info.Kind);
     }
+
+    [Fact]
+    public void C2R_БитыйProductReleaseIds_НеПадаетИНеСообщаетClickToRun()
+    {
+        // "," проходит IsNullOrWhiteSpace, но после RemoveEmptyEntries|TrimEntries даёт
+        // пустой массив — DescribeC2R([0]) должен был бы упасть, а Kind = ClickToRun
+        // с пустым ProductIds нарушил бы инвариант "адресное удаление доступно всегда,
+        // когда Kind == ClickToRun".
+        var registry = new FakeRegistry();
+        registry.ClickToRunValues["ProductReleaseIds"] = ",";
+        registry.ClickToRunValues["Platform"] = "x64";
+        registry.ClickToRunValues["ClientCulture"] = "ru-ru";
+        registry.ClickToRunValues["VersionToReport"] = "16.0.20326.20144";
+
+        var info = new OfficeInstallationService(registry).Detect();
+
+        Assert.NotEqual(OfficeInstallationKind.ClickToRun, info.Kind);
+    }
+
+    [Fact]
+    public void MSI_КомпонентПередСамимПакетомВUninstall_ВыбираетПакет()
+    {
+        // Компонентная запись стоит ПЕРВОЙ — против старого FirstOrDefault этот тест
+        // не проходит, потому что DisplayName/Kind брались бы с языкового пакета.
+        var registry = new FakeRegistry();
+        registry.UninstallEntries.Add(("Microsoft Office Shared MUI (Russian) 2013", "15.0.5361.1000"));
+        registry.UninstallEntries.Add(("Microsoft Office Professional Plus 2013", "15.0.5361.1000"));
+
+        var info = new OfficeInstallationService(registry).Detect();
+
+        Assert.Equal(OfficeInstallationKind.Msi, info.Kind);
+        Assert.Equal("Microsoft Office Professional Plus 2013", info.DisplayName);
+    }
 }
