@@ -53,6 +53,8 @@ namespace Ven4Tools.Models
         public long RequiredSpaceMB { get; set; } = 500;
         public string? AlternativeId { get; set; }
 
+        public string? RegionNote { get; set; }
+
         public string? LocalInstallerPath { get; set; }
 
         public string ChocoId { get; set; } = string.Empty;
