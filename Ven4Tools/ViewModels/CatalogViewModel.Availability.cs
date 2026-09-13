@@ -82,6 +82,9 @@ namespace Ven4Tools.ViewModels
             // для которых имеет смысл повторить проверку при первом Unavailable,
             // прежде чем показать красный статус. Каталожные приложения не ретраятся —
             // так же вело себя CheckAppAvailabilityFromCatalog в оригинале.
+            // RegionBlocked намеренно не ретраится: геоблок не транзиентная сетевая ошибка,
+            // в отличие от того, ради чего существует ретрай; строка разблокируется сама
+            // при следующей полной проверке, если замер изменится (например, включится VPN).
             int attempt = 1;
             while (availability == AppRowViewModel.RowAvailability.Unavailable && row.IsUserAdded && attempt < 3)
             {
