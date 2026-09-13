@@ -142,22 +142,42 @@ namespace Ven4Tools.Services
             if (c2r.TryGetValue("ProductReleaseIds", out string? rawIds) && !string.IsNullOrWhiteSpace(rawIds))
             {
                 var productIds = rawIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                return new InstalledOfficeInfo
+                // "," или " , " проходят IsNullOrWhiteSpace, но после RemoveEmptyEntries
+                // дают пустой массив — тогда DescribeC2R([0]) упадёт, а Kind = ClickToRun
+                // с пустым ProductIds нарушит инвариант задачи (адресное удаление должно
+                // быть доступно всегда, когда Kind == ClickToRun). Считаем это "C2R не
+                // сконфигурирован" и проваливаемся в MSI/NotFound, как будто ключа не было.
+                if (productIds.Length > 0)
                 {
-                    Kind = OfficeInstallationKind.ClickToRun,
-                    DisplayName = DescribeC2R(productIds),
-                    Platform = c2r.GetValueOrDefault("Platform", ""),
-                    Culture = c2r.GetValueOrDefault("ClientCulture", ""),
-                    Version = c2r.GetValueOrDefault("VersionToReport", ""),
-                    ProductIds = productIds
-                };
+                    return new InstalledOfficeInfo
+                    {
+                        Kind = OfficeInstallationKind.ClickToRun,
+                        DisplayName = DescribeC2R(productIds),
+                        Platform = c2r.GetValueOrDefault("Platform", ""),
+                        Culture = c2r.GetValueOrDefault("ClientCulture", ""),
+                        Version = c2r.GetValueOrDefault("VersionToReport", ""),
+                        ProductIds = productIds
+                    };
+                }
             }
 
-            var msiEntry = _registry.ReadUninstallDisplayEntries()
-                .FirstOrDefault(e => OfficeMsiNamePattern.IsMatch(e.DisplayName));
+            var msiCandidates = _registry.ReadUninstallDisplayEntries()
+                .Where(e => OfficeMsiNamePattern.IsMatch(e.DisplayName))
+                .ToList();
 
-            if (msiEntry.DisplayName != null)
+            if (msiCandidates.Count > 0)
             {
+                // Набор кандидатов (и то, что Kind вообще станет Msi) определяется только
+                // OfficeMsiNamePattern выше и не меняется ниже. Среди них Uninstall может
+                // содержать не только сам пакет, но и его компоненты — языковые пакеты,
+                // корректор, общие компоненты и т.п. — которые тоже начинаются с
+                // "Microsoft Office" и раньше могли попасть в DisplayName/Version первыми
+                // просто по порядку перечисления реестра. Здесь мы лишь ВЫБИРАЕМ, какая
+                // из уже отобранных записей похожа на сам пакет, а не на его компонент;
+                // если ни одна не похожа — берём первую, как и раньше.
+                var suiteEntry = msiCandidates.FirstOrDefault(e => !LooksLikeOfficeComponent(e.DisplayName));
+                var msiEntry = suiteEntry.DisplayName != null ? suiteEntry : msiCandidates[0];
+
                 return new InstalledOfficeInfo
                 {
                     Kind = OfficeInstallationKind.Msi,
@@ -187,6 +207,19 @@ namespace Ven4Tools.Services
             };
             return productIds.Count > 1 ? $"{friendly} (+{productIds.Count - 1})" : friendly;
         }
+
+        // Маркеры, по которым запись "Microsoft Office ..." в Uninstall похожа на
+        // отдельный компонент пакета, а не на сам пакет (суть). Список не исчерпывающий —
+        // это эвристика предпочтения между уже отобранными кандидатами, а не фильтр
+        // допуска: он никогда не решает, детектируется ли Msi вообще (см. комментарий
+        // в Detect()).
+        private static readonly string[] ComponentMarkers =
+        {
+            "Proofing Tools", "MUI", "Shared", "Components", "Tools", "Runtime", "Add-in"
+        };
+
+        private static bool LooksLikeOfficeComponent(string displayName) =>
+            ComponentMarkers.Any(marker => displayName.Contains(marker, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>Абстракция для OfficeViewModel (Task 3) — тестируется без реального реестра.</summary>
