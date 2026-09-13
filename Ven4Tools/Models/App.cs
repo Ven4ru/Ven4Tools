@@ -28,6 +28,13 @@ namespace Ven4Tools.Models
 
         public string? Sha256 { get; set; }
 
+        // Необязательная сноска региональной доступности (см. docs/superpowers/specs/
+        // 2026-09-10-catalog-region-availability-design.md): объяснение, а не вердикт —
+        // "разработчик ушёл из РФ, загрузка через VPN", не "недоступно в РФ". Вердикт
+        // всегда даёт замер AvailabilityChecker, сноска только участвует в
+        // классификации HTTP 403 (см. AvailabilityChecker.GetUrlInfo).
+        public string? RegionNote { get; set; }
+
         // Переопределение флага тихой установки для конкретного установщика (например,
         // AutoHotkey v2 требует "/silent", а не общепринятый NSIS-флаг "/S"). Пусто —
         // используется дефолт AppInfo.SilentArgs ("/S").
