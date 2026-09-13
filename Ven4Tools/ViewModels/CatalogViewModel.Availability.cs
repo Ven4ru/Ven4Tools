@@ -48,7 +48,8 @@ namespace Ven4Tools.ViewModels
                 await Task.WhenAll(tasks);
 
                 Log($"✅ Проверка завершена: {Apps.Count(a => a.Availability == AppRowViewModel.RowAvailability.Available)} доступно, " +
-                    $"{Apps.Count(a => a.Availability == AppRowViewModel.RowAvailability.Unavailable)} недоступно");
+                    $"{Apps.Count(a => a.Availability == AppRowViewModel.RowAvailability.Unavailable)} недоступно, " +
+                    $"{Apps.Count(a => a.Availability == AppRowViewModel.RowAvailability.RegionBlocked)} заблокировано в регионе");
             }
             finally
             {
@@ -108,9 +109,10 @@ namespace Ven4Tools.ViewModels
                     row.AvailableSizeMB = sizeMB;
                 return status switch
                 {
-                    AvailabilityChecker.AvailabilityStatus.Available   => AppRowViewModel.RowAvailability.Available,
-                    AvailabilityChecker.AvailabilityStatus.Unavailable => AppRowViewModel.RowAvailability.Unavailable,
-                    _                                                  => AppRowViewModel.RowAvailability.Unknown
+                    AvailabilityChecker.AvailabilityStatus.Available     => AppRowViewModel.RowAvailability.Available,
+                    AvailabilityChecker.AvailabilityStatus.Unavailable   => AppRowViewModel.RowAvailability.Unavailable,
+                    AvailabilityChecker.AvailabilityStatus.RegionBlocked => AppRowViewModel.RowAvailability.RegionBlocked,
+                    _                                                    => AppRowViewModel.RowAvailability.Unknown
                 };
             }
             catch { return AppRowViewModel.RowAvailability.Unknown; }
