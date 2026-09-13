@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -62,14 +63,14 @@ namespace Ven4Tools.Services
                     TimeSpan.FromMinutes(3), ct);
 
                 if (exitCode != 0)
-                    return OdtPrepareResult.Failed($"winget download завершился с кодом {exitCode}: {WingetRunner.StripAnsi(output)}");
+                    return FailedAndCleanup(workDir, $"winget download завершился с кодом {exitCode}: {WingetRunner.StripAnsi(output)}");
 
                 string? bootstrapperPath = Directory.GetFiles(workDir, "*.exe").FirstOrDefault();
                 if (bootstrapperPath == null)
-                    return OdtPrepareResult.Failed("winget download не создал исполняемый файл ODT");
+                    return FailedAndCleanup(workDir, "winget download не создал исполняемый файл ODT");
 
                 if (!AuthenticodeVerifier.IsSignedByMicrosoft(bootstrapperPath, out string signatureError))
-                    return OdtPrepareResult.Failed($"Подпись ODT не подтверждена: {signatureError}");
+                    return FailedAndCleanup(workDir, $"Подпись ODT не подтверждена: {signatureError}");
 
                 string extractDir = Path.Combine(workDir, "extracted");
                 Directory.CreateDirectory(extractDir);
@@ -83,23 +84,59 @@ namespace Ven4Tools.Services
                 };
                 using var extractProcess = Process.Start(extractPsi);
                 if (extractProcess == null)
-                    return OdtPrepareResult.Failed("Не удалось запустить самораспаковку ODT");
+                    return FailedAndCleanup(workDir, "Не удалось запустить самораспаковку ODT");
 
                 await extractProcess.WaitForExitAsync(ct);
                 if (extractProcess.ExitCode != 0)
-                    return OdtPrepareResult.Failed($"Самораспаковка ODT завершилась с кодом {extractProcess.ExitCode}");
+                    return FailedAndCleanup(workDir, $"Самораспаковка ODT завершилась с кодом {extractProcess.ExitCode}");
 
                 string setupExePath = Path.Combine(extractDir, "setup.exe");
                 if (!File.Exists(setupExePath))
-                    return OdtPrepareResult.Failed("setup.exe не найден после распаковки ODT");
+                    return FailedAndCleanup(workDir, "setup.exe не найден после распаковки ODT");
+
+                // Второй, независимый рубеж проверки: setupExePath — это тот самый файл,
+                // который Task 3 запускает с Verb="runas" (пересекает границу привилегий).
+                // Между распаковкой и повышенным запуском он лежит в пользовательской
+                // %TEMP%-папке, где его теоретически может подменить другой процесс того
+                // же пользователя со средней целостностью. Проверка подписи бутстраппера
+                // выше не покрывает этот файл — оставляем обе проверки, а не одну вместо
+                // другой (это и есть defense-in-depth, который явно требует план).
+                if (!AuthenticodeVerifier.IsSignedByMicrosoft(setupExePath, out string setupSignatureError))
+                    return FailedAndCleanup(workDir, $"Подпись setup.exe не подтверждена: {setupSignatureError}");
 
                 return OdtPrepareResult.Ok(setupExePath);
             }
-            catch (OperationCanceledException) { throw; }
+            catch (OperationCanceledException)
+            {
+                // workDir НЕ удаляем: дочерний процесс (winget download / самораспаковка)
+                // мог не успеть завершиться и всё ещё писать в эту папку — удаление могло
+                // бы столкнуться с файлом, открытым на запись, или удалить папку из-под
+                // живого процесса. Это единственный путь, где директория осознанно
+                // остаётся — на все остальные ветки ниже это не распространяется.
+                throw;
+            }
             catch (Exception ex)
             {
-                return OdtPrepareResult.Failed($"Подготовка ODT: {ex.Message}");
+                return FailedAndCleanup(workDir, $"Подготовка ODT: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Помечает подготовку ODT неуспешной и рекурсивно удаляет её временную папку.
+        /// На успешном пути workDir/setup.exe намеренно переживает вызов PrepareAsync —
+        /// им дальше владеет Task 3 (RunConfigureAsync). Но при ЛЮБОЙ неудаче
+        /// OdtPrepareResult несёт только текст ошибки, вызывающий код не узнаёт путь к
+        /// workDir и не может убрать за собой — иначе каждая неудачная попытка (а именно
+        /// неудачи чаще всего повторяют) оставляла бы в %TEMP% ~3.5 МБ бутстраппера
+        /// навсегда. Удаление — в собственном try/catch, чтобы сбой очистки никогда не
+        /// заслонил настоящую причину ошибки.
+        /// </summary>
+        private static OdtPrepareResult FailedAndCleanup(string workDir, string error)
+        {
+            try { Directory.Delete(workDir, recursive: true); }
+            catch { /* очистка — best effort, не должна маскировать исходную ошибку */ }
+
+            return OdtPrepareResult.Failed(error);
         }
 
         /// <summary>
@@ -107,7 +144,23 @@ namespace Ven4Tools.Services
         /// работает одинаково для свежераспакованного setup.exe (из PrepareAsync) и для
         /// уже установленного OfficeClickToRun.exe (запасной путь, когда ODT недоступен:
         /// это тот же C2R-клиент, тот же контракт "/configure"). Возвращает код возврата
-        /// процесса; -1, если процесс не удалось запустить.
+        /// процесса; -1, если процесс не удалось запустить — в том числе если пользователь
+        /// отклонил запрос UAC (это тоже "не удалось запустить", а не ошибка выполнения).
+        ///
+        /// ⚠️ ВАЖНО про <paramref name="ct"/>: отмена здесь ТОЛЬКО прекращает ожидание
+        /// (await) в этом методе — она НЕ останавливает и не убивает уже запущенный
+        /// повышенный процесс, который в этот момент может выполнять реальное необратимое
+        /// удаление/изменение установки Office. "Отмена" в терминах этого метода — это
+        /// "мы перестали ждать", а не "операция остановлена". Поэтому:
+        /// вызывающий код НЕ ДОЛЖЕН освобождать InstallSemaphore по отмене этого вызова —
+        /// элевированный процесс может продолжать работать над Office ещё долго после
+        /// того, как этот метод перестал ждать, и до завершения нужно считать машину
+        /// занятой (не простаивающей), иначе второй запуск может стартовать поверх
+        /// наполовину удалённой установки. План фиксирует сигнатуру этого метода с
+        /// параметром CancellationToken; сейчас Task 3 всегда передаёт
+        /// CancellationToken.None, так что риск не проявляется — но если когда-нибудь
+        /// сюда передадут реальный токен, прочитайте этот комментарий до конца, а не
+        /// после инцидента.
         /// </summary>
         public async Task<int> RunConfigureAsync(string exePath, string configXmlPath, CancellationToken ct)
         {
@@ -120,7 +173,23 @@ namespace Ven4Tools.Services
                 CreateNoWindow = true
             };
 
-            using var process = Process.Start(psi);
+            Process? process;
+            try
+            {
+                process = Process.Start(psi);
+            }
+            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223) // ERROR_CANCELLED
+            {
+                AppLogger.Write("RunConfigureAsync: пользователь отклонил запрос UAC — процесс не запущен");
+                return -1;
+            }
+            catch (Win32Exception ex)
+            {
+                AppLogger.Write(ex, "RunConfigureAsync: не удалось запустить процесс");
+                return -1;
+            }
+
+            using var _ = process;
             if (process == null) return -1;
 
             await process.WaitForExitAsync(ct);
