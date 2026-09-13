@@ -80,6 +80,7 @@ public sealed class ThemePaletteTests
             ("StatusWarning", "StatusWarningForeground"),
             ("StatusDanger", "StatusDangerForeground"),
             ("StatusInfo", "StatusInfoForeground"),
+            ("StatusRegionBlocked", "StatusRegionBlockedForeground"),
         };
 
         foreach ((string fill, string foreground) in pairs)
@@ -118,7 +119,7 @@ public sealed class ThemePaletteTests
     public void АкцентИСтатусыВидныКакТекстНаПодложках(string theme)
     {
         IReadOnlyDictionary<string, Color> palette = ThemeService.BuildPalette(theme);
-        string[] inks = { "AccentColor", "StatusSuccess", "StatusWarning", "StatusDanger", "StatusInfo" };
+        string[] inks = { "AccentColor", "StatusSuccess", "StatusWarning", "StatusDanger", "StatusInfo", "StatusRegionBlocked" };
 
         foreach (string ink in inks)
         {

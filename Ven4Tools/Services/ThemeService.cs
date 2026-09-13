@@ -65,7 +65,8 @@ namespace Ven4Tools.Services
             Color Success,
             Color Warning,
             Color Danger,
-            Color Info);
+            Color Info,
+            Color RegionBlocked);
 
         private static ThemePalette PaletteFor(string? theme) => theme switch
         {
@@ -86,7 +87,8 @@ namespace Ven4Tools.Services
                 Success: Rgb(0x4A, 0xDE, 0x80),
                 Warning: Rgb(0xFB, 0xBF, 0x24),
                 Danger: Rgb(0xF8, 0x71, 0x71),
-                Info: Rgb(0x38, 0xBD, 0xF8)),
+                Info: Rgb(0x38, 0xBD, 0xF8),
+                RegionBlocked: Rgb(0xC0, 0x84, 0xFC)),
 
             // Тема называется «Бирюзовая» (SystemTab.xaml, Tag="teal") — акцент
             // бирюзовый/тил, а не зелёный, как у темы «Как на ven4tools.ru».
@@ -103,7 +105,8 @@ namespace Ven4Tools.Services
                 Success: Rgb(0x4A, 0xDE, 0x80),
                 Warning: Rgb(0xFB, 0xBF, 0x24),
                 Danger: Rgb(0xF8, 0x71, 0x71),
-                Info: Rgb(0x38, 0xBD, 0xF8)),
+                Info: Rgb(0x38, 0xBD, 0xF8),
+                RegionBlocked: Rgb(0xC0, 0x84, 0xFC)),
 
             // Светлая — единственная тема со светлыми подложками. Цвета статусов
             // здесь свои: пастельные #4ADE80/#FBBF24/#F87171 тёмных тем на белой
@@ -121,7 +124,8 @@ namespace Ven4Tools.Services
                 Success: Rgb(0x15, 0x7F, 0x35),
                 Warning: Rgb(0xA4, 0x5A, 0x00),
                 Danger: Rgb(0xC6, 0x28, 0x28),
-                Info: Rgb(0x03, 0x69, 0xA1)),
+                Info: Rgb(0x03, 0x69, 0xA1),
+                RegionBlocked: Rgb(0x6D, 0x28, 0xD9)),
 
             // Тёмная — нейтрально-серая тема Windows, значение по умолчанию для
             // любого неизвестного значения настройки (как и до 5.0).
@@ -142,7 +146,8 @@ namespace Ven4Tools.Services
                 Success: Rgb(0x4A, 0xDE, 0x80),
                 Warning: Rgb(0xFB, 0xBF, 0x24),
                 Danger: Rgb(0xF8, 0x71, 0x71),
-                Info: Rgb(0x38, 0xBD, 0xF8)),
+                Info: Rgb(0x38, 0xBD, 0xF8),
+                RegionBlocked: Rgb(0xC0, 0x84, 0xFC)),
         };
 
         /// <summary>
@@ -195,6 +200,8 @@ namespace Ven4Tools.Services
                 // Пропуск этого ключа не ломал ничего сегодня, но следующий, кто
                 // возьмёт StatusInfo под заливку, не нашёл бы надписи к ней.
                 ["StatusInfoForeground"] = ReadableOn(p.Info),
+                ["StatusRegionBlocked"] = p.RegionBlocked,
+                ["StatusRegionBlockedForeground"] = ReadableOn(p.RegionBlocked),
             };
         }
 
