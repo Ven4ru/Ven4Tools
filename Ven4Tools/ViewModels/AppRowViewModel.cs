@@ -48,6 +48,7 @@ namespace Ven4Tools.ViewModels
         // поиск не зависел от этой детали хранения.
         public string? WingetId => App.AlternativeId;
         public string? ChocoId => App.ChocoId;
+        public string? RegionNote => App.RegionNote;
 
         /// <summary>
         /// Совпадает ли строка каталога с поисковым запросом. Раньше сравнивалось только
@@ -157,7 +158,7 @@ namespace Ven4Tools.ViewModels
         // (как было в первой версии рефакторинга) ломала тест молча.
         public string FavoriteTooltip => IsFavorite ? "Убрать из избранного" : "Добавить в избранное";
 
-        public enum RowAvailability { Checking, Available, Unavailable, Unknown }
+        public enum RowAvailability { Checking, Available, Unavailable, Unknown, RegionBlocked }
 
         private RowAvailability _availability = RowAvailability.Checking;
         public RowAvailability Availability
@@ -178,8 +179,18 @@ namespace Ven4Tools.ViewModels
         // JustInstalled блокирует чекбокс так же, как оригинал (IsEnabled=false после
         // успешной установки в рамках текущей сессии) — раньше строка лишь тускнела
         // (RowBrush), но оставалась выбираемой.
-        public bool IsSelectable => Availability != RowAvailability.Unavailable && !JustInstalled;
-        public bool ShowSuggestButton => Availability == RowAvailability.Unavailable && !IsUserAdded;
+        // RegionBlocked — тоже реальный замер "сейчас не получится": попытка
+        // установить прямо сейчас (без VPN) провалилась бы так же, как Unavailable.
+        // Разблокируется само при следующей проверке, если результат изменится
+        // (например, пользователь включил VPN) — см. CatalogViewModel.Availability.
+        public bool IsSelectable =>
+            Availability != RowAvailability.Unavailable &&
+            Availability != RowAvailability.RegionBlocked &&
+            !JustInstalled;
+
+        public bool ShowSuggestButton =>
+            (Availability == RowAvailability.Unavailable || Availability == RowAvailability.RegionBlocked)
+            && !IsUserAdded;
 
         // Скрыть можно только каталожные приложения — у пользовательских уже есть
         // свой способ убрать из списка (кнопка ❌, RemoveUserAppCommand), и это
@@ -296,9 +307,10 @@ namespace Ven4Tools.ViewModels
                         : BrushResolver.Resolve("StatusInfo", _fallbackInstalled);
                 return Availability switch
                 {
-                    RowAvailability.Available   => BrushResolver.Resolve("StatusSuccess", Brushes.LightGreen),
-                    RowAvailability.Unavailable => BrushResolver.Resolve("StatusDanger", Brushes.LightCoral),
-                    _                           => BrushResolver.Resolve("TextSecondary", Brushes.Gray)
+                    RowAvailability.Available     => BrushResolver.Resolve("StatusSuccess", Brushes.LightGreen),
+                    RowAvailability.Unavailable   => BrushResolver.Resolve("StatusDanger", Brushes.LightCoral),
+                    RowAvailability.RegionBlocked => BrushResolver.Resolve("StatusRegionBlocked", Brushes.MediumPurple),
+                    _                             => BrushResolver.Resolve("TextSecondary", Brushes.Gray)
                 };
             }
         }
@@ -338,13 +350,16 @@ namespace Ven4Tools.ViewModels
                 }
                 return Availability switch
                 {
-                    RowAvailability.Available   => $"✅ Доступно для установки ({(AvailableSizeMB > 0 ? $"~{AvailableSizeMB} МБ" : "размер неизвестен")})",
-                    RowAvailability.Unavailable => "❌ Недоступно",
+                    RowAvailability.Available     => $"✅ Доступно для установки ({(AvailableSizeMB > 0 ? $"~{AvailableSizeMB} МБ" : "размер неизвестен")})",
+                    RowAvailability.Unavailable   => "❌ Недоступно",
+                    // Сноска каталога — только объяснение результата замера (regionNote),
+                    // никогда не вердикт. Нет сноски — общая формулировка, есть — её текст.
+                    RowAvailability.RegionBlocked => $"🌍 {(string.IsNullOrWhiteSpace(RegionNote) ? "Похоже на блокировку по региону — попробуйте через VPN" : RegionNote)}",
                     // Во время ретрая проверки (только пользовательские приложения) показываем
                     // номер попытки — так же, как оригинальный CheckSingleAppAvailability.
                     // При обычной первой проверке RetryAttempt == 0 → статичный текст.
-                    RowAvailability.Checking    => RetryAttempt > 0 ? $"⏳ Повторная проверка... ({RetryAttempt}/3)" : "⏳ Проверка доступности...",
-                    _                           => "⚠️ Статус неизвестен"
+                    RowAvailability.Checking      => RetryAttempt > 0 ? $"⏳ Повторная проверка... ({RetryAttempt}/3)" : "⏳ Проверка доступности...",
+                    _                             => "⚠️ Статус неизвестен"
                 };
             }
         }
