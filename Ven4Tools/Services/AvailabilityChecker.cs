@@ -265,12 +265,12 @@ namespace Ven4Tools.Services
                                     && DownloadValidator.ValidateAfterRedirect(getResponse))
                                     return ClassifySuccess(url, getResponse);
 
-                                return ClassifyFailure(getResponse.StatusCode, hasRegionNote);
+                                return ClassifyFailure(url, getResponse.StatusCode, hasRegionNote);
                             }
                         }
                     }
 
-                    return ClassifyFailure(response.StatusCode, hasRegionNote);
+                    return ClassifyFailure(url, response.StatusCode, hasRegionNote);
                 }
             }
             catch (Exception ex) { AppLogger.Write($"[AvailabilityChecker] HEAD/GET ошибка для {url}: {ex.Message}"); }
@@ -289,13 +289,22 @@ namespace Ven4Tools.Services
         // защиты от ботов, см. спеку); остальное — просто недоступно. Ни одного
         // лишнего сетевого запроса: код ответа уже получен вызывающим методом.
         private static (AvailabilityStatus Status, long SizeMB) ClassifyFailure(
-            System.Net.HttpStatusCode statusCode, bool hasRegionNote)
+            string url, System.Net.HttpStatusCode statusCode, bool hasRegionNote)
         {
             if (statusCode == UnavailableForLegalReasonsStatusCode)
+            {
+                // M7: без regionNote в каталоге для большинства приложений это пока
+                // единственный след, по которому реальный геоблок можно отличить от
+                // протухшей ссылки — логируем, какое правило сработало, и по какому URL.
+                AppLogger.Write($"[AvailabilityChecker] RegionBlocked (451) для {url}");
                 return (AvailabilityStatus.RegionBlocked, 0);
+            }
 
             if (statusCode == System.Net.HttpStatusCode.Forbidden && hasRegionNote)
+            {
+                AppLogger.Write($"[AvailabilityChecker] RegionBlocked (403 + сноска regionNote) для {url}");
                 return (AvailabilityStatus.RegionBlocked, 0);
+            }
 
             return (AvailabilityStatus.Unavailable, 0);
         }
@@ -332,7 +341,14 @@ namespace Ven4Tools.Services
             if (string.Equals(finalUri.Host, originalUri.Host, StringComparison.OrdinalIgnoreCase)) return false;
 
             string? mediaType = response.Content.Headers.ContentType?.MediaType;
-            return string.Equals(mediaType, "text/html", StringComparison.OrdinalIgnoreCase);
+            bool isStub = string.Equals(mediaType, "text/html", StringComparison.OrdinalIgnoreCase);
+            if (isStub)
+            {
+                // M7: тот же мотив, что и у ClassifyFailure — без этой строки редирект
+                // на гео-заглушку неотличим постфактум от обычного протухшего зеркала.
+                AppLogger.Write($"[AvailabilityChecker] RegionBlocked (редирект на гео-заглушку {finalUri.Host}) для {originalUrl}");
+            }
+            return isStub;
         }
 
         // community.chocolatey.org не поддерживает HEAD (всегда 501, независимо от
