@@ -15,8 +15,14 @@ namespace Ven4Tools.Services
 
     /// <summary>
     /// Установленный на машине Office — от <see cref="OfficeInstallationService.Detect"/>.
-    /// <see cref="ProductIds"/> заполнен только для C2R (нужен для адресного удаления
-    /// через ODT); MSI не даёт ProductReleaseIds, поэтому для него список пуст.
+    /// <see cref="ProductIds"/> заполнен только для C2R: сегодня он используется для
+    /// того, ЧТО установлено (сравнение с выбранной ниже версией — см. IsReplaceBlocked
+    /// в OfficeViewModel.Management.cs, которая решает, блокировать ли «Заменить», когда
+    /// выбранный ProductReleaseId уже среди установленных). Адресное удаление через ODT
+    /// (<see cref="OfficeDeploymentToolRunner.BuildRemoveProductsConfigurationXml"/>)
+    /// поддерживает те же ProductIds, но сейчас не задействовано ни в одном отгружаемом
+    /// пути — оба флоу удаления/замены используют "Remove All". MSI не даёт
+    /// ProductReleaseIds, поэтому для него список пуст.
     /// </summary>
     public sealed class InstalledOfficeInfo
     {
@@ -144,9 +150,13 @@ namespace Ven4Tools.Services
                 var productIds = rawIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 // "," или " , " проходят IsNullOrWhiteSpace, но после RemoveEmptyEntries
                 // дают пустой массив — тогда DescribeC2R([0]) упадёт, а Kind = ClickToRun
-                // с пустым ProductIds нарушит инвариант задачи (адресное удаление должно
-                // быть доступно всегда, когда Kind == ClickToRun). Считаем это "C2R не
-                // сконфигурирован" и проваливаемся в MSI/NotFound, как будто ключа не было.
+                // с пустым ProductIds нарушит инвариант "раз Kind == ClickToRun, значит
+                // есть чем определить, что именно установлено" (см. IsReplaceBlocked в
+                // OfficeViewModel.Management.cs — она перебирает InstalledOffice.ProductIds
+                // и сравнивает с выбранной версией; пустой список сделал бы «Заменить»
+                // недоступной для сравнения, а не заблокировал бы что-то реальное, но
+                // сигнал был бы лживым). Считаем это "C2R не сконфигурирован" и
+                // проваливаемся в MSI/NotFound, как будто ключа не было.
                 if (productIds.Length > 0)
                 {
                     return new InstalledOfficeInfo
