@@ -68,7 +68,7 @@
                     <WrapPanel Visibility="{Binding IsClickToRunInstallation, Converter={StaticResource BoolToVis}}">
                         <Button Content="🗑 Удалить" Height="34" Width="140" Margin="0,0,8,0"
                                 ToolTip="Полностью удалит установленный Office. Приложения и активация будут потеряны, документы на диске не затрагиваются."
-                                Background="{DynamicResource StatusDanger}" Foreground="{DynamicResource AccentForeground}" FontWeight="Bold"
+                                Background="{DynamicResource StatusDanger}" Foreground="{DynamicResource StatusDangerForeground}" FontWeight="Bold"
                                 Command="{Binding UninstallCommand}"/>
                         <Button Content="↻ Заменить на выбранную" Height="34" Width="190"
                                 ToolTip="Скачает выбранную ниже версию, удалит установленный Office и поставит новую."
