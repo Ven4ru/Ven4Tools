@@ -31,6 +31,7 @@ namespace Ven4Tools.ViewModels
                 {
                     OnPropertyChanged(nameof(ShowInstalledCard));
                     OnPropertyChanged(nameof(IsMsiInstallation));
+                    OnPropertyChanged(nameof(IsClickToRunInstallation));
                     OnPropertyChanged(nameof(InstalledSummaryText));
                     OnPropertyChanged(nameof(IsReplaceBlocked));
                     UninstallCommand.RaiseCanExecuteChanged();
@@ -41,6 +42,7 @@ namespace Ven4Tools.ViewModels
 
         public bool ShowInstalledCard => InstalledOffice.Kind != OfficeInstallationKind.NotFound;
         public bool IsMsiInstallation => InstalledOffice.Kind == OfficeInstallationKind.Msi;
+        public bool IsClickToRunInstallation => InstalledOffice.Kind == OfficeInstallationKind.ClickToRun;
 
         public string InstalledSummaryText => InstalledOffice.Kind switch
         {
