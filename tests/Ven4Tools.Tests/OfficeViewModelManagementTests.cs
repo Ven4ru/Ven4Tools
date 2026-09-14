@@ -8,7 +8,12 @@ public sealed class OfficeViewModelManagementTests
     private sealed class FakeDetector : IOfficeInstallationDetector
     {
         public InstalledOfficeInfo Result { get; set; } = InstalledOfficeInfo.None;
-        public InstalledOfficeInfo Detect() => Result;
+        public int DetectCallCount { get; private set; }
+        public InstalledOfficeInfo Detect()
+        {
+            DetectCallCount++;
+            return Result;
+        }
     }
 
     [Fact]
@@ -98,5 +103,19 @@ public sealed class OfficeViewModelManagementTests
 
         Assert.False(vm.IsReplaceBlocked);
         Assert.True(vm.ReplaceCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void Детекция_НеЗапускаетсяВКонструкторе_АТолькоПриПервомЧтенииКарточки()
+    {
+        var detector = new FakeDetector();
+
+        var vm = new OfficeViewModel(detector);
+
+        Assert.Equal(0, detector.DetectCallCount);
+
+        _ = vm.ShowInstalledCard;
+
+        Assert.Equal(1, detector.DetectCallCount);
     }
 }

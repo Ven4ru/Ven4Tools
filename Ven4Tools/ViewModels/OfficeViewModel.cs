@@ -294,7 +294,6 @@ namespace Ven4Tools.ViewModels
             }
 
             UpdateRegionDisplay();
-            RefreshInstalledOfficeState();
         }
 
         private void RunCancel()
