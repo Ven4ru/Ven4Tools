@@ -17,9 +17,13 @@ namespace Ven4Tools.Services
     /// setup.exe и — после Task 3 — Configuration.xml) и открытым на чтение
     /// хендлом самого setup.exe (см. комментарий в <see cref="OfficeDeploymentToolRunner.PrepareAsync"/>
     /// про TOCTOU). Вызывающий код обязан вызвать Dispose() ПОСЛЕ того, как
-    /// элевированный процесс уже запущен (Process.Start вернул управление) —
-    /// см. RunConfigureFlowAsync в OfficeViewModel.Management.cs, тот же порядок,
-    /// что и installerHandle в OfficeViewModel.Install.cs.
+    /// элевированный процесс ЗАВЕРШИЛСЯ, а не сразу после Process.Start: для
+    /// хендла setup.exe хватило бы и возврата из Process.Start (так сделано с
+    /// installerHandle в OfficeViewModel.Install.cs), но этот Dispose ещё и
+    /// удаляет <see cref="WorkDir"/> — снести папку из-под работающего setup.exe
+    /// нельзя. См. RunConfigureFlowAsync в OfficeViewModel.Management.cs: там
+    /// Dispose стоит в finally после await RunConfigureAsync, который дожидается
+    /// выхода процесса.
     /// </summary>
     public sealed class OdtPrepareResult : IDisposable
     {
