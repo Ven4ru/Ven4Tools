@@ -121,7 +121,11 @@ public sealed class OfficeInstallationServiceTests
 
         var info = new OfficeInstallationService(registry).Detect();
 
-        Assert.NotEqual(OfficeInstallationKind.ClickToRun, info.Kind);
+        // M3: с пустым ProductReleaseIds и пустым UninstallEntries единственный
+        // корректный исход — NotFound (а не любой Kind, отличный от ClickToRun: MSI был
+        // бы столь же неверным сигналом, как и ClickToRun с пустым ProductIds).
+        Assert.Equal(OfficeInstallationKind.NotFound, info.Kind);
+        Assert.Empty(info.ProductIds);
     }
 
     [Fact]
