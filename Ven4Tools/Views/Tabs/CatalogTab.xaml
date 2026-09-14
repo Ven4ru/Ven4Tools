@@ -272,6 +272,19 @@
                                                               CommandParameter="{Binding}"/>
                                             </TextBlock.InputBindings>
                                         </TextBlock>
+
+                                        <!-- 🌍 Блокировка по региону — ОТДЕЛЬНЫЙ значок рядом с названием,
+                                             а не перекраска названия: по спеке это должно отличаться от
+                                             обычной недоступности, а не быть ещё одним её цветом.
+                                             Тот же приём, что у 🔒 ниже. Тултип — сноска regionNote из
+                                             каталога, если она есть, иначе общая формулировка. -->
+                                        <TextBlock Text="🌍" Width="20" Height="20" Margin="6,0,0,0"
+                                                   VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                   TextAlignment="Center" FontSize="12"
+                                                   Foreground="{DynamicResource StatusRegionBlocked}"
+                                                   Visibility="{Binding ShowRegionBlockedGlyph, Converter={StaticResource BoolToVis}}"
+                                                   ToolTip="{Binding RegionBlockedTooltip}"
+                                                   ToolTipService.ShowDuration="20000"/>
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="14,0,0,0">
