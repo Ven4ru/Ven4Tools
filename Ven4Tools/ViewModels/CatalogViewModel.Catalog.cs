@@ -209,7 +209,8 @@ namespace Ven4Tools.ViewModels
                         RequiredSpaceMB = ParseSizeToMB(catalogApp.Size),
                         IsUserAdded = false,
                         ChocoId = catalogApp.ChocoId,
-                        Sha256 = catalogApp.Sha256
+                        Sha256 = catalogApp.Sha256,
+                        RegionNote = catalogApp.RegionNote
                     };
                     if (!string.IsNullOrEmpty(catalogApp.SilentArgs)) appInfo.SilentArgs = catalogApp.SilentArgs;
                     _appManager.AddCatalogApp(appInfo);
@@ -220,6 +221,7 @@ namespace Ven4Tools.ViewModels
                     if (!string.IsNullOrEmpty(catalogApp.WingetId)) existing.AlternativeId = catalogApp.WingetId;
                     existing.ChocoId = catalogApp.ChocoId;
                     existing.Sha256 = catalogApp.Sha256;
+                    existing.RegionNote = catalogApp.RegionNote;
                     if (!string.IsNullOrEmpty(catalogApp.SilentArgs)) existing.SilentArgs = catalogApp.SilentArgs;
                 }
             }
