@@ -311,6 +311,11 @@ namespace Ven4Tools.ViewModels
             var prepared = await _deploymentToolRunner.PrepareAsync(ct);
             if (prepared.Success) return (prepared.SetupExePath, "", prepared);
 
+            // Неуспешный результат ничем не владеет (WorkDir уже удалён в PrepareAsync),
+            // но он всё равно IDisposable — освобождаем явно, чтобы путь не зависел от
+            // того, что «Failed ничего не держит», если это когда-нибудь изменится.
+            prepared.Dispose();
+
             AppLogger.Write($"⚠️ ODT недоступен ({prepared.Error}) — пробуем уже установленный OfficeClickToRun.exe");
             string fallbackPath = ResolveFallbackClickToRunPath();
             // I3: для setup.exe (ODT) выход из процесса действительно означает, что
