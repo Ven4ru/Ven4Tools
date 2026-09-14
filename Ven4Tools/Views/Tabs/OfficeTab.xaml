@@ -66,11 +66,11 @@
 
                     <!-- C2R: удалить/заменить. MSI: ODT его не удаляет — только системная панель. -->
                     <WrapPanel Visibility="{Binding IsClickToRunInstallation, Converter={StaticResource BoolToVis}}">
-                        <Button Content="🗑 Удалить" Height="34" Width="140" Margin="0,0,8,0"
+                        <Button x:Name="btnUninstallOffice" Content="🗑 Удалить" Height="34" Padding="12,0" Margin="0,0,8,0"
                                 ToolTip="Полностью удалит установленный Office. Приложения и активация будут потеряны, документы на диске не затрагиваются."
                                 Background="{DynamicResource StatusDanger}" Foreground="{DynamicResource StatusDangerForeground}" FontWeight="Bold"
                                 Command="{Binding UninstallCommand}"/>
-                        <Button Content="↻ Заменить на выбранную" Height="34" Width="190"
+                        <Button x:Name="btnReplaceOffice" Content="↻ Заменить на выбранную" Height="34" Padding="12,0" Margin="0,0,8,0"
                                 ToolTip="Скачает выбранную ниже версию, удалит установленный Office и поставит новую."
                                 Command="{Binding ReplaceCommand}"/>
                     </WrapPanel>
@@ -78,7 +78,7 @@
                     <StackPanel Visibility="{Binding IsMsiInstallation, Converter={StaticResource BoolToVis}}">
                         <TextBlock Text="Это классическая MSI-установка Office — Office Deployment Tool такие не удаляет."
                                    Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"/>
-                        <Button Content="Открыть «Установленные приложения»" Height="34" HorizontalAlignment="Left" Padding="12,0"
+                        <Button x:Name="btnOpenOfficeAppsFeatures" Content="Открыть «Установленные приложения»" Height="34" HorizontalAlignment="Left" Padding="12,0"
                                 ToolTip="Откроет системную панель управления для удаления MSI-версии Office вручную."
                                 Command="{Binding OpenAppsFeaturesCommand}"/>
                     </StackPanel>
