@@ -86,6 +86,26 @@ public sealed class AvailabilityCheckerRegionTests
     }
 
     [Fact]
+    public async Task Код405_ЗатемРанжированныйGetВозвращает451_ДаётRegionBlocked()
+    {
+        // M1: единственная непокрытая до этого теста ветка — HEAD 405 (community.
+        // chocolatey.org и подобные не поддерживают HEAD), затем ranged GET получает
+        // 451 (RFC 7725) вместо 2xx/206 — уходит в тот же ClassifyFailure, что и прямой
+        // 451 на HEAD, и должен дать тот же вердикт.
+        // Различаем два запроса по методу, а не по порядковому номеру вызова:
+        // порядковый счётчик молча начал бы проверять не то, если бы в цепочку
+        // добавился ещё один запрос (та же причина, что и в тестах каскада ниже).
+        using var checker = CheckerReturning(request =>
+            request.Method == HttpMethod.Head
+                ? new HttpResponseMessage(HttpStatusCode.MethodNotAllowed) { RequestMessage = request }
+                : new HttpResponseMessage((HttpStatusCode)451) { RequestMessage = request });
+
+        var (status, _) = await checker.CheckAppAvailabilityWithSize(AppWithUrl());
+
+        Assert.Equal(AvailabilityChecker.AvailabilityStatus.RegionBlocked, status);
+    }
+
+    [Fact]
     public async Task РедиректНаГеоЗаглушку_ДаётRegionBlocked()
     {
         // Смена хоста + HTML вместо бинарника — единственный сигнал геозаглушки,
@@ -117,13 +137,13 @@ public sealed class AvailabilityCheckerRegionTests
     {
         var app = AppWithUrl();
         app.ChocoId = "does-not-matter";
-        int call = 0;
         using var checker = new AvailabilityChecker(new HttpClient(new DelegateHandler(request =>
         {
-            call++;
-            // 1-й запрос — HEAD на прямую ссылку (451). 2-й — GET к Chocolatey
-            // (GetChocoPackageInfo) — отвечаем неудачей (404).
-            return call == 1
+            // Запрос на прямую ссылку (HEAD) — 451. Любой другой хост — это запрос к
+            // Chocolatey (GetChocoPackageInfo) — отвечаем неудачей (404). Различаем по
+            // хосту, а не по порядковому номеру вызова: порядок запросов — деталь
+            // реализации CheckAppAvailabilityWithSize, а не то, что тест обязан пинить.
+            return request.RequestUri!.Host == new Uri(TestUrl).Host
                 ? new HttpResponseMessage((HttpStatusCode)451) { RequestMessage = request }
                 : new HttpResponseMessage(HttpStatusCode.NotFound) { RequestMessage = request };
         })));
@@ -138,11 +158,13 @@ public sealed class AvailabilityCheckerRegionTests
     {
         var app = AppWithUrl();
         app.ChocoId = "works-via-choco";
-        int call = 0;
         using var checker = new AvailabilityChecker(new HttpClient(new DelegateHandler(request =>
         {
-            call++;
-            return call == 1
+            // Запрос на прямую ссылку (HEAD) — 451. Любой другой хост — это запрос к
+            // Chocolatey (GetChocoPackageInfo) — отвечаем успехом (206). Различаем по
+            // хосту, а не по порядковому номеру вызова: порядок запросов — деталь
+            // реализации CheckAppAvailabilityWithSize, а не то, что тест обязан пинить.
+            return request.RequestUri!.Host == new Uri(TestUrl).Host
                 ? new HttpResponseMessage((HttpStatusCode)451) { RequestMessage = request }
                 : new HttpResponseMessage(HttpStatusCode.PartialContent) { RequestMessage = request };
         })));
