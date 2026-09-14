@@ -172,6 +172,8 @@ namespace Ven4Tools.ViewModels
                     OnPropertyChanged(nameof(IsSelectable));
                     OnPropertyChanged(nameof(ShowSuggestButton));
                     OnPropertyChanged(nameof(StatusTooltip));
+                    OnPropertyChanged(nameof(ShowRegionBlockedGlyph));
+                    OnPropertyChanged(nameof(RegionBlockedTooltip));
                 }
             }
         }
@@ -191,6 +193,21 @@ namespace Ven4Tools.ViewModels
         public bool ShowSuggestButton =>
             (Availability == RowAvailability.Unavailable || Availability == RowAvailability.RegionBlocked)
             && !IsUserAdded;
+
+        // Региональная блокировка показывается ОТДЕЛЬНЫМ значком 🌍 рядом с названием,
+        // а не перекраской названия (спека docs/superpowers/specs/
+        // 2026-09-10-catalog-region-availability-design.md: «Отдельный значок 🌍 — не тот
+        // же, что у обычной недоступности»). Тот же приём, что у 🔒 (ShowLaunchBlocked)
+        // в CatalogTab.xaml: видимость через BoolToVis, свой тултип.
+        public bool ShowRegionBlockedGlyph => Availability == RowAvailability.RegionBlocked;
+
+        // Текст у значка — без 🌍-префикса: эмодзи уже нарисовано самим значком.
+        // Сноска каталога (regionNote) — только объяснение результата замера, никогда
+        // не вердикт: нет сноски — общая формулировка, есть — её текст.
+        public string RegionBlockedTooltip =>
+            string.IsNullOrWhiteSpace(RegionNote)
+                ? "Похоже на блокировку по региону — попробуйте через VPN"
+                : RegionNote;
 
         // Скрыть можно только каталожные приложения — у пользовательских уже есть
         // свой способ убрать из списка (кнопка ❌, RemoveUserAppCommand), и это
@@ -309,7 +326,11 @@ namespace Ven4Tools.ViewModels
                 {
                     RowAvailability.Available     => BrushResolver.Resolve("StatusSuccess", Brushes.LightGreen),
                     RowAvailability.Unavailable   => BrushResolver.Resolve("StatusDanger", Brushes.LightCoral),
-                    RowAvailability.RegionBlocked => BrushResolver.Resolve("StatusRegionBlocked", Brushes.MediumPurple),
+                    // RegionBlocked намеренно НЕ перекрашивает название: по спеке
+                    // (docs/superpowers/specs/2026-09-10-catalog-region-availability-design.md)
+                    // это ОТДЕЛЬНЫЙ значок 🌍 рядом с именем, а не ещё один цвет строки —
+                    // см. ShowRegionBlockedGlyph и CatalogTab.xaml. Уходит в ветку по
+                    // умолчанию (обычный приглушённый цвет), как Unknown/Checking.
                     _                             => BrushResolver.Resolve("TextSecondary", Brushes.Gray)
                 };
             }
@@ -352,9 +373,10 @@ namespace Ven4Tools.ViewModels
                 {
                     RowAvailability.Available     => $"✅ Доступно для установки ({(AvailableSizeMB > 0 ? $"~{AvailableSizeMB} МБ" : "размер неизвестен")})",
                     RowAvailability.Unavailable   => "❌ Недоступно",
-                    // Сноска каталога — только объяснение результата замера (regionNote),
-                    // никогда не вердикт. Нет сноски — общая формулировка, есть — её текст.
-                    RowAvailability.RegionBlocked => $"🌍 {(string.IsNullOrWhiteSpace(RegionNote) ? "Похоже на блокировку по региону — попробуйте через VPN" : RegionNote)}",
+                    // Текст один и тот же, что у значка 🌍 (RegionBlockedTooltip) — здесь он
+                    // лишь получает эмодзи-префикс, как у соседних веток. Саму формулировку
+                    // не дублируем: единственное место, где она живёт, — RegionBlockedTooltip.
+                    RowAvailability.RegionBlocked => $"🌍 {RegionBlockedTooltip}",
                     // Во время ретрая проверки (только пользовательские приложения) показываем
                     // номер попытки — так же, как оригинальный CheckSingleAppAvailability.
                     // При обычной первой проверке RetryAttempt == 0 → статичный текст.
