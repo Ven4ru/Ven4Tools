@@ -157,6 +157,30 @@ namespace Ven4Tools.ViewModels
             }
 
             await RunInstallAsync();
+
+            // I2: RunInstallAsync могла не запуститься вовсе — например, конкурентная
+            // установка из каталога заняла InstallSemaphore в узком окне между его
+            // освобождением в RunConfigureFlowAsync.finally (чуть выше) и повторным
+            // захватом внутри самой RunInstallAsync: тогда Views.UiGuards.WarnIfInstallBusy()
+            // покажет свой обычный MessageBox и вернёт управление сюда молча —
+            // HasDownloadedInstaller при этом остаётся true (файл не тронут), потому что
+            // ранний возврат RunInstallAsync происходит ДО того, как она сама сбрасывает
+            // этот флаг. InstalledOffice всё ещё NotFound, потому что старый Office к
+            // этому моменту уже гарантированно удалён (мы дошли сюда только при
+            // oldRemoved == true выше), а новый не встал. Тот же признак совпадает и с
+            // другими причинами, по которым RunInstallAsync не довела дело до конца
+            // (сбой установщика, отмена пользователем) — во всех них машина сейчас без
+            // Office, и не сказать об этом явно значило бы дать замене «тихо потеряться
+            // в никуда» ровно в момент, когда на машине временно нет никакого Office.
+            if (HasDownloadedInstaller && InstalledOffice.Kind == OfficeInstallationKind.NotFound)
+            {
+                string message =
+                    $"{oldDisplayName} удалён, но {newDisplayName} ещё не установлен.\n\n" +
+                    "Скачанный установщик сохранён — нажмите «Установить», когда текущая операция " +
+                    "(если она сейчас идёт) завершится.";
+                AppLogger.Write($"⚠️ {oldDisplayName} удалён, {newDisplayName} не установлен — установка не завершилась. Установщик сохранён, доступна кнопка «Установить».");
+                MessageBox.Show(message, "Замена Office", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         // ── Общий поток "подготовить ODT/фолбэк → запустить /configure" ─────
@@ -172,7 +196,18 @@ namespace Ven4Tools.ViewModels
         {
             IsInstalling = true; // тот же признак занятости, что и обычная установка
             CancelVisible = false; // операция ODT/OfficeClickToRun не отменяема после запуска
-            string? configPath = null;
+
+            // I1/I5: prepared (когда ODT реально скачан и распакован) владеет и рабочей
+            // папкой ODT, и открытым на чтение хендлом setup.exe (см. OdtPrepareResult) —
+            // держим его до самого finally, ПОСЛЕ того как RunConfigureAsync (а значит и
+            // Process.Start элевированного процесса внутри неё) уже вернула управление.
+            // configHandle защищает тем же приёмом Configuration.xml — тоже до finally.
+            // configWorkDir используется только на запасном пути (уже установленный
+            // OfficeClickToRun.exe, без ODT) — там нет чужой рабочей папки, которая сама
+            // себя уберёт, поэтому создаём и чистим её сами.
+            OdtPrepareResult? prepared = null;
+            FileStream? configHandle = null;
+            string? configWorkDir = null;
 
             SetProgress(true, startPhase, 0, "");
             AppLogger.Write($"\n{startPhase}");
@@ -181,7 +216,8 @@ namespace Ven4Tools.ViewModels
             try
             {
                 SetPhase("🔐 Подготовка средства удаления/установки Office...");
-                var (exePath, error) = await ResolveConfigureExecutableAsync(CancellationToken.None);
+                var (exePath, error, resolvedPrepared) = await ResolveConfigureExecutableAsync(CancellationToken.None);
+                prepared = resolvedPrepared;
                 if (exePath == null)
                 {
                     AppLogger.Write($"❌ {error}");
@@ -190,8 +226,31 @@ namespace Ven4Tools.ViewModels
                     return false;
                 }
 
-                configPath = Path.Combine(Path.GetTempPath(), $"Ven4Tools-ODT-Config-{Guid.NewGuid():N}.xml");
+                // TOCTOU у Configuration.xml — тот же риск, что и у setup.exe (см.
+                // OfficeDeploymentToolRunner.PrepareAsync): ODT поддерживает
+                // <Add SourcePath="…">, так что подмена этого XML тем же пользователем,
+                // пока висит запрос UAC, превращает элевированный процесс в установщик
+                // произвольного контента. Решаем тем же приёмом, что и installerHandle в
+                // OfficeViewModel.Install.cs: пишем файл, сразу открываем на чтение с
+                // FileShare.Read и держим хендл открытым до завершения /configure.
+                // Кладём файл в рабочую папку ODT (prepared.WorkDir), когда она есть, —
+                // тогда prepared.Dispose() ниже уберёт его вместе со всем остальным, а не
+                // в голый %TEMP% отдельным потерянным файлом.
+                string configDir;
+                if (prepared != null)
+                {
+                    configDir = prepared.WorkDir;
+                }
+                else
+                {
+                    configWorkDir = Path.Combine(Path.GetTempPath(), $"Ven4Tools-ODT-Config-{Guid.NewGuid():N}");
+                    Directory.CreateDirectory(configWorkDir);
+                    configDir = configWorkDir;
+                }
+
+                string configPath = Path.Combine(configDir, "Configuration.xml");
                 await File.WriteAllTextAsync(configPath, configurationXml);
+                configHandle = new FileStream(configPath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
                 SetPhase(startPhase);
                 int exitCode = await _deploymentToolRunner.RunConfigureAsync(exePath, configPath, CancellationToken.None);
@@ -219,7 +278,16 @@ namespace Ven4Tools.ViewModels
             finally
             {
                 InstallationService.InstallSemaphore.Release();
-                if (configPath != null) { try { File.Delete(configPath); } catch { } }
+
+                // Порядок важен: сначала закрыть хендлы (иначе Directory.Delete внутри
+                // prepared.Dispose()/ниже упадёт на файле, открытом на чтение), потом
+                // убрать папки. К этому моменту RunConfigureAsync уже вернула управление —
+                // элевированный /configure либо завершился, либо запуск не удался вовсе,
+                // так что подменять здесь уже нечего.
+                configHandle?.Dispose();
+                if (configWorkDir != null) { try { Directory.Delete(configWorkDir, recursive: true); } catch { } }
+                prepared?.Dispose();
+
                 RefreshInstalledOfficeState();
                 Application.Current?.Dispatcher.Invoke(() =>
                 {
@@ -229,16 +297,33 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        private async Task<(string? ExePath, string Error)> ResolveConfigureExecutableAsync(CancellationToken ct)
+        // I4: не полагаемся на захардкоженный "C:\..." — Program Files может быть не на
+        // C: (кастомная установка Windows) или переопределён политикой; на неанглийской
+        // Windows сам путь всё равно на английском (Common Files не переводится), но диск
+        // и локаль пользователя — не наше дело угадывать заранее.
+        private static string ResolveFallbackClickToRunPath() =>
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles),
+                @"Microsoft Shared\ClickToRun\OfficeClickToRun.exe");
+
+        private async Task<(string? ExePath, string Error, OdtPrepareResult? Prepared)> ResolveConfigureExecutableAsync(CancellationToken ct)
         {
             var prepared = await _deploymentToolRunner.PrepareAsync(ct);
-            if (prepared.Success) return (prepared.SetupExePath, "");
+            if (prepared.Success) return (prepared.SetupExePath, "", prepared);
 
             AppLogger.Write($"⚠️ ODT недоступен ({prepared.Error}) — пробуем уже установленный OfficeClickToRun.exe");
-            const string fallbackPath = @"C:\Program Files\Common Files\Microsoft Shared\ClickToRun\OfficeClickToRun.exe";
-            if (File.Exists(fallbackPath)) return (fallbackPath, "");
+            string fallbackPath = ResolveFallbackClickToRunPath();
+            // I3: для setup.exe (ODT) выход из процесса действительно означает, что
+            // /configure завершился — это синхронный инструмент. Для этого запасного
+            // OfficeClickToRun.exe это НЕ подтверждено: исторически C2R-клиент передаёт
+            // реальную работу отдельному процессу и потенциально может вернуться раньше
+            // фактического завершения (см. GetC2RProcessPids/WaitForC2RProcess/
+            // MonitorInstallation в OfficeViewModel.Install.cs — готовый механизм ожидания,
+            // если понадобится и здесь). Подтвердить на обязательном ручном прогоне, пока
+            // этот путь не задействован по-настоящему.
+            if (File.Exists(fallbackPath)) return (fallbackPath, "", null);
 
-            return (null, $"ODT недоступен ({prepared.Error}), запасной OfficeClickToRun.exe тоже не найден на этой машине.");
+            return (null, $"ODT недоступен ({prepared.Error}), запасной OfficeClickToRun.exe тоже не найден на этой машине.", null);
         }
     }
 }
