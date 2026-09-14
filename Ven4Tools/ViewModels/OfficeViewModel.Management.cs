@@ -11,10 +11,20 @@ namespace Ven4Tools.ViewModels
     {
         // ── Состояние "что установлено" ─────────────────────────────────────
 
-        private InstalledOfficeInfo _installedOffice = InstalledOfficeInfo.None;
+        // null означает «детекция ещё не выполнялась». Конструктор VM достижим из
+        // юнит-тестов (см. публичный OfficeViewModel() → this(new OfficeInstallationService())),
+        // а Detect() на реальном детекторе читает живой реестр — HKLM ClickToRun\Configuration,
+        // и при отсутствии C2R дополнительно перебирает обе ветки Uninstall подключ за подключом.
+        // Поэтому детекция запускается лениво, при первом реальном обращении к карточке
+        // (геттер ниже), а не безусловно в конструкторе.
+        private InstalledOfficeInfo? _installedOffice;
         public InstalledOfficeInfo InstalledOffice
         {
-            get => _installedOffice;
+            get
+            {
+                if (_installedOffice == null) RefreshInstalledOfficeState();
+                return _installedOffice!;
+            }
             private set
             {
                 if (SetField(ref _installedOffice, value))
