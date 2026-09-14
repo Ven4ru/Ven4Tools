@@ -117,5 +117,14 @@ public sealed class OfficeViewModelManagementTests
         _ = vm.ShowInstalledCard;
 
         Assert.Equal(1, detector.DetectCallCount);
+
+        // M4: второе чтение карточки не должно снова дёргать Detect() — если бы кэш
+        // был снят, этот счётчик стал бы 2 здесь же. Это не праздная проверка: WPF
+        // CommandManager перезапрашивает CanExecute очень часто (на каждое движение
+        // фокуса/мыши), и регрессия кэша обернулась бы реальным опросом реестра на
+        // каждый такой тик, а не только при первом обращении к карточке.
+        _ = vm.InstalledSummaryText;
+
+        Assert.Equal(1, detector.DetectCallCount);
     }
 }
