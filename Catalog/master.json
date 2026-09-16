@@ -1,7 +1,14 @@
 {
-  "version": 20,
-  "lastUpdated": "2026-09-16 12:40:41",
+  "version": 21,
+  "lastUpdated": "2026-09-16 17:58:19",
   "changelog": [
+    {
+      "version": 21,
+      "date": "2026-09-16",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "Ven4Control обновлён до 0.6.0-beta: приложение научилось обновляться само, поэтому дальше каталог будет отставать от него без вреда — установленная копия догонит себя при первой же проверке."
+    },
     {
       "version": 20,
       "date": "2026-09-16",
@@ -1401,13 +1408,13 @@
       "name": "Ven4Control",
       "category": "Системные",
       "wingetId": "",
-      "downloadUrl": "https://github.com/Ven4ru/Ven4Control/releases/download/v0.5.0-beta/Ven4Control.Setup-0.5.0.exe",
-      "version": "0.5.0",
+      "downloadUrl": "https://github.com/Ven4ru/Ven4Control/releases/download/v0.6.0-beta/Ven4Control.Setup-0.6.0.exe",
+      "version": "0.6.0",
       "size": "65.9 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=github.com&sz=64",
       "description": "Управление OpenWrt-роутерами, Ubuntu-серверами и Windows-машинами из одного окна: SSH-терминал, файлы по SFTP, журналы, сервисы, температура и RDP внутри SSH-туннеля.",
       "profile": "extended",
-      "sha256": "dcd0e351c7b67977db2ac0807940b804eda3723af20930badadfc58a0c265f54",
+      "sha256": "9f128646c166bf0b54b62dc44b9254c0e81573750b24c5e35b0f91076fbecf20",
       "chocoId": "",
       "silentArgs": "/S"
     }
