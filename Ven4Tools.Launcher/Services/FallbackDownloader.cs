@@ -117,6 +117,16 @@ internal sealed class FallbackDownloader
                 // источники, операция в любом случае должна остановиться.
                 throw;
             }
+            catch (OperationCanceledException ex)
+            {
+                // Токен вызывающего НЕ отменён — значит, это таймаут источника
+                // (заголовки/простой). Наружу он не должен уйти как
+                // OperationCanceledException: вызывающие трактуют этот тип как
+                // «пользователь нажал Отмена» — дельта не переходила на полную
+                // загрузку, а сбой всех источников показывался как «Отменено».
+                lastError = new TimeoutException("Источник не ответил вовремя", ex);
+                anyAttempted = true;
+            }
             catch (Exception ex)
             {
                 lastError = ex;

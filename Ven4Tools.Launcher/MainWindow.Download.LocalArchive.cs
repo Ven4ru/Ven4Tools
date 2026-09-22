@@ -55,6 +55,19 @@ namespace Ven4Tools.Launcher
                 await InstallFromLocalArchiveAsync(archivePath, lease.Token, silent: false);
         }
 
+        /// <summary>
+        /// Вход для headless-установки (CliInstallRunner). Конструктор окна и в CLI-режиме
+        /// запускает фоновый апдейтер, поэтому установка обязана занимать ту же аренду
+        /// операций, что и кнопка: иначе долгая распаковка на медленном диске пересекалась
+        /// с тихим автообновлением той же папки.
+        /// </summary>
+        internal async Task<bool> InstallFromLocalArchiveForCliAsync(string archivePath, bool silent)
+        {
+            using var lease = TryBeginOperation("Установка клиента из файла", TimeSpan.FromMinutes(10), silent: true);
+            if (lease == null) return false;
+            return await InstallFromLocalArchiveAsync(archivePath, lease.Token, silent);
+        }
+
         internal async Task<bool> InstallFromLocalArchiveAsync(string archivePath, CancellationToken token, bool silent)
         {
             Dispatcher.Invoke(() =>

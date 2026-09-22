@@ -127,6 +127,15 @@ namespace Ven4Tools.Launcher
                 return false;
             }
 
+            // Общая аренда операций лаунчера: без неё починка шла параллельно с ручным
+            // или тихим автообновлением той же папки (окно настроек немодальное).
+            using var lease = TryBeginOperation("Восстановление клиента", TimeSpan.FromMinutes(30));
+            if (lease == null)
+            {
+                report.SetRepairMessage("лаунчер занят другой операцией");
+                return false;
+            }
+
             _integrityOperationRunning = true;
             try
             {
@@ -183,6 +192,20 @@ namespace Ven4Tools.Launcher
                 // Тот же общий гейт, что и у любого другого способа положить файлы в
                 // папку клиента — своей копии этих проверок здесь быть не должно.
                 if (!await EnsureClientClosedAndPathSafeAsync(silent: false)) return false;
+
+                // Отчёт мог устареть: окно настроек немодальное, между «Проверить» и
+                // «Исправить» клиент успел обновиться. Применять план старой версии
+                // поверх новой — значит вернуть её файлы и удалить «лишние», то есть
+                // файлы новой версии. Сверяем версию на диске прямо перед записью.
+                string? onDisk = FileVersionInfo.GetVersionInfo(
+                    Path.Combine(clientPath, LauncherPaths.ClientExeName)).FileVersion;
+                if (onDisk == null || remoteManifest.Version == null ||
+                    VersionComparer.Compare(onDisk, remoteManifest.Version) != 0)
+                {
+                    AddLog($"⚠️ Восстановление отменено: в папке уже версия {onDisk ?? "не читается"}, " +
+                           $"а отчёт составлен для {remoteManifest.Version} — запустите проверку заново");
+                    return false;
+                }
 
                 // Транзакция читает и переименовывает файлы публикации — не на UI-потоке.
                 await Task.Run(
