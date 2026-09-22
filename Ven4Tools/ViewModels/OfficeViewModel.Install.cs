@@ -47,6 +47,11 @@ namespace Ven4Tools.ViewModels
             SetProgress(true, "⏳ Подготовка установки...", 0, "");
             AppLogger.Write($"\n🚀 Установка {displayName}...");
 
+            // Объявлен вне try: finally обязан закрыть хендл и в ветках исключений
+            // (отказ в UAC, отмена, сбой смены региона) — иначе файл остаётся
+            // заблокированным до сборки мусора и повторное скачивание его не удалит.
+            FileStream? installerHandle = null;
+
             await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
@@ -58,7 +63,7 @@ namespace Ven4Tools.ViewModels
                 // (InstallWebView2Async/InstallVcRedistAsync лаунчера). Хендл
                 // закрывается явно (не using var на весь блок), чтобы не держать
                 // файл заблокированным для удаления в ветке отказа проверки ниже.
-                var installerHandle = new FileStream(installerPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                installerHandle = new FileStream(installerPath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
                 if (!AuthenticodeVerifier.IsSignedByMicrosoft(installerPath, out string signatureError))
                 {
@@ -159,6 +164,13 @@ namespace Ven4Tools.ViewModels
                 AppLogger.Write("⏹️ Установка отменена");
                 SetProgress(true, "⏹️ Отменено", 0, "");
             }
+            catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
+            {
+                // ERROR_CANCELLED: пользователь ответил «Нет» в окне UAC — это его
+                // решение, а не сбой установки.
+                AppLogger.Write("⏹️ Установка отменена: запрос прав администратора отклонён");
+                SetProgress(true, "⏹️ Отменено", 0, "Запрос прав администратора отклонён");
+            }
             catch (Exception ex)
             {
                 AppLogger.Write($"❌ Ошибка установки: {ex.Message}");
@@ -168,6 +180,7 @@ namespace Ven4Tools.ViewModels
             }
             finally
             {
+                installerHandle?.Dispose();
                 InstallationService.InstallSemaphore.Release();
 
                 if (regionChanged)
