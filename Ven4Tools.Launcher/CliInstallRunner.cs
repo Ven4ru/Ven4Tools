@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ven4Tools.Launcher;
@@ -24,8 +23,7 @@ internal static class CliInstallRunner
     {
         try
         {
-            bool success = await window.InstallFromLocalArchiveAsync(
-                archivePath, CancellationToken.None, silent);
+            bool success = await window.InstallFromLocalArchiveForCliAsync(archivePath, silent);
             return success ? 0 : 1;
         }
         catch (Exception ex)

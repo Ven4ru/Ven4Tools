@@ -228,6 +228,22 @@ namespace Ven4Tools.Launcher
                 }
                 if (deltaOutcome == DeltaUpdateOutcome.Aborted) return;
 
+                // Без SHA256 архив всё равно будет отклонён (fail-closed, ниже) —
+                // проверяем до загрузки, а не после сотен мегабайт впустую.
+                if (string.IsNullOrEmpty(version.ExpectedSha256))
+                {
+                    txtDownloadStatus.Text = "Целостность не подтверждена";
+                    SetOperationStage(0);
+                    AddLog($"⛔ Для версии {version.Version} нет подтверждённого SHA256 (CDN недоступен или ещё не знает эту версию) — загрузка отменена");
+                    if (!silent)
+                        System.Windows.MessageBox.Show(
+                            $"Не удалось подтвердить целостность архива версии {version.Version} — CDN недоступен, " +
+                            "или версия ещё не попала в подписанный манифест.\n\nПопробуйте позже, когда CDN " +
+                            "синхронизируется, или обратитесь к автору проекта.",
+                            "Целостность не подтверждена", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 var downloader = new FallbackDownloader();
                 // using держит FileShare.Read-хендл на tempZip открытым до конца метода
                 // (в т.ч. через SafeZipExtractor.ExtractAsync ниже) — закрывает окно TOCTOU
@@ -285,6 +301,8 @@ namespace Ven4Tools.Launcher
                 }
                 else
                 {
+                    // Сюда не попадаем: отсутствие хеша отсекается ещё до загрузки
+                    // (см. перед FallbackDownloader). Ветка оставлена как fail-closed страховка.
                     txtDownloadStatus.Text = "Целостность не подтверждена";
                     SetOperationStage(0);
                     AddLog($"⛔ Для версии {version.Version} нет подтверждённого SHA256 (CDN недоступен или ещё не знает эту версию) — установка отменена");
@@ -437,7 +455,10 @@ namespace Ven4Tools.Launcher
             string clientParent = Path.GetDirectoryName(Path.GetFullPath(_clientPath))
                 ?? throw new InvalidOperationException("Не удалось определить каталог установки.");
             string extractPath = Path.Combine(
-                clientParent, $".Ven4Tools_Client.staging-{Guid.NewGuid():N}");
+                // Префикс из имени папки клиента — CleanupStaleInstallArtifacts ищет
+                // остатки именно по нему; зашитый «Ven4Tools_Client» не находился у
+                // клиента в папке с другим именем («Найти клиент»).
+                clientParent, $".{Path.GetFileName(Path.GetFullPath(_clientPath))}.staging-{Guid.NewGuid():N}");
 
             try
             {
@@ -488,6 +509,10 @@ namespace Ven4Tools.Launcher
                 }
 
                 var installer = new TransactionalDirectoryInstaller();
+                // Кэш состава сбрасывается до записи в папку клиента — см.
+                // ClientDeltaInstaller.Apply: убитый посреди установки процесс не должен
+                // оставить описание прошлой версии для следующей дельты.
+                new InstalledManifestStore().Invalidate();
                 installer.Install(extractPath, _clientPath, token);
 
                 Dispatcher.Invoke(() =>
