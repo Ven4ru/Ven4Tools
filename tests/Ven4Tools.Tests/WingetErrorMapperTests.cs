@@ -21,8 +21,26 @@ public sealed class WingetErrorMapperTests
     [Fact]
     public void MapExitCode_КодНесовпаденияХеша_СообщаетОХеше()
     {
-        var message = WingetErrorMapper.MapExitCode(unchecked((int)0x8A150109));
+        var message = WingetErrorMapper.MapExitCode(unchecked((int)0x8A150011));
         Assert.Contains("Хеш", message);
+    }
+
+    [Theory]
+    [InlineData(3010)]
+    [InlineData(unchecked((int)0x8A150109))]
+    [InlineData(unchecked((int)0x8A15010B))]
+    public void IsSuccessWithReboot_КодыПерезагрузки(int code)
+    {
+        Assert.True(WingetErrorMapper.IsSuccessWithReboot(code));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(unchecked((int)0x8A15002C))]
+    [InlineData(unchecked((int)0x8A15010A))]
+    public void IsSuccessWithReboot_НеКодыПерезагрузки(int code)
+    {
+        Assert.False(WingetErrorMapper.IsSuccessWithReboot(code));
     }
 
     [Fact]

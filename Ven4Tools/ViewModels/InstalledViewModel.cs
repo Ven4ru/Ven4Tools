@@ -322,7 +322,7 @@ namespace Ven4Tools.ViewModels
         internal static (bool Success, bool Reboot, string Reason) DescribeWingetExitCode(int code)
         {
             if (code == 0) return (true, false, "");
-            if (code == 3010 || code == unchecked((int)0x8A15002C)) return (true, true, "");
+            if (WingetErrorMapper.IsSuccessWithReboot(code)) return (true, true, "");
             return (false, false, WingetErrorMapper.MapExitCode(code));
         }
     }
