@@ -105,6 +105,9 @@ namespace Ven4Tools.Views
             var appInfo = new AppInfo
             {
                 Id = catalogApp.Id, DisplayName = catalogApp.Name,
+                // Без категории AppInfo получал первое значение enum («Браузеры») —
+                // и порядок источников чужой категории (SourceOrderService).
+                Category = AppCategoryHelper.Parse(catalogApp.Category),
                 AlternativeId = catalogApp.WingetId,
                 InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl)
                     ? new List<string> { catalogApp.DownloadUrl } : new(),

@@ -126,7 +126,13 @@ namespace Ven4Tools.Services
                 // Тот же ключ (AlternativeId ?? Id), что уже использует
                 // CatalogViewModel.UpdateInstalledStatusAsync для бейджа «установлено»
                 // на карточках — единая точка правды по всему клиенту.
-                string outcomeCheckId = !string.IsNullOrEmpty(app.AlternativeId) ? app.AlternativeId! : app.Id;
+                // Без AlternativeId (в каталоге нет wingetId: rudesktop, exitlag и т.п.)
+                // сверять не с чем: app.Id — внутренний ID каталога, `winget list --id
+                // rudesktop` не найдёт его никогда. Раньше такие установки всегда
+                // заканчивались «не удалось подтвердить» и не попадали в историю.
+                // Пустая строка = «проверка недоступна» (IsVerifiableId) — дальше
+                // доверяем коду выхода установщика.
+                string outcomeCheckId = app.AlternativeId ?? "";
                 var baseline = await CaptureInstalledBaselineAsync(outcomeCheckId);
 
                 // ── Local installer (drag-drop) ────────────────────────────────
