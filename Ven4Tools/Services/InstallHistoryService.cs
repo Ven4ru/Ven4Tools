@@ -34,7 +34,10 @@ namespace Ven4Tools.Services
             await _lock.WaitAsync();
             try
             {
-                var list = await LoadAsync();
+                // null — файл истории не прочитан: запись пропускаем, а не затираем
+                // всю историю списком из одной строки (см. JsonListFile).
+                var list = JsonListFile.TryLoad<HistoryEntry>(_path, "[InstallHistory]");
+                if (list == null) return;
                 list.Insert(0, new HistoryEntry
                 {
                     AppId       = appId,
@@ -55,7 +58,7 @@ namespace Ven4Tools.Services
         public async Task<List<HistoryEntry>> GetHistoryAsync()
         {
             await _lock.WaitAsync();
-            try { return await LoadAsync(); }
+            try { return await Task.Run(() => JsonListFile.TryLoad<HistoryEntry>(_path, "[InstallHistory]") ?? new List<HistoryEntry>()); }
             finally { _lock.Release(); }
         }
 
@@ -68,24 +71,6 @@ namespace Ven4Tools.Services
                 Changed?.Invoke();
             }
             finally { _lock.Release(); }
-        }
-
-        private async Task<List<HistoryEntry>> LoadAsync()
-        {
-            try
-            {
-                if (File.Exists(_path))
-                {
-                    var json = await File.ReadAllTextAsync(_path);
-                    return JsonConvert.DeserializeObject<List<HistoryEntry>>(json)
-                           ?? new List<HistoryEntry>();
-                }
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write(ex, "Ошибка загрузки истории установок");
-            }
-            return new List<HistoryEntry>();
         }
 
         private async Task SaveAsync(List<HistoryEntry> list)
