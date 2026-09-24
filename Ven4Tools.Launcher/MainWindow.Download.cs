@@ -22,6 +22,20 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
+            // Смена папки посреди загрузки/установки уводила _clientPath из-под идущей
+            // операции: staging создавался у старой папки, а переносился в новую, и
+            // проверки пути относились уже не к тому каталогу. Слот держим и на время
+            // диалога — операция, начавшаяся за это время, получила бы ту же проблему.
+            using var lease = TryBeginOperation("Смена папки установки", Timeout.InfiniteTimeSpan);
+            if (lease == null) return;
+
+            SelectInstallFolder();
+        }
+
+        // Сам выбор папки — без слота: его вызывает и «Найти клиент на диске», который
+        // уже держит слот операций.
+        private void SelectInstallFolder()
+        {
             using var dialog = new FolderBrowserDialog
             {
                 Description      = "Выберите папку для установки Ven4Tools",
@@ -228,6 +242,24 @@ namespace Ven4Tools.Launcher
                 }
                 if (deltaOutcome == DeltaUpdateOutcome.Aborted) return;
 
+                // Fail-closed по хешу проверяется ДО загрузки: без подтверждённого
+                // SHA256 из подписанного version.json установка всё равно будет
+                // отклонена, а раньше отказ приходил только после скачивания архива
+                // целиком (минуты и десятки мегабайт впустую — при недоступном CDN
+                // архив докачивался с GitHub лишь затем, чтобы быть отброшенным).
+                if (!DownloadValidator.IsValidSha256(version.ExpectedSha256))
+                {
+                    var why = ClientHashAvailability.Explain(version.Version, _cdnManifestLoaded, _cdnClientVersion);
+                    txtDownloadStatus.Text = "Целостность не подтверждена";
+                    SetOperationStage(0);
+                    AddLog($"⛔ Для версии {version.Version} нет подтверждённого SHA256: {why.Reason} — загрузка не начата");
+                    if (!silent)
+                        System.Windows.MessageBox.Show(
+                            $"Не удалось подтвердить целостность архива версии {version.Version}: {why.Reason}.\n\n{why.Advice}",
+                            "Целостность не подтверждена", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 var downloader = new FallbackDownloader();
                 // using держит FileShare.Read-хендл на tempZip открытым до конца метода
                 // (в т.ч. через SafeZipExtractor.ExtractAsync ниже) — закрывает окно TOCTOU
@@ -268,34 +300,14 @@ namespace Ven4Tools.Launcher
 
                 token.ThrowIfCancellationRequested();
 
-                // SHA256 проверяется загрузчиком до принятия файла; при несовпадении
-                // основного источника автоматически пробуется резервный. Отсутствие
-                // хеша в манифесте (CDN недоступен в момент загрузки списка версий,
-                // либо CDN ещё не знает именно эту версию — окно между релизом на
-                // GitHub и cdn-deploy) раньше трактовалось как предупреждение и
-                // установка продолжалась без независимой проверки целостности —
-                // fail-open. Самообновление лаунчера (LauncherUpdateService) в тех
-                // же условиях строго отказывает; здесь приводим клиентский путь
-                // к той же fail-closed политике.
+                // SHA256 проверен загрузчиком до принятия файла; при несовпадении
+                // основного источника автоматически пробовался резервный. Отсутствие
+                // хеша раньше трактовалось как предупреждение (fail-open), теперь
+                // отсекается до загрузки — см. проверку перед DownloadAsync выше;
+                // та же fail-closed политика, что у самообновления лаунчера.
                 SetOperationStage(2); // Проверка целостности
-                if (!string.IsNullOrEmpty(version.ExpectedSha256))
-                {
-                    txtDownloadStatus.Text = "Проверка целостности...";
-                    AddLog("🔒 Целостность подтверждена (SHA256)");
-                }
-                else
-                {
-                    txtDownloadStatus.Text = "Целостность не подтверждена";
-                    SetOperationStage(0);
-                    AddLog($"⛔ Для версии {version.Version} нет подтверждённого SHA256 (CDN недоступен или ещё не знает эту версию) — установка отменена");
-                    if (!silent)
-                        System.Windows.MessageBox.Show(
-                            $"Не удалось подтвердить целостность архива версии {version.Version} — CDN недоступен, " +
-                            "или версия ещё не попала в подписанный манифест.\n\nПопробуйте позже, когда CDN " +
-                            "синхронизируется, или обратитесь к автору проекта.",
-                            "Целостность не подтверждена", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
+                txtDownloadStatus.Text = "Проверка целостности...";
+                AddLog("🔒 Целостность подтверждена (SHA256)");
 
                 bool installed = await ExtractAndInstallClientAsync(tempZip, version.Version, token, silent);
                 if (!installed) return;
@@ -504,7 +516,20 @@ namespace Ven4Tools.Launcher
                 // включилось бы никогда: ему нужен подтверждённый состав того, что
                 // стоит на диске, а появиться он может только здесь — дельта сама
                 // без него невозможна.
-                await RefreshInstalledManifestAsync(versionLabel, token);
+                //
+                // Клиент к этому моменту уже установлен: отмена (или истёкший бюджет
+                // операции) во время пересчёта не должна выдавать себя за отмену
+                // установки — раньше она уходила наверх как «⏹ Загрузка отменена»,
+                // и кнопка с подписью версии оставались в состоянии до установки.
+                // Кэш при этом уже сброшен — следующее обновление просто будет полным.
+                try
+                {
+                    await RefreshInstalledManifestAsync(versionLabel, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    AddLog("⚠️ Подсчёт состава установленной версии прерван — следующее обновление будет полным");
+                }
 
                 // CheckExistingClient, а не голый SetLaunchButtonState: он перечитывает
                 // версию с диска и обновляет подпись «Текущая версия». Раньше после

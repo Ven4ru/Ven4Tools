@@ -31,6 +31,11 @@ namespace Ven4Tools.ViewModels
                     var previousDebounce = _searchDebounce;
                     previousDebounce?.Cancel();
                     previousDebounce?.Dispose();
+                    // Обнуляем сразу: ветка else ниже нового токена не создаёт, и поле
+                    // продолжало бы указывать на освобождённый объект — следующее же
+                    // изменение текста (в т.ч. кнопка «✕», ClearSearchCommand) звало бы
+                    // Cancel() на нём и падало с ObjectDisposedException.
+                    _searchDebounce = null;
                     // AppsView.IsEmpty учитывает текущий фильтр без полного перечисления
                     // представления (сеттер срабатывает на каждое нажатие клавиши в поиске),
                     // в отличие от прежнего Cast<object>().Count() == 0.
@@ -247,6 +252,14 @@ namespace Ven4Tools.ViewModels
                 }
             }
             catch (OperationCanceledException) { }
+            catch (Exception ex) when (!token.IsCancellationRequested)
+            {
+                // Прочие сбои источников (не таймаут) раньше уходили только в журнал
+                // через ContinueWith вызывающего, а панель навсегда оставалась на
+                // «⏳ Поиск по источникам...».
+                SuggestionsStatus = "⚠ Не удалось выполнить поиск по источникам";
+                AppLogger.Write(ex, "Ошибка подсказок поиска по каталогу");
+            }
         }
 
         // Поиск по тегам категории: winget-вызовы по всем тегам идут параллельно

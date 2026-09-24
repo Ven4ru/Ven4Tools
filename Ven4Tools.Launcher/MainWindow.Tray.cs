@@ -249,6 +249,9 @@ namespace Ven4Tools.Launcher
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            // Окно закрывает сам Shutdown из ExitApplication — всё уже освобождено.
+            if (_exiting) return;
+
             // Крестик прячет окно в трей только если включена соответствующая настройка
             if (_minimizeToTray)
             {
@@ -261,8 +264,17 @@ namespace Ven4Tools.Launcher
             }
         }
 
+        // Выход идёт ровно один раз. Shutdown закрывает главное окно, и его Closing
+        // (при выключенном «сворачивать в трей») снова вызывал ExitApplication:
+        // повторный UpdateBackgroundService.Dispose дёргал Cancel у уже освобождённого
+        // источника отмены — ObjectDisposedException посреди завершения, то есть
+        // «падение» с записью launcher_crash_*.txt на каждом штатном выходе.
+        private bool _exiting;
+
         private void ExitApplication()
         {
+            if (_exiting) return;
+            _exiting = true;
             _watchdog?.Dispose();
             _updateService?.Dispose();
             _notifyIcon?.Dispose();

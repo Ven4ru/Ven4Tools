@@ -175,8 +175,12 @@ namespace Ven4Tools.ClientUITests
             // Временный файл обязан быть удалён после прогона на любом томе.
             foreach (var drive in DriveInfo.GetDrives().Where(d => d.IsReady))
             {
-                string path = Path.Combine(drive.RootDirectory.FullName, "Ven4Tools_benchmark.tmp");
-                Assert.IsFalse(File.Exists(path), "Временный файл теста остался на диске: " + path);
+                // Имя у каждого прогона своё (Ven4Tools_benchmark_<guid>.tmp), поэтому ищем по
+                // маске; старое фиксированное имя — на случай регрессии.
+                string root = drive.RootDirectory.FullName;
+                var leftovers = Directory.EnumerateFiles(root, "Ven4Tools_benchmark*.tmp").ToList();
+                Assert.AreEqual(0, leftovers.Count,
+                    "Временный файл теста остался на диске: " + string.Join(", ", leftovers));
             }
         }
 

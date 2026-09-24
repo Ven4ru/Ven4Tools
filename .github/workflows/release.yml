@@ -20,6 +20,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Токен job'а с contents: write не оставляем в .git/config: иначе его
+          # может прочитать любой код, исполняемый при сборке/тестах (MSBuild-
+          # таски и анализаторы из NuGet-пакетов). gh ниже получает токен явно
+          # через GH_TOKEN, git-операций с удалённым репозиторием в job нет.
+          persist-credentials: false
 
       - name: Настройка .NET 8
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
@@ -125,8 +131,12 @@ jobs:
                 "_release/$assetName"
             }
           } else {
+            # --target обязателен: без него gh создаёт отсутствующий тег на HEAD
+            # ветки по умолчанию, а не на собранном коммите — при workflow_dispatch
+            # с другой ветки/коммита тег и исходники релиза разошлись бы с бинарником.
             gh release create ${{ steps.ver.outputs.TAG }} `
               "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip" `
+              --target "$env:GITHUB_SHA" `
               --title "Ven4Tools ${{ steps.ver.outputs.VERSION }}" `
               --generate-notes `
               --draft `

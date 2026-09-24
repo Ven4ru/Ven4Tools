@@ -22,6 +22,8 @@ namespace Ven4Tools
         // Счётчик поколений фоновых поисков: поздний ответ применяется только если
         // остаётся последним запущенным, иначе он затирал бы более свежий результат.
         private int _searchGeneration;
+        // Элемент «Ручной ввод», вставленный в список из поля ручного ID (если есть).
+        private WingetPackage? _manualPackage;
 
         public AlternativeSourceDialog(string appName)
         {
@@ -108,8 +110,29 @@ namespace Ven4Tools
 
         private void TxtManualId_TextChanged(object sender, TextChangedEventArgs e)
         {
+            // Ручной пакет в списке всегда один. Раньше каждое нажатие клавиши
+            // вставляло новый элемент («M», «Mo», «Moz»…), а после очистки поля
+            // выбранным оставался последний из них — и «Сохранить» записывал ID,
+            // которого в поле ввода уже нет.
+            var current = cmbResults.ItemsSource as ObservableCollection<WingetPackage>;
+            if (_manualPackage != null)
+            {
+                current?.Remove(_manualPackage);
+                _manualPackage = null;
+            }
+
             if (string.IsNullOrWhiteSpace(txtManualId.Text))
             {
+                _hasWingetResults = current != null && current.Count > 0;
+                if (_hasWingetResults)
+                {
+                    if (cmbResults.SelectedItem == null) cmbResults.SelectedIndex = 0;
+                }
+                else
+                {
+                    cmbResults.IsEnabled = false;
+                    chkPriorityWinget.IsEnabled = false;
+                }
                 CheckCanSave();
                 return;
             }
@@ -135,6 +158,7 @@ namespace Ven4Tools
             if (existing == null)
             {
                 list.Insert(0, manualPackage);
+                _manualPackage = manualPackage;
                 existing = manualPackage;
             }
 
@@ -165,6 +189,15 @@ namespace Ven4Tools
 
         private void BtnOk_Click(object sender, RoutedEventArgs e)
         {
+            // Результат собирается заново при каждом нажатии: после отказа
+            // (неверная ссылка, «Нет» в подтверждении, недопустимый ID) пользователь
+            // правит поля и жмёт снова — без сброса сохранялась бы ссылка, которую он
+            // уже стёр, или пакет, от которого он только что отказался.
+            SelectedPackage = null;
+            CustomUrl = null;
+            UseWingetFirst = false;
+            UseUrlFirst = false;
+
             if (_hasWingetResults && cmbResults.SelectedItem is WingetPackage selected)
             {
                 string message = $"Вы выбрали:\n\n" +

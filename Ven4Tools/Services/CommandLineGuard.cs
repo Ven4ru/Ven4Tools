@@ -21,8 +21,11 @@ namespace Ven4Tools.Services
         // передают аргументы через ArgumentList и от этого защищены, но набор символов
         // — второй, независимый рубеж: он не должен молча разваливаться, если хотя бы
         // одно место вернётся к строковой интерполяции.
+        // Ведущий дефис запрещён: id и версии winget/choco с него не начинаются, а
+        // значение вида "-y" или "--force" из пользовательских файлов (ChocoId,
+        // AlternativeId) встало бы в командную строку флагом, а не именем пакета.
         private static readonly Regex _allowedId =
-            new(@"^[A-Za-z0-9.\-+_]+$", RegexOptions.Compiled);
+            new(@"^(?!-)[A-Za-z0-9.\-+_]+$", RegexOptions.Compiled);
 
         private static readonly Regex _stripChars =
             new(@"[^A-Za-z0-9.\-+_ ]", RegexOptions.Compiled);

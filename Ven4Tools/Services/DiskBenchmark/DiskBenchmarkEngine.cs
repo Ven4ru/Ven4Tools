@@ -38,7 +38,17 @@ namespace Ven4Tools.Services.DiskBenchmark
         /// <summary>Доля шкалы прогресса, отведённая под подготовку файла.</summary>
         private const double PrepareProgressShare = 0.10;
 
+        /// <summary>Имя тестового файла версий до случайных имён — только для уборки сирот.</summary>
         public const string TempFileName = "Ven4Tools_benchmark.tmp";
+
+        /// <summary>
+        /// Префикс тестового файла. Полное имя у каждого прогона своё (случайный хвост):
+        /// файл лежит в корне тома, где обычный пользователь может создать каталог, а
+        /// каталог — превратить в точку подключения на чужой файл. Заранее известное
+        /// имя позволило бы подложить такую ссылку, и elevated-клиент при
+        /// FileMode.Create обнулил бы и перезаписал случайными данными её цель.
+        /// </summary>
+        public const string TempFilePrefix = "Ven4Tools_benchmark_";
 
         /// <summary>Полный прогон. Отмена — штатный путь: возвращается частичный результат.</summary>
         public static async Task<BenchmarkRunResult> RunAsync(
@@ -60,7 +70,8 @@ namespace Ven4Tools.Services.DiskBenchmark
                 StartedAt = DateTime.Now
             };
 
-            string path = Path.Combine(volume.Letter + Path.DirectorySeparatorChar, TempFileName);
+            string path = Path.Combine(volume.Letter + Path.DirectorySeparatorChar,
+                TempFilePrefix + Guid.NewGuid().ToString("N") + ".tmp");
             var stopwatch = Stopwatch.StartNew();
 
             // Лучшее значение по проходам для каждой пары «паттерн + направление».
@@ -70,7 +81,7 @@ namespace Ven4Tools.Services.DiskBenchmark
 
             try
             {
-                await PrepareFileAsync(path, fileSizeBytes, progress, ct).ConfigureAwait(false);
+                var identity = await PrepareFileAsync(path, fileSizeBytes, progress, ct).ConfigureAwait(false);
 
                 for (int pass = 1; pass <= passes; pass++)
                 {
@@ -92,7 +103,7 @@ namespace Ven4Tools.Services.DiskBenchmark
                                            (1 - PrepareProgressShare) * doneMeasurements / totalMeasurements
                             });
 
-                            var measurement = await MeasureAsync(path, pattern, operation, fileSizeBytes, ct)
+                            var measurement = await MeasureAsync(path, identity, pattern, operation, fileSizeBytes, ct)
                                 .ConfigureAwait(false);
 
                             string key = pattern.Name + "/" + operation;
@@ -143,7 +154,7 @@ namespace Ven4Tools.Services.DiskBenchmark
         /// возвращается мгновенно и обесценивает замер. Псевдослучайные — тоже обязательно:
         /// накопители с аппаратным сжатием на однородных данных завышают результат.
         /// </summary>
-        private static async Task PrepareFileAsync(
+        private static async Task<DateTime> PrepareFileAsync(
             string path, long fileSizeBytes, IProgress<BenchmarkProgress>? progress, CancellationToken ct)
         {
             progress?.Report(new BenchmarkProgress { Stage = "Подготовка тестового файла", Fraction = 0 });
@@ -153,9 +164,17 @@ namespace Ven4Tools.Services.DiskBenchmark
 
             long totalBlocks = fileSizeBytes / PrepareBlockSize;
 
+            // CreateNew, а не Create: существующий объект с этим именем (в том числе
+            // подложенная ссылка) не должен ни открываться, ни обрезаться. ReadWrite, а не
+            // Write: у чисто пишущего дескриптора нет права FILE_READ_ATTRIBUTES, без
+            // которого не прочитать время создания (отпечаток файла, см. ниже).
             using var handle = File.OpenHandle(
-                path, FileMode.Create, FileAccess.Write, FileShare.None,
+                path, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None,
                 NoBuffering | FileOptions.WriteThrough | FileOptions.Asynchronous, fileSizeBytes);
+
+            // Время создания — отпечаток именно этого файла: между замерами дескриптор
+            // закрывается, и файл в корне тома может быть удалён и заменён ссылкой.
+            DateTime identity = File.GetCreationTimeUtc(handle);
 
             RandomAccess.SetLength(handle, fileSizeBytes);
 
@@ -188,6 +207,8 @@ namespace Ven4Tools.Services.DiskBenchmark
                     });
                 }
             }
+
+            return identity;
         }
 
         /// <summary>
@@ -218,7 +239,7 @@ namespace Ven4Tools.Services.DiskBenchmark
         /// та, что не мешает измерять диск.
         /// </summary>
         private static async Task<BenchmarkMeasurement> MeasureAsync(
-            string path, BenchmarkPattern pattern, BenchmarkOperation operation,
+            string path, DateTime identity, BenchmarkPattern pattern, BenchmarkOperation operation,
             long fileSizeBytes, CancellationToken ct)
         {
             int threadCount = Math.Max(1, pattern.ThreadCount);
@@ -240,8 +261,15 @@ namespace Ven4Tools.Services.DiskBenchmark
             if (!synchronous) options |= FileOptions.Asynchronous;
 
             using var handle = File.OpenHandle(
-                path, FileMode.Open, reading ? FileAccess.Read : FileAccess.Write,
+                path, FileMode.Open, reading ? FileAccess.Read : FileAccess.ReadWrite,
                 FileShare.None, options);
+
+            // Файл переоткрывается на каждый замер — в промежутке его могли удалить и
+            // подложить на его место ссылку на чужой файл. Сверяем отпечаток до первой
+            // записи: подменённую цель клиент не должен перезаписывать. Пока дескриптор
+            // открыт с FileShare.None, удалить или подменить файл уже нельзя.
+            if (File.GetCreationTimeUtc(handle) != identity || RandomAccess.GetLength(handle) != fileSizeBytes)
+                throw new IOException("Тестовый файл был подменён во время теста — замер прерван.");
 
             var counters = new long[streams];
             long blocksPerStream = Math.Max(1, totalBlocks / streams);
@@ -383,7 +411,10 @@ namespace Ven4Tools.Services.DiskBenchmark
                 {
                     if (!drive.IsReady) continue;
                     if (drive.DriveType != DriveType.Fixed && drive.DriveType != DriveType.Removable) continue;
-                    TryDeleteFile(Path.Combine(drive.RootDirectory.FullName, TempFileName));
+                    string root = drive.RootDirectory.FullName;
+                    TryDeleteFile(Path.Combine(root, TempFileName));
+                    foreach (string orphan in Directory.EnumerateFiles(root, TempFilePrefix + "*.tmp"))
+                        TryDeleteFile(orphan);
                 }
                 catch (Exception ex)
                 {

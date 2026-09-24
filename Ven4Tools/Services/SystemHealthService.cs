@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Management;
@@ -97,9 +98,13 @@ namespace Ven4Tools.Services
                 var results = new List<RebootDiagnosis>();
                 foreach (var p41 in power41)
                 {
-                    int bugcheckCode = 0;
+                    // BugcheckCode в событии — UInt32: коды вида 0xC000021A не влезают в
+                    // int, и int.TryParse молча давал 0 — настоящий BSOD уходил в
+                    // «возможна потеря питания».
+                    uint bugcheckRaw = 0;
                     if (p41.Data.TryGetValue("BugcheckCode", out var codeStr))
-                        int.TryParse(codeStr, out bugcheckCode);
+                        uint.TryParse(codeStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out bugcheckRaw);
+                    int bugcheckCode = unchecked((int)bugcheckRaw);
 
                     var evt = new RebootEvent
                     {
@@ -119,7 +124,7 @@ namespace Ven4Tools.Services
                         TimeCreated = evt.TimeCreated,
                         Category = category.Value,
                         Summary = BuildSummary(category.Value),
-                        RawDetails = $"BugcheckCode={bugcheckCode}; " +
+                        RawDetails = $"BugcheckCode={bugcheckRaw}; " +
                                      $"СбойБыстрогоЗапускаРядом={evt.HasFastStartupFailureNearby}; " +
                                      p41.Message
                     });
@@ -191,15 +196,20 @@ namespace Ven4Tools.Services
                 var whea = QueryEvents("System", "Microsoft-Windows-WHEA-Logger", null, cutoff);
                 var tdr  = QueryEvents("System", null, 4101, cutoff);
 
-                var raw = new List<string>();
-                raw.AddRange(whea.Select(e => $"{e.TimeCreated:g} — аппаратная ошибка (WHEA): {e.Message}"));
-                raw.AddRange(tdr.Select(e => $"{e.TimeCreated:g} — сбой видеодрайвера (TDR): {e.Message}"));
+                // Сортировка по времени события, а не по готовой строке: строка начинается
+                // с даты в формате культуры («dd.MM.yyyy»), и её лексикографический порядок
+                // идёт по дню месяца, а не по хронологии.
+                var raw = whea.Select(e => (e.TimeCreated, Text: $"{e.TimeCreated:g} — аппаратная ошибка (WHEA): {e.Message}"))
+                    .Concat(tdr.Select(e => (e.TimeCreated, Text: $"{e.TimeCreated:g} — сбой видеодрайвера (TDR): {e.Message}")))
+                    .OrderByDescending(r => r.TimeCreated)
+                    .Select(r => r.Text)
+                    .ToList();
 
                 return new HardwareEventsSummary
                 {
                     WheaCount = whea.Count,
                     DisplayDriverCrashCount = tdr.Count,
-                    RawEntries = raw.OrderByDescending(r => r).ToList()
+                    RawEntries = raw
                 };
             });
 
@@ -250,11 +260,26 @@ namespace Ven4Tools.Services
                     Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SoftwareDistribution", "Download");
                 if (Directory.Exists(dir))
                 {
-                    var files = Directory.GetFiles(dir);
+                    // Не только файлы верхнего уровня: основную часть кэша WUA хранит в
+                    // подкаталогах (по одному на пакет), и Directory.GetFiles без них
+                    // «очищал» почти пустой набор и рапортовал успех.
+                    var files = Directory.GetFileSystemEntries(dir);
                     int deleted = 0;
                     foreach (var file in files)
                     {
-                        try { File.Delete(file); deleted++; }
+                        try
+                        {
+                            // Ссылку-каталог удаляем как ссылку, не заходя внутрь.
+                            var attributes = File.GetAttributes(file);
+                            if (attributes.HasFlag(FileAttributes.Directory) &&
+                                !attributes.HasFlag(FileAttributes.ReparsePoint))
+                                Directory.Delete(file, recursive: true);
+                            else if (attributes.HasFlag(FileAttributes.Directory))
+                                Directory.Delete(file);
+                            else
+                                File.Delete(file);
+                            deleted++;
+                        }
                         catch (Exception ex)
                         {
                             AppLogger.Write(ex, $"SystemHealthService.ClearWindowsUpdateCacheAsync: не удалось удалить {file}");

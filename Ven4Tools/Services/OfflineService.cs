@@ -178,7 +178,14 @@ namespace Ven4Tools.Services
                 var read  = 0L;
                 var buf   = new byte[81920];
 
-                await using var fs = new FileStream(partial, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+                // Удаление + CreateNew вместо FileMode.Create: жёсткая ссылка — не reparse
+                // point, проверка выше её не видит, а Create открыл бы и обрезал её цель
+                // (elevated-перезапись произвольного файла через заранее подложенный
+                // «{id}.exe.partial»). File.Delete убирает саму ссылку, не цель; если
+                // файл успели подложить заново между удалением и созданием, CreateNew
+                // упадёт, и кэширование просто не состоится.
+                File.Delete(partial);
+                await using var fs = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.None, 8192, true);
                 await using var stream = await resp.Content.ReadAsStreamAsync(token);
                 // Sliding-таймаут простоя между чтениями — ResponseHeadersRead не покрывает
                 // HttpClient.Timeout на потоковое чтение тела; без этого зависший/крайне

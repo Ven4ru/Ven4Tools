@@ -51,6 +51,18 @@ namespace Ven4Tools.Launcher.Services
                 lock (_lock)
                 {
                     Directory.CreateDirectory(LogDirectory);
+                    // Та же проверка на подмену reparse point'ом, что в FileHelper, —
+                    // перед КАЖДОЙ записью. Описание класса её обещало, но запись шла
+                    // мимо: в elevated-запуске подменённый junction'ом каталог logs
+                    // превращал дозапись и ротацию (удаление launcher.old.log) в запись
+                    // и удаление по пути, выбранному непривилегированным процессом.
+                    if (Helpers.FileHelper.IsReparsePoint(LogDirectory) ||
+                        Helpers.FileHelper.IsReparsePoint(LogPath) ||
+                        Helpers.FileHelper.IsReparsePoint(PreviousLogPath))
+                    {
+                        _disabled = true;
+                        return;
+                    }
                     RotateIfNeeded();
 
                     var text = new StringBuilder();
@@ -59,7 +71,7 @@ namespace Ven4Tools.Launcher.Services
                         _sessionHeaderWritten = true;
                         text.Append(BuildSessionHeader());
                     }
-                    text.Append($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ")
+                    text.Append(FormattableString.Invariant($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] "))
                         .Append(Sanitize(message))
                         .Append(Environment.NewLine);
 
@@ -100,7 +112,7 @@ namespace Ven4Tools.Launcher.Services
 
             return Environment.NewLine +
                    "════════════════════════════════════════════════════" + Environment.NewLine +
-                   $"Запуск {DateTime.Now:yyyy-MM-dd HH:mm:ss} · лаунчер {version} · " +
+                   FormattableString.Invariant($"Запуск {DateTime.Now:yyyy-MM-dd HH:mm:ss} · лаунчер {version} · ") +
                    $"Windows {Environment.OSVersion.Version} · права администратора: {admin}" + Environment.NewLine +
                    "════════════════════════════════════════════════════" + Environment.NewLine;
         }

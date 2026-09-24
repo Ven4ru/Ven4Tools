@@ -48,6 +48,11 @@ namespace Ven4Tools.ViewModels
             AppLogger.Write($"\n🚀 Установка {displayName}...");
 
             await InstallationService.InstallSemaphore.WaitAsync();
+            // Объявлен вне try: между открытием хендла и его явным закрытием есть выходы
+            // исключением — отмена (ThrowIfCancellationRequested) и отказ в UAC
+            // (Process.Start бросает Win32Exception). Без закрытия в finally файл
+            // установщика оставался открытым до сборки мусора, и его не удавалось удалить.
+            FileStream? installerHandle = null;
             try
             {
                 SetPhase("🔐 Проверка подлинности установщика...");
@@ -58,7 +63,7 @@ namespace Ven4Tools.ViewModels
                 // (InstallWebView2Async/InstallVcRedistAsync лаунчера). Хендл
                 // закрывается явно (не using var на весь блок), чтобы не держать
                 // файл заблокированным для удаления в ветке отказа проверки ниже.
-                var installerHandle = new FileStream(installerPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                installerHandle = new FileStream(installerPath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
                 if (!AuthenticodeVerifier.IsSignedByMicrosoft(installerPath, out string signatureError))
                 {
@@ -168,6 +173,7 @@ namespace Ven4Tools.ViewModels
             }
             finally
             {
+                installerHandle?.Dispose();
                 InstallationService.InstallSemaphore.Release();
 
                 if (regionChanged)

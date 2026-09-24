@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Ven4Tools.Models
 {
@@ -22,6 +23,11 @@ namespace Ven4Tools.Models
         public string Mode { get; set; } = "global";
 
         // Упорядоченный список идентификаторов источников: ["winget","direct","choco"]
+        // Replace обязателен: по умолчанию Newtonsoft (ObjectCreationHandling.Auto)
+        // ДОПИСЫВАЕТ прочитанные элементы в уже заполненный инициализатором список —
+        // сохранённый порядок оказывался за порядком по умолчанию и не применялся,
+        // а каждое сохранение удлиняло файл ещё на три дубля.
+        [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
         public List<string> GlobalOrder { get; set; } = new(AllSources);
 
         // Основной источник для категории: "Браузеры" -> "winget".

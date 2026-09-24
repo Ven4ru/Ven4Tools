@@ -43,6 +43,14 @@ internal static class SafeZipExtractor
             cancellationToken.ThrowIfCancellationRequested();
             RejectSymbolicLink(entry);
 
+            // Подпись архива — метаданные архива, а не файл клиента: в папке установки
+            // она становилась «лишним файлом» для проверки целостности (на абсолютно
+            // чистой установке «Проверить» сообщал о расхождении) и попадала в кэш
+            // состава для дельта-обновления. Проверена она до распаковки
+            // (LocalArchiveVerifier / SHA256 архива), клиенту не нужна.
+            if (string.Equals(entry.FullName, CanonicalArchiveHasher.SignatureEntryName, StringComparison.Ordinal))
+                continue;
+
             string targetPath = GetSafeDestinationPath(destinationRoot, entry.FullName);
             if (string.IsNullOrEmpty(entry.Name))
             {

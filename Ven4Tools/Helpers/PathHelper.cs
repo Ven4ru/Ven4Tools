@@ -15,7 +15,15 @@ internal static class PathHelper
     private static readonly HashSet<char> InvalidFileNameChars = new(Path.GetInvalidFileNameChars());
 
     public static string SanitizeFileNameComponent(string value, char replacement = '_')
-        => string.Concat(value.Select(c => InvalidFileNameChars.Contains(c) ? replacement : c));
+    {
+        string result = string.Concat(value.Select(c => InvalidFileNameChars.Contains(c) ? replacement : c));
+        // «.» и «..» состоят из допустимых символов, но компонентом имени не являются:
+        // Path.Combine(dir, "..") выводит на уровень выше (INSTALLDIR="…\Program Files\.."
+        // из названия, введённого при добавлении локального установщика).
+        if (result.Length > 0 && result.Trim().All(c => c == '.'))
+            result = new string(replacement, result.Length);
+        return result;
+    }
 
     /// <summary>
     /// Является ли путь reparse point (junction/symlink).

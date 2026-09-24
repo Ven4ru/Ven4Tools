@@ -75,6 +75,7 @@ namespace Ven4Tools.Services.WindowsUpdate
         public static IReadOnlyList<WindowsUpdateCategoryNode> Build(IReadOnlyList<WindowsUpdateItem> items)
         {
             var byCategory = new Dictionary<string, WindowsUpdateCategoryNode>();
+            var nodesByUpdateId = new Dictionary<string, List<WindowsUpdateItemNode>>();
 
             foreach (var item in items)
             {
@@ -90,7 +91,35 @@ namespace Ven4Tools.Services.WindowsUpdate
                         node = new WindowsUpdateCategoryNode { Name = name };
                         byCategory[name] = node;
                     }
-                    node.Items.Add(new WindowsUpdateItemNode { Item = item, IsChecked = false });
+                    var itemNode = new WindowsUpdateItemNode { Item = item, IsChecked = false };
+                    node.Items.Add(itemNode);
+
+                    string id = item.UpdateId ?? "";
+                    if (!nodesByUpdateId.TryGetValue(id, out var sameUpdate))
+                        nodesByUpdateId[id] = sameUpdate = new List<WindowsUpdateItemNode>();
+                    sameUpdate.Add(itemNode);
+                }
+            }
+
+            // Один патч под несколькими категориями — это несколько узлов, но выбор у
+            // них должен быть один: GetSelectedUpdateIds берёт патч, если отмечен ЛЮБОЙ
+            // из его узлов, и снятая в «Security Updates» галка при оставшейся в
+            // «Critical Updates» всё равно отправляла патч на установку. Поэтому
+            // изменение отметки одного узла переносится на все узлы того же патча
+            // (сеттер IsChecked пропускает равные значения — зацикливания нет).
+            foreach (var sameUpdate in nodesByUpdateId.Values)
+            {
+                if (sameUpdate.Count < 2) continue;
+                foreach (var itemNode in sameUpdate)
+                {
+                    itemNode.PropertyChanged += (sender, e) =>
+                    {
+                        if (e.PropertyName != nameof(WindowsUpdateItemNode.IsChecked)) return;
+                        var source = (WindowsUpdateItemNode)sender!;
+                        foreach (var sibling in sameUpdate)
+                            if (!ReferenceEquals(sibling, source))
+                                sibling.IsChecked = source.IsChecked;
+                    };
                 }
             }
 

@@ -39,6 +39,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Токен job'а с issues: write не оставляем в .git/config: иначе его
+          # может прочитать любой код, исполняемый в job. gh ниже получает токен явно
+          # через GH_TOKEN, git-операций с удалённым репозиторием в job нет.
+          persist-credentials: false
 
       - name: Скачивание установщиков и сбор фактических данных
         id: verify
