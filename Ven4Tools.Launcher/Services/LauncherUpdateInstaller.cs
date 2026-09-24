@@ -137,7 +137,7 @@ namespace Ven4Tools.Launcher.Services
 
                 // Уникальная папка на каждое обновление: никто не может заранее
                 // подложить файл в известный путь (в отличие от общей папки staging).
-                stagingDir = Path.Combine(Path.GetTempPath(), $"ven4tools_setup_{Guid.NewGuid():N}");
+                stagingDir = Path.Combine(Path.GetTempPath(), $"{StagingPrefix}{Guid.NewGuid():N}");
                 Directory.CreateDirectory(stagingDir);
                 string setupPath = Path.Combine(stagingDir, BuildSetupFileName(updateInfo.LatestVersion));
 
@@ -258,7 +258,7 @@ namespace Ven4Tools.Launcher.Services
 
                 // Уникальная папка: файл нельзя подменить между проверкой и запуском
                 // по заранее известному пути.
-                stagingDir = Path.Combine(Path.GetTempPath(), $"ven4tools_setup_{Guid.NewGuid():N}");
+                stagingDir = Path.Combine(Path.GetTempPath(), $"{StagingPrefix}{Guid.NewGuid():N}");
                 Directory.CreateDirectory(stagingDir);
                 string setupPath = Path.Combine(stagingDir, setupName);
 
@@ -301,6 +301,44 @@ namespace Ven4Tools.Launcher.Services
                 TryDeleteDirectory(stagingDir);
                 return false;
             }
+        }
+
+        /// <summary>Префикс уникальных папок %TEMP%, куда скачивается установщик.</summary>
+        internal const string StagingPrefix = "ven4tools_setup_";
+
+        /// <summary>
+        /// Удаляет папки прошлых загрузок установщика из <paramref name="tempRoot"/>.
+        /// Успешное самообновление оставляет свою папку навсегда: установщик
+        /// запускается прямо из неё, и удалить её в момент запуска нельзя (48 МБ на
+        /// каждое обновление); убитый посреди загрузки лаунчер оставляет .partial.
+        /// Трогаются только папки с нашим префиксом, старше <paramref name="minAge"/>
+        /// (установщик, запущенный недавно, может ещё работать) и не ссылки (reparse
+        /// point). Занятая папка пропускается — её уберёт следующий запуск.
+        /// </summary>
+        /// <returns>Сколько папок удалено.</returns>
+        internal static int CleanupStaleStagingDirectories(string tempRoot, DateTime nowUtc, TimeSpan minAge)
+        {
+            IEnumerable<string> candidates;
+            try { candidates = Directory.EnumerateDirectories(tempRoot, StagingPrefix + "*"); }
+            catch { return 0; }
+
+            int removed = 0;
+            foreach (string dir in candidates)
+            {
+                try
+                {
+                    var info = new DirectoryInfo(dir);
+                    if ((info.Attributes & FileAttributes.ReparsePoint) != 0) continue;
+                    if (nowUtc - info.LastWriteTimeUtc < minAge) continue;
+                    info.Delete(recursive: true);
+                    removed++;
+                }
+                catch
+                {
+                    // Занята или нет доступа — не критично, попробуем при следующем запуске.
+                }
+            }
+            return removed;
         }
 
         private static void TryDeleteDirectory(string? path)
