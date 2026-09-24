@@ -40,6 +40,12 @@ jobs:
           }
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Токен job'а с contents: write не оставляем в .git/config: иначе его
+          # может прочитать любой код, исполняемый при сборке/тестах (MSBuild-
+          # таски и анализаторы из NuGet-пакетов). gh ниже получает токен явно
+          # через GH_TOKEN, git-операций с удалённым репозиторием в job нет.
+          persist-credentials: false
 
       - name: Настройка .NET 8
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
@@ -137,9 +143,14 @@ jobs:
           # установщик лаунчера, а не на клиент (наблюдалось при выпуске
           # launcher-v3.1.5 25.07.2026). Отметку Latest ставит только релиз
           # клиента (release.yml, флаг --latest).
+          #
+          # --target: без него gh создаёт тег на HEAD ветки по умолчанию, а не на
+          # коммите, из которого собран Setup (workflow_dispatch можно запустить
+          # с любой ветки).
           gh release create "launcher-v$env:RELEASE_VERSION" `
             "_release/Ven4Tools.Setup-${env:RELEASE_VERSION}.exe" `
             "_release/SHA256SUMS.txt" `
+            --target "$env:GITHUB_SHA" `
             --title "Ven4Tools Launcher $env:RELEASE_VERSION" `
             --generate-notes `
             --draft `

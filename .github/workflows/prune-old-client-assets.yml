@@ -36,7 +36,17 @@ jobs:
           tags=$(gh release list --repo "$REPO" --limit 100 --json tagName -q '.[].tagName' \
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v -x "$CURRENT_TAG" || true)
 
+          current_ver="${CURRENT_TAG#v}"
           for tag in $tags; do
+            # Только релизы с версией НИЖЕ опубликованного. Публикация более старого
+            # релиза (перевыпуск/хотфикс предыдущей ветки после выхода новой)
+            # иначе снесла бы zip у актуальной версии — и у черновика следующей,
+            # в который уже загружен архив автора.
+            ver="${tag#v}"
+            if [ "$(printf '%s\n%s\n' "$ver" "$current_ver" | sort -V | head -n1)" != "$ver" ]; then
+              echo "Пропуск $tag: версия не ниже $CURRENT_TAG."
+              continue
+            fi
             assets=$(gh release view "$tag" --repo "$REPO" --json assets -q '.assets[].name' || true)
             for asset in $assets; do
               [ -z "$asset" ] && continue
