@@ -28,6 +28,9 @@ namespace Ven4Tools.ViewModels
         private string? _originalGeoName;
         private string? _originalGeoNation;
 
+        private readonly IOfficeInstallationDetector _installationDetector;
+        private readonly OfficeDeploymentToolRunner _deploymentToolRunner = new();
+
         private readonly string[] officeLanguages = { "ru-ru", "en-us", "de-de", "fr-fr", "es-es", "it-it", "zh-cn", "ja-jp" };
         public string[] OfficeLanguages => officeLanguages;
 
@@ -122,6 +125,9 @@ namespace Ven4Tools.ViewModels
         // (не HasDownloadedInstaller) — см. Global Constraints плана.
         private void OnVersionOrLanguageChanged()
         {
+            OnPropertyChanged(nameof(IsReplaceBlocked));
+            ReplaceCommand.RaiseCanExecuteChanged();
+
             if (_downloadedFilePath == null) return;
 
             try { if (System.IO.File.Exists(_downloadedFilePath)) System.IO.File.Delete(_downloadedFilePath); } catch { }
@@ -181,6 +187,8 @@ namespace Ven4Tools.ViewModels
         {
             DownloadCommand.RaiseCanExecuteChanged();
             InstallCommand.RaiseCanExecuteChanged();
+            UninstallCommand.RaiseCanExecuteChanged();
+            ReplaceCommand.RaiseCanExecuteChanged();
         }
 
         // ── Прогресс / статус установки ─────────────────────────────────────
@@ -251,14 +259,27 @@ namespace Ven4Tools.ViewModels
         public RelayCommand CancelCommand { get; }
         public RelayCommand GoActivationCommand { get; }
 
-        public OfficeViewModel()
+        public OfficeViewModel() : this(new OfficeInstallationService())
         {
+        }
+
+        // internal — сюда заходят тесты OfficeViewModelManagementTests с подменным
+        // IOfficeInstallationDetector, минуя реальный реестр (см. OfficeInstallationService
+        // и его seam IOfficeRegistryReader).
+        internal OfficeViewModel(IOfficeInstallationDetector installationDetector)
+        {
+            _installationDetector = installationDetector;
             _selectedLanguage = officeLanguages[0];
 
-            DownloadCommand     = RelayCommand.FromAsync(_ => RunDownloadAsync(), _ => !IsDownloading && !IsInstalling);
-            InstallCommand      = RelayCommand.FromAsync(_ => RunInstallAsync(),  _ => HasDownloadedInstaller && !IsDownloading && !IsInstalling);
-            CancelCommand       = new RelayCommand(_ => RunCancel(), _ => CancelEnabled);
-            GoActivationCommand = new RelayCommand(_ => GoToActivation?.Invoke());
+            DownloadCommand         = RelayCommand.FromAsync(_ => RunDownloadAsync(), _ => !IsDownloading && !IsInstalling);
+            InstallCommand          = RelayCommand.FromAsync(_ => RunInstallAsync(),  _ => HasDownloadedInstaller && !IsDownloading && !IsInstalling);
+            CancelCommand            = new RelayCommand(_ => RunCancel(), _ => CancelEnabled);
+            GoActivationCommand      = new RelayCommand(_ => GoToActivation?.Invoke());
+            UninstallCommand         = RelayCommand.FromAsync(_ => RunUninstallAsync(),
+                _ => ShowInstalledCard && !IsMsiInstallation && !IsDownloading && !IsInstalling);
+            ReplaceCommand           = RelayCommand.FromAsync(_ => RunReplaceAsync(),
+                _ => ShowInstalledCard && !IsMsiInstallation && !IsReplaceBlocked && !IsDownloading && !IsInstalling);
+            OpenAppsFeaturesCommand  = new RelayCommand(_ => OpenAppsFeatures());
 
             // Восстановление региона после аварийного завершения (hard-kill / отключение
             // питания во время установки Office, когда finally в RunInstallAsync не успел

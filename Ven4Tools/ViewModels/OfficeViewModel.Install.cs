@@ -190,6 +190,7 @@ namespace Ven4Tools.ViewModels
                 }
                 _cancellationTokenSource?.Dispose();
                 _cancellationTokenSource = null;
+                RefreshInstalledOfficeState();
                 // `?.` — см. комментарий у SetProgress в OfficeViewModel.cs
                 Application.Current?.Dispatcher.Invoke(() =>
                 {

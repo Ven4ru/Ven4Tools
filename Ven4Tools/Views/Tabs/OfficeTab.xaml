@@ -53,6 +53,38 @@
             <TextBlock Text="Загрузка официального установщика Office с серверов Microsoft"
                        Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,20" TextWrapping="Wrap"/>
 
+            <!-- Установлено — видна только когда на машине найден Office -->
+            <Border Visibility="{Binding ShowInstalledCard, Converter={StaticResource BoolToVis}}"
+                    Background="{DynamicResource CardBackground}"
+                    BorderBrush="{DynamicResource AccentColor}" BorderThickness="1"
+                    CornerRadius="8" Padding="14,10" Margin="0,0,0,15">
+                <StackPanel>
+                    <TextBlock Text="УСТАНОВЛЕНО" FontSize="11" FontWeight="Bold"
+                               Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding InstalledSummaryText}" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                    <!-- C2R: удалить/заменить. MSI: ODT его не удаляет — только системная панель. -->
+                    <WrapPanel Visibility="{Binding IsClickToRunInstallation, Converter={StaticResource BoolToVis}}">
+                        <Button x:Name="btnUninstallOffice" Content="🗑 Удалить" Height="34" Padding="12,0" Margin="0,0,8,0"
+                                ToolTip="Полностью удалит установленный Office. Приложения и активация будут потеряны, документы на диске не затрагиваются."
+                                Background="{DynamicResource StatusDanger}" Foreground="{DynamicResource StatusDangerForeground}" FontWeight="Bold"
+                                Command="{Binding UninstallCommand}"/>
+                        <Button x:Name="btnReplaceOffice" Content="↻ Заменить на выбранную" Height="34" Padding="12,0" Margin="0,0,8,0"
+                                ToolTip="Скачает выбранную ниже версию, удалит установленный Office и поставит новую."
+                                Command="{Binding ReplaceCommand}"/>
+                    </WrapPanel>
+
+                    <StackPanel Visibility="{Binding IsMsiInstallation, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Это классическая MSI-установка Office — Office Deployment Tool такие не удаляет."
+                                   Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                        <Button x:Name="btnOpenOfficeAppsFeatures" Content="Открыть «Установленные приложения»" Height="34" HorizontalAlignment="Left" Padding="12,0"
+                                ToolTip="Откроет системную панель управления для удаления MSI-версии Office вручную."
+                                Command="{Binding OpenAppsFeaturesCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- Выбор версии — карточки -->
             <GroupBox Header="📦 Выбор версии" Margin="0,0,0,15">
                 <WrapPanel Margin="10,10,0,0">
