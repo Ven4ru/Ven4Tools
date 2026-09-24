@@ -183,8 +183,11 @@ namespace Ven4Tools.Launcher
                 {
                     if (!needElevation)
                     {
-                        var stdoutTask = proc.StandardOutput.ReadToEndAsync();
-                        string stderr  = await proc.StandardError.ReadToEndAsync();
+                        // ct и в чтении потоков: ReadToEnd stderr без токена ждал конца
+                        // процесса сам, и до WaitForExitAsync(ct) дело не доходило —
+                        // «Отмена» и 10-минутный бюджет в этой ветке не действовали.
+                        var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
+                        string stderr  = await proc.StandardError.ReadToEndAsync(ct);
                         await proc.WaitForExitAsync(ct);
                         await stdoutTask;
                         if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))

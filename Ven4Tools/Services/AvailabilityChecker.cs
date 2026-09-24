@@ -259,7 +259,12 @@ namespace Ven4Tools.Services
                         using (var getRequest = new HttpRequestMessage(HttpMethod.Get, url))
                         {
                             getRequest.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 0);
-                            using (var getResponse = await _httpClient.SendAsync(getRequest, getCts.Token))
+                            // ResponseHeadersRead: сервер, игнорирующий Range, отдаёт 200 с
+                            // полным телом, а SendAsync по умолчанию буферизует его целиком —
+                            // установщик в сотни МБ качался до таймаута, и доступная ссылка
+                            // помечалась «недоступной». Для вердикта хватает заголовков.
+                            using (var getResponse = await _httpClient.SendAsync(
+                                getRequest, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, getCts.Token))
                             {
                                 if ((getResponse.IsSuccessStatusCode || getResponse.StatusCode == System.Net.HttpStatusCode.PartialContent)
                                     && DownloadValidator.ValidateAfterRedirect(getResponse))

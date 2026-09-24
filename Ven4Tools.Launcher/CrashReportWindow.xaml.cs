@@ -43,11 +43,14 @@ namespace Ven4Tools.Launcher
             btnSkip.IsEnabled   = false;
             txtStatus.Text      = "⏳ Создаём issue на GitHub...";
 
-            string title = $"[Crash] Ven4Tools {_report.Version} — {_report.ExceptionType.Split('.')[^1]}";
-            string body  = BuildIssueBody();
-
             try
             {
+                // Внутри try: отчёт читается из файла, и поле со значением null в JSON
+                // (ExceptionType, StackTrace) роняло бы здесь NullReferenceException из
+                // async void — то есть весь лаунчер, а не только это окно.
+                string title = $"[Crash] Ven4Tools {_report.Version} — {(_report.ExceptionType ?? "").Split('.')[^1]}";
+                string body  = BuildIssueBody();
+
                 var github = new GitHubService();
                 var (ok, url, error) = await github.CreateIssueAsync(title, body);
 

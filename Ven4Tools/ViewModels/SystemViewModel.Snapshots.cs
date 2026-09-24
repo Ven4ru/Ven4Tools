@@ -76,6 +76,10 @@ namespace Ven4Tools.ViewModels
             }
 
             row.IsRestoring = true;
+            // CanExecute команды читает row.IsRestoring, а смена поля у строки сама
+            // перезапрос не вызывает — без явного уведомления кнопка «Восстановить»
+            // оставалась закэшированно выключенной и после завершения, до первого ввода.
+            RestoreSnapshotCommand.RaiseCanExecuteChanged();
             try
             {
                 var debloaterTab = DebloaterTabProvider?.Invoke();
@@ -146,7 +150,11 @@ namespace Ven4Tools.ViewModels
                 SnapshotStatusText = $"❌ Ошибка восстановления: {ex.Message}";
                 AppLogger.Write($"[Снапшоты] Ошибка восстановления: {ex.Message}");
             }
-            finally { row.IsRestoring = false; }
+            finally
+            {
+                row.IsRestoring = false;
+                RestoreSnapshotCommand.RaiseCanExecuteChanged();
+            }
         }
 
         private void DeleteSnapshot(SnapshotRow? row)

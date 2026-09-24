@@ -50,6 +50,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# $Version подставляется в путь на CDN и в текст команд удалённого bash (ssh jump
+# "mkdir -p ..." / mv / chown -R) — без проверки опечатка вроде "5.1.0 /" или
+# "../x" превращалась бы в chown -R/запись вне client-files, а ';' — в
+# произвольную команду на jump-хосте.
+if ($Version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?\z') {
+    throw "Некорректная версия '$Version' — ожидается X.Y.Z (допускается суффикс вида -beta.1)."
+}
+
 if (-not (Test-Path $PublishPath)) { throw "Не найдена папка публикации: $PublishPath" }
 if (-not (Test-Path $PrivateKeyPath)) {
     throw "Не найден приватный ключ подписи файлового манифеста: $PrivateKeyPath. " +

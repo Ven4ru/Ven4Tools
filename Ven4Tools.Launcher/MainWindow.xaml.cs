@@ -147,36 +147,45 @@ namespace Ven4Tools.Launcher
                 if (_isUiTestMode)
                     return;
 
-                // Лаунчер запущен не из папки установки — предлагаем установить.
-                // Если пользователь согласился и установщик запущен — выходим.
-                var installSvc = new LauncherUpdateService(AddLog, _downloadSource);
-                if (await installSvc.OfferInstallationAsync())
+                // async void: исключение из любого шага стартовой последовательности
+                // иначе уходило в DispatcherUnhandledException, а тот завершает лаунчер.
+                try
                 {
-                    ExitApplication();
-                    return;
-                }
+                    // Лаунчер запущен не из папки установки — предлагаем установить.
+                    // Если пользователь согласился и установщик запущен — выходим.
+                    var installSvc = new LauncherUpdateService(AddLog, _downloadSource);
+                    if (await installSvc.OfferInstallationAsync())
+                    {
+                        ExitApplication();
+                        return;
+                    }
 
-                if (_startMinimized)
-                {
-                    // Окно скрыто (автозапуск в трее) — не запускаем установку выбранных
-                    // в setup компонентов незаметно. Откладываем до первого показа окна
-                    // из трея, где UAC-диалоги и прогресс будут видны пользователю.
-                    Hide();
-                    _pendingSetupComponents = true;
-                }
-                else
-                {
-                    await ProcessSetupComponentRequestsAsync();
-                }
-                await LoadVersionsAsync();
-                await CheckComponentsAutoAsync();
+                    if (_startMinimized)
+                    {
+                        // Окно скрыто (автозапуск в трее) — не запускаем установку выбранных
+                        // в setup компонентов незаметно. Откладываем до первого показа окна
+                        // из трея, где UAC-диалоги и прогресс будут видны пользователю.
+                        Hide();
+                        _pendingSetupComponents = true;
+                    }
+                    else
+                    {
+                        await ProcessSetupComponentRequestsAsync();
+                    }
+                    await LoadVersionsAsync();
+                    await CheckComponentsAutoAsync();
 
-                // Модальные отчёты не показываем поверх скрытого окна (автозапуск в
-                // трее) — откладываем до первого показа из трея (см. ShowWindow).
-                if (_startMinimized)
-                    _pendingStartupReports = true;
-                else
-                    ShowStartupReports();
+                    // Модальные отчёты не показываем поверх скрытого окна (автозапуск в
+                    // трее) — откладываем до первого показа из трея (см. ShowWindow).
+                    if (_startMinimized)
+                        _pendingStartupReports = true;
+                    else
+                        ShowStartupReports();
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"❌ Ошибка при запуске лаунчера: {ex.Message}");
+                }
             };
         }
 

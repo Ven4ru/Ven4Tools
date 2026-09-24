@@ -20,6 +20,24 @@ public sealed class SafeZipExtractorTests
             await File.ReadAllTextAsync(Path.Combine(destination, "bin", "Ven4Tools.exe")));
     }
 
+    [Fact]
+    public async Task ExtractAsync_SkipsArchiveSignatureEntry()
+    {
+        // Подпись архива — метаданные, а не файл клиента: в папке установки она
+        // становилась «лишним файлом» для проверки целостности.
+        using var area = new TemporaryDirectory();
+        string archivePath = Path.Combine(area.Path, "signed.zip");
+        string destination = Path.Combine(area.Path, "staging");
+        CreateArchive(archivePath,
+            ("Ven4Tools.exe", "payload"),
+            (CanonicalArchiveHasher.SignatureEntryName, "{}"));
+
+        await SafeZipExtractor.ExtractAsync(archivePath, destination, CancellationToken.None);
+
+        Assert.True(File.Exists(Path.Combine(destination, "Ven4Tools.exe")));
+        Assert.False(File.Exists(Path.Combine(destination, CanonicalArchiveHasher.SignatureEntryName)));
+    }
+
     [Theory]
     [InlineData("../escaped.txt")]
     [InlineData("folder/../../escaped.txt")]

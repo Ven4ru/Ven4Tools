@@ -12,6 +12,12 @@ namespace Ven4Tools.Launcher
 {
     public partial class MainWindow
     {
+        // Что было известно о подписанном version.json CDN при последней загрузке
+        // списка версий — только чтобы объяснить отсутствие хеша у версии (см.
+        // ClientHashAvailability), а не как источник доверия.
+        private bool _cdnManifestLoaded;
+        private string? _cdnClientVersion;
+
         private async Task LoadVersionsAsync()
         {
             try
@@ -28,7 +34,11 @@ namespace Ven4Tools.Launcher
                     // недоступность сервера.
                     string? cdnFailure = null;
                     using var cdnService = new CdnService(reason => cdnFailure = reason);
+                    _cdnManifestLoaded = false;
+                    _cdnClientVersion = null;
                     cdnInfo = await cdnService.GetVersionInfoAsync();
+                    _cdnManifestLoaded = cdnInfo != null;
+                    _cdnClientVersion = cdnInfo?.Client?.Version;
                     if (cdnInfo?.Client?.ZipUrl != null)
                         AddLog($"🌐 CDN доступен: клиент {cdnInfo.Client.Version}");
                     else

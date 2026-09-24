@@ -278,8 +278,12 @@ namespace Ven4Tools.Services
 
             await WaitForExitRespectingCancellationAsync(proc, token);
 
-            // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — считаем успехом
-            return (proc.ExitCode == 0 || proc.ExitCode == 3010, proc.ExitCode == 3010, proc.ExitCode);
+            // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED, 1641 = ERROR_SUCCESS_REBOOT_INITIATED —
+            // оба успешные (см. MsiExitCodes). Без 1641 прямая загрузка считала такой
+            // исход провалом и скачивала/запускала установщик со следующего зеркала
+            // прямо во время уже начатой перезагрузки.
+            bool reboot = proc.ExitCode == 3010 || proc.ExitCode == 1641;
+            return (proc.ExitCode == 0 || reboot, reboot, proc.ExitCode);
         }
 
         // Единая точка ожидания процесса с обработкой отмены — вынесена из

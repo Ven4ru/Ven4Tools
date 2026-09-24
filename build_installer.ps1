@@ -91,7 +91,8 @@ if (-not (Test-Path $publishedExe)) {
 # Контроль: версия в exe должна совпадать с запрошенной
 $fileVersion = (Get-Item $publishedExe).VersionInfo.FileVersion
 Write-Host "Опубликован exe, FileVersion = $fileVersion"
-if (-not $fileVersion.StartsWith($Version)) {
+# Сравнение по целому компоненту: голый StartsWith("2.1.1") принимал и "2.1.10.0".
+if ($fileVersion -ne $Version -and -not $fileVersion.StartsWith("$Version.", [StringComparison]::Ordinal)) {
     throw "Версия exe ($fileVersion) не совпадает с запрошенной ($Version)."
 }
 

@@ -27,6 +27,12 @@ namespace Ven4Tools.Launcher
         // той же папки, которую первая уже переписывает. Гейт один на обе операции.
         private bool _integrityOperationRunning;
 
+        // Папка, для которой построен последний отчёт проверки. Отчёт живёт в окне
+        // настроек сколько угодно; если за это время папку клиента сменили, его план
+        // относится к другому каталогу, и применять его к текущему нельзя.
+        private ClientIntegrityReport? _lastIntegrityReport;
+        private string? _lastIntegrityReportClientPath;
+
         /// <summary>
         /// Запускает проверку целостности установленного клиента. Возвращает отчёт
         /// (в том числе «не установлен» / «не с чем сверять») либо null, если другая
@@ -81,8 +87,11 @@ namespace Ven4Tools.Launcher
                     FilesBaseMirrorHostingUrl = installedRelease?.FilesBaseMirrorHostingUrl,
                 };
 
+                string checkedClientPath = _clientPath;
                 var checker = new ClientIntegrityChecker(_httpClient, this);
-                var report = await checker.CheckAsync(_clientPath, installedVersion, sources, token);
+                var report = await checker.CheckAsync(checkedClientPath, installedVersion, sources, token);
+                _lastIntegrityReport = report;
+                _lastIntegrityReportClientPath = checkedClientPath;
 
                 AddLog($"🩺 Проверка версии {installedVersion ?? "не читается"}: {report.Summary}");
                 if (report.AclCompromised)
@@ -127,16 +136,61 @@ namespace Ven4Tools.Launcher
                 return false;
             }
 
+            // Починка переписывает файлы в папке клиента — ровно то же, что загрузка,
+            // установка из файла и тихое автообновление. Раньше она шла мимо общего
+            // слота и могла выполняться одновременно с ними.
+            using var lease = TryBeginOperation(
+                "Восстановление файлов клиента", Timeout.InfiniteTimeSpan, silent: true);
+            if (lease == null)
+            {
+                report.SetRepairMessage(
+                    $"сейчас выполняется другая операция: {_operations.CurrentOperation ?? "загрузка или установка"}");
+                return false;
+            }
+
+            // Отчёт мог устареть, пока окно настроек было открыто: клиент обновили
+            // (тогда план собран по манифесту прежней версии и смешал бы на диске два
+            // релиза) или сменили папку клиента (план относится к другому каталогу).
+            if (!IsIntegrityReportCurrent(report))
+            {
+                report.SetRepairMessage("клиент изменился после проверки — запустите проверку заново");
+                return false;
+            }
+
             _integrityOperationRunning = true;
             try
             {
                 AddLog("🛠 Восстановление файлов клиента...");
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, lease.Token);
                 var checker = new ClientIntegrityChecker(_httpClient, this);
-                return await checker.RepairAsync(report, _clientPath, token);
+                return await checker.RepairAsync(report, _clientPath, linked.Token);
             }
             finally
             {
                 _integrityOperationRunning = false;
+            }
+        }
+
+        private bool IsIntegrityReportCurrent(ClientIntegrityReport report)
+        {
+            if (!ReferenceEquals(report, _lastIntegrityReport) ||
+                !string.Equals(_lastIntegrityReportClientPath, _clientPath, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            string? manifestVersion = report.RemoteManifest?.Version;
+            if (manifestVersion == null) return true; // чинить всё равно не по чему — решит RepairAsync
+
+            try
+            {
+                string clientExe = Path.Combine(_clientPath, LauncherPaths.ClientExeName);
+                string? installed = File.Exists(clientExe)
+                    ? FileVersionInfo.GetVersionInfo(clientExe).FileVersion
+                    : null;
+                return installed != null && VersionComparer.Compare(manifestVersion, installed) == 0;
+            }
+            catch
+            {
+                return false;
             }
         }
 

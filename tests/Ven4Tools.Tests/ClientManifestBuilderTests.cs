@@ -61,6 +61,19 @@ public sealed class ClientManifestBuilderTests : IDisposable
     }
 
     [Fact]
+    public async Task BuildFromDirectoryAsync_ExcludesArchiveSignatureLeftByOlderInstalls()
+    {
+        // Установки до исправления SafeZipExtractor распаковывали подпись архива в
+        // папку клиента — на чистой установке она не должна считаться «лишним файлом».
+        WriteFile("Ven4Tools.exe", "exe");
+        WriteFile(CanonicalArchiveHasher.SignatureEntryName, "{}");
+
+        var manifest = await ClientManifestBuilder.BuildFromDirectoryAsync(_root, "5.0.0", CancellationToken.None);
+
+        Assert.Equal(new[] { "Ven4Tools.exe" }, manifest.Files!.Select(f => f.Path));
+    }
+
+    [Fact]
     public async Task BuildFromDirectoryAsync_ExcludesTransientPartialInstallArtifacts()
     {
         WriteFile("Ven4Tools.exe", "exe");

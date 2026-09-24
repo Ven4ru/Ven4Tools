@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Ven4Tools.Launcher.Models;
@@ -42,8 +43,11 @@ namespace Ven4Tools.Launcher.Services
                 try
                 {
                     var cacheBust = $"?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
-                    var json      = await _http.GetStringAsync(url + cacheBust);
-                    var signature = await _http.GetStringAsync(url + ".sig" + cacheBust);
+                    // BoundedHttpText, а не GetStringAsync: тот буферизует ответ любого
+                    // размера ДО проверки подписи (см. обоснование в BoundedHttpText) —
+                    // а среди источников есть хостинг, которому доверяем меньше, чем CDN.
+                    var json      = await BoundedHttpText.GetStringAsync(_http, url + cacheBust, CancellationToken.None);
+                    var signature = await BoundedHttpText.GetStringAsync(_http, url + ".sig" + cacheBust, CancellationToken.None);
 
                     // Fail-closed: без валидной ECDSA-подписи уведомление не показываем —
                     // компрометация только хостинга (без приватного ключа, который

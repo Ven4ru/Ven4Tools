@@ -141,7 +141,7 @@ namespace Ven4Tools.ViewModels
                 var exit = DescribeWingetExitCode(code);
                 if (exit.Success)
                 {
-                    // Успех, в т.ч. коды «требуется перезагрузка» (3010 / 0x8A15002C)
+                    // Успех, в т.ч. коды «требуется перезагрузка» (3010 / 0x8A150109)
                     app.Available = "";
                     Application.Current?.Dispatcher.Invoke(() => { ApplyFilter(); RecomputeStats(); });
                     AppLogger.Write(exit.Reboot

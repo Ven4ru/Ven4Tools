@@ -30,12 +30,17 @@ namespace Ven4Tools.Services
                 // (свежая Windows — типовой сценарий для установщика ПО), вместо списка
                 // версий печатает запрос подтверждения и завершается ошибкой — список
                 // версий молча оказывался пустым, и выбор версии в каталоге не работал.
-                var (_, output) = await WingetRunner.RunAsync(
+                var (exitCode, output) = await WingetRunner.RunAsync(
                     WingetArgs.Query("show", "--id", wingetId, "--versions", "-e", "--source", "winget"),
                     token: token);
 
                 var versions = ParseVersions(output);
-                _cache[wingetId] = (DateTime.UtcNow, versions);
+                // -1 — winget не найден, не запустился, убит по таймауту или отмене
+                // (RunAsync в этих случаях не бросает). Пустой список от такого запуска —
+                // не ответ winget, и в кеше он на 30 минут отключал выбор версии в
+                // каталоге после одного отменённого/зависшего обновления.
+                if (exitCode != -1)
+                    _cache[wingetId] = (DateTime.UtcNow, versions);
                 return versions;
             }
             catch (Exception ex)

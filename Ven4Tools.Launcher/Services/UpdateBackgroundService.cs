@@ -293,8 +293,13 @@ namespace Ven4Tools.Launcher.Services
         }
 
 
+        // Повторный Dispose раньше делал _cts.Cancel() на уже освобождённом источнике
+        // и бросал ObjectDisposedException — освобождение выполняется ровно один раз.
+        private int _disposed;
+
         public void Dispose()
         {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
             _cts.Cancel();
             _timer?.Dispose();
             _checkGate.Dispose();

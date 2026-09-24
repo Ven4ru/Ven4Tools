@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using Ven4Tools.Models;
@@ -52,31 +53,50 @@ namespace Ven4Tools.Views
         public void Drop(DragEventArgs e)
         {
             _overlay.Visibility = Visibility.Collapsed;
-            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+            var files = GetDroppedInstallers(e, checkExists: true);
+            if (files.Length == 0) return;
 
-            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            foreach (var file in files)
+            // Диалоги показываем уже после выхода из обработчика Drop: модальное окно
+            // прямо внутри него держит OLE-цикл перетаскивания источника (Проводник
+            // «замерзает», пока пользователь не закроет диалог).
+            _owner.Dispatcher.BeginInvoke(new Action(() =>
             {
-                if (!file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                    && !file.EndsWith(".msi", StringComparison.OrdinalIgnoreCase)) continue;
-
-                var dlg = new LocalInstallerDialog(file) { Owner = _owner };
-                if (dlg.ShowDialog() == true && dlg.Result != null)
+                foreach (var file in files)
                 {
-                    AppLogger.Write($"📦 Добавлен локальный установщик: {dlg.Result.DisplayName}");
-                    // Передаём во вкладку каталога — в механизм пользовательских приложений
-                    _installerAccepted(dlg.Result);
+                    var dlg = new LocalInstallerDialog(file) { Owner = _owner };
+                    if (dlg.ShowDialog() == true && dlg.Result != null)
+                    {
+                        AppLogger.Write($"📦 Добавлен локальный установщик: {dlg.Result.DisplayName}");
+                        // Передаём во вкладку каталога — в механизм пользовательских приложений
+                        _installerAccepted(dlg.Result);
+                    }
                 }
-            }
+            }));
         }
 
-        private static bool IsExeOrMsi(DragEventArgs e)
+        // DragOver приходит на каждое движение мыши — без обращения к диску (сетевые пути).
+        private static bool IsExeOrMsi(DragEventArgs e) => GetDroppedInstallers(e, checkExists: false).Length > 0;
+
+        // GetData может вернуть null (источник объявил FileDrop, но данных не отдал) —
+        // прямое приведение (string[]) роняло бы обработчик DragEnter/DragOver.
+        // Каталог с именем «setup.exe» установщиком не является — только существующие файлы.
+        private static string[] GetDroppedInstallers(DragEventArgs e, bool checkExists)
         {
-            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return false;
-            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            return files.Any(f =>
-                f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
-                f.EndsWith(".msi", StringComparison.OrdinalIgnoreCase));
+            try
+            {
+                if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return Array.Empty<string>();
+                if (e.Data.GetData(DataFormats.FileDrop) is not string[] files) return Array.Empty<string>();
+                return files
+                    .Where(f => !string.IsNullOrEmpty(f)
+                                && (f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                                    || f.EndsWith(".msi", StringComparison.OrdinalIgnoreCase))
+                                && (!checkExists || File.Exists(f)))
+                    .ToArray();
+            }
+            catch (Exception)
+            {
+                return Array.Empty<string>();
+            }
         }
     }
 }

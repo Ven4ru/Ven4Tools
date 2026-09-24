@@ -18,6 +18,10 @@ namespace Ven4Tools.Services
     {
         private readonly string _path;
         private readonly object _lock = new object();
+        // Отдельный замок записи: снимок и запись файла должны идти одной парой.
+        // Иначе два параллельных Save могли записать файл в обратном порядке, и на
+        // диске оставался более старый снимок (например, без только что скрытого приложения).
+        private readonly object _saveLock = new object();
         private HashSet<string> _hidden = new();
 
         public HiddenAppsStore(string path)
@@ -43,9 +47,12 @@ namespace Ven4Tools.Services
         {
             try
             {
-                string json;
-                lock (_lock) { json = JsonConvert.SerializeObject(_hidden, Formatting.Indented); }
-                FileHelper.WriteAllTextAtomic(_path, json);
+                lock (_saveLock)
+                {
+                    string json;
+                    lock (_lock) { json = JsonConvert.SerializeObject(_hidden, Formatting.Indented); }
+                    FileHelper.WriteAllTextAtomic(_path, json);
+                }
             }
             catch (Exception ex) { AppLogger.Write($"[HiddenAppsStore] Save: {ex.Message}"); }
         }

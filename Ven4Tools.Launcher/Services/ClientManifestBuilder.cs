@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,6 +62,11 @@ internal static class ClientManifestBuilder
             if (string.Equals(relative, "Data/master.json", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(relative, "Data/master.json.sig", StringComparison.OrdinalIgnoreCase))
                 continue;
+            // Подпись архива: установки до исправления SafeZipExtractor распаковали её
+            // в папку клиента. Она не часть публикации — без исключения «Проверить» у
+            // всех уже установленных клиентов сообщал бы о «лишнем файле».
+            if (string.Equals(relative, CanonicalArchiveHasher.SignatureEntryName, StringComparison.OrdinalIgnoreCase))
+                continue;
 
             files.Add(new ClientManifestFileEntry
             {
@@ -75,7 +81,9 @@ internal static class ClientManifestBuilder
         return new ClientFileManifest
         {
             Version = version,
-            GeneratedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            // InvariantCulture: в пользовательском формате «:» — это разделитель времени
+            // текущей культуры, а год считается в её календаре (th-TH — буддийский).
+            GeneratedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
             Files = files,
         };
     }
