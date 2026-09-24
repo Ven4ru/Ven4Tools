@@ -161,6 +161,11 @@ internal sealed class ClientDeltaInstaller
         Action<string>? log,
         CancellationToken cancellationToken)
     {
+        // Кэш сбрасывается ДО первой записи в папку клиента: если процесс умрёт
+        // посреди фиксации или Save ниже не удастся, на диске не должно остаться
+        // описания прошлой версии — по нему следующая дельта сочла бы «неизменными»
+        // файлы, которых на диске уже нет в таком виде (смесь версий).
+        _store.Invalidate();
         _installer.InstallPartial(clientPath, downloaded.Updates, plan.ToDelete, cancellationToken);
 
         if (!_store.Save(remote))

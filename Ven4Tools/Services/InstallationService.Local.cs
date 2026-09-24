@@ -137,6 +137,18 @@ namespace Ven4Tools.Services
 
             bool cacheIsMsi = cachedPath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase);
             string locArgCache = BuildInstallerLocationArg(cacheIsMsi, installDrive, app.DisplayName);
+            // Тихие аргументы — из каталога, как у прямой ссылки и локального файла.
+            // Раньше здесь был жёсткий "/S /silent /quiet": у установщиков, которые
+            // не понимают лишние ключи (AutoHotkey v2 — «Invalid arg» и зависание),
+            // установка из кэша висела, держа общий семафор до ручной отмены.
+            string silentArgsCache = app.SilentArgs;
+            if (!CommandLineGuard.ValidateSilentArgs(silentArgsCache))
+            {
+                AppLogger.Write($"[InstallationService] ⚠ SilentArgs содержит недопустимые символы для {app.DisplayName} — использую /S");
+                silentArgsCache = "/S";
+            }
+            if (string.IsNullOrWhiteSpace(silentArgsCache))
+                silentArgsCache = "/S";
             // Держим кэшированный файл открытым с FileShare.Read НЕПРЕРЫВНО от
             // проверки хеша до завершения установки — верификация читает из уже
             // открытого хендла, а не из отдельного временного (иначе между закрытием
@@ -155,7 +167,7 @@ namespace Ven4Tools.Services
                         FileName       = cacheIsMsi ? TrustedExecutablePaths.MsiExec : cachedPath,
                         Arguments      = cacheIsMsi
                                          ? $"/i \"{cachedPath}\" /quiet /norestart{locArgCache}"
-                                         : "/S /silent /quiet" + locArgCache,
+                                         : silentArgsCache + locArgCache,
                         UseShellExecute = true, Verb = "runas",
                         WindowStyle     = ProcessWindowStyle.Hidden
                     };

@@ -501,7 +501,10 @@ namespace Ven4Tools.Launcher
             string clientParent = Path.GetDirectoryName(Path.GetFullPath(_clientPath))
                 ?? throw new InvalidOperationException("Не удалось определить каталог установки.");
             string extractPath = Path.Combine(
-                clientParent, $".Ven4Tools_Client.staging-{Guid.NewGuid():N}");
+                // Префикс из имени папки клиента — CleanupStaleInstallArtifacts ищет
+                // остатки именно по нему; зашитый «Ven4Tools_Client» не находился у
+                // клиента в папке с другим именем («Найти клиент»).
+                clientParent, $".{Path.GetFileName(Path.GetFullPath(_clientPath))}.staging-{Guid.NewGuid():N}");
 
             try
             {
@@ -552,6 +555,10 @@ namespace Ven4Tools.Launcher
                 }
 
                 var installer = new TransactionalDirectoryInstaller();
+                // Кэш состава сбрасывается до записи в папку клиента — см.
+                // ClientDeltaInstaller.Apply: убитый посреди установки процесс не должен
+                // оставить описание прошлой версии для следующей дельты.
+                new InstalledManifestStore().Invalidate();
                 installer.Install(extractPath, _clientPath, token);
 
                 Dispatcher.Invoke(() =>

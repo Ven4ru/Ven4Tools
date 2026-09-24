@@ -21,23 +21,28 @@ namespace Ven4Tools.Services
             // интерполяцию — .NET сам экранирует каждый токен, устраняя поверхность
             // инъекции. ValidateId — та же defense-in-depth проверка id, что перед
             // winget show в AvailabilityChecker.
+            bool wingetFoundNothing = false;
             if (!string.IsNullOrWhiteSpace(wingetId) && !wingetId.Contains('…') &&
                 CommandLineGuard.ValidateId(wingetId))
             {
-                // --exact обязателен: без него --id ищет ПОДСТРОКУ, и при отсутствии
-                // самого пакета winget удалил бы единственный найденный «соседний»
-                // (Mozilla.Firefox → Mozilla.Firefox.ESR / Mozilla.Firefox.ru). Паритет
-                // с install (-e) и QuerySinglePackageAsync (--exact).
+                // --exact: без него --id ищет по подстроке, и при двух похожих пакетах
+                // (Mozilla.Firefox / Mozilla.Firefox.ESR) winget либо откажется, либо
+                // тронет не тот.
                 var (exitCode, _) = await WingetRunner.RunAsync(
                     WingetArgs.Query("uninstall", "--id", wingetId, "--exact", "--silent"));
-                // 0 = успех, 0x8A150014 = пакет не установлен (нечего удалять — считаем успехом).
-                if (exitCode == 0 || exitCode == unchecked((int)0x8A150014))
+                if (exitCode == 0)
                     return true;
+                // 0x8A150014 = winget не нашёл пакет с таким ID. Это ещё не «не установлено»:
+                // приложение могло быть поставлено мимо winget или под другим ID — раньше
+                // здесь сразу возвращался успех, и интерфейс писал «удалено», хотя
+                // приложение оставалось в системе. Решает поиск в реестре ниже.
+                wingetFoundNothing = exitCode == unchecked((int)0x8A150014);
             }
 
             // Попытка 2: найти строку UninstallString в реестре по DisplayName.
             var found = await Task.Run(() => FindUninstallString(displayName));
-            if (found == null) return false;
+            // Ни winget, ни реестр о приложении не знают — удалять действительно нечего.
+            if (found == null) return wingetFoundNothing;
 
             // Запись из HKCU не запускаем — см. развёрнутое обоснование в комментарии
             // к RunUninstallStringAsync. Возвращаем false, вызывающий код покажет
