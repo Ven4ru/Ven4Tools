@@ -42,7 +42,17 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
     public Action? OnRebootPendingChecked { get; set; }
 
     public bool IsServiceRunning() => ServiceRunning;
-    public bool TryStartService() { ServiceRunning = true; return true; }
+
+    // false — служба не запускается (тип запуска «Отключена»).
+    public bool StartServiceSucceeds { get; set; } = true;
+    public int StartServiceCallCount { get; private set; }
+
+    public bool TryStartService()
+    {
+        StartServiceCallCount++;
+        if (StartServiceSucceeds) ServiceRunning = true;
+        return StartServiceSucceeds;
+    }
 
     public bool IsRebootPending()
     {
