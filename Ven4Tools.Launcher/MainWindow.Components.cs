@@ -165,7 +165,27 @@ namespace Ven4Tools.Launcher
             if (lease == null) return;
 
             btnInstallMissing.Visibility = Visibility.Collapsed;
-            await CheckComponentsInteractiveAsync(lease);
+            try
+            {
+                await CheckComponentsInteractiveAsync(lease);
+            }
+            catch (Exception ex)
+            {
+                // async void: необработанное исключение завершило бы весь лаунчер.
+                AddLog($"❌ Ошибка устранения проблем: {ex.Message}");
+                btnInstallMissing.Visibility = Visibility.Visible;
+            }
+        }
+
+        // «Отмена» отменяет аренду всей сессии, а не один шаг: после неё каждая
+        // следующая установка сессии мгновенно завершалась бы «отменено» — сразу после
+        // того, как пользователь согласился на неё в очередном диалоге. Поэтому после
+        // любого шага с отменой сессия прекращает задавать вопросы.
+        private bool ComponentSessionCancelled(OperationLease lease)
+        {
+            if (!lease.Token.IsCancellationRequested) return false;
+            AddLog("⏹ Устранение проблем прервано кнопкой «Отмена»");
+            return true;
         }
 
         private async Task CheckComponentsInteractiveAsync(OperationLease lease)
@@ -205,6 +225,7 @@ namespace Ven4Tools.Launcher
                 if (installResult == MessageBoxResult.Yes)
                 {
                     await InstallWingetAsync(lease);
+                    if (ComponentSessionCancelled(lease)) { await CheckComponentsAutoAsync(); return; }
                     wingetInfo = await CheckWingetWithVersionAsync();
                     if (wingetInfo.IsInstalled)
                         AddLog($"   ✅ Winget {wingetInfo.Version}");
@@ -224,6 +245,7 @@ namespace Ven4Tools.Launcher
                 if (updateResult == MessageBoxResult.Yes)
                 {
                     await InstallWingetAsync(lease);
+                    if (ComponentSessionCancelled(lease)) { await CheckComponentsAutoAsync(); return; }
                     wingetInfo = await CheckWingetWithVersionAsync();
                     AddLog(wingetInfo.IsInstalled
                         ? $"   ✅ Winget {wingetInfo.Version}"
@@ -242,6 +264,7 @@ namespace Ven4Tools.Launcher
                 if (r == MessageBoxResult.Yes)
                 {
                     await InstallWebView2Async(lease);
+                    if (ComponentSessionCancelled(lease)) { await CheckComponentsAutoAsync(); return; }
                     AddLog(IsWebView2Installed()
                         ? "   ✅ WebView2 установлен"
                         : "   ⚠️ WebView2 не обнаружен после установки. Возможно, требуется перезагрузка.");
@@ -256,6 +279,7 @@ namespace Ven4Tools.Launcher
                 if (r == MessageBoxResult.Yes)
                 {
                     await InstallVcRedistAsync(lease);
+                    if (ComponentSessionCancelled(lease)) { await CheckComponentsAutoAsync(); return; }
                     AddLog(IsVcRedistInstalled()
                         ? "   ✅ Visual C++ Redistributable установлен"
                         : "   ⚠️ VC++ не обнаружен после установки. Возможно, требуется перезагрузка.");
@@ -265,6 +289,7 @@ namespace Ven4Tools.Launcher
             // Опциональные менеджеры пакетов — предлагаем, но не настаиваем:
             // отказ ничем не грозит, клиент работает и без них
             await OfferOptionalPackageManagersAsync(lease);
+            if (ComponentSessionCancelled(lease)) { await CheckComponentsAutoAsync(); return; }
 
             if (!CheckWindowsVersionOk())
             {
@@ -311,9 +336,9 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
-            _updateService?.Dispose();
-            _notifyIcon?.Dispose();
-            System.Windows.Application.Current.Shutdown();
+            // Общий путь выхода: он же гасит повторный вызов из Window_Closing,
+            // который Shutdown поднимает при закрытии главного окна.
+            ExitApplication();
         }
 
         // Единая загрузка файла с доверенного хоста: потоковое скачивание с проверкой

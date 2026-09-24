@@ -94,7 +94,7 @@ namespace Ven4Tools.Launcher
                     // что и кнопка «Изменить…» — иначе пользователю остаётся только
                     // догадаться, куда идти дальше.
                     AddLog("ℹ️ Автоматически найденная папка отклонена — открываю выбор папки вручную");
-                    BtnSelectFolder_Click(sender, e);
+                    SelectInstallFolder();
                     return;
                 }
 
