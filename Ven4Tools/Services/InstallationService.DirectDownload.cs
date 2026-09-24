@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Ven4Tools.Helpers;
 using Ven4Tools.Models;
 
 namespace Ven4Tools.Services
@@ -75,9 +76,13 @@ namespace Ven4Tools.Services
                 // но в ветке с AlternativeId сам app.Id остаётся непроверенным — а именно
                 // он идёт в имя временного файла. Тот же ValidateId, иначе безопасный плейсхолдер.
                 string idForTempFile = CommandLineGuard.ValidateId(app.Id) ? app.Id : "app";
-                string tempFile = Path.Combine(Path.GetTempPath(), $"{idForTempFile}_{Guid.NewGuid()}{urlExt}");
+                // Не голый %TEMP%: установщик запускается elevated, а соседняя DLL в каталоге
+                // запуска грузится им по порядку поиска — см. InstallerTempDirectory.
+                string tempFile = "";
                 try
                 {
+                    // Внутри try: сбой создания каталога — обычная неудача источника.
+                    tempFile = InstallerTempDirectory.NewFilePath($"{idForTempFile}_{Guid.NewGuid()}{urlExt}");
                     // Таймаут 30 секунд только на установление соединения и заголовки;
                     // скачивание тела дополнительно ограничено sliding-таймаутом простоя
                     // (idleCts, ниже) — без него сервер, отдающий байты бесконечно медленно

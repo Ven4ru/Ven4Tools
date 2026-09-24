@@ -190,6 +190,13 @@ namespace Ven4Tools.Launcher.Services
         // поэтому его нельзя извлечь реверс-инжинирингом распространяемого лаунчера.
         private const string CrashProxyUrl = "https://ven4tools.ru/api/db.php?action=report_crash";
 
+        internal static bool IsTrustedIssueUrl(string? url) =>
+            Uri.TryCreate(url, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps
+            && uri.IsDefaultPort
+            && string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase)
+            && uri.AbsolutePath.StartsWith("/Ven4ru/Ven4Tools/issues/", StringComparison.OrdinalIgnoreCase);
+
         /// <summary>
         /// Отправка отчёта об ошибке через серверный прокси ven4tools.ru.
         /// Сервер сам создаёт issue в репозитории, используя свой токен.
@@ -230,6 +237,13 @@ namespace Ven4Tools.Launcher.Services
                 string? issueUrl =
                     root.TryGetProperty("issue_url", out var iu) ? iu.GetString() :
                     root.TryGetProperty("html_url", out var hu) ? hu.GetString() : null;
+
+                // Ссылка уходит в Process.Start(UseShellExecute=true). Сайт с API доверенным
+                // источником не считается (см. DownloadValidator), поэтому открываем только
+                // https-страницу issue нашего репозитория — не file:, не чужой хост.
+                // Отчёт при этом уже создан: без ссылки возвращаем успех без URL.
+                if (!IsTrustedIssueUrl(issueUrl))
+                    issueUrl = null;
 
                 return (true, issueUrl, null);
             }

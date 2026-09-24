@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
@@ -38,10 +39,13 @@ namespace Ven4Tools.ViewModels
             SetProgress(true, "⏳ Подготовка...", 0, "");
             AppLogger.Write($"\n📥 Скачивание {displayName} ({lang})...");
 
-            string tempFile = Path.Combine(Path.GetTempPath(), $"OfficeSetup_{Guid.NewGuid():N}.exe");
+            // Защищённый каталог, а не голый %TEMP% — см. InstallerTempDirectory (DLL рядом
+            // с elevated-бутстраппером).
+            string tempFile = "";
 
             try
             {
+                tempFile = InstallerTempDirectory.NewFilePath($"OfficeSetup_{Guid.NewGuid():N}.exe");
                 string downloadUrl = string.Format(officeDirectLinks[productId], lang);
                 // Таймаут 30 секунд на соединение и заголовки — вторая половина той же
                 // пары, что и sliding-таймаут ниже (см. InstallationService.DirectDownload,

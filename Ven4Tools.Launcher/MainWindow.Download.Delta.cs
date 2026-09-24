@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
@@ -106,6 +107,18 @@ namespace Ven4Tools.Launcher
                     return DeltaUpdateOutcome.FallBackToFullDownload;
                 }
 
+                // Кэш состава один на лаунчер и не знает, к какой папке относится:
+                // после «Найти клиент»/смены папки или частично неудачного удаления он
+                // описывает не то, что лежит в _clientPath. Файлы, «неизменные» по кэшу,
+                // тогда не скачиваются — и на диске остаётся смесь двух версий.
+                string? mismatch = DescribeLocalManifestMismatch(cached!, plan, _clientPath);
+                if (mismatch != null)
+                {
+                    store.Invalidate();
+                    AddLog($"ℹ️ Дельта неприменима: {mismatch} — полная загрузка");
+                    return DeltaUpdateOutcome.FallBackToFullDownload;
+                }
+
                 AddLog($"⚡ Блочное обновление: {plan.Reason}");
                 AddLog($"⚡ К загрузке {FormatBytes(plan.DownloadBytes)} вместо полного архива");
 
@@ -172,8 +185,10 @@ namespace Ven4Tools.Launcher
                 _clientUpdateAvailable = false;
                 return DeltaUpdateOutcome.Installed;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
+                // Фильтр по токену: OCE без отмены — таймаут сети, он должен
+                // уйти в полную загрузку веткой ниже, а не оборвать обновление.
                 // Отмена пользователем относится ко всему обновлению, а не только к
                 // дельте: перезапускать после неё полную загрузку было бы издевательством.
                 throw;
@@ -197,6 +212,32 @@ namespace Ven4Tools.Launcher
                     // Временный каталог в %TEMP% — его остаток не мешает работе лаунчера.
                 }
             }
+        }
+
+        /// <summary>
+        /// Дешёвая сверка кэша состава с диском: версия exe и наличие/размер каждого
+        /// файла, который план считает неизменным. Полное хеширование здесь не нужно —
+        /// цель поймать чужую папку и недоустановку, а не подмену содержимого.
+        /// Null — расхождений нет.
+        /// </summary>
+        private static string? DescribeLocalManifestMismatch(
+            ClientFileManifest local, ClientDeltaPlan plan, string clientPath)
+        {
+            string exe = Path.Combine(clientPath, LauncherPaths.ClientExeName);
+            string? onDisk = FileVersionInfo.GetVersionInfo(exe).FileVersion;
+            if (onDisk == null || local.Version == null ||
+                VersionComparer.Compare(onDisk, local.Version) != 0)
+            {
+                return $"в папке клиента версия {onDisk ?? "не читается"}, а сохранённый состав описывает {local.Version ?? "неизвестную"}";
+            }
+
+            foreach (var entry in plan.Unchanged)
+            {
+                var info = new FileInfo(Path.Combine(clientPath, entry.Path!.Replace('/', Path.DirectorySeparatorChar)));
+                if (!info.Exists || info.Length != entry.Size)
+                    return $"файл {entry.Path} не совпадает с сохранённым составом установки";
+            }
+            return null;
         }
 
         /// <summary>

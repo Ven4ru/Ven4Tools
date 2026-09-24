@@ -27,6 +27,12 @@ namespace Ven4Tools.Launcher.Services
         // Interlocked гарантирует, что событие уйдёт только один раз.
         private int _reported;
 
+        // Сколько тиков подряд heartbeat был устаревшим. Одного мало: после выхода
+        // компьютера из сна таймер лаунчера может сработать раньше, чем клиент успеет
+        // обновить heartbeat, — возраст тогда равен длительности сна, и лаунчер
+        // объявлял «клиент не отвечал 3600 сек» и выключал watchdog навсегда.
+        private int _staleTicks;
+
         // Клиент завис — лаунчер предлагает завершить
         public event Action<CrashReport>? ClientFrozen;
 
@@ -58,7 +64,8 @@ namespace Ven4Tools.Launcher.Services
                 if (beat.Value.pid != _process.Id) return;
 
                 double age = (DateTime.UtcNow - beat.Value.timestamp).TotalSeconds;
-                if (age < FreezeTimeoutSec) return;
+                if (age < FreezeTimeoutSec) { _staleTicks = 0; return; }
+                if (++_staleTicks < 2) return;
 
                 if (Interlocked.CompareExchange(ref _reported, 1, 0) != 0) return;
 
