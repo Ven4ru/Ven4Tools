@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -75,7 +76,9 @@ internal static class ClientManifestBuilder
         return new ClientFileManifest
         {
             Version = version,
-            GeneratedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            // InvariantCulture: в пользовательском формате «:» — это разделитель времени
+            // текущей культуры, а год считается в её календаре (th-TH — буддийский).
+            GeneratedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
             Files = files,
         };
     }

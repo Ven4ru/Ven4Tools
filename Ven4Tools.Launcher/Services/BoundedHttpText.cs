@@ -25,6 +25,17 @@ internal static class BoundedHttpText
 
     public static async Task<string> GetStringAsync(HttpClient client, string url, CancellationToken ct)
     {
+        // HttpClient.Timeout при ResponseHeadersRead покрывает только ожидание
+        // заголовков — чтение тела ниже им уже не ограничено. Заменённый здесь
+        // GetStringAsync укладывал в Timeout весь ответ целиком; без этого сервер,
+        // приславший заголовки и замолчавший, подвешивал бы вызов навсегда (у
+        // фоновой проверки обновлений токена нет вовсе, и её семафор оставался бы
+        // занят до конца сеанса). Восстанавливаем прежнюю семантику явно.
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        if (client.Timeout != Timeout.InfiniteTimeSpan)
+            timeoutCts.CancelAfter(client.Timeout);
+        ct = timeoutCts.Token;
+
         using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct)
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
