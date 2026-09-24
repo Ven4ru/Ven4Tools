@@ -382,54 +382,45 @@ namespace Ven4Tools.Launcher
             AddLog("📦 Установка winget...");
             Dispatcher.Invoke(() => txtDownloadStatus.Text = "Установка...");
 
-            string tempScript = Path.Combine(Path.GetTempPath(), $"winget_install_{Guid.NewGuid():N}.ps1");
-            try
+            // Одинарные кавычки в PowerShell отключают подстановку $-переменных в путях.
+            // Скрипт передаётся через -EncodedCommand (Base64 UTF-16LE), а не временным
+            // .ps1: FileShare.Read-хендл на такой файл можно было открыть лишь ПОСЛЕ
+            // того, как File.WriteAllText закрыл свой, — в этом промежутке другой
+            // процесс того же пользователя успевал переписать скрипт, и PowerShell
+            // исполнял подменённое содержимое. Аргумент командной строки фиксируется
+            // в момент старта процесса (тот же приём, что у InstallChocoAsync).
+            string script =
+                "$ErrorActionPreference = 'Stop'\r\n" +
+                $"try {{ Add-AppxPackage -Path '{tempVcLibs.Replace("'", "''")}' }} catch {{}}\r\n" +
+                $"try {{ Add-AppxPackage -Path '{tempUiXaml.Replace("'", "''")}' }} catch {{}}\r\n" +
+                $"Add-AppxPackage -Path '{tempMsix.Replace("'", "''")}' -ForceApplicationShutdown\r\n";
+            string encodedScript = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
+
+            var psi = new ProcessStartInfo
             {
-                // Одинарные кавычки в PowerShell отключают подстановку $-переменных в путях
-                File.WriteAllText(tempScript,
-                    $"$ErrorActionPreference = 'Stop'\r\n" +
-                    $"try {{ Add-AppxPackage -Path '{tempVcLibs.Replace("'", "''")}' }} catch {{}}\r\n" +
-                    $"try {{ Add-AppxPackage -Path '{tempUiXaml.Replace("'", "''")}' }} catch {{}}\r\n" +
-                    $"Add-AppxPackage -Path '{tempMsix.Replace("'", "''")}' -ForceApplicationShutdown\r\n",
-                    Encoding.UTF8);
+                FileName               = Services.TrustedExecutablePaths.PowerShellExe,
+                Arguments              = $"-NoProfile -ExecutionPolicy Bypass -EncodedCommand {encodedScript}",
+                UseShellExecute        = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError  = true,
+                CreateNoWindow         = true,
+                // Согласовано с MainWindow.PackageManagers.cs — без явной кодировки
+                // .NET использует Console.OutputEncoding вызывающего процесса, которая
+                // может не совпадать с тем, что реально пишет PowerShell: текст ошибки
+                // Add-AppxPackage приходил в лог нечитаемыми символами.
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding  = Encoding.UTF8
+            };
 
-                // Держим temp-скрипт открытым с FileShare.Read НЕПРЕРЫВНО от записи до
-                // завершения PowerShell — иначе между закрытием файла записи и открытием
-                // PowerShell остаётся окно для подмены содержимого другим процессом того
-                // же пользователя (TOCTOU). Зеркалирует защиту InstallationService/пакетов
-                // VCLibs-UI.Xaml-msix выше в этом же методе.
-                using var scriptGuard = new FileStream(tempScript, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-                var psi = new ProcessStartInfo
-                {
-                    FileName               = Services.TrustedExecutablePaths.PowerShellExe,
-                    Arguments              = $"-NoProfile -ExecutionPolicy Bypass -File \"{tempScript}\"",
-                    UseShellExecute        = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError  = true,
-                    CreateNoWindow         = true,
-                    // Согласовано с MainWindow.PackageManagers.cs — без явной кодировки
-                    // .NET использует Console.OutputEncoding вызывающего процесса, которая
-                    // может не совпадать с тем, что реально пишет PowerShell: текст ошибки
-                    // Add-AppxPackage приходил в лог нечитаемыми символами.
-                    StandardOutputEncoding = Encoding.UTF8,
-                    StandardErrorEncoding  = Encoding.UTF8
-                };
-
-                using var proc = Process.Start(psi);
-                if (proc != null)
-                {
-                    var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
-                    string stderr  = await proc.StandardError.ReadToEndAsync(ct);
-                    await proc.WaitForExitAsync(ct);
-                    await stdoutTask;
-                    if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
-                        AddLog($"⚠️ PowerShell: {stderr.Trim()}");
-                }
-            }
-            finally
+            using var proc = Process.Start(psi);
+            if (proc != null)
             {
-                try { File.Delete(tempScript); } catch { }
+                var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
+                string stderr  = await proc.StandardError.ReadToEndAsync(ct);
+                await proc.WaitForExitAsync(ct);
+                await stdoutTask;
+                if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
+                    AddLog($"⚠️ PowerShell: {stderr.Trim()}");
             }
             return true;
         }

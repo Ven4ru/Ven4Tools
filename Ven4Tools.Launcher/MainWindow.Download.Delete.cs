@@ -45,47 +45,72 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
+            // Удаление — такая же операция над папкой клиента, как установка: без
+            // слота оно шло параллельно с загрузкой или тихим автообновлением и
+            // сносило каталог, в который те как раз переносили файлы.
+            using var lease = TryBeginOperation("Удаление клиента", Timeout.InfiniteTimeSpan);
+            if (lease == null) return;
+
+            // Файлы запущенного клиента залочены: Directory.Delete удалил бы всё
+            // незанятое и упал на exe/dll — на диске остался бы полуразобранный клиент.
+            if (IsClientRunning())
+            {
+                AddLog("⏸ Удаление отменено: клиент запущен");
+                System.Windows.MessageBox.Show(
+                    "Ven4Tools сейчас запущен.\n\nЗакройте клиент и повторите удаление.",
+                    "Клиент запущен", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             btnDeleteClient.IsEnabled = false;
             AddLog("🗑️ Удаление клиента...");
 
-            await Task.Run(() =>
+            try
             {
-                if (Directory.Exists(_clientPath))
+                await Task.Run(() =>
                 {
-                    try { Directory.Delete(_clientPath, true); AddLog("   ✅ Папка клиента удалена"); }
-                    catch (Exception ex) { AddLog($"   ⚠️ Папка клиента: {ex.Message}"); }
-                }
-                else
-                {
-                    AddLog("   ℹ️ Папка клиента не найдена");
-                }
+                    if (Directory.Exists(_clientPath))
+                    {
+                        try { Directory.Delete(_clientPath, true); AddLog("   ✅ Папка клиента удалена"); }
+                        catch (Exception ex) { AddLog($"   ⚠️ Папка клиента: {ex.Message}"); }
+                    }
+                    else
+                    {
+                        AddLog("   ℹ️ Папка клиента не найдена");
+                    }
 
-                string[] desktops = {
-                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                    Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory)
-                };
-                string[] startMenuRoots = {
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs"),
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs")
-                };
-                ClientShortcutCleaner.Clean(desktops, startMenuRoots);
-                AddLog("   ✅ Ярлыки клиента проверены");
+                    string[] desktops = {
+                        Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                        Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory)
+                    };
+                    string[] startMenuRoots = {
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs"),
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs")
+                    };
+                    ClientShortcutCleaner.Clean(desktops, startMenuRoots);
+                    AddLog("   ✅ Ярлыки клиента проверены");
 
-                try
-                {
-                    using var runKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                        @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", writable: true);
-                    runKey?.DeleteValue("Ven4Tools", throwOnMissingValue: false);
-                    runKey?.DeleteValue("Ven4Tools Client", throwOnMissingValue: false);
-                    AddLog("   ✅ Записи автозапуска клиента удалены");
-                }
-                catch (Exception ex) { AddLog($"   ⚠️ Реестр: {ex.Message}"); }
+                    try
+                    {
+                        using var runKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", writable: true);
+                        runKey?.DeleteValue("Ven4Tools", throwOnMissingValue: false);
+                        runKey?.DeleteValue("Ven4Tools Client", throwOnMissingValue: false);
+                        AddLog("   ✅ Записи автозапуска клиента удалены");
+                    }
+                    catch (Exception ex) { AddLog($"   ⚠️ Реестр: {ex.Message}"); }
 
-                // Корневую папку %LocalAppData%\Ven4Tools не трогаем: в ней лежат
-                // настройки и логи работающего лаунчера. Пустую папку клиента обратно
-                // НЕ создаём: «удалить» должно означать «удалить», а не «оставить
-                // пустой каталог в Документах». Установка создаст её заново сама.
-            });
+                    // Корневую папку %LocalAppData%\Ven4Tools не трогаем: в ней лежат
+                    // настройки и логи работающего лаунчера. Пустую папку клиента обратно
+                    // НЕ создаём: «удалить» должно означать «удалить», а не «оставить
+                    // пустой каталог в Документах». Установка создаст её заново сама.
+                });
+            }
+            catch (Exception ex)
+            {
+                // async void: исключение отсюда уронило бы весь лаунчер.
+                AddLog($"   ⚠️ Удаление прервано: {ex.Message}");
+            }
 
             Dispatcher.Invoke(() =>
             {

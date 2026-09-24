@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Ven4Tools.Launcher.Services;
@@ -61,6 +62,13 @@ namespace Ven4Tools.Launcher
                 AddLog("UI test: установка обновления лаунчера");
                 return;
             }
+
+            // Успешное обновление завершает лаунчер, поэтому посреди загрузки или
+            // установки клиента оно обрывало бы их на полпути (вплоть до прерванного
+            // переноса папки клиента). Из «Установить компоненты» InstallUpdateCoreAsync
+            // вызывается напрямую — там слот уже занят этой же сессией.
+            using var lease = TryBeginOperation("Обновление лаунчера", Timeout.InfiniteTimeSpan);
+            if (lease == null) return;
 
             await InstallUpdateCoreAsync();
         }
