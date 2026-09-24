@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -100,6 +102,44 @@ internal sealed class InstalledManifestStore
             string temporary = _path + ".tmp";
             File.WriteAllText(temporary, JsonSerializer.Serialize(manifest, WriteOptions), new UTF8Encoding(false));
             File.Move(temporary, _path, overwrite: true);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Относится ли кэш к клиенту, который сейчас лежит в <paramref name="clientPath"/>.
+    /// Кэш один на всю систему и ни к папке, ни к версии не привязан: после смены
+    /// папки или «Найти клиент на диске» он описывает ДРУГУЮ установку, и дельта по
+    /// нему сочла бы неизменившимися файлы, которых в этой папке нет (наблюдалось:
+    /// кэш от 5.2.0, на диске 5.0.0 — «обновлено блочным обновлением, 0 файлов», а
+    /// на диске осталась 5.0.0). Поэтому сверяем с диском главные файлы сборки —
+    /// exe и сборку клиента: они меняются в каждом релизе. Запись exe обязана быть
+    /// в кэше; нечитаемый файл или несовпавший хеш — «кэш не наш».
+    /// </summary>
+    public static bool MatchesClientFolder(ClientFileManifest cached, string clientPath)
+    {
+        try
+        {
+            var keyFiles = new[] { LauncherPaths.ClientExeName, "Ven4Tools.dll" };
+            var entries = keyFiles
+                .Select(name => cached.Files?.FirstOrDefault(
+                    e => string.Equals(e.Path, name, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+            if (entries[0] == null) return false;
+
+            foreach (var entry in entries)
+            {
+                if (entry == null) continue;
+                string file = Path.Combine(clientPath, entry.Path!);
+                if (!File.Exists(file)) return false;
+                using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+                string actual = Convert.ToHexString(SHA256.HashData(stream));
+                if (!string.Equals(actual, entry.Sha256, StringComparison.OrdinalIgnoreCase)) return false;
+            }
             return true;
         }
         catch
