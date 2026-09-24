@@ -313,6 +313,15 @@ namespace Ven4Tools.ViewModels
                 LoadOfflineSettings();
                 LoadSourceOrderUI();
                 SetField(ref _minimizeToTray, ProfileService.Current.MinimizeToTray, nameof(MinimizeToTray));
+                // Внешний вид — тем же путём, что в конструкторе (поля напрямую, без
+                // сеттеров с Save/Apply). Раньше поля оставались от профиля ДО импорта:
+                // выпадающие списки показывали старую тему/язык, а попытка вернуть
+                // прежнюю тему глохла в сеттере на проверке «значение не изменилось».
+                SetField(ref _themeTag, ProfileService.Current.Theme, nameof(ThemeTag));
+                SetField(ref _languageTag, ProfileService.Current.Language, nameof(LanguageTag));
+                SetField(ref _compactMode, ProfileService.Current.CompactMode, nameof(CompactMode));
+                SetField(ref _reduceMotion, ProfileService.Current.ReduceMotion, nameof(ReduceMotion));
+                Ven4Tools.Shared.MotionService.Enabled = !ProfileService.Current.ReduceMotion;
                 ThemeService.Apply(ProfileService.Current.Theme);
                 ThemeApplied?.Invoke();
                 LocalizationService.Init();

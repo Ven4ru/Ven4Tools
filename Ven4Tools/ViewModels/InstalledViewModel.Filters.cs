@@ -39,6 +39,10 @@ namespace Ven4Tools.ViewModels
             DisplayedApps = filtered.ToList();
             RecomputeStats();
             RecomputeSelectAllState();
+            // Доступность «Обновить/Удалить выбранные» считается по DisplayedApps, а он
+            // только что сменился (фильтр, перезагрузка списка, удаление строк) — без
+            // пересчёта кнопки оставались включёнными по уже не отображаемым строкам.
+            RecomputeCanActOnSelection();
         }
 
         private void RecomputeStats()
