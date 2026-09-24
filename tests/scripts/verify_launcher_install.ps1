@@ -25,7 +25,8 @@ if (-not (Test-Path $uninstallKey)) {
 $fileVersion = (Get-Item -LiteralPath $launcherPath).VersionInfo.FileVersion
 $registry = Get-ItemProperty $uninstallKey
 
-if (-not $fileVersion.StartsWith($ExpectedVersion, [StringComparison]::Ordinal)) {
+# Сравнение по целому компоненту: голый StartsWith("2.1.1") принимал и "2.1.10.0".
+if ($fileVersion -ne $ExpectedVersion -and -not $fileVersion.StartsWith("$ExpectedVersion.", [StringComparison]::Ordinal)) {
     throw "Версия launcher exe $fileVersion не совпадает с ожидаемой $ExpectedVersion."
 }
 if ($registry.DisplayVersion -ne $ExpectedVersion) {

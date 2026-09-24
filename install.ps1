@@ -15,6 +15,15 @@
 
 $ErrorActionPreference = 'Stop'
 
+# При запуске через "irm | iex" скрипт исполняется прямо в сессии пользователя,
+# и exit закрывает саму консоль — вместе с сообщением об ошибке, которое человек
+# так и не успевает прочитать. exit с кодом — только при запуске файлом (&$t),
+# где он завершает лишь скрипт; под iex — return.
+$runAsFile = [bool]$PSCommandPath
+# Явный сброс: под iex переменные живут в сессии пользователя, и catch ниже
+# не должен удалить чужой $tmpDir, если ошибка случилась до его создания.
+$tmpDir = $null
+
 Write-Host ""
 Write-Host "  Ven4Tools  |  ven4tools.ru" -ForegroundColor Cyan
 Write-Host ""
@@ -139,7 +148,7 @@ try {
         Write-Host "  Обновление не требуется." -ForegroundColor DarkGray
         Remove-Item $tmpDir -Recurse -Force
         Write-Host ""
-        exit 0
+        if ($runAsFile) { exit 0 } else { return }
     }
 
     if ($installedVersion) {
@@ -166,8 +175,11 @@ try {
     Write-Host ""
 }
 catch {
+    # Часть отказов (расхождение хеша между хостингом и CDN, недоступный CDN)
+    # бросается уже после загрузки — непроверенный exe не должен оставаться в %TEMP%.
+    if ($tmpDir -and (Test-Path $tmpDir)) { Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue }
     Write-Host ""
     Write-Host "  Ошибка: $_" -ForegroundColor Red
     Write-Host ""
-    exit 1
+    if ($runAsFile) { exit 1 } else { return }
 }

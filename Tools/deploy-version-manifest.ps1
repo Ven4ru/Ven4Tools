@@ -95,8 +95,15 @@ dotnet $SignerDll verify $VersionJsonPath $sigPath $PublicKeyPath
 if ($LASTEXITCODE -ne 0) { throw "Локальная подпись не прошла проверку — заливка на CDN отменена." }
 
 Write-Host "Заливаю на CDN (jump:/var/www/cdn/)..."
+# $ErrorActionPreference=Stop не распространяется на нативные exe (scp/ssh) —
+# без явной проверки $LASTEXITCODE упавший scp манифеста не останавливал скрипт,
+# и mv ниже публиковал новую подпись рядом со старым манифестом (или файл,
+# оставшийся в /tmp от прошлого неудачного прогона). Так же, как в
+# deploy-client-manifest.ps1.
 scp $VersionJsonPath "jump:/tmp/version.json.new"
+if ($LASTEXITCODE -ne 0) { throw "Заливка version.json на CDN не удалась — scp завершился с кодом $LASTEXITCODE." }
 scp $sigPath "jump:/tmp/version.json.sig.new"
+if ($LASTEXITCODE -ne 0) { throw "Заливка version.json.sig на CDN не удалась — scp завершился с кодом $LASTEXITCODE." }
 # mv на удалённой стороне — атомарная замена обоих файлов разом, без окна
 # "manifest уже новый, подпись ещё старая" (или наоборот). Одна строка —
 # backtick-перенос внутри двойных кавычек здесь ломался (экранировался как
@@ -104,6 +111,7 @@ scp $sigPath "jump:/tmp/version.json.sig.new"
 # backtick'и и падал на command substitution.
 $remoteCmd = "mv /tmp/version.json.new /var/www/cdn/version.json && mv /tmp/version.json.sig.new /var/www/cdn/version.json.sig && chown root:root /var/www/cdn/version.json /var/www/cdn/version.json.sig && chmod 644 /var/www/cdn/version.json /var/www/cdn/version.json.sig"
 ssh jump $remoteCmd
+if ($LASTEXITCODE -ne 0) { throw "Публикация version.json/подписи на CDN не удалась — ssh завершился с кодом $LASTEXITCODE." }
 
 Write-Host "Проверка публичной доступности..."
 # -UseBasicParsing: без него Invoke-WebRequest в Windows PowerShell 5.1
