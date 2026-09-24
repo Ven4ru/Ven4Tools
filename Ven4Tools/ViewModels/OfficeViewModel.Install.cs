@@ -262,7 +262,12 @@ namespace Ven4Tools.ViewModels
             while (!proc.HasExited && DateTime.UtcNow < deadline && !token.IsCancellationRequested)
             {
                 await Task.Delay(5000, token);
-                SetDetail($"Установка идёт {elapsed.Elapsed:mm\\:ss}...");
+                // Установщик Office в конце показывает окно «Готово!» и не завершается,
+                // пока его не закроют, — а регион восстанавливается только после этого.
+                // Без подсказки вкладка минутами писала «Установка идёт» при уже
+                // установленном Office (замечено при проверке замены Office).
+                SetDetail($"Установка идёт {elapsed.Elapsed:mm\\:ss}... Когда установщик Office покажет «Готово!», " +
+                          "нажмите в его окне «Закрыть» — регион Windows вернётся сразу после этого.");
             }
 
             if (!proc.HasExited)
