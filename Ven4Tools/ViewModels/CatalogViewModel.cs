@@ -180,10 +180,16 @@ namespace Ven4Tools.ViewModels
 
             CancelInstallCommand = new RelayCommand(_ =>
             {
-                if (_installCts == null) return;
+                var cts = _installCts;
+                if (cts == null) return;
+                // Пока открыт модальный MessageBox, диспетчер продолжает крутить очередь:
+                // пачка может успеть завершиться, и её finally освободит и обнулит
+                // _installCts. Отменяем только если это всё ещё та же установка — иначе
+                // Cancel() падал бы с NullReference/ObjectDisposedException.
                 if (MessageBox.Show("Вы действительно хотите прервать установку?", "Подтверждение отмены",
-                        MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-                    _installCts.Cancel();
+                        MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes
+                    && ReferenceEquals(_installCts, cts))
+                    cts.Cancel();
             }, _ => IsInstalling);
 
             RefreshAvailabilityCommand = RelayCommand.FromAsync(async _ => await RefreshAvailabilityAsync(),

@@ -31,6 +31,11 @@ namespace Ven4Tools.ViewModels
                     var previousDebounce = _searchDebounce;
                     previousDebounce?.Cancel();
                     previousDebounce?.Dispose();
+                    // Обнуляем сразу: ветка else ниже нового токена не создаёт, и поле
+                    // продолжало бы указывать на освобождённый объект — следующее же
+                    // изменение текста (в т.ч. кнопка «✕», ClearSearchCommand) звало бы
+                    // Cancel() на нём и падало с ObjectDisposedException.
+                    _searchDebounce = null;
                     // AppsView.IsEmpty учитывает текущий фильтр без полного перечисления
                     // представления (сеттер срабатывает на каждое нажатие клавиши в поиске),
                     // в отличие от прежнего Cast<object>().Count() == 0.
