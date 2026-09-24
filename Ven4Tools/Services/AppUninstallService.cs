@@ -24,8 +24,12 @@ namespace Ven4Tools.Services
             if (!string.IsNullOrWhiteSpace(wingetId) && !wingetId.Contains('…') &&
                 CommandLineGuard.ValidateId(wingetId))
             {
+                // --exact обязателен: без него --id ищет ПОДСТРОКУ, и при отсутствии
+                // самого пакета winget удалил бы единственный найденный «соседний»
+                // (Mozilla.Firefox → Mozilla.Firefox.ESR / Mozilla.Firefox.ru). Паритет
+                // с install (-e) и QuerySinglePackageAsync (--exact).
                 var (exitCode, _) = await WingetRunner.RunAsync(
-                    WingetArgs.Query("uninstall", "--id", wingetId, "--silent"));
+                    WingetArgs.Query("uninstall", "--id", wingetId, "--exact", "--silent"));
                 // 0 = успех, 0x8A150014 = пакет не установлен (нечего удалять — считаем успехом).
                 if (exitCode == 0 || exitCode == unchecked((int)0x8A150014))
                     return true;

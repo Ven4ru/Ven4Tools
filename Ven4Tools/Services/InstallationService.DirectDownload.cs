@@ -209,16 +209,22 @@ namespace Ven4Tools.Services
                         hashMismatchCount++;
                         continue;
                     }
-                    if (run != null)
-                    {
-                        try { File.Delete(tempFile); } catch { }
-                        if (run.Value.Ok)
-                            return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
-                                true, run.Value.Reboot, "direct", token, url);
-                    }
+                    // Удаляем и тогда, когда процесс не запустился (run == null): раньше
+                    // удаление стояло внутри проверки run != null, и проверенный
+                    // установщик оставался лежать во временной папке.
+                    try { File.Delete(tempFile); } catch { }
+                    if (run is { Ok: true })
+                        return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
+                            true, run.Value.Reboot, "direct", token, url);
                 }
                 // Отмена пользователем — пробрасываем; таймаут заголовков — пробуем следующий источник
-                catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    // Отмена посреди загрузки/установки — временный файл не должен
+                    // оставаться в %TEMP% (раньше удалялся только в общей ветке ниже).
+                    try { File.Delete(tempFile); } catch { }
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     Log($"❌ Прямая ссылка {url}: {ex.Message}");

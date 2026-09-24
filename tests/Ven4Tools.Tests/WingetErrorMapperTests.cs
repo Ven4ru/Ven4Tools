@@ -21,8 +21,19 @@ public sealed class WingetErrorMapperTests
     [Fact]
     public void MapExitCode_КодНесовпаденияХеша_СообщаетОХеше()
     {
-        var message = WingetErrorMapper.MapExitCode(unchecked((int)0x8A150109));
+        // APPINSTALLER_CLI_ERROR_INSTALLER_HASH_MISMATCH.
+        var message = WingetErrorMapper.MapExitCode(unchecked((int)0x8A150011));
         Assert.Contains("Хеш", message);
+    }
+
+    [Fact]
+    public void MapExitCode_КодПерезагрузкиДляЗавершения_НеВыдаётсяЗаОшибкуХеша()
+    {
+        // APPINSTALLER_CLI_ERROR_INSTALL_REBOOT_REQUIRED_TO_FINISH — раньше ошибочно
+        // подписывался как несовпадение хеша.
+        var message = WingetErrorMapper.MapExitCode(unchecked((int)0x8A150109));
+        Assert.Contains("перезагрузка", message);
+        Assert.DoesNotContain("Хеш", message);
     }
 
     [Fact]
