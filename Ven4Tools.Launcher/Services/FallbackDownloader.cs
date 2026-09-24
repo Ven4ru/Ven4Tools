@@ -290,7 +290,11 @@ internal sealed class FallbackDownloader
                 targetPath, FileMode.Open, FileAccess.Read, FileShare.Read,
                 bufferSize: 81920, useAsync: true);
 
-            if (!string.IsNullOrWhiteSpace(expectedSha256))
+            // null — единственный способ сказать «хеша нет» (компоненты Microsoft,
+            // проверяемые Authenticode). Пустую/пробельную строку пропускать нельзя:
+            // вызывающий код клиента считает целостность подтверждённой по
+            // !IsNullOrEmpty, и строка из пробелов проходила бы вообще без сверки.
+            if (expectedSha256 != null)
             {
                 string actualSha256 = await Helpers.FileHashHelper
                     .ComputeSha256Async(guard, cancellationToken).ConfigureAwait(false);

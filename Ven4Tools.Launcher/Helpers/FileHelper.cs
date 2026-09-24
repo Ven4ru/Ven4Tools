@@ -19,7 +19,7 @@ internal static class FileHelper
     /// лаунчере отдельный PathHelper ради одного метода незачем — вынос этой пары
     /// в Shared/ (по образцу AuthenticodeVerifier, round 38) пока не сделан.
     /// </summary>
-    private static bool IsReparsePoint(string path)
+    internal static bool IsReparsePoint(string path)
     {
         try
         {
