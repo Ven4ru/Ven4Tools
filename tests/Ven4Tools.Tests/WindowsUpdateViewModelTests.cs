@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Ven4Tools.Services.WindowsUpdate;
+using Ven4Tools.Tests.Fakes;
 using Ven4Tools.ViewModels;
 using Xunit;
 
@@ -141,6 +143,48 @@ namespace Ven4Tools.Tests
             var node = new WindowsUpdateItemNode { Item = MakeItem("1") }; // IsDownloaded = false
 
             Assert.DoesNotContain("Скачан", node.DisplayText);
+        }
+
+        // wuauserv запускается по требованию и в простое обычно остановлена — раньше
+        // из-за этого почти каждое открытие вкладки спрашивало «Запустить службу?».
+
+        [Fact]
+        public async Task Проверка_СлужбаОстановлена_ЗапускаетсяМолчаИПоискИдёт()
+        {
+            var fake = new FakeWindowsUpdateSource { ServiceRunning = false };
+            var vm = new WindowsUpdateViewModel(new WindowsUpdateService(fake));
+
+            await vm.RunSearchAsync();
+
+            Assert.Equal(1, fake.StartServiceCallCount);
+            Assert.Equal(1, fake.SearchCallCount);
+            Assert.StartsWith("✅", vm.StatusText);
+        }
+
+        [Fact]
+        public async Task Проверка_СлужбаНеЗапускается_СтатусОбъясняетИПоискаНет()
+        {
+            var fake = new FakeWindowsUpdateSource { ServiceRunning = false, StartServiceSucceeds = false };
+            var vm = new WindowsUpdateViewModel(new WindowsUpdateService(fake));
+
+            await vm.RunSearchAsync();
+
+            Assert.Equal(0, fake.SearchCallCount);
+            Assert.Contains("Не удалось запустить службу", vm.StatusText);
+            Assert.True(vm.ShowEmptyState);
+            Assert.False(vm.IsSearching);
+        }
+
+        [Fact]
+        public async Task Проверка_СлужбаРаботает_НеПерезапускается()
+        {
+            var fake = new FakeWindowsUpdateSource { ServiceRunning = true };
+            var vm = new WindowsUpdateViewModel(new WindowsUpdateService(fake));
+
+            await vm.RunSearchAsync();
+
+            Assert.Equal(0, fake.StartServiceCallCount);
+            Assert.Equal(1, fake.SearchCallCount);
         }
     }
 }
