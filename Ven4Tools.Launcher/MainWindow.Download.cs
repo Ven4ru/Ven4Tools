@@ -242,6 +242,24 @@ namespace Ven4Tools.Launcher
                 }
                 if (deltaOutcome == DeltaUpdateOutcome.Aborted) return;
 
+                // Fail-closed по хешу проверяется ДО загрузки: без подтверждённого
+                // SHA256 из подписанного version.json установка всё равно будет
+                // отклонена, а раньше отказ приходил только после скачивания архива
+                // целиком (минуты и десятки мегабайт впустую — при недоступном CDN
+                // архив докачивался с GitHub лишь затем, чтобы быть отброшенным).
+                if (!DownloadValidator.IsValidSha256(version.ExpectedSha256))
+                {
+                    var why = ClientHashAvailability.Explain(version.Version, _cdnManifestLoaded, _cdnClientVersion);
+                    txtDownloadStatus.Text = "Целостность не подтверждена";
+                    SetOperationStage(0);
+                    AddLog($"⛔ Для версии {version.Version} нет подтверждённого SHA256: {why.Reason} — загрузка не начата");
+                    if (!silent)
+                        System.Windows.MessageBox.Show(
+                            $"Не удалось подтвердить целостность архива версии {version.Version}: {why.Reason}.\n\n{why.Advice}",
+                            "Целостность не подтверждена", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 var downloader = new FallbackDownloader();
                 // using держит FileShare.Read-хендл на tempZip открытым до конца метода
                 // (в т.ч. через SafeZipExtractor.ExtractAsync ниже) — закрывает окно TOCTOU
@@ -282,34 +300,14 @@ namespace Ven4Tools.Launcher
 
                 token.ThrowIfCancellationRequested();
 
-                // SHA256 проверяется загрузчиком до принятия файла; при несовпадении
-                // основного источника автоматически пробуется резервный. Отсутствие
-                // хеша в манифесте (CDN недоступен в момент загрузки списка версий,
-                // либо CDN ещё не знает именно эту версию — окно между релизом на
-                // GitHub и cdn-deploy) раньше трактовалось как предупреждение и
-                // установка продолжалась без независимой проверки целостности —
-                // fail-open. Самообновление лаунчера (LauncherUpdateService) в тех
-                // же условиях строго отказывает; здесь приводим клиентский путь
-                // к той же fail-closed политике.
+                // SHA256 проверен загрузчиком до принятия файла; при несовпадении
+                // основного источника автоматически пробовался резервный. Отсутствие
+                // хеша раньше трактовалось как предупреждение (fail-open), теперь
+                // отсекается до загрузки — см. проверку перед DownloadAsync выше;
+                // та же fail-closed политика, что у самообновления лаунчера.
                 SetOperationStage(2); // Проверка целостности
-                if (!string.IsNullOrEmpty(version.ExpectedSha256))
-                {
-                    txtDownloadStatus.Text = "Проверка целостности...";
-                    AddLog("🔒 Целостность подтверждена (SHA256)");
-                }
-                else
-                {
-                    txtDownloadStatus.Text = "Целостность не подтверждена";
-                    SetOperationStage(0);
-                    AddLog($"⛔ Для версии {version.Version} нет подтверждённого SHA256 (CDN недоступен или ещё не знает эту версию) — установка отменена");
-                    if (!silent)
-                        System.Windows.MessageBox.Show(
-                            $"Не удалось подтвердить целостность архива версии {version.Version} — CDN недоступен, " +
-                            "или версия ещё не попала в подписанный манифест.\n\nПопробуйте позже, когда CDN " +
-                            "синхронизируется, или обратитесь к автору проекта.",
-                            "Целостность не подтверждена", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
+                txtDownloadStatus.Text = "Проверка целостности...";
+                AddLog("🔒 Целостность подтверждена (SHA256)");
 
                 bool installed = await ExtractAndInstallClientAsync(tempZip, version.Version, token, silent);
                 if (!installed) return;
