@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -189,6 +190,32 @@ namespace Ven4Tools.Launcher
                 ipPinned);
         }
 
+        // Версия клиента на диске (null — не установлен или не читается): нужна политике
+        // установки без подтверждения CDN, чтобы не откатить клиента на старую версию.
+        private string? ReadInstalledClientVersion()
+        {
+            try
+            {
+                string clientExe = Path.Combine(_clientPath, LauncherPaths.ClientExeName);
+                return File.Exists(clientExe) ? FileVersionInfo.GetVersionInfo(clientExe).FileVersion : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void RefuseUnconfirmedArchive(string version, string reason, string advice, bool silent)
+        {
+            txtDownloadStatus.Text = "Целостность не подтверждена";
+            SetOperationStage(0);
+            AddLog($"⛔ Версия {version} не установлена: {reason}");
+            if (!silent)
+                System.Windows.MessageBox.Show(
+                    $"Не удалось подтвердить целостность архива версии {version}: {reason}.\n\n{advice}",
+                    "Целостность не подтверждена", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
         private async Task DownloadVersionAsync(ClientVersionInfo version, CancellationToken token, bool silent = false)
         {
             if (version == null) return;
@@ -242,22 +269,23 @@ namespace Ven4Tools.Launcher
                 }
                 if (deltaOutcome == DeltaUpdateOutcome.Aborted) return;
 
-                // Fail-closed по хешу проверяется ДО загрузки: без подтверждённого
-                // SHA256 из подписанного version.json установка всё равно будет
-                // отклонена, а раньше отказ приходил только после скачивания архива
-                // целиком (минуты и десятки мегабайт впустую — при недоступном CDN
-                // архив докачивался с GitHub лишь затем, чтобы быть отброшенным).
-                if (!DownloadValidator.IsValidSha256(version.ExpectedSha256))
+                // Без SHA256 из подписанного version.json остаётся второй источник
+                // доверия — встроенная ECDSA-подпись архива (как у «Установить из
+                // файла»): архив проверяется ею после загрузки, см. ниже. Даунгрейд так
+                // не ставится никогда — его отсекаем до загрузки, не тратя минуты.
+                bool hashConfirmed = DownloadValidator.IsValidSha256(version.ExpectedSha256);
+                string? installedVersion = null;
+                if (!hashConfirmed)
                 {
                     var why = ClientHashAvailability.Explain(version.Version, _cdnManifestLoaded, _cdnClientVersion);
-                    txtDownloadStatus.Text = "Целостность не подтверждена";
-                    SetOperationStage(0);
-                    AddLog($"⛔ Для версии {version.Version} нет подтверждённого SHA256: {why.Reason} — загрузка не начата");
-                    if (!silent)
-                        System.Windows.MessageBox.Show(
-                            $"Не удалось подтвердить целостность архива версии {version.Version}: {why.Reason}.\n\n{why.Advice}",
-                            "Целостность не подтверждена", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
+                    installedVersion = ReadInstalledClientVersion();
+                    string? refusal = SignedArchiveFallbackPolicy.CheckBeforeDownload(version.Version, installedVersion);
+                    if (refusal != null)
+                    {
+                        RefuseUnconfirmedArchive(version.Version, $"{why.Reason}; {refusal}", why.Advice, silent);
+                        return;
+                    }
+                    AddLog($"⚠️ Для версии {version.Version} нет подтверждённого SHA256: {why.Reason} — архив будет проверен по встроенной подписи");
                 }
 
                 var downloader = new FallbackDownloader();
@@ -268,7 +296,7 @@ namespace Ven4Tools.Launcher
                     candidates,
                     tempZip,
                     token,
-                    version.ExpectedSha256,
+                    hashConfirmed ? version.ExpectedSha256 : null,
                     // FallbackDownloader теперь читает/пишет с ConfigureAwait(false) (не
                     // маршалит каждую итерацию через WPF-контекст) — эти колбэки поэтому
                     // могут прилетать с любого потока пула, не только с UI-потока, и обязаны
@@ -300,14 +328,38 @@ namespace Ven4Tools.Launcher
 
                 token.ThrowIfCancellationRequested();
 
-                // SHA256 проверен загрузчиком до принятия файла; при несовпадении
-                // основного источника автоматически пробовался резервный. Отсутствие
-                // хеша раньше трактовалось как предупреждение (fail-open), теперь
-                // отсекается до загрузки — см. проверку перед DownloadAsync выше;
-                // та же fail-closed политика, что у самообновления лаунчера.
+                // Подтверждённый SHA256 проверен загрузчиком до принятия файла; при
+                // несовпадении основного источника автоматически пробовался резервный.
+                // Без него архив принимается только по встроенной подписи — fail-closed,
+                // как у самообновления лаунчера: без того или другого установки нет.
                 SetOperationStage(2); // Проверка целостности
                 txtDownloadStatus.Text = "Проверка целостности...";
-                AddLog("🔒 Целостность подтверждена (SHA256)");
+                if (hashConfirmed)
+                {
+                    AddLog("🔒 Целостность подтверждена (SHA256)");
+                }
+                else
+                {
+                    // Хендл downloadResult (FileShare.Read) держит архив неизменным от
+                    // этой проверки до распаковки — та же защита от подмены, что у
+                    // проверки SHA256 внутри загрузчика.
+                    using var cdnService = new CdnService();
+                    var signed = await LocalArchiveVerifier.VerifyAsync(tempZip, cdnService, token);
+                    string? refusal = signed.Outcome == LocalArchiveOutcome.Rejected
+                        ? signed.RejectionReason
+                        : SignedArchiveFallbackPolicy.CheckSignedArchive(
+                            signed.Outcome == LocalArchiveOutcome.Offline ? signed.Version : null,
+                            version.Version, installedVersion);
+                    if (refusal != null)
+                    {
+                        RefuseUnconfirmedArchive(version.Version, refusal,
+                            "Повторите попытку, когда CDN станет доступен.", silent);
+                        return;
+                    }
+                    AddLog($"🔒 Встроенная подпись архива подтверждена (версия {signed.Version})");
+                    if (!_cdnManifestLoaded)
+                        AddLog("⚠️ Список отозванных версий на CDN недоступен — отзыв этого архива не проверен");
+                }
 
                 bool installed = await ExtractAndInstallClientAsync(tempZip, version.Version, token, silent);
                 if (!installed) return;
