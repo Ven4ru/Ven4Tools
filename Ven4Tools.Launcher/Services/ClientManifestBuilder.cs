@@ -62,6 +62,11 @@ internal static class ClientManifestBuilder
             if (string.Equals(relative, "Data/master.json", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(relative, "Data/master.json.sig", StringComparison.OrdinalIgnoreCase))
                 continue;
+            // Подпись архива: установки до исправления SafeZipExtractor распаковали её
+            // в папку клиента. Она не часть публикации — без исключения «Проверить» у
+            // всех уже установленных клиентов сообщал бы о «лишнем файле».
+            if (string.Equals(relative, CanonicalArchiveHasher.SignatureEntryName, StringComparison.OrdinalIgnoreCase))
+                continue;
 
             files.Add(new ClientManifestFileEntry
             {
