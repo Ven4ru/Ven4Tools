@@ -252,6 +252,14 @@ namespace Ven4Tools.ViewModels
                 }
             }
             catch (OperationCanceledException) { }
+            catch (Exception ex) when (!token.IsCancellationRequested)
+            {
+                // Прочие сбои источников (не таймаут) раньше уходили только в журнал
+                // через ContinueWith вызывающего, а панель навсегда оставалась на
+                // «⏳ Поиск по источникам...».
+                SuggestionsStatus = "⚠ Не удалось выполнить поиск по источникам";
+                AppLogger.Write(ex, "Ошибка подсказок поиска по каталогу");
+            }
         }
 
         // Поиск по тегам категории: winget-вызовы по всем тегам идут параллельно
