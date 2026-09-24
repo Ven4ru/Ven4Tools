@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using Ven4Tools.Launcher.Models;
@@ -121,6 +122,16 @@ namespace Ven4Tools.Launcher
                 {
                     AddLog($"🧹 Остатки прерванной установки: восстановлено {cleanup.Restored}, удалено {cleanup.Removed}");
                 }
+
+                // Папки прошлых загрузок установщика лаунчера в %TEMP% (по 48 МБ на
+                // каждое самообновление). В фоне: обход %TEMP% не должен задерживать окно.
+                _ = Task.Run(() =>
+                {
+                    int removed = LauncherUpdateInstaller.CleanupStaleStagingDirectories(
+                        Path.GetTempPath(), DateTime.UtcNow, TimeSpan.FromHours(6));
+                    if (removed > 0)
+                        Services.LauncherLog.Write($"🧹 Удалены остатки прошлых загрузок установщика лаунчера: {removed}");
+                });
             }
             // Папку клиента здесь НЕ создаём. Раньше конструктор делал это
             // безусловно, и у каждого, кто лаунчер только запустил, появлялся пустой
