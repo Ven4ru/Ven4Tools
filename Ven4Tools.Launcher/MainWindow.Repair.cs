@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using Ven4Tools.Launcher.Services;
 
 namespace Ven4Tools.Launcher
@@ -157,6 +158,30 @@ namespace Ven4Tools.Launcher
                 return false;
             }
 
+            // Запущенный клиент держит свои файлы: без этого шага починка зависала на
+            // «Восстановление...», так и не заменив ни одного файла (найдено при ручной
+            // проверке на Windows). Установка и обновление перед применением файлов
+            // закрывают клиента — здесь тот же штатный путь, с вопросом пользователю.
+            if (IsClientRunning())
+            {
+                var answer = System.Windows.MessageBox.Show(
+                    "Ven4Tools сейчас запущен.\n\nЗакрыть клиент, чтобы восстановить его файлы?",
+                    "Клиент запущен", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (answer != MessageBoxResult.Yes)
+                {
+                    report.SetRepairMessage("клиент запущен — закройте его и повторите");
+                    return false;
+                }
+
+                AddLog("🔒 Закрываю клиент перед восстановлением файлов...");
+                if (!await TryCloseRunningClientAsync())
+                {
+                    report.SetRepairMessage("клиент не закрылся (возможно, свёрнут в трей) — закройте его вручную и повторите");
+                    return false;
+                }
+                AddLog("✅ Клиент закрыт, продолжаю восстановление");
+            }
+
             _integrityOperationRunning = true;
             try
             {
@@ -237,6 +262,20 @@ namespace Ven4Tools.Launcher
                 // Тот же общий гейт, что и у любого другого способа положить файлы в
                 // папку клиента — своей копии этих проверок здесь быть не должно.
                 if (!await EnsureClientClosedAndPathSafeAsync(silent: false)) return false;
+
+                // Отчёт мог устареть: окно настроек немодальное, между «Проверить» и
+                // «Исправить» клиент успел обновиться. Применять план старой версии
+                // поверх новой — значит вернуть её файлы и удалить «лишние», то есть
+                // файлы новой версии. Сверяем версию на диске прямо перед записью.
+                string? onDisk = FileVersionInfo.GetVersionInfo(
+                    Path.Combine(clientPath, LauncherPaths.ClientExeName)).FileVersion;
+                if (onDisk == null || remoteManifest.Version == null ||
+                    VersionComparer.Compare(onDisk, remoteManifest.Version) != 0)
+                {
+                    AddLog($"⚠️ Восстановление отменено: в папке уже версия {onDisk ?? "не читается"}, " +
+                           $"а отчёт составлен для {remoteManifest.Version} — запустите проверку заново");
+                    return false;
+                }
 
                 // Транзакция читает и переименовывает файлы публикации — не на UI-потоке.
                 await Task.Run(
