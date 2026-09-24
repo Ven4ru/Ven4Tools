@@ -88,7 +88,18 @@ namespace Ven4Tools.Launcher
 
                 // 3. План: что скачать, что удалить, выгодна ли дельта вообще.
                 var store = new InstalledManifestStore();
-                var plan = ClientDeltaPlanner.Plan(remote, store.Load());
+                var cached = store.Load();
+                // Кэш мог остаться от другой папки или версии клиента (смена папки,
+                // «Найти клиент на диске») — тогда план по нему «обновил» бы клиента,
+                // не тронув устаревшие файлы на диске.
+                string clientPath = _clientPath;
+                if (cached != null &&
+                    !await Task.Run(() => InstalledManifestStore.MatchesClientFolder(cached, clientPath), token))
+                {
+                    AddLog("ℹ️ Дельта недоступна: сохранённый состав установки не совпадает с файлами в папке клиента — полная загрузка");
+                    return DeltaUpdateOutcome.FallBackToFullDownload;
+                }
+                var plan = ClientDeltaPlanner.Plan(remote, cached);
                 if (plan.FullDownloadRecommended)
                 {
                     AddLog($"ℹ️ Дельта неприменима: {plan.Reason} — полная загрузка");
