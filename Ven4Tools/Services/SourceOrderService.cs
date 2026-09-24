@@ -75,6 +75,18 @@ namespace Ven4Tools.Services
             }
         }
 
+        /// <summary>
+        /// Перечитывает файл и уведомляет подписчиков так же, как <see cref="Save"/>.
+        /// Нужен импорту настроек: голый Load() подменял порядок молча — каталог не
+        /// перепроверял доступность приложений, а Version не менялся.
+        /// </summary>
+        public static void Reload()
+        {
+            Load();
+            Version++;
+            Changed?.Invoke();
+        }
+
         public static void Save()
         {
             try

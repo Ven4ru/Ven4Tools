@@ -202,7 +202,7 @@ namespace Ven4Tools.Services
             {
                 ProfileService.Reload();
                 AppSettings.NotifyChanged();
-                SourceOrderService.Load();
+                SourceOrderService.Reload();
             }
             catch (Exception ex)
             {
