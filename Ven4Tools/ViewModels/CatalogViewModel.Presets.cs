@@ -111,7 +111,11 @@ namespace Ven4Tools.ViewModels
                 _pendingUpdatePreset = null;
                 SavePresetLabel = "💾 Сохранить выбор";
             }
-            await PresetService.DeleteAsync(preset);
+            if (!await PresetService.DeleteAsync(preset))
+            {
+                Log($"❌ Не удалось удалить пресет «{preset.Name}»");
+                return;
+            }
             Presets.Remove(preset);
             PresetsEmpty = Presets.Count == 0;
             Log($"🗑️ Пресет «{preset.Name}» удалён");
