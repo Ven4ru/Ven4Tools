@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -158,7 +159,9 @@ namespace Ven4Tools.ViewModels
             {
                 Id            = catalogApp.Id,
                 DisplayName   = catalogApp.Name,
-                Category      = AppCategory.Другое,
+                // Категория нужна не для вида: по ней SourceOrderService выбирает
+                // пользовательский порядок источников. «Другое» здесь его игнорировало.
+                Category      = AppCategoryHelper.Parse(catalogApp.Category),
                 AlternativeId = catalogApp.WingetId,
                 InstallerUrls = !string.IsNullOrEmpty(catalogApp.DownloadUrl)
                     ? new List<string> { catalogApp.DownloadUrl }
@@ -184,7 +187,10 @@ namespace Ven4Tools.ViewModels
                 using var installer = new InstallationService();
                 using var cts = new CancellationTokenSource();
                 var result = await installer.InstallAppAsync(
-                    appInfo, new[] { "winget", "msstore" }, cts.Token, progress, "C:\\", null, Views.UiGuards.ConfirmPackageManagerInstallAsync);
+                    appInfo, new[] { "winget", "msstore" }, cts.Token, progress,
+                    // Системный диск, а не жёсткое "C:\\": при Windows на другом диске
+                    // "C:\\" считался «несистемным» и добавлял --location.
+                    Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\", null, Views.UiGuards.ConfirmPackageManagerInstallAsync);
 
                 AppLogger.Write(result.Success
                     ? $"✅ {entry.AppName} переустановлен"
