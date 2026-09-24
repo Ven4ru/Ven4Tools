@@ -15,11 +15,14 @@ namespace Ven4Tools.Services
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Ven4Tools", "presets.json");
 
-        public static Task<List<Preset>> LoadAsync() => Task.FromResult(LoadLocal());
+        public static Task<List<Preset>> LoadAsync() => Task.FromResult(LoadLocal() ?? new());
 
+        // Все изменяющие методы: LoadLocal() == null — файл не прочитан, писать нельзя
+        // (иначе сохранили бы пустой список поверх непрочитанных пресетов).
         public static Task<Preset?> SaveAsync(Preset preset)
         {
             var local = LoadLocal();
+            if (local == null) return Task.FromResult<Preset?>(null);
             if (preset.Id == 0)
             {
                 int newId;
@@ -33,16 +36,16 @@ namespace Ven4Tools.Services
                 var index = local.FindIndex(p => p.Id == preset.Id);
                 if (index >= 0) local[index] = preset; else local.Add(preset);
             }
-            SaveLocal(local);
+            if (!SaveLocal(local)) return Task.FromResult<Preset?>(null);
             return Task.FromResult<Preset?>(preset);
         }
 
-        public static Task DeleteAsync(Preset preset)
+        public static Task<bool> DeleteAsync(Preset preset)
         {
             var local = LoadLocal();
+            if (local == null) return Task.FromResult(false);
             local.RemoveAll(p => p.Id == preset.Id);
-            SaveLocal(local);
-            return Task.CompletedTask;
+            return Task.FromResult(SaveLocal(local));
         }
 
         /// <summary>
@@ -55,27 +58,15 @@ namespace Ven4Tools.Services
         public static Task<bool> UpdateAsync(Preset preset)
         {
             var local = LoadLocal();
+            if (local == null) return Task.FromResult(false);
             var index = local.FindIndex(p => p.Id == preset.Id);
             if (index < 0) return Task.FromResult(false);
             local[index] = preset;
-            SaveLocal(local);
-            return Task.FromResult(true);
+            return Task.FromResult(SaveLocal(local));
         }
 
-        private static List<Preset> LoadLocal()
-        {
-            try
-            {
-                if (!File.Exists(LocalPath)) return new();
-                return JsonConvert.DeserializeObject<List<Preset>>(
-                    File.ReadAllText(LocalPath, Encoding.UTF8)) ?? new();
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write($"[PresetService] Чтение локальных пресетов: {ex.Message}");
-                return new();
-            }
-        }
+        private static List<Preset>? LoadLocal() =>
+            JsonListFile.TryLoad<Preset>(LocalPath, "[PresetService]");
 
         private static bool SaveLocal(List<Preset> list)
         {

@@ -11,12 +11,12 @@ namespace Ven4Tools.Services
     {
         private static readonly Dictionary<int, string> KnownExitCodes = new(MsiExitCodes.Known)
         {
+            // Коды APPINSTALLER_CLI_ERROR_* сверены с официальным списком winget-cli
+            // (doc/windows/package-manager/winget/returnCodes.md). До 2026-09-23 часть
+            // из них была перепутана: 0x8A150109 («перезагрузите для завершения», то есть
+            // успех) выдавался за несовпадение хеша, а 0x8A15002C («upgrade --all
+            // завершился с ошибками») — за успех с перезагрузкой.
             { 0, "Успешно." },
-            // Значения — по AppInstallerErrors.h winget-cli. Прежние подписи были сдвинуты:
-            // 0x8A150109 выдавался за несовпадение хеша, хотя это «нужна перезагрузка для
-            // завершения установки», 0x8A150005 — за отказ в доступе (это сигнал
-            // завершения), 0x8A15002C — за «требуется перезагрузка» (это сводный код
-            // upgrade --all с частичными неудачами).
             { unchecked((int)0x8A150005), "Операция winget прервана сигналом завершения." },
             { unchecked((int)0x8A150011), "Хеш установщика не совпал с ожидаемым — повреждённая загрузка или изменённый пакет." },
             { unchecked((int)0x8A150014), "Пакет не найден в источнике или недоступен для этой системы." },
@@ -24,9 +24,21 @@ namespace Ven4Tools.Services
             { unchecked((int)0x8A15002B), "Обновление недоступно — версия в источнике не подходит для данной системы." },
             { unchecked((int)0x8A15002C), "Обновление части пакетов завершилось с ошибками." },
             { unchecked((int)0x8A150109), "Установлено, для завершения требуется перезагрузка." },
+            { unchecked((int)0x8A15010A), "Установка не удалась: перезагрузите компьютер и попробуйте снова." },
+            { unchecked((int)0x8A15010B), "Установлено, компьютер будет перезагружен для завершения." },
             { unchecked((int)0x80072EE2), "Ошибка сети — источник недоступен, попробуйте позже." },
             { unchecked((int)0x80072EFE), "Ошибка сети — соединение разорвано, попробуйте позже." },
         };
+
+        /// <summary>
+        /// Коды «установка прошла, но нужна перезагрузка»: 3010 (Windows Installer,
+        /// ERROR_SUCCESS_REBOOT_REQUIRED) и собственные коды winget
+        /// INSTALL_REBOOT_REQUIRED_TO_FINISH / INSTALL_REBOOT_INITIATED.
+        /// </summary>
+        public static bool IsSuccessWithReboot(int exitCode) =>
+            exitCode == 3010 ||
+            exitCode == unchecked((int)0x8A150109) ||
+            exitCode == unchecked((int)0x8A15010B);
 
         public static string MapExitCode(int exitCode) =>
             KnownExitCodes.TryGetValue(exitCode, out var message)

@@ -135,13 +135,13 @@ namespace Ven4Tools.ViewModels
                 }
 
                 // RunStreamingAsync: живой прогресс в лог + 15-минутный таймаут
-                string args = $"upgrade --id \"{app.WingetId}\" --silent {WingetArgs.ModifyLine}";
+                string args = $"upgrade --id \"{app.WingetId}\" --exact --silent {WingetArgs.ModifyLine}";
                 int code = await WingetRunner.RunStreamingAsync(args, line => AppLogger.Write($"  {line}"),
                     TimeSpan.FromMinutes(15));
                 var exit = DescribeWingetExitCode(code);
                 if (exit.Success)
                 {
-                    // Успех, в т.ч. коды «требуется перезагрузка» (3010 / 0x8A150109)
+                    // Успех, в т.ч. коды «требуется перезагрузка» (WingetErrorMapper.IsSuccessWithReboot)
                     app.Available = "";
                     Application.Current?.Dispatcher.Invoke(() => { ApplyFilter(); RecomputeStats(); });
                     AppLogger.Write(exit.Reboot

@@ -65,6 +65,15 @@ namespace Ven4Tools.Launcher
                     btnSkip.IsEnabled   = true;
                     btnSkip.Content     = "Закрыть";
                 }
+                else if (ok)
+                {
+                    // Отчёт принят, но ссылки нет (или она не прошла проверку) —
+                    // это успех, а не «❌» с пустым текстом ошибки.
+                    MarkReported();
+                    txtStatus.Text      = "✅ Отчёт отправлен";
+                    btnSkip.IsEnabled   = true;
+                    btnSkip.Content     = "Закрыть";
+                }
                 else
                 {
                     txtStatus.Text      = $"❌ {error}";
