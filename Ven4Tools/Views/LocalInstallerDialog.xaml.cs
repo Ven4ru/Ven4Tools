@@ -9,11 +9,13 @@ namespace Ven4Tools.Views
     {
         public AppInfo? Result { get; private set; }
         private readonly string _filePath;
+        private bool _closed;
 
         public LocalInstallerDialog(string filePath)
         {
             InitializeComponent();
             _filePath = filePath;
+            Closed += (_, _) => _closed = true;
 
             txtFilePath.Text = filePath;
             txtName.Text     = Path.GetFileNameWithoutExtension(filePath);
@@ -40,17 +42,27 @@ namespace Ven4Tools.Views
             // не-elevated процессу пользователя. Без пиннинга подмена LocalInstallerPath/
             // самого файла между добавлением и повторным запуском из списка привела бы
             // к запуску произвольного exe с правами администратора.
+            //
+            // Хеш большого установщика считается секундами: на это время кнопка
+            // выключается (повторный клик запускал второй подсчёт и второй
+            // DialogResult), а если окно закрыли, не дождавшись, — результат
+            // отбрасывается: DialogResult у закрытого окна бросает
+            // InvalidOperationException прямо из async void-обработчика.
             string sha256;
+            btnOk.IsEnabled = false;
             try
             {
                 sha256 = await HashHelper.ComputeSha256Async(_filePath);
             }
             catch (System.Exception ex)
             {
+                if (_closed) return;
+                btnOk.IsEnabled = true;
                 MessageBox.Show($"Не удалось прочитать файл: {ex.Message}", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+            if (_closed) return;
 
             Result = new AppInfo
             {

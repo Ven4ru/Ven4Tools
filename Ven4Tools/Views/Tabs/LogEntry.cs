@@ -87,39 +87,55 @@ namespace Ven4Tools.Views.Tabs
             _iconBrushFallback = iconBrush.Fallback;
         }
 
+        // Префиксы сравниваются ординально, а отрезаются по собственной длине.
+        // Раньше здесь был культурозависимый StartsWith с зашитыми срезами text[2..]/
+        // text[3..]: под ICU вариативный селектор U+FE0F игнорируется при сравнении,
+        // и «⚠ Сеть…» (без FE0F) совпадало с «⚠️», после чего срез text[3..] съедал
+        // первую букву сообщения. А у однобуквенных значков (✅ ❌ ➕ ⏳ — один
+        // UTF-16 символ) срез [2..] на строке из одного значка бросал исключение
+        // прямо из AppLogger. Варианты без U+FE0F перечислены явно, после полных.
+        private static readonly (string Prefix, string Icon, (string Key, Brush Fallback) Brush)[] Prefixes =
+        {
+            ("✅", "✅", Green),
+            ("❌", "❌", Red),
+            ("⚠️", "⚠️", Orange),
+            ("⚠", "⚠️", Orange),
+            ("➕", "➕", Orange),
+            ("🗑️", "🗑️", Orange),
+            ("🗑", "🗑️", Orange),
+            ("📦", "📦", Teal),
+            ("📡", "📡", Teal),
+            ("💾", "💾", Teal),
+            ("📅", "📅", Teal),
+            ("📋", "📋", Teal),
+            ("📥", "📥", Teal),
+            ("📤", "📤", Teal),
+            ("🔍", "🔍", Teal),
+            ("ℹ️", "ℹ️", Teal),
+            ("ℹ", "ℹ️", Teal),
+            ("☁️", "☁️", Teal),
+            ("☁", "☁️", Teal),
+            ("🔄", "🔄", Muted),
+            ("⏳", "⏳", Muted),
+            ("🔔", "🔔", Muted),
+            ("🆙", "🆙", Green),
+            ("🛡️", "🛡️", Purple),
+            ("🛡", "🛡️", Purple),
+            ("🔑", "🔑", Purple),
+        };
+
         public static LogEntry Parse(string raw)
         {
             string time = DateTime.Now.ToString("HH:mm:ss");
-            string text = raw.TrimStart();
+            string text = (raw ?? string.Empty).TrimStart();
 
-            (string icon, string msg, (string Key, Brush Fallback) iconBrush) =
-                text switch
-                {
-                    _ when text.StartsWith("✅") => ("✅", text[2..].TrimStart(), Green),
-                    _ when text.StartsWith("❌") => ("❌", text[2..].TrimStart(), Red),
-                    _ when text.StartsWith("⚠️") => ("⚠️", text[3..].TrimStart(), Orange),
-                    _ when text.StartsWith("➕") => ("➕", text[2..].TrimStart(), Orange),
-                    _ when text.StartsWith("🗑️") => ("🗑️", text[3..].TrimStart(), Orange),
-                    _ when text.StartsWith("📦") => ("📦", text[2..].TrimStart(), Teal),
-                    _ when text.StartsWith("📡") => ("📡", text[2..].TrimStart(), Teal),
-                    _ when text.StartsWith("💾") => ("💾", text[2..].TrimStart(), Teal),
-                    _ when text.StartsWith("📅") => ("📅", text[2..].TrimStart(), Teal),
-                    _ when text.StartsWith("📋") => ("📋", text[2..].TrimStart(), Teal),
-                    _ when text.StartsWith("📥") => ("📥", text[2..].TrimStart(), Teal),
-                    _ when text.StartsWith("📤") => ("📤", text[2..].TrimStart(), Teal),
-                    _ when text.StartsWith("🔍") => ("🔍", text[2..].TrimStart(), Teal),
-                    _ when text.StartsWith("ℹ️") => ("ℹ️", text[3..].TrimStart(), Teal),
-                    _ when text.StartsWith("☁️") => ("☁️", text[3..].TrimStart(), Teal),
-                    _ when text.StartsWith("🔄") => ("🔄", text[2..].TrimStart(), Muted),
-                    _ when text.StartsWith("⏳") => ("⏳", text[2..].TrimStart(), Muted),
-                    _ when text.StartsWith("🔔") => ("🔔", text[2..].TrimStart(), Muted),
-                    _ when text.StartsWith("🆙") => ("🆙", text[2..].TrimStart(), Green),
-                    _ when text.StartsWith("🛡️") => ("🛡️", text[3..].TrimStart(), Purple),
-                    _ when text.StartsWith("🔑") => ("🔑", text[2..].TrimStart(), Purple),
-                    _                            => ("·",  text,                  Muted),
-                };
+            foreach (var (prefix, icon, iconBrush) in Prefixes)
+            {
+                if (text.StartsWith(prefix, StringComparison.Ordinal))
+                    return new LogEntry(time, icon, text[prefix.Length..].TrimStart(), iconBrush);
+            }
 
-            return new LogEntry(time, icon, msg, iconBrush);
+            return new LogEntry(time, "·", text, Muted);
         }
 
         private static SolidColorBrush Frozen(byte r, byte g, byte b)

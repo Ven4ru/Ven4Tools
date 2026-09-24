@@ -29,20 +29,61 @@ internal static class FileHelper
     /// потеря строки лога безобидна): вызывающие сохраняют пользовательские данные и
     /// уже обязаны переживать исключения записи, а молчаливая потеря настроек была бы
     /// хуже видимой ошибки.</para>
+    ///
+    /// <para>Проверяется не только ближайший каталог, но и все его предки внутри
+    /// %LocalAppData%: у снапшотов, иконок и т.п. путь вида
+    /// <c>%LocalAppData%\Ven4Tools\snapshots\x.json</c>, и junction на месте самого
+    /// <c>Ven4Tools</c> иначе проходил бы проверку — атрибуты <c>snapshots</c>
+    /// читаются уже в цели подмены, где это обычный каталог. Выше %LocalAppData%
+    /// не поднимаемся: перенос профиля junction'ом — легитимная настройка машины,
+    /// и отказ там сломал бы клиенту всю запись.</para>
     /// </summary>
     private static void EnsureNotRedirected(string dir, string path)
     {
-        if (PathHelper.IsReparsePoint(dir))
-            throw new IOException($"Каталог подменён ссылкой, запись отменена: {dir}");
+        foreach (var d in DirectoriesToCheck(dir))
+        {
+            if (PathHelper.IsReparsePoint(d))
+                throw new IOException($"Каталог подменён ссылкой, запись отменена: {d}");
+        }
         if (PathHelper.IsReparsePoint(path))
             throw new IOException($"Файл подменён ссылкой, запись отменена: {path}");
+    }
+
+    private static System.Collections.Generic.IEnumerable<string> DirectoriesToCheck(string dir)
+    {
+        string full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dir));
+        yield return full;
+
+        string root = Path.TrimEndingDirectorySeparator(
+            System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData));
+        if (root.Length == 0 ||
+            !full.StartsWith(root + Path.DirectorySeparatorChar, System.StringComparison.OrdinalIgnoreCase))
+            yield break;
+
+        for (string? d = Path.GetDirectoryName(full);
+             d != null && d.Length > root.Length;
+             d = Path.GetDirectoryName(d))
+        {
+            yield return d;
+        }
+    }
+
+    /// <summary>
+    /// Проверка до <see cref="Directory.CreateDirectory(string)"/> обязательна:
+    /// через подменённого предка создание недостающих каталогов уже само по себе
+    /// создавало бы их elevated-процессом в цели подмены.
+    /// </summary>
+    private static void PrepareDirectory(string dir, string path)
+    {
+        EnsureNotRedirected(dir, path);
+        Directory.CreateDirectory(dir);
+        EnsureNotRedirected(dir, path);
     }
 
     public static void WriteAllTextAtomic(string path, string content)
     {
         var dir = Path.GetDirectoryName(path)!;
-        Directory.CreateDirectory(dir);
-        EnsureNotRedirected(dir, path);
+        PrepareDirectory(dir, path);
         var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
         try
         {
@@ -59,8 +100,7 @@ internal static class FileHelper
     public static async Task WriteAllTextAtomicAsync(string path, string content)
     {
         var dir = Path.GetDirectoryName(path)!;
-        Directory.CreateDirectory(dir);
-        EnsureNotRedirected(dir, path);
+        PrepareDirectory(dir, path);
         var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
         try
         {
@@ -77,8 +117,7 @@ internal static class FileHelper
     public static async Task WriteAllBytesAtomicAsync(string path, byte[] content)
     {
         var dir = Path.GetDirectoryName(path)!;
-        Directory.CreateDirectory(dir);
-        EnsureNotRedirected(dir, path);
+        PrepareDirectory(dir, path);
         var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
         try
         {
