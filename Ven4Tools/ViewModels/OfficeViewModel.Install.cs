@@ -47,12 +47,12 @@ namespace Ven4Tools.ViewModels
             SetProgress(true, "⏳ Подготовка установки...", 0, "");
             AppLogger.Write($"\n🚀 Установка {displayName}...");
 
-            await InstallationService.InstallSemaphore.WaitAsync();
-            // Объявлен вне try: между открытием хендла и его явным закрытием есть выходы
-            // исключением — отмена (ThrowIfCancellationRequested) и отказ в UAC
-            // (Process.Start бросает Win32Exception). Без закрытия в finally файл
-            // установщика оставался открытым до сборки мусора, и его не удавалось удалить.
+            // Объявлен вне try: finally обязан закрыть хендл и в ветках исключений
+            // (отказ в UAC, отмена, сбой смены региона) — иначе файл остаётся
+            // заблокированным до сборки мусора и повторное скачивание его не удалит.
             FileStream? installerHandle = null;
+
+            await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
                 SetPhase("🔐 Проверка подлинности установщика...");
@@ -163,6 +163,13 @@ namespace Ven4Tools.ViewModels
             {
                 AppLogger.Write("⏹️ Установка отменена");
                 SetProgress(true, "⏹️ Отменено", 0, "");
+            }
+            catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
+            {
+                // ERROR_CANCELLED: пользователь ответил «Нет» в окне UAC — это его
+                // решение, а не сбой установки.
+                AppLogger.Write("⏹️ Установка отменена: запрос прав администратора отклонён");
+                SetProgress(true, "⏹️ Отменено", 0, "Запрос прав администратора отклонён");
             }
             catch (Exception ex)
             {

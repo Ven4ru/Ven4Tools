@@ -1,7 +1,59 @@
 {
-  "version": 16,
-  "lastUpdated": "2026-09-01 00:00:00",
+  "version": 21,
+  "lastUpdated": "2026-09-16 17:58:19",
   "changelog": [
+    {
+      "version": 21,
+      "date": "2026-09-16",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "Ven4Control обновлён до 0.6.0-beta: приложение научилось обновляться само, поэтому дальше каталог будет отставать от него без вреда — установленная копия догонит себя при первой же проверке."
+    },
+    {
+      "version": 20,
+      "date": "2026-09-16",
+      "addedApps": [
+        "ven4control"
+      ],
+      "removedApps": [],
+      "message": "Добавлен Ven4Control — управление OpenWrt-роутерами, Ubuntu-серверами и Windows-машинами по SSH из одного окна. Ставится установщиком с тихим режимом."
+    },
+    {
+      "version": 19,
+      "date": "2026-09-07",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "Устранён пробел из аудита round-review: заполнены version/size у fps-monitor (были пустые оба поля — версия взята из живого Chocolatey-реестра, 5520.00) и size у 6 записей версии 17 (anydesk 8.0 МБ, raidrive 38.5 МБ, furmark 32.4 МБ, claude-code 216.2 МБ, codex-cli 114.2 МБ, github-copilot-cli 81.2 МБ) — размеры сняты HEAD-запросом с реальных installer-URL из актуальных winget-манифестов, не оценка. foxit-pdf-reader/epic-games/rtss/msi-afterburner/snappy-driver/amd-adrenalin по-прежнему без size — их installer-URL либо заблокированы на уровне TLS с этой сети, либо (amd-adrenalin) отдают промежуточную страницу загрузки без прямого файла; оставлены пустыми по тому же правилу версии 11 (пустая строка честнее неверного числа)."
+    },
+    {
+      "version": 18,
+      "date": "2026-09-04",
+      "addedApps": [
+        "furmark"
+      ],
+      "removedApps": [],
+      "message": "Добавлен FurMark 2 (Geeks3D) — стресс-тест/бенчмарк видеокарты, по запросу пользователя. Через winget (Geeks3D.FurMark.2), проверено вживую на этой машине."
+    },
+    {
+      "version": 17,
+      "date": "2026-09-02",
+      "addedApps": [
+        "anydesk",
+        "rudesktop",
+        "raidrive",
+        "epic-games",
+        "exitlag",
+        "amd-adrenalin",
+        "fps-monitor",
+        "rtss",
+        "msi-afterburner",
+        "claude-code",
+        "codex-cli",
+        "github-copilot-cli"
+      ],
+      "removedApps": [],
+      "message": "Добавлено 12 приложений по запросу пользователя: удалённый доступ (AnyDesk, RuDesktop — российский аналог), облачные диски (RaiDrive), игровые сервисы (Epic Games Launcher, ExitLag), драйверы (AMD Software: Adrenalin Edition — переиздан впервые с версии 5, тогда был удалён из-за отсутствия winget/URL, теперь есть рабочий chocoId), мониторинг GPU/FPS (FPS Monitor, RTSS, MSI Afterburner — все без winget, идут через chocoId), и новая категория «ИИ» (Claude Code, Codex CLI, GitHub Copilot CLI — все три через winget). AnyDesk/RuDesktop/RaiDrive/AMD/FPS Monitor/MSI Afterburner проверены живьём через winget/choco CLI на этой машине. RuDesktop и ExitLag — прямая ссылка на официальном CDN, SHA256 посчитан от реально скачанного файла. HoYoPlay и 4Game из исходного списка пользователя пока не добавлены — у обоих JS-рендеринг страницы загрузки без статической ссылки на установщик, нет winget/choco; отложено до появления рабочего источника."
+    },
     {
       "version": 16,
       "date": "2026-09-01",
@@ -959,6 +1011,48 @@
       "chocoId": "rufus"
     },
     {
+      "id": "anydesk",
+      "name": "AnyDesk",
+      "category": "Системные",
+      "wingetId": "AnyDesk.AnyDesk",
+      "downloadUrl": "",
+      "version": "9.7.15",
+      "size": "8.0 MB",
+      "iconUrl": "https://cdn.simpleicons.org/anydesk",
+      "description": "Быстрый и надёжный клиент для удалённого доступа к компьютеру.",
+      "profile": "basic",
+      "sha256": "",
+      "chocoId": "anydesk"
+    },
+    {
+      "id": "rudesktop",
+      "name": "RuDesktop",
+      "category": "Системные",
+      "wingetId": "",
+      "downloadUrl": "https://storage.rudesktop.ru/download/rudesktop-3.0.1563-x64.msi",
+      "version": "3.0.1563",
+      "size": "30.3 MB",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=rudesktop.ru&sz=64",
+      "description": "Российское приложение для удалённого доступа и управления компьютером — аналог AnyDesk/TeamViewer.",
+      "profile": "extended",
+      "sha256": "f02e1b8d1a1b446e599d0edcfec64ca005dea0ca8e6b9e4d9c8bc367fc7b6aad",
+      "chocoId": ""
+    },
+    {
+      "id": "raidrive",
+      "name": "RaiDrive",
+      "category": "Системные",
+      "wingetId": "OpenBoxLab.RaiDrive",
+      "downloadUrl": "",
+      "version": "2023.9.256",
+      "size": "38.5 MB",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=raidrive.com&sz=64",
+      "description": "Подключает облачные хранилища (Google Drive, Яндекс.Диск, OneDrive и др.) как обычный локальный диск.",
+      "profile": "extended",
+      "sha256": "",
+      "chocoId": "raidrive"
+    },
+    {
       "id": "steam",
       "name": "Steam",
       "category": "Игровые сервисы",
@@ -1015,6 +1109,34 @@
       "chocoId": "goggalaxy"
     },
     {
+      "id": "epic-games",
+      "name": "Epic Games Launcher",
+      "category": "Игровые сервисы",
+      "wingetId": "EpicGames.EpicGamesLauncher",
+      "downloadUrl": "",
+      "version": "1.3.193.0",
+      "size": "",
+      "iconUrl": "https://cdn.simpleicons.org/epicgames",
+      "description": "Магазин и лаунчер Epic Games — еженедельные бесплатные раздачи игр, Fortnite и другие проекты Epic.",
+      "profile": "basic",
+      "sha256": "",
+      "chocoId": "epicgameslauncher"
+    },
+    {
+      "id": "exitlag",
+      "name": "ExitLag",
+      "category": "Игровые сервисы",
+      "wingetId": "",
+      "downloadUrl": "https://cdn.exitlag.com/SetupExitLag-5.21.3-x64.exe",
+      "version": "5.21.3",
+      "size": "92.1 MB",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=exitlag.com&sz=64",
+      "description": "Оптимизация маршрута сетевого трафика для снижения пинга и потерь пакетов в онлайн-играх.",
+      "profile": "extended",
+      "sha256": "b75b6f4a08be43692496281d3d4efc5d57a77ef7a0598dd8dc738cb982483786",
+      "chocoId": ""
+    },
+    {
       "id": "snappy-driver",
       "name": "Snappy Driver Installer",
       "category": "Драйверпаки",
@@ -1055,6 +1177,20 @@
       "profile": "full",
       "sha256": "",
       "chocoId": ""
+    },
+    {
+      "id": "amd-adrenalin",
+      "name": "AMD Software: Adrenalin Edition",
+      "category": "Драйверпаки",
+      "wingetId": "",
+      "downloadUrl": "",
+      "version": "26.8.1",
+      "size": "",
+      "iconUrl": "https://cdn.simpleicons.org/amd",
+      "description": "Официальное ПО AMD для видеокарт Radeon: драйверы, игровые настройки, запись и трансляция.",
+      "profile": "full",
+      "sha256": "",
+      "chocoId": "amd-software-adrenalin-edition"
     },
     {
       "id": "malwarebytes",
@@ -1168,6 +1304,119 @@
       "profile": "extended",
       "sha256": "",
       "chocoId": "cpu-z"
+    },
+    {
+      "id": "fps-monitor",
+      "name": "FPS Monitor",
+      "category": "Другое",
+      "wingetId": "",
+      "downloadUrl": "",
+      "version": "5520.00",
+      "size": "14.9 MB",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=fpsmon.com&sz=64",
+      "description": "Оверлей мониторинга состояния оборудования (FPS, температуры, нагрузка) поверх игры или на рабочем столе.",
+      "profile": "extended",
+      "sha256": "",
+      "chocoId": "fpsmonitor"
+    },
+    {
+      "id": "rtss",
+      "name": "RivaTuner Statistics Server",
+      "category": "Другое",
+      "wingetId": "Guru3D.RTSS",
+      "downloadUrl": "",
+      "version": "7.3.7",
+      "size": "",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=guru3d.com&sz=64",
+      "description": "Оверлей FPS и статистики поверх игр — стандарт де-факто для мониторинга производительности.",
+      "profile": "extended",
+      "sha256": "",
+      "chocoId": ""
+    },
+    {
+      "id": "msi-afterburner",
+      "name": "MSI Afterburner",
+      "category": "Другое",
+      "wingetId": "Guru3D.Afterburner",
+      "downloadUrl": "",
+      "version": "4.6.6",
+      "size": "",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=msi.com&sz=64",
+      "description": "Разгон, мониторинг и управление вентиляторами видеокарты — самый популярный инструмент для GPU.",
+      "profile": "extended",
+      "sha256": "",
+      "chocoId": "msiafterburner"
+    },
+    {
+      "id": "furmark",
+      "name": "FurMark 2",
+      "category": "Другое",
+      "wingetId": "Geeks3D.FurMark.2",
+      "downloadUrl": "",
+      "version": "2.10.2.0",
+      "size": "32.4 MB",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=geeks3d.com&sz=64",
+      "description": "Стресс-тест и бенчмарк видеокарты (OpenGL/Vulkan) — проверка стабильности, температур и троттлинга под максимальной нагрузкой.",
+      "profile": "extended",
+      "sha256": "",
+      "chocoId": ""
+    },
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "category": "ИИ",
+      "wingetId": "Anthropic.ClaudeCode",
+      "downloadUrl": "",
+      "version": "2.1.248",
+      "size": "216.2 MB",
+      "iconUrl": "https://cdn.simpleicons.org/claude",
+      "description": "Agentic-инструмент Anthropic для написания и правки кода прямо в терминале.",
+      "profile": "full",
+      "sha256": "",
+      "chocoId": ""
+    },
+    {
+      "id": "codex-cli",
+      "name": "Codex CLI",
+      "category": "ИИ",
+      "wingetId": "OpenAI.Codex",
+      "downloadUrl": "",
+      "version": "0.146.1",
+      "size": "114.2 MB",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=openai.com&sz=64",
+      "description": "Agentic-инструмент OpenAI для написания и правки кода прямо в терминале.",
+      "profile": "full",
+      "sha256": "",
+      "chocoId": ""
+    },
+    {
+      "id": "github-copilot-cli",
+      "name": "GitHub Copilot CLI",
+      "category": "ИИ",
+      "wingetId": "GitHub.Copilot",
+      "downloadUrl": "",
+      "version": "1.0.82",
+      "size": "81.2 MB",
+      "iconUrl": "https://cdn.simpleicons.org/githubcopilot",
+      "description": "Agentic-инструмент GitHub Copilot для написания и правки кода прямо в терминале.",
+      "profile": "full",
+      "sha256": "",
+      "chocoId": ""
+    },
+    {
+      "id": "ven4control",
+      "name": "Ven4Control",
+      "category": "Системные",
+      "wingetId": "",
+      "downloadUrl": "https://github.com/Ven4ru/Ven4Control/releases/download/v0.6.0-beta/Ven4Control.Setup-0.6.0.exe",
+      "version": "0.6.0",
+      "size": "65.9 MB",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=github.com&sz=64",
+      "description": "Управление OpenWrt-роутерами, Ubuntu-серверами и Windows-машинами из одного окна: SSH-терминал, файлы по SFTP, журналы, сервисы, температура и RDP внутри SSH-туннеля.",
+      "profile": "extended",
+      "sha256": "9f128646c166bf0b54b62dc44b9254c0e81573750b24c5e35b0f91076fbecf20",
+      "chocoId": "",
+      "silentArgs": "/S"
     }
   ]
 }

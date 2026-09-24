@@ -173,13 +173,10 @@ namespace Ven4Tools.Services
                 // при отмене вместо того, чтобы выбросить исключение прямо из паузы.
                 await WaitForExitRespectingCancellationAsync(process, token);
 
-                // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — установка прошла успешно.
-                // 0x8A150109 (INSTALL_REBOOT_REQUIRED_TO_FINISH) — собственный код winget
-                // для того же исхода: пакет поставлен, осталась перезагрузка. Без него
-                // такой исход считался провалом, и цепочка шла ставить тот же пакет
-                // повторно через choco/прямую ссылку. Итог всё равно сверяется по факту
-                // в ReportInstallOutcomeAsync.
-                bool reboot = process.ExitCode == 3010 || process.ExitCode == unchecked((int)0x8A150109);
+                // 3010 и коды winget «перезагрузите для завершения» — установка прошла успешно.
+                // Раньше успехом считался только 3010, и winget-код перезагрузки уводил
+                // цепочку на следующий источник — повторная установка того же приложения.
+                bool reboot = WingetErrorMapper.IsSuccessWithReboot(process.ExitCode);
                 if (reboot)
                     Log($"⚠ Установлено. Требуется перезагрузка. ({appId})");
                 return (process.ExitCode == 0 || reboot, reboot, process.ExitCode);
