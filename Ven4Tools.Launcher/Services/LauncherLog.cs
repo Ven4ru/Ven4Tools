@@ -75,7 +75,9 @@ namespace Ven4Tools.Launcher.Services
                         .Append(Sanitize(message))
                         .Append(Environment.NewLine);
 
-                    File.AppendAllText(LogPath, text.ToString(), Encoding.UTF8);
+                    // Раньше здесь был голый File.AppendAllText — вопреки обещанию в
+                    // doc-комментарии класса guard'а не было вовсе.
+                    Helpers.FileHelper.AppendAllTextGuarded(LogPath, text.ToString());
                 }
             }
             catch
@@ -132,6 +134,13 @@ namespace Ven4Tools.Launcher.Services
             {
                 var info = new FileInfo(LogPath);
                 if (!info.Exists || info.Length < MaxBytes) return;
+
+                // Delete/Move в elevated-процессе по подменённому пути — тот же примитив
+                // «удаление/перемещение произвольного файла», что и запись.
+                if (Helpers.FileHelper.IsReparsePoint(LogDirectory) ||
+                    Helpers.FileHelper.IsReparsePoint(LogPath) ||
+                    Helpers.FileHelper.IsReparsePoint(PreviousLogPath))
+                    return;
 
                 try { File.Delete(PreviousLogPath); } catch { }
                 File.Move(LogPath, PreviousLogPath);

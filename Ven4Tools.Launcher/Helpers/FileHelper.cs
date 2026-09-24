@@ -54,6 +54,20 @@ internal static class FileHelper
             throw new IOException($"Файл подменён ссылкой, запись отменена: {path}");
     }
 
+    /// <summary>
+    /// Дозапись в файл журнала с тем же guard'ом, что у <see cref="WriteAllTextAtomic"/>:
+    /// каталог и сам файл проверяются на reparse point непосредственно перед записью.
+    /// Атомарность здесь не нужна (журнал только растёт), а вот перенаправление
+    /// elevated-записи junction'ом — тот же примитив, что и для атомарной записи.
+    /// </summary>
+    public static void AppendAllTextGuarded(string path, string content)
+    {
+        var dir = Path.GetDirectoryName(path)!;
+        Directory.CreateDirectory(dir);
+        EnsureNotRedirected(dir, path);
+        File.AppendAllText(path, content, System.Text.Encoding.UTF8);
+    }
+
     public static void WriteAllTextAtomic(string path, string content)
     {
         var dir = Path.GetDirectoryName(path)!;

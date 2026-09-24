@@ -322,10 +322,7 @@ namespace Ven4Tools.ViewModels
         internal static (bool Success, bool Reboot, string Reason) DescribeWingetExitCode(int code)
         {
             if (code == 0) return (true, false, "");
-            // 0x8A150109 — APPINSTALLER_CLI_ERROR_INSTALL_REBOOT_REQUIRED_TO_FINISH. Раньше
-            // здесь стоял 0x8A15002C, но это UPDATE_ALL_HAS_FAILURE (сводный провал
-            // upgrade --all), а настоящий код «нужна перезагрузка» считался ошибкой.
-            if (code == 3010 || code == unchecked((int)0x8A150109)) return (true, true, "");
+            if (WingetErrorMapper.IsSuccessWithReboot(code)) return (true, true, "");
             return (false, false, WingetErrorMapper.MapExitCode(code));
         }
     }

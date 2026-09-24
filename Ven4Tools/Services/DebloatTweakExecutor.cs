@@ -41,8 +41,24 @@ namespace Ven4Tools.Services
             }
         }
 
+        // Имя пакета Appx — латиница/цифры/точка/дефис/подчёркивание. Сегодня все
+        // значения — литералы из DebloatCatalog, но это единственное место, где
+        // elevated-команда PowerShell собирается интерполяцией: любое расширение
+        // источника твиков (пресеты, каталог, сайт) превратило бы его в инъекцию
+        // с правами администратора. Поэтому проверка здесь, fail-closed.
+        private static readonly System.Text.RegularExpressions.Regex AppxNamePattern =
+            new(@"^[A-Za-z0-9._-]{1,128}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+        // Экранирование для строкового литерала PowerShell в одинарных кавычках.
+        private static string PsQuote(string value) => value.Replace("'", "''");
+
         public static async Task<bool> RemoveAppxAsync(string packageName, CancellationToken ct = default)
         {
+            if (!AppxNamePattern.IsMatch(packageName))
+            {
+                AppLogger.Write($"[Деблоатер] Отклонено недопустимое имя пакета: {packageName}");
+                return false;
+            }
             string script = $"Get-AppxPackage -Name '*{packageName}*' | Remove-AppxPackage -ErrorAction SilentlyContinue; " +
                             $"Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like '*{packageName}*' | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue";
             return await RunPSAsync(script, ct);
@@ -105,7 +121,7 @@ namespace Ven4Tools.Services
             try
             {
                 var psi = new ProcessStartInfo(TrustedExecutablePaths.PowerShellExe,
-                    $"-NoProfile -ExecutionPolicy Bypass -Command \"If (!(Test-Path '{path}')) {{ New-Item -Path '{path}' -Force | Out-Null }}; Set-ItemProperty -Path '{path}' -Name '{name}' -Value {value}\"")
+                    $"-NoProfile -ExecutionPolicy Bypass -Command \"If (!(Test-Path '{PsQuote(path)}')) {{ New-Item -Path '{PsQuote(path)}' -Force | Out-Null }}; Set-ItemProperty -Path '{PsQuote(path)}' -Name '{PsQuote(name)}' -Value {value}\"")
                 {
                     UseShellExecute = false, CreateNoWindow = true,
                     RedirectStandardOutput = true, RedirectStandardError = true

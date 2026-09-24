@@ -210,7 +210,7 @@ namespace Ven4Tools.Tests
         [Fact]
         public void DescribeWingetExitCode_КодCOM_УспехСПерезагрузкой()
         {
-            // Вторая ветка «успех с требованием перезагрузки» — COM-код winget
+            // Вторая ветка «успех с требованием перезагрузки» — код winget
             // INSTALL_REBOOT_REQUIRED_TO_FINISH.
             var (success, reboot, reason) = InstalledViewModel.DescribeWingetExitCode(unchecked((int)0x8A150109));
 
@@ -220,12 +220,13 @@ namespace Ven4Tools.Tests
         }
 
         [Fact]
-        public void DescribeWingetExitCode_ЧастичныйПровалUpgradeAll_НеУспех()
+        public void DescribeWingetExitCode_UpdateAllHasFailure_НеУспех()
         {
-            // 0x8A15002C — UPDATE_ALL_HAS_FAILURE, а не «требуется перезагрузка».
-            var (success, _, _) = InstalledViewModel.DescribeWingetExitCode(unchecked((int)0x8A15002C));
+            // 0x8A15002C — «upgrade --all завершился с ошибками», а не успех.
+            var (success, _, reason) = InstalledViewModel.DescribeWingetExitCode(unchecked((int)0x8A15002C));
 
             Assert.False(success);
+            Assert.Contains("ошибками", reason);
         }
 
         [Fact]
