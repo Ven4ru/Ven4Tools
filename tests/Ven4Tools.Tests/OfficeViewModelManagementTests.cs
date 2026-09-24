@@ -68,7 +68,7 @@ public sealed class OfficeViewModelManagementTests
     }
 
     [Fact]
-    public void ВыбраннаяВерсияСовпадаетСУстановленной_ЗаменитьЗаблокирована()
+    public void ВыбранныеВерсияИЯзыкСовпадаютСУстановленными_ЗаменитьЗаблокирована()
     {
         var detector = new FakeDetector
         {
@@ -76,13 +76,72 @@ public sealed class OfficeViewModelManagementTests
             {
                 Kind = OfficeInstallationKind.ClickToRun,
                 DisplayName = "Office 2016 Professional",
-                ProductIds = new[] { "ProPlusRetail" }
+                ProductIds = new[] { "ProPlusRetail" },
+                Culture = "ru-ru"
             }
         };
-        var vm = new OfficeViewModel(detector) { IsO2016Selected = true };
+        var vm = new OfficeViewModel(detector) { IsO2016Selected = true, SelectedLanguage = "ru-ru" };
 
         Assert.True(vm.IsReplaceBlocked);
         Assert.False(vm.ReplaceCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void ТаЖеВерсияДругойЯзык_ЗаменитьДоступна()
+    {
+        // Раньше сравнивалась только версия: русский Office нельзя было заменить
+        // английским той же версии — кнопка гасла без объяснения.
+        var detector = new FakeDetector
+        {
+            Result = new InstalledOfficeInfo
+            {
+                Kind = OfficeInstallationKind.ClickToRun,
+                DisplayName = "Office 2016 Professional",
+                ProductIds = new[] { "ProPlusRetail" },
+                Culture = "ru-ru"
+            }
+        };
+        var vm = new OfficeViewModel(detector) { IsO2016Selected = true, SelectedLanguage = "en-us" };
+
+        Assert.False(vm.IsReplaceBlocked);
+        Assert.True(vm.ReplaceCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void ЯзыкУстановленногоНеизвестен_ЗаменитьДоступна()
+    {
+        var detector = new FakeDetector
+        {
+            Result = new InstalledOfficeInfo
+            {
+                Kind = OfficeInstallationKind.ClickToRun,
+                DisplayName = "Office 2016 Professional",
+                ProductIds = new[] { "ProPlusRetail" },
+                Culture = ""
+            }
+        };
+        var vm = new OfficeViewModel(detector) { IsO2016Selected = true, SelectedLanguage = "ru-ru" };
+
+        Assert.False(vm.IsReplaceBlocked);
+    }
+
+    [Fact]
+    public void ЯзыкСравниваетсяБезУчётаРегистра()
+    {
+        // ClientCulture в реестре C2R бывает и «ru-RU», и «ru-ru».
+        var detector = new FakeDetector
+        {
+            Result = new InstalledOfficeInfo
+            {
+                Kind = OfficeInstallationKind.ClickToRun,
+                DisplayName = "Office 2016 Professional",
+                ProductIds = new[] { "ProPlusRetail" },
+                Culture = "ru-RU"
+            }
+        };
+        var vm = new OfficeViewModel(detector) { IsO2016Selected = true, SelectedLanguage = "ru-ru" };
+
+        Assert.True(vm.IsReplaceBlocked);
     }
 
     [Fact]
