@@ -117,6 +117,13 @@ try {
     scp -r $publishGlob "jump:$remoteDir/"
     if ($LASTEXITCODE -ne 0) { throw "Заливка файлов публикации на CDN не удалась — scp завершился с кодом $LASTEXITCODE." }
 
+    # scp с Windows создаёт вложенные каталоги (cs/, ru/ и т.д.) с правами 744 —
+    # без права обхода nginx отдаёт 404 на все файлы внутри них, и дельта у
+    # пользователей молча падает в полную загрузку (так было при выпуске 5.3.0:
+    # 221 из 466 файлов недоступны). Права выравниваем явно.
+    ssh jump "chmod -R a+rX $remoteDir"
+    if ($LASTEXITCODE -ne 0) { throw "Не удалось выставить права на файлы в $remoteDir — ssh завершился с кодом $LASTEXITCODE." }
+
     Write-Host "Заливаю манифест и подпись..."
     scp $manifestPath "jump:/tmp/client-manifest.json.new"
     if ($LASTEXITCODE -ne 0) { throw "Заливка манифеста на CDN не удалась — scp завершился с кодом $LASTEXITCODE." }
