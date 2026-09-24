@@ -52,19 +52,29 @@ namespace Ven4Tools.ViewModels
             _ => ""
         };
 
-        // «Заменить» заблокирована, если выбранная ниже версия совпадает с уже
-        // установленной — устанавливать поверх себя же нет смысла (см. спеку).
+        // «Заменить» заблокирована, если выбранные ниже версия И язык совпадают с уже
+        // установленными — устанавливать поверх себя же нет смысла (см. спеку).
+        // Раньше сравнивалась только версия: русский Office 2021 нельзя было заменить
+        // английским Office 2021 — кнопка гасла без объяснения. Язык установленного
+        // неизвестен (ClientCulture пуст) — замену не блокируем: лишняя переустановка
+        // безвредна, а запрет смены языка — нет.
         public bool IsReplaceBlocked
         {
             get
             {
                 if (InstalledOffice.Kind != OfficeInstallationKind.ClickToRun) return false;
-                var (_, selectedProductId) = GetSelectedVersion();
-                foreach (var installedId in InstalledOffice.ProductIds)
-                    if (string.Equals(installedId, selectedProductId, StringComparison.OrdinalIgnoreCase))
-                        return true;
-                return false;
+                if (!IsSelectedProductInstalled()) return false;
+                return string.Equals(InstalledOffice.Culture, SelectedLanguage, StringComparison.OrdinalIgnoreCase);
             }
+        }
+
+        private bool IsSelectedProductInstalled()
+        {
+            var (_, selectedProductId) = GetSelectedVersion();
+            foreach (var installedId in InstalledOffice.ProductIds)
+                if (string.Equals(installedId, selectedProductId, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
         }
 
         public RelayCommand UninstallCommand { get; }
@@ -127,6 +137,14 @@ namespace Ven4Tools.ViewModels
 
             var (newDisplayName, _) = GetSelectedVersion();
             string oldDisplayName = InstalledOffice.DisplayName;
+            // Та же версия, другой язык — без языков подтверждение читалось бы как
+            // «Office 2021 будет заменён на Office 2021».
+            if (IsSelectedProductInstalled())
+            {
+                if (!string.IsNullOrEmpty(InstalledOffice.Culture))
+                    oldDisplayName = $"{oldDisplayName} ({InstalledOffice.Culture})";
+                newDisplayName = $"{newDisplayName} ({SelectedLanguage})";
+            }
 
             var confirm = MessageBox.Show(
                 $"{oldDisplayName} будет удалён и заменён на {newDisplayName}.\n\n" +
