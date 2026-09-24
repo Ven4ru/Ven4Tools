@@ -26,6 +26,8 @@ namespace Ven4Tools
         private bool _categorySelectionShown = false;
         private string _currentTab = "catalog";
         private bool _feedbackShown = false;
+        // Закрытие главного окна подтверждено (Closing не отменён) — см. окно отзыва.
+        private bool _closeConfirmed;
 
         private CatalogTab?    _catalogTab;
         private InstalledTab?  _installedTab;
@@ -496,11 +498,16 @@ namespace Ven4Tools
                 e.Cancel = true;
                 _feedbackShown = true;
                 var fw = new Views.FeedbackWindow { Owner = this };
-                fw.Closed += (_, _) => Close();
+                // Окно отзыва немодальное: пользователь может ещё раз закрыть главное
+                // окно, не закрывая отзыв, — тогда отзыв закрывается как дочернее уже
+                // во время закрытия главного, и повторный Close() бросил бы
+                // InvalidOperationException («нельзя вызывать Close во время закрытия»).
+                fw.Closed += (_, _) => { if (!_closeConfirmed) Close(); };
                 fw.Show();
                 return;
             }
 
+            _closeConfirmed = true;
             _tray.Dispose();
             ConnectivityMonitor.Stop();
         }

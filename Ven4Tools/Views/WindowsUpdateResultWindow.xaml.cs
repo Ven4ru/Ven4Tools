@@ -50,7 +50,19 @@ namespace Ven4Tools.Views
 
         private void BtnRestartNow_Click(object sender, RoutedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo(Ven4Tools.Services.TrustedExecutablePaths.ShutdownExe, "/r /t 5") { UseShellExecute = true });
+            // Сбой запуска shutdown.exe (политика, антивирус) не должен уходить из
+            // обработчика нажатия в DispatcherUnhandledException и закрывать клиент.
+            try
+            {
+                Process.Start(new ProcessStartInfo(Ven4Tools.Services.TrustedExecutablePaths.ShutdownExe, "/r /t 5") { UseShellExecute = true });
+            }
+            catch (System.Exception ex)
+            {
+                AppLogger.Write(ex, "WindowsUpdateResultWindow.BtnRestartNow_Click");
+                MessageBox.Show("Не удалось запустить перезагрузку: " + ex.Message + "\n\nПерезагрузите компьютер вручную.",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             Close();
         }
     }
