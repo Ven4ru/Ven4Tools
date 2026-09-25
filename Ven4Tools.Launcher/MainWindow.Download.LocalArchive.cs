@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -86,6 +87,13 @@ namespace Ven4Tools.Launcher
             try
             {
                 AddLog($"📂 Установка из локального файла: {archivePath}");
+                // FileShare.Read-хендл от проверки подписи до конца распаковки — та же
+                // защита от подмены (TOCTOU), что у сетевого пути (DownloadResult): архив
+                // выбран пользователем в папке, доступной на запись любому его процессу,
+                // а между проверкой и распаковкой может висеть диалог «архивная версия»
+                // или «клиент запущен». Без FileShare.Delete файл нельзя и переименовать.
+                using var archiveGuard = new FileStream(
+                    archivePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 using var cdnService = new CdnService();
                 var result = await LocalArchiveVerifier.VerifyAsync(archivePath, cdnService, token);
 
@@ -128,6 +136,8 @@ namespace Ven4Tools.Launcher
                 }
 
                 bool installed = await ExtractAndInstallClientAsync(archivePath, result.Version ?? "?", token, silent);
+                // Архив больше не нужен — не держим его занятым, пока висит сообщение ниже.
+                archiveGuard.Dispose();
                 if (installed && !silent)
                     Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
                         $"Клиент {result.Version} успешно установлен в:\n{_clientPath}",

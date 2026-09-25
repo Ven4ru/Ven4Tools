@@ -47,14 +47,25 @@ internal static class InstallerTempDirectory
 
     private static string Create()
     {
-        string path = Path.Combine(Path.GetTempPath(), $"Ven4Tools.Installers.{Guid.NewGuid():N}");
+        bool elevated = IsElevated();
+
+        // Elevated — не в пользовательском %TEMP%: у пользователя там полный доступ к
+        // самой папке, включая FILE_DELETE_CHILD, а с ним любой его процесс может
+        // переименовать наш защищённый каталог вопреки его DACL и создать на том же
+        // пути свой — Get() увидел бы «существующий каталог» и положил установщик
+        // рядом с подложенной DLL. В %SystemRoot%\Temp обычные пользователи могут
+        // только создавать свои подкаталоги, удалять и переименовывать чужие — нет.
+        string root = elevated
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp")
+            : Path.GetTempPath();
+        string path = Path.Combine(root, $"Ven4Tools.Installers.{Guid.NewGuid():N}");
 
         // Имя случайное, но проверяем явно: Directory.CreateDirectory молча
         // «успевает» на уже существующем каталоге и тогда наш DACL не применяется.
         if (Directory.Exists(path) || File.Exists(path))
             throw new IOException($"Временный каталог установщиков уже существует: {path}");
 
-        if (!IsElevated())
+        if (!elevated)
         {
             Directory.CreateDirectory(path);
             return path;

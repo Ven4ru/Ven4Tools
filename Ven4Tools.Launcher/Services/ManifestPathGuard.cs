@@ -37,6 +37,12 @@ internal static class ManifestPathGuard
         {
             if (segment.Length == 0) return false;      // «a//b» или хвостовой слэш
             if (segment == "." || segment == "..") return false;
+            // Хвостовые точку и пробел Windows отбрасывает при разборе пути: «a.dll.»
+            // и «a.dll» — разные строки для планировщика (обе пройдут проверку на
+            // дубликаты), но один файл на диске. Вторая запись набора перезаписала бы
+            // резервную копию первой в InstallPartial, и откат потерял бы оригинал.
+            // Настоящий файл публикации таким именем на Windows быть не может.
+            if (segment.EndsWith('.') || segment.EndsWith(' ')) return false;
         }
 
         return true;

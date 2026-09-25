@@ -24,7 +24,13 @@ namespace Ven4Tools.Services
             try
             {
                 if (!File.Exists(_path)) return;
-                var profile = JsonConvert.DeserializeObject<UserProfile>(File.ReadAllText(_path));
+                // null в файле (ручная правка, повреждение, импорт чужого архива)
+                // пропускается, и поле сохраняет значение по умолчанию: иначе
+                // "PinnedAppIds": null давал NullReferenceException в полосе пинов
+                // уже на Loaded главного окна — и так при каждом запуске, потому что
+                // сам файл никто не чинит.
+                var profile = JsonConvert.DeserializeObject<UserProfile>(File.ReadAllText(_path),
+                    new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
                 if (profile != null) Current = profile;
             }
             catch (Exception ex) { AppLogger.Write($"[ProfileService] {ex.Message}"); }

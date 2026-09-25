@@ -54,6 +54,9 @@ public sealed class ClientDeltaUrlTests
     [InlineData("Resources//Inter.ttf", false)]
     [InlineData("Resources/", false)]
     [InlineData("./Ven4Tools.dll", false)]
+    // Windows отбрасывает хвостовые точку/пробел — такое имя совпало бы с другим файлом.
+    [InlineData("Ven4Tools.dll.", false)]
+    [InlineData("Resources /Inter.ttf", false)]
     [InlineData("", false)]
     [InlineData(null, false)]
     public void IsSafeRelativePath_AcceptsOnlyManifestStylePaths(string? path, bool expected)

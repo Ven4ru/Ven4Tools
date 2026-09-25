@@ -69,6 +69,7 @@ namespace Ven4Tools.ViewModels
                 _catalog = catalog;
                 SyncCatalogToAppManager();
                 _appManager.LoadAlternativeSources();
+                _appManager.ReloadHiddenApps();
 
                 string sourceText = catalog.Source switch
                 {
@@ -169,6 +170,9 @@ namespace Ven4Tools.ViewModels
                 _catalog = loaded;
                 SyncCatalogToAppManager();
                 _appManager.LoadAlternativeSources();
+                // «Показать скрытые» на «Настройках» обещает вернуть приложения именно
+                // по «Обновить каталог» — список скрытых перечитываем с диска.
+                _appManager.ReloadHiddenApps();
                 _appManager.ApplyAlternativesToCatalog(_catalog);
 
                 BuildRows();
@@ -292,6 +296,12 @@ namespace Ven4Tools.ViewModels
                     if (string.IsNullOrWhiteSpace(catalogApp.Id) || string.IsNullOrWhiteSpace(catalogApp.Name))
                         continue;
                     if (!seenCatalogIds.Add(catalogApp.Id))
+                        continue;
+                    // Скрытые кнопкой 🙈 приложения. HideApp убирал строку только из
+                    // текущего списка, а при каждом построении (перезапуск клиента,
+                    // «Обновить каталог») она возвращалась: строки берутся по Id через
+                    // GetAppById, который скрытые не отсеивает.
+                    if (_appManager.IsAppHidden(catalogApp.Id))
                         continue;
                     var appInfo = _appManager.GetAppById(catalogApp.Id);
                     if (appInfo == null) continue;

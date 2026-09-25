@@ -214,6 +214,12 @@ namespace Ven4Tools.ViewModels
 
         private async Task UninstallAsync()
         {
+            // Тот же гейт, что и в InstallAsync: без него удаление молча вставало в
+            // очередь за чужой установкой (пачка каталога, обновление всего) и
+            // карточка минутами висела на «Удаление...». Переустановка при отказе
+            // здесь тоже останавливается — IsInstalled остаётся true.
+            if (Views.UiGuards.WarnIfInstallBusy()) return;
+
             IsBusy = true;
             try
             {

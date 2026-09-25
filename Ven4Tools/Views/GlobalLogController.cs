@@ -36,10 +36,17 @@ namespace Ven4Tools.Views
         /// <summary>
         /// Добавляет сообщение в журнал. Вызывается из фоновых потоков (подписка на
         /// <c>AppLogger.MessageReceived</c>), поэтому переключение в поток UI — здесь.
+        /// <para>Асинхронно (BeginInvoke), а не синхронным Invoke: AppLogger.Write
+        /// зовут и изнутри замков — TrustedExecutablePaths.IsDirectoryAclCompromised
+        /// пишет в журнал под своим замком, а построение индекса AppLaunchResolver
+        /// держит ещё и свой. Синхронный Invoke из такого потока ждал UI-поток, а UI-поток
+        /// в это время мог ждать тот же замок (InvalidateCache, ResolveWinget) —
+        /// взаимная блокировка и намертво зависшее окно. Порядок строк BeginInvoke
+        /// сохраняет: очередь диспетчера FIFO.</para>
         /// </summary>
         public void Append(string message)
         {
-            _list.Dispatcher.Invoke(() =>
+            _list.Dispatcher.BeginInvoke(() =>
             {
                 var entry = LogEntry.Parse(message);
                 _entries.Add(entry);

@@ -47,7 +47,10 @@ if (args.Length == 4 && args[0] == "generate")
 
     var manifest = new Manifest(
         version,
-        DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+        // InvariantCulture — как в ClientManifestBuilder лаунчера: в пользовательском
+        // формате «:» — разделитель времени текущей культуры, а год считается в её
+        // календаре (th-TH — буддийский).
+        DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture),
         entries);
 
     var json = JsonSerializer.Serialize(manifest, new JsonSerializerOptions
