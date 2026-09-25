@@ -343,7 +343,12 @@ namespace Ven4Tools.Launcher
                     // Хендл downloadResult (FileShare.Read) держит архив неизменным от
                     // этой проверки до распаковки — та же защита от подмены, что у
                     // проверки SHA256 внутри загрузчика.
-                    using var cdnService = new CdnService();
+                    // Список отзыва VerifyAsync запрашивает сам, прямо сейчас; признак
+                    // «не проверен» — сбой ИМЕННО этого запроса (CdnService сообщает о
+                    // каждом null через log), а не _cdnManifestLoaded со старта: тот
+                    // устаревает в обе стороны и молчал, когда список не пришёл сейчас.
+                    string? revocationListFailure = null;
+                    using var cdnService = new CdnService(reason => revocationListFailure = reason);
                     var signed = await LocalArchiveVerifier.VerifyAsync(tempZip, cdnService, token);
                     string? refusal = signed.Outcome == LocalArchiveOutcome.Rejected
                         ? signed.RejectionReason
@@ -357,8 +362,8 @@ namespace Ven4Tools.Launcher
                         return;
                     }
                     AddLog($"🔒 Встроенная подпись архива подтверждена (версия {signed.Version})");
-                    if (!_cdnManifestLoaded)
-                        AddLog("⚠️ Список отозванных версий на CDN недоступен — отзыв этого архива не проверен");
+                    if (revocationListFailure != null)
+                        AddLog($"⚠️ Список отозванных версий на CDN недоступен ({revocationListFailure}) — отзыв этого архива не проверен");
                 }
 
                 bool installed = await ExtractAndInstallClientAsync(tempZip, version.Version, token, silent);
