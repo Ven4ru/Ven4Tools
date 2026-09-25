@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace Ven4Tools.Launcher.Services;
@@ -299,10 +300,19 @@ internal sealed class TransactionalDirectoryInstaller
     /// оригинал при отсутствии файла под штатным именем — единственная копия,
     /// и её нужно возвращать на место. Чистая функция — покрыта unit-тестами.
     /// </summary>
-    public static bool TryParseTransientArtifactName(string? fileName, out string originalName, out bool isBackup)
+    public static bool TryParseTransientArtifactName(string? fileName, out string originalName, out bool isBackup) =>
+        TryParseTransientArtifactName(fileName, out originalName, out isBackup, out _);
+
+    /// <summary>
+    /// То же, плюс идентификатор операции (32 hex-хвост): остатки одной прерванной
+    /// транзакции нужно разбирать вместе — см. <see cref="RecoverLeftovers"/>.
+    /// </summary>
+    public static bool TryParseTransientArtifactName(
+        string? fileName, out string originalName, out bool isBackup, out string operationId)
     {
         originalName = string.Empty;
         isBackup = false;
+        operationId = string.Empty;
         if (string.IsNullOrEmpty(fileName)) return false;
 
         // Решает суффикс, стоящий ПОСЛЕДНИМ: у файла с «.old-» внутри собственного
@@ -323,7 +333,92 @@ internal sealed class TransactionalDirectoryInstaller
 
         originalName = fileName[..marker];
         isBackup = backup;
+        operationId = tail;
         return true;
+    }
+
+    /// <summary>
+    /// Разбор остатков прерванной <see cref="InstallPartial"/> внутри папки клиента
+    /// (процесс убит, отключилось питание). Возвращает (восстановлено, удалено).
+    ///
+    /// Остатки одной операции решаются вместе. Пока у операции есть хоть одна
+    /// заготовка «.new-{id}», фаза фиксации не дошла до конца: часть файлов уже новая
+    /// (оригинал — в «.old-{id}»), часть ещё старая (новая версия — в «.new-{id}»).
+    /// Такую операцию откатываем целиком: все «.old-{id}» возвращаются на место
+    /// поверх уже заменённых файлов, заготовки удаляются. Раньше «.old» удалялся
+    /// везде, где файл под штатным именем существовал, и в папке оставалась смесь
+    /// двух версий. Файлы, которых в старой версии не было и которые успели лечь
+    /// на место, остаются лишними — их покажет проверка целостности.
+    ///
+    /// Если заготовок у операции нет, фиксация завершилась, и «.old-{id}» — просто
+    /// неубранные резервные копии: удаляются. Исключение — «.old» без файла под
+    /// штатным именем: это единственная копия, её возвращаем на место.
+    /// </summary>
+    public static (int Restored, int Removed) RecoverLeftovers(string directory)
+    {
+        int restored = 0, removed = 0;
+        var leftovers = new List<(string Path, string Original, bool IsBackup, string OperationId)>();
+        foreach (string file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories).ToList())
+        {
+            if (TryParseTransientArtifactName(Path.GetFileName(file),
+                    out string originalName, out bool isBackup, out string operationId))
+            {
+                string original = Path.Combine(Path.GetDirectoryName(file)!, originalName);
+                leftovers.Add((file, original, isBackup, operationId));
+            }
+        }
+
+        var interrupted = new HashSet<string>(
+            leftovers.Where(l => !l.IsBackup).Select(l => l.OperationId), StringComparer.OrdinalIgnoreCase);
+
+        // Сначала резервные копии (при откате они ложатся поверх новых файлов),
+        // потом заготовки.
+        foreach (var (path, original, _, operationId) in leftovers.Where(l => l.IsBackup))
+        {
+            if (interrupted.Contains(operationId) || !File.Exists(original))
+            {
+                try { File.Move(path, original, overwrite: true); restored++; }
+                catch { /* не удалось вернуть — остаток оставляем, не удаляя */ }
+                continue;
+            }
+
+            try { File.Delete(path); removed++; }
+            catch { /* занято/уже удалено */ }
+        }
+
+        foreach (var (path, _, _, _) in leftovers.Where(l => !l.IsBackup))
+        {
+            try { File.Delete(path); removed++; }
+            catch { /* занято/уже удалено */ }
+        }
+
+        return (restored, removed);
+    }
+
+    /// <summary>
+    /// Имя каталога — служебный остаток установки для папки клиента
+    /// <paramref name="clientName"/>: «.{имя}.staging-{32 hex}» (распаковка) или
+    /// «{имя}.backup-{32 hex}» (прежняя версия на время замены). Строго по шаблону:
+    /// по одному префиксу соседняя папка пользователя вроде «Ven4Tools_Client.backup-old»
+    /// удалялась бы при старте лаунчера целиком.
+    /// </summary>
+    public static bool IsInstallLeftoverDirectory(string directoryName, string clientName, out bool isBackup)
+    {
+        isBackup = false;
+        string stagingPrefix = $".{clientName}.staging-";
+        string backupPrefix = $"{clientName}.backup-";
+        string tail;
+        if (directoryName.StartsWith(stagingPrefix, StringComparison.OrdinalIgnoreCase))
+            tail = directoryName[stagingPrefix.Length..];
+        else if (directoryName.StartsWith(backupPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            tail = directoryName[backupPrefix.Length..];
+            isBackup = true;
+        }
+        else
+            return false;
+
+        return tail.Length == 32 && tail.All(Uri.IsHexDigit);
     }
 
     private static void ValidatePaths(string staging, string target)
