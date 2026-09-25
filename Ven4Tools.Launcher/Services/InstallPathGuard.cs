@@ -30,8 +30,24 @@ namespace Ven4Tools.Launcher.Services
             if (IsSameOrSubPath(client, data)) return false;
             if (IsSameOrSubPath(data, client)) return false;
             if (IsProtectedUserRoot(client)) return false;
+            if (IsVolumeRoot(clientPath)) return false;
 
             return true;
+        }
+
+        // Корень диска или сетевой шары («D:\», «\\server\share»). Системный диск уже
+        // отсекается проверкой выше (он предок папки данных), а любой другой — нет:
+        // путь из отредактированного файла настроек «D:\» превращал «Удалить клиент»
+        // в Directory.Delete всего диска, а установку — в перенос его содержимого.
+        private static bool IsVolumeRoot(string path)
+        {
+            string full = Path.GetFullPath(path);
+            string? root = Path.GetPathRoot(full);
+            return !string.IsNullOrEmpty(root) &&
+                   string.Equals(
+                       full.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                       root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                       StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsProtectedUserRoot(string normalizedClientPath)

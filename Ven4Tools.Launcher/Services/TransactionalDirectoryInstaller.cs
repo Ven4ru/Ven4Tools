@@ -305,9 +305,13 @@ internal sealed class TransactionalDirectoryInstaller
         isBackup = false;
         if (string.IsNullOrEmpty(fileName)) return false;
 
-        int marker = fileName.LastIndexOf(OldSuffix, StringComparison.Ordinal);
-        bool backup = marker > 0;
-        if (!backup) marker = fileName.LastIndexOf(NewSuffix, StringComparison.Ordinal);
+        // Решает суффикс, стоящий ПОСЛЕДНИМ: у файла с «.old-» внутри собственного
+        // имени («a.old-b.dll.new-{id}») раньше находился «.old-», хвост после него
+        // не проходил проверку, и заготовка «.new-» не опознавалась вовсе.
+        int oldMarker = fileName.LastIndexOf(OldSuffix, StringComparison.Ordinal);
+        int newMarker = fileName.LastIndexOf(NewSuffix, StringComparison.Ordinal);
+        bool backup = oldMarker > newMarker;
+        int marker = Math.Max(oldMarker, newMarker);
         if (marker <= 0) return false;
 
         string tail = fileName[(marker + OldSuffix.Length)..];

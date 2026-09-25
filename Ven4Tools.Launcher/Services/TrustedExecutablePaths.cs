@@ -42,6 +42,14 @@ namespace Ven4Tools.Launcher.Services
         public static string ShutdownExe { get; } = Path.Combine(SystemDir, "shutdown.exe");
 
         /// <summary>
+        /// %SystemRoot%\explorer.exe — лежит в каталоге Windows, а не в System32. Короткое
+        /// «explorer.exe» ShellExecute ищет в том числе в каталоге лаунчера — том же
+        /// user-writable месте, от которого защищают остальные пути этого класса.
+        /// </summary>
+        public static string ExplorerExe { get; } = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+
+        /// <summary>
         /// winget — сначала пробуем сам пакет App Installer под Program Files\WindowsApps
         /// (см. ResolveWingetFromPackageFolder), и только если не нашли — старый путь
         /// через App Execution Alias в %LocalAppData%\Microsoft\WindowsApps с ACL-проверкой.

@@ -2,7 +2,15 @@ name: Очистка старых ассетов клиента
 
 on:
   release:
-    types: [published]
+    # released — перевод предрелиза в стабильный: публикация самого предрелиза
+    # ничего не чистит (см. проверку ниже), чистка случается именно здесь.
+    # Обычная публикация стабильного релиза шлёт оба события — прогоны идут по
+    # очереди (concurrency), и второй просто не находит, что удалять.
+    types: [published, released]
+
+concurrency:
+  group: prune-old-client-assets
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -17,8 +25,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CURRENT_TAG: ${{ github.event.release.tag_name }}
+          IS_PRERELEASE: ${{ github.event.release.prerelease }}
           REPO: ${{ github.repository }}
         run: |
+          # Предрелиз не становится актуальной версией: лаунчер берёт «latest» только
+          # из стабильных релизов с zip (ClientVersionMapper.FindFirstStableClientRelease).
+          # Снятие zip у текущего стабильного по публикации предрелиза оставило бы
+          # лаунчер вообще без устанавливаемой версии клиента.
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            echo "Релиз $CURRENT_TAG — предрелиз, пропуск."
+            exit 0
+          fi
+
           # Публикация клиентского релиза (тег vX.Y.Z, не launcher-vX.Y.Z) — повод
           # убрать zip у всех остальных клиентских релизов: скачивание версии без
           # прикреплённого к ней SHA256 из version.json (хеш там есть только для

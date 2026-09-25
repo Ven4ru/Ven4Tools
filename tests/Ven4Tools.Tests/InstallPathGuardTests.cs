@@ -38,6 +38,26 @@ public sealed class InstallPathGuardTests
         Assert.False(InstallPathGuard.IsClientPathSafe(clientPath, unrelatedDataFolder));
     }
 
+    // Корень несистемного диска не является предком папки данных, поэтому проверка
+    // пересечения его не ловила: «Удалить клиент» с таким путём (отредактированный
+    // файл настроек) стирал бы весь диск.
+    [Theory]
+    [InlineData(@"D:\")]
+    [InlineData(@"D:\\")]
+    [InlineData(@"\\server\share")]
+    [InlineData(@"\\server\share\")]
+    public void IsClientPathSafe_RejectsVolumeRoot(string clientPath)
+    {
+        Assert.False(InstallPathGuard.IsClientPathSafe(clientPath, @"C:\Users\test\AppData\Local\Ven4Tools"));
+    }
+
+    [Fact]
+    public void IsClientPathSafe_AllowsFolderOnOtherVolume()
+    {
+        Assert.True(InstallPathGuard.IsClientPathSafe(
+            @"D:\Games\Ven4Tools_Client", @"C:\Users\test\AppData\Local\Ven4Tools"));
+    }
+
     [Fact]
     public void IsClientPathSafe_AllowsSubfolderInsideKnownUserContentRoot()
     {

@@ -101,6 +101,18 @@ namespace Ven4Tools.Launcher
             };
 
             _updateService.UpdateAvailable += OnUpdateAvailable;
+            // Повторная попытка автообновления клиента, отложенного на прошлом тике
+            // (клиент был запущен, лаунчер занят, сбой сети). Без уведомления — о
+            // версии пользователю уже сообщили; TriggerAutoClientUpdateAsync сам
+            // ничего не делает, если автоматический режим выключен.
+            _updateService.ClientUpdateStillPending += info =>
+            {
+                try
+                {
+                    Dispatcher.Invoke(() => { _ = TriggerAutoClientUpdateAsync(info.LatestVersion ?? ""); });
+                }
+                catch { } // Dispatcher может быть выключен при завершении приложения
+            };
 
             _updateService.WingetUpgradeCountChanged += count =>
             {
