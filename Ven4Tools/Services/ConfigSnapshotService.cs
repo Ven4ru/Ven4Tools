@@ -107,6 +107,10 @@ namespace Ven4Tools.Services
                 var snapshot = JsonConvert.DeserializeObject<ConfigSnapshot>(
                     File.ReadAllText(filePath, Encoding.UTF8));
                 if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.Name)) return null;
+                // "DebloatTweakIds": null / "Presets": null — файл тоже повреждён: без
+                // отсева NullReference из .Count в GetSnapshots обрывал обход папки, и
+                // один битый файл прятал из списка все снапшоты после него.
+                if (snapshot.DebloatTweakIds == null || snapshot.Presets == null) return null;
                 if (snapshot.FormatVersion > 1)
                 {
                     AppLogger.Write($"[Снапшоты] Неподдерживаемая версия формата ({snapshot.FormatVersion}): {Path.GetFileName(filePath)}");

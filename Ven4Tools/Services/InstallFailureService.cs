@@ -20,7 +20,13 @@ namespace Ven4Tools.Services
         {
             try
             {
-                var list = ReadAll();
+                // Чтение через JsonListFile, а не ReadAll: тот на любой ошибке отдаёт
+                // пустой список, и запись ниже затирала бы весь журнал вместе с
+                // флагами Reported, которые проставляет лаунчер, — достаточно, чтобы
+                // файл на мгновение был занят (антивирус, лаунчер как раз заменяет его).
+                // Тот же приём, что у истории установок и пресетов.
+                var list = JsonListFile.TryLoad<InstallFailure>(FailuresPath, "[InstallFailureService]");
+                if (list == null) return;
                 list.Add(new InstallFailure
                 {
                     SessionId   = CrashReportService.SessionId,

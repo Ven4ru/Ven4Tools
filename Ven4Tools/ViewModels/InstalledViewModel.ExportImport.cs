@@ -74,7 +74,12 @@ namespace Ven4Tools.ViewModels
                 // Успех определяется кодом выхода, а не поиском подстрок
                 // «успешно»/«successfully» в выводе — проект принципиально не передаёт
                 // --locale en-US, поэтому winget печатает на языке системы.
-                var (code, output) = await WingetRunner.RunAsync($"import -i \"{dlg.FileName}\" {WingetArgs.ModifyLine}");
+                // Таймаут явный и длинный — как у «Обновить всё» (RunStreamingAsync, 45 мин).
+                // По умолчанию RunAsync ждёт 120 с: импорт ставит пакеты один за другим и
+                // почти всегда дольше, а по таймауту дерево winget убивается прямо посреди
+                // установки очередного пакета, и итог показывался как «winget не отработал».
+                var (code, output) = await WingetRunner.RunAsync(
+                    $"import -i \"{dlg.FileName}\" {WingetArgs.ModifyLine}", TimeSpan.FromMinutes(45));
                 var exit = DescribeWingetExitCode(code);
 
                 if (exit.Success)

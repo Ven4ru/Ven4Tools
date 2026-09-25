@@ -30,11 +30,20 @@ namespace Ven4Tools.ViewModels
                 // Приложение уже работает с правами администратора (перезапуск через UAC
                 // в MainWindow), поэтому runas не нужен — запускаем скрыто и перенаправляем
                 // вывод команд в лог-панель вместо отдельного окна консоли.
+                //
+                // Внутри цепочки — полные пути, а не голые «netsh»/«ipconfig»: cmd ищет
+                // короткое имя сначала в ТЕКУЩЕМ каталоге и только потом по PATH, то есть
+                // netsh.bat, подложенный в каталог запуска клиента, выполнился бы с правами
+                // администратора — ровно то, от чего защищает TrustedExecutablePaths
+                // (сам cmd.exe уже запускался по полному пути). /s + внешняя пара кавычек:
+                // cmd снимает ровно первую и последнюю кавычку и оставляет кавычки у путей.
+                string netsh = TrustedExecutablePaths.NetshExe;
+                string ipconfig = TrustedExecutablePaths.IpconfigExe;
                 var psi = new ProcessStartInfo
                 {
                     FileName  = TrustedExecutablePaths.CmdExe,
-                    Arguments = "/c netsh winsock reset & netsh int ip reset & " +
-                                "ipconfig /release & ipconfig /renew",
+                    Arguments = $"/s /c \"\"{netsh}\" winsock reset & \"{netsh}\" int ip reset & " +
+                                $"\"{ipconfig}\" /release & \"{ipconfig}\" /renew\"",
                     UseShellExecute        = false,
                     CreateNoWindow         = true,
                     WindowStyle            = ProcessWindowStyle.Hidden,
