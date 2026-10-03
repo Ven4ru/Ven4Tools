@@ -25,13 +25,22 @@ namespace Ven4Tools.ViewModels
             UpdatesLogText = "⏳ Проверка...";
             try
             {
-                var (_, raw) = await WingetRunner.RunAsync(
+                var (code, raw) = await WingetRunner.RunAsync(
                     $"upgrade --include-unknown --source winget {WingetArgs.NonInteractiveLine}",
                     TimeSpan.FromMinutes(3));
 
                 var upgradable = ParseUpgradableRows(raw);
 
-                if (upgradable.Count > 0)
+                // -1 — синтетический код «winget вообще не отработал» (не найден, не
+                // запустился, убит по таймауту), тот же признак, что разбирают
+                // «Установленные». Пустой вывод в этом случае раньше читался как
+                // «обновлений нет», и пользователь получал зелёное «всё актуально».
+                if (code == -1 && upgradable.Count == 0)
+                {
+                    UpdatesLogText = "⚠ Не удалось проверить обновления: winget не найден или не ответил вовремя";
+                    AppLogger.Write("⚠ Проверка обновлений winget не выполнена: winget не отработал");
+                }
+                else if (upgradable.Count > 0)
                 {
                     UpdatesLogText = $"🔔 Доступно обновлений: {upgradable.Count}\n\n" + string.Join("\n", upgradable);
                     AppLogger.Write($"🔔 Доступно обновлений winget: {upgradable.Count}");

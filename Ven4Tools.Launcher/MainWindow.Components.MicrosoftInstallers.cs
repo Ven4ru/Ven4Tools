@@ -23,7 +23,10 @@ namespace Ven4Tools.Launcher
             string url, string fileName, string args, string label,
             OperationLease lease, TimeSpan timeout)
         {
-            string tempFile = Path.Combine(Path.GetTempPath(), $"ven4_{Guid.NewGuid():N}_{fileName}");
+            // Отдельный каталог, а не общий %TEMP%: в elevated-лаунчере установщик
+            // запускается с правами администратора прямо отсюда, и соседние файлы
+            // (подложенная DLL) не должны быть доступны на запись — см. InstallerRunDirectory.
+            string? runDirectory = null;
             AddLog($"⬇️ Скачивание {label}...");
             // L4: раньше отменить зависшую загрузку/установку WebView2/VC++ было нечем —
             // кнопка «Отмена» показывалась только для скачивания клиента. Переиспользуем
@@ -41,6 +44,8 @@ namespace Ven4Tools.Launcher
             });
             try
             {
+                runDirectory = Helpers.InstallerRunDirectory.Create();
+                string tempFile = Path.Combine(runDirectory, fileName);
                 await DownloadTrustedFileAsync(url, tempFile, label, reportProgress: true, ct);
 
                 // Скачано с доверенного хоста Microsoft по HTTPS, но перед запуском с
@@ -98,7 +103,7 @@ namespace Ven4Tools.Launcher
             }
             finally
             {
-                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+                Helpers.InstallerRunDirectory.TryDelete(runDirectory);
                 Dispatcher.Invoke(() =>
                 {
                     progressDownload.Value = 0;

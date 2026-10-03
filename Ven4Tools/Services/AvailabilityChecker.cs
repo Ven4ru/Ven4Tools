@@ -77,6 +77,24 @@ namespace Ven4Tools.Services
 
         public async Task<(AvailabilityStatus Status, long SizeMB)> CheckAppAvailabilityWithSize(AppInfo app)
         {
+            // Локальный установщик (перетащенный .exe/.msi) — источник на диске, и
+            // установка берёт его первым (InstallationService: LocalInstallerPath при
+            // существующем файле). Раньше проверка его не видела: Id «User.…» минует
+            // winget, ссылок и choco у такого приложения нет — итог Unavailable, строка
+            // становилась невыбираемой (IsSelectable), и поставить добавленный файл
+            // из каталога было нельзя. Сеть здесь не нужна, поэтому проверка идёт до
+            // параноидального и офлайн-режимов.
+            if (!string.IsNullOrEmpty(app.LocalInstallerPath))
+            {
+                try
+                {
+                    var local = new System.IO.FileInfo(app.LocalInstallerPath);
+                    if (local.Exists)
+                        return (AvailabilityStatus.Available, Math.Max(1, local.Length / 1024 / 1024));
+                }
+                catch (Exception ex) { AppLogger.Write($"[AvailabilityChecker] Локальный установщик {app.LocalInstallerPath}: {ex.Message}"); }
+            }
+
             // Параноидальный режим: проверка доступности — это ни загрузка каталога,
             // ни сама установка, поэтому сетевые запросы к сторонним хостам (HEAD/GET)
             // и внешний winget-source здесь запрещены. Возвращаем нейтральный статус

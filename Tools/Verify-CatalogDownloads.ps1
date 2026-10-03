@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$CatalogPath = (Join-Path $PSScriptRoot '..\Catalog\master.json'),
     [string]$OutputDirectory = (Join-Path $env:TEMP 'Ven4Tools-CatalogAudit'),
     [int]$TimeoutMinutes = 30

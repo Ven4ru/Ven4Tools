@@ -80,11 +80,10 @@ namespace Ven4Tools.Launcher
         {
             AddLog("📦 Получение информации о winget с GitHub...");
 
-            string uniq           = Guid.NewGuid().ToString("N");
-            string tempMsix       = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_winget_setup.msixbundle");
-            string tempVcLibs     = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_VCLibs.appx");
-            string tempUiXaml     = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_UIXaml.appx");
-            string tempAppRuntime = Path.Combine(Path.GetTempPath(), $"ven4_{uniq}_WindowsAppRuntime.exe");
+            // Установщик Windows App Runtime запускается с правами лаунчера — в
+            // elevated-лаунчере это права администратора, поэтому каталог для него не
+            // общий %TEMP% (подложенная рядом DLL), см. InstallerRunDirectory.
+            string? runDirectory = null;
 
             Dispatcher.Invoke(() =>
             {
@@ -106,6 +105,12 @@ namespace Ven4Tools.Launcher
                 // finally этой установки диспоузил уже чужой токен.
                 using var step = lease.CreateStep(TimeSpan.FromMinutes(10));
                 var ct = step.Token;
+
+                runDirectory          = Helpers.InstallerRunDirectory.Create();
+                string tempMsix       = Path.Combine(runDirectory, "winget_setup.msixbundle");
+                string tempVcLibs     = Path.Combine(runDirectory, "VCLibs.appx");
+                string tempUiXaml     = Path.Combine(runDirectory, "UIXaml.appx");
+                string tempAppRuntime = Path.Combine(runDirectory, "WindowsAppRuntime.exe");
 
                 string? msixUrl = await ResolveWingetMsixUrlAsync(ct);
                 if (msixUrl == null) return;
@@ -166,10 +171,7 @@ namespace Ven4Tools.Launcher
             }
             finally
             {
-                try { if (File.Exists(tempMsix))   File.Delete(tempMsix);   } catch { }
-                try { if (File.Exists(tempVcLibs)) File.Delete(tempVcLibs); } catch { }
-                try { if (File.Exists(tempUiXaml)) File.Delete(tempUiXaml); } catch { }
-                try { if (File.Exists(tempAppRuntime)) File.Delete(tempAppRuntime); } catch { }
+                Helpers.InstallerRunDirectory.TryDelete(runDirectory);
                 Dispatcher.Invoke(() =>
                 {
                     progressDownload.Value = 0;

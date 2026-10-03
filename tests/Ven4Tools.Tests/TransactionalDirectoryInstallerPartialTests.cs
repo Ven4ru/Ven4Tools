@@ -183,6 +183,12 @@ public sealed class TransactionalDirectoryInstallerPartialTests
             "Ven4Tools.dll.new-0123456789abcdef0123456789abcdef", out original, out isBackup));
         Assert.Equal("Ven4Tools.dll", original);
         Assert.False(isBackup);
+
+        // «.old-» внутри собственного имени файла не должно мешать опознать заготовку.
+        Assert.True(TransactionalDirectoryInstaller.TryParseTransientArtifactName(
+            "a.old-b.dll.new-0123456789abcdef0123456789abcdef", out original, out isBackup));
+        Assert.Equal("a.old-b.dll", original);
+        Assert.False(isBackup);
     }
 
     private sealed class AlwaysPresentDirectoryOperations : IDirectoryOperations

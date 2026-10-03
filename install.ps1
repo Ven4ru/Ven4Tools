@@ -23,6 +23,7 @@ $runAsFile = [bool]$PSCommandPath
 # Явный сброс: под iex переменные живут в сессии пользователя, и catch ниже
 # не должен удалить чужой $tmpDir, если ошибка случилась до его создания.
 $tmpDir = $null
+$guard = $null
 
 Write-Host ""
 Write-Host "  Ven4Tools  |  ven4tools.ru" -ForegroundColor Cyan
@@ -97,6 +98,14 @@ try {
         throw "Загрузка перенаправлена на недоверенный источник: $($finalUri.Scheme)://$($finalUri.Host)$($finalUri.AbsolutePath) — установка прервана"
     }
 
+    # Хендл с FileShare.Read держим от проверки SHA256 до завершения установщика:
+    # случайное имя каталога не мешает процессу того же пользователя, следящему
+    # за %TEMP%, подменить уже скачанный файл между Get-FileHash и Start-Process.
+    # Тот же приём, что DownloadResult в лаунчере. Без FileShare.Delete файл
+    # нельзя ни перезаписать, ни переименовать; чтение и запуск он не блокирует.
+    $guard = [System.IO.File]::Open($tmp, [System.IO.FileMode]::Open,
+        [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+
     # Проверка целостности — fail-closed, как и весь остальной проект
     # (DownloadValidator/InstallationService в клиенте и лаунчере). Раньше при
     # пустом хеше (latest_version.php оставляет launcher_sha256 пустым, если
@@ -133,7 +142,7 @@ try {
     Write-Host "  Проверка целостности..." -ForegroundColor Gray
     $actual = (Get-FileHash $tmp -Algorithm SHA256).Hash
     if ($actual -ne $api.downloads.launcher_sha256.ToUpper()) {
-        Remove-Item $tmpDir -Recurse -Force
+        # Каталог удалит catch — после того, как закроет хендл.
         throw "Несовпадение SHA256 — установка прервана"
     }
 
@@ -146,6 +155,7 @@ try {
     if ($installedVersion -and ([version]$newVersion -le [version]$installedVersion)) {
         Write-Host "  Установлена актуальная версия: $installedVersion" -ForegroundColor White
         Write-Host "  Обновление не требуется." -ForegroundColor DarkGray
+        $guard.Dispose(); $guard = $null
         Remove-Item $tmpDir -Recurse -Force
         Write-Host ""
         if ($runAsFile) { exit 0 } else { return }
@@ -159,6 +169,7 @@ try {
 
     Write-Host "  Установка..." -ForegroundColor Gray
     $proc = Start-Process $tmp -ArgumentList '/S' -PassThru -Wait
+    $guard.Dispose(); $guard = $null
     if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
 
     if ($proc.ExitCode -ne 0) {
@@ -177,6 +188,8 @@ try {
 catch {
     # Часть отказов (расхождение хеша между хостингом и CDN, недоступный CDN)
     # бросается уже после загрузки — непроверенный exe не должен оставаться в %TEMP%.
+    # Хендл закрываем первым: без FileShare.Delete он не дал бы удалить файл.
+    if ($guard) { $guard.Dispose(); $guard = $null }
     if ($tmpDir -and (Test-Path $tmpDir)) { Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue }
     Write-Host ""
     Write-Host "  Ошибка: $_" -ForegroundColor Red

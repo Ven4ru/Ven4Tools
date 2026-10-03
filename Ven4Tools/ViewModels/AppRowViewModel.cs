@@ -224,6 +224,11 @@ namespace Ven4Tools.ViewModels
                 {
                     OnPropertyChanged(nameof(RowBrush));
                     OnPropertyChanged(nameof(StatusTooltip));
+                    // Оба вычисляются и из IsInstalled: удаление из карточки сбрасывает
+                    // IsInstalled, а LaunchBlockedReason остаётся прежним — без этих
+                    // уведомлений значок 🔒 висел на уже удалённом приложении.
+                    OnPropertyChanged(nameof(CanLaunch));
+                    OnPropertyChanged(nameof(ShowLaunchBlocked));
                 }
             }
         }
@@ -435,7 +440,14 @@ namespace Ven4Tools.ViewModels
         public string? LaunchPath
         {
             get => _launchPath;
-            set { if (SetField(ref _launchPath, value)) OnPropertyChanged(nameof(CanLaunch)); }
+            set
+            {
+                if (SetField(ref _launchPath, value))
+                {
+                    OnPropertyChanged(nameof(CanLaunch));
+                    OnPropertyChanged(nameof(ShowLaunchBlocked));
+                }
+            }
         }
 
         public bool CanLaunch => IsInstalled && !string.IsNullOrEmpty(LaunchPath);

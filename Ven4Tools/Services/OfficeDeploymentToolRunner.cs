@@ -112,7 +112,21 @@ namespace Ven4Tools.Services
         /// </summary>
         public async Task<OdtPrepareResult> PrepareAsync(CancellationToken ct)
         {
-            string workDir = Path.Combine(Path.GetTempPath(), $"Ven4Tools-ODT-{Guid.NewGuid():N}");
+            // Не голый %TEMP%: и бутстраппер (самораспаковка — дочерний процесс
+            // elevated-клиента), и setup.exe (/configure, runas) запускаются с правами
+            // администратора, а соседняя DLL в каталоге запуска грузится ими по порядку
+            // поиска — см. InstallerTempDirectory. В защищённом каталоге заодно нельзя
+            // подменить ни бутстраппер между проверкой подписи и запуском, ни
+            // Configuration.xml между записью и открытием хендла.
+            string workDir;
+            try
+            {
+                workDir = Helpers.InstallerTempDirectory.NewFilePath($"Ven4Tools-ODT-{Guid.NewGuid():N}");
+            }
+            catch (Exception ex)
+            {
+                return OdtPrepareResult.Failed($"Подготовка ODT: {ex.Message}");
+            }
 
             try
             {

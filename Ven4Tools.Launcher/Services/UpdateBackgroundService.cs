@@ -29,6 +29,10 @@ namespace Ven4Tools.Launcher.Services
 
         // Первый параметр — тип обновления: "launcher" либо "client"
         public event Action<string, UpdateInfo>? UpdateAvailable;
+        // Более новая версия клиента по-прежнему не установлена, хотя уведомление о
+        // ней уже показывалось (LastNotifiedClientVersion). Нужна автообновлению:
+        // см. комментарий в CheckClientAsync.
+        public event Action<UpdateInfo>? ClientUpdateStillPending;
         public event Action<int>? WingetUpgradeCountChanged;
         public event Action<Notification>? NotificationAvailable;
 
@@ -208,8 +212,25 @@ namespace Ven4Tools.Launcher.Services
 
             if (latestVersion == null) return;
             if (!VersionComparer.IsNewer(latestVersion, installedVersion)) return;
-            if (latestVersion == LastNotifiedClientVersion) return;
             if (_cts.IsCancellationRequested) return;
+            if (latestVersion == LastNotifiedClientVersion)
+            {
+                // Уведомление по этой версии уже было — повторно его не показываем. Но
+                // само обновление могло не состояться: тихое автообновление откладывается,
+                // пока клиент запущен или лаунчер занят другой операцией, и обрывается
+                // сбоем сети — «до следующего тика». Раньше следующий тик выходил здесь же,
+                // а отметка о показанном уведомлении хранится в настройках и переживает
+                // перезапуск: отложенное автообновление не наступало никогда.
+                ClientUpdateStillPending?.Invoke(new UpdateInfo
+                {
+                    HasUpdate = true,
+                    CurrentVersion = installedVersion,
+                    LatestVersion = latestVersion,
+                    DownloadUrl = downloadUrl,
+                    ReleaseNotes = releaseNotes
+                });
+                return;
+            }
 
             LastNotifiedClientVersion = latestVersion;
             UpdateAvailable?.Invoke("client", new UpdateInfo
