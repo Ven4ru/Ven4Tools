@@ -41,6 +41,25 @@ namespace Ven4Tools.ClientUITests
             return null;
         }
 
+        /// <summary>
+        /// Кнопка из «Инструментов каталога». В прежнем виде каталога они всегда на
+        /// виду, в новом — лежат в свёрнутом блоке под панелью набора, и до раскрытия
+        /// их нет в дереве автоматизации.
+        /// </summary>
+        public static AutomationElement? FindCatalogTool(AppSession session, string automationId)
+        {
+            var element = Lookup(session, automationId);
+            if (element != null) return element;
+
+            var tools = Lookup(session, "expCatalogTools");
+            if (tools == null || !tools.Patterns.ExpandCollapse.IsSupported) return null;
+
+            tools.Patterns.ExpandCollapse.Pattern.Expand();
+            return Retry.WhileNull(() => Lookup(session, automationId),
+                timeout: TimeSpan.FromSeconds(2), interval: TimeSpan.FromMilliseconds(150),
+                throwOnTimeout: false).Result;
+        }
+
         private static AutomationElement? Lookup(AppSession session, string automationId) =>
             session.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId(automationId));
     }

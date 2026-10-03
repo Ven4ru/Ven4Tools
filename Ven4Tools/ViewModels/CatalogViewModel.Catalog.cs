@@ -339,7 +339,8 @@ namespace Ven4Tools.ViewModels
 
             // Счётчик выбранного должен отражать восстановленные отметки: подписки
             // выше навешены уже ПОСЛЕ проставления IsSelected и сами его не поднимут.
-            OnPropertyChanged(nameof(SelectedCount));
+            RefreshSelection();
+            RefreshCategoryChips();
         }
 
         private void BuildCategoryHeaders()

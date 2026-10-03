@@ -242,6 +242,7 @@ namespace Ven4Tools
                     _installedTab.ShowUpdatesFilter();
                     NavigateToInstalled(null, null);
                 };
+                _catalogTab.ApplyUiMode(_uiModern);
             }
             MainFrame.Content = (_catalogTab);
             UpdateMascot("catalog");

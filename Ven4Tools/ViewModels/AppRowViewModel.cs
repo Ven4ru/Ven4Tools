@@ -133,10 +133,44 @@ namespace Ven4Tools.ViewModels
         public bool IsSelected
         {
             get => _isSelected;
-            set { if (SetField(ref _isSelected, value)) SelectionChanged?.Invoke(); }
+            set
+            {
+                if (!SetField(ref _isSelected, value)) return;
+                OnPropertyChanged(nameof(SelectLabel));
+                SelectionChanged?.Invoke();
+            }
         }
 
         public event Action? SelectionChanged;
+
+        // ── Карточка каталога (новый интерфейс) ─────────────────────────────────
+
+        /// <summary>Версия и размер одной строкой под названием: «157.0 · 89,6 МБ».</summary>
+        public string CardMetaText
+        {
+            get
+            {
+                string size = CatalogSize.ToDisplay(CatalogSizeText);
+                bool hasVersion = !string.IsNullOrWhiteSpace(CatalogVersion);
+                if (hasVersion && size.Length > 0) return $"{CatalogVersion} · {size}";
+                if (hasVersion) return CatalogVersion!;
+                if (size.Length > 0) return size;
+                return IsUserAdded ? "добавлено вручную" : "";
+            }
+        }
+
+        /// <summary>Размер для строки в панели «Ваш набор»; прочерк, если он неизвестен.</summary>
+        public string SetSizeText => CatalogSize.ToDisplay(CatalogSizeText) is { Length: > 0 } size ? size : "—";
+
+        /// <summary>
+        /// Подпись переключателя «в набор» на карточке. Причина недоступности названа
+        /// словами: серая кнопка без объяснения выглядит как сбой.
+        /// </summary>
+        public string SelectLabel =>
+            IsSelected ? "✓ В наборе"
+            : JustInstalled ? "Установлено"
+            : !IsSelectable ? "Недоступно"
+            : "Добавить";
 
         private bool _isFavorite;
         public bool IsFavorite
@@ -170,6 +204,7 @@ namespace Ven4Tools.ViewModels
                 {
                     OnPropertyChanged(nameof(RowBrush));
                     OnPropertyChanged(nameof(IsSelectable));
+                    OnPropertyChanged(nameof(SelectLabel));
                     OnPropertyChanged(nameof(ShowSuggestButton));
                     OnPropertyChanged(nameof(StatusTooltip));
                     OnPropertyChanged(nameof(ShowRegionBlockedGlyph));
@@ -292,6 +327,7 @@ namespace Ven4Tools.ViewModels
                 {
                     OnPropertyChanged(nameof(RowBrush));
                     OnPropertyChanged(nameof(IsSelectable));
+                    OnPropertyChanged(nameof(SelectLabel));
                 }
             }
         }

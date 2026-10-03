@@ -26,7 +26,7 @@ namespace Ven4Tools.ViewModels
         /// </summary>
         private void OnRowSelectionChanged()
         {
-            OnPropertyChanged(nameof(SelectedCount));
+            RefreshSelection();
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
         }
 

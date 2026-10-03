@@ -88,6 +88,22 @@ namespace Ven4Tools.Services
             id.Length <= 64 && id.All(c => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
                                         || (c >= '0' && c <= '9') || c == '-' || c == '.' || c == '_');
 
+        /// <summary>
+        /// Собирает код набора из идентификаторов приложений — обратная операция к
+        /// <see cref="Parse"/>. Идентификаторы, которые разбор всё равно отбросил бы
+        /// (добавленные вручную программы с произвольными именами), в код не попадают.
+        /// Пустая строка, если подходящих приложений нет.
+        /// </summary>
+        public static string BuildCode(IEnumerable<string> appIds)
+        {
+            var ids = appIds
+                .Where(id => !string.IsNullOrWhiteSpace(id) && IsPlausibleId(id))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(MaxApps)
+                .ToList();
+            return ids.Count == 0 ? "" : CodePrefix + string.Join(",", ids);
+        }
+
         private static bool TryExtractFromUrl(string text, out string payload)
         {
             payload = "";
