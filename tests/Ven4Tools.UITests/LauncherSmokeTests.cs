@@ -34,6 +34,7 @@ public sealed class LauncherSmokeTests : IDisposable
             Path.GetTempPath(),
             $"Ven4Tools.UI.Tests-{Guid.NewGuid():N}");
         string executable = FindLauncher();
+        LauncherTestEnvironment.PrepareShell(_testRoot);
         var startInfo = new ProcessStartInfo(executable);
         startInfo.Environment["VEN4TOOLS_UI_TEST"] = "1";
         startInfo.Environment["VEN4TOOLS_UI_TEST_ROOT"] = _testRoot;
@@ -66,8 +67,10 @@ public sealed class LauncherSmokeTests : IDisposable
         string resultDirectory = Path.Combine(root, "TestResults", "Snapshots");
         Directory.CreateDirectory(snapshotDirectory);
         Directory.CreateDirectory(resultDirectory);
-        string actual = Path.Combine(resultDirectory, "launcher-main.actual.png");
-        string baseline = Path.Combine(snapshotDirectory, "launcher-main.png");
+        // У каждого вида окна свой эталон: набор прогоняется дважды, в прежнем и в новом.
+        string snapshotName = LauncherTestEnvironment.SuiteUsesModernShell ? "launcher-main-modern" : "launcher-main";
+        string actual = Path.Combine(resultDirectory, snapshotName + ".actual.png");
+        string baseline = Path.Combine(snapshotDirectory, snapshotName + ".png");
 
         IntPtr windowHandle = new(_window.Properties.NativeWindowHandle.Value);
         Assert.NotEqual(IntPtr.Zero, windowHandle);
@@ -78,6 +81,12 @@ public sealed class LauncherSmokeTests : IDisposable
         // сверху — тест краснел при исправном лаунчере (ловилось окно браузера,
         // окно Проводника, консоль). PrintWindow рисует окно независимо от
         // перекрытий, поэтому поднимать и двигать окно больше не нужно.
+        // Указатель уводим на заголовок окна: кнопка под ним подсвечивается, и снимок
+        // зависел бы от того, где мышь оказалась после предыдущего теста.
+        var bounds = _window.BoundingRectangle;
+        FlaUI.Core.Input.Mouse.MoveTo(new System.Drawing.Point(bounds.Left + (bounds.Width / 2), bounds.Top + 12));
+        Thread.Sleep(TimeSpan.FromMilliseconds(400));
+
         using (Image<Rgba32> frame = WindowCapture.Capture(windowHandle))
         {
             frame.SaveAsPng(actual);
@@ -251,6 +260,45 @@ public sealed class LauncherSmokeTests : IDisposable
 
         ExerciseSettingsWindow();
     }
+
+    [Fact]
+    public void UiModeSwitch_TogglesShellBothWaysAndKeepsControls()
+    {
+        bool startedModern = LauncherTestEnvironment.SuiteUsesModernShell;
+        string settingsPath = Path.Combine(_testRoot, "launcher_settings.json");
+
+        Assert.Equal(startedModern ? "Старый интерфейс" : "Новый интерфейс", SwitchButton().Name);
+        AssertPrimaryControlsAreAvailable();
+
+        // ── В другой вид ──
+        SwitchButton().Invoke();
+        Assert.True(
+            Retry.WhileFalse(
+                () => SwitchButton().Name == (startedModern ? "Новый интерфейс" : "Старый интерфейс"),
+                timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200)).Success,
+            "После переключения подпись кнопки должна называть противоположный вид.");
+        AssertPrimaryControlsAreAvailable();
+        Assert.Contains(startedModern ? "classic" : "modern", ReadSettings(settingsPath));
+
+        // ── И обратно ──
+        SwitchButton().Invoke();
+        Assert.True(
+            Retry.WhileFalse(
+                () => SwitchButton().Name == (startedModern ? "Старый интерфейс" : "Новый интерфейс"),
+                timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200)).Success,
+            "Повторное переключение должно возвращать исходный вид.");
+        AssertPrimaryControlsAreAvailable();
+        Assert.Contains(startedModern ? "modern" : "classic", ReadSettings(settingsPath));
+        Assert.False(_application.HasExited, "Переключение вида завершило launcher.");
+    }
+
+    private Button SwitchButton() =>
+        _window.FindFirstDescendant(condition => condition.ByAutomationId("btnUiModeSwitch"))?.AsButton()
+        ?? throw new InvalidOperationException("Кнопка переключения вида (btnUiModeSwitch) не найдена.");
+
+    private static string ReadSettings(string path) =>
+        Retry.WhileException(() => File.ReadAllText(path), timeout: TimeSpan.FromSeconds(3),
+            interval: TimeSpan.FromMilliseconds(200)).Result ?? "";
 
     private void ExerciseSettingsWindow()
     {

@@ -193,6 +193,11 @@ namespace Ven4Tools.Launcher
                 LaunchButtonState.Update   => ("⬆ Обновить Ven4Tools",   UpdateBrush),
                 _                          => (btnLaunchApp.Content, btnLaunchApp.Background)
             };
+
+            // Новый вид окна: свой цвет кнопки и заголовок карточки по состоянию клиента.
+            _launchState = state;
+            if (_uiModern) btnLaunchApp.Background = ModernLaunchBrush(state);
+            UpdateHeroTitle();
         }
 
         // quiet=true — вызов на этапе инициализации окна: состояние кнопки и панель
