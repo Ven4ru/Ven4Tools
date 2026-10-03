@@ -98,6 +98,7 @@ namespace Ven4Tools.Launcher
             _dataFolderPath = appData;
 
             LoadSettings();
+            ApplyUiMode();
             if (_isUiTestMode)
                 _minimizeToTray = false;
             if (!_isUiTestMode)
@@ -368,6 +369,8 @@ namespace Ven4Tools.Launcher
             public string? LastNotifiedLauncherVersion { get; set; }
             public string? LastNotifiedClientVersion   { get; set; }
             public string? LastNotifiedNotificationId  { get; set; }
+            // Вид окна: "modern" (по умолчанию) или "classic" — см. MainWindow.UiMode.cs.
+            public string? UiMode                      { get; set; }
         }
     }
 }

@@ -54,6 +54,40 @@
             </Setter>
         </Style>
 
+        <!-- Подпись кнопки с полями: общий шаблон кнопки не учитывает Padding, а в новом
+             интерфейсе кнопки стоят в ряд и берут ширину по тексту. -->
+        <DataTemplate x:Key="PaddedButtonText">
+            <TextBlock Text="{Binding}" Margin="14,0"
+                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ButtonBase}}"/>
+        </DataTemplate>
+        <Style x:Key="UiModeSwitch" TargetType="Button">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
+            <Setter Property="ToolTipService.BetweenShowDelay" Value="100"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" Padding="8,0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="&#xE8AB;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="11"
+                                           Margin="0,1,7,0" Foreground="{TemplateBinding Foreground}"/>
+                                <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="StageDot" TargetType="Border">
             <Setter Property="Width" Value="24"/>
             <Setter Property="Height" Value="24"/>
@@ -64,13 +98,40 @@
         </Style>
     </Window.Resources>
 
+    <!-- Два вида одного окна. В прежнем — боковая панель с кнопками и рабочая область.
+         В новом боковой панели нет: вверху полоса с названием, в центре карточка клиента
+         с главным действием, внизу полоса редких действий. Кнопки и подписи не
+         дублируются — код переставляет те же элементы между панелями (MainWindow.UiMode.cs). -->
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="232"/>
+            <ColumnDefinition x:Name="colSidebar" Width="232"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}"
+        <Border x:Name="barTop" Grid.Row="0" Grid.ColumnSpan="2" Visibility="Collapsed" Height="64"
+                Background="{DynamicResource SidebarBackground}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,0">
+            <DockPanel>
+                <StackPanel x:Name="slotTopActions" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"/>
+                <Grid x:Name="slotBrand" HorizontalAlignment="Left" Width="200"/>
+            </DockPanel>
+        </Border>
+
+        <Border x:Name="barBottom" Grid.Row="2" Grid.ColumnSpan="2" Visibility="Collapsed" Height="50"
+                Background="{DynamicResource SidebarBackground}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="14,0,20,0">
+            <DockPanel>
+                <StackPanel x:Name="slotBottomLeft" DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center"/>
+                <StackPanel x:Name="slotBottomActions" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <Border x:Name="sidebar" Grid.Row="1" Grid.Column="0" Background="{DynamicResource SidebarBackground}"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
             <Grid Margin="14,0">
                 <Grid.RowDefinitions>
@@ -80,7 +141,7 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0">
+                <Grid x:Name="brandBlock" Grid.Row="0">
                     <Border Width="3" Height="38" HorizontalAlignment="Left"
                             Background="{StaticResource BrandGreen}" CornerRadius="2"
                             Effect="{StaticResource BrandAuraEffect}"/>
@@ -149,7 +210,7 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <StackPanel Grid.Row="3" Margin="0,0,0,12">
+                <StackPanel x:Name="pnlSidebarBottom" Grid.Row="3" Margin="0,0,0,8">
                     <Separator Margin="0,0,0,8"/>
                     <Button x:Name="btnDeleteClient" Content="Удалить клиент"
                             Style="{StaticResource SideCommand}" Foreground="{StaticResource StatusDanger}"
@@ -159,25 +220,29 @@
                     <Button x:Name="btnExit" Content="Закрыть лаунчер"
                             Style="{StaticResource SideCommand}" Background="Transparent"
                             Foreground="{DynamicResource TextSecondary}" Click="BtnExit_Click"/>
+                    <Button x:Name="btnUiModeSwitch" Content="Новый интерфейс" Style="{StaticResource UiModeSwitch}"
+                            ToolTip="Переключает вид окна между новым и прежним. Вернуться можно этой же кнопкой."
+                            Click="BtnUiModeSwitch_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <Grid Grid.Column="1" Background="{DynamicResource ContentBackground}">
+        <Grid x:Name="gridMain" Grid.Row="1" Grid.Column="1" Background="{DynamicResource ContentBackground}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="colMain" Width="*"/>
                 <ColumnDefinition x:Name="colDetails" Width="0"/>
             </Grid.ColumnDefinitions>
 
-            <Grid Grid.Column="0" Margin="28,22,28,24">
+            <Grid x:Name="gridContent" Grid.Column="0" Margin="28,22,28,24">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="0,0,0,18">
+                <Grid x:Name="pageHeader" Grid.Row="0" Margin="0,0,0,18">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -206,9 +271,12 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="КЛИЕНТ VEN4TOOLS" Style="{StaticResource EyebrowStyle}"/>
-                            <TextBlock Text="Готов к установке" FontSize="22" FontWeight="SemiBold" Margin="0,7,0,6"/>
-                            <TextBlock Text="Лаунчер автоматически выберет актуальную версию, проверит целостность и установит клиент без лишних шагов."
+                            <TextBlock x:Name="txtHeroTitle" Text="Готов к установке" FontSize="22" FontWeight="SemiBold" Margin="0,7,0,6"/>
+                            <TextBlock x:Name="txtHeroDescription" Text="Лаунчер автоматически выберет актуальную версию, проверит целостность и установит клиент без лишних шагов."
                                        Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" MaxWidth="520"/>
+                            <!-- Новый интерфейс: версии и главное действие — в самой карточке клиента. -->
+                            <WrapPanel x:Name="slotHeroVersions" Visibility="Collapsed" Margin="0,0,0,2"/>
+                            <WrapPanel x:Name="slotHeroActions" Visibility="Collapsed" Margin="0,12,0,0"/>
                             <!-- Папка установки: не просто подпись, а точка входа в её выбор.
                                  Кликабельна вся карточка, плюс явная кнопка-подсказка справа —
                                  путь и способ его изменить теперь в одном месте. -->
@@ -245,7 +313,11 @@
                     </Grid>
                 </Border>
 
-                <Border Grid.Row="2" Margin="0,16,0,0" Background="{StaticResource SurfaceCard}"
+                <!-- Новый интерфейс: сюда встают «Обновить лаунчер» и «Установить компоненты»,
+                     когда они нужны; пустая панель места не занимает. -->
+                <WrapPanel x:Name="slotAlerts" Grid.Row="2" Visibility="Collapsed" Margin="0,12,0,0"/>
+
+                <Border Grid.Row="3" Margin="0,16,0,0" Background="{StaticResource SurfaceCard}"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
                     <StackPanel>
                         <Grid>
@@ -273,7 +345,7 @@
                     </StackPanel>
                 </Border>
 
-                <Expander x:Name="logExpander" Grid.Row="3" Header="Журнал и технические подробности" Margin="0,14,0,0"
+                <Expander x:Name="logExpander" Grid.Row="4" Header="Журнал и технические подробности" Margin="0,14,0,0"
                           VerticalAlignment="Stretch" IsExpanded="True">
                     <Border Margin="0,8,0,0" Background="#700A0A14" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="6" Padding="10">
