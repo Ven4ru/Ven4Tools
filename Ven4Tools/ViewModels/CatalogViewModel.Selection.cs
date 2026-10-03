@@ -56,6 +56,29 @@ namespace Ven4Tools.ViewModels
             }
         }, _ => SelectionCode.Length > 0);
 
+        private RelayCommand? _setFromInstalledCommand;
+        /// <summary>
+        /// «Набор из установленного»: показывает, что из каталога уже стоит на этом
+        /// компьютере, с кодом набора и файлом ответа. Отметки в каталоге не меняет —
+        /// отмеченные установленные программы кнопка «Установить» стала бы ставить заново.
+        /// </summary>
+        public RelayCommand SetFromInstalledCommand => _setFromInstalledCommand ??= new RelayCommand(_ =>
+        {
+            var set = InstalledSetBuilder.Build(
+                Apps.Where(a => !a.IsUserAdded).Select(a => (a.AppId, a.DisplayName, a.IsInstalled)));
+            if (set.AppIds.Count == 0)
+            {
+                MessageBox.Show(
+                    "Среди программ каталога установленных не найдено.\n\n" +
+                    "Если каталог открыт только что, дождитесь окончания проверки и повторите.",
+                    "Набор из установленного", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            Log($"📋 Набор из установленного: программ — {set.AppIds.Count}");
+            new Views.InstalledSetWindow(set) { Owner = OwnerWindowProvider?.Invoke() }.ShowDialog();
+        });
+
         /// <summary>
         /// Приводит <see cref="SelectedApps"/> в соответствие с отметками строк. Порядок
         /// уже выбранных не меняется — новые встают в конец, снятые убираются.
