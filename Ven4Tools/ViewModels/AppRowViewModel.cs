@@ -159,6 +159,17 @@ namespace Ven4Tools.ViewModels
             }
         }
 
+        /// <summary>Первая буква или цифра названия — стоит на месте значка, пока его нет.</summary>
+        public string Monogram
+        {
+            get
+            {
+                foreach (char c in DisplayName ?? "")
+                    if (char.IsLetterOrDigit(c)) return char.ToUpperInvariant(c).ToString();
+                return "•";
+            }
+        }
+
         /// <summary>Размер для строки в панели «Ваш набор»; прочерк, если он неизвестен.</summary>
         public string SetSizeText => CatalogSize.ToDisplay(CatalogSizeText) is { Length: > 0 } size ? size : "—";
 
