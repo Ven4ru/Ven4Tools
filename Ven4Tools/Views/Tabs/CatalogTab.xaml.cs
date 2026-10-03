@@ -105,6 +105,10 @@ namespace Ven4Tools.Views.Tabs
         public System.Threading.Tasks.Task<UnattendedReport> RunUnattendedAsync(UnattendedRequest request) =>
             _viewModel.RunUnattendedAsync(request);
 
+        /// <summary>Отмечает в каталоге программы готового набора (с «Обзора»). Установку не начинает.</summary>
+        public void ApplyAppSet(System.Collections.Generic.IReadOnlyList<string> appIds, string setTitle) =>
+            TabInitGuard.Run(() => _viewModel.ApplyAppSetAsync(appIds, setTitle), "CatalogTab.ApplyAppSet");
+
         // ── Два вида каталога ───────────────────────────────────────────────────
 
         private UIElement? _classicRoot;

@@ -65,6 +65,11 @@ namespace Ven4Tools.ViewModels
         public RelayCommand OpenHistoryCommand { get; }
         public RelayCommand OpenAboutCommand { get; }
 
+        /// <summary>Готовый набор: ключ уходит в окно как «set:ключ» — тем же событием, что и переходы.</summary>
+        public RelayCommand OpenReadySetCommand { get; }
+        public const string ReadySetPrefix = "set:";
+        public System.Collections.Generic.IReadOnlyList<ReadySet> ReadySetList => ReadySets.All;
+
         public OverviewViewModel()
         {
             OpenCatalogCommand = new RelayCommand(_ => NavigateRequested?.Invoke("catalog"));
@@ -74,6 +79,10 @@ namespace Ven4Tools.ViewModels
             OpenDiagnosticsCommand = new RelayCommand(_ => NavigateRequested?.Invoke("diagnostics"));
             OpenHistoryCommand = new RelayCommand(_ => NavigateRequested?.Invoke("history"));
             OpenAboutCommand = new RelayCommand(_ => NavigateRequested?.Invoke("about"));
+            OpenReadySetCommand = new RelayCommand(key =>
+            {
+                if (key is string setKey) NavigateRequested?.Invoke(ReadySetPrefix + setKey);
+            });
 
             ClientVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "—";
         }

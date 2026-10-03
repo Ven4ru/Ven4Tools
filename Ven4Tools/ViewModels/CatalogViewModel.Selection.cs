@@ -80,6 +80,27 @@ namespace Ven4Tools.ViewModels
         });
 
         /// <summary>
+        /// Готовый набор с «Обзора»: добавляет его программы к уже отмеченным. Ждёт
+        /// загрузки каталога — набор могут выбрать раньше, чем каталог открыт впервые.
+        /// </summary>
+        public async System.Threading.Tasks.Task ApplyAppSetAsync(IReadOnlyList<string> appIds, string setTitle)
+        {
+            await EnsureLoadedAsync();
+
+            int marked = 0;
+            var skipped = new List<string>();
+            foreach (string id in appIds)
+            {
+                var row = Apps.FirstOrDefault(a => string.Equals(a.AppId, id, StringComparison.OrdinalIgnoreCase));
+                if (row is { IsSelectable: true }) { row.IsSelected = true; marked++; }
+                else skipped.Add(row?.DisplayName ?? id);
+            }
+
+            Log($"📋 Набор «{setTitle}»: отмечено {marked}" +
+                (skipped.Count > 0 ? $", пропущено (нет в каталоге или недоступно): {string.Join(", ", skipped)}" : ""));
+        }
+
+        /// <summary>
         /// Приводит <see cref="SelectedApps"/> в соответствие с отметками строк. Порядок
         /// уже выбранных не меняется — новые встают в конец, снятые убираются.
         /// </summary>

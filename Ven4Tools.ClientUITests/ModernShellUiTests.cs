@@ -129,6 +129,31 @@ namespace Ven4Tools.ClientUITests
             StringAssert.Contains(ProfileText(), "modern", "Выбор новой оболочки должен записаться в профиль.");
         }
 
+        [TestMethod]
+        public void ГотовыйНабор_СОбзора_ОтмечаетПрограммыВКаталоге()
+        {
+            var s = Require();
+            if (Find(s, "btnUiModeSwitch")?.Name == "Новый интерфейс")
+                Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
+
+            Find(s, "btnOverviewTab")!.AsButton().Invoke();
+            var home = WaitFor(s, "btnReadySet_home");
+            Assert.IsNotNull(home, "На «Обзоре» нет готового набора «Для дома».");
+            Assert.IsNotNull(Find(s, "btnReadySet_dev"), "На «Обзоре» нет готового набора «Для разработки».");
+
+            home!.AsButton().Invoke();
+
+            // Набор открывает каталог и отмечает свои программы; установка не начинается.
+            var inSet = Retry.WhileNull(() => Find(s, "btnSetRemove_firefox"), timeout: TimeSpan.FromSeconds(40),
+                interval: TimeSpan.FromMilliseconds(400), throwOnTimeout: false).Result;
+            Assert.IsNotNull(inSet, "Готовый набор не отметил Firefox в каталоге.");
+            Assert.IsNotNull(Find(s, "btnSetRemove_7zip"), "Готовый набор не отметил 7-Zip в каталоге.");
+            Assert.IsNull(Find(s, "btnCancelInstall"), "Готовый набор не должен запускать установку сам.");
+
+            Find(s, "btnClearSelection")!.AsButton().Invoke();
+            Assert.IsTrue(WaitGone(s, "btnSetRemove_firefox"), "«Очистить набор» не сняла отметки.");
+        }
+
         /// <summary>Выбирает кнопку-категорию — элемент списка категорий с одиночным выбором.</summary>
         private static void SelectChip(AppSession s, string automationId)
         {
