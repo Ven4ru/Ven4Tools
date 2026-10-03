@@ -143,6 +143,13 @@ namespace Ven4Tools.ClientUITests
         /// </summary>
         private static bool RowHasPlayButton(AutomationElement chk)
         {
+            // На карточке нового вида «▶» стоит НАД кнопкой «в набор», а не в одной с ней
+            // строке, поэтому геометрия прежнего списка здесь не годится. Зато карточка —
+            // отдельный узел дерева, и всё, что внутри него, принадлежит этому приложению.
+            if (AppSession.SuiteUsesModernShell)
+                return chk.Parent?.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                    .Any(b => (b.Name ?? "") == "▶") == true;
+
             var chkRect = chk.BoundingRectangle;
             var scope = RowGridForCheckBox(chk);
             if (scope == null) return false;
@@ -506,7 +513,11 @@ namespace Ven4Tools.ClientUITests
             }
 
             bool? before = ReadState();
-            var corner = new Point(rect.Left + 2, rect.Top + 2); // почти угол увеличенной области
+            // В прежнем списке отметка — квадрат, и проверяется почти самый угол. На карточке
+            // нового вида это кнопка со скруглением 7 px: её геометрический угол лежит за
+            // пределами самой кнопки, поэтому точка берётся сразу за скруглением.
+            int inset = AppSession.SuiteUsesModernShell ? 8 : 2;
+            var corner = new Point(rect.Left + inset, rect.Top + inset);
 
             // Физический клик по экранным координатам долетает до контрола только
             // если в этой точке действительно окно клиента. В полном прогоне сверху

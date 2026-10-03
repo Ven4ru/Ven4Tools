@@ -80,6 +80,8 @@ namespace Ven4Tools
                 ? "Вернуть прежний вид окна: все разделы отдельными пунктами меню. Обратно — этой же кнопкой."
                 : "Включить новый вид окна: обзор и шесть пунктов меню. Обратно — этой же кнопкой.";
 
+            _catalogTab?.ApplyUiMode(_uiModern);
+
             if (_activeNavButton != null) OnNavigated(_activeNavButton);
         }
 

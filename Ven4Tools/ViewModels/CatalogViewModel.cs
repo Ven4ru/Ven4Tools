@@ -30,7 +30,9 @@ namespace Ven4Tools.ViewModels
     //   • CatalogViewModel.Availability.cs — доступность, версии, установленность, карточка;
     //   • CatalogViewModel.Install.cs   — установка, отмена, прогресс, неудачные установки;
     //   • CatalogViewModel.Presets.cs   — пресеты и экспорт/импорт списка;
-    //   • CatalogViewModel.Disks.cs     — диск установки и проверка свободного места.
+    //   • CatalogViewModel.Disks.cs     — диск установки и проверка свободного места;
+    //   • CatalogViewModel.Selection.cs — панель «Ваш набор» и кнопки-категории
+    //                                     нового интерфейса.
     public sealed partial class CatalogViewModel : ViewModelBase
     {
         private readonly AppManager _appManager = new();
@@ -230,6 +232,7 @@ namespace Ven4Tools.ViewModels
             CheckUpdatesCommand = new RelayCommand(_ => SwitchToUpdatesRequested?.Invoke());
 
             LoadAvailableDisks();
+            InitSelectionTracking();
 
             // Каталог — единственный долгоживущий владелец строк, поэтому обход
             // коллекции при смене темы делает он, а не сами строки (см.

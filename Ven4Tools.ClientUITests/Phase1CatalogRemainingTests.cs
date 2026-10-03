@@ -212,7 +212,7 @@ namespace Ven4Tools.ClientUITests
             catalogBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);
 
-            var clearBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnClearAllUserApps"));
+            var clearBtn = UiNav.FindCatalogTool(s, "btnClearAllUserApps");
             Assert.IsNotNull(clearBtn, "Не найдена кнопка «Очистить добавленные».");
             clearBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);

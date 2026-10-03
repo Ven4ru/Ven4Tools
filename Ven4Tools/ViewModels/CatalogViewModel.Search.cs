@@ -24,6 +24,9 @@ namespace Ven4Tools.ViewModels
                 if (SetField(ref _searchText, value))
                 {
                     OnPropertyChanged(nameof(HasSearchText));
+                    // Поиск идёт по всему каталогу: выбранная категория (новый интерфейс)
+                    // иначе прятала бы найденное в других разделах.
+                    if (value.Length > 0 && _categoryFilter != null) CategoryFilter = null;
                     AppsView.Refresh();
                     // Cancel + Dispose предыдущего токена — раньше только отменялся,
                     // объект никогда не освобождался (каждое нажатие клавиши в поиске
@@ -144,6 +147,7 @@ namespace Ven4Tools.ViewModels
             if (!row.MatchesProfile) return false;
             if (ProfileService.Current.HideInstalled && row.IsInstalled) return false;
             if (ShowFavoritesOnly && !row.IsFavorite) return false;
+            if (_categoryFilter != null && row.CategoryString != _categoryFilter) return false;
             // Совпадение по имени, описанию и идентификаторам winget/Chocolatey —
             // см. AppRowViewModel.MatchesSearch.
             return row.MatchesSearch(SearchText);
@@ -170,6 +174,7 @@ namespace Ven4Tools.ViewModels
             }
             ApplySortOrder();
             AppsView.Refresh();
+            RefreshCategoryChips();
         }
 
         // Первый SortDescription (CategorySortOrder) не трогаем — порядок категорий
