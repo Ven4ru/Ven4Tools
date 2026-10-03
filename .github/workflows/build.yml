@@ -31,6 +31,47 @@ jobs:
       - name: Быстрые unit-тесты
         run: dotnet test tests/Ven4Tools.Tests/Ven4Tools.Tests.csproj -c Release -p:Platform=x64 -p:CollectCoverage=true --no-build --no-restore --nologo --logger "trx;LogFileName=unit-tests.trx" --results-directory TestResults/Unit
 
+      # Покрытие собиралось и проверялось по порогу, но нигде не показывалось:
+      # узнать цифру можно было только из лога шага. Выводим в сводку прогона.
+      - name: Сводка покрытия
+        if: always()
+        shell: pwsh
+        run: |
+          $path = 'TestResults/Coverage/coverage.cobertura.xml'
+          if (-not (Test-Path $path)) {
+            "### Покрытие`n`nФайл покрытия не создан — тесты не дошли до конца." >> $env:GITHUB_STEP_SUMMARY
+            exit 0
+          }
+          [xml]$xml = Get-Content $path -Raw
+          $culture = [System.Globalization.CultureInfo]::InvariantCulture
+          function Format-Rate([string]$rate) {
+            ([double]::Parse($rate, $culture) * 100).ToString('F1', $culture) + ' %'
+          }
+          $lines = @(
+            '### Покрытие критического сервисного слоя'
+            ''
+            "Строки: **$(Format-Rate $xml.coverage.'line-rate')** · ветви: **$(Format-Rate $xml.coverage.'branch-rate')** · порог сборки — 80 % строк."
+            ''
+            '| Класс | Строки | Ветви |'
+            '| --- | --- | --- |'
+          )
+          $classes = $xml.coverage.packages.package.classes.class |
+            Where-Object { $_.name -notmatch '[<>/]' } |
+            Sort-Object { [double]::Parse($_.'line-rate', $culture) }
+          foreach ($class in $classes) {
+            $lines += "| ``$($class.name)`` | $(Format-Rate $class.'line-rate') | $(Format-Rate $class.'branch-rate') |"
+          }
+          $lines -join "`n" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Отчёт о покрытии
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage
+          path: TestResults/Coverage/coverage.cobertura.xml
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Проверка уязвимых NuGet-зависимостей
         shell: pwsh
         run: |
