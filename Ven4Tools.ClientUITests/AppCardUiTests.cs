@@ -143,6 +143,13 @@ namespace Ven4Tools.ClientUITests
         /// </summary>
         private static bool RowHasPlayButton(AutomationElement chk)
         {
+            // На карточке нового вида «▶» стоит НАД кнопкой «в набор», а не в одной с ней
+            // строке, поэтому геометрия прежнего списка здесь не годится. Зато карточка —
+            // отдельный узел дерева, и всё, что внутри него, принадлежит этому приложению.
+            if (AppSession.SuiteUsesModernShell)
+                return chk.Parent?.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                    .Any(b => (b.Name ?? "") == "▶") == true;
+
             var chkRect = chk.BoundingRectangle;
             var scope = RowGridForCheckBox(chk);
             if (scope == null) return false;
