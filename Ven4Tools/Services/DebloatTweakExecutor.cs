@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,6 +24,10 @@ namespace Ven4Tools.Services
         {
             try
             {
+                // Прежнее состояние запоминается до первой же правки — по нему твик
+                // потом возвращается кнопкой «Вернуть» (см. DebloatUndoService).
+                DebloatUndoService.Default.Capture(id, RegistryChangesOf(category, id), ServiceOf(category, id));
+
                 if (category == "app")
                     return await RemoveAppxAsync(id, ct);
 
@@ -64,56 +69,115 @@ namespace Ven4Tools.Services
             return await RunPSAsync(script, ct);
         }
 
+        // Что именно меняет каждый твик приватности в реестре. Таблица, а не ветки
+        // switch: по ней же перед применением запоминается прежнее состояние для отката.
+        private static readonly Dictionary<string, DebloatRegistryChange[]> PrivacyRegistry = new()
+        {
+            ["telemetry"] = new[]
+            {
+                new DebloatRegistryChange(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0),
+                new DebloatRegistryChange(@"HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection", "AllowTelemetry", 0)
+            },
+            ["activity_history"] = new[]
+            {
+                new DebloatRegistryChange(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\System", "EnableActivityFeed", 0),
+                new DebloatRegistryChange(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 0)
+            },
+            ["advertising_id"] = new[]
+            {
+                new DebloatRegistryChange(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo", "Enabled", 0)
+            },
+            ["content_delivery"] = new[]
+            {
+                new DebloatRegistryChange(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SystemPaneSuggestionsEnabled", 0),
+                new DebloatRegistryChange(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SilentInstalledAppsEnabled", 0)
+            },
+            ["cortana_registry"] = new[]
+            {
+                new DebloatRegistryChange(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search", "AllowCortana", 0)
+            },
+            ["input_tracking"] = new[]
+            {
+                new DebloatRegistryChange(@"HKCU:\SOFTWARE\Microsoft\Input\TIPC", "Enabled", 0)
+            }
+        };
+
+        /// <summary>Значения реестра, которые меняет твик; пусто, если он реестр не трогает.</summary>
+        public static IReadOnlyList<DebloatRegistryChange> RegistryChangesOf(string category, string tweakId) =>
+            category == "privacy" && PrivacyRegistry.TryGetValue(tweakId, out var changes)
+                ? changes
+                : Array.Empty<DebloatRegistryChange>();
+
+        /// <summary>Служба, которую твик останавливает и отключает; null, если служб он не трогает.</summary>
+        public static string? ServiceOf(string category, string tweakId) => (category, tweakId) switch
+        {
+            ("privacy", "diag_track")       => "DiagTrack",
+            ("service", "svc_diagtrack")    => "DiagTrack",
+            ("service", "svc_sysmain")      => "SysMain",
+            ("service", "svc_dmwappushsvc") => "dmwappushservice",
+            _                               => null
+        };
+
+        /// <summary>Можно ли вернуть твик точечно: он меняет реестр или службу, а не удаляет приложение.</summary>
+        public static bool IsUndoable(string category, string tweakId) =>
+            RegistryChangesOf(category, tweakId).Count > 0 || ServiceOf(category, tweakId) != null;
+
         public static async Task<bool> ApplyPrivacyTweakAsync(string tweakId, CancellationToken ct = default)
         {
-            switch (tweakId)
+            if (PrivacyRegistry.TryGetValue(tweakId, out var changes))
             {
-                case "telemetry":
-                {
-                    bool a = await SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0, ct);
-                    bool b = await SetReg(@"HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection", "AllowTelemetry", 0, ct);
-                    return a && b;
-                }
-                case "activity_history":
-                {
-                    bool a = await SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\System", "EnableActivityFeed", 0, ct);
-                    bool b = await SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 0, ct);
-                    return a && b;
-                }
-                case "advertising_id":
-                    return await SetReg(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo", "Enabled", 0, ct);
-                case "content_delivery":
-                {
-                    bool a = await SetReg(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SystemPaneSuggestionsEnabled", 0, ct);
-                    bool b = await SetReg(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SilentInstalledAppsEnabled", 0, ct);
-                    return a && b;
-                }
-                case "cortana_registry":
-                    return await SetReg(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search", "AllowCortana", 0, ct);
-                case "input_tracking":
-                    return await SetReg(@"HKCU:\SOFTWARE\Microsoft\Input\TIPC", "Enabled", 0, ct);
-                case "diag_track":
-                    return await RunPSAsync("Stop-Service DiagTrack -Force -ErrorAction SilentlyContinue; Set-Service DiagTrack -StartupType Disabled -ErrorAction SilentlyContinue", ct);
-                default:
-                    return false;
+                // Применяются все значения твика, даже если одно не записалось: так
+                // было и раньше, и частично применённый твик лучше недоприменённого.
+                bool all = true;
+                foreach (var change in changes)
+                    all &= await SetReg(change.Path, change.Name, change.Value, ct);
+                return all;
             }
+
+            if (tweakId == "diag_track")
+                return await RunPSAsync("Stop-Service DiagTrack -Force -ErrorAction SilentlyContinue; Set-Service DiagTrack -StartupType Disabled -ErrorAction SilentlyContinue", ct);
+
+            return false;
         }
 
         public static async Task<bool> DisableServiceAsync(string tweakId, CancellationToken ct = default)
         {
-            string? svcName = tweakId switch
-            {
-                "svc_diagtrack"     => "DiagTrack",
-                "svc_sysmain"       => "SysMain",
-                "svc_dmwappushsvc"  => "dmwappushservice",
-                _                   => null
-            };
+            string? svcName = ServiceOf("service", tweakId);
             if (svcName == null)
             {
                 AppLogger.Write($"[Деблоатер] Неизвестный tweakId: {tweakId}");
                 return false;
             }
             return await RunPSAsync($"Stop-Service {svcName} -Force -ErrorAction SilentlyContinue; Set-Service {svcName} -StartupType Disabled -ErrorAction SilentlyContinue", ct);
+        }
+
+        // Имена служб для отката приходят из файла записей, а не из литералов, поэтому
+        // проверяются так же строго, как имена пакетов: команда собирается интерполяцией
+        // и выполняется с правами администратора.
+        private static readonly System.Text.RegularExpressions.Regex ServiceNamePattern =
+            new(@"^[A-Za-z0-9_]{1,64}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+        /// <summary>
+        /// Возвращает службе режим запуска, который был до твика (2 — авто, 3 — вручную,
+        /// 4 — отключена), и запускает её, если она была автоматической.
+        /// </summary>
+        public static async Task<bool> RestoreServiceAsync(string service, int startMode, CancellationToken ct = default)
+        {
+            if (!ServiceNamePattern.IsMatch(service))
+            {
+                AppLogger.Write($"[Деблоатер] Отклонено недопустимое имя службы: {service}");
+                return false;
+            }
+            string? startupType = startMode switch { 2 => "Automatic", 3 => "Manual", 4 => "Disabled", _ => null };
+            if (startupType == null)
+            {
+                AppLogger.Write($"[Деблоатер] Неизвестный режим запуска службы {service}: {startMode}");
+                return false;
+            }
+
+            string script = $"Set-Service {service} -StartupType {startupType} -ErrorAction Stop";
+            if (startMode == 2) script += $"; Start-Service {service} -ErrorAction SilentlyContinue";
+            return await RunPSAsync(script, ct);
         }
 
         private static async Task<bool> SetReg(string path, string name, int value, CancellationToken ct = default)

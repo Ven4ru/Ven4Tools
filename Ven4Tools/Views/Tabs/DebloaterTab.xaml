@@ -2,6 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource ContentBackground}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisUndo"/>
+    </UserControl.Resources>
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -76,7 +79,18 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
+                                    <!-- «Вернуть» видна только у твиков, для которых сохранено
+                                         состояние до применения (реестр и службы). -->
+                                    <Button Grid.Column="3" Content="↩ Вернуть" Width="96" Height="26" Margin="8,0,0,0"
+                                            FontSize="11" VerticalAlignment="Center"
+                                            AutomationProperties.AutomationId="{Binding Id, StringFormat='btnUndoTweak_{0}'}"
+                                            ToolTip="Вернёт значения реестра и режим запуска службы, которые были до применения этого твика."
+                                            Visibility="{Binding CanUndo, Converter={StaticResource BoolToVisUndo}}"
+                                            IsEnabled="{Binding DataContext.ApplyEnabled, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            Command="{Binding DataContext.UndoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"/>
                                     <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
