@@ -318,7 +318,7 @@ namespace Ven4Tools.ViewModels
                     // восстановление выбора выглядело бы как действие пользователя
                     // и лишний раз дёргало пересчёт SelectedCount на каждую строку.
                     if (selectedIds.Contains(row.AppId) && row.IsSelectable) row.IsSelected = true;
-                    row.SelectionChanged += () => OnPropertyChanged(nameof(SelectedCount));
+                    row.SelectionChanged += OnRowSelectionChanged;
                     Apps.Add(row);
                 }
             }
@@ -329,7 +329,7 @@ namespace Ven4Tools.ViewModels
                 if (Apps.Any(a => a.AppId == appInfo.Id)) continue;
                 var row = new AppRowViewModel(appInfo) { IsFavorite = _favoritesService.IsFavorite(appInfo.Id) };
                 if (selectedIds.Contains(row.AppId) && row.IsSelectable) row.IsSelected = true;
-                row.SelectionChanged += () => OnPropertyChanged(nameof(SelectedCount));
+                row.SelectionChanged += OnRowSelectionChanged;
                 Apps.Add(row);
                 if (!string.IsNullOrEmpty(appInfo.AlternativeId))
                     _ = FetchVersionsForRowAsync(row).ContinueWith(
@@ -392,7 +392,7 @@ namespace Ven4Tools.ViewModels
         {
             if (!app.IsUserAdded) _appManager.AddUserApp(app);
             var row = new AppRowViewModel(app) { IsFavorite = _favoritesService.IsFavorite(app.Id) };
-            row.SelectionChanged += () => OnPropertyChanged(nameof(SelectedCount));
+            row.SelectionChanged += OnRowSelectionChanged;
             Apps.Add(row);
             if (!string.IsNullOrEmpty(app.AlternativeId))
                 _ = FetchVersionsForRowAsync(row).ContinueWith(

@@ -17,6 +17,19 @@ namespace Ven4Tools.ViewModels
 
         public int SelectedCount => Apps.Count(a => a.IsSelected);
 
+        /// <summary>
+        /// Отметка строки изменилась. Кроме счётчика, заново опрашиваются команды
+        /// («Установить выбранные», «Сохранить выбор»): WPF сам переспрашивает их только
+        /// после ввода с мыши или клавиатуры, а отметка меняется и без него — пресетом,
+        /// импортом списка, кодом набора, средствами автоматизации. Без явного вызова
+        /// кнопки оставались неактивными до следующего движения мыши.
+        /// </summary>
+        private void OnRowSelectionChanged()
+        {
+            OnPropertyChanged(nameof(SelectedCount));
+            System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+        }
+
         private double _overallProgressPercentage;
         public double OverallProgressPercentage
         {

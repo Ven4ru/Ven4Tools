@@ -128,8 +128,7 @@ namespace Ven4Tools.ClientUITests
 
             foreach (var item in cases)
             {
-                var navigation = s.MainWindow.FindFirstDescendant(
-                    cf => cf.ByAutomationId(item.NavigationId));
+                var navigation = UiNav.Find(s, item.NavigationId);
                 Assert.IsNotNull(navigation, $"Не найдена навигация вкладки «{item.TabName}».");
                 navigation!.AsButton().Invoke();
 
