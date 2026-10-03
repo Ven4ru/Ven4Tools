@@ -56,6 +56,35 @@
                 </StackPanel>
             </GroupBox>
 
+            <!-- Автообновление программ -->
+            <GroupBox Header="⬆ Автообновление программ" Margin="0,0,0,15">
+                <StackPanel Margin="10">
+                    <CheckBox x:Name="chkAutoUpdateApps"
+                              Content="Обновлять установленные программы автоматически"
+                              Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"
+                              IsChecked="{Binding AutoUpdateApps, Mode=TwoWay}"/>
+                    <TextBlock Text="Выключено по умолчанию. Когда включено, клиент сам ставит обновления через winget, пока он запущен (в том числе свёрнутый в трей). Программы из списка исключений не трогает."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,0,0,10"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Как часто:" Foreground="{DynamicResource TextPrimary}"
+                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ComboBox x:Name="cmbAutoUpdateFrequency" Width="170" Margin="0"
+                                  SelectedValuePath="Tag" SelectedValue="{Binding AutoUpdateFrequencyTag, Mode=TwoWay}">
+                            <ComboBoxItem Content="Раз в неделю" Tag="weekly"/>
+                            <ComboBoxItem Content="Раз в день" Tag="daily"/>
+                        </ComboBox>
+                    </StackPanel>
+                    <TextBlock Text="Не обновлять (идентификаторы пакетов winget, по одному в строке — например Mozilla.Firefox):"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtAutoUpdateExcluded" Height="70" AcceptsReturn="True" TextWrapping="NoWrap"
+                             VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="11" Padding="6,4"
+                             Text="{Binding AutoUpdateExcludedText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                    <TextBlock x:Name="txtAutoUpdateStatus" Text="{Binding AutoUpdateStatusText}"
+                               Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,6,0,0"/>
+                </StackPanel>
+            </GroupBox>
+
             <!-- Установка приложений -->
             <GroupBox Header="📦 Установка приложений" Margin="0,0,0,15">
                 <StackPanel Margin="10">

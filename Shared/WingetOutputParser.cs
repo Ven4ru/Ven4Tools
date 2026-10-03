@@ -89,5 +89,68 @@ namespace Ven4Tools.Shared
             }
             return rows;
         }
+
+        /// <summary>Строка таблицы «winget upgrade», разобранная по колонкам.</summary>
+        public sealed record UpgradeEntry(string Name, string Id, string Version, string Available);
+
+        private static readonly Regex _packageIdRegex =
+            new(@"^[A-Za-z0-9][A-Za-z0-9.+_\-]*$", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Разбирает таблицу «winget upgrade» в записи с идентификаторами пакетов.
+        ///
+        /// Границы колонок берутся из строки заголовка: winget выравнивает значения по
+        /// началу названия колонки, а между самым длинным значением и следующей
+        /// колонкой оставляет всего один пробел — делить строку по «двум и более
+        /// пробелам» нельзя, имя и идентификатор слиплись бы. Названия колонок
+        /// локализованы, поэтому важны только их позиции, а не текст.
+        ///
+        /// Запись, у которой идентификатор не похож на идентификатор пакета (усечён
+        /// многоточием, сдвинут широкими символами в названии), пропускается: по
+        /// такому значению обновлять нечего, а угадывать — значит обновить не то.
+        /// </summary>
+        public static List<UpgradeEntry> ParseUpgradeEntries(string rawOutput)
+        {
+            var entries = new List<UpgradeEntry>();
+            if (string.IsNullOrWhiteSpace(rawOutput)) return entries;
+
+            // winget рисует индикатор хода, возвращая каретку: в одной строке с
+            // заголовком остаются его обрывки. Настоящая строка — после последнего \r.
+            var lines = StripAnsi(rawOutput).Split('\n').Select(line =>
+            {
+                string text = line.TrimEnd('\r');
+                int carriage = text.LastIndexOf('\r');
+                return carriage >= 0 ? text.Substring(carriage + 1) : text;
+            }).ToArray();
+
+            int sepIdx = Array.FindIndex(lines, IsTableSeparator);
+            if (sepIdx < 1) return entries;
+
+            var starts = Regex.Matches(lines[sepIdx - 1], @"\S+").Select(m => m.Index).ToList();
+            if (starts.Count < 4) return entries;
+
+            for (int i = sepIdx + 1; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                if (string.IsNullOrWhiteSpace(line)) break;
+                if (IsTableSeparator(line)) continue;
+                if (!IsTableRow(line)) break;
+
+                string id = Column(line, starts, 1);
+                if (!_packageIdRegex.IsMatch(id)) continue;
+
+                entries.Add(new UpgradeEntry(
+                    Column(line, starts, 0), id, Column(line, starts, 2), Column(line, starts, 3)));
+            }
+            return entries;
+        }
+
+        private static string Column(string line, List<int> starts, int index)
+        {
+            int from = starts[index];
+            if (from >= line.Length) return "";
+            int to = index + 1 < starts.Count ? Math.Min(starts[index + 1], line.Length) : line.Length;
+            return line.Substring(from, to - from).Trim();
+        }
     }
 }

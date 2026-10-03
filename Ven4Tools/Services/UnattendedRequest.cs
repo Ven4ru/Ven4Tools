@@ -10,7 +10,8 @@ namespace Ven4Tools.Services
     /// из файла ответа.
     /// <para>
     /// <c>Ven4Tools.exe --install V4T:firefox,7zip --silent</c><br/>
-    /// <c>Ven4Tools.exe --answer-file D:\набор.json</c>
+    /// <c>Ven4Tools.exe --answer-file D:\набор.json</c><br/>
+    /// <c>Ven4Tools.exe --update-apps --silent</c>
     /// </para>
     /// <para>
     /// Без <c>--silent</c> окно открывается как обычно, программы отмечаются и
@@ -23,6 +24,12 @@ namespace Ven4Tools.Services
     {
         /// <summary>Идентификаторы приложений каталога в порядке, в котором их назвали.</summary>
         public IReadOnlyList<string> AppIds { get; init; } = Array.Empty<string>();
+
+        /// <summary>
+        /// Задание «обновить установленные программы» (<c>--update-apps</c>) вместо
+        /// установки набора. Список исключений берётся из настроек автообновления.
+        /// </summary>
+        public bool UpdateApps { get; init; }
 
         /// <summary>Не задавать вопросов и завершиться после установки.</summary>
         public bool Silent { get; init; }
@@ -85,7 +92,7 @@ namespace Ven4Tools.Services
             error = "";
 
             string? install = null, answerFile = null, drive = null, report = null;
-            bool silent = false;
+            bool silent = false, updateApps = false;
             bool? restorePoint = null;
             bool sawAny = false;
 
@@ -118,6 +125,10 @@ namespace Ven4Tools.Services
                     case "--report":
                         report = Value();
                         if (report == null) { error = "После --report нужен путь к файлу итога."; return ParseStatus.Error; }
+                        break;
+                    case "--update-apps":
+                        sawAny = true;
+                        updateApps = true;
                         break;
                     case "--silent":
                         silent = true;
@@ -174,7 +185,12 @@ namespace Ven4Tools.Services
             }
 
             ids = ids.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            if (ids.Count == 0)
+            if (updateApps && ids.Count > 0)
+            {
+                error = "--update-apps и набор для установки задаются разными запусками.";
+                return ParseStatus.Error;
+            }
+            if (!updateApps && ids.Count == 0)
             {
                 error = "В задании нет ни одного приложения.";
                 return ParseStatus.Error;
@@ -190,6 +206,7 @@ namespace Ven4Tools.Services
             request = new UnattendedRequest
             {
                 AppIds = ids,
+                UpdateApps = updateApps,
                 Silent = silent || file?.Silent == true,
                 RestorePoint = restorePoint ?? file?.RestorePoint,
                 InstallDrive = resolvedDrive,

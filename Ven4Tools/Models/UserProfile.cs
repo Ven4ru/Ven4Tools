@@ -26,6 +26,15 @@ namespace Ven4Tools.Models
         public bool NotifyAppUpdates { get; set; } = true;
         public bool NotifyInstallComplete { get; set; } = true;
 
+        // Автообновление программ: выключено, пока пользователь сам не включит.
+        // Работает, пока клиент запущен (в том числе свёрнутый в трей).
+        public bool AutoUpdateApps { get; set; } = false;
+        // "daily" | "weekly"
+        public string AutoUpdateFrequency { get; set; } = "weekly";
+        // Идентификаторы пакетов winget, которые автообновление не трогает.
+        public System.Collections.Generic.List<string> AutoUpdateExcluded { get; set; } = new();
+        public System.DateTime? AutoUpdateLastRunUtc { get; set; }
+
         // Windows Update: "NotSet" (первый вход ещё не пройден), "NotifyOnly", "NotifyAndDownload".
         public string WindowsUpdateMode { get; set; } = "NotSet";
 
