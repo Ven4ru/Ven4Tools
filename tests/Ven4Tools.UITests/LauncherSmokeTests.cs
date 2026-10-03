@@ -81,6 +81,12 @@ public sealed class LauncherSmokeTests : IDisposable
         // сверху — тест краснел при исправном лаунчере (ловилось окно браузера,
         // окно Проводника, консоль). PrintWindow рисует окно независимо от
         // перекрытий, поэтому поднимать и двигать окно больше не нужно.
+        // Указатель уводим на заголовок окна: кнопка под ним подсвечивается, и снимок
+        // зависел бы от того, где мышь оказалась после предыдущего теста.
+        var bounds = _window.BoundingRectangle;
+        FlaUI.Core.Input.Mouse.MoveTo(new System.Drawing.Point(bounds.Left + (bounds.Width / 2), bounds.Top + 12));
+        Thread.Sleep(TimeSpan.FromMilliseconds(400));
+
         using (Image<Rgba32> frame = WindowCapture.Capture(windowHandle))
         {
             frame.SaveAsPng(actual);
