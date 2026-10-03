@@ -385,6 +385,9 @@
                                 ToolTip="После подтверждения удалит из каталога все приложения, добавленные пользователем."
                                 Command="{Binding ClearAllUserAppsCommand}"/>
                         <Separator Margin="3,4"/>
+                        <Button x:Name="btnSetFromInstalled" Content="Набор из установленного" Height="32" Margin="3"
+                                ToolTip="Покажет программы каталога, которые уже стоят на этом компьютере, с кодом набора и файлом ответа для другой машины."
+                                Command="{Binding SetFromInstalledCommand}"/>
                         <Button x:Name="btnExportList" Content="Экспорт списка" Height="32" Margin="3"
                                 ToolTip="Сохранит список выбранных приложений в JSON-файл без их установки."
                                 Command="{Binding ExportListCommand}"/>
