@@ -129,6 +129,14 @@ namespace Ven4Tools.ClientUITests
             StringAssert.Contains(ProfileText(), "modern", "Выбор новой оболочки должен записаться в профиль.");
         }
 
+        /// <summary>Выбирает кнопку-категорию — элемент списка категорий с одиночным выбором.</summary>
+        private static void SelectChip(AppSession s, string automationId)
+        {
+            var chip = Find(s, automationId);
+            Assert.IsNotNull(chip, $"Нет кнопки категории {automationId}.");
+            chip!.Patterns.SelectionItem.Pattern.Select();
+        }
+
         /// <summary>Отметка на карточке, найденная заново: после перестроения списка старая ссылка не годится.</summary>
         private static bool? IsChecked(AppSession s, string automationId) =>
             Find(s, automationId)?.AsCheckBox().IsChecked;
@@ -159,14 +167,12 @@ namespace Ven4Tools.ClientUITests
             Assert.AreEqual("V4T:7zip", code!.AsTextBox().Text);
 
             // ── Категория прячет чужие карточки, но набор не трогает ──
-            var browsers = Find(s, "chipCategory_Браузеры");
-            Assert.IsNotNull(browsers, "Нет кнопки категории «Браузеры».");
-            browsers!.AsButton().Invoke();
+            SelectChip(s, "chipCategory_Браузеры");
             Assert.IsTrue(WaitGone(s, "chkApp_7zip"), "В категории «Браузеры» карточки 7-Zip быть не должно.");
             Assert.IsNotNull(Find(s, "chkApp_firefox"), "В категории «Браузеры» должен остаться Firefox.");
             Assert.IsNotNull(Find(s, "btnSetRemove_7zip"), "Смена категории не должна выбрасывать программу из набора.");
 
-            Find(s, "chipCategory_all")!.AsButton().Invoke();
+            SelectChip(s, "chipCategory_all");
             Assert.IsNotNull(WaitFor(s, "chkApp_7zip"), "«Все» должна возвращать полный каталог.");
             Assert.AreEqual(true, IsChecked(s, "chkApp_7zip"), "Отметка должна пережить смену категории.");
 
@@ -183,6 +189,9 @@ namespace Ven4Tools.ClientUITests
             Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
             UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
             Assert.IsNotNull(WaitFor(s, "btnSetRemove_7zip"), "После возврата в новый вид набор должен быть на месте.");
+            // Категории обязаны остаться в дереве автоматизации и после ухода с вкладки:
+            // раньше после возврата они были видны на экране, но не программам чтения с экрана.
+            Assert.IsNotNull(Find(s, "chipCategory_all"), "После возврата на вкладку категории пропали из дерева автоматизации.");
 
             // ── Крестик в наборе снимает отметку с карточки ──
             Find(s, "btnSetRemove_7zip")!.AsButton().Invoke();

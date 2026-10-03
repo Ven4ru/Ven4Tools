@@ -50,22 +50,26 @@
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
 
-        <!-- Кнопка-категория. Выбранная залита акцентом. -->
-        <Style x:Key="CategoryChip" TargetType="Button">
-            <Setter Property="Height" Value="30"/>
+        <!-- Кнопка-категория — элемент списка с одиночным выбором: выбранная залита
+             акцентом, стрелки на клавиатуре переходят между категориями. Список, а не
+             набор кнопок в ItemsControl: у кнопок внутри ItemsControl после возврата на
+             вкладку пропадали узлы автоматизации, и категории переставали существовать
+             для программ чтения с экрана. У ListBoxItem узел свой и не теряется. -->
+        <Style x:Key="CategoryChip" TargetType="ListBoxItem">
             <Setter Property="Margin" Value="0,0,6,6"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="AutomationProperties.AutomationId" Value="{Binding AutomationId}"/>
+            <Setter Property="AutomationProperties.Name" Value="{Binding Label}"/>
+            <Setter Property="ToolTip" Value="Покажет только программы этой категории. «Все» возвращает полный каталог."/>
             <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
-            <Setter Property="ToolTipService.BetweenShowDelay" Value="100"/>
-            <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border Height="30" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="1" CornerRadius="15" Padding="12,0">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Label}" Foreground="{TemplateBinding Foreground}" FontWeight="SemiBold"/>
@@ -77,11 +81,14 @@
                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                             </Trigger>
-                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource AccentForeground}"/>
-                            </DataTrigger>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -176,21 +183,18 @@
                         Background="Transparent" BorderThickness="1"/>
             </Grid>
 
-            <ItemsControl x:Name="lstCategoryChips" DockPanel.Dock="Top" ItemsSource="{Binding CategoryChips}" Margin="0,0,0,4">
-                <ItemsControl.ItemsPanel>
+            <ListBox x:Name="lstCategoryChips" DockPanel.Dock="Top" Margin="0,0,0,4"
+                     ItemsSource="{Binding CategoryChips}"
+                     SelectedItem="{Binding ActiveCategoryChip, Mode=TwoWay}"
+                     ItemContainerStyle="{StaticResource CategoryChip}"
+                     AutomationProperties.Name="Категории каталога"
+                     Background="Transparent" BorderThickness="0" Padding="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                <ListBox.ItemsPanel>
                     <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="{x:Type vm:CategoryChipViewModel}">
-                        <Button Style="{StaticResource CategoryChip}"
-                                AutomationProperties.AutomationId="{Binding AutomationId}"
-                                AutomationProperties.Name="{Binding Label}"
-                                ToolTip="Покажет только программы этой категории. «Все» возвращает полный каталог."
-                                Command="{Binding DataContext.SelectCategoryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                CommandParameter="{Binding}"/>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </ListBox.ItemsPanel>
+            </ListBox>
 
             <TextBlock DockPanel.Dock="Top" Text="{Binding StatusText}"
                        Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,8"/>
@@ -352,6 +356,7 @@
                                             <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
                                                        FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        MaxHeight="36" TextTrimming="CharacterEllipsis"
+                                                       HorizontalAlignment="Left"
                                                        ToolTip="{Binding StatusTooltip}" Cursor="Hand">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">

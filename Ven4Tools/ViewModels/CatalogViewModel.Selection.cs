@@ -109,7 +109,22 @@ namespace Ven4Tools.ViewModels
             {
                 if (!SetField(ref _categoryFilter, value)) return;
                 foreach (var chip in CategoryChips) chip.IsActive = chip.Key == value;
+                OnPropertyChanged(nameof(ActiveCategoryChip));
                 AppsView.Refresh();
+            }
+        }
+
+        /// <summary>
+        /// Выбранная кнопка-категория — для списка категорий (SelectedItem). null от
+        /// списка игнорируется: он приходит, когда набор кнопок пересобирается, а не
+        /// когда пользователь что-то выбрал.
+        /// </summary>
+        public CategoryChipViewModel? ActiveCategoryChip
+        {
+            get => CategoryChips.FirstOrDefault(chip => chip.Key == _categoryFilter);
+            set
+            {
+                if (value != null) SelectCategoryCommand.Execute(value);
             }
         }
 
@@ -146,6 +161,7 @@ namespace Ven4Tools.ViewModels
                 CategoryChips.Clear();
                 foreach (var (key, label, count) in wanted)
                     CategoryChips.Add(new CategoryChipViewModel(key, label, count) { IsActive = key == _categoryFilter });
+                OnPropertyChanged(nameof(ActiveCategoryChip));
             }
 
             // Категория опустела (сменили режим каталога, скрыли последнюю программу) —
