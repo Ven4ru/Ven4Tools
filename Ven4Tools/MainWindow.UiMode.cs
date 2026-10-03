@@ -126,6 +126,15 @@ namespace Ven4Tools
 
         private void OpenFromOverview(string key)
         {
+            if (key.StartsWith(ViewModels.OverviewViewModel.ReadySetPrefix, System.StringComparison.Ordinal))
+            {
+                var set = ReadySets.Find(key.Substring(ViewModels.OverviewViewModel.ReadySetPrefix.Length));
+                if (set == null) return;
+                NavigateToCatalog(this, null);
+                _catalogTab!.ApplyAppSet(set.AppIds, set.Title);
+                return;
+            }
+
             switch (key)
             {
                 case "catalog": NavigateToCatalog(this, null); break;
