@@ -33,22 +33,31 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
+        <!-- Общий шаблон кнопки не учитывает Padding, поэтому поля вокруг подписи
+             задаются здесь: без них текст прилипает к рамке. -->
+        <DataTemplate x:Key="OverviewButtonText">
+            <TextBlock Text="{Binding}" Margin="14,0"
+                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ButtonBase}}"/>
+        </DataTemplate>
         <Style x:Key="OverviewAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Height" Value="34"/>
-            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="ContentTemplate" Value="{StaticResource OverviewButtonText}"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="Margin" Value="0,14,0,0"/>
         </Style>
         <Style x:Key="OverviewQuickAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Height" Value="40"/>
             <Setter Property="Margin" Value="0,0,8,8"/>
-            <Setter Property="Padding" Value="12,0"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="ContentTemplate" Value="{StaticResource OverviewButtonText}"/>
         </Style>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20,18,6,18" MaxWidth="1040" HorizontalAlignment="Left">
+        <!-- Колонка тянется на всю ширину окна, но не шире 1100: на широком экране
+             карточки не расползаются, на узком — занимают всё доступное место. -->
+        <Grid Margin="20,18,6,18">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="1100"/></Grid.ColumnDefinitions>
+        <StackPanel>
             <TextBlock Text="Состояние компьютера" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
             <TextBlock x:Name="txtOverviewSummary" Text="{Binding Summary}" FontSize="13"
                        Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,16"/>
@@ -137,7 +146,7 @@
                     <StackPanel>
                         <DockPanel>
                             <Button x:Name="btnOverviewHistory" DockPanel.Dock="Right" Content="Вся история"
-                                ToolTip="Откроет полную историю установок с поиском и повторной установкой." Height="30" Padding="12,0"
+                                ToolTip="Откроет полную историю установок с поиском и повторной установкой." Height="30" ContentTemplate="{StaticResource OverviewButtonText}"
                                     Command="{Binding OpenHistoryCommand}"/>
                             <TextBlock Text="Последние действия" Style="{StaticResource OverviewCardTitle}" VerticalAlignment="Center"/>
                         </DockPanel>
@@ -160,5 +169,6 @@
                 </Border>
             </Grid>
         </StackPanel>
+        </Grid>
     </ScrollViewer>
 </UserControl>
