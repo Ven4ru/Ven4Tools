@@ -70,11 +70,20 @@
         <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
     </Style>
 
+    <!-- Значок из шрифта Segoe Fluent Icons как содержимое кнопки. Шрифт задан на самом
+         TextBlock: неявный стиль TextBlock из App.xaml перебивает FontFamily, унаследованный
+         от кнопки, и вместо значка рисовался пустой квадрат. Цвет берётся у кнопки по той же
+         причине — иначе не сработали бы ни привязка Foreground, ни подсветка при наведении. -->
+    <DataTemplate x:Key="IconGlyphTemplate">
+        <TextBlock Text="{Binding}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ButtonBase}}"/>
+    </DataTemplate>
+
     <Style x:Key="IconButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Width" Value="34"/>
         <Setter Property="Height" Value="34"/>
         <Setter Property="Padding" Value="0"/>
-        <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+        <Setter Property="ContentTemplate" Value="{StaticResource IconGlyphTemplate}"/>
         <Setter Property="FontSize" Value="15"/>
     </Style>
 
