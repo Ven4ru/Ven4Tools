@@ -225,6 +225,10 @@ namespace Ven4Tools.Launcher
             var result = new List<string>();
             var stack = new Stack<string>();
             stack.Push(root);
+            // Цели ссылок (junction/symlink), по которым обход уже ходил. Ссылка на
+            // собственного предка — «Документы\x → Документы» — раньше раскручивала
+            // обход по кругу до таймаута поиска: каждая цель теперь обходится один раз.
+            var visitedLinkTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { SafeFullPath(root) };
             while (stack.Count > 0)
             {
                 // Проверка на каждом каталоге, а не на каждом корне: обход одного
@@ -242,7 +246,22 @@ namespace Ven4Tools.Launcher
                 string[] subDirs;
                 try { subDirs = Directory.GetDirectories(dir); }
                 catch { continue; } // недоступен список подпапок — глубже не идём, но остальное дерево не страдает
-                foreach (var sub in subDirs) stack.Push(sub);
+                foreach (var sub in subDirs)
+                {
+                    string next = sub;
+                    try
+                    {
+                        if ((File.GetAttributes(sub) & FileAttributes.ReparsePoint) != 0)
+                        {
+                            var target = Directory.ResolveLinkTarget(sub, returnFinalTarget: true);
+                            if (target == null) continue;
+                            next = target.FullName;
+                            if (!visitedLinkTargets.Add(SafeFullPath(next))) continue;
+                        }
+                    }
+                    catch { continue; } // битая или недоступная ссылка — как недоступная папка
+                    stack.Push(next);
+                }
             }
             return result;
         }

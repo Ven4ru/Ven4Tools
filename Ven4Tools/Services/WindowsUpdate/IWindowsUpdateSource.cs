@@ -17,6 +17,12 @@ namespace Ven4Tools.Services.WindowsUpdate
         /// <summary>Попытаться запустить службу. true — удалось (или уже была запущена).</summary>
         bool TryStartService();
 
+        /// <summary>Тип запуска службы — «Отключена» (запустить её нельзя, пока не включить)?</summary>
+        bool IsServiceDisabled();
+
+        /// <summary>Перевести отключённую службу в тип запуска «Вручную». true — удалось.</summary>
+        bool TryEnableService();
+
         /// <summary>Требуется перезагрузка от предыдущей установки?</summary>
         bool IsRebootPending();
 

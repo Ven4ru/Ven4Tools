@@ -123,14 +123,22 @@ namespace Ven4Tools.Launcher
                     AddLog($"🧹 Остатки прерванной установки: восстановлено {cleanup.Restored}, удалено {cleanup.Removed}");
                 }
 
-                // Папки прошлых загрузок установщика лаунчера в %TEMP% (по 48 МБ на
-                // каждое самообновление). В фоне: обход %TEMP% не должен задерживать окно.
+                // Временные файлы прошлых запусков в %TEMP%: папки загрузок установщика
+                // лаунчера (по 48 МБ на каждое самообновление), а после убитого процесса —
+                // ещё и архив клиента, папки блочного обновления и починки. В фоне: обход
+                // %TEMP% не должен задерживать окно.
                 _ = Task.Run(() =>
                 {
-                    int removed = LauncherUpdateInstaller.CleanupStaleStagingDirectories(
+                    int removed = LauncherUpdateInstaller.CleanupStaleTempArtifacts(
                         Path.GetTempPath(), DateTime.UtcNow, TimeSpan.FromHours(6));
+                    // Каталоги установщиков elevated-лаунчера лежат в %SystemRoot%\Temp;
+                    // без прав администратора удаление там тихо не пройдёт — их уберёт
+                    // следующий запуск с повышением или клиент (он всегда elevated).
+                    removed += LauncherUpdateInstaller.CleanupStaleTempArtifacts(
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp"),
+                        DateTime.UtcNow, TimeSpan.FromHours(6));
                     if (removed > 0)
-                        Services.LauncherLog.Write($"🧹 Удалены остатки прошлых загрузок установщика лаунчера: {removed}");
+                        Services.LauncherLog.Write($"🧹 Удалены временные файлы прошлых запусков: {removed}");
                 });
             }
             // Папку клиента здесь НЕ создаём. Раньше конструктор делал это

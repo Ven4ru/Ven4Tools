@@ -167,7 +167,25 @@ namespace Ven4Tools.ViewModels
                 // (ServiceController.WaitForStatus), на UI-потоке это полностью
                 // замороженное окно «не отвечает». Сам поиск обновлений уводится в пул
                 // тем же способом (WindowsUpdateComSource.SearchAsync).
-                if (!await Task.Run(_service.TryStartService))
+                bool started = await Task.Run(_service.TryStartService);
+                // Служба именно отключена (тип запуска «Отключена») — раньше вкладка
+                // только объясняла, что её нужно включить, и отправляла в services.msc.
+                // Предлагаем сделать это здесь же; без согласия ничего не меняем.
+                if (!started && await Task.Run(_service.IsServiceDisabled))
+                {
+                    var answer = MessageBox.Show(
+                        "Служба Windows Update отключена, поэтому проверить обновления нельзя.\n\n" +
+                        "Включить её (тип запуска «Вручную») и продолжить?",
+                        "Служба Windows Update", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (ct.IsCancellationRequested) return;
+                    if (answer == MessageBoxResult.Yes)
+                    {
+                        started = await Task.Run(() => _service.TryEnableService() && _service.TryStartService());
+                        if (started)
+                            AppLogger.Write("[WindowsUpdate] Служба wuauserv была отключена — включена (тип запуска «Вручную») по запросу пользователя");
+                    }
+                }
+                if (!started)
                 {
                     StatusText = "❌ Не удалось запустить службу Windows Update — возможно, она отключена.";
                     IsSearching = false;
@@ -193,6 +211,9 @@ namespace Ven4Tools.ViewModels
                         "Подробности — в сообщении выше");
                     return;
                 }
+
+                // Значок-счётчик в боковой панели — тем же числом, что видит пользователь.
+                WindowsUpdateBackgroundService.ReportSearchResult(result.Items.Count);
 
                 if (result.Items.Count == 0)
                 {

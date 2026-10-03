@@ -66,6 +66,51 @@ namespace Ven4Tools.Services.WindowsUpdate
             }
         }
 
+        public bool IsServiceDisabled()
+        {
+            try
+            {
+                using var sc = new ServiceController("wuauserv");
+                return sc.StartType == ServiceStartMode.Disabled;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[WindowsUpdateComSource] Тип запуска службы: {ex.Message}");
+                return false;
+            }
+        }
+
+        public bool TryEnableService()
+        {
+            try
+            {
+                // ServiceController тип запуска менять не умеет — штатный sc.exe по
+                // полному пути. «demand» — «Вручную»: так служба настроена в Windows
+                // по умолчанию, автозапуск мы ей не навязываем.
+                using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = TrustedExecutablePaths.ScExe,
+                    ArgumentList = { "config", "wuauserv", "start=", "demand" },
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+                if (process == null) return false;
+                if (!process.WaitForExit(15000))
+                {
+                    try { process.Kill(entireProcessTree: true); } catch { }
+                    return false;
+                }
+                if (process.ExitCode != 0)
+                    AppLogger.Write($"[WindowsUpdateComSource] sc config wuauserv завершился с кодом {process.ExitCode}");
+                return process.ExitCode == 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[WindowsUpdateComSource] Включение службы не удалось: {ex.Message}");
+                return false;
+            }
+        }
+
         public bool IsRebootPending()
         {
             object? sysInfoCom = null;

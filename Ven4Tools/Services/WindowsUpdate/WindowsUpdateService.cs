@@ -50,6 +50,8 @@ namespace Ven4Tools.Services.WindowsUpdate
 
         public bool IsServiceRunning() => _source.IsServiceRunning();
         public bool TryStartService() => _source.TryStartService();
+        public bool IsServiceDisabled() => _source.IsServiceDisabled();
+        public bool TryEnableService() => _source.TryEnableService();
         public bool IsRebootPending() => _source.IsRebootPending();
 
         public Task<WindowsUpdateSearchResult> SearchAsync(CancellationToken ct) =>

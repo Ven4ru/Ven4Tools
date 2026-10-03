@@ -164,6 +164,13 @@ namespace Ven4Tools.Services
             public void Report(WindowsUpdateProgress value) { }
         }
 
+        /// <summary>
+        /// Результат ручной проверки на вкладке «Windows Update». Счётчик в боковой
+        /// панели обновляла только фоновая проверка раз в 6 часов: после ручного поиска
+        /// или установки патчей значок продолжал показывать прежнее число.
+        /// </summary>
+        public static void ReportSearchResult(int count) => SetCount(count);
+
         private static void SetCount(int count)
         {
             if (AvailableCount == count) return;

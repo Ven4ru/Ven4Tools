@@ -7,6 +7,10 @@ using Xunit;
 
 namespace Ven4Tools.Tests
 {
+    // Та же коллекция, что у WindowsUpdateBackgroundServiceTests: проверка на вкладке
+    // обновляет общий static-счётчик значка, и параллельный прогон двух классов
+    // делал бы проверки счётчика нестабильными.
+    [Collection("ProfileService")]
     public class WindowsUpdateViewModelTests
     {
         private static WindowsUpdateItem MakeItem(string id, long sizeBytes = 100) =>
