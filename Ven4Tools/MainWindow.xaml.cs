@@ -356,7 +356,7 @@ namespace Ven4Tools
         /// </summary>
         private void UpdateConnectionIndicator()
         {
-            bool offlineForced = ProfileService.Current.OfflineMode;
+            bool offlineForced = OfflineService.IsOffline;
             bool onlineForced  = ProfileService.Current.ForceOnlineMode;
             bool online        = ConnectivityMonitor.IsOnline;
 
@@ -391,7 +391,7 @@ namespace Ven4Tools
 
         public void UpdateTabVisibility()
         {
-            bool online    = ConnectivityMonitor.IsEffectivelyOnline && !ProfileService.Current.OfflineMode;
+            bool online    = ConnectivityMonitor.IsEffectivelyOnline && !OfflineService.IsOffline;
 
             // Индикатор соединения обновляем здесь же: этот метод вызывается на смену
             // статуса сети (OnConnectivityChanged), при старте и при переключении

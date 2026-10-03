@@ -76,7 +76,7 @@ namespace Ven4Tools.Services
             var mode = ProfileService.Current.WindowsUpdateMode;
             if (mode == "NotSet") return;
             if (ProfileService.Current.ParanoidMode) return;
-            if (ProfileService.Current.OfflineMode) return;
+            if (OfflineService.IsOffline) return;
             // IsEffectivelyOnline, а не IsOnline — та же причина, что и в
             // UpdateBackgroundService: «Принудительный онлайн-режим» должен перекрывать
             // автодетект сети и здесь, иначе на VPN с ложноотрицательным детектом

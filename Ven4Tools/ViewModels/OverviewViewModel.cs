@@ -118,7 +118,7 @@ namespace Ven4Tools.ViewModels
         private void RefreshStatuses()
         {
             var profile = ProfileService.Current;
-            bool backgroundOff = profile.ParanoidMode || profile.OfflineMode;
+            bool backgroundOff = profile.ParanoidMode || OfflineService.IsOffline;
 
             (AppUpdatesStatus, AppUpdatesHint, AppUpdatesNeedAttention) =
                 DescribeAppUpdates(UpdateBackgroundService.AvailableCount, profile.NotifyAppUpdates && !backgroundOff);

@@ -49,6 +49,22 @@ namespace Ven4Tools
             }
             Unattended = unattended;
 
+            // Переносной офлайн-набор: офлайн-режим только на этот сеанс, до того как
+            // окно и службы прочитают настройки.
+            if (unattended?.OfflineCachePath is { } offlineCache)
+            {
+                if (!System.IO.Directory.Exists(offlineCache))
+                {
+                    string message = $"Папка офлайн-набора не найдена: {offlineCache}";
+                    AppLogger.Write("[App] " + message);
+                    if (!silentRequested)
+                        MessageBox.Show(message, "Ven4Tools — установка по заданию", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    Shutdown(UnattendedExitCode.InvalidRequest);
+                    return;
+                }
+                OfflineService.UseSessionCache(offlineCache);
+            }
+
             // Единственный экземпляр клиента: два процесса гонялись бы за файлами
             // (profile.json, apps.json) и могли запустить параллельные установки.
             _instanceMutex = new Mutex(true, "Ven4Tools.Client.SingleInstance", out bool createdNew);

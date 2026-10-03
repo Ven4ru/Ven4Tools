@@ -101,7 +101,7 @@ namespace Ven4Tools.ViewModels
         public void UpdateConnectivityStatus()
         {
             bool online        = ConnectivityMonitor.IsOnline;
-            bool offlineForced = ProfileService.Current.OfflineMode;
+            bool offlineForced = OfflineService.IsOffline;
             bool onlineForced  = ProfileService.Current.ForceOnlineMode;
 
             if (offlineForced)

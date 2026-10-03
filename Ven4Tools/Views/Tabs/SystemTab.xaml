@@ -450,6 +450,12 @@
                                 IsEnabled="{Binding CanCancelCacheDownload}"
                                 Command="{Binding CancelCacheDownloadCommand}"/>
                     </Grid>
+                    <Button x:Name="btnBuildOfflineKit" Height="34" Margin="0,0,0,4"
+                            Content="💾 Сделать набор переносным (на флешку)"
+                            ToolTip="Положит в папку кэша копию клиента, файл ответа и файл запуска: программы из кэша можно будет поставить на другом компьютере без интернета."
+                            Command="{Binding BuildOfflineKitCommand}"/>
+                    <TextBlock x:Name="txtOfflineKitStatus" Text="{Binding OfflineKitStatusText}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,8"/>
 
                     <ProgressBar x:Name="progressCache" Height="6" Minimum="0" Maximum="100"
                                  Value="{Binding CacheProgressValue, Mode=OneWay}" Margin="0,0,0,6"
