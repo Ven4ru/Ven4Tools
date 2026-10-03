@@ -21,6 +21,14 @@ namespace Ven4Tools.ViewModels
             set { if (_isSelected == value) return; _isSelected = value; OnPropertyChanged(); }
         }
 
+        private bool _canUndo;
+        /// <summary>Для твика сохранено прежнее состояние — его можно вернуть кнопкой «Вернуть».</summary>
+        public bool CanUndo
+        {
+            get => _canUndo;
+            set { if (_canUndo == value) return; _canUndo = value; OnPropertyChanged(); }
+        }
+
         public string RiskLabel => Risk switch
         {
             "safe"     => "Безопасно",
