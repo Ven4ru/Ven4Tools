@@ -51,6 +51,12 @@ namespace Ven4Tools.Services
 
         /// <summary>Куда записать итог в JSON; null — не записывать.</summary>
         public string? ReportPath { get; init; }
+
+        /// <summary>
+        /// Папка переносного офлайн-набора (в ней лежит каталог кэша установщиков).
+        /// Задана — клиент работает офлайн на этот сеанс и ставит программы из неё.
+        /// </summary>
+        public string? OfflineCachePath { get; init; }
     }
 
     /// <summary>Коды возврата клиента в тихом режиме.</summary>
@@ -91,7 +97,7 @@ namespace Ven4Tools.Services
             request = null;
             error = "";
 
-            string? install = null, answerFile = null, drive = null, report = null;
+            string? install = null, answerFile = null, drive = null, report = null, offlineCache = null;
             bool silent = false, updateApps = false;
             bool? restorePoint = null;
             bool sawAny = false;
@@ -125,6 +131,10 @@ namespace Ven4Tools.Services
                     case "--report":
                         report = Value();
                         if (report == null) { error = "После --report нужен путь к файлу итога."; return ParseStatus.Error; }
+                        break;
+                    case "--offline-cache":
+                        offlineCache = Value();
+                        if (offlineCache == null) { error = "После --offline-cache нужна папка офлайн-набора."; return ParseStatus.Error; }
                         break;
                     case "--update-apps":
                         sawAny = true;
@@ -211,7 +221,8 @@ namespace Ven4Tools.Services
                 RestorePoint = restorePoint ?? file?.RestorePoint,
                 InstallDrive = resolvedDrive,
                 AllowPackageManagers = file?.AllowPackageManagers ?? true,
-                ReportPath = report ?? file?.Report
+                ReportPath = report ?? file?.Report,
+                OfflineCachePath = offlineCache ?? ResolveBesideAnswerFile(file?.OfflineCache, answerFile)
             };
             return ParseStatus.Ok;
         }
@@ -240,6 +251,18 @@ namespace Ven4Tools.Services
             return true;
         }
 
+        /// <summary>
+        /// Путь из файла ответа отсчитывается от папки самого файла: «.» — рядом с ним.
+        /// Так набор на флешке работает с любой буквой диска.
+        /// </summary>
+        private static string? ResolveBesideAnswerFile(string? path, string? answerFile)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return null;
+            if (System.IO.Path.IsPathRooted(path) || answerFile == null) return path;
+            string? directory = System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(answerFile));
+            return directory == null ? path : System.IO.Path.GetFullPath(System.IO.Path.Combine(directory, path));
+        }
+
         private static bool TryNormalizeDrive(string value, out string? drive)
         {
             drive = null;
@@ -259,6 +282,7 @@ namespace Ven4Tools.Services
             public string? Drive { get; set; }
             public bool? AllowPackageManagers { get; set; }
             public string? Report { get; set; }
+            public string? OfflineCache { get; set; }
         }
     }
 

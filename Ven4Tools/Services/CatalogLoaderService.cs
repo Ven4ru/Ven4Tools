@@ -147,7 +147,7 @@ namespace Ven4Tools.Services
         public async Task<MasterCatalog> LoadCatalogAsync(CancellationToken ct = default)
         {
             // Offline mode — skip remote, use local cache or embedded
-            if (ProfileService.Current.OfflineMode)
+            if (OfflineService.IsOffline)
             {
                 var cached = await TryReadCacheAsync(ct);
                 if (cached != null)

@@ -52,6 +52,57 @@ namespace Ven4Tools.ViewModels
                 : _cacheAppItems.Where(a => a.DisplayName.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
+        // ── Переносной набор ─────────────────────────────────────────────────────
+
+        private string _offlineKitStatusText =
+            "Сначала скачайте нужные программы в кэш (папку кэша можно выбрать прямо на флешке), затем сделайте набор переносным.";
+        public string OfflineKitStatusText { get => _offlineKitStatusText; private set => SetField(ref _offlineKitStatusText, value); }
+
+        private bool _buildingKit;
+        private RelayCommand? _buildOfflineKitCommand;
+        public RelayCommand BuildOfflineKitCommand => _buildOfflineKitCommand ??=
+            RelayCommand.FromAsync(async _ => await BuildOfflineKitAsync(), _ => !_buildingKit);
+
+        private async Task BuildOfflineKitAsync()
+        {
+            var cached = _cacheAppItems.Where(a => OfflineService.HasCachedInstaller(a.Id)).Select(a => a.Id).ToList();
+            if (cached.Count == 0)
+            {
+                OfflineKitStatusText = "❌ В кэше нет ни одного установщика. Отметьте программы и нажмите «Скачать выбранные в кэш».";
+                return;
+            }
+
+            string kitRoot = OfflineService.CacheBasePath;
+            if (MessageBox.Show(
+                    $"В папку кэша будут добавлены копия клиента (около 250 МБ), файл ответа и файл запуска.\n\n" +
+                    $"Папка: {kitRoot}\nПрограмм в наборе: {cached.Count}\n\nПродолжить?",
+                    "Переносной офлайн-набор", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                return;
+
+            _buildingKit = true;
+            BuildOfflineKitCommand.RaiseCanExecuteChanged();
+            try
+            {
+                var progress = new Progress<string>(text => OfflineKitStatusText = "⏳ " + text);
+                var result = await Task.Run(() => OfflineKitBuilder.Build(
+                    kitRoot, cached, AppContext.BaseDirectory, progress));
+                OfflineKitStatusText =
+                    $"✅ Набор готов: программ {result.Apps}, клиент {result.ClientBytes / 1024 / 1024} МБ. " +
+                    $"На другом компьютере откройте {OfflineKitBuilder.LauncherFileName} из этой папки.";
+                AppLogger.Write($"💾 Переносной офлайн-набор собран: программ {result.Apps}, файлов клиента {result.ClientFiles}");
+            }
+            catch (Exception ex)
+            {
+                OfflineKitStatusText = $"❌ Набор не собран: {ex.Message}";
+                AppLogger.Write($"❌ Переносной офлайн-набор не собран: {ex.Message}");
+            }
+            finally
+            {
+                _buildingKit = false;
+                BuildOfflineKitCommand.RaiseCanExecuteChanged();
+            }
+        }
+
         private void UpdateCacheStats() => ApplyCacheStats(OfflineService.GetCacheStats());
 
         // Отделено от чтения диска, чтобы InitializeAsync могла выполнить сам обход

@@ -48,7 +48,7 @@ namespace Ven4Tools.Services
             // (не только с доверенного источника каталога) — раскрывают IP third-party
             // серверам, чего пользователь в этом режиме не ожидает. Офлайн-режим:
             // сетевой запрос бессмысленен, каталог и так берётся из кэша.
-            bool skipNetwork = ProfileService.Current.ParanoidMode || ProfileService.Current.OfflineMode;
+            bool skipNetwork = ProfileService.Current.ParanoidMode || OfflineService.IsOffline;
 
             lock (_cache)
             {
