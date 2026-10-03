@@ -1,7 +1,11 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
+using FlaUI.Core.AutomationElements;
+using FlaUI.Core.Definitions;
+using FlaUI.Core.Tools;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Ven4Tools.ClientUITests
@@ -135,6 +139,51 @@ namespace Ven4Tools.ClientUITests
             Assert.AreEqual(3, exitCode, "Приложения нет в каталоге — ожидался код 3 и выход без вопросов.");
             var report = ReadReport(reportPath);
             StringAssert.Contains(report.GetProperty("NotFound").ToString(), "no-such-app-in-catalog");
+        }
+
+        [TestMethod]
+        public void НезавершённаяУстановка_СпрашиваетИПоОтказуЗабывает()
+        {
+            // Клиент «не дошёл до конца» прошлой пачки: в очереди остались два приложения.
+            KillClient();
+            Directory.CreateDirectory(Path.GetDirectoryName(AppSession.PendingInstallPath)!);
+            File.WriteAllText(AppSession.PendingInstallPath,
+                "{\"AppIds\":[\"autohotkey\",\"7zip\"],\"InstallDrive\":null,\"StartedUtc\":\"" +
+                DateTime.UtcNow.ToString("o") + "\"}");
+
+            AppSession? session = null;
+            try
+            {
+                session = AppSession.Launch(AppSession.SuiteUsesModernShell, keepPendingInstall: true);
+
+                var question = Retry.WhileNull(
+                    () => session.MainWindow.ModalWindows.FirstOrDefault(
+                        w => (w.Title ?? "").Contains("незавершённая установка", StringComparison.OrdinalIgnoreCase)),
+                    timeout: TimeSpan.FromSeconds(20), interval: TimeSpan.FromMilliseconds(300),
+                    throwOnTimeout: false).Result;
+                Assert.IsNotNull(question, "Клиент не спросил о продолжении незавершённой установки.");
+
+                string text = string.Join(" ", question!.FindAllDescendants(cf => cf.ByControlType(ControlType.Text))
+                    .Select(t => t.Name));
+                StringAssert.Contains(text, "Осталось установить: 2", "В вопросе должно быть названо, сколько осталось.");
+                StringAssert.Contains(text, "autohotkey", "В вопросе должно быть названо, что именно осталось.");
+
+                var no = question.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                    .FirstOrDefault(b => b.Name is "Нет" or "No");
+                Assert.IsNotNull(no, "В вопросе нет кнопки «Нет».");
+                no!.AsButton().Invoke();
+
+                Assert.IsTrue(
+                    Retry.WhileTrue(() => File.Exists(AppSession.PendingInstallPath),
+                        timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200),
+                        throwOnTimeout: false).Success,
+                    "После отказа очередь должна быть забыта — иначе вопрос повторялся бы при каждом запуске.");
+            }
+            finally
+            {
+                session?.Dispose();
+                try { File.Delete(AppSession.PendingInstallPath); } catch { }
+            }
         }
 
         [TestMethod]

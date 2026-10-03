@@ -63,9 +63,12 @@ namespace Ven4Tools.ViewModels
         public RelayCommand SelectNoneCommand { get; }
         public RelayCommand ApplyCommand { get; }
         public RelayCommand CancelCommand { get; }
+        public RelayCommand UndoCommand { get; }
 
         public DebloaterViewModel()
         {
+            UndoCommand = RelayCommand.FromAsync(async p => { if (p is DebloatItem item) await UndoAsync(item); });
+            RefreshUndoFlags();
             SelectAllCommand = new RelayCommand(_ => SelectAll());
             SelectNoneCommand = new RelayCommand(_ => SelectNone());
             ApplyCommand = RelayCommand.FromAsync(async _ => await ApplyAsync());
@@ -156,6 +159,7 @@ namespace Ven4Tools.ViewModels
             finally
             {
                 ApplyEnabled = true;
+                RefreshUndoFlags();
             }
         }
 
@@ -237,6 +241,47 @@ namespace Ven4Tools.ViewModels
                 ApplyEnabled = true;
                 CancelVisible = Visibility.Collapsed;
                 _cts?.Dispose(); _cts = null;
+                RefreshUndoFlags();
+            }
+        }
+
+        // ── Точечный откат ───────────────────────────────────────────────────────
+
+        private void RefreshUndoFlags()
+        {
+            var recorded = new HashSet<string>(DebloatUndoService.Default.RecordedTweaks(), StringComparer.OrdinalIgnoreCase);
+            foreach (var item in _allItems) item.CanUndo = recorded.Contains(item.Id);
+        }
+
+        /// <summary>
+        /// Возвращает один твик к состоянию до его применения: прежние значения реестра
+        /// и режим запуска службы. Остальные твики не затрагиваются.
+        /// </summary>
+        private async Task UndoAsync(DebloatItem item)
+        {
+            // Тот же гейт, что у «Применить»: откат и применение не должны идти внахлёст.
+            if (!ApplyEnabled) return;
+
+            if (MessageBox.Show(
+                    $"Вернуть «{item.Name}» к состоянию до применения?\n\n" +
+                    "Будут восстановлены прежние значения реестра и режим запуска службы. Остальные изменения не затрагиваются.",
+                    "Ven4Tools — откат твика", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                return;
+
+            ApplyEnabled = false;
+            try
+            {
+                StatusText = $"↩ {item.Name}...";
+                bool ok = await DebloatUndoService.Default.UndoAsync(item.Id);
+                AppLogger.Write($"{(ok ? "↩" : "❌")} Откат твика: {item.Name}");
+                StatusText = ok
+                    ? $"↩ Возвращено: {item.Name}"
+                    : $"❌ Не удалось вернуть полностью: {item.Name} — подробности в журнале";
+            }
+            finally
+            {
+                ApplyEnabled = true;
+                RefreshUndoFlags();
             }
         }
 

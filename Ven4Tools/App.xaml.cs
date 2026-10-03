@@ -161,6 +161,8 @@ namespace Ven4Tools
 
                 if (Unattended != null)
                     _ = RunUnattendedAsync(main, Unattended);
+                else
+                    OfferResumePendingInstall(main);
             }
             catch (Exception ex)
             {
@@ -226,6 +228,44 @@ namespace Ven4Tools
 
             if (request.Silent) Shutdown(report.ExitCode);
         }
+
+        /// <summary>
+        /// Прошлая установка набора не дошла до конца (перезагрузка, закрытие, сбой) —
+        /// спрашиваем, ставить ли оставшееся. Без согласия ничего не устанавливается,
+        /// а очередь забывается, чтобы вопрос не повторялся при каждом запуске.
+        /// </summary>
+        private void OfferResumePendingInstall(MainWindow main)
+        {
+            var pending = PendingInstallQueue.Default.Load(DateTime.UtcNow);
+            if (pending == null) return;
+
+            var answer = MessageBox.Show(main,
+                "В прошлый раз установка набора не была завершена.\n\n" +
+                $"Осталось установить: {pending.AppIds.Count} ({DescribeIds(pending.AppIds)}).\n\n" +
+                "Продолжить установку?",
+                "Ven4Tools — незавершённая установка",
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (answer != MessageBoxResult.Yes)
+            {
+                PendingInstallQueue.Default.Clear();
+                AppLogger.Write("[App] Незавершённая установка набора: пользователь отказался продолжать");
+                return;
+            }
+
+            AppLogger.Write($"[App] Продолжение незавершённой установки набора: {pending.AppIds.Count}");
+            // Тем же путём, что и установка по заданию, но с окном и обычными вопросами.
+            _ = RunUnattendedAsync(main, new UnattendedRequest
+            {
+                AppIds = pending.AppIds,
+                InstallDrive = pending.InstallDrive
+            });
+        }
+
+        internal static string DescribeIds(System.Collections.Generic.IReadOnlyList<string> ids) =>
+            ids.Count <= 5
+                ? string.Join(", ", ids)
+                : string.Join(", ", System.Linq.Enumerable.Take(ids, 5)) + $" и ещё {ids.Count - 5}";
 
         /// <summary>
         /// Задание <c>--update-apps</c>: то же обновление, что делает автообновление по
