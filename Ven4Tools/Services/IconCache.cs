@@ -17,6 +17,9 @@ namespace Ven4Tools.Services
     public static class IconCache
     {
         private static readonly Dictionary<string, BitmapImage?> _cache = new();
+        // Время последнего сетевого сбоя по URL — см. GetIconAsync.
+        private static readonly Dictionary<string, DateTime> _failedAtUtc = new();
+        private static readonly TimeSpan RetryAfter = TimeSpan.FromMinutes(2);
         // Единый с остальными сервисами стиль: static readonly + инициализатор.
         // Timeout бесконечный — фактический предел задаётся per-request через
         // CancellationTokenSource(IconTimeout), как и раньше при factory-варианте.
@@ -75,6 +78,12 @@ namespace Ven4Tools.Services
                 return null;
             }
 
+            lock (_cache)
+            {
+                if (_failedAtUtc.TryGetValue(url, out var failedAt) && DateTime.UtcNow - failedAt < RetryAfter)
+                    return null;
+            }
+
             byte[] data;
             try
             {
@@ -83,9 +92,14 @@ namespace Ven4Tools.Services
             }
             catch
             {
-                lock (_cache) { _cache[url] = null; }
+                // Сбой сети — не «иконки нет»: раньше null запоминался до конца сеанса,
+                // и после секундного обрыва при старте каталог оставался без иконок,
+                // сколько его ни обновляй. Запоминаем только время сбоя, чтобы не
+                // долбить недоступный хост при каждом перестроении списка.
+                lock (_cache) { _failedAtUtc[url] = DateTime.UtcNow; }
                 return null;
             }
+            lock (_cache) { _failedAtUtc.Remove(url); }
 
             var bitmap = DecodeIcon(data);
             lock (_cache) { _cache[url] = bitmap; }

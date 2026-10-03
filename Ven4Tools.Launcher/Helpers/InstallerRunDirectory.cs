@@ -93,7 +93,7 @@ internal static class InstallerRunDirectory
         }
     }
 
-    private static bool IsElevated()
+    internal static bool IsElevated()
     {
         try
         {

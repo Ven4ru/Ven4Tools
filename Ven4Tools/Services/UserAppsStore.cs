@@ -25,6 +25,8 @@ namespace Ven4Tools.Services
     {
         private readonly string _configPath;
         private readonly bool _protect;
+        // Файл есть, но не прочитан (занят, нет доступа) — см. Load и Save.
+        private bool _loadFailed;
 
         // Дополнительная энтропия DPAPI: привязывает защищённый blob именно к этому
         // назначению, а не к любому DPAPI-контейнеру той же учётной записи.
@@ -65,8 +67,12 @@ namespace Ven4Tools.Services
         {
             try
             {
-                if (!File.Exists(_configPath)) return new List<AppInfo>();
-                var raw = File.ReadAllText(_configPath);
+                var read = SettingsFileReader.TryRead(_configPath, "[UserAppsStore]", out string raw);
+                // Файл есть, но занят: владелец получит пустой список, и первое же
+                // сохранение (добавили приложение, сменили альтернативный источник)
+                // стёрло бы все добавленные вручную приложения — см. Save.
+                _loadFailed = read == SettingsReadResult.Unreadable;
+                if (read != SettingsReadResult.Read) return new List<AppInfo>();
                 if (string.IsNullOrWhiteSpace(raw)) return new List<AppInfo>();
 
                 List<AppInfo>? userApps;
@@ -124,6 +130,22 @@ namespace Ven4Tools.Services
         {
             try
             {
+                if (_loadFailed)
+                {
+                    // При старте файл не прочитался, и у владельца в памяти нет того,
+                    // что лежит на диске. Дочитываем сейчас и дописываем к сохраняемому
+                    // списку всё, чего в нём нет: запись без этого стёрла бы прежние
+                    // приложения. Не читается и сейчас — не пишем вовсе.
+                    var onDisk = Load();
+                    if (_loadFailed)
+                    {
+                        AppLogger.Write("[UserAppsStore] Сохранение пропущено: apps.json не удалось прочитать, запись стёрла бы добавленные приложения");
+                        return;
+                    }
+                    var known = new HashSet<string>(userApps.Select(a => a.Id), StringComparer.OrdinalIgnoreCase);
+                    userApps = userApps.Concat(onDisk.Where(a => a.IsUserAdded && known.Add(a.Id))).ToList();
+                }
+
                 FileHelper.WriteAllTextAtomic(_configPath, Serialize(userApps));
                 // Защищённый файл записан — фиксируем миграцию, чтобы при следующей
                 // загрузке plaintext на его месте больше не принимался автоматически.

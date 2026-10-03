@@ -110,6 +110,17 @@ namespace Ven4Tools
                 // InstalledTab уже готов и откроется мгновенно
                 InstalledTab.StartPreload();
             };
+            Loaded += (_, _) =>
+            {
+                // Каталоги установщиков прошлых сеансов в %SystemRoot%\Temp — в фоне,
+                // обход не должен задерживать окно.
+                _ = Task.Run(() =>
+                {
+                    int removed = Helpers.InstallerTempDirectory.CleanupStale(DateTime.UtcNow, TimeSpan.FromHours(6));
+                    if (removed > 0)
+                        AppLogger.Write($"🧹 Удалены временные каталоги установщиков прошлых сеансов: {removed}");
+                });
+            };
             Loaded += (s, e) =>
             {
                 // Именованный обработчик — отписываемся в OnClosed, чтобы не было утечки

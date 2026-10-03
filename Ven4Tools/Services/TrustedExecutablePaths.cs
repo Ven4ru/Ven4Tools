@@ -46,6 +46,9 @@ namespace Ven4Tools.Services
         /// <summary>%SystemRoot%\System32\net.exe — часть базовой ОС, путь фиксирован.</summary>
         public static string NetExe { get; } = Path.Combine(SystemDir, "net.exe");
 
+        /// <summary>%SystemRoot%\System32\sc.exe — часть базовой ОС, путь фиксирован.</summary>
+        public static string ScExe { get; } = Path.Combine(SystemDir, "sc.exe");
+
         /// <summary>%SystemRoot%\System32\netsh.exe — часть базовой ОС, путь фиксирован.</summary>
         public static string NetshExe { get; } = Path.Combine(SystemDir, "netsh.exe");
 

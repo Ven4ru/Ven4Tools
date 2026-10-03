@@ -101,6 +101,70 @@ internal static class InstallerTempDirectory
         return path;
     }
 
+    // Свой каталог и каталоги установщиков лаунчера (InstallerRunDirectory): из
+    // %SystemRoot%\Temp их может убрать только elevated-процесс, а клиент — как раз он.
+    private static readonly string[] StalePatterns =
+    {
+        "Ven4Tools.Installers.*",
+        "Ven4Tools.Launcher.Installers.*",
+    };
+
+    /// <summary>
+    /// Убирает каталоги установщиков прошлых сеансов. Каталог живёт до конца
+    /// процесса и сам не удаляется (установщик может ещё работать), поэтому после
+    /// каждого сеанса с установкой в %SystemRoot%\Temp оставалась пустая папка.
+    /// Трогаются только наши шаблоны имён, не ссылки, не каталог текущего процесса
+    /// и только старше <paramref name="minAge"/> — запущенный недавно установщик
+    /// может ещё выполняться из своего каталога. Занятое пропускается.
+    /// </summary>
+    /// <returns>Сколько каталогов удалено.</returns>
+    public static int CleanupStale(DateTime nowUtc, TimeSpan minAge)
+    {
+        string? current;
+        lock (_lock) { current = _path; }
+
+        var roots = new[]
+        {
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp"),
+            Path.GetTempPath(),
+        };
+        return CleanupStale(roots, current, nowUtc, minAge);
+    }
+
+    internal static int CleanupStale(string[] roots, string? current, DateTime nowUtc, TimeSpan minAge)
+    {
+        int removed = 0;
+        foreach (string root in roots)
+        {
+            foreach (string pattern in StalePatterns)
+            {
+                string[] directories;
+                try { directories = Directory.GetDirectories(root, pattern); }
+                catch { continue; }
+
+                foreach (string dir in directories)
+                {
+                    try
+                    {
+                        if (current != null && string.Equals(
+                                Path.GetFullPath(dir), Path.GetFullPath(current), StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        var info = new DirectoryInfo(dir);
+                        if ((info.Attributes & FileAttributes.ReparsePoint) != 0) continue;
+                        if (nowUtc - info.LastWriteTimeUtc < minAge) continue;
+                        info.Delete(recursive: true);
+                        removed++;
+                    }
+                    catch
+                    {
+                        // Занят установщиком или нет доступа — уберёт следующий запуск.
+                    }
+                }
+            }
+        }
+        return removed;
+    }
+
     private static bool IsElevated()
     {
         try
