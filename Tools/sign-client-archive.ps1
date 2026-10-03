@@ -22,7 +22,7 @@ param(
 
     [string]$PrivateKeyPath = "$env:USERPROFILE\.ven4tools\client-archive-signing-private.pem",
     [string]$PublicKeyPath = "$env:USERPROFILE\.ven4tools\client-archive-signing-public.pem",
-    [string]$SignerDll = "$PSScriptRoot\ClientArchiveSigner\bin\Release\net8.0\ClientArchiveSigner.dll"
+    [string]$SignerDll = "$PSScriptRoot\ClientArchiveSigner\bin\Release\net10.0\ClientArchiveSigner.dll"
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,7 +32,7 @@ $ErrorActionPreference = "Stop"
 # особенность биндера, в PowerShell 7 отсутствует) — поэтому досчитываем путь
 # здесь, если -SignerDll не был передан явно.
 if (-not $PSBoundParameters.ContainsKey('SignerDll')) {
-    $SignerDll = Join-Path $PSScriptRoot "ClientArchiveSigner\bin\Release\net8.0\ClientArchiveSigner.dll"
+    $SignerDll = Join-Path $PSScriptRoot "ClientArchiveSigner\bin\Release\net10.0\ClientArchiveSigner.dll"
 }
 
 if (-not (Test-Path $ArchivePath)) { throw "Не найден $ArchivePath" }

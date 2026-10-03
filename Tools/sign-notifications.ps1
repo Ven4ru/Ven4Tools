@@ -27,7 +27,7 @@ NotificationsVerifier.Verify так же, как и полное отсутст�
 param(
     [string]$NotificationsJsonPath = "$PSScriptRoot\..\Catalog\notifications.json",
     [string]$PrivateKeyPath = "$env:USERPROFILE\.ven4tools\notifications-signing-private.pem",
-    [string]$SignerDll = "$PSScriptRoot\NotificationsSigner\bin\Release\net8.0\NotificationsSigner.dll"
+    [string]$SignerDll = "$PSScriptRoot\NotificationsSigner\bin\Release\net10.0\NotificationsSigner.dll"
 )
 
 $ErrorActionPreference = "Stop"

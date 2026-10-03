@@ -47,10 +47,10 @@ jobs:
           # через GH_TOKEN, git-операций с удалённым репозиторием в job нет.
           persist-credentials: false
 
-      - name: Настройка .NET 8
+      - name: Настройка .NET 10
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Восстановление зависимостей
         run: dotnet restore Ven4Tools.sln --nologo

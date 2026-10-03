@@ -115,7 +115,7 @@ namespace Ven4Tools.ClientUITests
         public static string ResolveClientExePath()
         {
             // Папка решения: ...\Ven4Tools (solution root). Сборка тестов лежит в
-            // Ven4Tools.ClientUITests\bin\<Cfg>\net8.0-windows\win-x64\ — поднимаемся к корню.
+            // Ven4Tools.ClientUITests\bin\<Cfg>\net10.0-windows\win-x64\ — поднимаемся к корню.
             string? dir = AppContext.BaseDirectory;
             string? solutionRoot = null;
             var probe = new DirectoryInfo(dir);
@@ -134,8 +134,8 @@ namespace Ven4Tools.ClientUITests
             string clientBin = Path.Combine(solutionRoot, "Ven4Tools", "bin");
             string[] candidates =
             {
-                Path.Combine(clientBin, "Release", "net8.0-windows", "win-x64", "Ven4Tools.exe"),
-                Path.Combine(clientBin, "Debug",   "net8.0-windows", "win-x64", "Ven4Tools.exe"),
+                Path.Combine(clientBin, "Release", "net10.0-windows", "win-x64", "Ven4Tools.exe"),
+                Path.Combine(clientBin, "Debug",   "net10.0-windows", "win-x64", "Ven4Tools.exe"),
             };
 
             string? exe = candidates.FirstOrDefault(File.Exists);

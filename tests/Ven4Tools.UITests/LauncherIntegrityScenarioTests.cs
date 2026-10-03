@@ -330,7 +330,7 @@ internal static class LauncherTestEnvironment
             "Ven4Tools.Launcher",
             "bin",
             "Release",
-            "net8.0-windows",
+            "net10.0-windows",
             "win-x64",
             "Ven4Tools.Launcher.exe");
         return File.Exists(path)
