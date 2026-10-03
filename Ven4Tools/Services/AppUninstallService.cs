@@ -28,8 +28,13 @@ namespace Ven4Tools.Services
                 // --exact: без него --id ищет по подстроке, и при двух похожих пакетах
                 // (Mozilla.Firefox / Mozilla.Firefox.ESR) winget либо откажется, либо
                 // тронет не тот.
+                // Таймаут явно: по умолчанию RunAsync ждёт 120 с и убивает дерево
+                // процессов — удаление крупного пакета обрывалось посреди работы деинсталлятора,
+                // а следующая попытка через реестр запускалась поверх недоудалённого.
+                // 15 минут — как у обновления одного пакета.
                 var (exitCode, _) = await WingetRunner.RunAsync(
-                    WingetArgs.Query("uninstall", "--id", wingetId, "--exact", "--silent"));
+                    WingetArgs.Query("uninstall", "--id", wingetId, "--exact", "--silent"),
+                    TimeSpan.FromMinutes(15));
                 if (exitCode == 0)
                     return true;
                 // 0x8A150014 = winget не нашёл пакет с таким ID. Это ещё не «не установлено»:

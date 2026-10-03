@@ -112,8 +112,8 @@ namespace Ven4Tools.Launcher
                 System.IO.Directory.CreateDirectory(LauncherLog.LogDirectory);
 
                 var psi = System.IO.File.Exists(LauncherLog.LogPath)
-                    ? new System.Diagnostics.ProcessStartInfo("explorer.exe", $"/select,\"{LauncherLog.LogPath}\"")
-                    : new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{LauncherLog.LogDirectory}\"");
+                    ? new System.Diagnostics.ProcessStartInfo(TrustedExecutablePaths.ExplorerExe, $"/select,\"{LauncherLog.LogPath}\"")
+                    : new System.Diagnostics.ProcessStartInfo(TrustedExecutablePaths.ExplorerExe, $"\"{LauncherLog.LogDirectory}\"");
                 psi.UseShellExecute = true;
                 System.Diagnostics.Process.Start(psi);
             }

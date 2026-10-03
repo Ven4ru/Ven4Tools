@@ -198,9 +198,14 @@ namespace Ven4Tools.ViewModels
                     }
                 });
 
-                // CheckOfficeActivationAsync уже async — Task.Run вокруг нею добавлял
-                // лишний прыжок на пул потоков без всякой пользы.
-                await CheckOfficeActivationAsync();
+                // Task.Run обязателен, хотя метод и async: асинхронно в нём только
+                // чтение вывода OSPP.VBS, а запасные пути — WMI-запрос
+                // SoftwareLicensingProduct (секунды, а то и десятки) и реестр — идут
+                // синхронно. Без пула потоков они выполнялись на UI-потоке при каждом
+                // открытии вкладки там, где OSPP.VBS нет, — окно замирало, а heartbeat
+                // для watchdog'а лаунчера на это время переставал писаться. Статусы
+                // метод выставляет сам через Dispatcher (SetOfficeStatusOnUI).
+                await Task.Run(CheckOfficeActivationAsync);
             }
             catch (Exception ex)
             {

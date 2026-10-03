@@ -94,14 +94,14 @@ internal sealed class InstalledManifestStore
     {
         try
         {
-            string? directory = System.IO.Path.GetDirectoryName(_path);
-            if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
-
             // Через временный файл: прерывание записи не должно оставить наполовину
             // записанный кэш, который выглядит валидным JSON'ом лишь частично.
-            string temporary = _path + ".tmp";
-            File.WriteAllText(temporary, JsonSerializer.Serialize(manifest, WriteOptions), new UTF8Encoding(false));
-            File.Move(temporary, _path, overwrite: true);
+            // FileHelper, а не своя пара WriteAllText+Move: прежнее фиксированное имя
+            // «.tmp» можно было заранее подложить ссылкой, а каталог — подменить
+            // junction'ом, и запись лаунчера, запущенного от администратора, ушла бы
+            // по ссылке (обоснование — в Helpers/FileHelper.cs). Кодировка та же:
+            // UTF-8 без BOM.
+            Helpers.FileHelper.WriteAllTextAtomic(_path, JsonSerializer.Serialize(manifest, WriteOptions));
             return true;
         }
         catch

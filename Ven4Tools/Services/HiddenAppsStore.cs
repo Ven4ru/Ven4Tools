@@ -30,6 +30,14 @@ namespace Ven4Tools.Services
             Load();
         }
 
+        /// <summary>
+        /// Перечитывает hidden.json. Файл меняют и другие экземпляры хранилища:
+        /// «Показать скрытые» на «Настройках» работает через собственный AppManager,
+        /// и без перечитывания каталог продолжал бы прятать уже возвращённые
+        /// приложения, а следующее «Скрыть» записало бы их в файл обратно.
+        /// </summary>
+        public void Reload() => Load();
+
         private void Load()
         {
             try
@@ -71,6 +79,7 @@ namespace Ven4Tools.Services
         /// <summary>Скрывает приложение из каталога и сохраняет файл.</summary>
         public void Hide(string appId)
         {
+            Load();
             lock (_lock) { _hidden.Add(appId); }
             Save();
         }

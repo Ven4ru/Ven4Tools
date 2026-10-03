@@ -103,8 +103,6 @@ namespace Ven4Tools.Launcher
                 if (parent == null || !Directory.Exists(parent)) return default;
 
                 string clientName = Path.GetFileName(fullClientPath);
-                string stagingPrefix = $".{clientName}.staging-";
-                string backupPrefix = $"{clientName}.backup-";
 
                 // Материализуем список: ниже возможно перемещение бэкапа обратно в
                 // папку клиента (внутри того же родителя), а менять каталог во время
@@ -112,9 +110,8 @@ namespace Ven4Tools.Launcher
                 foreach (string dir in Directory.EnumerateDirectories(parent).ToList())
                 {
                     string name = Path.GetFileName(dir);
-                    bool isStaging = name.StartsWith(stagingPrefix, StringComparison.OrdinalIgnoreCase);
-                    bool isBackup = name.StartsWith(backupPrefix, StringComparison.OrdinalIgnoreCase);
-                    if (!isStaging && !isBackup) continue;
+                    if (!TransactionalDirectoryInstaller.IsInstallLeftoverDirectory(name, clientName, out bool isBackup))
+                        continue;
 
                     // Есть бэкап предыдущей версии, а самой папки клиента нет — значит
                     // установку прервали между Move(target→backup) и Move(staging→target).
@@ -136,33 +133,14 @@ namespace Ven4Tools.Launcher
                 // Остатки прерванного блочного (дельта-) обновления — «файл.new-{id}»
                 // и «файл.old-{id}» ВНУТРИ папки клиента. Транзакция InstallPartial
                 // убирает их сама, но убитый посреди работы процесс мог не успеть.
-                // Опознаются по строгому шаблону (см. IsTransientArtifactName), поэтому
-                // настоящие файлы публикации задеть невозможно.
+                // Прерванная посреди фиксации операция откатывается целиком, чтобы в
+                // папке не осталась смесь двух версий, — см. RecoverLeftovers.
                 if (Directory.Exists(fullClientPath))
                 {
-                    foreach (string file in Directory.EnumerateFiles(fullClientPath, "*", SearchOption.AllDirectories).ToList())
-                    {
-                        string name = Path.GetFileName(file);
-                        if (!TransactionalDirectoryInstaller.TryParseTransientArtifactName(
-                                name, out string originalName, out bool isBackup))
-                            continue;
-
-                        // «.old-{id}» — сохранённый оригинал. Если файла под штатным
-                        // именем рядом нет, значит процесс убили между переименованием
-                        // оригинала и установкой нового файла: в остатке лежит
-                        // ЕДИНСТВЕННАЯ копия, её надо вернуть на место, а не удалить
-                        // (тот же случай, что и с ".backup-*" выше).
-                        string original = Path.Combine(Path.GetDirectoryName(file)!, originalName);
-                        if (isBackup && !File.Exists(original))
-                        {
-                            try { File.Move(file, original); restored++; }
-                            catch { /* не удалось вернуть — остаток оставляем, не удаляя */ }
-                            continue;
-                        }
-
-                        try { File.Delete(file); removed++; }
-                        catch { /* занято/уже удалено */ }
-                    }
+                    var (partialRestored, partialRemoved) =
+                        TransactionalDirectoryInstaller.RecoverLeftovers(fullClientPath);
+                    restored += partialRestored;
+                    removed += partialRemoved;
                 }
             }
             catch { /* зачистка необязательна для работы лаунчера */ }
@@ -343,7 +321,12 @@ namespace Ven4Tools.Launcher
                     // Хендл downloadResult (FileShare.Read) держит архив неизменным от
                     // этой проверки до распаковки — та же защита от подмены, что у
                     // проверки SHA256 внутри загрузчика.
-                    using var cdnService = new CdnService();
+                    // Список отзыва VerifyAsync запрашивает сам, прямо сейчас; признак
+                    // «не проверен» — сбой ИМЕННО этого запроса (CdnService сообщает о
+                    // каждом null через log), а не _cdnManifestLoaded со старта: тот
+                    // устаревает в обе стороны и молчал, когда список не пришёл сейчас.
+                    string? revocationListFailure = null;
+                    using var cdnService = new CdnService(reason => revocationListFailure = reason);
                     var signed = await LocalArchiveVerifier.VerifyAsync(tempZip, cdnService, token);
                     string? refusal = signed.Outcome == LocalArchiveOutcome.Rejected
                         ? signed.RejectionReason
@@ -357,8 +340,8 @@ namespace Ven4Tools.Launcher
                         return;
                     }
                     AddLog($"🔒 Встроенная подпись архива подтверждена (версия {signed.Version})");
-                    if (!_cdnManifestLoaded)
-                        AddLog("⚠️ Список отозванных версий на CDN недоступен — отзыв этого архива не проверен");
+                    if (revocationListFailure != null)
+                        AddLog($"⚠️ Список отозванных версий на CDN недоступен ({revocationListFailure}) — отзыв этого архива не проверен");
                 }
 
                 bool installed = await ExtractAndInstallClientAsync(tempZip, version.Version, token, silent);
