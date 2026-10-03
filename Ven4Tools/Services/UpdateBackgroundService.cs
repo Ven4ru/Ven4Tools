@@ -75,7 +75,7 @@ namespace Ven4Tools.Services
         private async Task CheckOnceAsync(CancellationToken ct)
         {
             // Без интернета и в офлайн-режиме проверки бессмысленны — пропускаем цикл.
-            if (ProfileService.Current.OfflineMode) return;
+            if (OfflineService.IsOffline) return;
             // Параноидальный режим: фоновые проверки обновлений (winget) отключены.
             if (ProfileService.Current.ParanoidMode) return;
             // IsEffectivelyOnline, а не IsOnline: настройка «Принудительный онлайн-режим»

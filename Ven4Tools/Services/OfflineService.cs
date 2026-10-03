@@ -15,12 +15,24 @@ namespace Ven4Tools.Services
         private const string CacheMarkerName = ".ven4tools-cache";
         private const string CacheMarkerContent = "Ven4Tools offline cache v1";
 
-        public static bool IsOffline => ProfileService.Current.OfflineMode;
+        // Офлайн-режим только на этот сеанс: клиент запущен из переносного набора
+        // (--offline-cache или файл ответа с offlineCache). В профиль не записывается —
+        // на чужом компьютере набор не должен оставлять клиент в офлайн-режиме навсегда.
+        private static string? _sessionCacheBase;
+
+        /// <summary>Включает офлайн-режим на этот сеанс с кэшем в указанной папке.</summary>
+        public static void UseSessionCache(string cacheBasePath) =>
+            _sessionCacheBase = Path.GetFullPath(cacheBasePath);
+
+        public static bool IsSessionOffline => _sessionCacheBase != null;
+
+        public static bool IsOffline => _sessionCacheBase != null || ProfileService.Current.OfflineMode;
 
         public static string CacheBasePath
         {
             get
             {
+                if (_sessionCacheBase != null) return _sessionCacheBase;
                 var custom = ProfileService.Current.OfflineCachePath;
                 return !string.IsNullOrWhiteSpace(custom)
                     ? custom
