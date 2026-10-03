@@ -210,6 +210,7 @@ public sealed class LauncherIntegrityScenarioTests : IDisposable
 
     private Window StartLauncher()
     {
+        LauncherTestEnvironment.PrepareShell(_testRoot);
         var startInfo = new ProcessStartInfo(LauncherTestEnvironment.FindLauncher());
         startInfo.Environment["VEN4TOOLS_UI_TEST"] = "1";
         startInfo.Environment["VEN4TOOLS_UI_TEST_ROOT"] = _testRoot;
@@ -307,6 +308,26 @@ public sealed class LauncherIntegrityScenarioTests : IDisposable
 /// </summary>
 internal static class LauncherTestEnvironment
 {
+    /// <summary>
+    /// Вид окна, в котором идёт весь набор. Набор прогоняется дважды — в прежнем и в
+    /// новом: переменная окружения VEN4TOOLS_UITEST_SHELL (classic | modern) задаётся
+    /// запускающим скриптом, по умолчанию — прежний.
+    /// </summary>
+    public static bool SuiteUsesModernShell => string.Equals(
+        Environment.GetEnvironmentVariable("VEN4TOOLS_UITEST_SHELL"), "modern", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Записывает выбранный вид в настройки лаунчера в его тестовой папке — тем же
+    /// путём, каким его запоминает сам лаунчер. Вызывается до запуска процесса.
+    /// </summary>
+    public static void PrepareShell(string testRoot)
+    {
+        Directory.CreateDirectory(testRoot);
+        File.WriteAllText(
+            Path.Combine(testRoot, "launcher_settings.json"),
+            "{\"UiMode\":\"" + (SuiteUsesModernShell ? "modern" : "classic") + "\"}");
+    }
+
     /// <summary>
     /// Лаунчер под тестом. LAUNCHER_UNDER_TEST задаётся релизным workflow и указывает
     /// на РЕАЛЬНО установленный лаунчер — без него берётся сборка из Release.

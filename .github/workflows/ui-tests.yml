@@ -33,11 +33,19 @@ jobs:
         shell: pwsh
         run: ./tests/scripts/set_ci_display_resolution.ps1
 
-      - name: UI smoke и snapshot (лаунчер)
-        run: dotnet test tests/Ven4Tools.UITests/Ven4Tools.UITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
+      # Оба набора — лаунчера и клиента — прогоняются дважды: в прежнем и в новом виде окна.
+      # Второй прогон идёт, даже если первый упал, — иначе о новом виде ничего не узнать.
+      - name: UI smoke и snapshot (лаунчер) — прежний интерфейс
+        env:
+          VEN4TOOLS_UITEST_SHELL: classic
+        run: dotnet test tests/Ven4Tools.UITests/Ven4Tools.UITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --logger "trx;LogFileName=launcher-ui-classic.trx" --results-directory TestResults/UI
 
-      # Набор прогоняется дважды: в прежней и в новой оболочке главного окна.
-      # Второй прогон идёт, даже если первый упал, — иначе о новой оболочке ничего не узнать.
+      - name: UI smoke и snapshot (лаунчер) — новый интерфейс
+        if: always()
+        env:
+          VEN4TOOLS_UITEST_SHELL: modern
+        run: dotnet test tests/Ven4Tools.UITests/Ven4Tools.UITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --logger "trx;LogFileName=launcher-ui-modern.trx" --results-directory TestResults/UI
+
       - name: UI-тесты клиента — прежний интерфейс
         env:
           VEN4TOOLS_UITEST_SHELL: classic

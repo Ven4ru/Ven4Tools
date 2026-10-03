@@ -35,6 +35,9 @@ namespace Ven4Tools.Launcher
                         _lastNotifiedLauncherVersion = settings.LastNotifiedLauncherVersion ?? "";
                         _lastNotifiedClientVersion   = settings.LastNotifiedClientVersion   ?? "";
                         _lastNotifiedNotificationId  = settings.LastNotifiedNotificationId  ?? "";
+                        // Любое значение, кроме «classic», — новый вид: так его получают
+                        // и те, у кого настройки записаны прежней версией лаунчера.
+                        _uiMode                      = settings.UiMode ?? UiModeModern;
                     }
                 }
             }
@@ -63,7 +66,8 @@ namespace Ven4Tools.Launcher
                     LastKnownCdnIp              = _lastKnownCdnIp,
                     LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
                     LastNotifiedClientVersion   = _lastNotifiedClientVersion,
-                    LastNotifiedNotificationId  = _lastNotifiedNotificationId
+                    LastNotifiedNotificationId  = _lastNotifiedNotificationId,
+                    UiMode                      = _uiMode
                 };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented);
                 FileHelper.WriteAllTextAtomic(_settingsPath, json);
