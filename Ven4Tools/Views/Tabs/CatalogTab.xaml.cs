@@ -84,7 +84,7 @@ namespace Ven4Tools.Views.Tabs
                 _initialized = true;
                 TabInitGuard.Run(async () =>
                 {
-                    await _viewModel.LoadAsync();
+                    await _viewModel.EnsureLoadedAsync();
                     _lastSourceOrderVersion = SourceOrderService.Version;
                 }, "CatalogTab.LoadAsync");
             }
@@ -100,6 +100,10 @@ namespace Ven4Tools.Views.Tabs
         private void OnAppSettingsChanged() => _viewModel.UpdateTimeouts();
 
         public void AddLocalInstallerApp(AppInfo app) => _viewModel.AddLocalInstallerApp(app);
+
+        /// <summary>Установка набора по заданию тихого режима — см. <see cref="UnattendedRequest"/>.</summary>
+        public System.Threading.Tasks.Task<UnattendedReport> RunUnattendedAsync(UnattendedRequest request) =>
+            _viewModel.RunUnattendedAsync(request);
 
         // ── Два вида каталога ───────────────────────────────────────────────────
 

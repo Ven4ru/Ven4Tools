@@ -32,7 +32,9 @@ namespace Ven4Tools.ViewModels
     //   • CatalogViewModel.Presets.cs   — пресеты и экспорт/импорт списка;
     //   • CatalogViewModel.Disks.cs     — диск установки и проверка свободного места;
     //   • CatalogViewModel.Selection.cs — панель «Ваш набор» и кнопки-категории
-    //                                     нового интерфейса.
+    //                                     нового интерфейса;
+    //   • CatalogViewModel.Unattended.cs — установка набора по заданию из командной
+    //                                     строки или файла ответа.
     public sealed partial class CatalogViewModel : ViewModelBase
     {
         private readonly AppManager _appManager = new();

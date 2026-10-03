@@ -16,6 +16,12 @@ namespace Ven4Tools
         private static ClientControlServer? _clientControlServer;
         private static Mutex? _instanceMutex;
 
+        /// <summary>Задание на установку набора из командной строки; null — обычный запуск.</summary>
+        public static UnattendedRequest? Unattended { get; private set; }
+
+        /// <summary>Тихий режим: окно свёрнуто, вопросов нет, по окончании клиент завершается.</summary>
+        public static bool IsSilentRun => Unattended?.Silent == true;
+
         public App()
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -28,19 +34,37 @@ namespace Ven4Tools
             // остаётся светлым поверх тёмной темы приложения даже при тёмной теме Windows.
             try { WindowChromeHelper.RegisterGlobalDarkTitleBar(); } catch { }
 
+            // Задание тихого режима разбирается до всего остального: ошибка в нём не
+            // должна заканчиваться открытым окном, которого сценарий установки не ждёт.
+            bool silentRequested = Array.Exists(e.Args, a => string.Equals(a, "--silent", StringComparison.OrdinalIgnoreCase));
+            var parseStatus = UnattendedCommandLine.Parse(
+                e.Args, System.IO.File.ReadAllText, out var unattended, out string parseError);
+            if (parseStatus == UnattendedCommandLine.ParseStatus.Error)
+            {
+                AppLogger.Write($"[App] Задание на установку не разобрано: {parseError}");
+                if (!silentRequested)
+                    MessageBox.Show(parseError, "Ven4Tools — установка по заданию", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Shutdown(UnattendedExitCode.InvalidRequest);
+                return;
+            }
+            Unattended = unattended;
+
             // Единственный экземпляр клиента: два процесса гонялись бы за файлами
             // (profile.json, apps.json) и могли запустить параллельные установки.
             _instanceMutex = new Mutex(true, "Ven4Tools.Client.SingleInstance", out bool createdNew);
             if (!createdNew)
             {
-                MessageBox.Show(
-                    "Приложение Ven4Tools уже запущено.",
-                    "Уже запущено",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                if (IsSilentRun)
+                    AppLogger.Write("[App] Тихая установка не начата: клиент уже запущен");
+                else
+                    MessageBox.Show(
+                        "Приложение Ven4Tools уже запущено.",
+                        "Уже запущено",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
                 _instanceMutex.Dispose();
                 _instanceMutex = null;
-                Shutdown();
+                Shutdown(IsSilentRun ? UnattendedExitCode.AlreadyRunning : 0);
                 return;
             }
 
@@ -71,15 +95,19 @@ namespace Ven4Tools
                 // провал здесь = регион пользователя остаётся подменённым без следа
                 // в журнале, диагностировать нечем.
                 try { OfficeRegionRecoveryService.Recover(); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось восстановить регион Windows после Office"); }
-                // Краш-репорт прошлого сеанса отправляется только с явного согласия пользователя
-                try { AskAndSendPendingCrashReport(); } catch { }
+                // Краш-репорт прошлого сеанса отправляется только с явного согласия пользователя.
+                // В тихом режиме спросить некого — вопрос откладывается до обычного запуска.
+                if (!IsSilentRun)
+                {
+                    try { AskAndSendPendingCrashReport(); } catch { }
+                }
                 // Отправка отложенного отзыва — тоже fire-and-forget
                 try { _ = FeedbackService.TrySendPendingAsync(); } catch { }
 
                 try
                 {
                     splash = new SplashWindow();
-                    splash.Show();
+                    if (!IsSilentRun) splash.Show();
                     await splash.RunPreloadAsync();
                 }
                 catch (Exception ex)
@@ -90,6 +118,13 @@ namespace Ven4Tools
                 }
 
                 var main = new MainWindow();
+                if (IsSilentRun)
+                {
+                    // Окно остаётся в панели задач свёрнутым: ход установки можно
+                    // посмотреть, но фокус у пользователя оно не забирает.
+                    main.ShowActivated = false;
+                    main.WindowState = WindowState.Minimized;
+                }
                 main.Show();
 
                 // Launcher работает без повышения прав, а клиент — elevated, поэтому
@@ -123,6 +158,9 @@ namespace Ven4Tools
                 {
                     AppLogger.Write(ex, "[App] Не удалось запустить фоновую проверку обновлений Windows");
                 }
+
+                if (Unattended != null)
+                    _ = RunUnattendedAsync(main, Unattended);
             }
             catch (Exception ex)
             {
@@ -143,6 +181,48 @@ namespace Ven4Tools
                 // splash закрываем в любом случае — даже если MainWindow упал до Show().
                 try { splash?.Close(); } catch { }
             }
+        }
+
+        /// <summary>
+        /// Установка набора по заданию из командной строки. В тихом режиме по её
+        /// окончании клиент завершается с кодом возврата; с окном — остаётся открытым.
+        /// </summary>
+        private async System.Threading.Tasks.Task RunUnattendedAsync(MainWindow main, UnattendedRequest request)
+        {
+            UnattendedReport report;
+            try
+            {
+                report = await main.RunUnattendedAsync(request);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "[App] Установка по заданию прервана ошибкой");
+                report = new UnattendedReport
+                {
+                    ExitCode = UnattendedExitCode.PartialFailure,
+                    Message = "установка прервана ошибкой: " + ex.Message,
+                    FinishedUtc = DateTime.UtcNow.ToString("o")
+                };
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.ReportPath))
+            {
+                try
+                {
+                    string json = System.Text.Json.JsonSerializer.Serialize(report, new System.Text.Json.JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                    });
+                    System.IO.File.WriteAllText(request.ReportPath, json);
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Write(ex, "[App] Не удалось записать итог установки по заданию");
+                }
+            }
+
+            if (request.Silent) Shutdown(report.ExitCode);
         }
 
         /// <summary>
