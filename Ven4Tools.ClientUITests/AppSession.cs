@@ -44,13 +44,37 @@ namespace Ven4Tools.ClientUITests
         /// Бросает исключение, если окно не появилось за отведённое время —
         /// вызывающий код переводит тесты в Inconclusive в headless-окружении.
         /// </summary>
-        public static AppSession Launch() => Launch(modernUi: false);
+        /// <summary>
+        /// Оболочка главного окна, в которой идёт весь набор. Набор прогоняется дважды —
+        /// в прежней и в новой оболочке: переменная окружения VEN4TOOLS_UITEST_SHELL
+        /// (classic | modern) задаётся запускающим скриптом, по умолчанию — прежняя.
+        /// </summary>
+        public static bool SuiteUsesModernShell => string.Equals(
+            Environment.GetEnvironmentVariable("VEN4TOOLS_UITEST_SHELL"), "modern", StringComparison.OrdinalIgnoreCase);
+
+        public static AppSession Launch()
+        {
+            var session = Launch(SuiteUsesModernShell);
+            if (SuiteUsesModernShell) session.OpenCatalog();
+            return session;
+        }
 
         /// <summary>
-        /// Запуск с выбором оболочки главного окна. Существующий набор тестов написан
-        /// под прежнюю раскладку меню (двенадцать пунктов), поэтому по умолчанию клиент
-        /// запускается в ней — что бы ни было записано в профиле. Новая оболочка
-        /// проверяется отдельным классом, который передаёт <paramref name="modernUi"/>.
+        /// Новая оболочка открывается на «Обзоре», прежняя — на каталоге. Тесты разделов
+        /// написаны от каталога как исходной точки, поэтому в новой оболочке набор
+        /// начинает с него же; сам стартовый «Обзор» проверяет ModernShellUiTests.
+        /// </summary>
+        private void OpenCatalog()
+        {
+            var catalog = Retry.WhileNull(
+                () => MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab")),
+                timeout: TimeSpan.FromSeconds(8), interval: TimeSpan.FromMilliseconds(300),
+                throwOnTimeout: false).Result;
+            catalog?.AsButton().Invoke();
+        }
+
+        /// <summary>
+        /// Запуск с явным выбором оболочки — что бы ни было записано в профиле.
         /// </summary>
         public static AppSession Launch(bool modernUi)
         {

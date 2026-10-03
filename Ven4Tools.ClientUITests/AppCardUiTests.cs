@@ -73,7 +73,7 @@ namespace Ven4Tools.ClientUITests
 
         private static AutomationElement GetSearchBox(AppSession s)
         {
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             catalogBtn?.AsButton().Invoke();
             var search = Retry.WhileNull(
                 () => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtSearch")),

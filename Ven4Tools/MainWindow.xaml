@@ -124,7 +124,7 @@
                         <StackPanel x:Name="slotInstalled"/>
                         <Grid>
                             <Button x:Name="btnGroupWindows" Style="{StaticResource NavButtonStyle}" Tag="&#xE770;" Content="Windows"
-                                    Click="BtnGroupWindows_Click" ToolTip="Windows Update, Office, лицензия, очистка"/>
+                                    Click="BtnGroupWindows_Click" ToolTip="Раскрывает разделы Windows: обновления, Office, лицензия и очистка."/>
                             <TextBlock x:Name="chevGroupWindows" Text="&#xE70D;" FontFamily="Segoe Fluent Icons" FontSize="9"
                                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
                                        IsHitTestVisible="False" Foreground="{DynamicResource TextSecondary}"/>
@@ -132,7 +132,7 @@
                         <StackPanel x:Name="pnlGroupWindows" Margin="14,0,0,0" Visibility="Collapsed"/>
                         <Grid>
                             <Button x:Name="btnGroupService" Style="{StaticResource NavButtonStyle}" Tag="&#xE90F;" Content="Сервис"
-                                    Click="BtnGroupService_Click" ToolTip="Сеть, диагностика, бенчмарк"/>
+                                    Click="BtnGroupService_Click" ToolTip="Раскрывает служебные разделы: сеть, диагностика и бенчмарк."/>
                             <TextBlock x:Name="chevGroupService" Text="&#xE70D;" FontFamily="Segoe Fluent Icons" FontSize="9"
                                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
                                        IsHitTestVisible="False" Foreground="{DynamicResource TextSecondary}"/>
@@ -186,7 +186,9 @@
                         </Grid>
                     </Border>
                     <!-- Возврат к прежней оболочке и обратно. Подпись и подсказку ставит ApplyUiMode. -->
-                    <Button x:Name="btnUiModeSwitch" Style="{StaticResource SidebarLinkButtonStyle}" Click="BtnUiModeSwitch_Click"/>
+                    <Button x:Name="btnUiModeSwitch" Style="{StaticResource SidebarLinkButtonStyle}" Click="BtnUiModeSwitch_Click"
+                            Content="Старый интерфейс"
+                            ToolTip="Переключает вид окна между новым и прежним. Вернуться можно этой же кнопкой."/>
                 </StackPanel>
             </Grid>
         </Border>

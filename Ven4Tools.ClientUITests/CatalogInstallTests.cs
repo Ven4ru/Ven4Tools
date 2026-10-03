@@ -163,7 +163,7 @@ namespace Ven4Tools.ClientUITests
                 continueBtn.AsButton().Invoke();
             }
 
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             Assert.IsNotNull(catalogBtn, "Не найдена кнопка вкладки «Каталог».");
             catalogBtn!.AsButton().Invoke();
 
@@ -278,7 +278,7 @@ namespace Ven4Tools.ClientUITests
             // Обратная связь по переустановке идёт только через AppLogger.Write, который
             // MainWindow подписывает на глобальный лог (lstGlobalLog) — там и проверяем
             // итоговый текст, отдельного прогресс-бара на этой вкладке нет.
-            var historyBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnHistoryTab"));
+            var historyBtn = UiNav.Find(s, "btnHistoryTab");
             Assert.IsNotNull(historyBtn, "Не найдена кнопка вкладки «История».");
             historyBtn!.AsButton().Invoke();
 

@@ -71,7 +71,8 @@
                         <TextBlock Text="Обновления программ" Style="{StaticResource OverviewCardTitle}"/>
                         <TextBlock x:Name="txtOverviewAppUpdates" Text="{Binding AppUpdatesStatus}" Style="{StaticResource OverviewStatus}"/>
                         <TextBlock Text="{Binding AppUpdatesHint}" Style="{StaticResource OverviewHint}"/>
-                        <Button x:Name="btnOverviewAppUpdates" Content="Открыть обновления" Style="{StaticResource OverviewAction}"
+                        <Button x:Name="btnOverviewAppUpdates" Content="Открыть обновления"
+                                ToolTip="Откроет «Установленные» со списком программ, для которых есть обновление." Style="{StaticResource OverviewAction}"
                                 Command="{Binding OpenAppUpdatesCommand}"/>
                     </StackPanel>
                 </Border>
@@ -90,7 +91,8 @@
                         <TextBlock Text="Windows Update" Style="{StaticResource OverviewCardTitle}"/>
                         <TextBlock x:Name="txtOverviewWindowsUpdate" Text="{Binding WindowsUpdateStatus}" Style="{StaticResource OverviewStatus}"/>
                         <TextBlock Text="{Binding WindowsUpdateHint}" Style="{StaticResource OverviewHint}"/>
-                        <Button x:Name="btnOverviewWindowsUpdate" Content="Открыть Windows Update" Style="{StaticResource OverviewAction}"
+                        <Button x:Name="btnOverviewWindowsUpdate" Content="Открыть Windows Update"
+                                ToolTip="Откроет раздел Windows Update, где можно проверить и выбрать патчи." Style="{StaticResource OverviewAction}"
                                 Command="{Binding OpenWindowsUpdateCommand}"/>
                     </StackPanel>
                 </Border>
@@ -99,12 +101,15 @@
                     <StackPanel>
                         <TextBlock Text="Быстрые действия" Style="{StaticResource OverviewCardTitle}" Margin="0,0,0,12"/>
                         <WrapPanel>
-                            <Button x:Name="btnOverviewCatalog" Content="Собрать набор программ" Style="{StaticResource OverviewQuickAction}"
+                            <Button x:Name="btnOverviewCatalog" Content="Собрать набор программ"
+                                ToolTip="Откроет каталог, где программы отмечаются и ставятся одним набором." Style="{StaticResource OverviewQuickAction}"
                                     Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
                                     Command="{Binding OpenCatalogCommand}"/>
-                            <Button x:Name="btnOverviewDebloater" Content="Очистка Windows" Style="{StaticResource OverviewQuickAction}"
+                            <Button x:Name="btnOverviewDebloater" Content="Очистка Windows"
+                                ToolTip="Откроет раздел очистки: встроенные приложения, твики и точка восстановления." Style="{StaticResource OverviewQuickAction}"
                                     Command="{Binding OpenDebloaterCommand}"/>
-                            <Button x:Name="btnOverviewDiagnostics" Content="Диагностика" Style="{StaticResource OverviewQuickAction}"
+                            <Button x:Name="btnOverviewDiagnostics" Content="Диагностика"
+                                ToolTip="Откроет диагностику: диски, ошибки системы и состояние обновлений." Style="{StaticResource OverviewQuickAction}"
                                     Command="{Binding OpenDiagnosticsCommand}"/>
                         </WrapPanel>
                     </StackPanel>
@@ -122,7 +127,8 @@
                             <TextBlock x:Name="txtOverviewCatalog" Grid.Row="1" Grid.Column="1" Text="{Binding CatalogStatus}" FontSize="12"
                                        Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
                         </Grid>
-                        <Button x:Name="btnOverviewAbout" Content="О программе" Style="{StaticResource OverviewAction}"
+                        <Button x:Name="btnOverviewAbout" Content="О программе"
+                                ToolTip="Откроет сведения о версии, список изменений и обратную связь." Style="{StaticResource OverviewAction}"
                                 Command="{Binding OpenAboutCommand}"/>
                     </StackPanel>
                 </Border>
@@ -130,7 +136,8 @@
                 <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource OverviewCard}">
                     <StackPanel>
                         <DockPanel>
-                            <Button x:Name="btnOverviewHistory" DockPanel.Dock="Right" Content="Вся история" Height="30" Padding="12,0"
+                            <Button x:Name="btnOverviewHistory" DockPanel.Dock="Right" Content="Вся история"
+                                ToolTip="Откроет полную историю установок с поиском и повторной установкой." Height="30" Padding="12,0"
                                     Command="{Binding OpenHistoryCommand}"/>
                             <TextBlock Text="Последние действия" Style="{StaticResource OverviewCardTitle}" VerticalAlignment="Center"/>
                         </DockPanel>

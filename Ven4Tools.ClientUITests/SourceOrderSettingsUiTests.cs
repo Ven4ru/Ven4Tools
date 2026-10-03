@@ -94,7 +94,7 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
 
-            var systemBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnSystemTab"));
+            var systemBtn = UiNav.Find(s, "btnSystemTab");
             Assert.IsNotNull(systemBtn, "Не найдена кнопка вкладки «Система».");
             systemBtn!.AsButton().Invoke();
 

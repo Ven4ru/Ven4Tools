@@ -63,7 +63,7 @@ namespace Ven4Tools.ClientUITests
         /// <summary>Кликает по навигационной кнопке сайдбара по её AutomationId.</summary>
         private static void NavigateTo(AppSession s, string navButtonAutomationId)
         {
-            var btn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId(navButtonAutomationId));
+            var btn = UiNav.Find(s, navButtonAutomationId);
             Assert.IsNotNull(btn, $"Не найдена кнопка навигации '{navButtonAutomationId}'.");
             btn!.AsButton().Invoke();
         }
@@ -75,7 +75,7 @@ namespace Ven4Tools.ClientUITests
         /// </summary>
         private static bool TryNavigateTo(AppSession s, string navButtonAutomationId)
         {
-            var btn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId(navButtonAutomationId));
+            var btn = UiNav.Find(s, navButtonAutomationId);
             if (btn == null || btn.IsOffscreen) return false;
             btn.AsButton().Invoke();
             return true;

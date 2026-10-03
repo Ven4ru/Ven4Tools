@@ -39,7 +39,7 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
 
-            var navBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnDiagnosticsTab"));
+            var navBtn = UiNav.Find(s, "btnDiagnosticsTab");
             Assert.IsNotNull(navBtn, "Не найдена кнопка вкладки «Диагностика» в сайдбаре.");
             navBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);
@@ -68,7 +68,7 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
 
-            var navBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnDiagnosticsTab"));
+            var navBtn = UiNav.Find(s, "btnDiagnosticsTab");
             navBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);
 

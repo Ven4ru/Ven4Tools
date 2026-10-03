@@ -166,7 +166,7 @@ namespace Ven4Tools.ClientUITests
         public void NetworkTab_ОстальныеДиагностическиеКнопки()
         {
             var s = Require();
-            var netBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnNetworkTab"));
+            var netBtn = UiNav.Find(s, "btnNetworkTab");
             Assert.IsNotNull(netBtn, "Не найдена кнопка вкладки «Сеть».");
             netBtn!.AsButton().Invoke();
             Thread.Sleep(500);
@@ -200,7 +200,7 @@ namespace Ven4Tools.ClientUITests
         public void InstalledTab_ПроверитьОбновления()
         {
             var s = Require();
-            var installedBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnInstalledTab"));
+            var installedBtn = UiNav.Find(s, "btnInstalledTab");
             Assert.IsNotNull(installedBtn, "Не найдена кнопка вкладки «Установленные».");
             installedBtn!.AsButton().Invoke();
             Thread.Sleep(1500);
@@ -214,7 +214,7 @@ namespace Ven4Tools.ClientUITests
         public void OfficeTab_ОтменаИПереходКАктивации()
         {
             var s = Require();
-            var officeBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnOfficeTab"));
+            var officeBtn = UiNav.Find(s, "btnOfficeTab");
             Assert.IsNotNull(officeBtn, "Не найдена кнопка вкладки «Office».");
             officeBtn!.AsButton().Invoke();
             Thread.Sleep(500);
@@ -238,7 +238,7 @@ namespace Ven4Tools.ClientUITests
         public void ActivationTab_ПроверитьСтатус()
         {
             var s = Require();
-            var activationBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnActivationTab"));
+            var activationBtn = UiNav.Find(s, "btnActivationTab");
             Assert.IsNotNull(activationBtn, "Не найдена кнопка вкладки «Лицензия».");
             activationBtn!.AsButton().Invoke();
             Thread.Sleep(500);
@@ -265,7 +265,7 @@ namespace Ven4Tools.ClientUITests
         public void ActivationTab_КнопкиАктивацииТребуютСогласия()
         {
             var s = Require();
-            var activationBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnActivationTab"));
+            var activationBtn = UiNav.Find(s, "btnActivationTab");
             Assert.IsNotNull(activationBtn, "Не найдена кнопка вкладки «Лицензия».");
             activationBtn!.AsButton().Invoke();
             Thread.Sleep(500);
@@ -324,7 +324,7 @@ namespace Ven4Tools.ClientUITests
         public void DebloaterTab_ВыбратьВсеИСброс()
         {
             var s = Require();
-            var debloaterBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnDebloaterTab"));
+            var debloaterBtn = UiNav.Find(s, "btnDebloaterTab");
             Assert.IsNotNull(debloaterBtn, "Не найдена кнопка вкладки «Очистка».");
             debloaterBtn!.AsButton().Invoke();
             Thread.Sleep(500);
@@ -347,7 +347,7 @@ namespace Ven4Tools.ClientUITests
         public void HistoryTab_ПоискФильтрОчистка()
         {
             var s = Require();
-            var historyBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnHistoryTab"));
+            var historyBtn = UiNav.Find(s, "btnHistoryTab");
             Assert.IsNotNull(historyBtn, "Не найдена кнопка вкладки «История».");
             historyBtn!.AsButton().Invoke();
             Thread.Sleep(500);
