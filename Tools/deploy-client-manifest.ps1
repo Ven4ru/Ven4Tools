@@ -44,7 +44,7 @@ param(
 
     [string]$PrivateKeyPath = "$env:USERPROFILE\.ven4tools\client-manifest-signing-private.pem",
     [string]$PublicKeyPath = "$PSScriptRoot\ClientManifestSigner\client-manifest-signing-public.pem",
-    [string]$SignerDll = "$PSScriptRoot\ClientManifestSigner\bin\Release\net8.0\ClientManifestSigner.dll",
+    [string]$SignerDll = "$PSScriptRoot\ClientManifestSigner\bin\Release\net10.0\ClientManifestSigner.dll",
     [switch]$SkipUpload
 )
 
