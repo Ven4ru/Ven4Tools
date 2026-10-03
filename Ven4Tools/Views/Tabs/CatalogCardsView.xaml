@@ -329,8 +329,15 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
+                                        <!-- Щелчок по значку (или букве на его месте) открывает карточку
+                                             приложения — так же, как щелчок по названию. -->
                                         <Border Width="36" Height="36" CornerRadius="8" Margin="0,0,10,0"
-                                                Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Top">
+                                                Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Top" Cursor="Hand">
+                                            <Border.InputBindings>
+                                                <MouseBinding MouseAction="LeftClick"
+                                                              Command="{Binding DataContext.OpenCardCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                              CommandParameter="{Binding}"/>
+                                            </Border.InputBindings>
                                             <Grid>
                                                 <!-- Пока значок не загружен (или его нет вовсе), на его
                                                      месте первая буква названия — пустой квадрат
@@ -479,7 +486,8 @@
 
                         <ScrollViewer MaxHeight="232" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto"
                                       Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
-                            <ItemsControl x:Name="lstYourSet" ItemsSource="{Binding SelectedApps}">
+                            <views:FlatItemsControl x:Name="lstYourSet" ItemsSource="{Binding SelectedApps}"
+                                                    AutomationProperties.Name="Ваш набор">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:AppRowViewModel}">
                                         <Border Margin="0,0,0,4" Padding="10,0,2,0" CornerRadius="7" Height="30"
@@ -502,7 +510,7 @@
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            </views:FlatItemsControl>
                         </ScrollViewer>
 
                         <DockPanel Margin="0,8,0,0" Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
