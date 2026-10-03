@@ -1,0 +1,61 @@
+<Window x:Class="Ven4Tools.Views.InstalledSetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Набор из установленного" Height="470" Width="480"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="ToolWindow" ResizeMode="NoResize"
+        Background="{DynamicResource WindowBackground}">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="txtInstalledSetTitle" Grid.Row="0" Text="Установлено из каталога"
+                   FontSize="15" FontWeight="Bold"
+                   Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,6"/>
+
+        <TextBlock Grid.Row="1" TextWrapping="Wrap"
+                   Text="Программы каталога, которые уже стоят на этом компьютере. Код набора или файл ответа вернут тот же состав на другой машине или после переустановки Windows."
+                   FontSize="11" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
+
+        <ListBox x:Name="lstInstalledSet" Grid.Row="2"
+                 Background="{DynamicResource CardBackground}"
+                 Foreground="{DynamicResource TextPrimary}"
+                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                 FontSize="12" Focusable="False"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+
+        <TextBlock Grid.Row="3" Text="Код набора — его принимает кнопка «Набор с сайта»"
+                   FontSize="11" Foreground="{DynamicResource TextSecondary}" Margin="0,12,0,3"/>
+        <TextBox x:Name="txtInstalledSetCode" Grid.Row="4" IsReadOnly="True"
+                 Height="52" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                 Background="{DynamicResource CardBackground}"
+                 Foreground="{DynamicResource AccentColor}"
+                 BorderBrush="{DynamicResource BorderBrush}"
+                 FontFamily="Consolas" FontSize="11" Padding="8,6"/>
+
+        <TextBlock x:Name="txtInstalledSetHint" Grid.Row="5" TextWrapping="Wrap"
+                   Text="Файл ответа ставит набор без вопросов: Ven4Tools.exe --answer-file «файл»"
+                   FontSize="11" Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,0"/>
+
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button x:Name="btnCopyInstalledSetCode" Content="Копировать код" Width="130" Height="32" Margin="0,0,8,0"
+                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
+                    BorderThickness="0"
+                    ToolTip="Скопирует код набора в буфер обмена."
+                    Click="CopyCode_Click"/>
+            <Button x:Name="btnSaveAnswerFile" Content="Сохранить файл ответа…" Width="180" Height="32" Margin="0,0,8,0"
+                    ToolTip="Сохранит набор в файл для тихой установки: Ven4Tools.exe --answer-file «файл»."
+                    Click="SaveAnswerFile_Click"/>
+            <Button x:Name="btnCloseInstalledSet" Content="Закрыть" Width="90" Height="32" IsCancel="True"
+                    ToolTip="Закроет окно. Отметки в каталоге не меняются."
+                    Click="Close_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

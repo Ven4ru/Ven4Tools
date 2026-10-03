@@ -228,5 +228,52 @@ namespace Ven4Tools.ClientUITests
                 System.Threading.Thread.Sleep(500);
             }
         }
+
+        [TestMethod]
+        public void НаборИзУстановленного_ПоказываетКодИлиСообщаетЧтоПусто()
+        {
+            var s = Require();
+            UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
+            System.Threading.Thread.Sleep(500);
+
+            var button = UiNav.FindCatalogTool(s, "btnSetFromInstalled");
+            Assert.IsNotNull(button, "Не найдена кнопка «Набор из установленного».");
+            button!.AsButton().Invoke();
+
+            var dialog = Retry.WhileNull(() => s.MainWindow.ModalWindows.FirstOrDefault(),
+                timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
+            Assert.IsNotNull(dialog, "Кнопка «Набор из установленного» не открыла ни окно набора, ни сообщение.");
+
+            try
+            {
+                var code = dialog!.FindFirstDescendant(cf => cf.ByAutomationId("txtInstalledSetCode"));
+                if (code != null)
+                {
+                    // На машине есть установленные программы каталога: код набора обязан
+                    // быть в формате, который принимает «Набор с сайта».
+                    StringAssert.StartsWith(code.AsTextBox().Text, "V4T:",
+                        "Код набора из установленного должен начинаться с V4T:.");
+                    Assert.IsNotNull(dialog.FindFirstDescendant(cf => cf.ByAutomationId("btnSaveAnswerFile")),
+                        "В окне набора нет сохранения файла ответа.");
+                    Assert.IsNotNull(dialog.FindFirstDescendant(cf => cf.ByAutomationId("btnCopyInstalledSetCode")),
+                        "В окне набора нет копирования кода.");
+                }
+                else
+                {
+                    // Установленных программ каталога нет — об этом сказано словами,
+                    // а не пустым окном.
+                    Assert.AreEqual("Набор из установленного", dialog.Title,
+                        "Без установленных программ ожидалось сообщение «Набор из установленного».");
+                }
+            }
+            finally
+            {
+                var close = dialog!.FindFirstDescendant(cf => cf.ByAutomationId("btnCloseInstalledSet"))
+                            ?? dialog.FindAllDescendants(cf => cf.ByControlType(ControlType.Button)).FirstOrDefault();
+                close?.AsButton().Invoke();
+                Retry.WhileTrue(() => s.MainWindow.ModalWindows.Length > 0,
+                    timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(250), throwOnTimeout: false);
+            }
+        }
     }
 }
