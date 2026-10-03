@@ -475,6 +475,10 @@ namespace Ven4Tools
         // в трей, предупреждение об активной установке и окно отзыва на prerelease.
         private void Window_Closing_Extended(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            // Тихий режим завершается сам, по окончании установки: ни сворачивания в
+            // трей, ни вопросов, ни окна отзыва при этом быть не должно.
+            if (App.IsSilentRun) return;
+
             // При сворачивании в трей окно не закрывается — установка продолжается,
             // предупреждение и окно отзыва не нужны. Если иконку создать не удалось
             // (см. TrayIconController.Initialize) — сворачивать некуда, окно должно
@@ -604,8 +608,18 @@ namespace Ven4Tools
             Application.Current.Shutdown();
         }
 
+        /// <summary>Установка набора по заданию из командной строки — см. <see cref="UnattendedRequest"/>.</summary>
+        public System.Threading.Tasks.Task<UnattendedReport> RunUnattendedAsync(UnattendedRequest request)
+        {
+            NavigateToCatalog(null, null);
+            return _catalogTab!.RunUnattendedAsync(request);
+        }
+
         private void ShowCategorySelectionIfNeeded()
         {
+            // Тихий режим: выбор режима каталога откладывается до обычного запуска —
+            // модальное окно под свёрнутым клиентом ждало бы ответа, которого не будет.
+            if (App.IsSilentRun) return;
             if (_categorySelectionShown) return;
             if (ProfileService.Current.HasSelectedCategory) return;
             _categorySelectionShown = true;
