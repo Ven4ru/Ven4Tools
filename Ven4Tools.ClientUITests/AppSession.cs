@@ -76,8 +76,27 @@ namespace Ven4Tools.ClientUITests
         /// <summary>
         /// Запуск с явным выбором оболочки — что бы ни было записано в профиле.
         /// </summary>
-        public static AppSession Launch(bool modernUi)
+        /// <summary>
+        /// Файл очереди установки, переживающей перезагрузку. Тест, убивший клиент
+        /// посреди установки, оставил бы его — и следующий класс встретил бы на старте
+        /// вопрос «продолжить?», о котором ничего не знает.
+        /// </summary>
+        public static readonly string PendingInstallPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "pending_install.json");
+
+        public static AppSession Launch(bool modernUi) => Launch(modernUi, keepPendingInstall: false);
+
+        /// <param name="keepPendingInstall">
+        /// Оставить файл очереди как есть — только для теста самого вопроса о продолжении.
+        /// </param>
+        public static AppSession Launch(bool modernUi, bool keepPendingInstall)
         {
+            if (!keepPendingInstall)
+            {
+                try { File.Delete(PendingInstallPath); } catch { }
+            }
+
             // Переменную читает UiModeService клиента; дочерний процесс наследует
             // окружение тестового.
             Environment.SetEnvironmentVariable("VEN4TOOLS_UI_CLASSIC", modernUi ? null : "1");
