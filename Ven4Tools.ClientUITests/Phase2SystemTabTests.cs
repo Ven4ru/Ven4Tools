@@ -73,7 +73,7 @@ namespace Ven4Tools.ClientUITests
 
         private static void GoToSystemSubTab(AppSession s, string subTabName)
         {
-            var systemBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnSystemTab"));
+            var systemBtn = UiNav.Find(s, "btnSystemTab");
             Assert.IsNotNull(systemBtn, "Не найдена кнопка вкладки «Система».");
             systemBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);

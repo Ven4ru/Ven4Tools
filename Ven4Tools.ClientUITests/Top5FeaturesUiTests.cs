@@ -54,7 +54,7 @@ namespace Ven4Tools.ClientUITests
 
         private static AutomationElement NavigateTo(AppSession s, string navButtonAutomationId)
         {
-            var btn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId(navButtonAutomationId));
+            var btn = UiNav.Find(s, navButtonAutomationId);
             Assert.IsNotNull(btn, $"Не найдена кнопка навигации «{navButtonAutomationId}» в сайдбаре.");
             btn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(700);

@@ -83,7 +83,7 @@ namespace Ven4Tools.ClientUITests
 
             void GoTo(string navBtnId, string landmarkId, string tabName)
             {
-                var btn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId(navBtnId));
+                var btn = UiNav.Find(s, navBtnId);
                 Assert.IsNotNull(btn, $"Не найдена кнопка навигации {navBtnId} ({tabName}).");
                 btn!.AsButton().Invoke();
 
@@ -128,8 +128,7 @@ namespace Ven4Tools.ClientUITests
 
             foreach (var item in cases)
             {
-                var navigation = s.MainWindow.FindFirstDescendant(
-                    cf => cf.ByAutomationId(item.NavigationId));
+                var navigation = UiNav.Find(s, item.NavigationId);
                 Assert.IsNotNull(navigation, $"Не найдена навигация вкладки «{item.TabName}».");
                 navigation!.AsButton().Invoke();
 
@@ -153,7 +152,7 @@ namespace Ven4Tools.ClientUITests
             // «Диагностика» — верхнеуровневая вкладка (btnDiagnosticsTab), а не под-вкладка
             // «Системы»: переехала 2026-07-21. Тест до этого шёл в «Систему» и искал там
             // TabItem «Диагностика» — с тех пор падал в каждом прогоне.
-            var diagBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnDiagnosticsTab"));
+            var diagBtn = UiNav.Find(s, "btnDiagnosticsTab");
             Assert.IsNotNull(diagBtn, "Не найдена кнопка вкладки «Диагностика».");
             diagBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(600);
@@ -228,7 +227,7 @@ namespace Ven4Tools.ClientUITests
         public void Сеть_ПолнаяДиагностика_ЗавершаетсяБезЗависания()
         {
             var s = Require();
-            var networkBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnNetworkTab"));
+            var networkBtn = UiNav.Find(s, "btnNetworkTab");
             Assert.IsNotNull(networkBtn, "Не найдена кнопка вкладки «Сеть».");
             networkBtn!.AsButton().Invoke();
 
@@ -284,7 +283,7 @@ namespace Ven4Tools.ClientUITests
         public void История_Очистить_ПоказываетПодтверждениеИНеУдаляетПриОтказе()
         {
             var s = Require();
-            var historyBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnHistoryTab"));
+            var historyBtn = UiNav.Find(s, "btnHistoryTab");
             Assert.IsNotNull(historyBtn, "Не найдена кнопка вкладки «История».");
             historyBtn!.AsButton().Invoke();
 
@@ -311,7 +310,7 @@ namespace Ven4Tools.ClientUITests
         public void ОПрограмме_КнопкаGitHub_ОткрываетБраузерБезИсключения()
         {
             var s = Require();
-            var aboutBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnAboutTab"));
+            var aboutBtn = UiNav.Find(s, "btnAboutTab");
             Assert.IsNotNull(aboutBtn, "Не найдена кнопка вкладки «О программе».");
             aboutBtn!.AsButton().Invoke();
 

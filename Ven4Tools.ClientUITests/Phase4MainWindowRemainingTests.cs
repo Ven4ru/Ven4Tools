@@ -89,7 +89,7 @@ namespace Ven4Tools.ClientUITests
         public void AboutTab_ОбратнаяСвязьИСообщитьОПроблеме_ОткрываютБраузер()
         {
             var s = Require();
-            var aboutBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnAboutTab"));
+            var aboutBtn = UiNav.Find(s, "btnAboutTab");
             Assert.IsNotNull(aboutBtn, "Не найдена кнопка вкладки «О программе».");
             aboutBtn!.AsButton().Invoke();
             Thread.Sleep(500);

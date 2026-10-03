@@ -90,7 +90,7 @@ namespace Ven4Tools.ClientUITests
         private static void OpenCatalog(AppSession s)
         {
             var catalogBtn = Retry.WhileNull(
-                () => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab")),
+                () => UiNav.Find(s, "btnCatalogTab"),
                 timeout: T, throwOnTimeout: false).Result;
             Assert.IsNotNull(catalogBtn, "Не найдена вкладка «Каталог».");
             catalogBtn!.AsButton().Invoke();

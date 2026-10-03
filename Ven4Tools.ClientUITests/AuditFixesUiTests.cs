@@ -175,7 +175,7 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
 
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             Assert.IsNotNull(catalogBtn, "Не найдена кнопка вкладки «Каталог».");
             long t0 = LogTailPosition();
             catalogBtn!.AsButton().Invoke();
@@ -385,7 +385,7 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
 
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             Assert.IsNotNull(catalogBtn, "Не найдена кнопка вкладки «Каталог».");
             catalogBtn!.AsButton().Invoke();
 
@@ -401,7 +401,7 @@ namespace Ven4Tools.ClientUITests
             Assert.IsTrue(loaded, "Каталог не завершил первичную загрузку за 30с.");
             System.Threading.Thread.Sleep(1000);
 
-            var systemBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnSystemTab"));
+            var systemBtn = UiNav.Find(s, "btnSystemTab");
             Assert.IsNotNull(systemBtn, "Не найдена кнопка вкладки «Система».");
             systemBtn!.AsButton().Invoke(); // «Каталог» теперь Unloaded
             System.Threading.Thread.Sleep(500);
@@ -512,7 +512,7 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
 
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             Assert.IsNotNull(catalogBtn, "Не найдена кнопка вкладки «Каталог».");
             catalogBtn!.AsButton().Invoke();
 
@@ -620,7 +620,7 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
 
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             Assert.IsNotNull(catalogBtn, "Не найдена кнопка вкладки «Каталог».");
             catalogBtn!.AsButton().Invoke();
 

@@ -48,7 +48,7 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
 
-            var navBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnBenchmarkTab"));
+            var navBtn = UiNav.Find(s, "btnBenchmarkTab");
             Assert.IsNotNull(navBtn, "Не найдена кнопка вкладки «Бенчмарк» в сайдбаре.");
             navBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(700);

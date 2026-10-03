@@ -77,7 +77,7 @@ namespace Ven4Tools.ClientUITests
         public void Поиск_ОчисткаИИзбранное_Работают()
         {
             var s = Require();
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             catalogBtn!.AsButton().Invoke();
 
             var search = Retry.WhileNull(() => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtSearch")),
@@ -105,7 +105,7 @@ namespace Ven4Tools.ClientUITests
         public void Пресеты_СохранениеПрименениеПереименованиеУдаление()
         {
             var s = Require();
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             long tInit = LogTailPosition();
             catalogBtn!.AsButton().Invoke();
 
@@ -208,7 +208,7 @@ namespace Ven4Tools.ClientUITests
         public void ОчиститьДобавленные_РаботаетСПодтверждением()
         {
             var s = Require();
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             catalogBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);
 
