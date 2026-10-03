@@ -43,22 +43,52 @@ namespace Ven4Tools.ViewModels
         private string _installStatusText = "Готов";
         public string InstallStatusText { get => _installStatusText; set => SetField(ref _installStatusText, value); }
 
-        private async Task InstallSelectedAsync()
+        /// <summary>Итог пачки установок — нужен тихому режиму для кода возврата и отчёта.</summary>
+        internal sealed record InstallBatchResult(
+            IReadOnlyList<AppRowViewModel> Installed,
+            IReadOnlyList<(AppRowViewModel Row, string Message)> Failed,
+            bool Cancelled);
+
+        /// <param name="unattended">
+        /// Задание тихого режима. Когда оно задано с <see cref="UnattendedRequest.Silent"/>,
+        /// ни один вопрос не показывается: ответы берутся из задания. null — обычная
+        /// установка по кнопке.
+        /// </param>
+        /// <returns>null, если установка не началась (нечего ставить, занято, отказ на вопросе).</returns>
+        private async Task<InstallBatchResult?> InstallSelectedAsync(UnattendedRequest? unattended = null)
         {
+            bool silent = unattended?.Silent == true;
             var selected = Apps.Where(a => a.IsSelected && a.IsSelectable).ToList();
             if (selected.Count == 0)
             {
-                MessageBox.Show("Выберите хотя бы одну программу!", "Ven4Tools", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                if (!silent)
+                    MessageBox.Show("Выберите хотя бы одну программу!", "Ven4Tools", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return null;
             }
-            if (Views.UiGuards.WarnIfInstallBusy()) return;
+            if (silent)
+            {
+                if (InstallationService.IsBusy)
+                {
+                    Log("⚠️ Тихая установка не начата: уже идёт другая установка");
+                    return null;
+                }
+            }
+            else if (Views.UiGuards.WarnIfInstallBusy()) return null;
 
             InstallProgress.Clear();
             ClearFailedInstalls();
             OverallProgressPercentage = 0;
             IsInstalling = true;
 
-            if (selected.Count >= 2)
+            // Точка восстановления: задание может ответить заранее. Без ответа тихий
+            // режим её не создаёт (спросить некого), обычный — спрашивает, как всегда.
+            if (unattended?.RestorePoint == true)
+            {
+                Log("🛡️ Создаю точку восстановления...");
+                bool created = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед установкой");
+                Log(created ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (установка продолжается)");
+            }
+            else if (unattended?.RestorePoint == null && !silent && selected.Count >= 2)
             {
                 var rpOutcome = await Views.UiGuards.ConfirmAndCreateRestorePointAsync(
                     $"Будет установлено {selected.Count} приложений.\n\nСоздать точку восстановления Windows перед установкой?",
@@ -66,7 +96,7 @@ namespace Ven4Tools.ViewModels
                 if (rpOutcome == Views.RestorePointOutcome.Cancelled)
                 {
                     IsInstalling = false;
-                    return;
+                    return null;
                 }
             }
 
@@ -118,7 +148,9 @@ namespace Ven4Tools.ViewModels
                 try
                 {
                     if (pmConsentCache.TryGetValue(pmName, out bool cached)) return cached;
-                    bool consented = await Views.UiGuards.ConfirmPackageManagerInstallAsync(pmName);
+                    bool consented = silent
+                        ? unattended!.AllowPackageManagers
+                        : await Views.UiGuards.ConfirmPackageManagerInstallAsync(pmName);
                     pmConsentCache[pmName] = consented;
                     return consented;
                 }
@@ -129,7 +161,9 @@ namespace Ven4Tools.ViewModels
             // отбираются записи именно этой установки, а не прошлых сеансов.
             var batchStartedUtc = DateTime.UtcNow;
             var failedRows = new List<(AppRowViewModel Row, string Message)>();
+            var installedRows = new List<AppRowViewModel>();
             var failedRowsLock = new object();
+            bool cancelled = false;
 
             var tasks = selected.Select(row => Task.Run(async () =>
             {
@@ -142,6 +176,7 @@ namespace Ven4Tools.ViewModels
                     if (result.Success)
                     {
                         completed++;
+                        lock (failedRowsLock) installedRows.Add(row);
                         if (row.PinnedVersion != null && row.VersionOptions.Count > 1)
                             _versionTracker.TrackInstall(row.AppId, row.PinnedVersion, row.VersionOptions[1]);
                         row.JustInstalled = true;
@@ -181,7 +216,7 @@ namespace Ven4Tools.ViewModels
 
                 await UpdateInstalledStatusAsync();
             }
-            catch (OperationCanceledException) { InstallStatusText = "⏹️ Установка отменена"; }
+            catch (OperationCanceledException) { InstallStatusText = "⏹️ Установка отменена"; cancelled = true; }
             finally
             {
                 IsInstalling = false;
@@ -192,6 +227,8 @@ namespace Ven4Tools.ViewModels
                 PublishFailedInstalls(failedRows, batchStartedUtc);
                 _ = UpdateSpaceStatusAsync();
             }
+
+            return new InstallBatchResult(installedRows, failedRows, cancelled);
         }
 
         // ── Неуспешные установки: список причин и повтор ────────────────────────
