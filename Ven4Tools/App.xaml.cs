@@ -192,7 +192,9 @@ namespace Ven4Tools
             UnattendedReport report;
             try
             {
-                report = await main.RunUnattendedAsync(request);
+                report = request.UpdateApps
+                    ? await RunUpdateAppsAsync()
+                    : await main.RunUnattendedAsync(request);
             }
             catch (Exception ex)
             {
@@ -223,6 +225,35 @@ namespace Ven4Tools
             }
 
             if (request.Silent) Shutdown(report.ExitCode);
+        }
+
+        /// <summary>
+        /// Задание <c>--update-apps</c>: то же обновление, что делает автообновление по
+        /// расписанию, но сейчас и независимо от того, включено ли оно в настройках.
+        /// </summary>
+        private static async System.Threading.Tasks.Task<UnattendedReport> RunUpdateAppsAsync()
+        {
+            var report = new UnattendedReport { StartedUtc = DateTime.UtcNow.ToString("o") };
+            var result = await AutoUpdateService.RunAsync(
+                ProfileService.Current.AutoUpdateExcluded, AppLogger.Write, CancellationToken.None);
+
+            report.Installed.AddRange(result.Updated);
+            foreach (var (id, reason) in result.Failed)
+                report.Failed.Add(new UnattendedFailure { Id = id, Reason = reason });
+            report.Unavailable.AddRange(result.Excluded);
+            report.Message = result.Describe();
+            report.ExitCode = result.WingetUnavailable ? UnattendedExitCode.NothingToInstall
+                : result.Failed.Count > 0 ? UnattendedExitCode.PartialFailure
+                : UnattendedExitCode.Success;
+            report.FinishedUtc = DateTime.UtcNow.ToString("o");
+            AppLogger.Write($"🤖 Обновление программ по заданию: {report.Message}");
+
+            if (!result.WingetUnavailable)
+            {
+                ProfileService.Current.AutoUpdateLastRunUtc = DateTime.UtcNow;
+                ProfileService.Save();
+            }
+            return report;
         }
 
         /// <summary>

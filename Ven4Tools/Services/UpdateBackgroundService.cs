@@ -93,6 +93,42 @@ namespace Ven4Tools.Services
 
             if (profile.NotifyAppUpdates)
                 await CheckAppUpdatesAsync(ct);
+
+            if (profile.AutoUpdateApps
+                && AutoUpdateService.IsDue(profile.AutoUpdateLastRunUtc, profile.AutoUpdateFrequency, DateTime.UtcNow))
+                await RunAutoUpdateAsync(ct);
+        }
+
+        // ── Автообновление программ ──────────────────────────────────────────────
+
+        private async Task RunAutoUpdateAsync(CancellationToken ct)
+        {
+            // Идёт установка из окна — не вклиниваемся, попробуем в следующий цикл.
+            if (InstallationService.IsBusy) return;
+
+            AppLogger.Write("⬆ Автообновление программ: проверка");
+            var result = await AutoUpdateService.RunAsync(
+                ProfileService.Current.AutoUpdateExcluded, AppLogger.Write, ct);
+            AppLogger.Write($"⬆ Автообновление программ: {result.Describe()}");
+
+            // winget не ответил — время запуска не записываем: проверка не состоялась,
+            // и ждать из-за неё сутки или неделю незачем.
+            if (result.WingetUnavailable) return;
+
+            ProfileService.Current.AutoUpdateLastRunUtc = DateTime.UtcNow;
+            ProfileService.Save();
+
+            if (result.Updated.Count > 0 || result.Failed.Count > 0)
+            {
+                ShowNotification("Автообновление программ",
+                    result.Failed.Count > 0
+                        ? $"Обновлено: {result.Updated.Count}, не удалось: {result.Failed.Count}. Подробности — в журнале."
+                        : $"Обновлено программ: {result.Updated.Count}.");
+                // Счётчик на «Обзоре» устарел — пересчитываем сразу, а не через три часа.
+                try { await CheckAppUpdatesAsync(ct); }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex) { AppLogger.Write($"[UpdateBg] {ex.Message}"); }
+            }
         }
 
         // ── Обновления установленных приложений (winget) ────────────────────────
