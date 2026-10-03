@@ -61,7 +61,7 @@ namespace Ven4Tools.ClientUITests
         public void ЗвездаИзбранного_ПереключаетСостояние()
         {
             var s = Require();
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             catalogBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(1000);
 
@@ -108,7 +108,7 @@ namespace Ven4Tools.ClientUITests
         public void WingetПредложение_ДобавляетПриложениеВСписок()
         {
             var s = Require();
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             catalogBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(1000);
 
@@ -153,7 +153,7 @@ namespace Ven4Tools.ClientUITests
         public void УдалитьПользовательскоеПриложение_ИзСписка()
         {
             var s = Require();
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             catalogBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(1000);
 

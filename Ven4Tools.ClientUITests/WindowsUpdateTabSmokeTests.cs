@@ -79,7 +79,7 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
 
-            var navBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnWindowsUpdateTab"));
+            var navBtn = UiNav.Find(s, "btnWindowsUpdateTab");
             Assert.IsNotNull(navBtn, "Не найдена кнопка навигации 'btnWindowsUpdateTab'.");
             navBtn!.AsButton().Invoke();
 

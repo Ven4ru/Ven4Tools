@@ -13,6 +13,11 @@ namespace Ven4Tools.Models
         public bool CompactMode { get; set; } = false;
         public bool ReduceMotion { get; set; } = false;
 
+        // Оболочка главного окна: "modern" — новая (обзор, шесть пунктов меню,
+        // группы «Windows» и «Сервис»), "classic" — прежняя, с двенадцатью пунктами.
+        // Переключается кнопкой слева внизу; см. Services/UiModeService.
+        public string UiMode { get; set; } = "modern";
+
         // Установка
         public bool SilentInstall { get; set; } = false;
         public string DefaultInstallFolder { get; set; } = "";

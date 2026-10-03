@@ -13,7 +13,9 @@
         <SolidColorBrush x:Key="ContentBackground" Color="#0A0A14"/>
         <SolidColorBrush x:Key="CardBackground"    Color="#11161F"/>
         <SolidColorBrush x:Key="AccentColor"       Color="#4ADE80"/>
-        <SolidColorBrush x:Key="TextPrimary"       Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="AccentForeground"  Color="#06130D"/>
+        <SolidColorBrush x:Key="AccentPressed"     Color="#3CB569"/>
+        <SolidColorBrush x:Key="TextPrimary"      Color="#E2E8F0"/>
         <SolidColorBrush x:Key="TextSecondary"     Color="#AAB8CE"/>
         <SolidColorBrush x:Key="BorderBrush"       Color="#1E2A38"/>
         <SolidColorBrush x:Key="HeaderForeground"  Color="#E2E8F0"/>

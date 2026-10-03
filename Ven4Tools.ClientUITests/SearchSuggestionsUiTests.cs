@@ -70,7 +70,7 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
 
-            var catalogBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCatalogTab"));
+            var catalogBtn = UiNav.Find(s, "btnCatalogTab");
             Assert.IsNotNull(catalogBtn, "Не найдена кнопка вкладки «Каталог».");
             catalogBtn!.AsButton().Invoke();
 

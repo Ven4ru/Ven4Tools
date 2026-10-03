@@ -116,6 +116,23 @@ namespace Ven4Tools.Services
                     "Откройте вкладку «Установленные», чтобы обновить.");
             }
             _lastUpgradeCount = count;
+            SetAvailableCount(count);
+        }
+
+        /// <summary>
+        /// Сколько установленных программ можно обновить по последней фоновой проверке;
+        /// -1 — проверка ещё не выполнялась (или выключена в настройках). Нужен экрану
+        /// «Обзор»: уведомление в трее показывается один раз, а число должно быть видно
+        /// всё время.
+        /// </summary>
+        public static int AvailableCount { get; private set; } = -1;
+        public static event Action? CountChanged;
+
+        private static void SetAvailableCount(int count)
+        {
+            if (AvailableCount == count) return;
+            AvailableCount = count;
+            CountChanged?.Invoke();
         }
 
         // Запускает winget upgrade и считает строки таблицы. Сам разбор — общий

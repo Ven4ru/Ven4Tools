@@ -39,24 +39,24 @@
                              BorderBrush="{DynamicResource BorderBrush}"
                              VerticalContentAlignment="Center" Padding="5,0"
                              Tag="Поиск по названию или категории"/>
-                    <Button x:Name="btnClearSearch" Grid.Column="1" Content="&#xE711;" FontFamily="Segoe Fluent Icons"
+                    <Button x:Name="btnClearSearch" Grid.Column="1" Content="&#xE711;" ContentTemplate="{StaticResource IconGlyphTemplate}"
                             Width="28" Height="28" Margin="4,0,0,0"
                             ToolTip="Очистит строку поиска и снова покажет полный список текущей категории."
                             Command="{Binding ClearSearchCommand}"
                             Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVis}}"/>
-                    <Button x:Name="btnFavoritesOnly" Grid.Column="2" Content="&#xE734;" FontFamily="Segoe Fluent Icons"
+                    <Button x:Name="btnFavoritesOnly" Grid.Column="2" Content="&#xE734;" ContentTemplate="{StaticResource IconGlyphTemplate}"
                             Width="28" Height="28" Margin="4,0,0,0"
                             FontSize="16" ToolTip="Включит или выключит показ только избранных приложений."
                             Command="{Binding ToggleFavoritesOnlyCommand}"
                             Foreground="{Binding FavoritesOnlyBrush}"
                             Background="Transparent" BorderThickness="1"/>
-                    <Button x:Name="btnHideInstalled" Grid.Column="3" Content="&#xED1A;" FontFamily="Segoe Fluent Icons"
+                    <Button x:Name="btnHideInstalled" Grid.Column="3" Content="&#xED1A;" ContentTemplate="{StaticResource IconGlyphTemplate}"
                             Width="28" Height="28" Margin="4,0,0,0"
                             FontSize="16" ToolTip="Включит или выключит скрытие уже установленных приложений из списка."
                             Command="{Binding ToggleHideInstalledCommand}"
                             Foreground="{Binding HideInstalledBrush}"
                             Background="Transparent" BorderThickness="1"/>
-                    <Button x:Name="btnSortAlphabetically" Grid.Column="4" Content="&#xE8CB;" FontFamily="Segoe Fluent Icons"
+                    <Button x:Name="btnSortAlphabetically" Grid.Column="4" Content="&#xE8CB;" ContentTemplate="{StaticResource IconGlyphTemplate}"
                             Width="28" Height="28" Margin="4,0,0,0"
                             FontSize="16" ToolTip="Включит или выключит сортировку приложений по алфавиту внутри категории."
                             Command="{Binding ToggleSortAlphabeticallyCommand}"

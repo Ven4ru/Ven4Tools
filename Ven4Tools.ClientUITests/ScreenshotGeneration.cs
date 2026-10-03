@@ -36,7 +36,7 @@ namespace Ven4Tools.ClientUITests
 
                 void Shot(string navBtnId, string fileName, int waitMs = 1500)
                 {
-                    var btn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId(navBtnId));
+                    var btn = UiNav.Find(s, navBtnId);
                     Assert.IsNotNull(btn, $"Не найдена кнопка навигации {navBtnId}.");
                     btn!.AsButton().Invoke();
                     Thread.Sleep(waitMs);
