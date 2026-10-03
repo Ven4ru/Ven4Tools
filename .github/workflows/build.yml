@@ -31,6 +31,12 @@ jobs:
       - name: Быстрые unit-тесты
         run: dotnet test tests/Ven4Tools.Tests/Ven4Tools.Tests.csproj -c Release -p:Platform=x64 -p:CollectCoverage=true --no-build --no-restore --nologo --logger "trx;LogFileName=unit-tests.trx" --results-directory TestResults/Unit
 
+      # Вторая половина сверки правил доверия к источнику загрузки: лаунчер проверен
+      # unit-тестом DownloadTrustVectorsTests, install.ps1 — тем же набором примеров.
+      - name: Правила доверия install.ps1
+        shell: pwsh
+        run: ./tests/scripts/Test-InstallScriptTrustRules.ps1
+
       # Покрытие собиралось и проверялось по порогу, но нигде не показывалось:
       # узнать цифру можно было только из лога шага. Выводим в сводку прогона.
       - name: Сводка покрытия
