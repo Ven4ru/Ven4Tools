@@ -100,5 +100,33 @@ namespace Ven4Tools.Views.Tabs
         private void OnAppSettingsChanged() => _viewModel.UpdateTimeouts();
 
         public void AddLocalInstallerApp(AppInfo app) => _viewModel.AddLocalInstallerApp(app);
+
+        // ── Два вида каталога ───────────────────────────────────────────────────
+
+        private UIElement? _classicRoot;
+        private CatalogCardsView? _cardsView;
+
+        /// <summary>
+        /// Переключает вид каталога вместе с оболочкой окна: карточки с панелью «Ваш
+        /// набор» в новой, прежний список — в старой. Модель одна на оба вида, поэтому
+        /// отметки, поиск и идущая установка при переключении сохраняются. В дереве
+        /// остаётся только один вид — второй не тратит время на раскладку и не
+        /// дублирует имена элементов для автоматизации.
+        /// </summary>
+        public void ApplyUiMode(bool modern)
+        {
+            _classicRoot ??= (UIElement)Content;
+            if (modern)
+            {
+                _cardsView ??= new CatalogCardsView(_viewModel.CategoryHeaders);
+                Content = _cardsView;
+            }
+            else
+            {
+                Content = _classicRoot;
+                // Кнопок-категорий в прежнем виде нет — оставшийся фильтр было бы нечем снять.
+                _viewModel.CategoryFilter = null;
+            }
+        }
     }
 }

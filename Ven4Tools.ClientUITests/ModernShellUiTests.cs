@@ -128,5 +128,76 @@ namespace Ven4Tools.ClientUITests
             Assert.IsNotNull(WaitFor(s, "txtOverviewSummary"), "После возврата в новую оболочку должен открыться «Обзор».");
             StringAssert.Contains(ProfileText(), "modern", "Выбор новой оболочки должен записаться в профиль.");
         }
+
+        /// <summary>Выбирает кнопку-категорию — элемент списка категорий с одиночным выбором.</summary>
+        private static void SelectChip(AppSession s, string automationId)
+        {
+            var chip = Find(s, automationId);
+            Assert.IsNotNull(chip, $"Нет кнопки категории {automationId}.");
+            chip!.Patterns.SelectionItem.Pattern.Select();
+        }
+
+        /// <summary>Отметка на карточке, найденная заново: после перестроения списка старая ссылка не годится.</summary>
+        private static bool? IsChecked(AppSession s, string automationId) =>
+            Find(s, automationId)?.AsCheckBox().IsChecked;
+
+        [TestMethod]
+        public void НовыйКаталог_Карточки_ВашНабор_Категории()
+        {
+            var s = Require();
+            if (Find(s, "btnUiModeSwitch")?.Name == "Новый интерфейс")
+                Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
+
+            UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
+            Assert.IsNotNull(WaitFor(s, "chipCategory_all"), "В новом каталоге нет кнопок-категорий.");
+
+            var card = Retry.WhileNull(() => Find(s, "chkApp_7zip"), timeout: TimeSpan.FromSeconds(40),
+                interval: TimeSpan.FromMilliseconds(400), throwOnTimeout: false).Result;
+            Assert.IsNotNull(card, "Карточка 7-Zip не появилась — каталог не загрузился.");
+
+            // ── Отметка на карточке попадает в «Ваш набор» ──
+            Assert.IsNull(Find(s, "btnSetRemove_7zip"), "До отметки программы в наборе быть не должно.");
+            card!.AsCheckBox().IsChecked = true;
+            Assert.IsNotNull(WaitFor(s, "btnSetRemove_7zip"), "Отмеченная программа не появилась в панели «Ваш набор».");
+            Assert.AreEqual("Выбрано приложений: 1", Find(s, "txtSelectionBar")?.Name);
+            Assert.IsTrue(Find(s, "btnInstall")!.IsEnabled, "С программой в наборе кнопка установки должна быть доступна.");
+
+            var code = WaitFor(s, "txtSetCode");
+            Assert.IsNotNull(code, "У непустого набора должен показываться его код.");
+            Assert.AreEqual("V4T:7zip", code!.AsTextBox().Text);
+
+            // ── Категория прячет чужие карточки, но набор не трогает ──
+            SelectChip(s, "chipCategory_Браузеры");
+            Assert.IsTrue(WaitGone(s, "chkApp_7zip"), "В категории «Браузеры» карточки 7-Zip быть не должно.");
+            Assert.IsNotNull(Find(s, "chkApp_firefox"), "В категории «Браузеры» должен остаться Firefox.");
+            Assert.IsNotNull(Find(s, "btnSetRemove_7zip"), "Смена категории не должна выбрасывать программу из набора.");
+
+            SelectChip(s, "chipCategory_all");
+            Assert.IsNotNull(WaitFor(s, "chkApp_7zip"), "«Все» должна возвращать полный каталог.");
+            Assert.AreEqual(true, IsChecked(s, "chkApp_7zip"), "Отметка должна пережить смену категории.");
+
+            // ── Редкие действия свёрнуты ──
+            Assert.IsNull(Find(s, "btnRefreshCatalog"), "Инструменты каталога в новом виде должны быть свёрнуты.");
+            Assert.IsNotNull(UiNav.FindCatalogTool(s, "btnRefreshCatalog"), "Инструменты каталога не раскрылись.");
+
+            // ── Прежний вид показывает тот же выбор, и обратно ──
+            Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
+            Assert.IsTrue(WaitGone(s, "chipCategory_all"), "В прежнем виде каталога кнопок-категорий нет.");
+            Assert.AreEqual(true, IsChecked(s, "chkApp_7zip"), "Отметка должна сохраниться при возврате к прежнему виду.");
+            Assert.AreEqual("Выбрано приложений: 1", Find(s, "txtSelectionBar")?.Name);
+
+            Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
+            UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
+            Assert.IsNotNull(WaitFor(s, "btnSetRemove_7zip"), "После возврата в новый вид набор должен быть на месте.");
+            // Категории обязаны остаться в дереве автоматизации и после ухода с вкладки:
+            // раньше после возврата они были видны на экране, но не программам чтения с экрана.
+            Assert.IsNotNull(Find(s, "chipCategory_all"), "После возврата на вкладку категории пропали из дерева автоматизации.");
+
+            // ── Крестик в наборе снимает отметку с карточки ──
+            Find(s, "btnSetRemove_7zip")!.AsButton().Invoke();
+            Assert.IsTrue(WaitGone(s, "btnSetRemove_7zip"), "Программа не убралась из набора.");
+            Assert.AreEqual(false, IsChecked(s, "chkApp_7zip"), "Крестик в наборе должен снимать отметку с карточки.");
+            Assert.AreEqual("Выбрано приложений: 0", Find(s, "txtSelectionBar")?.Name);
+        }
     }
 }

@@ -187,7 +187,7 @@ namespace Ven4Tools.ClientUITests
                 "Первичная проверка доступности (авто, при загрузке каталога) не завершилась за 60с — возможен возврат зависания semaphore-бага (#4).");
 
             // ---- #4: явный клик «Проверить доступность» — второй путь через SemaphoreSlim ----
-            var refreshBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnRefreshAvailability"));
+            var refreshBtn = UiNav.FindCatalogTool(s, "btnRefreshAvailability");
             Assert.IsNotNull(refreshBtn, "Не найдена кнопка «Проверить доступность» (btnRefreshAvailability).");
 
             long t1 = LogTailPosition();
