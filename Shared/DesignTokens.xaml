@@ -79,10 +79,45 @@
                    Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ButtonBase}}"/>
     </DataTemplate>
 
-    <Style x:Key="IconButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+    <!-- Вид кнопки задан здесь целиком, без BasedOn: этот словарь загружается раньше
+         App.xaml, и ссылка на неявный стиль Button разрешалась в системный — кнопка
+         выходила светло-серой на тёмном окне. -->
+    <Style x:Key="IconButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="34"/>
         <Setter Property="Height" Value="34"/>
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceRaised}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
+        <Setter Property="ToolTipService.BetweenShowDelay" Value="100"/>
+        <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource AccentForeground}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource AccentPressed}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
         <Setter Property="ContentTemplate" Value="{StaticResource IconGlyphTemplate}"/>
         <Setter Property="FontSize" Value="15"/>
     </Style>
