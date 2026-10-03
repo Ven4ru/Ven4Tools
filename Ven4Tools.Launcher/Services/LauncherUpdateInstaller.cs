@@ -137,8 +137,7 @@ namespace Ven4Tools.Launcher.Services
 
                 // Уникальная папка на каждое обновление: никто не может заранее
                 // подложить файл в известный путь (в отличие от общей папки staging).
-                stagingDir = Path.Combine(Path.GetTempPath(), $"{StagingPrefix}{Guid.NewGuid():N}");
-                Directory.CreateDirectory(stagingDir);
+                stagingDir = CreateSetupStagingDirectory();
                 string setupPath = Path.Combine(stagingDir, BuildSetupFileName(updateInfo.LatestVersion));
 
                 // FallbackDownloader: проверка доверенного хоста (включая редиректы),
@@ -258,8 +257,7 @@ namespace Ven4Tools.Launcher.Services
 
                 // Уникальная папка: файл нельзя подменить между проверкой и запуском
                 // по заранее известному пути.
-                stagingDir = Path.Combine(Path.GetTempPath(), $"{StagingPrefix}{Guid.NewGuid():N}");
-                Directory.CreateDirectory(stagingDir);
+                stagingDir = CreateSetupStagingDirectory();
                 string setupPath = Path.Combine(stagingDir, setupName);
 
                 var downloader = new FallbackDownloader();
@@ -339,6 +337,99 @@ namespace Ven4Tools.Launcher.Services
                 }
             }
             return removed;
+        }
+
+        // Остальные временные артефакты лаунчера. Штатно каждый убирается своим
+        // finally, но убитый процесс или отключение питания оставляют их навсегда:
+        // архив клиента — это 85 МБ, папка блочного обновления — до 180 МБ.
+        private static readonly string[] TransientDirectoryPatterns =
+        {
+            StagingPrefix + "*",
+            "Ven4Tools_Delta_*",
+            "Ven4Tools_Repair_*",
+            "Ven4Tools.Launcher.Installers.*",
+        };
+
+        private static readonly string[] TransientFilePatterns =
+        {
+            "Ven4Tools_Client_*.zip",
+            "Ven4Tools_Client_*.zip.partial",
+        };
+
+        /// <summary>
+        /// Удаляет из <paramref name="tempRoot"/> все временные папки и файлы лаунчера
+        /// старше <paramref name="minAge"/> — те же правила, что у
+        /// <see cref="CleanupStaleStagingDirectories"/>: только наши шаблоны имён, не
+        /// ссылки, занятое пропускается. Возраст отсекает операции, идущие прямо сейчас
+        /// (второй экземпляр, установщик, запущенный минуту назад).
+        /// </summary>
+        /// <returns>Сколько папок и файлов удалено.</returns>
+        internal static int CleanupStaleTempArtifacts(string tempRoot, DateTime nowUtc, TimeSpan minAge)
+        {
+            int removed = 0;
+            foreach (string pattern in TransientDirectoryPatterns)
+            {
+                IEnumerable<string> directories;
+                try { directories = Directory.EnumerateDirectories(tempRoot, pattern); }
+                catch { continue; }
+
+                foreach (string dir in directories)
+                {
+                    try
+                    {
+                        var info = new DirectoryInfo(dir);
+                        if ((info.Attributes & FileAttributes.ReparsePoint) != 0) continue;
+                        if (nowUtc - info.LastWriteTimeUtc < minAge) continue;
+                        info.Delete(recursive: true);
+                        removed++;
+                    }
+                    catch
+                    {
+                        // Занята или нет доступа — попробуем при следующем запуске.
+                    }
+                }
+            }
+
+            foreach (string pattern in TransientFilePatterns)
+            {
+                IEnumerable<string> files;
+                try { files = Directory.EnumerateFiles(tempRoot, pattern); }
+                catch { continue; }
+
+                foreach (string file in files)
+                {
+                    try
+                    {
+                        var info = new FileInfo(file);
+                        if ((info.Attributes & FileAttributes.ReparsePoint) != 0) continue;
+                        if (nowUtc - info.LastWriteTimeUtc < minAge) continue;
+                        info.Delete();
+                        removed++;
+                    }
+                    catch
+                    {
+                        // см. выше
+                    }
+                }
+            }
+            return removed;
+        }
+
+        /// <summary>
+        /// Папка, из которой запускается скачанный Setup. В elevated-лаунчере Setup
+        /// наследует права администратора, поэтому каталог запуска — защищённый
+        /// (<see cref="Helpers.InstallerRunDirectory"/>), а не пользовательский %TEMP%,
+        /// где рядом с установщиком можно подложить DLL. Без повышения прав защищать
+        /// нечего — остаётся уникальная папка в %TEMP%.
+        /// </summary>
+        private static string CreateSetupStagingDirectory()
+        {
+            if (Helpers.InstallerRunDirectory.IsElevated())
+                return Helpers.InstallerRunDirectory.Create();
+
+            string dir = Path.Combine(Path.GetTempPath(), $"{StagingPrefix}{Guid.NewGuid():N}");
+            Directory.CreateDirectory(dir);
+            return dir;
         }
 
         private static void TryDeleteDirectory(string? path)

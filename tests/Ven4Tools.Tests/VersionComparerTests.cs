@@ -18,6 +18,19 @@ public sealed class VersionComparerTests
     [InlineData("1.0.0", null, 1)]
     [InlineData(null, null, 0)]
     [InlineData("", "0.0.0", 0)]
+    // Предрелизная метка с точкой не должна читаться как четвёртый компонент номера:
+    // «5.3.0-beta.2» раньше оказывалась новее стабильной «5.3.0».
+    [InlineData("5.3.0-beta.2", "5.3.0", -1)]
+    [InlineData("5.3.0", "5.3.0-rc.1", 1)]
+    // Предрелизы одного номера различаются между собой (раньше — равны).
+    [InlineData("5.3.0-rc", "5.3.0-beta", 1)]
+    [InlineData("5.3.0-beta.2", "5.3.0-beta.10", -1)]
+    [InlineData("5.3.0-beta", "5.3.0-beta.1", -1)]
+    [InlineData("5.3.0-beta", "5.3.0-BETA", 0)]
+    // Сборочные метаданные (+хеш коммита в версии exe) в сравнении не участвуют.
+    [InlineData("5.3.1+38876a7d", "5.3.0", 1)]
+    [InlineData("5.3.0+38876a7d", "5.3.0", 0)]
+    [InlineData("5.3.0-rc.1+build.5", "5.3.0-rc.1", 0)]
     public void Compare_ReturnsExpectedOrder(string? left, string? right, int expectedSign)
     {
         Assert.Equal(expectedSign, Math.Sign(VersionComparer.Compare(left, right)));

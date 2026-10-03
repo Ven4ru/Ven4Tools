@@ -12,6 +12,9 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
     public List<WindowsUpdateItem> Items { get; } = new();
     public bool ServiceRunning { get; set; } = true;
     public bool RebootPending { get; set; }
+    public bool ServiceDisabled { get; set; }
+    public bool IsServiceDisabled() => ServiceDisabled;
+    public bool TryEnableService() { ServiceDisabled = false; return true; }
     public bool SearchShouldFail { get; set; }
     public string SearchFailureMessage { get; set; } = "";
     public List<string> InstallCallsReceived { get; } = new();

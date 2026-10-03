@@ -38,14 +38,32 @@ namespace Ven4Tools.Services
         /// </summary>
         public void Reload() => Load();
 
+        // Файл есть, но не прочитан: в памяти прежний (или пустой) набор, и запись
+        // вернула бы в каталог всё скрытое. См. SettingsFileReader.
+        private volatile bool _loadFailed;
+
         private void Load()
         {
             try
             {
-                if (!File.Exists(_path)) return;
+                var read = SettingsFileReader.TryRead(_path, "[HiddenAppsStore]", out string json);
+                _loadFailed = read == SettingsReadResult.Unreadable;
+                if (read == SettingsReadResult.Unreadable) return;
+                if (read == SettingsReadResult.Missing)
+                {
+                    // Файл удалён (например, «Показать скрытые» из другого экземпляра
+                    // на старой версии) — набор пуст, а не «каким был».
+                    lock (_lock) { _hidden = new HashSet<string>(); }
+                    return;
+                }
 
-                var json = File.ReadAllText(_path);
-                var loaded = JsonConvert.DeserializeObject<HashSet<string>>(json) ?? new HashSet<string>();
+                HashSet<string> loaded;
+                try { loaded = JsonConvert.DeserializeObject<HashSet<string>>(json) ?? new HashSet<string>(); }
+                catch (JsonException ex)
+                {
+                    _loadFailed = !SettingsFileReader.SetAsideCorrupt(_path, "[HiddenAppsStore]", ex.Message);
+                    return;
+                }
                 lock (_lock) { _hidden = loaded; }
             }
             catch (Exception ex) { AppLogger.Write($"[HiddenAppsStore] Load: {ex.Message}"); }
@@ -55,6 +73,11 @@ namespace Ven4Tools.Services
         {
             try
             {
+                if (_loadFailed)
+                {
+                    AppLogger.Write("[HiddenAppsStore] Сохранение пропущено: список скрытых не удалось прочитать");
+                    return;
+                }
                 lock (_saveLock)
                 {
                     string json;

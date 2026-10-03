@@ -74,9 +74,24 @@ if (-not $AllowClientDowngrade) {
         }
         Write-Host "Проверка отката: ок (CDN client=$($live.client.version) launcher=$($live.launcher.version))"
     }
-    catch [System.Net.WebException] {
+    catch {
         # CDN недоступен — сверять не с чем. Это не повод блокировать деплой:
         # именно ради недоступного CDN манифест и переливают.
+        # Тип исключения сверяем по имени, а не через catch [тип]: Windows PowerShell 5.1
+        # бросает WebException, PowerShell 7 — HttpRequestException (или его наследника
+        # HttpResponseException) и TaskCanceledException по таймауту. Раньше ловился
+        # только первый, и в PowerShell 7 скрипт при недоступном CDN падал.
+        $networkTypes = @(
+            'System.Net.WebException',
+            'System.Net.Http.HttpRequestException',
+            'System.Threading.Tasks.TaskCanceledException',
+            'System.OperationCanceledException'
+        )
+        $isNetwork = $false
+        for ($t = $_.Exception.GetType(); $t; $t = $t.BaseType) {
+            if ($networkTypes -contains $t.FullName) { $isNetwork = $true; break }
+        }
+        if (-not $isNetwork) { throw }
         Write-Warning "CDN недоступен, проверка отката пропущена: $($_.Exception.Message)"
     }
 }

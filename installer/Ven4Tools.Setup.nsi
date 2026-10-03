@@ -275,6 +275,31 @@ Function UpdateInstall
   ; 2. Ждём завершения процесса лаунчера, запустившего обновление
   Call WaitForLauncherExit
 
+  ; 2а. Прошлое обновление оборвалось между переименованиями (отключение питания):
+  ;     exe нет, а его копия лежит в .bak — возвращаем её, иначе шаг бэкапа ниже
+  ;     сочтёт, что бэкапить нечего, и удалит единственную рабочую версию.
+  IfFileExists "$INSTDIR\${EXE_NAME}" restore_done
+  IfFileExists "$INSTDIR\${EXE_NAME}.bak" 0 restore_done
+  Rename "$INSTDIR\${EXE_NAME}.bak" "$INSTDIR\${EXE_NAME}"
+  restore_done:
+
+  ; 2б. Новый exe кладём в папку установки под временным именем ДО того, как
+  ;     трогать рабочий. Раньше 48 МБ копировались уже после переименования
+  ;     старого exe в .bak, и обрыв посреди копирования оставлял лаунчер вовсе
+  ;     без exe (ярлык в никуда). Теперь долгое копирование идёт, пока старый
+  ;     exe ещё на месте, а сама замена — два переименования на одном томе.
+  CreateDirectory "$INSTDIR"
+  Delete "$INSTDIR\${EXE_NAME}.new"
+  ClearErrors
+  Rename "$PLUGINSDIR\${EXE_NAME}" "$INSTDIR\${EXE_NAME}.new"
+  IfErrors 0 stage_ok
+    DetailPrint "Не удалось подготовить новый exe в папке установки — обновление отменено"
+    Delete "$INSTDIR\${EXE_NAME}.new"
+    SetErrorLevel 3
+    Call RelaunchInstalled
+    Quit
+  stage_ok:
+
   ; 3. Бэкап текущего exe. Rename не проходит, пока файл занят другим
   ;    процессом — это одновременно и проверка разблокировки (до 15 попыток).
   IfFileExists "$INSTDIR\${EXE_NAME}" 0 backup_done
@@ -290,15 +315,15 @@ Function UpdateInstall
     Goto backup_retry
   backup_failed:
     DetailPrint "Файл лаунчера занят — обновление отменено, старая версия сохранена"
+    Delete "$INSTDIR\${EXE_NAME}.new"
     SetErrorLevel 5
     Call RelaunchInstalled
     Quit
   backup_done:
 
-  ; 4. Установка нового exe в папку установки
-  CreateDirectory "$INSTDIR"
+  ; 4. Подготовленный exe — на рабочее имя (переименование на том же томе)
   ClearErrors
-  CopyFiles /SILENT "$PLUGINSDIR\${EXE_NAME}" "$INSTDIR"
+  Rename "$INSTDIR\${EXE_NAME}.new" "$INSTDIR\${EXE_NAME}"
   IfErrors update_rollback
 
   ; 5. Проверка результата: файл на месте и его версия совпадает с ожидаемой
@@ -317,6 +342,7 @@ Function UpdateInstall
   update_rollback:
   ; 7. Неудача: возвращаем бэкап на место и запускаем старую версию
   DetailPrint "Установка новой версии не удалась — откат на предыдущую"
+  Delete "$INSTDIR\${EXE_NAME}.new"
   Delete "$INSTDIR\${EXE_NAME}"
   IfFileExists "$INSTDIR\${EXE_NAME}.bak" 0 rollback_done
   Rename "$INSTDIR\${EXE_NAME}.bak" "$INSTDIR\${EXE_NAME}"

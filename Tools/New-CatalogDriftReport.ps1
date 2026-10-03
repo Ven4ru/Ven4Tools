@@ -105,6 +105,45 @@ function ConvertTo-ComparableVersion {
     return ($parts -join '.')
 }
 
+# Установщики-обёртки: ProductVersion у них принадлежит самой обёртке (7-Zip SFX у
+# Firefox, Inno Setup у Lunacy), а не приложению, и с версией каталога не совпадёт
+# никогда. Для них версия сверяется только по адресу после редиректов.
+$WrapperVersionIds = @('firefox', 'lunacy')
+
+function Test-VersionMatches {
+    <#
+        Совпадает ли версия каталога с фактической. Считаются равными:
+          * одинаковые после нормализации («1.2.3» и «1.2.3.0»);
+          * одна — начало другой по границе компонента («4.92.0» и «4.92.0.240144»:
+            вендор дописывает номер сборки);
+          * версия каталога встречается в адресе файла после редиректов
+            («…/releases/156.0.1/…»).
+        Нечего сравнивать (нет версии у файла или в каталоге) — расхождения нет.
+    #>
+    param([string]$Id, [string]$Catalog, [string]$Actual, [string]$FinalUrl)
+
+    $normalizedCatalog = ConvertTo-ComparableVersion $Catalog
+    if (-not $normalizedCatalog) { return $true }
+
+    if (-not [string]::IsNullOrWhiteSpace($FinalUrl)) {
+        $pattern = '(?<![\d.])' + [regex]::Escape($normalizedCatalog) + '(?![\d])'
+        if ([regex]::IsMatch($FinalUrl, $pattern)) { return $true }
+    }
+
+    if ($WrapperVersionIds -contains $Id) {
+        # Версии обёртки верить нельзя. Если в адресе есть версиеподобная
+        # последовательность, а версии каталога в нём нет — вендор выложил новую.
+        return -not [regex]::IsMatch([string]$FinalUrl, '\d+\.\d+\.\d+')
+    }
+
+    $normalizedActual = ConvertTo-ComparableVersion $Actual
+    if (-not $normalizedActual) { return $true }
+    if ($normalizedCatalog -eq $normalizedActual) { return $true }
+    if ($normalizedActual.StartsWith($normalizedCatalog + '.')) { return $true }
+    if ($normalizedCatalog.StartsWith($normalizedActual + '.')) { return $true }
+    return $false
+}
+
 function ConvertTo-Bytes {
     <# «84.7 MB» -> 88805376. Возвращает $null, если строку разобрать не удалось. #>
     param([string]$Value)
@@ -220,12 +259,21 @@ foreach ($item in $results) {
         $issues.Add("**sha256** — в каталоге ``$([string]$item.previousSha256)``, фактический ``$([string]$item.sha256)``")
     }
 
+    # Закреплённый в каталоге хеш совпал с фактическим — по ссылке лежит тот самый
+    # файл, с которого составлялась запись. Ни версия, ни подпись у него «уплыть»
+    # не могли, а сверка всё равно давала расхождения: ProductVersion у PE записан
+    # в своём формате («8.964» у Notepad++ 8.9.6.4, «3,7,8,0» у Audacity, версия
+    # обновлятора у Brave), а часть вендоров не подписывает установщики вовсе
+    # (7-Zip, ShareX, AutoHotkey). Из 19 «расхождений» прогона 27.09 таких было 11.
+    $catalogSha = if ($catalogApp) { [string]$catalogApp.sha256 } else { '' }
+    $pinnedAndSame = (-not [string]::IsNullOrWhiteSpace($catalogSha)) -and
+        ($catalogSha -ieq [string]$item.sha256)
+
     # Версия — сверяем ProductVersion скачанного PE с полем version каталога.
     $catalogVersion = if ($catalogApp) { [string]$catalogApp.version } else { [string]$item.catalogVersion }
     $actualVersion = [string]$item.productVersion
-    $normalizedCatalog = ConvertTo-ComparableVersion $catalogVersion
-    $normalizedActual = ConvertTo-ComparableVersion $actualVersion
-    if ($normalizedCatalog -and $normalizedActual -and $normalizedCatalog -ne $normalizedActual) {
+    if (-not $pinnedAndSame -and
+        -not (Test-VersionMatches -Id $id -Catalog $catalogVersion -Actual $actualVersion -FinalUrl ([string]$item.finalUrl))) {
         $kinds.Add('версия')
         $issues.Add("**версия** — в каталоге ``$catalogVersion``, у файла ``$actualVersion``")
     }
@@ -253,7 +301,7 @@ foreach ($item in $results) {
 
     # Подпись проверяем только у PE: у ZIP её не бывает по определению.
     $signature = [string]$item.signatureStatus
-    if (([string]$item.format) -eq 'pe' -and $signature -and $signature -ne 'Valid') {
+    if (-not $pinnedAndSame -and ([string]$item.format) -eq 'pe' -and $signature -and $signature -ne 'Valid') {
         $kinds.Add('подпись')
         $issues.Add("**подпись Authenticode** — статус ``$signature``")
     }

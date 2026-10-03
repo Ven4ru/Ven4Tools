@@ -13,6 +13,9 @@ namespace Ven4Tools.Services
             "Ven4Tools", "favorites.json");
 
         private readonly HashSet<string> _favorites = new();
+        // Файл есть, но не прочитан: запись пустого набора стёрла бы избранное.
+        // См. SettingsFileReader.
+        private bool _loadFailed;
 
         public FavoritesService() => Load();
 
@@ -20,8 +23,17 @@ namespace Ven4Tools.Services
         {
             try
             {
-                if (!File.Exists(FilePath)) return;
-                var ids = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(FilePath));
+                var read = SettingsFileReader.TryRead(FilePath, "[FavoritesService]", out string json);
+                _loadFailed = read == SettingsReadResult.Unreadable;
+                if (read != SettingsReadResult.Read) return;
+
+                List<string>? ids;
+                try { ids = JsonConvert.DeserializeObject<List<string>>(json); }
+                catch (JsonException ex)
+                {
+                    _loadFailed = !SettingsFileReader.SetAsideCorrupt(FilePath, "[FavoritesService]", ex.Message);
+                    return;
+                }
                 if (ids != null)
                     foreach (var id in ids)
                         _favorites.Add(id);
@@ -32,10 +44,24 @@ namespace Ven4Tools.Services
             }
         }
 
+        // Перед изменением: если при старте файл не прочитался, пробуем ещё раз.
+        // false — файл по-прежнему недоступен, менять и писать нельзя.
+        private bool EnsureLoaded()
+        {
+            if (!_loadFailed) return true;
+            Load();
+            return !_loadFailed;
+        }
+
         public void Save()
         {
             try
             {
+                if (!EnsureLoaded())
+                {
+                    AppLogger.Write("[FavoritesService] Сохранение пропущено: избранное не удалось прочитать");
+                    return;
+                }
                 FileHelper.WriteAllTextAtomic(FilePath,
                     JsonConvert.SerializeObject(new List<string>(_favorites), Formatting.Indented));
             }
@@ -46,6 +72,8 @@ namespace Ven4Tools.Services
 
         public void Toggle(string appId)
         {
+            // Сначала дочитываем файл: иначе изменение легло бы на пустой набор.
+            if (!EnsureLoaded()) return;
             if (!_favorites.Remove(appId))
                 _favorites.Add(appId);
             Save();
