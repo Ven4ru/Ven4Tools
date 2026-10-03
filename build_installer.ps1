@@ -15,7 +15,7 @@
 # самообновляется, скачивая и запуская тот же Setup в тихом режиме обновления
 # (см. LauncherUpdateService.DownloadAndRunSetupUpdateAsync и installer\Ven4Tools.Setup.nsi).
 #
-# Требования: .NET 8 SDK, NSIS 3.x (winget install NSIS.NSIS).
+# Требования: .NET 10 SDK, NSIS 3.x (winget install NSIS.NSIS).
 # Совместим с Windows PowerShell 5.1 и PowerShell 7.
 # ============================================================================
 
@@ -82,7 +82,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "dotnet publish завершился с ошибкой (код $LASTEXITCODE)."
 }
 
-$publishDir = Join-Path $root "Ven4Tools.Launcher\bin\Release\net8.0-windows\win-x64\publish"
+$publishDir = Join-Path $root "Ven4Tools.Launcher\bin\Release\net10.0-windows\win-x64\publish"
 $publishedExe = Join-Path $publishDir "Ven4Tools.Launcher.exe"
 if (-not (Test-Path $publishedExe)) {
     throw "После publish не найден exe: $publishedExe"

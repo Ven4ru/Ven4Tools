@@ -1,7 +1,7 @@
 # Уведомления о сторонних компонентах
 
 Ven4Tools распространяется в виде самодостаточных (self-contained) сборок,
-которые включают среду выполнения .NET 8 и перечисленные ниже сторонние
+которые включают среду выполнения .NET 10 и перечисленные ниже сторонние
 пакеты NuGet. Их лицензии требуют сохранения уведомлений об авторских правах
 при распространении, поэтому оригинальные тексты приведены здесь.
 
@@ -21,16 +21,15 @@ Ven4Tools распространяется в виде самодостаточ�
 |-----------|--------|----------|
 | Newtonsoft.Json | 13.0.4 | MIT |
 | System.Management | 10.0.12 | MIT |
-| System.Security.Cryptography.ProtectedData | 10.0.12 | MIT |
 | System.ServiceProcess.ServiceController | 10.0.12 | MIT |
-| Среда выполнения .NET 8 (self-contained) | 8.x | MIT |
+| Среда выполнения .NET 10 (self-contained) | 10.x | MIT |
 
 ## Лаунчер (Ven4Tools.Launcher.exe)
 
 | Компонент | Версия | Лицензия |
 |-----------|--------|----------|
 | Newtonsoft.Json | 13.0.4 | MIT |
-| Среда выполнения .NET 8 (self-contained) | 8.x | MIT |
+| Среда выполнения .NET 10 (self-contained) | 10.x | MIT |
 
 ---
 
@@ -39,8 +38,7 @@ Ven4Tools распространяется в виде самодостаточ�
 ### MIT License
 
 Под лицензией MIT распространяются: Newtonsoft.Json, а также компоненты .NET
-(System.Management, System.Security.Cryptography.ProtectedData,
-System.ServiceProcess.ServiceController) и сама среда выполнения .NET 8.
+(System.Management, System.ServiceProcess.ServiceController) и сама среда выполнения .NET 10.
 
 **Newtonsoft.Json** — Copyright (c) 2007 James Newton-King
 

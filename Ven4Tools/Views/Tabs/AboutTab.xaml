@@ -50,7 +50,7 @@
                     <TextBlock Text="🔧 Используемые технологии" FontWeight="Bold" FontSize="13"
                                Foreground="{DynamicResource HeaderForeground}" Margin="0,0,0,10"/>
                     <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}">
-                        • .NET 8.0 / WPF
+                        • .NET 10.0 / WPF
                         • winget (Windows Package Manager)
                         • PowerShell Core
                         • Microsoft Activation Scripts (MAS)

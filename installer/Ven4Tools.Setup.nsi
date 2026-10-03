@@ -35,7 +35,7 @@ Unicode true
   !define VERSION "2.1.0"
 !endif
 !ifndef PUBLISH_DIR
-  !define PUBLISH_DIR "..\Ven4Tools.Launcher\bin\Release\net8.0-windows\win-x64\publish"
+  !define PUBLISH_DIR "..\Ven4Tools.Launcher\bin\Release\net10.0-windows\win-x64\publish"
 !endif
 !ifndef OUTFILE
   !define OUTFILE "..\_release\Ven4Tools.Setup-${VERSION}.exe"

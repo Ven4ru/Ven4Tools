@@ -23,7 +23,7 @@ param(
 
     [string]$PrivateKeyPath = "$env:USERPROFILE\.ven4tools\update-manifest-signing-private.pem",
     [string]$PublicKeyPath = "$env:USERPROFILE\.ven4tools\update-manifest-signing-public.pem",
-    [string]$SignerDll = "$PSScriptRoot\UpdateManifestSigner\bin\Release\net8.0\UpdateManifestSigner.dll",
+    [string]$SignerDll = "$PSScriptRoot\UpdateManifestSigner\bin\Release\net10.0\UpdateManifestSigner.dll",
 
     # Разрешить публикацию манифеста, в котором версия клиента или лаунчера СТАРШЕ
     # уже опубликованной на CDN. Нужен только для осознанного отката релиза.
