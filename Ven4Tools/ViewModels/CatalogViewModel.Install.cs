@@ -100,6 +100,10 @@ namespace Ven4Tools.ViewModels
                 }
             }
 
+            // Состав пачки — в очередь на случай перезагрузки: если клиент не дойдёт до
+            // конца, при следующем запуске он предложит поставить оставшееся.
+            PendingInstallQueue.Default.Begin(selected.Select(r => r.AppId), SelectedInstallDrive.TrimEnd('\\'));
+
             _installCts = new CancellationTokenSource();
             var token = _installCts.Token;
             int completed = 0, failed = 0;
@@ -177,6 +181,7 @@ namespace Ven4Tools.ViewModels
                     {
                         completed++;
                         lock (failedRowsLock) installedRows.Add(row);
+                        PendingInstallQueue.Default.MarkDone(row.AppId);
                         if (row.PinnedVersion != null && row.VersionOptions.Count > 1)
                             _versionTracker.TrackInstall(row.AppId, row.PinnedVersion, row.VersionOptions[1]);
                         row.JustInstalled = true;
@@ -222,6 +227,10 @@ namespace Ven4Tools.ViewModels
                 IsInstalling = false;
                 _installCts?.Dispose();
                 _installCts = null;
+                // Пачка дошла до конца — пусть и с ошибками или отменой: неудачи видны в
+                // блоке «Не установлено» с повтором, а очередь нужна только на случай,
+                // когда до этого места клиент не добрался.
+                PendingInstallQueue.Default.Clear();
                 // И после обычного завершения, и после отмены: то, что не встало,
                 // пользователь должен увидеть здесь же, а не только в логе.
                 PublishFailedInstalls(failedRows, batchStartedUtc);
