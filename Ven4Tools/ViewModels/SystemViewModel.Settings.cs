@@ -12,6 +12,13 @@ namespace Ven4Tools.ViewModels
         {
             SetField(ref _notifyInstallComplete, ProfileService.Current.NotifyInstallComplete, nameof(NotifyInstallComplete));
             SetField(ref _notifyAppUpdates, ProfileService.Current.NotifyAppUpdates, nameof(NotifyAppUpdates));
+            SetField(ref _autoUpdateApps, ProfileService.Current.AutoUpdateApps, nameof(AutoUpdateApps));
+            SetField(ref _autoUpdateFrequencyTag,
+                ProfileService.Current.AutoUpdateFrequency == AutoUpdateService.Daily ? AutoUpdateService.Daily : AutoUpdateService.Weekly,
+                nameof(AutoUpdateFrequencyTag));
+            SetField(ref _autoUpdateExcludedText,
+                string.Join(Environment.NewLine, ProfileService.Current.AutoUpdateExcluded), nameof(AutoUpdateExcludedText));
+            OnPropertyChanged(nameof(AutoUpdateStatusText));
 
             double catalogTimeout = Math.Clamp(AppSettings.CatalogTimeout, 3, 30);
             double checkTimeout   = Math.Clamp(AppSettings.CheckTimeout, 5, 60);
@@ -57,7 +64,66 @@ namespace Ven4Tools.ViewModels
 
             ProfileService.Current.NotifyInstallComplete = NotifyInstallComplete;
             ProfileService.Current.NotifyAppUpdates = NotifyAppUpdates;
+            ProfileService.Current.AutoUpdateApps = AutoUpdateApps;
+            ProfileService.Current.AutoUpdateFrequency = AutoUpdateFrequencyTag;
+            ProfileService.Current.AutoUpdateExcluded = AutoUpdateService.ParseExcluded(AutoUpdateExcludedText);
             ProfileService.Save();
+            OnPropertyChanged(nameof(AutoUpdateStatusText));
+        }
+
+        // ── Автообновление программ ──────────────────────────────────────────────
+
+        private bool _autoUpdateApps;
+        public bool AutoUpdateApps
+        {
+            get => _autoUpdateApps;
+            set
+            {
+                if (_autoUpdateApps == value) return;
+                SetField(ref _autoUpdateApps, value);
+                SaveSettings();
+            }
+        }
+
+        private string _autoUpdateFrequencyTag = AutoUpdateService.Weekly;
+        /// <summary>"daily" или "weekly" — значение SelectedValue списка «как часто».</summary>
+        public string AutoUpdateFrequencyTag
+        {
+            get => _autoUpdateFrequencyTag;
+            set
+            {
+                if (string.IsNullOrEmpty(value) || _autoUpdateFrequencyTag == value) return;
+                SetField(ref _autoUpdateFrequencyTag, value);
+                SaveSettings();
+            }
+        }
+
+        private string _autoUpdateExcludedText = "";
+        /// <summary>Исключения: идентификаторы пакетов winget, по одному в строке.</summary>
+        public string AutoUpdateExcludedText
+        {
+            get => _autoUpdateExcludedText;
+            set
+            {
+                if (_autoUpdateExcludedText == value) return;
+                SetField(ref _autoUpdateExcludedText, value ?? "");
+                SaveSettings();
+            }
+        }
+
+        /// <summary>Когда автообновление срабатывало в последний раз и сколько программ в исключениях.</summary>
+        public string AutoUpdateStatusText
+        {
+            get
+            {
+                var profile = ProfileService.Current;
+                string last = profile.AutoUpdateLastRunUtc is { } utc
+                    ? $"Последний запуск: {utc.ToLocalTime():dd.MM.yyyy HH:mm}."
+                    : "Ещё не запускалось.";
+                return profile.AutoUpdateExcluded.Count > 0
+                    ? $"{last} В исключениях: {profile.AutoUpdateExcluded.Count}."
+                    : last;
+            }
         }
 
         // ── Уведомления / таймауты ───────────────────────────────────────────────
