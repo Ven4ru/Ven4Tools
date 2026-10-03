@@ -1,0 +1,157 @@
+<UserControl x:Class="Ven4Tools.Views.Tabs.OverviewTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Ven4Tools.Views.Tabs"
+             Background="{DynamicResource ContentBackground}">
+    <UserControl.Resources>
+        <local:InverseBoolToVisibility x:Key="InverseBoolToVis"/>
+
+        <!-- Карточка обзора. Рамка становится жёлтой, когда блок требует внимания:
+             цвет — второй признак, первый — сам текст статуса. -->
+        <Style x:Key="OverviewCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="18,16"/>
+            <Setter Property="Margin" Value="0,0,14,14"/>
+        </Style>
+        <Style x:Key="OverviewCardTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        </Style>
+        <Style x:Key="OverviewStatus" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="19"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,10,0,4"/>
+        </Style>
+        <Style x:Key="OverviewHint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="OverviewAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Margin" Value="0,14,0,0"/>
+        </Style>
+        <Style x:Key="OverviewQuickAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20,18,6,18" MaxWidth="1040" HorizontalAlignment="Left">
+            <TextBlock Text="Состояние компьютера" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+            <TextBlock x:Name="txtOverviewSummary" Text="{Binding Summary}" FontSize="13"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,16"/>
+
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Grid.Column="0">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource OverviewCard}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding AppUpdatesNeedAttention}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource StatusWarning}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Text="Обновления программ" Style="{StaticResource OverviewCardTitle}"/>
+                        <TextBlock x:Name="txtOverviewAppUpdates" Text="{Binding AppUpdatesStatus}" Style="{StaticResource OverviewStatus}"/>
+                        <TextBlock Text="{Binding AppUpdatesHint}" Style="{StaticResource OverviewHint}"/>
+                        <Button x:Name="btnOverviewAppUpdates" Content="Открыть обновления" Style="{StaticResource OverviewAction}"
+                                Command="{Binding OpenAppUpdatesCommand}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="0" Grid.Column="1">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource OverviewCard}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding WindowsUpdateNeedsAttention}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource StatusWarning}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <TextBlock Text="Windows Update" Style="{StaticResource OverviewCardTitle}"/>
+                        <TextBlock x:Name="txtOverviewWindowsUpdate" Text="{Binding WindowsUpdateStatus}" Style="{StaticResource OverviewStatus}"/>
+                        <TextBlock Text="{Binding WindowsUpdateHint}" Style="{StaticResource OverviewHint}"/>
+                        <Button x:Name="btnOverviewWindowsUpdate" Content="Открыть Windows Update" Style="{StaticResource OverviewAction}"
+                                Command="{Binding OpenWindowsUpdateCommand}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource OverviewCard}">
+                    <StackPanel>
+                        <TextBlock Text="Быстрые действия" Style="{StaticResource OverviewCardTitle}" Margin="0,0,0,12"/>
+                        <WrapPanel>
+                            <Button x:Name="btnOverviewCatalog" Content="Собрать набор программ" Style="{StaticResource OverviewQuickAction}"
+                                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
+                                    Command="{Binding OpenCatalogCommand}"/>
+                            <Button x:Name="btnOverviewDebloater" Content="Очистка Windows" Style="{StaticResource OverviewQuickAction}"
+                                    Command="{Binding OpenDebloaterCommand}"/>
+                            <Button x:Name="btnOverviewDiagnostics" Content="Диагностика" Style="{StaticResource OverviewQuickAction}"
+                                    Command="{Binding OpenDiagnosticsCommand}"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource OverviewCard}">
+                    <StackPanel>
+                        <TextBlock Text="Ven4Tools" Style="{StaticResource OverviewCardTitle}" Margin="0,0,0,10"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Text="Клиент" Style="{StaticResource OverviewHint}" Margin="0,0,16,6"/>
+                            <TextBlock Grid.Column="1" Text="{Binding ClientVersion}" FontSize="12" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Grid.Row="1" Text="Каталог" Style="{StaticResource OverviewHint}" Margin="0,0,16,0"/>
+                            <TextBlock x:Name="txtOverviewCatalog" Grid.Row="1" Grid.Column="1" Text="{Binding CatalogStatus}" FontSize="12"
+                                       Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+                        </Grid>
+                        <Button x:Name="btnOverviewAbout" Content="О программе" Style="{StaticResource OverviewAction}"
+                                Command="{Binding OpenAboutCommand}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource OverviewCard}">
+                    <StackPanel>
+                        <DockPanel>
+                            <Button x:Name="btnOverviewHistory" DockPanel.Dock="Right" Content="Вся история" Height="30" Padding="12,0"
+                                    Command="{Binding OpenHistoryCommand}"/>
+                            <TextBlock Text="Последние действия" Style="{StaticResource OverviewCardTitle}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <TextBlock Text="Здесь появятся установленные через Ven4Tools программы."
+                                   Style="{StaticResource OverviewHint}" Margin="0,10,0,0"
+                                   Visibility="{Binding HasRecent, Converter={StaticResource InverseBoolToVis}}"/>
+                        <ItemsControl ItemsSource="{Binding Recent}" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,6,0,0">
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Details}" FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondary}" Margin="16,0,0,0"/>
+                                        <TextBlock Text="{Binding Title}" FontSize="13" Foreground="{DynamicResource TextPrimary}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

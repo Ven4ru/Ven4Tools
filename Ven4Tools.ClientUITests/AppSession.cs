@@ -44,8 +44,20 @@ namespace Ven4Tools.ClientUITests
         /// Бросает исключение, если окно не появилось за отведённое время —
         /// вызывающий код переводит тесты в Inconclusive в headless-окружении.
         /// </summary>
-        public static AppSession Launch()
+        public static AppSession Launch() => Launch(modernUi: false);
+
+        /// <summary>
+        /// Запуск с выбором оболочки главного окна. Существующий набор тестов написан
+        /// под прежнюю раскладку меню (двенадцать пунктов), поэтому по умолчанию клиент
+        /// запускается в ней — что бы ни было записано в профиле. Новая оболочка
+        /// проверяется отдельным классом, который передаёт <paramref name="modernUi"/>.
+        /// </summary>
+        public static AppSession Launch(bool modernUi)
         {
+            // Переменную читает UiModeService клиента; дочерний процесс наследует
+            // окружение тестового.
+            Environment.SetEnvironmentVariable("VEN4TOOLS_UI_CLASSIC", modernUi ? null : "1");
+
             // Клиент — single-instance (Mutex "Ven4Tools.Client.SingleInstance"):
             // если предыдущий процесс (из другого тестового класса) не успел
             // полностью завершиться до этого момента, новый экземпляр молча

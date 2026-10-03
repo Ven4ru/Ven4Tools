@@ -45,6 +45,41 @@
             <Setter Property="Background" Value="{DynamicResource AccentSoftBackground}"/>
             <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
         </Style>
+        <!-- Кнопка-ссылка под индикатором сети: переключатель оболочки. Неброская, но
+             с полноценной областью нажатия и видимым фокусом с клавиатуры. -->
+        <Style x:Key="SidebarLinkButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="5"
+                                BorderBrush="Transparent" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE8AB;" FontFamily="Segoe Fluent Icons" FontSize="11" Margin="0,1,7,0"
+                                           Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource AccentHoverBackground}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="SectionLabel" TargetType="TextBlock" BasedOn="{StaticResource EyebrowStyle}">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="FontSize" Value="9"/>
@@ -53,7 +88,7 @@
     </Window.Resources>
 
     <Grid>
-        <Grid.ColumnDefinitions><ColumnDefinition Width="228"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+        <Grid.ColumnDefinitions><ColumnDefinition x:Name="colSidebar" Width="228"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
 
         <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
@@ -80,6 +115,36 @@
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <StackPanel>
+                    <!-- Новая оболочка: шесть пунктов вместо двенадцати. Сами кнопки разделов —
+                         те же экземпляры, что в прежнем меню ниже: ApplyUiMode переставляет их
+                         в гнёзда (slot*, pnlGroup*), поэтому обработчики и имена одни на оба вида. -->
+                    <StackPanel x:Name="navModern" Visibility="Collapsed" Margin="0,4,0,0">
+                        <Button x:Name="btnOverviewTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE80F;" Content="Обзор" Click="NavigateToOverview"/>
+                        <StackPanel x:Name="slotCatalog"/>
+                        <StackPanel x:Name="slotInstalled"/>
+                        <Grid>
+                            <Button x:Name="btnGroupWindows" Style="{StaticResource NavButtonStyle}" Tag="&#xE770;" Content="Windows"
+                                    Click="BtnGroupWindows_Click" ToolTip="Windows Update, Office, лицензия, очистка"/>
+                            <TextBlock x:Name="chevGroupWindows" Text="&#xE70D;" FontFamily="Segoe Fluent Icons" FontSize="9"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
+                                       IsHitTestVisible="False" Foreground="{DynamicResource TextSecondary}"/>
+                        </Grid>
+                        <StackPanel x:Name="pnlGroupWindows" Margin="14,0,0,0" Visibility="Collapsed"/>
+                        <Grid>
+                            <Button x:Name="btnGroupService" Style="{StaticResource NavButtonStyle}" Tag="&#xE90F;" Content="Сервис"
+                                    Click="BtnGroupService_Click" ToolTip="Сеть, диагностика, бенчмарк"/>
+                            <TextBlock x:Name="chevGroupService" Text="&#xE70D;" FontFamily="Segoe Fluent Icons" FontSize="9"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
+                                       IsHitTestVisible="False" Foreground="{DynamicResource TextSecondary}"/>
+                        </Grid>
+                        <StackPanel x:Name="pnlGroupService" Margin="14,0,0,0" Visibility="Collapsed"/>
+                        <StackPanel x:Name="slotHistory"/>
+                        <Border Height="1" Margin="8,10" Background="{DynamicResource BorderBrush}"/>
+                        <StackPanel x:Name="slotSettings"/>
+                        <StackPanel x:Name="slotAbout"/>
+                    </StackPanel>
+
+                    <StackPanel x:Name="navClassic">
                         <TextBlock Text="ПРИЛОЖЕНИЯ" Style="{StaticResource SectionLabel}"/>
                         <Button x:Name="btnCatalogTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE71D;" Content="Каталог" Click="NavigateToCatalog"/>
                         <Button x:Name="btnInstalledTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE896;" Content="Установленные" Click="NavigateToInstalled"/>
@@ -88,7 +153,7 @@
                         <Button x:Name="btnSystemTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE713;" Content="Настройки" Click="NavigateToSystem"/>
                         <Button x:Name="btnDiagnosticsTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE9D9;" Content="Диагностика" Click="NavigateToDiagnostics"/>
                         <Button x:Name="btnBenchmarkTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE916;" Content="Бенчмарк" Click="NavigateToBenchmark"/>
-                        <Grid>
+                        <Grid x:Name="gridWindowsUpdateNav">
                             <Button x:Name="btnWindowsUpdateTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE72E;" Content="Windows Update" Click="NavigateToWindowsUpdate"/>
                             <Border x:Name="badgeWindowsUpdateCount" Background="{DynamicResource StatusDanger}" CornerRadius="7"
                                     MinWidth="16" Height="15" HorizontalAlignment="Right" VerticalAlignment="Center"
@@ -106,6 +171,7 @@
                         <Button x:Name="btnHistoryTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE81C;" Content="История" Click="NavigateToHistory"/>
                         <Button x:Name="btnAboutTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE946;" Content="О программе" Click="NavigateToAbout"/>
                     </StackPanel>
+                    </StackPanel>
                 </ScrollViewer>
 
                 <StackPanel Grid.Row="2" Margin="0,8,0,12">
@@ -119,19 +185,21 @@
                             <TextBlock x:Name="txtSidebarVersion" HorizontalAlignment="Right" FontFamily="Cascadia Mono, Consolas" FontSize="9" Foreground="{DynamicResource TextSecondary}"/>
                         </Grid>
                     </Border>
+                    <!-- Возврат к прежней оболочке и обратно. Подпись и подсказку ставит ApplyUiMode. -->
+                    <Button x:Name="btnUiModeSwitch" Style="{StaticResource SidebarLinkButtonStyle}" Click="BtnUiModeSwitch_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <Grid Grid.Column="1" Background="{DynamicResource ContentBackground}" AllowDrop="True"
               DragEnter="MainArea_DragEnter" DragOver="MainArea_DragOver" DragLeave="MainArea_DragLeave" Drop="MainArea_Drop">
-            <Grid.RowDefinitions><RowDefinition Height="58"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition x:Name="rowHeader" Height="58"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
             <Border Grid.Row="0" Background="{DynamicResource SidebarBackground}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,0">
                 <Grid>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Рабочее пространство" FontSize="16" FontWeight="SemiBold"/>
-                        <TextBlock Text="Управление приложениями и Windows" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,2,0,0"/>
+                        <TextBlock x:Name="txtHeaderTitle" Text="Рабочее пространство" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtHeaderSubtitle" Text="Управление приложениями и Windows" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,2,0,0"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Border Style="{StaticResource PillStatusStyle}" Margin="0,0,8,0">

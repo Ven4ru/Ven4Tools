@@ -89,7 +89,12 @@ namespace Ven4Tools
                 return;
             }
 
+            // Оболочку выбираем до первой навигации: ApplyUiMode раскладывает кнопки меню.
+            ApplyUiMode();
+            // Каталог создаётся в обоих видах: его загрузка стартует здесь, а не при первом
+            // открытии, — к моменту перехода из «Обзора» список уже готов.
             NavigateToCatalog(null, null);
+            if (_uiModern) NavigateToOverview(null, null);
 
             Loaded += (s, e) => ShowCategorySelectionIfNeeded();
             Loaded += (s, e) =>
@@ -552,12 +557,13 @@ namespace Ven4Tools
 
         private void SetActiveButton(Button activeButton)
         {
-            var buttons = new[] { btnCatalogTab, btnInstalledTab, btnSystemTab, btnDiagnosticsTab, btnBenchmarkTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnWindowsUpdateTab };
+            var buttons = new[] { btnOverviewTab, btnCatalogTab, btnInstalledTab, btnSystemTab, btnDiagnosticsTab, btnBenchmarkTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnWindowsUpdateTab };
             foreach (var btn in buttons)
             {
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");
             }
             activeButton.Style = (Style)FindResource("ActiveNavButtonStyle");
+            OnNavigated(activeButton);
             MotionService.Pulse(activeButton, 1.02, 140);
             Dispatcher.BeginInvoke(new Action(() => MotionService.SlideIn(MainFrame, 6, 160)),
                 System.Windows.Threading.DispatcherPriority.Loaded);
