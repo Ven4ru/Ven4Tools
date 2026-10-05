@@ -32,13 +32,29 @@ namespace Ven4Tools.ClientUITests
         {
             if (context.CurrentTestOutcome is UnitTestOutcome.Passed or UnitTestOutcome.Inconclusive) return;
 
+            string report = Snapshot(context.TestName ?? "test",
+                $"{context.FullyQualifiedTestClassName}.{context.TestName} — {context.CurrentTestOutcome}");
+            if (report.Length > 0) context.WriteLine(report);
+        }
+
+        /// <summary>
+        /// Сохраняет следы под указанным именем и возвращает их текст. Тест, который сам
+        /// закрывает клиент в <c>finally</c>, вызывает это до закрытия: к общей уборке
+        /// после теста окна клиента уже нет, и снимать нечего.
+        /// </summary>
+        public static string Snapshot(string name, string? header = null)
+        {
             // Сбор следов не должен менять исход теста: любая ошибка здесь проглатывается.
             try
             {
                 string dir = Path.Combine(ResolveSolutionRoot(), "TestResults", "ClientUI", "failures");
                 Directory.CreateDirectory(dir);
                 string shell = AppSession.SuiteUsesModernShell ? "modern" : "classic";
-                string baseName = Path.Combine(dir, shell + "-" + SafeFileName(context.TestName ?? "test"));
+                string baseName = Path.Combine(dir, shell + "-" + SafeFileName(name));
+
+                var report = new StringBuilder();
+                if (header != null) report.AppendLine(header);
+                report.AppendLine($"Время (UTC): {DateTime.UtcNow:o}");
 
                 try
                 {
@@ -47,12 +63,9 @@ namespace Ven4Tools.ClientUITests
                 }
                 catch (Exception ex)
                 {
-                    context.WriteLine("Снимок экрана не сделан: " + ex.Message);
+                    report.AppendLine("Снимок экрана не сделан: " + ex.Message);
                 }
 
-                var report = new StringBuilder();
-                report.AppendLine($"{context.FullyQualifiedTestClassName}.{context.TestName} — {context.CurrentTestOutcome}");
-                report.AppendLine($"Время (UTC): {DateTime.UtcNow:o}");
                 report.AppendLine();
                 report.AppendLine("Окна на рабочем столе:");
                 report.AppendLine(DescribeWindows());
@@ -60,9 +73,12 @@ namespace Ven4Tools.ClientUITests
                 report.AppendLine(ReadLogTail());
 
                 File.WriteAllText(baseName + ".txt", report.ToString(), new UTF8Encoding(false));
-                context.WriteLine(report.ToString());
+                return report.ToString();
             }
-            catch { }
+            catch
+            {
+                return "";
+            }
         }
 
         private static string ResolveSolutionRoot()

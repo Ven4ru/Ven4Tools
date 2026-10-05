@@ -161,7 +161,14 @@ namespace Ven4Tools.ClientUITests
                         w => (w.Title ?? "").Contains("незавершённая установка", StringComparison.OrdinalIgnoreCase)),
                     timeout: TimeSpan.FromSeconds(20), interval: TimeSpan.FromMilliseconds(300),
                     throwOnTimeout: false).Result;
-                Assert.IsNotNull(question, "Клиент не спросил о продолжении незавершённой установки.");
+                if (question == null)
+                {
+                    // Клиент закрывается в finally — следы нужно снять, пока он ещё на экране.
+                    string traces = FailureDiagnostics.Snapshot(
+                        nameof(НезавершённаяУстановка_СпрашиваетИПоОтказуЗабывает) + "-без-вопроса");
+                    Assert.Fail("Клиент не спросил о продолжении незавершённой установки. Файл очереди " +
+                        (File.Exists(AppSession.PendingInstallPath) ? "на месте" : "уже удалён") + ". " + traces);
+                }
 
                 string text = string.Join(" ", question!.FindAllDescendants(cf => cf.ByControlType(ControlType.Text))
                     .Select(t => t.Name));
