@@ -21,21 +21,6 @@ namespace Ven4Tools.ClientUITests
         private static readonly string SettingsDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
         private static readonly string ProfilePath = Path.Combine(SettingsDir, "profile.json");
-        private static readonly string LogPath = Path.Combine(SettingsDir, "app.log");
-
-        private static long LogTailPosition() { try { return new FileInfo(LogPath).Length; } catch { return 0; } }
-        private static string ReadLogSince(long position)
-        {
-            try
-            {
-                using var fs = new FileStream(LogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                if (fs.Length <= position) return "";
-                fs.Seek(position, SeekOrigin.Begin);
-                using var reader = new StreamReader(fs);
-                return reader.ReadToEnd();
-            }
-            catch { return ""; }
-        }
 
         private static string? _profileBackup; private static bool _profileExisted;
         private static AppSession? _session;
@@ -87,15 +72,28 @@ namespace Ven4Tools.ClientUITests
             search.AsTextBox().Enter("firefox");
             System.Threading.Thread.Sleep(800);
 
-            var clearBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnClearSearch"));
+            // Ввод и очистка запроса перестраивают список каталога, и пока он
+            // перестраивается, разовый поиск по дереву автоматизации может не найти
+            // даже кнопку, которая стоит на месте, — на слабой машине это окно
+            // растягивается на секунды. Поэтому элементы ищутся с ожиданием.
+            AutomationElement? WaitFor(string automationId) =>
+                Retry.WhileNull(() => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId(automationId)),
+                    timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
+
+            var clearBtn = WaitFor("btnClearSearch");
             Assert.IsNotNull(clearBtn, "Не найдена кнопка очистки поиска.");
             clearBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(300);
             string afterClear = search.AsTextBox().Text ?? "";
             Assert.AreNotEqual("firefox", afterClear, "btnClearSearch не очистила поле поиска.");
 
-            var favBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnFavoritesOnly"));
-            Assert.IsNotNull(favBtn, "Не найдена кнопка «только избранные».");
+            var favBtn = WaitFor("btnFavoritesOnly");
+            if (favBtn == null)
+            {
+                string ids = string.Join(" | ", s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                    .Select(b => b.Properties.AutomationId.ValueOrDefault).Where(id => !string.IsNullOrEmpty(id)));
+                Assert.Fail("Не найдена кнопка «только избранные». Кнопки в окне: " + ids);
+            }
             favBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(400);
             favBtn.AsButton().Invoke(); // возвращаем обратно
@@ -106,18 +104,15 @@ namespace Ven4Tools.ClientUITests
         {
             var s = Require();
             var catalogBtn = UiNav.Find(s, "btnCatalogTab");
-            long tInit = LogTailPosition();
             catalogBtn!.AsButton().Invoke();
 
-            // Дожидаемся конца первичной загрузки каталога: BuildRows() может
-            // перестроить строки ещё раз, пока идут фоновые проверки версий —
-            // отметка чекбокса ДО этого момента гонится с пересозданием строки
-            // и теряется (см. round 40: тест ловил ElementNotEnabledException на
-            // кнопке «Сохранить выбор», т.к. CanExecute видел пустой IsSelected).
-            var loaded = Retry.WhileFalse(
-                () => ReadLogSince(tInit).Contains("Версии загружены", StringComparison.OrdinalIgnoreCase),
-                timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Success;
-            Assert.IsTrue(loaded, "Каталог не завершил первичную загрузку за 15с.");
+            // Дожидаемся конца первичной проверки доступности: до неё строка каталога
+            // ещё меняет состояние, и отметка чекбокса гонится с этим. Строки
+            // перестраиваются только при загрузке каталога — опрос версий, который
+            // идёт следом, их не трогает, поэтому ждать его не нужно (на раннере CI он
+            // длится минуты, и прежнее ожидание строки «Версии загружены» туда не
+            // укладывалось).
+            Assert.IsTrue(s.WaitForAvailabilityChecked(), "Каталог не завершил первичную проверку доступности.");
             System.Threading.Thread.Sleep(300);
 
             // Отмечаем одно приложение чекбоксом, чтобы было что сохранить в пресет.
