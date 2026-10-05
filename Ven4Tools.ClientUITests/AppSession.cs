@@ -53,12 +53,39 @@ namespace Ven4Tools.ClientUITests
         /// <summary>Размер журнала клиента перед запуском — всё, что дальше, написал этот сеанс.</summary>
         private readonly long _logStart;
 
-        private AppSession(UIA3Automation automation, Application? app, Window mainWindow, long logStart)
+        /// <summary>Профиль создан этим сеансом (см. <see cref="EnsureProfileExists"/>) и убирается вместе с ним.</summary>
+        private readonly bool _ownsProfile;
+
+        private AppSession(UIA3Automation automation, Application? app, Window mainWindow, long logStart, bool ownsProfile)
         {
             Automation = automation;
             App = app;
             MainWindow = mainWindow;
             _logStart = logStart;
+            _ownsProfile = ownsProfile;
+        }
+
+        private static readonly string ProfilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "profile.json");
+
+        /// <summary>
+        /// На машине, где клиент ещё не запускали, профиля нет, и клиент открывает
+        /// поверх главного окна «Добро пожаловать» с выбором режима каталога. Окно
+        /// модальное: оно перехватывает ввод и подменяет собой диалог, которого ждёт
+        /// тест. Классы, которым важны настройки, пишут профиль сами до запуска; для
+        /// остальных здесь создаётся профиль с уже выбранным полным каталогом.
+        /// Существующий профиль не трогается. Возвращает true, если файл создан.
+        /// </summary>
+        private static bool EnsureProfileExists()
+        {
+            try
+            {
+                if (File.Exists(ProfilePath)) return false;
+                Directory.CreateDirectory(Path.GetDirectoryName(ProfilePath)!);
+                File.WriteAllText(ProfilePath, "{\"CatalogMode\":\"full\",\"HasSelectedCategory\":true}");
+                return true;
+            }
+            catch { return false; }
         }
 
         /// <summary>
@@ -176,6 +203,7 @@ namespace Ven4Tools.ClientUITests
 
             string exePath = ResolveClientExePath();
             long logStart = CurrentLogLength();
+            bool ownsProfile = EnsureProfileExists();
 
             var automation = new UIA3Automation { ConnectionTimeout = UiaConnectionTimeout };
             Application? app = null;
@@ -193,6 +221,7 @@ namespace Ven4Tools.ClientUITests
             if (mainWindow == null)
             {
                 try { automation.Dispose(); } catch { }
+                if (ownsProfile) { try { File.Delete(ProfilePath); } catch { } }
                 throw new InvalidOperationException(
                     "Главное окно Ven4Tools не появилось за " + LaunchTimeout.TotalSeconds +
                     " сек. Вероятные причины: окружение без интерактивного рабочего стола " +
@@ -200,7 +229,7 @@ namespace Ven4Tools.ClientUITests
                     "из сессии «от имени администратора» с активным рабочим столом.");
             }
 
-            return new AppSession(automation, app, mainWindow, logStart);
+            return new AppSession(automation, app, mainWindow, logStart, ownsProfile);
         }
 
         /// <summary>Ищет главное окно клиента на рабочем столе по заголовку.</summary>
@@ -286,6 +315,9 @@ namespace Ven4Tools.ClientUITests
                 }
             }
             catch { }
+
+            // После завершения клиента: он сам дописывает профиль, пока работает.
+            if (_ownsProfile) { try { File.Delete(ProfilePath); } catch { } }
 
             try { App?.Dispose(); } catch { }
             try { Automation.Dispose(); } catch { }
