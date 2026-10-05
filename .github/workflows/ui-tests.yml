@@ -9,6 +9,11 @@ on:
     # Понедельник, 04:41 UTC (07:41 МСК).
     - cron: '41 4 * * 1'
   workflow_dispatch:
+    inputs:
+      client_filter:
+        description: 'Фильтр тестов клиента (выражение dotnet test --filter); пусто — весь набор'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -49,13 +54,23 @@ jobs:
       - name: UI-тесты клиента — прежний интерфейс
         env:
           VEN4TOOLS_UITEST_SHELL: classic
-        run: dotnet test Ven4Tools.ClientUITests/Ven4Tools.ClientUITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --filter "FullyQualifiedName!~ScreenshotGeneration" --logger "trx;LogFileName=client-ui-classic.trx" --results-directory TestResults/ClientUI
+          CLIENT_FILTER: ${{ inputs.client_filter || 'FullyQualifiedName!~ScreenshotGeneration' }}
+        run: dotnet test Ven4Tools.ClientUITests/Ven4Tools.ClientUITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --filter "$env:CLIENT_FILTER" --logger "trx;LogFileName=client-ui-classic.trx" --results-directory TestResults/ClientUI
 
       - name: UI-тесты клиента — новый интерфейс
         if: always()
         env:
           VEN4TOOLS_UITEST_SHELL: modern
-        run: dotnet test Ven4Tools.ClientUITests/Ven4Tools.ClientUITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --filter "FullyQualifiedName!~ScreenshotGeneration" --logger "trx;LogFileName=client-ui-modern.trx" --results-directory TestResults/ClientUI
+          CLIENT_FILTER: ${{ inputs.client_filter || 'FullyQualifiedName!~ScreenshotGeneration' }}
+        run: dotnet test Ven4Tools.ClientUITests/Ven4Tools.ClientUITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --filter "$env:CLIENT_FILTER" --logger "trx;LogFileName=client-ui-modern.trx" --results-directory TestResults/ClientUI
+
+      # Журнал клиента лежит вне рабочей папки — кладём его рядом со следами падений.
+      - name: Журнал клиента
+        if: failure()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force TestResults/ClientUI/failures | Out-Null
+          Copy-Item "$env:LOCALAPPDATA\Ven4Tools\app.log" TestResults/ClientUI/failures/ -ErrorAction SilentlyContinue
 
       - name: Диагностика падения
         if: failure()
@@ -65,4 +80,5 @@ jobs:
           path: |
             TestResults/**/*.trx
             TestResults/**/*.actual.png
+            TestResults/ClientUI/failures/**
           if-no-files-found: warn

@@ -26,8 +26,12 @@ namespace Ven4Tools.ClientUITests
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
         private static readonly string SourceOrderPath = Path.Combine(SettingsDir, "source_order.json");
 
+        private static readonly string ProfilePath = Path.Combine(SettingsDir, "profile.json");
+
         private static string? _sourceOrderBackup;
         private static bool _sourceOrderExisted;
+        private static string? _profileBackup;
+        private static bool _profileExisted;
         private static string _workDir = "";
 
         [ClassInitialize]
@@ -42,6 +46,14 @@ namespace Ven4Tools.ClientUITests
             File.WriteAllText(SourceOrderPath,
                 "{\"Mode\":\"per_category\",\"GlobalOrder\":[\"winget\",\"direct\",\"choco\"]," +
                 "\"CategoryPrimary\":{\"Другое\":\"direct\"}}");
+
+            // Режим каталога задаётся явно: без него клиент при запуске с окном открывает
+            // «Добро пожаловать», и оно встаёт раньше вопроса о незавершённой установке.
+            // На машине, где клиентом уже пользовались, режим выбран давно, а на чистой
+            // (раннер CI) тест вопроса так и не дожидался.
+            _profileExisted = File.Exists(ProfilePath);
+            if (_profileExisted) _profileBackup = File.ReadAllText(ProfilePath);
+            File.WriteAllText(ProfilePath, "{\"CatalogMode\":\"full\",\"HasSelectedCategory\":true}");
         }
 
         [ClassCleanup]
@@ -52,6 +64,12 @@ namespace Ven4Tools.ClientUITests
             {
                 if (_sourceOrderExisted) File.WriteAllText(SourceOrderPath, _sourceOrderBackup!);
                 else if (File.Exists(SourceOrderPath)) File.Delete(SourceOrderPath);
+            }
+            catch { }
+            try
+            {
+                if (_profileExisted) File.WriteAllText(ProfilePath, _profileBackup!);
+                else if (File.Exists(ProfilePath)) File.Delete(ProfilePath);
             }
             catch { }
 
@@ -161,7 +179,14 @@ namespace Ven4Tools.ClientUITests
                         w => (w.Title ?? "").Contains("незавершённая установка", StringComparison.OrdinalIgnoreCase)),
                     timeout: TimeSpan.FromSeconds(20), interval: TimeSpan.FromMilliseconds(300),
                     throwOnTimeout: false).Result;
-                Assert.IsNotNull(question, "Клиент не спросил о продолжении незавершённой установки.");
+                if (question == null)
+                {
+                    // Клиент закрывается в finally — следы нужно снять, пока он ещё на экране.
+                    string traces = FailureDiagnostics.Snapshot(
+                        nameof(НезавершённаяУстановка_СпрашиваетИПоОтказуЗабывает) + "-без-вопроса");
+                    Assert.Fail("Клиент не спросил о продолжении незавершённой установки. Файл очереди " +
+                        (File.Exists(AppSession.PendingInstallPath) ? "на месте" : "уже удалён") + ". " + traces);
+                }
 
                 string text = string.Join(" ", question!.FindAllDescendants(cf => cf.ByControlType(ControlType.Text))
                     .Select(t => t.Name));
