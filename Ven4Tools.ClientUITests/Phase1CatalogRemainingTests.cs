@@ -72,15 +72,28 @@ namespace Ven4Tools.ClientUITests
             search.AsTextBox().Enter("firefox");
             System.Threading.Thread.Sleep(800);
 
-            var clearBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnClearSearch"));
+            // Ввод и очистка запроса перестраивают список каталога, и пока он
+            // перестраивается, разовый поиск по дереву автоматизации может не найти
+            // даже кнопку, которая стоит на месте, — на слабой машине это окно
+            // растягивается на секунды. Поэтому элементы ищутся с ожиданием.
+            AutomationElement? WaitFor(string automationId) =>
+                Retry.WhileNull(() => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId(automationId)),
+                    timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
+
+            var clearBtn = WaitFor("btnClearSearch");
             Assert.IsNotNull(clearBtn, "Не найдена кнопка очистки поиска.");
             clearBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(300);
             string afterClear = search.AsTextBox().Text ?? "";
             Assert.AreNotEqual("firefox", afterClear, "btnClearSearch не очистила поле поиска.");
 
-            var favBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnFavoritesOnly"));
-            Assert.IsNotNull(favBtn, "Не найдена кнопка «только избранные».");
+            var favBtn = WaitFor("btnFavoritesOnly");
+            if (favBtn == null)
+            {
+                string ids = string.Join(" | ", s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                    .Select(b => b.Properties.AutomationId.ValueOrDefault).Where(id => !string.IsNullOrEmpty(id)));
+                Assert.Fail("Не найдена кнопка «только избранные». Кнопки в окне: " + ids);
+            }
             favBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(400);
             favBtn.AsButton().Invoke(); // возвращаем обратно
