@@ -26,8 +26,12 @@ namespace Ven4Tools.ClientUITests
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
         private static readonly string SourceOrderPath = Path.Combine(SettingsDir, "source_order.json");
 
+        private static readonly string ProfilePath = Path.Combine(SettingsDir, "profile.json");
+
         private static string? _sourceOrderBackup;
         private static bool _sourceOrderExisted;
+        private static string? _profileBackup;
+        private static bool _profileExisted;
         private static string _workDir = "";
 
         [ClassInitialize]
@@ -42,6 +46,14 @@ namespace Ven4Tools.ClientUITests
             File.WriteAllText(SourceOrderPath,
                 "{\"Mode\":\"per_category\",\"GlobalOrder\":[\"winget\",\"direct\",\"choco\"]," +
                 "\"CategoryPrimary\":{\"Другое\":\"direct\"}}");
+
+            // Без выбранного режима каталога клиент при первом запуске с окном открывает
+            // «Добро пожаловать» — оно встаёт раньше вопроса о незавершённой установке
+            // и заслоняет его. На машине, где клиентом уже пользовались, режим выбран
+            // давно, а на чистой (раннер CI) тест вопроса так и не дожидался.
+            _profileExisted = File.Exists(ProfilePath);
+            if (_profileExisted) _profileBackup = File.ReadAllText(ProfilePath);
+            File.WriteAllText(ProfilePath, "{\"CatalogMode\":\"full\",\"HasSelectedCategory\":true}");
         }
 
         [ClassCleanup]
@@ -52,6 +64,12 @@ namespace Ven4Tools.ClientUITests
             {
                 if (_sourceOrderExisted) File.WriteAllText(SourceOrderPath, _sourceOrderBackup!);
                 else if (File.Exists(SourceOrderPath)) File.Delete(SourceOrderPath);
+            }
+            catch { }
+            try
+            {
+                if (_profileExisted) File.WriteAllText(ProfilePath, _profileBackup!);
+                else if (File.Exists(ProfilePath)) File.Delete(ProfilePath);
             }
             catch { }
 

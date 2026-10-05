@@ -392,13 +392,10 @@ namespace Ven4Tools.ClientUITests
             // Дожидаемся первичной загрузки — это устанавливает _initialized=true
             // и подписку на SourceOrderService.Changed (ровно нужная предпосылка).
             // Ждём именно окончания проверки доступности (лог), а не просто
-            // появления кнопки — иначе переключение вкладки соревнуется с фоновой
-            // загрузкой каталога за UI-поток.
-            long tInit = LogTailPosition();
-            var loaded = Retry.WhileFalse(
-                () => ReadLogSince(tInit).Contains("Версии загружены", StringComparison.OrdinalIgnoreCase),
-                timeout: TimeSpan.FromSeconds(30), interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Success;
-            Assert.IsTrue(loaded, "Каталог не завершил первичную загрузку за 30с.");
+            // появления кнопки: пока идёт первая проверка, перепроверка, которую
+            // ловит этот тест, не стартует вовсе. Опрос версий, идущий следом,
+            // перепроверке не мешает — ждать его не нужно.
+            Assert.IsTrue(s.WaitForAvailabilityChecked(), "Каталог не завершил первичную проверку доступности.");
             System.Threading.Thread.Sleep(1000);
 
             var systemBtn = UiNav.Find(s, "btnSystemTab");
