@@ -456,6 +456,10 @@
                             Command="{Binding BuildOfflineKitCommand}"/>
                     <TextBlock x:Name="txtOfflineKitStatus" Text="{Binding OfflineKitStatusText}" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,8"/>
+                    <Button x:Name="btnReinstallKit" Height="34" Margin="0,0,0,8"
+                            Content="🧳 Перед переустановкой Windows…"
+                            ToolTip="Соберёт на флешку драйверы этого компьютера, профили Wi-Fi и список программ, чтобы вернуть их после переустановки."
+                            Command="{Binding OpenReinstallKitCommand}"/>
 
                     <ProgressBar x:Name="progressCache" Height="6" Minimum="0" Maximum="100"
                                  Value="{Binding CacheProgressValue, Mode=OneWay}" Margin="0,0,0,6"

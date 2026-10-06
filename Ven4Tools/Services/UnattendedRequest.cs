@@ -57,6 +57,18 @@ namespace Ven4Tools.Services
         /// Задана — клиент работает офлайн на этот сеанс и ставит программы из неё.
         /// </summary>
         public string? OfflineCachePath { get; init; }
+
+        /// <summary>
+        /// Папка с драйверами набора «Перед переустановкой»: они возвращаются до
+        /// установки программ. null — драйверов в задании нет.
+        /// </summary>
+        public string? RestoreDriversPath { get; init; }
+
+        /// <summary>Папка с профилями Wi-Fi того же набора; null — их в задании нет.</summary>
+        public string? RestoreWifiPath { get; init; }
+
+        /// <summary>В задании есть что вернуть до установки программ.</summary>
+        public bool HasRestore => RestoreDriversPath != null || RestoreWifiPath != null;
     }
 
     /// <summary>Коды возврата клиента в тихом режиме.</summary>
@@ -200,9 +212,24 @@ namespace Ven4Tools.Services
                 error = "--update-apps и набор для установки задаются разными запусками.";
                 return ParseStatus.Error;
             }
-            if (!updateApps && ids.Count == 0)
+            // Драйверы и Wi-Fi берутся только из папки самого файла ответа: файл может
+            // прийти откуда угодно, а установка драйверов идёт с правами администратора.
+            if (!TryResolveInsideAnswerFolder(file?.Drivers, answerFile, out string? driversPath)
+                || !TryResolveInsideAnswerFolder(file?.Wifi, answerFile, out string? wifiPath))
+            {
+                error = "Папки драйверов и Wi-Fi в файле ответа задаются относительно самого файла и не могут выходить за его папку.";
+                return ParseStatus.Error;
+            }
+            bool hasRestore = driversPath != null || wifiPath != null;
+
+            if (!updateApps && ids.Count == 0 && !hasRestore)
             {
                 error = "В задании нет ни одного приложения.";
+                return ParseStatus.Error;
+            }
+            if (updateApps && hasRestore)
+            {
+                error = "--update-apps и возврат драйверов задаются разными запусками.";
                 return ParseStatus.Error;
             }
 
@@ -222,9 +249,32 @@ namespace Ven4Tools.Services
                 InstallDrive = resolvedDrive,
                 AllowPackageManagers = file?.AllowPackageManagers ?? true,
                 ReportPath = report ?? file?.Report,
-                OfflineCachePath = offlineCache ?? ResolveBesideAnswerFile(file?.OfflineCache, answerFile)
+                OfflineCachePath = offlineCache ?? ResolveBesideAnswerFile(file?.OfflineCache, answerFile),
+                RestoreDriversPath = driversPath,
+                RestoreWifiPath = wifiPath
             };
             return ParseStatus.Ok;
+        }
+
+        /// <summary>
+        /// Относительный путь из файла ответа → полный, если он остаётся внутри папки
+        /// файла. Пустое значение — «не задано» (успех, путь null).
+        /// </summary>
+        private static bool TryResolveInsideAnswerFolder(string? path, string? answerFile, out string? resolved)
+        {
+            resolved = null;
+            if (string.IsNullOrWhiteSpace(path)) return true;
+            if (answerFile == null || System.IO.Path.IsPathRooted(path)) return false;
+
+            string? directory = System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(answerFile));
+            if (directory == null) return false;
+
+            string full = System.IO.Path.GetFullPath(System.IO.Path.Combine(directory, path));
+            string root = directory.TrimEnd(System.IO.Path.DirectorySeparatorChar) + System.IO.Path.DirectorySeparatorChar;
+            if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase)) return false;
+
+            resolved = full;
+            return true;
         }
 
         /// <summary>
@@ -283,6 +333,8 @@ namespace Ven4Tools.Services
             public bool? AllowPackageManagers { get; set; }
             public string? Report { get; set; }
             public string? OfflineCache { get; set; }
+            public string? Drivers { get; set; }
+            public string? Wifi { get; set; }
         }
     }
 
@@ -297,6 +349,8 @@ namespace Ven4Tools.Services
         public List<string> NotFound { get; set; } = new();
         /// <summary>Есть в каталоге, но сейчас недоступны для установки.</summary>
         public List<string> Unavailable { get; set; } = new();
+        /// <summary>Что возвращено из набора «Перед переустановкой» до установки программ.</summary>
+        public List<string> Restored { get; set; } = new();
         public string StartedUtc { get; set; } = "";
         public string FinishedUtc { get; set; } = "";
     }
