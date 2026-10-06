@@ -172,11 +172,11 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="ℹ️ Примечание: регион Windows временно переключается на US для обхода блокировок и восстанавливается только после завершения установки."
+            <TextBlock Text="ℹ️ Чтобы загрузка с серверов Microsoft работала из России, на время установки меняются региональные параметры Windows и Office. После установки прежние значения возвращаются."
                        Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap"/>
             <TextBlock Text="⚠️ Требуется подключение к интернету для скачивания установщика."
                        Foreground="{DynamicResource StatusWarning}" FontSize="11" Margin="0,5,0,0"/>
-            <TextBlock Text="🔑 Для использования Microsoft Office требуется действующая лицензия Microsoft. Ven4Tools только скачивает официальный установщик."
+            <TextBlock Text="🔑 Office устанавливается без активации: для работы нужна ваша лицензия Microsoft. Ven4Tools только скачивает официальный установщик и ничего не активирует."
                        Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
 
             <!-- Кнопка активации — только для авторизованных -->

@@ -121,6 +121,15 @@ namespace Ven4Tools.ClientUITests
                 answerFile.Toggle();
                 Get("txtKitAccount").AsTextBox().Text = "Тестовый";
 
+                // Без явного согласия на учётную запись без пароля набор с файлом ответов не собирается.
+                Get("btnBuildKit").AsButton().Invoke();
+                Assert.IsTrue(
+                    Retry.WhileFalse(() => Get("txtKitStatus").Name.Contains("без пароля"), timeout: TimeSpan.FromSeconds(5),
+                        interval: TimeSpan.FromMilliseconds(200), throwOnTimeout: false).Success,
+                    "Без отметки про пустой пароль окно должно отказать и объяснить почему.");
+                Assert.IsFalse(File.Exists(Path.Combine(KitFolder, "restore.cmd")), "Набор начал собираться без согласия на пустой пароль.");
+                Get("chkKitNoPassword").AsCheckBox().Toggle();
+
                 Get("btnBuildKit").AsButton().Invoke();
 
                 // Копия клиента — сотни мегабайт, плюс два обращения к winget.

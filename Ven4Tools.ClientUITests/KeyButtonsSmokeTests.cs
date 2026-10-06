@@ -100,7 +100,7 @@ namespace Ven4Tools.ClientUITests
             GoTo("btnSystemTab", "cmbTheme", "Система");
             GoTo("btnWindowsUpdateTab", "btnCheck", "Windows Update");
             GoTo("btnOfficeTab", "btnDownloadOffice", "Office");
-            GoTo("btnActivationTab", "btnActivateWindows", "Лицензия");
+            GoTo("btnActivationTab", "btnCheckStatus", "Лицензия");
             GoTo("btnDebloaterTab", "btnDebloatSelectAll", "Очистка");
             GoTo("btnNetworkTab", "btnRunAll", "Сеть");
             GoTo("btnHistoryTab", "btnClearHistory", "История");
@@ -118,7 +118,7 @@ namespace Ven4Tools.ClientUITests
                 ("btnSystemTab", "btnCheckUpdates", "Настройки"),
                 ("btnWindowsUpdateTab", "btnCheck", "Windows Update"),
                 ("btnOfficeTab", "btnDownloadOffice", "Office"),
-                ("btnActivationTab", "btnActivateWindows", "Лицензия"),
+                ("btnActivationTab", "btnCheckStatus", "Лицензия"),
                 ("btnDebloaterTab", "btnApplyDebloat", "Очистка"),
                 ("btnNetworkTab", "btnRunAll", "Сеть"),
                 ("btnHistoryTab", "btnClearHistory", "История"),

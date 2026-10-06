@@ -1,7 +1,14 @@
 {
-  "version": 22,
-  "lastUpdated": "2026-10-03 12:52:24",
+  "version": 23,
+  "lastUpdated": "2026-10-06 23:30:00",
   "changelog": [
+    {
+      "version": 23,
+      "date": "2026-10-06",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "Уточнены описания Opera и Tailscale. Состав каталога не менялся."
+    },
     {
       "version": 22,
       "date": "2026-10-03",
@@ -272,7 +279,7 @@
       "version": "133.0.5932.20",
       "size": "131.8 MB",
       "iconUrl": "https://cdn.simpleicons.org/opera",
-      "description": "Браузер со встроенным VPN, блокировщиком рекламы и мессенджерами.",
+      "description": "Браузер со встроенным блокировщиком рекламы и мессенджерами в боковой панели.",
       "profile": "basic",
       "sha256": "eddd5dd8298c489fe7d0c27ce434620fab4af94626d880ba19c31dc102d24162",
       "chocoId": "opera"
@@ -1000,7 +1007,7 @@
       "version": "1.102.2",
       "size": "36.6 MB",
       "iconUrl": "https://cdn.simpleicons.org/tailscale",
-      "description": "Приватная mesh-VPN сеть на базе WireGuard для безопасного доступа между своими устройствами.",
+      "description": "Защищённая частная сеть между своими устройствами: доступ к домашнему или рабочему компьютеру без проброса портов.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "tailscale"
