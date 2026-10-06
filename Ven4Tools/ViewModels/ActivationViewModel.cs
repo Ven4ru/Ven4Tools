@@ -8,13 +8,13 @@ using System.Windows;
 using System.Windows.Media;
 using Ven4Tools.Helpers;
 using Ven4Tools.Services;
-using Ven4Tools.Views;
 
 namespace Ven4Tools.ViewModels
 {
     /// <summary>
-    /// Вкладка «Активация» — согласие, статус лицензий Windows/Office, ссылки на
-    /// сторонний инструмент активации. Перенесено из code-behind при MVVM-миграции
+    /// Вкладка «Лицензия» — только показ состояния активации Windows и Office:
+    /// клиент ничего не активирует и на инструменты активации не ссылается.
+    /// Перенесено из code-behind при MVVM-миграции
     /// (2026-08-25, четвёртая вкладка после DebloaterTab/HistoryTab/AboutTab),
     /// поведение не менялось — кроме способа попасть в UI-поток: у ViewModel нет
     /// собственного Dispatcher, используется Application.Current.Dispatcher.
@@ -22,15 +22,6 @@ namespace Ven4Tools.ViewModels
     public sealed class ActivationViewModel : ViewModelBase
     {
         private static readonly TimeSpan OfficeCheckTimeout = TimeSpan.FromSeconds(30);
-
-        public Func<Window?>? OwnerWindowProvider { get; set; }
-
-        private bool _consentGiven;
-        public bool ConsentGiven
-        {
-            get => _consentGiven;
-            set => SetField(ref _consentGiven, value);
-        }
 
         private string _windowsStatusText = "Проверка...";
         public string WindowsStatusText { get => _windowsStatusText; private set => SetField(ref _windowsStatusText, value); }
@@ -85,45 +76,15 @@ namespace Ven4Tools.ViewModels
             private set { if (SetField(ref _isCheckingStatus, value)) CheckStatusCommand.RaiseCanExecuteChanged(); }
         }
 
-        public RelayCommand ActivateWindowsCommand { get; }
-        public RelayCommand ActivateOfficeCommand { get; }
         public RelayCommand CheckStatusCommand { get; }
 
         public ActivationViewModel()
         {
-            ActivateWindowsCommand = new RelayCommand(_ => ActivateWindows());
-            ActivateOfficeCommand = new RelayCommand(_ => ActivateOffice());
             CheckStatusCommand = RelayCommand.FromAsync(async _ => await RunCheckStatusAsync(), _ => !IsCheckingStatus);
 
             // Цвета статусов держат ключ темы, но перечитать его должен кто-то
             // извне. Отписки нет: экземпляр ViewModel вкладки один на весь сеанс.
             ThemeService.ThemeChanged += RefreshThemeBrushes;
-        }
-
-        // Открывает сайт и окно-помощник для активации Windows
-        private void ActivateWindows()
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo("https://massgrave.dev") { UseShellExecute = true });
-                AppLogger.Write("🌐 Открыт сайт для управления лицензией Windows");
-                var guide = new MasGuideWindow("Windows") { Owner = OwnerWindowProvider?.Invoke() };
-                guide.Show();
-            }
-            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
-        }
-
-        // Открывает сайт и окно-помощник для активации Office
-        private void ActivateOffice()
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo("https://massgrave.dev") { UseShellExecute = true });
-                AppLogger.Write("🌐 Открыт сайт для управления лицензией Office");
-                var guide = new MasGuideWindow("Office") { Owner = OwnerWindowProvider?.Invoke() };
-                guide.Show();
-            }
-            catch (Exception ex) { AppLogger.Write($"❌ Ошибка: {ex.Message}"); }
         }
 
         private async Task RunCheckStatusAsync()

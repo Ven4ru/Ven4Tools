@@ -125,6 +125,13 @@ namespace Ven4Tools.Views
                 ShowStatus(accountError, error: true);
                 return;
             }
+            // Учётная запись без пароля — только по явному выбору: администратор с пустым
+            // паролем не должен появляться на компьютере незаметно для человека.
+            if (answerFile && chkKitNoPassword.IsChecked != true)
+            {
+                ShowStatus("Файл ответов создаёт учётную запись без пароля. Отметьте, что понимаете это, или снимите отметку «Файл ответов».", error: true);
+                return;
+            }
 
             SetBusy(true);
             _cts = new CancellationTokenSource();
@@ -245,6 +252,7 @@ namespace Ven4Tools.Views
             chkKitWifi.IsEnabled = !busy;
             chkKitApps.IsEnabled = !busy;
             chkKitAnswerFile.IsEnabled = !busy;
+            chkKitNoPassword.IsEnabled = !busy;
             txtKitAccount.IsEnabled = !busy;
         }
 

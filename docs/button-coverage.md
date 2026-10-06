@@ -32,7 +32,6 @@
 | `AppCardWindow.xaml` | закрепить на панели |
 | `EulaConfirmWindow.xaml` | «Отклонить» |
 | `FeedbackWindow.xaml` | пять звёзд, «Пропустить» |
-| `MasGuideWindow.xaml` | «Закрыть» |
 | `PresetSaveDialog.xaml`, `SnapshotNameDialog.xaml` | «Сохранить» |
 | `SplashWindow.xaml` | «Пропустить» |
 | `CatalogTab.xaml` | скрыть установленные, сортировка, добавить своё, избранное, пропуск обновления, удалить своё, скрыть приложение, обновить каталог, переименовать пресет, обновить состав пресета, проверить обновления |
