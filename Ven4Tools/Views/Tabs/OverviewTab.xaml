@@ -121,6 +121,9 @@
                             <Button x:Name="btnOverviewDiagnostics" Content="Диагностика"
                                 ToolTip="Откроет диагностику: диски, ошибки системы и состояние обновлений." Style="{StaticResource OverviewQuickAction}"
                                     Command="{Binding OpenDiagnosticsCommand}"/>
+                            <Button x:Name="btnOverviewReinstallKit" Content="Перед переустановкой"
+                                ToolTip="Соберёт на флешку драйверы, профили Wi-Fi и список программ, чтобы вернуть их после переустановки Windows." Style="{StaticResource OverviewQuickAction}"
+                                    Command="{Binding OpenReinstallKitCommand}"/>
                         </WrapPanel>
                     </StackPanel>
                 </Border>

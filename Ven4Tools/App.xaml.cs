@@ -210,9 +210,25 @@ namespace Ven4Tools
             UnattendedReport report;
             try
             {
-                report = request.UpdateApps
-                    ? await RunUpdateAppsAsync()
-                    : await main.RunUnattendedAsync(request);
+                // Набор «Перед переустановкой»: драйверы и Wi-Fi возвращаются раньше
+                // программ — без сетевого драйвера программам неоткуда скачиваться.
+                var restored = request.HasRestore
+                    ? await RestoreKitAsync(main, request)
+                    : new System.Collections.Generic.List<string>();
+
+                if (request.UpdateApps)
+                    report = await RunUpdateAppsAsync();
+                else if (request.AppIds.Count > 0)
+                    report = await main.RunUnattendedAsync(request);
+                else
+                    report = new UnattendedReport
+                    {
+                        ExitCode = UnattendedExitCode.Success,
+                        Message = "программ в задании нет",
+                        StartedUtc = DateTime.UtcNow.ToString("o"),
+                        FinishedUtc = DateTime.UtcNow.ToString("o")
+                    };
+                report.Restored.AddRange(restored);
             }
             catch (Exception ex)
             {
@@ -243,6 +259,56 @@ namespace Ven4Tools
             }
 
             if (request.Silent) Shutdown(report.ExitCode);
+        }
+
+        /// <summary>
+        /// Возвращает драйверы и профили Wi-Fi из набора «Перед переустановкой». С окном —
+        /// после вопроса: драйверы подходят только к тому компьютеру, с которого сняты,
+        /// и набор могли открыть на другом.
+        /// </summary>
+        private static async System.Threading.Tasks.Task<System.Collections.Generic.List<string>> RestoreKitAsync(
+            MainWindow main, UnattendedRequest request)
+        {
+            var log = new System.Collections.Generic.List<string>();
+            var (drivers, wifi) = ReinstallKitRestorer.Describe(request.RestoreDriversPath, request.RestoreWifiPath);
+            if (drivers == 0 && wifi == 0) return log;
+
+            if (!request.Silent)
+            {
+                var answer = MessageBox.Show(main,
+                    "В наборе есть то, что стоит вернуть до установки программ:\n\n" +
+                    (drivers > 0 ? $"  • драйверы: {drivers}\n" : "") +
+                    (wifi > 0 ? $"  • профили Wi-Fi: {wifi}\n" : "") +
+                    "\nДрайверы подходят только к тому компьютеру, с которого они сняты.\n\nВернуть их сейчас?",
+                    "Ven4Tools — набор «Перед переустановкой»",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (answer != MessageBoxResult.Yes)
+                {
+                    log.Add("Возврат драйверов и Wi-Fi пропущен по решению пользователя");
+                    AppLogger.Write("[Набор] " + log[0]);
+                    return log;
+                }
+            }
+
+            var outcome = await ReinstallKitRestorer.RestoreAsync(
+                request.RestoreDriversPath, request.RestoreWifiPath, KitCommandRunner.Default,
+                new Progress<string>(text => AppLogger.Write("[Набор] " + text)));
+            foreach (string line in outcome.Log) AppLogger.Write("[Набор] " + line);
+            log.AddRange(outcome.Log);
+
+            // Сеть после возврата драйвера и профиля поднимается не мгновенно, а
+            // программам она нужна сразу.
+            if (request.AppIds.Count > 0)
+            {
+                for (int i = 0; i < 30 && !System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable(); i++)
+                    await System.Threading.Tasks.Task.Delay(1000);
+            }
+            else if (!request.Silent)
+            {
+                MessageBox.Show(main, string.Join("\n", outcome.Log),
+                    "Ven4Tools — набор «Перед переустановкой»", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            return log;
         }
 
         /// <summary>
