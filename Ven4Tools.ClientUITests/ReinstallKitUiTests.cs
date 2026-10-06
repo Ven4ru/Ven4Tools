@@ -19,8 +19,28 @@ namespace Ven4Tools.ClientUITests
     [TestClass]
     public class ReinstallKitUiTests
     {
+        // Набор кладётся на несистемный диск, если он есть: только там можно проверить
+        // запись файла ответов Windows — в корень системного диска клиент его не пишет.
+        private static readonly string? DataDriveRoot = FindDataDrive();
         private static readonly string KitFolder = Path.Combine(
-            Path.GetTempPath(), "v4t-kit-ui-" + Guid.NewGuid().ToString("N"));
+            DataDriveRoot ?? Path.GetTempPath(), "v4t-kit-ui-" + Guid.NewGuid().ToString("N"));
+        private static string? AnswerFilePath => DataDriveRoot == null ? null : Path.Combine(DataDriveRoot, "autounattend.xml");
+        private static bool _answerFileExisted;
+
+        private static string? FindDataDrive()
+        {
+            try
+            {
+                string systemRoot = Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\";
+                return DriveInfo.GetDrives()
+                    .Where(d => d.DriveType == DriveType.Fixed && d.IsReady
+                                && !string.Equals(d.RootDirectory.FullName, systemRoot, StringComparison.OrdinalIgnoreCase)
+                                && d.AvailableFreeSpace > 2L * 1024 * 1024 * 1024)
+                    .Select(d => d.RootDirectory.FullName)
+                    .FirstOrDefault();
+            }
+            catch { return null; }
+        }
 
         private static AppSession? _session;
         private static string? _launchError;
@@ -28,6 +48,7 @@ namespace Ven4Tools.ClientUITests
         [ClassInitialize]
         public static void ClassInitialize(TestContext context)
         {
+            _answerFileExisted = AnswerFilePath != null && File.Exists(AnswerFilePath);
             try { _session = AppSession.Launch(); }
             catch (Exception ex) { _launchError = ex.Message; _session = null; }
         }
@@ -38,6 +59,18 @@ namespace Ven4Tools.ClientUITests
             _session?.Dispose();
             _session = null;
             try { if (Directory.Exists(KitFolder)) Directory.Delete(KitFolder, recursive: true); }
+            catch { /* уборка — по возможности */ }
+            try
+            {
+                // Файл ответов в корне диска: вернуть прежний, если он был, иначе убрать свой.
+                if (AnswerFilePath != null)
+                {
+                    string backup = AnswerFilePath + ".bak";
+                    if (_answerFileExisted && File.Exists(backup)) File.Copy(backup, AnswerFilePath, overwrite: true);
+                    else if (!_answerFileExisted && File.Exists(AnswerFilePath)) File.Delete(AnswerFilePath);
+                    if (File.Exists(backup)) File.Delete(backup);
+                }
+            }
             catch { /* уборка — по возможности */ }
         }
 
@@ -83,6 +116,11 @@ namespace Ven4Tools.ClientUITests
                 Assert.AreEqual(true, Get("chkKitApps").AsCheckBox().IsChecked, "«Список программ» должен быть отмечен по умолчанию.");
                 Assert.IsFalse(Get("btnOpenKitFolder").IsEnabled, "«Открыть папку» доступна до сборки набора.");
 
+                var answerFile = Get("chkKitAnswerFile").AsCheckBox();
+                Assert.AreEqual(false, answerFile.IsChecked, "Файл ответов Windows не должен быть отмечен по умолчанию.");
+                answerFile.Toggle();
+                Get("txtKitAccount").AsTextBox().Text = "Тестовый";
+
                 Get("btnBuildKit").AsButton().Invoke();
 
                 // Копия клиента — сотни мегабайт, плюс два обращения к winget.
@@ -108,6 +146,21 @@ namespace Ven4Tools.ClientUITests
                     "Драйверы выгружены, хотя отметка была снята.");
                 StringAssert.Contains(File.ReadAllText(Path.Combine(KitFolder, "ven4tools-restore.json")), "\"apps\"",
                     "В файле ответа нет списка программ.");
+
+                if (AnswerFilePath != null)
+                {
+                    Assert.IsTrue(File.Exists(AnswerFilePath), "Файл ответов Windows не записан в корень диска набора: " + status);
+                    string unattend = File.ReadAllText(AnswerFilePath);
+                    StringAssert.Contains(unattend, "<Name>Тестовый</Name>", "В файле ответов нет заданной учётной записи.");
+                    StringAssert.Contains(unattend, Path.GetFileName(KitFolder) + "\\restore.cmd",
+                        "Команда первого входа не ведёт в папку набора.");
+                    Assert.IsFalse(unattend.Contains("windowsPE"), "В файле ответов не должно быть прохода windowsPE.");
+                }
+                else
+                {
+                    // Несистемного диска нет: клиент обязан отказаться писать файл в корень системного.
+                    StringAssert.Contains(status, "Файл ответов не записан", "Ожидался отказ писать файл ответов на системный диск.");
+                }
             }
             finally
             {
