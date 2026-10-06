@@ -277,12 +277,125 @@ namespace Ven4Tools.ViewModels
                 StatusText = ok
                     ? $"↩ Возвращено: {item.Name}"
                     : $"❌ Не удалось вернуть полностью: {item.Name} — подробности в журнале";
+                if (ok)
+                {
+                    // Возвращённый твик больше не считается применённым: следить за ним незачем.
+                    DebloatAppliedJournal.Default.Forget(item.Id);
+                    if (HasDrift) await CheckDriftAsync(announce: false);
+                }
             }
             finally
             {
                 ApplyEnabled = true;
                 RefreshUndoFlags();
             }
+        }
+
+        // ── Проверка после обновления Windows ────────────────────────────────────
+
+        // Источники вынесены полями ради тестов: настоящие читают реестр, журнал в
+        // профиле пользователя и запускают PowerShell за списком пакетов.
+        internal IDebloatSystemState DriftSystem { get; set; } = DebloatUndoService.Default.System;
+        internal Func<IReadOnlyCollection<string>> AppliedTweaksSource { get; set; } = () =>
+            DebloatAppliedJournal.Default.AppliedTweaks()
+                .Concat(DebloatUndoService.Default.RecordedTweaks())
+                .ToList();
+        internal Func<CancellationToken, Task<IReadOnlyCollection<string>?>> InstalledAppxSource { get; set; } =
+            DebloatDriftService.ListInstalledAppxAsync;
+
+        private bool _hasDrift;
+        /// <summary>Среди применённых твиков есть те, что сейчас не действуют.</summary>
+        public bool HasDrift { get => _hasDrift; private set => SetField(ref _hasDrift, value); }
+
+        private string _driftText = "";
+        public string DriftText { get => _driftText; private set => SetField(ref _driftText, value); }
+
+        private bool _driftChecked;
+        private bool _checkingDrift;
+
+        private RelayCommand? _checkDriftCommand;
+        public RelayCommand CheckDriftCommand => _checkDriftCommand ??=
+            RelayCommand.FromAsync(async _ => await CheckDriftAsync(announce: true), _ => !_checkingDrift);
+
+        private RelayCommand? _reapplyDriftedCommand;
+        public RelayCommand ReapplyDriftedCommand => _reapplyDriftedCommand ??=
+            RelayCommand.FromAsync(async _ => await ReapplyDriftedAsync());
+
+        /// <summary>Первая проверка при открытии вкладки; повторные открытия её не запускают.</summary>
+        public async Task CheckDriftOnceAsync()
+        {
+            if (_driftChecked) return;
+            _driftChecked = true;
+            await CheckDriftAsync(announce: false);
+        }
+
+        /// <summary>
+        /// Сверяет применённые твики с текущим состоянием системы и помечает те, что
+        /// больше не действуют.
+        /// </summary>
+        /// <param name="announce">Писать ли итог в строку состояния, когда всё в порядке.</param>
+        internal async Task CheckDriftAsync(bool announce)
+        {
+            if (_checkingDrift) return;
+            _checkingDrift = true;
+            CheckDriftCommand.RaiseCanExecuteChanged();
+            try
+            {
+                var applied = new HashSet<string>(AppliedTweaksSource(), StringComparer.OrdinalIgnoreCase);
+                var tracked = _allItems.Where(i => applied.Contains(i.Id)).ToList();
+
+                // Список пакетов нужен только удалённым приложениям — без них PowerShell не запускаем.
+                IReadOnlyCollection<string>? appx = tracked.Any(i => i.Category == "app")
+                    ? await InstalledAppxSource(CancellationToken.None)
+                    : null;
+
+                var drifted = new HashSet<string>(
+                    DebloatDriftService.FindDrifted(tracked.Select(i => (i.Category, i.Id)), DriftSystem, appx),
+                    StringComparer.OrdinalIgnoreCase);
+                foreach (var item in _allItems) item.IsDrifted = drifted.Contains(item.Id);
+
+                var names = _allItems.Where(i => i.IsDrifted).Select(i => i.Name).ToList();
+                HasDrift = names.Count > 0;
+                DriftText = names.Count == 0
+                    ? ""
+                    : $"Сейчас не действуют применённые ранее твики: {names.Count}. " +
+                      string.Join(", ", names.Take(5)) + (names.Count > 5 ? " и другие" : "") +
+                      ". Обычно их возвращает крупное обновление Windows.";
+
+                if (names.Count > 0)
+                    AppLogger.Write($"[Очистка] Не действуют применённые твики: {string.Join(", ", names)}");
+                if (announce && names.Count == 0)
+                    StatusText = tracked.Count == 0
+                        ? "Проверять нечего: твики ещё не применялись"
+                        : $"✅ Все применённые твики действуют: {tracked.Count}";
+            }
+            finally
+            {
+                _checkingDrift = false;
+                CheckDriftCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        /// <summary>
+        /// Применяет заново то, что вернула система, — тем же путём, что и обычная
+        /// «Применить». Если твик так и не подействовал, об этом сказано прямо: новая
+        /// версия Windows могла закрыть возможность его отключить.
+        /// </summary>
+        private async Task ReapplyDriftedAsync()
+        {
+            if (!ApplyEnabled) return;
+
+            var drifted = _allItems.Where(i => i.IsDrifted).Select(i => i.Id).ToList();
+            if (drifted.Count == 0) return;
+
+            SetSelectedTweakIds(drifted);
+            await ApplyAsync();
+            await CheckDriftAsync(announce: false);
+
+            var still = _allItems.Where(i => i.IsDrifted && drifted.Contains(i.Id)).Select(i => i.Name).ToList();
+            if (still.Count > 0)
+                StatusText = $"⚠️ Не подействовали повторно: {string.Join(", ", still)}. " +
+                             "Возможно, эта версия Windows больше не даёт их отключить.";
         }
 
         // L10: отмена применения твиков — прерывает цикл после текущего элемента.
