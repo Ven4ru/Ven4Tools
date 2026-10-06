@@ -349,6 +349,8 @@ namespace Ven4Tools.Services
         public List<string> NotFound { get; set; } = new();
         /// <summary>Есть в каталоге, но сейчас недоступны для установки.</summary>
         public List<string> Unavailable { get; set; } = new();
+        /// <summary>Установлены, но для завершения нужна перезагрузка.</summary>
+        public List<string> RebootRequired { get; set; } = new();
         /// <summary>Что возвращено из набора «Перед переустановкой» до установки программ.</summary>
         public List<string> Restored { get; set; } = new();
         public string StartedUtc { get; set; } = "";
