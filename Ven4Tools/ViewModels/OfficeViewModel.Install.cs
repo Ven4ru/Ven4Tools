@@ -119,10 +119,10 @@ namespace Ven4Tools.ViewModels
                     if (bootstrapper.ExitCode != 0)
                     {
                         AppLogger.Write($"❌ Установщик завершился с кодом {bootstrapper.ExitCode}");
-                        AppLogger.Write("   Вероятная причина: CDN Microsoft заблокирован в вашем регионе.");
-                        AppLogger.Write("   Попробуйте использовать VPN и повторить установку.");
+                        AppLogger.Write("   Вероятная причина: серверы загрузки Microsoft недоступны из вашей сети.");
+                        AppLogger.Write("   Повторите установку позже или из другой сети.");
                         SetProgress(true, $"❌ Сбой установки (код {bootstrapper.ExitCode})", 0,
-                            "CDN Microsoft может быть недоступен. Попробуйте VPN.");
+                            "Серверы загрузки Microsoft могут быть недоступны. Повторите позже или из другой сети.");
                         return;
                     }
                 }

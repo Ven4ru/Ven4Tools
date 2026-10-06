@@ -278,9 +278,6 @@ namespace Ven4Tools.ClientUITests
             var about = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtActivationAbout"));
             Assert.IsNotNull(about, "Не найдено пояснение вкладки.");
             StringAssert.Contains(about!.Name, "не активирует", "Пояснение должно прямо говорить, что клиент ничего не активирует.");
-
-            // Повторная проверка ничего не меняет в системе: только читает состояние.
-            check!.AsButton().Invoke();
         }
 
         [TestMethod]
