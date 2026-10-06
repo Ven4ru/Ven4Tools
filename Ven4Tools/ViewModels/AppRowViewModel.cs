@@ -252,7 +252,7 @@ namespace Ven4Tools.ViewModels
         // не вердикт: нет сноски — общая формулировка, есть — её текст.
         public string RegionBlockedTooltip =>
             string.IsNullOrWhiteSpace(RegionNote)
-                ? "Похоже на блокировку по региону — попробуйте через VPN"
+                ? "Похоже, издатель не отдаёт эту программу в вашем регионе"
                 : RegionNote;
 
         // Скрыть можно только каталожные приложения — у пользовательских уже есть
