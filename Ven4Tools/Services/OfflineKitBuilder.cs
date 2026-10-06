@@ -84,7 +84,7 @@ namespace Ven4Tools.Services
 
         // Копия клиента без того, что к программе не относится: набор может лежать
         // внутри папки клиента или рядом, а кэш и журналы тащить с собой незачем.
-        private static (int Files, long Bytes) CopyClient(string source, string target, string kitRoot, CancellationToken ct)
+        internal static (int Files, long Bytes) CopyClient(string source, string target, string kitRoot, CancellationToken ct)
         {
             string sourceFull = Path.GetFullPath(source).TrimEnd(Path.DirectorySeparatorChar);
             string targetFull = Path.GetFullPath(target).TrimEnd(Path.DirectorySeparatorChar);

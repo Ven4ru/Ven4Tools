@@ -65,6 +65,10 @@ namespace Ven4Tools.ViewModels
         public RelayCommand OpenHistoryCommand { get; }
         public RelayCommand OpenAboutCommand { get; }
 
+        /// <summary>Окно «Перед переустановкой Windows» — открывается поверх «Обзора», без перехода в раздел.</summary>
+        public RelayCommand OpenReinstallKitCommand { get; } = new(_ =>
+            Views.ReinstallKitWindow.ShowFor(Application.Current));
+
         /// <summary>Готовый набор: ключ уходит в окно как «set:ключ» — тем же событием, что и переходы.</summary>
         public RelayCommand OpenReadySetCommand { get; }
         public const string ReadySetPrefix = "set:";

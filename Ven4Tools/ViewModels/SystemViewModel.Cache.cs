@@ -103,6 +103,11 @@ namespace Ven4Tools.ViewModels
             }
         }
 
+        private RelayCommand? _openReinstallKitCommand;
+        /// <summary>Окно «Перед переустановкой Windows»: драйверы, Wi-Fi и список программ на флешку.</summary>
+        public RelayCommand OpenReinstallKitCommand => _openReinstallKitCommand ??= new RelayCommand(_ =>
+            Views.ReinstallKitWindow.ShowFor(Application.Current));
+
         private void UpdateCacheStats() => ApplyCacheStats(OfflineService.GetCacheStats());
 
         // Отделено от чтения диска, чтобы InitializeAsync могла выполнить сам обход

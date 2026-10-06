@@ -67,7 +67,7 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        private static List<InstalledApp> ParseWingetList(string raw)
+        internal static List<InstalledApp> ParseWingetList(string raw)
         {
             var result = new List<InstalledApp>();
             if (string.IsNullOrWhiteSpace(raw)) return result;
