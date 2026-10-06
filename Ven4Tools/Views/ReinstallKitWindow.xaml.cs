@@ -31,6 +31,21 @@ namespace Ven4Tools.Views
             Closed += (_, _) => _cts?.Cancel();
         }
 
+        /// <summary>
+        /// Открывает окно поверх главного. Владелец ищется по типу, а не берётся из
+        /// <see cref="Application.MainWindow"/>: после закрытия заставки это свойство
+        /// пусто, и WPF записывает в него первое же созданное окно — то есть само это
+        /// окно, а назначить окно владельцем самому себе нельзя.
+        /// </summary>
+        public static void ShowFor(Application? application)
+        {
+            var window = new ReinstallKitWindow();
+            var owner = application?.Windows.OfType<MainWindow>().FirstOrDefault();
+            if (owner != null) window.Owner = owner;
+            else window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            window.ShowDialog();
+        }
+
         /// <summary>Первая подключённая флешка, а если её нет — «Документы».</summary>
         private static string SuggestFolder()
         {

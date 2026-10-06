@@ -66,7 +66,8 @@ namespace Ven4Tools.ClientUITests
 
             AutomationElement Get(string id)
             {
-                var element = window!.FindFirstDescendant(cf => cf.ByAutomationId(id));
+                var element = Retry.WhileNull(() => window!.FindFirstDescendant(cf => cf.ByAutomationId(id)),
+                    timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200), throwOnTimeout: false).Result;
                 Assert.IsNotNull(element, $"В окне нет элемента {id}.");
                 return element!;
             }
