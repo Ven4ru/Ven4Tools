@@ -37,6 +37,9 @@ namespace Ven4Tools.Views.Tabs
             _uiReady = true;
             DataContext = _viewModel;
             _viewModel.OwnerWindowProvider = () => Window.GetWindow(this);
+            // Проверка «что вернуло обновление Windows» — при первом показе вкладки,
+            // а не в конструкторе: она читает реестр и может запустить PowerShell.
+            Loaded += async (_, _) => await _viewModel.CheckDriftOnceAsync();
         }
 
         // Единственная логика, оставшаяся в code-behind: RadioButton.Checked не

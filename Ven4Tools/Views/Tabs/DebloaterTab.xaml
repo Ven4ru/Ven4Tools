@@ -26,6 +26,9 @@
                 </TextBlock>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <Button x:Name="btnCheckDrift" Content="Проверить применённое" Height="30" Padding="10,0"
+                        ToolTip="Сверит применённые ранее твики с текущим состоянием Windows: крупные обновления часто возвращают отключённое."
+                        Margin="0,0,6,0" Command="{Binding CheckDriftCommand}"/>
                 <Button x:Name="btnDebloatSelectAll" Content="Все" Width="50" Height="30"
                         ToolTip="Отметит все действия очистки, показанные текущим фильтром."
                         Margin="0,0,6,0" Command="{Binding SelectAllCommand}"/>
@@ -35,8 +38,27 @@
             </StackPanel>
         </Grid>
 
-        <!-- Filter tabs -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+        <!-- Filter tabs; над ними — полоса «обновление Windows вернуло отключённое» -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,12">
+        <Border x:Name="driftBanner" CornerRadius="8" Padding="12,9" Margin="0,0,0,12"
+                Background="{DynamicResource CardBackground}"
+                BorderBrush="{DynamicResource StatusDanger}" BorderThickness="1"
+                Visibility="{Binding HasDrift, Converter={StaticResource BoolToVisUndo}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="txtDrift" Text="{Binding DriftText}" TextWrapping="Wrap" FontSize="12"
+                           VerticalAlignment="Center" Foreground="{DynamicResource TextPrimary}"/>
+                <Button x:Name="btnReapplyDrifted" Grid.Column="1" Content="Применить заново"
+                        Height="30" Padding="12,0" Margin="12,0,0,0" VerticalAlignment="Center"
+                        ToolTip="Отметит переставшие действовать твики и применит их тем же путём, что и кнопка «Применить выбранное»."
+                        IsEnabled="{Binding ApplyEnabled}"
+                        Command="{Binding ReapplyDriftedCommand}"/>
+            </Grid>
+        </Border>
+        <StackPanel Orientation="Horizontal">
             <RadioButton x:Name="rbAll"      Content="Все"               GroupName="DebloatFilter"
                          IsChecked="True"    Margin="0,0,14,0"
                          Foreground="{DynamicResource TextPrimary}"
@@ -52,6 +74,7 @@
             <RadioButton x:Name="rbServices" Content="⚙️ Службы"       GroupName="DebloatFilter"
                          Foreground="{DynamicResource TextPrimary}"
                          Checked="FilterChanged"/>
+        </StackPanel>
         </StackPanel>
 
         <!-- Items list -->
@@ -99,6 +122,9 @@
                                         <TextBlock Text="{Binding Description}" FontSize="11"
                                                    Foreground="{DynamicResource TextSecondary}"
                                                    TextWrapping="Wrap"/>
+                                        <TextBlock Text="Применялся, но сейчас не действует" FontSize="11"
+                                                   Foreground="{DynamicResource StatusDanger}"
+                                                   Visibility="{Binding IsDrifted, Converter={StaticResource BoolToVisUndo}}"/>
                                     </StackPanel>
                                     <Border Grid.Column="2" CornerRadius="5" Padding="7,3"
                                             VerticalAlignment="Center" Margin="8,0,0,0">

@@ -28,16 +28,18 @@ namespace Ven4Tools.Services
                 // потом возвращается кнопкой «Вернуть» (см. DebloatUndoService).
                 DebloatUndoService.Default.Capture(id, RegistryChangesOf(category, id), ServiceOf(category, id));
 
-                if (category == "app")
-                    return await RemoveAppxAsync(id, ct);
+                bool ok = category switch
+                {
+                    "app"     => await RemoveAppxAsync(id, ct),
+                    "privacy" => await ApplyPrivacyTweakAsync(id, ct),
+                    "service" => await DisableServiceAsync(id, ct),
+                    _         => false
+                };
 
-                if (category == "privacy")
-                    return await ApplyPrivacyTweakAsync(id, ct);
-
-                if (category == "service")
-                    return await DisableServiceAsync(id, ct);
-
-                return false;
+                // По журналу применённого потом проверяется, не вернуло ли твик
+                // обновление Windows (см. DebloatDriftService).
+                if (ok) DebloatAppliedJournal.Default.MarkApplied(id);
+                return ok;
             }
             catch (Exception ex)
             {

@@ -29,6 +29,14 @@ namespace Ven4Tools.ViewModels
             set { if (_canUndo == value) return; _canUndo = value; OnPropertyChanged(); }
         }
 
+        private bool _isDrifted;
+        /// <summary>Твик применялся, но сейчас не действует — его вернуло обновление Windows.</summary>
+        public bool IsDrifted
+        {
+            get => _isDrifted;
+            set { if (_isDrifted == value) return; _isDrifted = value; OnPropertyChanged(); }
+        }
+
         public string RiskLabel => Risk switch
         {
             "safe"     => "Безопасно",
