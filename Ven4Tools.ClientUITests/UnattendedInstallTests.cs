@@ -159,6 +159,31 @@ namespace Ven4Tools.ClientUITests
             StringAssert.Contains(report.GetProperty("NotFound").ToString(), "no-such-app-in-catalog");
         }
 
+        /// <summary>
+        /// Файл ответа набора «Перед переустановкой»: клиент доходит до возврата профилей
+        /// Wi-Fi раньше программ и записывает итог. Профиль в наборе заведомо негодный —
+        /// netsh его отклоняет, поэтому система после теста остаётся прежней.
+        /// </summary>
+        [TestMethod]
+        public void НаборПередПереустановкой_ВозвратИдётДоПрограмм_ИПопадаетВИтог()
+        {
+            string kit = Path.Combine(_workDir, "kit");
+            Directory.CreateDirectory(Path.Combine(kit, "WiFi"));
+            File.WriteAllText(Path.Combine(kit, "WiFi", "Wi-Fi-test.xml"), "<это не профиль/>");
+            string answerFile = Path.Combine(kit, "ven4tools-restore.json");
+            File.WriteAllText(answerFile, "{\"apps\":[],\"silent\":true,\"wifi\":\"WiFi\"}");
+            string reportPath = Path.Combine(_workDir, "report-kit.json");
+
+            int? exitCode = Run($"--answer-file \"{answerFile}\" --report \"{reportPath}\"", TimeSpan.FromMinutes(2));
+
+            Assert.AreEqual(0, exitCode, "Набор без программ должен завершаться кодом 0 и без вопросов.");
+            var report = ReadReport(reportPath);
+            string restored = report.GetProperty("Restored").ToString();
+            StringAssert.Contains(restored, "Профили Wi-Fi", "В итоге не отражён возврат профилей Wi-Fi: " + restored);
+            StringAssert.Contains(restored, "не добавлено: 1", "Негодный профиль должен быть посчитан как не добавленный: " + restored);
+            Assert.AreEqual(0, report.GetProperty("Installed").GetArrayLength());
+        }
+
         [TestMethod]
         public void НезавершённаяУстановка_СпрашиваетИПоОтказуЗабывает()
         {
