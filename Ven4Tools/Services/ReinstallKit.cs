@@ -133,6 +133,17 @@ namespace Ven4Tools.Services
         {
             string folder = Path.Combine(root, DriversFolderName);
             Directory.CreateDirectory(folder);
+
+            // Драйверы одной видеокарты — это гигабайты; на заполненной флешке pnputil
+            // выгрузил бы часть и остановился с ничего не объясняющим кодом.
+            if (FreeSpaceOf(folder) is { } free && free < MinFreeBytesForDrivers)
+            {
+                result.Drivers = 0;
+                result.Warnings.Add(
+                    $"Драйверы не выгружены: на диске свободно {free / 1024 / 1024} МБ, а драйверы занимают до нескольких гигабайт.");
+                return;
+            }
+
             var (code, output) = await runner.RunAsync(
                 KitCommands.PnpUtil, new[] { "/export-driver", "*", folder }, TimeSpan.FromMinutes(20), ct);
 
@@ -150,6 +161,19 @@ namespace Ven4Tools.Services
                 result.Warnings.Add($"Драйверы не выгружены (pnputil, код {code}). {LastLine(output)}".TrimEnd());
             else if (code != 0)
                 result.Warnings.Add($"Часть драйверов могла не выгрузиться (pnputil, код {code}).");
+        }
+
+        private const long MinFreeBytesForDrivers = 1024L * 1024 * 1024;
+
+        /// <summary>Свободное место на диске папки; null — узнать не удалось (сетевой путь и т.п.).</summary>
+        private static long? FreeSpaceOf(string folder)
+        {
+            try
+            {
+                string? driveRoot = Path.GetPathRoot(Path.GetFullPath(folder));
+                return string.IsNullOrEmpty(driveRoot) ? null : new DriveInfo(driveRoot).AvailableFreeSpace;
+            }
+            catch { return null; }
         }
 
         private static async Task ExportWifiAsync(string root, IKitCommandRunner runner, Result result, CancellationToken ct)
@@ -335,8 +359,12 @@ namespace Ven4Tools.Services
                 driverPackages = driverCount;
                 // 3010 — драйверы поставлены, нужна перезагрузка; 259 — все уже стояли.
                 reboot = code == 3010;
+                // pnputil сообщает о перезагрузке не только кодом 3010: проверено вживую —
+                // при коде 259 он тоже может просить перезапуск текстом. Поэтому совет
+                // перезагрузиться даётся всегда, а не только по коду.
                 log.Add(code is 0 or 3010 or 259
-                    ? $"Драйверы возвращены: пакетов в наборе {driverCount}" + (reboot ? ", нужна перезагрузка" : "")
+                    ? $"Драйверы возвращены: пакетов в наборе {driverCount}. " +
+                      (reboot ? "Нужна перезагрузка." : "Если какое-то устройство не заработало, перезагрузите компьютер.")
                     : $"Драйверы возвращены не полностью (pnputil, код {code}): часть устройств могла уже иметь более новый драйвер");
             }
 

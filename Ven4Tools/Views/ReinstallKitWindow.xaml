@@ -44,7 +44,7 @@
                       Content="Драйверы этого компьютера"/>
             <TextBlock TextWrapping="Wrap" FontSize="11" Margin="20,0,0,10"
                        Foreground="{DynamicResource TextSecondary}"
-                       Text="Все сторонние драйверы, включая сетевой: без него на свежей системе не будет интернета. Обычно 1–3 ГБ и несколько минут."/>
+                       Text="Все сторонние драйверы, включая сетевой: без него на свежей системе не будет интернета. От одного до нескольких гигабайт и пара минут."/>
 
             <CheckBox x:Name="chkKitWifi" IsChecked="True" Margin="0,0,0,3"
                       Foreground="{DynamicResource TextPrimary}"

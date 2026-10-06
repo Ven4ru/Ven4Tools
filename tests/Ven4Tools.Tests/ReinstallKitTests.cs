@@ -245,7 +245,12 @@ public sealed class ReinstallKitTests : IDisposable
         var outcome = await ReinstallKitRestorer.RestoreAsync(Path.Combine(_kit, "Drivers"), null, _runner);
 
         Assert.True(outcome.DriversRebootNeeded);
-        Assert.Contains(outcome.Log, line => line.Contains("нужна перезагрузка"));
+        Assert.Contains(outcome.Log, line => line.Contains("Нужна перезагрузка"));
+
+        _runner.PnpUtilExitCode = 259;
+        outcome = await ReinstallKitRestorer.RestoreAsync(Path.Combine(_kit, "Drivers"), null, _runner);
+        Assert.False(outcome.DriversRebootNeeded);
+        Assert.Contains(outcome.Log, line => line.Contains("Драйверы возвращены") && line.Contains("перезагрузите"));
     }
 
     [Fact]
