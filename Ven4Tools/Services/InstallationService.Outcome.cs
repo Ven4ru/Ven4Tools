@@ -206,6 +206,7 @@ namespace Ven4Tools.Services
 
             appProgress.Status = status;
             appProgress.Outcome = outcome;
+            appProgress.RebootRequired = success && reboot;
             appProgress.IsIndeterminate = false;
             if (success) appProgress.Percentage = 100;
             appProgress.Phase = success ? InstallPhase.Done : InstallPhase.Error;

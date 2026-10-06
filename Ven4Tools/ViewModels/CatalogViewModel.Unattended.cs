@@ -68,6 +68,7 @@ namespace Ven4Tools.ViewModels
 
             report.Installed.AddRange(result.Installed.Select(r => r.AppId));
             report.Failed.AddRange(result.Failed.Select(f => new UnattendedFailure { Id = f.Row.AppId, Reason = f.Message }));
+            report.RebootRequired.AddRange(result.RebootRequired.Select(r => r.AppId));
 
             // Отменённая пачка может оставить часть приложений не начатыми: в отчёте
             // они должны быть видны, а не пропасть между «установлено» и «ошибка».

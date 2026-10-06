@@ -47,7 +47,8 @@ namespace Ven4Tools.ViewModels
         internal sealed record InstallBatchResult(
             IReadOnlyList<AppRowViewModel> Installed,
             IReadOnlyList<(AppRowViewModel Row, string Message)> Failed,
-            bool Cancelled);
+            bool Cancelled,
+            IReadOnlyList<AppRowViewModel> RebootRequired);
 
         /// <param name="unattended">
         /// Задание тихого режима. Когда оно задано с <see cref="UnattendedRequest.Silent"/>,
@@ -58,7 +59,12 @@ namespace Ven4Tools.ViewModels
         private async Task<InstallBatchResult?> InstallSelectedAsync(UnattendedRequest? unattended = null)
         {
             bool silent = unattended?.Silent == true;
-            var selected = Apps.Where(a => a.IsSelected && a.IsSelectable).ToList();
+            // Порядок установки — тот, в котором программы выбрали или назвали в файле
+            // ответа; драйверные пакеты, которые почти всегда просят перезагрузку, — в конце.
+            var selected = InstallOrder.Arrange(
+                Apps.Where(a => a.IsSelected && a.IsSelectable).ToList(),
+                row => row.AppId, row => row.App.CategoryString,
+                unattended?.AppIds ?? SelectedApps.Select(a => a.AppId).ToList());
             if (selected.Count == 0)
             {
                 if (!silent)
@@ -166,11 +172,19 @@ namespace Ven4Tools.ViewModels
             var batchStartedUtc = DateTime.UtcNow;
             var failedRows = new List<(AppRowViewModel Row, string Message)>();
             var installedRows = new List<AppRowViewModel>();
+            var rebootRows = new List<AppRowViewModel>();
             var failedRowsLock = new object();
             bool cancelled = false;
 
-            var tasks = selected.Select(row => Task.Run(async () =>
+            // Одна задача на весь набор, программы — строго по очереди. Раньше на каждую
+            // программу заводилась своя задача, и порядок определяло то, какая из них
+            // первой дождётся общей блокировки установки: он менялся от запуска к запуску.
+            // Блокировка по-прежнему берётся на каждую программу отдельно, чтобы между
+            // программами набора могли пройти другие установки (повтор, Windows Update).
+            var batch = Task.Run(async () =>
             {
+              foreach (var row in selected)
+              {
                 await InstallationService.InstallSemaphore.WaitAsync();
                 try
                 {
@@ -180,7 +194,11 @@ namespace Ven4Tools.ViewModels
                     if (result.Success)
                     {
                         completed++;
-                        lock (failedRowsLock) installedRows.Add(row);
+                        lock (failedRowsLock)
+                        {
+                            installedRows.Add(row);
+                            if (result.Progress.RebootRequired) rebootRows.Add(row);
+                        }
                         PendingInstallQueue.Default.MarkDone(row.AppId);
                         if (row.PinnedVersion != null && row.VersionOptions.Count > 1)
                             _versionTracker.TrackInstall(row.AppId, row.PinnedVersion, row.VersionOptions[1]);
@@ -194,16 +212,20 @@ namespace Ven4Tools.ViewModels
                     InstallStatusText = $"⏳ Установка: {completed + failed}/{selected.Count} (✅ {completed} | ❌ {failed})";
                 }
                 finally { InstallationService.InstallSemaphore.Release(); }
-            }, token));
+              }
+            }, token);
 
             try
             {
-                await Task.WhenAll(tasks);
+                await batch;
                 // При ошибках сразу указываем, где смотреть причину и как повторить —
                 // иначе итог «ошибок: N» остаётся числом без объяснения.
                 InstallStatusText = failed > 0
                     ? $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed} — причины в блоке «Не установлено»"
                     : $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed}";
+                // Одна просьба о перезагрузке на весь набор — в конце, а не посреди установки.
+                if (rebootRows.Count > 0)
+                    InstallStatusText += $". Нужна перезагрузка: {string.Join(", ", rebootRows.Select(r => r.DisplayName))}";
                 Log(InstallStatusText);
 
                 // Чекбокс "Показывать уведомления о завершении установки" на «Настройках»
@@ -237,7 +259,7 @@ namespace Ven4Tools.ViewModels
                 _ = UpdateSpaceStatusAsync();
             }
 
-            return new InstallBatchResult(installedRows, failedRows, cancelled);
+            return new InstallBatchResult(installedRows, failedRows, cancelled, rebootRows);
         }
 
         // ── Неуспешные установки: список причин и повтор ────────────────────────
