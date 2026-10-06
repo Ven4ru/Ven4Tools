@@ -529,6 +529,11 @@
                             <TextBlock Text="{Binding SelectedCount, StringFormat='Установить ({0})'}"
                                        Foreground="{DynamicResource AccentForeground}"/>
                         </Button>
+                        <!-- winget получает согласие с условиями источников в командной строке,
+                             поэтому человек должен видеть, что именно он принимает. -->
+                        <TextBlock x:Name="txtSourceTerms" TextWrapping="Wrap" FontSize="11" Margin="0,8,0,0"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   Text="Устанавливая программы, вы принимаете условия источников winget и Chocolatey и лицензии авторов программ."/>
                         <!-- «Отмена» нужна только во время установки, «Очистить набор» — только
                              когда в нём что-то есть: пустой набор не должен встречать
                              стопкой неактивных кнопок. -->

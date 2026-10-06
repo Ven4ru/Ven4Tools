@@ -584,6 +584,11 @@
                                Text="{Binding SelectedCount, StringFormat='Выбрано приложений: {0}'}"
                                FontSize="12" Margin="0,3,0,0"
                                Foreground="{DynamicResource TextSecondary}"/>
+                    <!-- winget получает согласие с условиями источников в командной строке,
+                         поэтому человек должен видеть, что именно он принимает. -->
+                    <TextBlock x:Name="txtSourceTerms" TextWrapping="Wrap" FontSize="11" Margin="0,3,12,0"
+                               Foreground="{DynamicResource TextSecondary}"
+                               Text="Устанавливая программы, вы принимаете условия источников winget и Chocolatey и лицензии авторов программ."/>
                 </StackPanel>
                 <Button x:Name="btnCancelInstall" Grid.Column="1" Content="Отмена" Height="38" MinWidth="90"
                         Margin="0,0,8,0"

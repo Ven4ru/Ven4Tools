@@ -249,75 +249,38 @@ namespace Ven4Tools.ClientUITests
         }
 
         /// <summary>
-        /// Юридический барьер вкладки «Активация»: обе кнопки перехода на сайт
-        /// стороннего инструмента доступны только после отметки чекбокса согласия.
-        /// До MVVM-миграции барьер держали три независимых механизма (статический
-        /// <c>IsEnabled="False"</c> в XAML, явное отключение в конструкторе и
-        /// обработчик чекбокса) — все закрытые по умолчанию. После миграции остался
-        /// один биндинг <c>IsEnabled="{Binding ConsentGiven}"</c>, а сломанный
-        /// биндинг в WPF молча даёт значение по умолчанию <c>IsEnabled=true</c>,
-        /// то есть отказ стал fail-open. Этот тест — единственное, что ловит такую
-        /// поломку (переименование свойства, невыставленный DataContext).
-        /// Реальный клик по самим кнопкам НЕ выполняется: они открывают внешний
-        /// сайт и окно-помощник, проверяется только их доступность.
+        /// Вкладка «Лицензия» только показывает состояние активации Windows и Office.
+        /// Ссылок на инструменты активации, кнопок перехода к ним и согласия на такой
+        /// переход в клиенте нет — тест закрепляет это: возвращённая по ошибке кнопка
+        /// не должна пройти незамеченной.
         /// </summary>
         [TestMethod]
-        public void ActivationTab_КнопкиАктивацииТребуютСогласия()
+        public void ActivationTab_ТолькоСтатус_БезКнопокАктивации()
         {
             var s = Require();
             var activationBtn = UiNav.Find(s, "btnActivationTab");
             Assert.IsNotNull(activationBtn, "Не найдена кнопка вкладки «Лицензия».");
             activationBtn!.AsButton().Invoke();
-            Thread.Sleep(500);
 
-            var consent = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("chkActivationConsent"));
-            Assert.IsNotNull(consent, "Не найден чекбокс согласия (Активация).");
-            var winBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnActivateWindows"));
-            Assert.IsNotNull(winBtn, "Не найдена кнопка активации Windows.");
-            var officeBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnActivateOffice"));
-            Assert.IsNotNull(officeBtn, "Не найдена кнопка активации Office.");
+            var check = Retry.WhileNull(
+                () => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnCheckStatus")),
+                timeout: TimeSpan.FromSeconds(10), interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
+            Assert.IsNotNull(check, "Не найдена кнопка «Проверить статус».");
+            Assert.IsNotNull(s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtWindowsStatus")),
+                "Не найден статус активации Windows.");
+            Assert.IsNotNull(s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtOfficeStatus")),
+                "Не найден статус активации Office.");
 
-            bool? consentWas = consent!.AsCheckBox().IsChecked;
-            try
-            {
-                // Отправная точка: согласие не дано — обе кнопки закрыты.
-                if (consentWas != false) consent.AsCheckBox().IsChecked = false;
-                AssertActivationButtons(winBtn!, officeBtn!, false,
-                    "без отметки согласия кнопки активации должны быть недоступны");
+            foreach (string removed in new[] { "btnActivateWindows", "btnActivateOffice", "chkActivationConsent" })
+                Assert.IsNull(s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId(removed)),
+                    $"На вкладке «Лицензия» снова есть {removed}: клиент не должен вести к инструментам активации.");
 
-                // Отмечаем согласие — барьер должен открыться.
-                consent.AsCheckBox().IsChecked = true;
-                AssertActivationButtons(winBtn!, officeBtn!, true,
-                    "после отметки согласия кнопки активации должны стать доступны");
+            var about = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtActivationAbout"));
+            Assert.IsNotNull(about, "Не найдено пояснение вкладки.");
+            StringAssert.Contains(about!.Name, "не активирует", "Пояснение должно прямо говорить, что клиент ничего не активирует.");
 
-                // И снова закрыться при снятии отметки: биндинг обязан работать
-                // в обе стороны, иначе барьер держится только на первой отрисовке.
-                consent.AsCheckBox().IsChecked = false;
-                AssertActivationButtons(winBtn!, officeBtn!, false,
-                    "после снятия отметки согласия кнопки активации должны снова закрыться");
-            }
-            finally
-            {
-                // Гигиена: возвращаем чекбокс ровно в то состояние, в котором он
-                // был до теста — вкладка общая для всего класса тестов.
-                try { if (consent.AsCheckBox().IsChecked != consentWas) consent.AsCheckBox().IsChecked = consentWas; }
-                catch { }
-            }
-        }
-
-        /// <summary>
-        /// Ждёт и утверждает доступность обеих кнопок активации. Ожидание нужно
-        /// потому, что <c>IsEnabled</c> меняется через биндинг на ConsentGiven, а
-        /// не синхронно с возвратом из UIA-вызова переключения чекбокса.
-        /// </summary>
-        private static void AssertActivationButtons(AutomationElement winBtn, AutomationElement officeBtn,
-            bool expected, string message)
-        {
-            Retry.WhileFalse(() => winBtn.IsEnabled == expected && officeBtn.IsEnabled == expected,
-                timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200),
-                throwOnTimeout: false);
-            Assert.AreEqual(expected, winBtn.AsButton().IsEnabled, "btnActivateWindows: " + message + ".");
-            Assert.AreEqual(expected, officeBtn.AsButton().IsEnabled, "btnActivateOffice: " + message + ".");
+            // Повторная проверка ничего не меняет в системе: только читает состояние.
+            check!.AsButton().Invoke();
         }
 
         [TestMethod]

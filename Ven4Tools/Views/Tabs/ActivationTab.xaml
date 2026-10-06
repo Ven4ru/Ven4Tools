@@ -4,67 +4,11 @@
              Background="{DynamicResource ContentBackground}">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="20">
-            <TextBlock Text="Управление лицензиями" FontSize="24" FontWeight="Bold"
+            <TextBlock Text="Состояние лицензий" FontSize="24" FontWeight="Bold"
                        Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10"/>
 
-            <TextBlock Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,20">
-                <Run Text="Ven4Tools открывает официальный сайт стороннего инструмента с открытым кодом. "/>
-                <Run Text="Вся дальнейшая работа выполняется пользователем самостоятельно."/>
-            </TextBlock>
-
-            <!-- Чекбокс согласия -->
-            <Border Background="{DynamicResource CardBackground}" CornerRadius="8" Padding="14,10" Margin="0,0,0,20"
-                    BorderBrush="{DynamicResource StatusWarning}" BorderThickness="1">
-                <CheckBox x:Name="chkActivationConsent"
-                          Foreground="{DynamicResource TextPrimary}"
-                          FontSize="12"
-                          IsChecked="{Binding ConsentGiven, Mode=TwoWay}">
-                    <CheckBox.Content>
-                        <TextBlock TextWrapping="Wrap" MaxWidth="560">
-                            <Run Text="Я понимаю, что перехожу на сайт стороннего инструмента с открытым кодом, использование которого может нарушать "/>
-                            <Run Text="лицензионное соглашение Microsoft." FontWeight="SemiBold"/>
-                            <Run Text=" Дальнейшие действия выполняю самостоятельно и принимаю за них ответственность."/>
-                        </TextBlock>
-                    </CheckBox.Content>
-                </CheckBox>
-            </Border>
-
-            <!-- Блок активации — только для авторизованных -->
-            <Grid>
-                <StackPanel>
-                    <!-- Управление активацией Windows -->
-                    <GroupBox Header="🪟 Управление активацией Windows" Margin="0,0,0,15">
-                        <StackPanel Margin="10">
-                            <TextBlock Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,10">
-                                <Run Text="Сторонний инструмент с открытым кодом. Откроется официальный сайт — "/>
-                                <Run Text="дальнейшие действия выполняет пользователь самостоятельно."/>
-                            </TextBlock>
-                            <Button x:Name="btnActivateWindows" Content="🌐 Открыть официальный сайт →"
-                                    Height="40" Width="260" HorizontalAlignment="Left"
-                                    ToolTip="Откроет официальный сайт стороннего инструмента. Ven4Tools не запускает скрипты автоматически."
-                                    FontWeight="Bold" IsEnabled="{Binding ConsentGiven}"
-                                    Command="{Binding ActivateWindowsCommand}"/>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <!-- Управление активацией Office -->
-                    <GroupBox Header="📁 Управление активацией Office" Margin="0,0,0,15">
-                        <StackPanel Margin="10">
-                            <TextBlock Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,10">
-                                <Run Text="Сторонний инструмент с открытым кодом. Откроется официальный сайт — "/>
-                                <Run Text="дальнейшие действия выполняет пользователь самостоятельно."/>
-                            </TextBlock>
-                            <Button x:Name="btnActivateOffice" Content="🌐 Открыть официальный сайт →"
-                                    Height="40" Width="260" HorizontalAlignment="Left"
-                                    ToolTip="Откроет официальный сайт стороннего инструмента. Дальнейшие действия выполняются вручную."
-                                    FontWeight="Bold" IsEnabled="{Binding ConsentGiven}"
-                                    Command="{Binding ActivateOfficeCommand}"/>
-                        </StackPanel>
-                    </GroupBox>
-
-                </StackPanel>
-
-            </Grid>
+            <TextBlock x:Name="txtActivationAbout" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,20"
+                       Text="Показывает состояние активации Windows и Office. Ven4Tools не активирует программы: для активации используйте свой ключ или цифровую лицензию."/>
 
             <!-- Статус активации -->
             <GroupBox Header="📊 Статус активации" Margin="0,0,0,15">
@@ -93,18 +37,6 @@
                             ToolTip="Повторно проверит состояние лицензий Windows и установленного Microsoft Office."
                             Height="32" Width="150" Margin="0,10,0,0" HorizontalAlignment="Left"
                             Command="{Binding CheckStatusCommand}"/>
-                </StackPanel>
-            </GroupBox>
-
-            <!-- Информация -->
-            <GroupBox Header="ℹ️ О стороннем инструменте" Margin="0,0,0,15">
-                <StackPanel Margin="10">
-                    <TextBlock Text="Сторонний инструмент с открытым исходным кодом для управления лицензиями."
-                               Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
-                    <TextBlock Text="Источник: github.com/massgravel/Microsoft-Activation-Scripts"
-                               Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,5,0,0"/>
-                    <TextBlock Text="⚠️ Может не поддерживать все редакции Windows. Рекомендуется Windows 10/11 Pro."
-                               Foreground="{DynamicResource StatusWarning}" TextWrapping="Wrap" Margin="0,10,0,0"/>
                 </StackPanel>
             </GroupBox>
         </StackPanel>
