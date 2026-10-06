@@ -43,8 +43,6 @@ namespace Ven4Tools.Services
             ["драйвер"]              = new[] { "driver" },
             ["торренты"]             = new[] { "torrent" },
             ["торрент"]              = new[] { "torrent" },
-            ["vpn"]                  = new[] { "vpn" },
-            ["впн"]                  = new[] { "vpn" },
             ["архиватор"]            = new[] { "archive", "compression" },
             ["архивы"]               = new[] { "archive", "compression" },
             ["архив"]                = new[] { "archive", "compression" },

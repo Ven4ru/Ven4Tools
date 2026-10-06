@@ -330,7 +330,7 @@
                               Content="Принудительный онлайн-режим"
                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"
                               IsChecked="{Binding ForceOnlineMode, Mode=TwoWay}"/>
-                    <TextBlock Text="Всегда считать соединение активным (для VPN/прокси). Игнорирует автодетект сети, чтобы онлайн-вкладки не скрывались при ложноотрицательном определении."
+                    <TextBlock Text="Всегда считать соединение активным (для сетей, где автоопределение ошибается). Игнорирует автодетект сети, чтобы онлайн-вкладки не скрывались при ложноотрицательном определении."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
                                FontSize="11" Margin="0,0,0,14"/>
 
