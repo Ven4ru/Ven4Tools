@@ -47,6 +47,9 @@ namespace Ven4Tools.Services
         private readonly IDebloatSystemState _system;
         private readonly object _gate = new();
 
+        /// <summary>Доступ к реестру и службам — тот же, через который идёт откат.</summary>
+        internal IDebloatSystemState System => _system;
+
         public DebloatUndoService(string path, IDebloatSystemState system)
         {
             _path = path;
