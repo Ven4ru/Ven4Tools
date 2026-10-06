@@ -28,7 +28,39 @@ namespace Ven4Tools.Views
         {
             InitializeComponent();
             txtKitFolder.Text = SuggestFolder();
+            txtKitAccount.Text = SuggestAccountName();
             Closed += (_, _) => _cts?.Cancel();
+        }
+
+        /// <summary>Имя нынешнего пользователя, если оно годится для новой учётной записи.</summary>
+        private static string SuggestAccountName()
+        {
+            string current = Environment.UserName;
+            return WindowsAnswerFileBuilder.ValidateAccountName(current) == null ? current : "User";
+        }
+
+        /// <summary>Настройки файла ответов — такие же, как на этом компьютере.</summary>
+        private static WindowsAnswerFileBuilder.Options AnswerFileOptions(string account, string kitRelativePath)
+        {
+            string locale = System.Globalization.CultureInfo.CurrentCulture.Name;
+            if (locale.Length == 0) locale = "ru-RU";
+
+            var keyboards = new List<string>();
+            try
+            {
+                foreach (System.Windows.Forms.InputLanguage language in System.Windows.Forms.InputLanguage.InstalledInputLanguages)
+                    if (!keyboards.Contains(language.Culture.Name, StringComparer.OrdinalIgnoreCase))
+                        keyboards.Add(language.Culture.Name);
+            }
+            catch { /* список раскладок недоступен — берём язык системы */ }
+            if (keyboards.Count == 0) keyboards.Add(locale);
+
+            string architecture =
+                System.Runtime.InteropServices.RuntimeInformation.OSArchitecture == System.Runtime.InteropServices.Architecture.Arm64
+                    ? "arm64" : "amd64";
+
+            return new WindowsAnswerFileBuilder.Options(
+                account, kitRelativePath, locale, keyboards, TimeZoneInfo.Local.Id, architecture);
         }
 
         /// <summary>
@@ -86,6 +118,14 @@ namespace Ven4Tools.Views
                 return;
             }
 
+            bool answerFile = chkKitAnswerFile.IsChecked == true;
+            string account = txtKitAccount.Text.Trim();
+            if (answerFile && WindowsAnswerFileBuilder.ValidateAccountName(account) is { } accountError)
+            {
+                ShowStatus(accountError, error: true);
+                return;
+            }
+
             SetBusy(true);
             _cts = new CancellationTokenSource();
             try
@@ -106,7 +146,25 @@ namespace Ven4Tools.Views
 
                 _builtFolder = Path.GetFullPath(folder);
                 btnOpenKitFolder.IsEnabled = true;
-                ShowStatus(Describe(result), error: false);
+
+                string summary = Describe(result);
+                if (answerFile)
+                {
+                    try
+                    {
+                        string written = WindowsAnswerFileBuilder.WriteToDriveRoot(
+                            folder, kitPath => AnswerFileOptions(account, kitPath));
+                        summary += $"\n\nФайл ответов: {written}. Установка Windows создаст учётную запись «{account}» без пароля " +
+                                   "и после первого входа запустит набор. Пароль задайте сами после входа.";
+                        AppLogger.Write($"💾 Файл ответов для установки Windows записан: {written}");
+                    }
+                    catch (Exception ex)
+                    {
+                        summary += $"\n\n⚠️ Файл ответов не записан: {ex.Message}";
+                        AppLogger.Write($"⚠️ Файл ответов для установки Windows не записан: {ex.Message}");
+                    }
+                }
+                ShowStatus(summary, error: false);
                 AppLogger.Write($"💾 Набор «Перед переустановкой» собран: драйверов {result.Drivers?.ToString() ?? "—"}, " +
                                 $"профилей Wi-Fi {result.WifiProfiles?.ToString() ?? "—"}, программ каталога {result.CatalogApps?.ToString() ?? "—"}");
             }
@@ -186,6 +244,8 @@ namespace Ven4Tools.Views
             chkKitDrivers.IsEnabled = !busy;
             chkKitWifi.IsEnabled = !busy;
             chkKitApps.IsEnabled = !busy;
+            chkKitAnswerFile.IsEnabled = !busy;
+            txtKitAccount.IsEnabled = !busy;
         }
 
         private void ShowStatus(string text, bool error)
