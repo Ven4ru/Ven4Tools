@@ -71,6 +71,27 @@ namespace Ven4Tools.ClientUITests
             return _session!;
         }
 
+        /// <summary>Закрывает окна Проводника, открытые на папке с таким именем.</summary>
+        private static void CloseExplorerWindows(string folderName)
+        {
+            try
+            {
+                var shellType = Type.GetTypeFromProgID("Shell.Application");
+                if (shellType == null) return;
+                dynamic shell = Activator.CreateInstance(shellType)!;
+                foreach (dynamic window in shell.Windows())
+                {
+                    try
+                    {
+                        if (string.Equals((string)window.LocationName, folderName, StringComparison.OrdinalIgnoreCase))
+                            window.Quit();
+                    }
+                    catch { /* окно уже закрыто или это не Проводник */ }
+                }
+            }
+            catch { /* нет оболочки (серверная сборка без Проводника) — закрывать нечего */ }
+        }
+
         private static void GoToSystemSubTab(AppSession s, string subTabName)
         {
             var systemBtn = UiNav.Find(s, "btnSystemTab");
@@ -82,7 +103,11 @@ namespace Ven4Tools.ClientUITests
                 () => s.MainWindow.FindFirstDescendant(cf => cf.ByControlType(ControlType.TabItem).And(cf.ByName(subTabName))),
                 timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(subTab, $"Не найдена под-вкладка «{subTabName}».");
-            subTab!.Click();
+            // Выбор через автоматизацию, а не щелчком мыши: поверх клиента может стоять
+            // чужое окно (Проводник после «Открыть папку кэша» из соседнего теста), и
+            // щелчок по координатам уходил в него — раздел не переключался.
+            try { subTab!.AsTabItem().Select(); }
+            catch { subTab!.Click(); }
             System.Threading.Thread.Sleep(400);
         }
 
@@ -119,6 +144,9 @@ namespace Ven4Tools.ClientUITests
             Assert.IsNotNull(openCacheBtn, "Не найдена кнопка «Открыть» (папка кэша).");
             openCacheBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(1000); // откроет окно проводника
+            // Окно Проводника закрывается сразу: оставшись поверх клиента, оно перехватывало
+            // щелчки следующих тестов.
+            CloseExplorerWindows("Ven4ToolsCache");
 
             // Очистка кэша — только подтверждение-отказ, как и для логов.
             var clearCacheBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnClearCache"));
@@ -192,14 +220,14 @@ namespace Ven4Tools.ClientUITests
                 },
                 timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(deleteBtn, "Не найдена кнопка удаления снапшота.");
-            deleteBtn!.Click();
+            deleteBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);
             var confirmBox = s.MainWindow.ModalWindows.FirstOrDefault();
             if (confirmBox != null)
             {
                 var yes = confirmBox.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
                     .FirstOrDefault(b => (b.Name ?? "") == "Да" || (b.Name ?? "") == "Yes");
-                yes?.Click();
+                yes?.AsButton().Invoke();
                 System.Threading.Thread.Sleep(500);
             }
         }
