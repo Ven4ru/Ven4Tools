@@ -49,7 +49,18 @@ namespace Ven4Tools.Localization
         public static string Tr(string? text)
         {
             if (_pack == null) return text ?? "";
-            string translated = _pack.Translate(text);
+            string translated;
+            try { translated = _pack.Translate(text); }
+            catch (Exception ex)
+            {
+                // Сбой перевода не должен мешать показать сообщение: оно выйдет как есть.
+                if (System.Threading.Interlocked.Increment(ref _failures) <= 5)
+                {
+                    try { Log?.Invoke($"[Язык] Сбой при переводе надписи: {ex.GetType().Name}: {ex.Message}"); }
+                    catch (Exception) { }
+                }
+                return text ?? "";
+            }
             // Только сбор: строка сверена с пакетом, но на экран идёт русский текст.
             return _collectOnly ? text ?? "" : translated;
         }
@@ -90,6 +101,27 @@ namespace Ven4Tools.Localization
             EventManager.RegisterClassHandler(typeof(Control), FrameworkElement.SizeChangedEvent, new SizeChangedEventHandler(OnControlSized));
         }
 
+        /// <summary>Куда сообщать о сбое перевода (журнал программы). Программа от него не падает.</summary>
+        public static Action<string>? Log { get; set; }
+
+        private static int _failures;
+
+        // Перевод работает внутри раскладки и отрисовки окна: исключение отсюда — это
+        // аварийное завершение всей программы из-за надписи. Любой сбой гасится, надпись
+        // остаётся как есть, в журнал уходят первые несколько случаев.
+        private static void Guard(Action action)
+        {
+            try { action(); }
+            catch (Exception ex)
+            {
+                if (System.Threading.Interlocked.Increment(ref _failures) <= 5)
+                {
+                    try { Log?.Invoke($"[Язык] Сбой при переводе надписи: {ex.GetType().Name}: {ex.Message}"); }
+                    catch (Exception) { }
+                }
+            }
+        }
+
         // Элемент уже подключён к переводу: событие размера приходит много раз, работа нужна один.
         private static readonly DependencyProperty HookedProperty = DependencyProperty.RegisterAttached(
             "Hooked", typeof(bool), typeof(UiTranslator), new PropertyMetadata(false));
@@ -126,7 +158,9 @@ namespace Ven4Tools.Localization
         private static readonly DependencyProperty AppliedProperty = DependencyProperty.RegisterAttached(
             "Applied", typeof(string), typeof(UiTranslator), new PropertyMetadata(null));
 
-        private static void OnTextBlockSized(object sender, SizeChangedEventArgs e)
+        private static void OnTextBlockSized(object sender, SizeChangedEventArgs e) => Guard(() => OnTextBlockSizedCore(sender, e));
+
+        private static void OnTextBlockSizedCore(object sender, SizeChangedEventArgs e)
         {
             if (_pack == null || sender is not TextBlock block || !TakeHook(block)) return;
             if (HasInlineContent(block))
@@ -153,7 +187,9 @@ namespace Ven4Tools.Localization
 
         private static void TranslateInlines(InlineCollection inlines)
         {
-            foreach (var inline in inlines)
+            // По копии списка: подстановка перевода в кусок меняет содержимое элемента, и
+            // перечисление самой коллекции на этом обрывается исключением.
+            foreach (var inline in inlines.ToList())
             {
                 if (inline is Run run)
                 {
@@ -174,7 +210,9 @@ namespace Ven4Tools.Localization
             }
         }
 
-        private static void OnWatchedTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnWatchedTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => Guard(() => OnWatchedTextChangedCore(d, e));
+
+        private static void OnWatchedTextChangedCore(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (_pack == null || e.NewValue is not string text) return;
             if (d is TextBlock block) ApplyTo(block, TextBlock.TextProperty, text);
@@ -195,7 +233,9 @@ namespace Ven4Tools.Localization
 
         // ── Окна, поля только для чтения, подписи для программ чтения с экрана ───
 
-        private static void OnControlSized(object sender, SizeChangedEventArgs e)
+        private static void OnControlSized(object sender, SizeChangedEventArgs e) => Guard(() => OnControlSizedCore(sender, e));
+
+        private static void OnControlSizedCore(object sender, SizeChangedEventArgs e)
         {
             if (_pack == null || sender is not Control control || !TakeHook(control)) return;
 
@@ -258,7 +298,9 @@ namespace Ven4Tools.Localization
             });
         }
 
-        private static void OnWatchedCaptionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnWatchedCaptionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => Guard(() => OnWatchedCaptionChangedCore(d, e));
+
+        private static void OnWatchedCaptionChangedCore(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (_pack == null) return;
             string? translated = null;

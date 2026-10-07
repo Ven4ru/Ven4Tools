@@ -1396,6 +1396,10 @@
     "t": "[Language] The pack did not download in time for startup — the interface stays Russian until the next start"
   },
   {
+    "s": "[Язык] Сбой при переводе надписи: {0}: {1}",
+    "t": "[Language] Failed to translate a caption: {0}: {1}"
+  },
+  {
     "s": "choco завершился с кодом {0}. Подробности — в логе установки.",
     "t": "choco exited with code {0}. See the installation log for details."
   },

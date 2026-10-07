@@ -56,6 +56,7 @@ namespace Ven4Tools.Launcher.Services
         /// </summary>
         public static void Start(TimeSpan wait)
         {
+            UiTranslator.Log = LauncherLog.Write;
             Wanted = AppLanguage.Resolve(null);
             bool collectOnly = Wanted != AppLanguage.English;
             if (collectOnly && !UiTranslator.CollectRequested) return;

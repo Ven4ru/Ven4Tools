@@ -50,6 +50,7 @@ namespace Ven4Tools.Services
         /// </summary>
         public static void Start()
         {
+            UiTranslator.Log = AppLogger.Write;
             Wanted = AppLanguage.Resolve(ProfileService.Current.Language);
             bool collectOnly = Wanted != AppLanguage.English;
             if (collectOnly && !UiTranslator.CollectRequested) return;
