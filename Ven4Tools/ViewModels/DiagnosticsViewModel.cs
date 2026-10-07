@@ -125,8 +125,26 @@ namespace Ven4Tools.ViewModels
 
         // ── Turbo Boost ──────────────────────────────────────────────────────────
 
-        private string _turboBoostStatusText = "Текущее состояние: определяется...";
+        private string _turboBoostStatusText = "Текущий режим: определяется...";
         public string TurboBoostStatusText { get => _turboBoostStatusText; private set => SetField(ref _turboBoostStatusText, value); }
+
+        /// <summary>Режимы, которые знает эта Windows; текущий и заводской помечены в подписи.</summary>
+        public System.Collections.ObjectModel.ObservableCollection<TurboBoostModeOption> TurboBoostModeOptions { get; } = new();
+
+        private TurboBoostModeOption? _selectedTurboBoostMode;
+        public TurboBoostModeOption? SelectedTurboBoostMode
+        {
+            get => _selectedTurboBoostMode;
+            set
+            {
+                if (!SetField(ref _selectedTurboBoostMode, value)) return;
+                OnPropertyChanged(nameof(SelectedTurboBoostDescription));
+                ApplyTurboBoostModeCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        /// <summary>Пояснение к выбранному в списке режиму.</summary>
+        public string SelectedTurboBoostDescription => _selectedTurboBoostMode?.Description ?? string.Empty;
 
         // ── Busy-флаги команд ────────────────────────────────────────────────────
 
@@ -145,9 +163,8 @@ namespace Ven4Tools.ViewModels
         }
 
         /// <summary>
-        /// Общий флаг для «Отключить»/«Включить» турбобуст: обе кнопки правят одну и ту
-        /// же настройку схемы электропитания через powercfg, поэтому взаимно исключают
-        /// друг друга, а не только сами себя. internal set — тем же способом, что у
+        /// Идёт смена режима турбобуста: кнопка «Применить режим» закрыта, пока powercfg
+        /// правит схему электропитания. internal set — тем же способом, что у
         /// <c>NetworkViewModel</c>, флаг доступен юнит-тестам.
         /// </summary>
         private bool _isApplyingTurboBoost;
@@ -158,8 +175,7 @@ namespace Ven4Tools.ViewModels
             {
                 if (SetField(ref _isApplyingTurboBoost, value))
                 {
-                    DisableTurboBoostCommand.RaiseCanExecuteChanged();
-                    EnableTurboBoostCommand.RaiseCanExecuteChanged();
+                    ApplyTurboBoostModeCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -182,8 +198,7 @@ namespace Ven4Tools.ViewModels
         public RelayCommand OpenLogsCommand { get; }
         public RelayCommand OpenLatestLogCommand { get; }
         public RelayCommand ClearLogsCommand { get; }
-        public RelayCommand DisableTurboBoostCommand { get; }
-        public RelayCommand EnableTurboBoostCommand { get; }
+        public RelayCommand ApplyTurboBoostModeCommand { get; }
         public RelayCommand ClearWuCacheCommand { get; }
         public RelayCommand OpenWindowsUpdateCommand { get; }
         public RelayCommand CopyFullReportCommand { get; }
@@ -196,8 +211,8 @@ namespace Ven4Tools.ViewModels
             OpenLogsCommand           = new RelayCommand(_ => OpenLogs());
             OpenLatestLogCommand      = new RelayCommand(_ => OpenLatestLog());
             ClearLogsCommand          = new RelayCommand(_ => ClearLogs());
-            DisableTurboBoostCommand  = RelayCommand.FromAsync(_ => RunDisableTurboBoostAsync(), _ => !IsApplyingTurboBoost);
-            EnableTurboBoostCommand   = RelayCommand.FromAsync(_ => RunEnableTurboBoostAsync(),  _ => !IsApplyingTurboBoost);
+            ApplyTurboBoostModeCommand = RelayCommand.FromAsync(_ => RunApplyTurboBoostModeAsync(),
+                _ => !IsApplyingTurboBoost && SelectedTurboBoostMode != null);
             ClearWuCacheCommand       = RelayCommand.FromAsync(_ => RunClearWuCacheAsync(),    _ => !IsClearingWuCache);
             OpenWindowsUpdateCommand  = new RelayCommand(_ => GoToWindowsUpdate?.Invoke());
             CopyFullReportCommand     = new RelayCommand(_ => CopyFullReport());

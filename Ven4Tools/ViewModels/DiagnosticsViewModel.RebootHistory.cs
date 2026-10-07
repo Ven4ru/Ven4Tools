@@ -82,7 +82,7 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunDisableFastStartupAsync()
         {
-            // Гейт реентерабельности — см. пояснение в RunDisableTurboBoostAsync:
+            // Гейт реентерабельности — см. пояснение в RunApplyTurboBoostModeAsync:
             // без него двойное нажатие запускало два powercfg с правами администратора
             // одновременно. Флаг взводится до диалога подтверждения, иначе второе
             // нажатие успевало открыть второе такое же окно.

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Win32;
@@ -7,31 +8,75 @@ using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
 {
+    /// <summary>Строка списка выбора режима Turbo Boost.</summary>
+    public sealed class TurboBoostModeOption
+    {
+        public required int Mode { get; init; }
+
+        /// <summary>Название с пометками «текущий» и «по умолчанию в Windows».</summary>
+        public required string Label { get; init; }
+
+        public required string Description { get; init; }
+    }
+
     public sealed partial class DiagnosticsViewModel
     {
         // CurrentControlSet — псевдоним активного набора, а не жёсткий ControlSet001:
         // на системах, где активен ControlSet002 (после отказа предыдущей загрузки),
         // жёсткий путь писал бы в неактивный набор и пункт не появлялся бы в Панели управления.
-        private const string TurboBoostRegPath = @"SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7";
+        private const string TurboBoostRegPath = @"SYSTEM\CurrentControlSet\Control\Power\PowerSettings\" + TurboBoostModes.Subgroup + @"\" + TurboBoostModes.Setting;
 
-        private const string TurboSubgroup = "54533251-82be-4824-96c1-47b60b740d00";
-
-        private const string TurboSetting  = "be337238-0d82-4146-a960-4f3749d470c7";
-
-        // L8: обновляет текстовый статус текущего состояния Turbo Boost в UI.
-        // Вызывается при загрузке вкладки и после включения/отключения.
+        // Обновляет список режимов и строку текущего режима. Вызывается при загрузке
+        // вкладки и после применения режима.
         private async Task RefreshTurboBoostStatusAsync()
         {
-            bool? state = await GetTurboBoostStateAsync();
-            TurboBoostStatusText = state switch
-            {
-                true  => "Текущее состояние: ⚡ включён",
-                false => "Текущее состояние: ❌ отключён",
-                _     => "Текущее состояние: неизвестно"
-            };
+            TurboBoostState state = await QueryTurboBoostStateAsync();
+            ApplyTurboBoostState(state, ReadWindowsDefaultMode(state.SchemeGuid));
         }
 
-        private async Task RunDisableTurboBoostAsync()
+        /// <summary>
+        /// Строит список режимов и строку состояния по тому, что сообщил powercfg.
+        /// internal — логика пометок проверяется тестами без запуска powercfg.
+        /// </summary>
+        internal void ApplyTurboBoostState(TurboBoostState state, int? windowsDefault)
+        {
+            string currentWord = Tr("текущий");
+            string defaultWord = Tr("по умолчанию в Windows");
+
+            // Текущий режим показываем в списке, даже если powercfg не назвал его среди
+            // возможных: иначе пометку «текущий» было бы некуда поставить.
+            var modes = state.Possible.ToList();
+            if (state.Ac is int ac && !modes.Contains(ac)) modes.Add(ac);
+            modes.Sort();
+
+            TurboBoostModeOptions.Clear();
+            foreach (int mode in modes)
+            {
+                TurboBoostModeOptions.Add(new TurboBoostModeOption
+                {
+                    Mode = mode,
+                    Label = TurboBoostModes.Label(Tr(TurboBoostModes.Name(mode)),
+                        isCurrent: mode == state.Ac, isDefault: mode == windowsDefault, currentWord, defaultWord),
+                    Description = Tr(TurboBoostModes.Description(mode)),
+                });
+            }
+
+            SelectedTurboBoostMode = TurboBoostModeOptions.FirstOrDefault(o => o.Mode == state.Ac);
+
+            if (state.Ac is not int current)
+            {
+                TurboBoostStatusText = Tr("Текущий режим: не удалось определить");
+                return;
+            }
+
+            string status = $"{Tr("Текущий режим:")} {Tr(TurboBoostModes.Name(current))}";
+            // На ноутбуке режим от батареи может отличаться — молчать об этом было бы неправдой.
+            if (state.Dc is int battery && battery != current)
+                status += $" ({Tr("от батареи")} — {Tr(TurboBoostModes.Name(battery))})";
+            TurboBoostStatusText = status;
+        }
+
+        private async Task RunApplyTurboBoostModeAsync()
         {
             // Гейт реентерабельности — одного CanExecute мало: перезапрос доступности
             // публикуется с приоритетом ниже обработки ввода, и между снятием флага и
@@ -39,19 +84,21 @@ namespace Ven4Tools.ViewModels
             // два параллельных powercfg, правящих одну и ту же схему электропитания
             // (та же схема защиты, что в NetworkViewModel).
             if (IsApplyingTurboBoost) return;
+            if (SelectedTurboBoostMode is not { } option) return;
             IsApplyingTurboBoost = true;
             try
             {
-                await ApplyTurboBoostAsync(false);
+                string name = TurboBoostModes.Name(option.Mode);
+                await ApplyTurboBoostAsync(option.Mode);
                 await RefreshTurboBoostStatusAsync();
-                AppLogger.Write("⚡ Турбобуст отключён");
-                MessageBox.Show("✅ Турбобуст отключён.\nИзменение применено немедленно — перезагрузка не требуется.",
+                AppLogger.Write($"⚡ Режим Turbo Boost: {name}");
+                MessageBox.Show($"✅ Режим Turbo Boost: {Tr(name)}.\nИзменение применено немедленно — перезагрузка не требуется.",
                     "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                AppLogger.Write($"❌ Ошибка при отключении турбобуста: {ex.Message}");
-                MessageBox.Show("Не удалось отключить турбобуст. Запустите приложение от имени администратора и попробуйте ещё раз.",
+                AppLogger.Write($"❌ Ошибка при смене режима турбобуста: {ex.Message}");
+                MessageBox.Show("Не удалось изменить режим Turbo Boost. Запустите приложение от имени администратора и попробуйте ещё раз.",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -60,39 +107,11 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        private async Task RunEnableTurboBoostAsync()
+        private async Task ApplyTurboBoostAsync(int mode)
         {
-            // Гейт реентерабельности — см. пояснение в RunDisableTurboBoostAsync.
-            // Флаг общий с «Отключить»: обе кнопки правят одну настройку схемы питания.
-            if (IsApplyingTurboBoost) return;
-            IsApplyingTurboBoost = true;
-            try
-            {
-                await ApplyTurboBoostAsync(true);
-                await RefreshTurboBoostStatusAsync();
-                AppLogger.Write("⚡ Турбобуст включён");
-                MessageBox.Show("✅ Турбобуст включён.\nИзменение применено немедленно — перезагрузка не требуется.",
-                    "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write($"❌ Ошибка при включении турбобуста: {ex.Message}");
-                MessageBox.Show("Не удалось включить турбобуст. Запустите приложение от имени администратора и попробуйте ещё раз.",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsApplyingTurboBoost = false;
-            }
-        }
-
-        private async Task ApplyTurboBoostAsync(bool enable)
-        {
-            int value = enable ? 1 : 0;
-
             // Применяем для AC (от сети) и DC (от батареи)
-            await RunPowerCfgAsync($"-setacvalueindex SCHEME_CURRENT {TurboSubgroup} {TurboSetting} {value}");
-            await RunPowerCfgAsync($"-setdcvalueindex SCHEME_CURRENT {TurboSubgroup} {TurboSetting} {value}");
+            await RunPowerCfgAsync($"-setacvalueindex SCHEME_CURRENT {TurboBoostModes.Subgroup} {TurboBoostModes.Setting} {mode}");
+            await RunPowerCfgAsync($"-setdcvalueindex SCHEME_CURRENT {TurboBoostModes.Subgroup} {TurboBoostModes.Setting} {mode}");
 
             // Активируем схему чтобы применить изменения
             await RunPowerCfgAsync("-setactive SCHEME_CURRENT");
@@ -101,40 +120,57 @@ namespace Ven4Tools.ViewModels
             SetTurboBoostAttributes(2);
         }
 
-        private async Task<bool?> GetTurboBoostStateAsync()
+        private static async Task<TurboBoostState> QueryTurboBoostStateAsync()
         {
             try
             {
                 var psi = new ProcessStartInfo
                 {
                     FileName = TrustedExecutablePaths.PowerCfgExe,
-                    Arguments = $"/query SCHEME_CURRENT {TurboSubgroup} {TurboSetting}",
+                    // /qh, а не /query: настройка в Windows по умолчанию скрыта, и обычный
+                    // запрос её не показывает вовсе — режим оставался «неизвестен», пока
+                    // программа сама не делала настройку видимой первым применением.
+                    Arguments = $"/qh SCHEME_CURRENT {TurboBoostModes.Subgroup} {TurboBoostModes.Setting}",
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
                     StandardOutputEncoding = System.Text.Encoding.UTF8
                 };
                 using var process = Process.Start(psi);
-                if (process == null) return null;
-                // Асинхронное чтение — не блокируем UI-поток
-                string output = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
-
-                // Языконезависимый разбор: powercfg локализует подписи строк
-                // («Current AC Power Setting Index» на русской Windows выводится по-русски),
-                // но значения «0x...» встречаются только в двух финальных строках —
-                // текущий индекс AC (от сети) и DC (от батареи). Берём первый — AC.
-                var matches = System.Text.RegularExpressions.Regex.Matches(output, @"0x([0-9A-Fa-f]+)");
-                if (matches.Count > 0)
-                    return Convert.ToInt32(matches[0].Groups[1].Value, 16) != 0;
+                if (process != null)
+                {
+                    // Асинхронное чтение — не блокируем UI-поток
+                    string output = await process.StandardOutput.ReadToEndAsync();
+                    await process.WaitForExitAsync();
+                    return TurboBoostModes.Parse(output);
+                }
             }
             catch (Exception ex)
             {
-                // Иначе в UI просто появляется «неизвестно», а причина нигде не остаётся —
-                // соседние обработчики турбобуста пишут свои ошибки в журнал так же.
-                AppLogger.Write(ex, "❌ Не удалось определить состояние турбобуста");
+                // Иначе в UI просто появляется «не удалось определить», а причина нигде не
+                // остаётся — соседние обработчики турбобуста пишут свои ошибки в журнал так же.
+                AppLogger.Write(ex, "❌ Не удалось определить режим турбобуста");
             }
-            return null;
+            return TurboBoostModes.Parse(null);
+        }
+
+        /// <summary>
+        /// Режим, который Windows задаёт этой схеме электропитания сама. Нужен для пометки
+        /// «по умолчанию в Windows»: по ней видно, к чему вернуться.
+        /// </summary>
+        private static int? ReadWindowsDefaultMode(string? schemeGuid)
+        {
+            if (string.IsNullOrEmpty(schemeGuid)) return null;
+            try
+            {
+                using var key = Registry.LocalMachine.OpenSubKey($@"{TurboBoostRegPath}\DefaultPowerSchemeValues\{schemeGuid}");
+                return key?.GetValue("ACSettingIndex") is int value ? value : null;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "❌ Не удалось прочитать режим турбобуста по умолчанию");
+                return null;
+            }
         }
 
         private async Task RunPowerCfgAsync(string args)
