@@ -216,7 +216,9 @@ namespace Ven4Tools.ViewModels
                 .Select(a => new CacheAppItem
                 {
                     Id          = a.Id,
-                    DisplayName = $"{a.Name}  [{a.Category}]{(IsCached(a.Id) ? " ✅" : "")}",
+                    // Имя и категория переводятся здесь: в составной строке без русского
+                    // текста вокруг перевод при показе их не найдёт.
+                    DisplayName = $"{Tr(a.Name)}  [{Tr(a.Category)}]{(IsCached(a.Id) ? " ✅" : "")}",
                     DownloadUrl = a.DownloadUrl,
                     Sha256      = a.Sha256!
                 })

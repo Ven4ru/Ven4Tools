@@ -45,9 +45,15 @@ namespace Ven4Tools.Localization
         /// <summary>Вызывается для каждой русской строки, которой не нашлось перевода.</summary>
         public Action<string>? Missed { get; set; }
 
+        // В языке перевода дробная часть отделяется точкой. Числа приходят на экран уже
+        // отформатированными по правилам Windows (в русской — с запятой), и менять правила
+        // для всей программы нельзя: от них зависит разбор вывода других программ.
+        private readonly bool _decimalPoint;
+
         private LanguagePack(string language, Dictionary<string, string> literals, IEnumerable<(string Source, string Target)> patterns)
         {
             Language = language;
+            _decimalPoint = string.Equals(language, "en", StringComparison.OrdinalIgnoreCase);
             _literals = literals;
             int count = 0;
             // Более определённые шаблоны (больше обычного текста) проверяются первыми:
@@ -151,6 +157,17 @@ namespace Ven4Tools.Localization
 
             if (depth < MaxDepth && TryPattern(text, depth, out string? byPattern)) return byPattern!;
 
+            // Значок или маркер перед текстом («• …», «⚠ …», «— …») часто приставляется в
+            // коде отдельно от самой строки: ищем перевод без него и возвращаем его на место.
+            int lead = 0;
+            while (lead < text.Length && !char.IsLetterOrDigit(text[lead]) && !IsOpeningMark(text[lead])) lead++;
+            if (lead > 0 && lead < text.Length && !text.Contains('\n'))
+            {
+                string body = text[lead..];
+                if (_literals.TryGetValue(body, out string? plain)) return string.Concat(text.AsSpan(0, lead), plain);
+                if (depth < MaxDepth && TryPattern(body, depth, out string? bodyByPattern)) return string.Concat(text.AsSpan(0, lead), bodyByPattern);
+            }
+
             if (text.Contains('\n'))
             {
                 string[] lines = text.Split('\n');
@@ -170,24 +187,13 @@ namespace Ven4Tools.Localization
             return text;
         }
 
-        private string TranslateLine(string line, int depth, out bool complete)
-        {
-            complete = true;
-            if (!HasCyrillic(line)) return line;
-            if (_literals.TryGetValue(line, out string? exact)) return exact;
+        // Скобка или кавычка в начале — часть самой строки («[Сеть] …», «„Имя“ …»), а не маркер.
+        private static bool IsOpeningMark(char c) => c is '[' or '(' or '{' or '«' or '"' or '\'' or '“' or '„' or '<';
 
-            int start = 0, end = line.Length;
-            while (start < end && char.IsWhiteSpace(line[start])) start++;
-            while (end > start && char.IsWhiteSpace(line[end - 1])) end--;
-            string core = start > 0 || end < line.Length ? line[start..end] : line;
-
-            string? translated = null;
-            if (!ReferenceEquals(core, line) && _literals.TryGetValue(core, out string? trimmed)) translated = trimmed;
-            else if (depth < MaxDepth && TryPattern(core, depth, out string? byPattern)) translated = byPattern;
-
-            if (translated == null) { complete = false; return line; }
-            return ReferenceEquals(core, line) ? translated : string.Concat(line.AsSpan(0, start), translated, line.AsSpan(end));
-        }
+        // Строка многострочного текста — тот же поиск, что и для отдельной строки:
+        // целиком, без пробелов по краям, по шаблонам, без значка в начале.
+        private string TranslateLine(string line, int depth, out bool complete) =>
+            TranslateCore(line, depth, out complete);
 
         private bool TryPattern(string text, int depth, out string? result)
         {
@@ -297,10 +303,27 @@ namespace Ven4Tools.Localization
                     {
                         string value = match.Groups["h" + _targetHoles[i]].Value;
                         // Значение само может быть текстом интерфейса («Статус: Установлено»).
-                        builder.Append(HasCyrillic(value) ? pack.TranslateCore(value, depth + 1, out _) : value);
+                        if (HasCyrillic(value)) builder.Append(pack.TranslateCore(value, depth + 1, out _));
+                        // Число с десятичной запятой («12,7 МБ»): в английском тексте — точка.
+                        else if (pack._decimalPoint && IsDecimalWithComma(value)) builder.Append(value.Replace(',', '.'));
+                        else builder.Append(value);
                     }
                 }
                 result = builder.ToString();
+                return true;
+            }
+
+            // Ровно «цифры, запятая, одна-две цифры»: дробное число, а не перечисление.
+            private static bool IsDecimalWithComma(string value)
+            {
+                int comma = value.IndexOf(',');
+                if (comma <= 0 || comma != value.LastIndexOf(',')) return false;
+                int fraction = value.Length - comma - 1;
+                if (fraction is < 1 or > 2) return false;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    if (i != comma && !char.IsAsciiDigit(value[i])) return false;
+                }
                 return true;
             }
         }

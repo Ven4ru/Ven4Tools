@@ -278,10 +278,15 @@
         </Style>
 
         <!-- Стиль для Button -->
+        <!-- Отступ надписи от края (Padding) по умолчанию нулевой и применяется шаблоном.
+             Раньше шаблон его не учитывал вовсе: кнопки без заданной ширины рисовались
+             вплотную к тексту, сколько бы отступа им ни задали в разметке. Значение по
+             умолчанию оставлено нулевым намеренно — у кнопок-значков ширина задана
+             жёстко, и общий отступ обрезал бы значок. -->
         <Style TargetType="Button">
             <Setter Property="Height" Value="35"/>
             <Setter Property="Margin" Value="3"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -299,7 +304,8 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -349,7 +355,7 @@
         <Style TargetType="ToggleButton">
             <Setter Property="Height" Value="35"/>
             <Setter Property="Margin" Value="3"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
@@ -363,7 +369,8 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">

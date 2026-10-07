@@ -20,7 +20,7 @@
                                 Background="{DynamicResource CardBackground}"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="6">
-                            <TextBlock x:Name="lbl" Text="{TemplateBinding Content}"
+                            <TextBlock x:Name="lbl" Text="{TemplateBinding Content}" Margin="{TemplateBinding Padding}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
                                        FontSize="12" FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondary}"/>

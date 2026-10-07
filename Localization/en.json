@@ -1620,6 +1620,10 @@
     "t": "{0} — {1} free"
   },
   {
+    "s": "{0} — свободно {1}, системный",
+    "t": "{0} — {1} free, system"
+  },
+  {
     "s": "{0}, {1} об/мин",
     "t": "{0}, {1} RPM"
   },
@@ -1669,11 +1673,11 @@
   },
   {
     "s": "«Только уведомлять» — клиент сообщает о найденных патчах, ничего не скачивая. «Уведомлять и скачивать в фоне» — патчи заранее загружаются в кэш Windows, и установка по кнопке на вкладке «Обновления Windows» стартует сразу, без ожидания загрузки. Устанавливаются патчи в обоих режимах только вручную.",
-    "t": "“Notify only” — the client reports found updates without downloading anything. “Notify and download in background” — updates are downloaded to the Windows cache in advance, so installing them with the button on the “Windows updates” tab starts right away, with no wait for the download. In both modes, updates are installed only manually."
+    "t": "“Notify only” — the client reports found updates without downloading anything. “Notify and download in background” — updates are downloaded to the Windows cache in advance, so installing them with the button on the “Windows Update” tab starts right away, with no wait for the download. In both modes, updates are installed only manually."
   },
   {
     "s": "Абсолютный путь на локальном диске, например D:\\Programs. Пустое поле — winget выбирает папку сам.",
-    "t": "An absolute path on a local drive, for example D:\\Programs. Empty field — winget picks the folder itself."
+    "t": "An absolute path on a local drive, for example D:\\Programs. If the field is empty, winget picks the folder itself."
   },
   {
     "s": "Авто (рекомендуется)",
@@ -2028,6 +2032,10 @@
     "t": "Reverts the registry values and service startup type to what they were before this tweak was applied."
   },
   {
+    "s": "Версия",
+    "t": "Version"
+  },
+  {
     "s": "Версия Ven4Tools:",
     "t": "Ven4Tools version:"
   },
@@ -2257,7 +2265,7 @@
   },
   {
     "s": "Выбор при первом запуске сохраняется навсегда, если не поменять его здесь. «Базовый» — только самые ходовые программы, «Полный» — весь каталог.",
-    "t": "The choice made on first launch is kept permanently unless you change it here. “Basic” — only the most popular apps, “Full” — the whole catalog."
+    "t": "The choice made on first launch is kept permanently unless you change it here. “Basic” shows only the most popular apps, “Full” shows the whole catalog."
   },
   {
     "s": "Выбран системный том — фоновая работа Windows идёт параллельно с замером и снижает результат. Для точного измерения лучше выбрать другой том.",
@@ -2496,6 +2504,10 @@
     "t": "Downloads damaged or missing files and deletes extra ones — per the list shown by the check above."
   },
   {
+    "s": "Доступна",
+    "t": "Available"
+  },
+  {
     "s": "Доступно обновление клиента",
     "t": "Client update available"
   },
@@ -2513,7 +2525,7 @@
   },
   {
     "s": "Драйверпаки",
-    "t": "Driver packs"
+    "t": "Drivers"
   },
   {
     "s": "Драйверы взяты с этого компьютера и подходят только к нему. Панели управления",
@@ -2964,6 +2976,10 @@
     "t": "The changelog will be available once the catalog has loaded."
   },
   {
+    "s": "Источник",
+    "t": "Source"
+  },
+  {
     "s": "Источник загрузки",
     "t": "Download source"
   },
@@ -3137,7 +3153,7 @@
   },
   {
     "s": "Код набора — его принимает кнопка «Набор с сайта»",
-    "t": "Set code — accepted by the “Set from website” button"
+    "t": "Set code — accepted by the “Website set” button"
   },
   {
     "s": "Код набора — им можно поделиться",
@@ -3341,7 +3357,7 @@
   },
   {
     "s": "Набор из установленного",
-    "t": "Set from installed apps"
+    "t": "Set of installed apps"
   },
   {
     "s": "Набор на флешку — чтобы после переустановки ничего не искать",
@@ -3353,7 +3369,7 @@
   },
   {
     "s": "Набор с сайта",
-    "t": "Set from website"
+    "t": "Website set"
   },
   {
     "s": "Набор утилит для повышения производительности Windows.",
@@ -4061,7 +4077,7 @@
   },
   {
     "s": "Обновления Windows",
-    "t": "Windows updates"
+    "t": "Windows Update"
   },
   {
     "s": "Обновления Windows скачаны в фоне",
@@ -4133,7 +4149,7 @@
   },
   {
     "s": "Онлайн-режим принудительно",
-    "t": "Forced online mode"
+    "t": "Force online mode"
   },
   {
     "s": "Операция winget прервана сигналом завершения.",
@@ -4301,7 +4317,7 @@
   },
   {
     "s": "Откроет вкладку «Обновления Windows», где можно заново проверить и установить не установившиеся патчи.",
-    "t": "Opens the “Windows updates” tab, where you can recheck and install updates that failed to install."
+    "t": "Opens the “Windows Update” tab, where you can recheck and install updates that failed to install."
   },
   {
     "s": "Откроет выбор другого источника установки для этого приложения.",
@@ -4805,7 +4821,7 @@
   },
   {
     "s": "Передаётся winget как --location. Многие установщики этот параметр игнорируют и ставятся туда, куда заложено в самом пакете; приложения из Microsoft Store (msstore) его не поддерживают вовсе. Если в каталоге выбран несистемный диск установки, папка используется только когда она лежит на этом же диске — иначе подставляется «Program Files» выбранного диска. Путь должен быть абсолютным и локальным: сетевые пути и кавычки не принимаются. Пустое поле — winget выбирает папку сам.",
-    "t": "Passed to winget as --location. Many installers ignore this option and install wherever the package itself dictates; Microsoft Store (msstore) apps do not support it at all. If a non-system install drive is selected in the catalog, the folder is used only when it is on that same drive — otherwise “Program Files” on the selected drive is used. The path must be absolute and local: network paths and quotation marks are not accepted. Empty field — winget picks the folder itself."
+    "t": "Passed to winget as --location. Many installers ignore this option and install wherever the package itself dictates; Microsoft Store (msstore) apps do not support it at all. If a non-system install drive is selected in the catalog, the folder is used only when it is on that same drive — otherwise “Program Files” on the selected drive is used. The path must be absolute and local: network paths and quotation marks are not accepted. If the field is empty, winget picks the folder itself."
   },
   {
     "s": "Перезагрузите компьютер для применения изменений.",
@@ -5309,7 +5325,7 @@
   },
   {
     "s": "Принудительный онлайн-режим",
-    "t": "Forced online mode"
+    "t": "Force online mode"
   },
   {
     "s": "Принудительный офлайн",
@@ -5317,7 +5333,7 @@
   },
   {
     "s": "Принудительный офлайн режим (скрыть вкладки, требующие интернет)",
-    "t": "Forced offline mode (hide tabs that need the internet)"
+    "t": "Force offline mode (hide tabs that need the internet)"
   },
   {
     "s": "Принудительный офлайн — вкладки скрыты вручную",
@@ -5897,7 +5913,7 @@
   },
   {
     "s": "Скопирует код набора. На другом компьютере его принимает кнопка «Набор с сайта».",
-    "t": "Copies the set code. On another computer, the “Set from website” button accepts it."
+    "t": "Copies the set code. On another computer, the “Website set” button accepts it."
   },
   {
     "s": "Скопирует показанные сведения о Windows, процессоре, памяти и версии Ven4Tools.",
@@ -6093,7 +6109,7 @@
   },
   {
     "s": "Сохранение и повторное применение набора настроек на этой машине: запоминает отмеченные твики Debloater и локальные пресеты. Это не отмена изменений — твики, применённые после создания снапшота, назад не возвращаются. Не зависит от точки восстановления Windows.",
-    "t": "Saves and reapplies a set of settings on this machine: it remembers the selected Debloater tweaks and local presets. This is not an undo — tweaks applied after the snapshot was created are not reverted. Independent of the Windows restore point."
+    "t": "Saves and reapplies a set of settings on this machine: it remembers the selected Cleanup tweaks and local presets. This is not an undo — tweaks applied after the snapshot was created are not reverted. Independent of the Windows restore point."
   },
   {
     "s": "Сохранено. Установка без вопросов: Ven4Tools.exe --answer-file \"{0}\"",
@@ -6182,6 +6198,10 @@
   {
     "s": "Список программ…",
     "t": "App list…"
+  },
+  {
+    "s": "Список — в «Установленных», с отметкой «Только с обновлениями».",
+    "t": "The list is in “Installed”, with “With updates only” checked."
   },
   {
     "s": "Список — в «Установленных», с фильтром «есть обновление».",
@@ -6901,7 +6921,7 @@
   },
   {
     "s": "Что делать с найденными обновлениями Windows:",
-    "t": "What to do with found Windows updates:"
+    "t": "When Windows updates are found:"
   },
   {
     "s": "Что ещё проверить до переустановки",
@@ -7537,7 +7557,7 @@
   },
   {
     "s": "• Все категории • Игровые сервисы • Драйверпаки • Пользовательские",
-    "t": "• All categories • Gaming services • Driver packs • Custom"
+    "t": "• All categories • Gaming services • Drivers • Custom"
   },
   {
     "s": "• Всё базовое",
@@ -7557,7 +7577,7 @@
   },
   {
     "s": "• Драйверпаки",
-    "t": "• Driver packs"
+    "t": "• Drivers"
   },
   {
     "s": "• Задержка вычислена из пропускной способности и глубины очереди по закону Литтла, а не измерена отдельно по каждой операции.",
@@ -7705,7 +7725,7 @@
   },
   {
     "s": "ℹ️ Точный слот на материнской плате определить нельзя — Windows такую разметку не сообщает. Всё, что не удалось выяснить достоверно, помечается как «не определяется», а не подставляется приблизительно.",
-    "t": "ℹ️ The exact motherboard slot cannot be determined — Windows does not report it. Anything that could not be established reliably is marked “not detectable” rather than filled in with a guess."
+    "t": "ℹ️ The exact motherboard slot cannot be determined — Windows does not report it. Anything that could not be established reliably is marked “unknown” rather than filled in with a guess."
   },
   {
     "s": "ℹ️ Уже установлено — версия не изменилась",
@@ -9677,7 +9697,7 @@
   },
   {
     "s": "\uD83D\uDCCB Набор из установленного: программ — {0}",
-    "t": "\uD83D\uDCCB Set from installed apps — apps: {0}"
+    "t": "\uD83D\uDCCB Set of installed apps — apps: {0}"
   },
   {
     "s": "\uD83D\uDCCB Неудачных установок в журнале клиента: {0} — показываю отчёт",
@@ -9801,15 +9821,15 @@
   },
   {
     "s": "\uD83D\uDCE5 Набор с сайта",
-    "t": "\uD83D\uDCE5 Set from website"
+    "t": "\uD83D\uDCE5 Website set"
   },
   {
     "s": "\uD83D\uDCE5 Набор с сайта: {0}",
-    "t": "\uD83D\uDCE5 Set from the site: {0}"
+    "t": "\uD83D\uDCE5 Website set: {0}"
   },
   {
     "s": "\uD83D\uDCE5 Набор с сайта: отмечено {0}, не найдено в каталоге: {1}, недоступно для выбора: {2}",
-    "t": "\uD83D\uDCE5 Set from the site: selected {0}, not found in the catalog: {1}, cannot be selected: {2}"
+    "t": "\uD83D\uDCE5 Website set: selected {0}, not found in the catalog: {1}, cannot be selected: {2}"
   },
   {
     "s": "\uD83D\uDCE5 Начинаем скачивание обновления лаунчера...",
@@ -10245,7 +10265,7 @@
   },
   {
     "s": "\uD83D\uDDA8️ Драйверпаки",
-    "t": "\uD83D\uDDA8️ Driver packs"
+    "t": "\uD83D\uDDA8️ Drivers"
   },
   {
     "s": "\uD83D\uDDD1 Удаление {0}...",
@@ -10341,7 +10361,7 @@
   },
   {
     "s": "\uD83D\uDEE1️ Обновления Windows",
-    "t": "\uD83D\uDEE1️ Windows updates"
+    "t": "\uD83D\uDEE1️ Windows Update"
   },
   {
     "s": "\uD83D\uDEE1️ Создаю точку восстановления...",
