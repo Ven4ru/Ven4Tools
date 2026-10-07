@@ -172,7 +172,7 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="ℹ️ Чтобы загрузка с серверов Microsoft работала из России, на время установки меняются региональные параметры Windows и Office. После установки прежние значения возвращаются."
+            <TextBlock Text="ℹ️ На время установки меняются региональные параметры Windows и Office: по ним загрузчик Microsoft выбирает сервер. После установки прежние значения возвращаются."
                        Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap"/>
             <TextBlock Text="⚠️ Требуется подключение к интернету для скачивания установщика."
                        Foreground="{DynamicResource StatusWarning}" FontSize="11" Margin="0,5,0,0"/>

@@ -103,8 +103,11 @@ namespace Ven4Tools.Services
         {
             var result = new Result();
 
+            // Без --include-unknown: программу с неопределяемой версией winget предлагал бы
+            // «обновить» в каждом цикле, и она переустанавливалась бы снова и снова.
+            // Вручную такие программы обновляются на вкладке «Установленные».
             var (code, output) = await WingetRunner.RunAsync(
-                $"upgrade --include-unknown --source winget {WingetArgs.NonInteractiveLine}",
+                $"upgrade --source winget {WingetArgs.NonInteractiveLine}",
                 TimeSpan.FromMinutes(3));
             ct.ThrowIfCancellationRequested();
 

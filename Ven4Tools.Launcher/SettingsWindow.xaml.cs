@@ -224,6 +224,15 @@ namespace Ven4Tools.Launcher
                     ShowIntegrityDetail(report.Summary);
                     break;
 
+                case ClientIntegrityStatus.VersionNotCurrent:
+                    // Не «сервер недоступен, попробуйте позже»: эталон публикуется
+                    // только для текущей версии, и ждать тут нечего — нужно обновиться.
+                    ShowIntegrityStatus(
+                        report.Headline ?? "Проверка доступна только для текущей версии клиента",
+                        "StatusWarning");
+                    ShowIntegrityDetail(report.Detail ?? report.Summary);
+                    break;
+
                 case ClientIntegrityStatus.CheckFailed:
                     ShowIntegrityStatus("Не удалось прочитать файлы клиента", "StatusDanger");
                     ShowIntegrityDetail(report.Summary);

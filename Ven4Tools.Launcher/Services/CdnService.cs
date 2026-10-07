@@ -135,6 +135,18 @@ namespace Ven4Tools.Launcher.Services
         {
             string json = await BoundedHttpText.GetStringAsync(client, VersionUrl, token);
             string signature = await BoundedHttpText.GetStringAsync(client, VersionSignatureUrl, token);
+            return ParseVerified(json, signature);
+        }
+
+        /// <summary>
+        /// Разбор version.json — только после проверки его ECDSA-подписи. Без
+        /// подтверждённой подписи возвращает null и текст манифеста не разбирает
+        /// вовсе: ни одно поле неподписанного манифеста не должно дойти до
+        /// вызывающего кода. Единственное место, где текст version.json становится
+        /// <see cref="CdnVersionInfo"/>. Чистая функция без сети — покрыта unit-тестами.
+        /// </summary>
+        internal static CdnVersionInfo? ParseVerified(string json, string? signature)
+        {
             if (!UpdateManifestVerifier.Verify(json, signature))
                 return null;
             return JsonSerializer.Deserialize<CdnVersionInfo>(json);

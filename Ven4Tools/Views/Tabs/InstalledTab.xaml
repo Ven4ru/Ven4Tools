@@ -1,6 +1,7 @@
 <UserControl x:Class="Ven4Tools.Views.Tabs.InstalledTab"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Ven4Tools.Views"
              Background="{DynamicResource ContentBackground}">
 
     <UserControl.Resources>
@@ -277,7 +278,7 @@
                           Visibility="{Binding IsListVisible, Converter={StaticResource BoolToVis}}"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl x:Name="lstApps" Margin="0" ItemsSource="{Binding DisplayedApps}">
+                <views:FlatItemsControl x:Name="lstApps" Margin="0" ItemsSource="{Binding DisplayedApps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Padding="16,0"
@@ -385,7 +386,7 @@
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                </views:FlatItemsControl>
             </ScrollViewer>
         </Grid>
     </Grid>
