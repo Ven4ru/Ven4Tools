@@ -35,6 +35,27 @@ public sealed class OverviewViewModelTests
         Assert.Equal(attention, result.NeedsAttention);
     }
 
+    [Fact]
+    public void WindowsUpdate_РежимЕщёНеВыбран_НеНазываетПроверкуВыключенной()
+    {
+        // Свежая установка: раздел «Windows Update» ни разу не открывали, проверку никто
+        // не выключал — карточка говорит, как она включится.
+        var result = OverviewViewModel.DescribeWindowsUpdate(-1, backgroundEnabled: false, neverOpened: true);
+
+        Assert.Equal("Фоновая проверка ещё не включена", result.Status);
+        Assert.Contains("Windows Update", result.Hint);
+        Assert.False(result.NeedsAttention);
+    }
+
+    [Fact]
+    public void WindowsUpdate_НайденныеПатчиВажнееНевыбранногоРежима()
+    {
+        var result = OverviewViewModel.DescribeWindowsUpdate(3, backgroundEnabled: false, neverOpened: true);
+
+        Assert.Equal("Найдено патчей: 3", result.Status);
+        Assert.True(result.NeedsAttention);
+    }
+
     [Theory]
     [InlineData(false, false, "Ничего не требует внимания.")]
     [InlineData(true, false, "Есть обновления программ, остальное в порядке.")]

@@ -140,7 +140,8 @@ namespace Ven4Tools.ViewModels
 
             (WindowsUpdateStatus, WindowsUpdateHint, WindowsUpdateNeedsAttention) =
                 DescribeWindowsUpdate(WindowsUpdateBackgroundService.AvailableCount,
-                    profile.WindowsUpdateMode != "NotSet" && !backgroundOff);
+                    profile.WindowsUpdateMode != "NotSet" && !backgroundOff,
+                    neverOpened: profile.WindowsUpdateMode == "NotSet" && !backgroundOff);
 
             var state = CatalogLoaderService.State;
             CatalogStatus = state.UsableCatalog is { } catalog
@@ -165,11 +166,19 @@ namespace Ven4Tools.ViewModels
                 : ("Фоновая проверка выключена", "Проверить вручную можно в «Установленных».", false);
         }
 
-        /// <summary>Текст карточки Windows Update. Чистая функция — покрыта тестами.</summary>
-        internal static (string Status, string Hint, bool NeedsAttention) DescribeWindowsUpdate(int count, bool backgroundEnabled)
+        /// <summary>
+        /// Текст карточки Windows Update. Чистая функция — покрыта тестами.
+        /// <paramref name="neverOpened"/> — режим ещё не выбран (раздел «Windows Update» и
+        /// настройки ни разу не открывались): проверку никто не выключал, она просто ещё
+        /// не начата, и карточка говорит, как её включить.
+        /// </summary>
+        internal static (string Status, string Hint, bool NeedsAttention) DescribeWindowsUpdate(
+            int count, bool backgroundEnabled, bool neverOpened = false)
         {
             if (count > 0)
                 return ($"Найдено патчей: {count}", "Патчи никогда не ставятся без вашего решения.", true);
+            if (neverOpened)
+                return ("Фоновая проверка ещё не включена", "Включится, когда вы впервые откроете «Windows Update».", false);
             return backgroundEnabled
                 ? ("Новых патчей не найдено", "Фоновая проверка идёт раз в шесть часов.", false)
                 : ("Фоновая проверка выключена", "Проверить вручную можно на вкладке «Windows Update».", false);

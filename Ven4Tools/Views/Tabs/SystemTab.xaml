@@ -504,11 +504,11 @@
                                FontSize="11" Margin="0,0,0,10"/>
                     <StackPanel Orientation="Horizontal">
                         <Button x:Name="btnExportSettings" Content="📤 Экспорт настроек"
-                                ToolTip="Сохранит настройки Ven4Tools в выбранный JSON-файл."
+                                ToolTip="Сохранит настройки Ven4Tools в выбранный архив (.zip)."
                                 Height="35" Width="180" Margin="0,0,10,0"
                                 Command="{Binding ExportSettingsCommand}"/>
                         <Button x:Name="btnImportSettings" Content="📥 Импорт настроек"
-                                ToolTip="Загрузит настройки из JSON-файла и применит поддерживаемые параметры."
+                                ToolTip="Загрузит настройки из сохранённого архива (.zip) и применит поддерживаемые параметры."
                                 Height="35" Width="180"
                                 Command="{Binding ImportSettingsCommand}"/>
                     </StackPanel>

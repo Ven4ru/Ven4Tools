@@ -2100,6 +2100,10 @@
     "t": "Enable the service (startup type “Manual” or “Automatic”) and click “Check for updates”"
   },
   {
+    "s": "Включится, когда вы впервые откроете «Windows Update».",
+    "t": "It turns on when you open “Windows Update” for the first time."
+  },
+  {
     "s": "Включить новый вид окна: обзор и шесть пунктов меню. Обратно — этой же кнопкой.",
     "t": "Switch to the new layout: an overview and six menu items. Use this button to switch back."
   },
@@ -2630,6 +2634,10 @@
   {
     "s": "Загрузит настройки из JSON-файла и применит поддерживаемые параметры.",
     "t": "Loads settings from a JSON file and applies the supported options."
+  },
+  {
+    "s": "Загрузит настройки из сохранённого архива (.zip) и применит поддерживаемые параметры.",
+    "t": "Loads settings from a saved archive (.zip) and applies the supported options."
   },
   {
     "s": "Загрузит свежий каталог приложений и обновит показанные записи.",
@@ -4356,6 +4364,10 @@
     "t": "Opens the catalog, where you select apps and install them as one set."
   },
   {
+    "s": "Откроет на GitHub страницу нового обращения: версия программы и Windows уже вписаны, остаётся написать сообщение.",
+    "t": "Opens a new issue page on GitHub: the app and Windows versions are already filled in, you only need to write your message."
+  },
+  {
     "s": "Откроет настройки фоновых проверок, автозапуска, обновления клиента и источника загрузки.",
     "t": "Opens settings for background checks, autostart, client updates and the download source."
   },
@@ -4374,6 +4386,10 @@
   {
     "s": "Откроет раздел Windows Update, где можно проверить и выбрать патчи.",
     "t": "Opens the Windows Update section, where you can check for and select updates."
+  },
+  {
+    "s": "Откроет раздел «Windows Update», где можно заново проверить и установить не установившиеся патчи.",
+    "t": "Opens the “Windows Update” section, where you can recheck and install updates that failed to install."
   },
   {
     "s": "Откроет раздел очистки: встроенные приложения, твики и точка восстановления.",
@@ -5356,6 +5372,10 @@
     "t": "Reason unknown"
   },
   {
+    "s": "Пробует источники по порядку — CDN, CDN по прямому адресу, зеркало ven4tools.ru, GitHub — и при сбое переходит к следующему.",
+    "t": "Tries the sources in order — CDN, CDN by direct address, the ven4tools.ru mirror, GitHub — and moves on to the next one on failure."
+  },
+  {
     "s": "Проверит недостающие системные компоненты и предложит установить каждый из них с подтверждением.",
     "t": "Checks for missing system components and offers to install each one, with confirmation."
   },
@@ -6144,6 +6164,10 @@
     "t": "Saves Ven4Tools settings to the selected JSON file."
   },
   {
+    "s": "Сохранит настройки Ven4Tools в выбранный архив (.zip).",
+    "t": "Saves Ven4Tools settings to the selected archive (.zip)."
+  },
+  {
     "s": "Сохранит отмеченные приложения как именованный пресет для повторного выбора.",
     "t": "Saves the selected apps as a named preset to select again later."
   },
@@ -6852,6 +6876,10 @@
     "t": "Background check is off"
   },
   {
+    "s": "Фоновая проверка ещё не включена",
+    "t": "Background check is not on yet"
+  },
+  {
     "s": "Фоновая проверка запускается через несколько минут после старта.",
     "t": "The background check starts a few minutes after launch."
   },
@@ -7244,6 +7272,10 @@
     "t": "nothing to compare against: {0}"
   },
   {
+    "s": "не удалось",
+    "t": "failed"
+  },
+  {
     "s": "не удалось запустить {0}",
     "t": "failed to start {0}"
   },
@@ -7522,6 +7554,10 @@
   {
     "s": "установлена {0} — она новее опубликованной, эталона для неё на сервере нет",
     "t": "{0} is installed — it is newer than the published one, the server has no reference for it"
+  },
+  {
+    "s": "установлено",
+    "t": "installed"
   },
   {
     "s": "установлено {0}, не удалось {1}, нет в каталоге {2}, недоступно {3}",
@@ -10374,6 +10410,14 @@
   {
     "s": "\uD83D\uDEE1️ Обновления Windows",
     "t": "\uD83D\uDEE1️ Windows Update"
+  },
+  {
+    "s": "\uD83D\uDEE1️ Открыть Windows Update →",
+    "t": "\uD83D\uDEE1️ Open Windows Update →"
+  },
+  {
+    "s": "\uD83D\uDEE1️ Ошибки Windows Update (7 дней)",
+    "t": "\uD83D\uDEE1️ Windows Update errors (7 days)"
   },
   {
     "s": "\uD83D\uDEE1️ Создаю точку восстановления...",

@@ -28,7 +28,7 @@ namespace Ven4Tools.Models
         {
             "winget" => "📦 Winget",
             "choco"  => "🍫 Chocolatey",
-            "direct" => "🔗 Direct",
+            "direct" => "🔗 Прямая ссылка",
             "cache"  => "🔌 Кэш",
             _        => Source
         };
@@ -40,6 +40,8 @@ namespace Ven4Tools.Models
         public string StatusIcon => Success ? "✅" : "❌";
 
         [JsonIgnore]
-        public string ActionVerb => (Success ? "install " : "failed  ");
+        // Слово занимает в строке списка место одной ширины (шрифт моноширинный), чтобы
+        // названия программ шли ровным столбцом на обоих языках.
+        public string ActionVerb => Tr(Success ? "установлено" : "не удалось").PadRight(12);
     }
 }

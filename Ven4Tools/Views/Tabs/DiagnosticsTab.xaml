@@ -115,7 +115,7 @@
                 </GroupBox>
 
                 <!-- Обновления Windows -->
-                <GroupBox Header="🪟 Ошибки Windows Update (7 дней)" Margin="0,0,0,15">
+                <GroupBox Header="🛡️ Ошибки Windows Update (7 дней)" Margin="0,0,0,15">
                     <StackPanel Margin="10">
                         <StackPanel x:Name="pnlWindowsUpdateFailures">
                             <TextBlock x:Name="txtWuPlaceholder" Text="Нажмите «Запустить диагностику»"
@@ -138,8 +138,8 @@
                                     Height="30" Width="240" HorizontalAlignment="Left"
                                     Visibility="{Binding WuButtonsVisible, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding ClearWuCacheCommand}"/>
-                            <Button x:Name="btnOpenWindowsUpdate" Content="🪟 Открыть Windows Update →"
-                                    ToolTip="Откроет вкладку «Обновления Windows», где можно заново проверить и установить не установившиеся патчи."
+                            <Button x:Name="btnOpenWindowsUpdate" Content="🛡️ Открыть Windows Update →"
+                                    ToolTip="Откроет раздел «Windows Update», где можно заново проверить и установить не установившиеся патчи."
                                     Height="30" Width="240" Margin="10,0,0,0" HorizontalAlignment="Left"
                                     Visibility="{Binding WuButtonsVisible, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding OpenWindowsUpdateCommand}"/>
