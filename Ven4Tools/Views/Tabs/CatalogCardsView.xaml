@@ -254,8 +254,9 @@
             </Border>
 
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <!-- Обычный ItemsControl намеренно: это список с группами (GroupStyle), и с FlatItemsControl
-                     средства автоматизации перестают находить его строки — проверено прогоном UI-тестов. -->
+                <!-- Обычный ItemsControl намеренно: это список с группами (GroupStyle). Узел группы в WPF
+                     берёт свои строки только у штатного узла списка, так что упрощённый узел
+                     FlatItemsControl списку с группами ничего не даёт — подробно в FlatItemsControl.cs. -->
                 <ItemsControl x:Name="lstCatalogCards" ItemsSource="{Binding AppsView}" Margin="0,0,6,16">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
