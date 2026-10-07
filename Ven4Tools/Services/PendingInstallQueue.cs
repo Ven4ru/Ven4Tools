@@ -107,10 +107,17 @@ namespace Ven4Tools.Services
                 }
                 return model;
             }
+            catch (JsonException ex)
+            {
+                AppLogger.Write($"[PendingInstallQueue] Очередь испорчена и сброшена: {ex.Message}");
+                Delete();
+                return null;
+            }
             catch (Exception ex)
             {
-                AppLogger.Write($"[PendingInstallQueue] Очередь не прочитана и сброшена: {ex.Message}");
-                Delete();
+                // Файл занят или недоступен — это не повод терять очередь: при
+                // следующем запуске она прочитается.
+                AppLogger.Write($"[PendingInstallQueue] Очередь сейчас не прочитана: {ex.Message}");
                 return null;
             }
         }
@@ -119,7 +126,6 @@ namespace Ven4Tools.Services
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
                 FileHelper.WriteAllTextAtomic(_path, JsonSerializer.Serialize(model));
             }
             catch (Exception ex)

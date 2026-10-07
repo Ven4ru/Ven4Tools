@@ -39,7 +39,7 @@ namespace Ven4Tools.Views.Tabs
             _viewModel.OwnerWindowProvider = () => Window.GetWindow(this);
             // Проверка «что вернуло обновление Windows» — при первом показе вкладки,
             // а не в конструкторе: она читает реестр и может запустить PowerShell.
-            Loaded += async (_, _) => await _viewModel.CheckDriftOnceAsync();
+            Loaded += (_, _) => TabInitGuard.Run(_viewModel.CheckDriftOnceAsync, "DebloaterTab.CheckDriftOnceAsync");
         }
 
         // Единственная логика, оставшаяся в code-behind: RadioButton.Checked не

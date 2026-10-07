@@ -330,10 +330,10 @@ namespace Ven4Tools
         private void NavigateToActivation(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnActivationTab);
-            if (sender != null) AppLogger.Write("📂 Открыта вкладка: Активация");
+            if (sender != null) AppLogger.Write("📂 Открыта вкладка: Лицензия");
             if (_activationTab == null) _activationTab = new ActivationTab();
             MainFrame.Content = (_activationTab);
-            UpdateMascot("activation");
+            UpdateMascot("system"); // вкладка только показывает состояние лицензий — отдельного маскота у неё нет
         }
 
         private void NavigateToAbout(object? sender, RoutedEventArgs? e)
@@ -400,8 +400,9 @@ namespace Ven4Tools
             UpdateConnectionIndicator();
 
             // Вкладки, работающие только при наличии сети
+            // «Лицензия» в их число не входит: состояние активации читается с самого
+            // компьютера, сеть для этого не нужна.
             btnOfficeTab.Visibility     = online ? Visibility.Visible : Visibility.Collapsed;
-            btnActivationTab.Visibility = online ? Visibility.Visible : Visibility.Collapsed;
             btnNetworkTab.Visibility    = online ? Visibility.Visible : Visibility.Collapsed;
 
             btnHistoryTab.Visibility = Visibility.Visible;
@@ -413,7 +414,7 @@ namespace Ven4Tools
                     : "🔌 Офлайн режим — часть вкладок скрыта";
                 AppLogger.Write(reason);
 
-                if (_currentTab is "office" or "activation" or "network")
+                if (_currentTab is "office" or "network")
                     NavigateToCatalog(null, null);
             }
 

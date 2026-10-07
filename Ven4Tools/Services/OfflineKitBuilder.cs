@@ -43,7 +43,7 @@ namespace Ven4Tools.Services
             Directory.CreateDirectory(kitRoot);
 
             progress?.Report("Копирование клиента…");
-            var (files, bytes) = CopyClient(clientDirectory, Path.Combine(kitRoot, ClientFolderName), kitRoot, ct);
+            var (files, bytes) = CopyClient(clientDirectory, Path.Combine(kitRoot, ClientFolderName), ct);
 
             progress?.Report("Запись файла ответа…");
             File.WriteAllText(Path.Combine(kitRoot, AnswerFileName), BuildAnswerFile(cachedAppIds), new UTF8Encoding(false));
@@ -82,13 +82,12 @@ namespace Ven4Tools.Services
             "по контрольной сумме из каталога перед запуском. Клиент работает прямо с\r\n" +
             "флешки и настройки на компьютере не меняет.\r\n";
 
-        // Копия клиента без того, что к программе не относится: набор может лежать
-        // внутри папки клиента или рядом, а кэш и журналы тащить с собой незачем.
-        internal static (int Files, long Bytes) CopyClient(string source, string target, string kitRoot, CancellationToken ct)
+        // Копия клиента без того, что к программе не относится: кэш и журналы тащить
+        // с собой незачем. Папка набора внутри папки клиента отклоняется ниже.
+        internal static (int Files, long Bytes) CopyClient(string source, string target, CancellationToken ct)
         {
             string sourceFull = Path.GetFullPath(source).TrimEnd(Path.DirectorySeparatorChar);
             string targetFull = Path.GetFullPath(target).TrimEnd(Path.DirectorySeparatorChar);
-            string kitFull = Path.GetFullPath(kitRoot).TrimEnd(Path.DirectorySeparatorChar);
 
             if (!File.Exists(Path.Combine(sourceFull, "Ven4Tools.exe")))
                 throw new FileNotFoundException("В папке клиента нет Ven4Tools.exe — копировать нечего.", sourceFull);
@@ -100,8 +99,11 @@ namespace Ven4Tools.Services
             foreach (string file in Directory.EnumerateFiles(sourceFull, "*", SearchOption.AllDirectories))
             {
                 ct.ThrowIfCancellationRequested();
-                // Набор, собираемый внутри папки клиента, не копирует сам себя.
-                if (IsSameOrInside(Path.GetFullPath(file), kitFull)) continue;
+                // Копия не копирует саму себя. Сверяется именно папка копии, а не вся
+                // папка набора: клиент может лежать внутри неё (кэш по умолчанию —
+                // %LocalAppData%\Ven4Tools, клиент — в её подпапке), и тогда пропускались
+                // бы все его файлы.
+                if (IsSameOrInside(Path.GetFullPath(file), targetFull)) continue;
 
                 string relative = Path.GetRelativePath(sourceFull, file);
                 if (IsTransient(relative)) continue;
@@ -112,6 +114,8 @@ namespace Ven4Tools.Services
                 files++;
                 bytes += new FileInfo(file).Length;
             }
+            if (!File.Exists(Path.Combine(targetFull, "Ven4Tools.exe")))
+                throw new IOException("Клиент не скопирован в набор — без него набор не запустится.");
             return (files, bytes);
         }
 

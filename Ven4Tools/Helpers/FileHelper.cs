@@ -80,6 +80,24 @@ internal static class FileHelper
         EnsureNotRedirected(dir, path);
     }
 
+    /// <summary>
+    /// Откладывает нечитаемый файл данных в сторону (<c>имя.bad</c>), чтобы на его
+    /// месте можно было начать заново, а содержимое осталось для разбора. Ошибки не
+    /// бросает: не отложился — следующая запись просто заменит файл.
+    /// </summary>
+    public static void SetAsideBroken(string path)
+    {
+        try
+        {
+            EnsureNotRedirected(Path.GetDirectoryName(path)!, path);
+            File.Move(path, path + ".bad", overwrite: true);
+        }
+        catch (System.Exception ex)
+        {
+            Services.AppLogger.Write($"[FileHelper] Испорченный файл не отложен: {ex.Message}");
+        }
+    }
+
     public static void WriteAllTextAtomic(string path, string content)
     {
         var dir = Path.GetDirectoryName(path)!;

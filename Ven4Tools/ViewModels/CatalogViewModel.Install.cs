@@ -185,10 +185,12 @@ namespace Ven4Tools.ViewModels
             {
               foreach (var row in selected)
               {
-                await InstallationService.InstallSemaphore.WaitAsync();
+                // Отмена во время ожидания и между программами — это отмена, а не
+                // штатное завершение: иначе итог сообщал бы об успехе без неначатых программ.
+                await InstallationService.InstallSemaphore.WaitAsync(token);
                 try
                 {
-                    if (token.IsCancellationRequested) return;
+                    token.ThrowIfCancellationRequested();
                     var result = await _installService!.InstallAppAsync(
                         row.App, _wingetSources, token, progress, SelectedInstallDrive, row.PinnedVersion, ConfirmPmInstall);
                     if (result.Success)

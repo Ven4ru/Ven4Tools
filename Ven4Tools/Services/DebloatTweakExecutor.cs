@@ -40,6 +40,8 @@ namespace Ven4Tools.Services
                 // обновление Windows (см. DebloatDriftService).
                 if (ok) DebloatAppliedJournal.Default.MarkApplied(id);
                 return ok;
+                // Запись отката при неуспехе остаётся намеренно: твик мог примениться
+                // частично, и вернуть уже записанные значения можно только по ней.
             }
             catch (Exception ex)
             {
@@ -119,6 +121,21 @@ namespace Ven4Tools.Services
             ("service", "svc_dmwappushsvc") => "dmwappushservice",
             _                               => null
         };
+
+        /// <summary>
+        /// Всё, что твик с таким идентификатором вправе менять, без оглядки на категорию.
+        /// По этому списку откат отсеивает записи файла, которых в описании твика нет.
+        /// </summary>
+        public static (IReadOnlyList<DebloatRegistryChange> Registry, IReadOnlyList<string> Services) KnownChangesOf(string tweakId)
+        {
+            var services = new List<string>(2);
+            foreach (string category in new[] { "privacy", "service" })
+            {
+                if (ServiceOf(category, tweakId) is { } service && !services.Contains(service))
+                    services.Add(service);
+            }
+            return (RegistryChangesOf("privacy", tweakId), services);
+        }
 
         /// <summary>Можно ли вернуть твик точечно: он меняет реестр или службу, а не удаляет приложение.</summary>
         public static bool IsUndoable(string category, string tweakId) =>

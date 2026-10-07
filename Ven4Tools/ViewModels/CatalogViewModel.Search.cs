@@ -42,7 +42,11 @@ namespace Ven4Tools.ViewModels
                     // AppsView.IsEmpty учитывает текущий фильтр без полного перечисления
                     // представления (сеттер срабатывает на каждое нажатие клавиши в поиске),
                     // в отличие от прежнего Cast<object>().Count() == 0.
-                    if (value.Length >= 2 && AppsView.IsEmpty)
+                    // Подсказки отправляют набранный текст в winget и Chocolatey. В офлайне
+                    // искать негде, а в параноидальном режиме клиент сам, без явного
+                    // действия, в сеть не ходит — набор текста таким действием не считается.
+                    if (value.Length >= 2 && AppsView.IsEmpty
+                        && !OfflineService.IsOffline && !ProfileService.Current.ParanoidMode)
                     {
                         _searchDebounce = new CancellationTokenSource();
                         _ = RunSearchSuggestionsAsync(value, _searchDebounce.Token).ContinueWith(

@@ -26,6 +26,31 @@ public class ActivationViewModelTests
         Assert.Null(typeof(ActivationViewModel).Assembly.GetType("Ven4Tools.Views.MasGuideWindow"));
     }
 
+    /// <summary>
+    /// Разметка клиента не упоминает инструменты активации и не обещает активацию
+    /// среди возможностей: проверка одного только типа окна выше этого не ловит —
+    /// строка может остаться в «О программе» или на соседней вкладке.
+    /// </summary>
+    [Fact]
+    public void Разметка_БезУпоминанийИнструментовАктивации()
+    {
+        string client = Path.Combine(RepositoryRoot(), "Ven4Tools");
+        var forbidden = new[] { "Activation Scripts", "massgrave", "(MAS)", "Активация Windows и Office", "Перейдите к активации" };
+
+        var hits = Directory.EnumerateFiles(client, "*.xaml", SearchOption.AllDirectories)
+            .Where(file => !file.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                        && !file.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar))
+            .SelectMany(file => forbidden
+                .Where(word => File.ReadAllText(file).Contains(word, StringComparison.OrdinalIgnoreCase))
+                .Select(word => $"{Path.GetFileName(file)}: {word}"))
+            .ToArray();
+
+        Assert.Empty(hits);
+    }
+
+    private static string RepositoryRoot([System.Runtime.CompilerServices.CallerFilePath] string thisFile = "") =>
+        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(thisFile)!, "..", ".."));
+
     [Fact]
     public void WindowsStatusText_ИOfficeStatusText_ПоУмолчанию_Проверка()
     {

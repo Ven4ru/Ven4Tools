@@ -35,6 +35,13 @@ namespace Ven4Tools.Services
         public bool Silent { get; init; }
 
         /// <summary>
+        /// Тихий режим задан самим запуском (<c>--silent</c>), а не файлом ответа.
+        /// Файл может прийти откуда угодно, поэтому то, что без вопроса делать нельзя
+        /// (установка драйверов), одного его слова не слушается.
+        /// </summary>
+        public bool SilentFromCommandLine { get; init; }
+
+        /// <summary>
         /// Создавать ли точку восстановления перед установкой. null — как решит
         /// обычный сценарий: с окном спросить, в тихом режиме не создавать.
         /// </summary>
@@ -173,6 +180,14 @@ namespace Ven4Tools.Services
             {
                 try
                 {
+                    // Размер проверяется до чтения: огромный файл не должен целиком
+                    // попадать в память ради отказа.
+                    if (System.IO.File.Exists(answerFile)
+                        && new System.IO.FileInfo(answerFile).Length > MaxAnswerFileLength * 4L)
+                    {
+                        error = "Файл ответа слишком велик.";
+                        return ParseStatus.Error;
+                    }
                     string json = readFile(answerFile);
                     if (json.Length > MaxAnswerFileLength)
                     {
@@ -220,6 +235,15 @@ namespace Ven4Tools.Services
                 error = "Папки драйверов и Wi-Fi в файле ответа задаются относительно самого файла и не могут выходить за его папку.";
                 return ParseStatus.Error;
             }
+            // То же для отчёта и офлайн-кэша ИЗ ФАЙЛА: отчёт пишется с правами
+            // администратора, а несошедшийся по хешу установщик из кэша удаляется.
+            // Произвольный путь задаётся только командной строкой — её пишет тот, кто запускает.
+            if (!TryResolveInsideAnswerFolder(file?.Report, answerFile, out string? fileReport)
+                || !TryResolveBesideAnswerFile(file?.OfflineCache, answerFile, out string? fileOfflineCache))
+            {
+                error = "Отчёт и офлайн-кэш в файле ответа задаются относительно самого файла и не могут выходить за его папку.";
+                return ParseStatus.Error;
+            }
             bool hasRestore = driversPath != null || wifiPath != null;
 
             if (!updateApps && ids.Count == 0 && !hasRestore)
@@ -248,8 +272,9 @@ namespace Ven4Tools.Services
                 RestorePoint = restorePoint ?? file?.RestorePoint,
                 InstallDrive = resolvedDrive,
                 AllowPackageManagers = file?.AllowPackageManagers ?? true,
-                ReportPath = report ?? file?.Report,
-                OfflineCachePath = offlineCache ?? ResolveBesideAnswerFile(file?.OfflineCache, answerFile),
+                SilentFromCommandLine = silent,
+                ReportPath = report ?? fileReport,
+                OfflineCachePath = offlineCache ?? fileOfflineCache,
                 RestoreDriversPath = driversPath,
                 RestoreWifiPath = wifiPath
             };
@@ -305,12 +330,24 @@ namespace Ven4Tools.Services
         /// Путь из файла ответа отсчитывается от папки самого файла: «.» — рядом с ним.
         /// Так набор на флешке работает с любой буквой диска.
         /// </summary>
-        private static string? ResolveBesideAnswerFile(string? path, string? answerFile)
+        private static bool TryResolveBesideAnswerFile(string? path, string? answerFile, out string? resolved)
         {
-            if (string.IsNullOrWhiteSpace(path)) return null;
-            if (System.IO.Path.IsPathRooted(path) || answerFile == null) return path;
+            resolved = null;
+            if (string.IsNullOrWhiteSpace(path)) return true;
+            if (answerFile == null || System.IO.Path.IsPathRooted(path)) return false;
+
             string? directory = System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(answerFile));
-            return directory == null ? path : System.IO.Path.GetFullPath(System.IO.Path.Combine(directory, path));
+            if (directory == null) return false;
+
+            // «.» — сама папка файла: так записан офлайн-набор.
+            string full = System.IO.Path.GetFullPath(System.IO.Path.Combine(directory, path));
+            if (full.TrimEnd(System.IO.Path.DirectorySeparatorChar)
+                    .Equals(directory.TrimEnd(System.IO.Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
+            {
+                resolved = full;
+                return true;
+            }
+            return TryResolveInsideAnswerFolder(path, answerFile, out resolved);
         }
 
         private static bool TryNormalizeDrive(string value, out string? drive)

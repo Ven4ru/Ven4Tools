@@ -185,7 +185,9 @@ namespace Ven4Tools.Services
             string content = Build(optionsForKitPath(relative));
             string target = Path.Combine(driveRoot, FileName);
             if (File.Exists(target))
-                File.Copy(target, target + ".bak", overwrite: true);
+                // Прежняя копия не перезаписывается: при повторной сборке в .bak лежал бы
+                // уже наш собственный файл, а исходный пропал бы.
+                if (!File.Exists(target + ".bak")) File.Copy(target, target + ".bak");
             File.WriteAllText(target, content, new UTF8Encoding(false));
             return target;
         }

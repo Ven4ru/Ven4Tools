@@ -179,7 +179,7 @@
             <TextBlock Text="🔑 Office устанавливается без активации: для работы нужна ваша лицензия Microsoft. Ven4Tools только скачивает официальный установщик и ничего не активирует."
                        Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
 
-            <!-- Кнопка активации — только для авторизованных -->
+            <!-- Переход на вкладку «Лицензия»: там только показ состояния, без активации -->
             <Border x:Name="pnlActivationHint"
                     Visibility="{Binding ActivationHintVisible, Converter={StaticResource BoolToVis}}"
                     Background="{DynamicResource CardBackground}"
@@ -188,12 +188,12 @@
                     Padding="16,12" Margin="0,20,0,0">
                 <DockPanel>
                     <Button x:Name="btnGoActivation" DockPanel.Dock="Right"
-                            Content="🔑 Активация →"
-                            ToolTip="Откроет вкладку управления лицензиями Office. Активация автоматически не выполняется."
+                            Content="🔑 Состояние лицензии →"
+                            ToolTip="Откроет вкладку «Лицензия»: там видно, активированы ли Windows и Office. Ven4Tools ничего не активирует."
                             Height="36" Padding="16,0"
                             FontWeight="Bold" FontSize="13"
                             Command="{Binding GoActivationCommand}"/>
-                    <TextBlock Text="Office уже установлен? Перейдите к активации."
+                    <TextBlock Text="Office уже установлен? Посмотрите состояние его лицензии."
                                Foreground="{DynamicResource TextSecondary}"
                                VerticalAlignment="Center" TextWrapping="Wrap"
                                Margin="0,0,12,0"/>
