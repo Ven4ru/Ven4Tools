@@ -14,7 +14,7 @@
       2. Атомарно заливает переданные файлы в /var/www/cdn/releases (.tmp + mv)
          и сверяет SHA256 на сервере с локальным.
       3. Меняет в манифесте только блоки выкладываемых компонентов. Для клиента
-         прежняя пара version/sha256 переносится в historicalClientArchives.
+         список historicalClientArchives очищается: публикуется только текущая сборка.
       4. Подписывает и выкладывает манифест через deploy-version-manifest.ps1
          (там же — публичная проверка подписи).
       5. Проверяет публичную доступность файлов по адресам из манифеста.
@@ -60,6 +60,7 @@ $CdnBase = 'https://cdn.ven4tools.ru'
 $MirrorBase = 'https://ven4tools.ru'
 $GitHubBase = 'https://github.com/Ven4ru/Ven4Tools/releases/download'
 $RemoteReleases = '/var/www/cdn/releases'
+$RemoteClientFiles = '/var/www/cdn/client-files'
 
 if (-not $ClientZip -and -not $LauncherSetup) {
     throw 'Нечего выкладывать: укажите -ClientZip и/или -LauncherSetup.'
@@ -143,7 +144,6 @@ if (-not $manifest.client -or -not $manifest.launcher) {
 if ($ClientZip) {
     $zipName = Split-Path -Leaf $ClientZip
     $previousVersion = [string]$manifest.client.version
-    $previousSha = [string]$manifest.client.zip_sha256
 
     if ($previousVersion -and ([version]$clientVersion -lt [version]$previousVersion)) {
         throw "На CDN уже клиент $previousVersion — выкладка более старого $clientVersion отменена."
@@ -161,12 +161,10 @@ if ($ClientZip) {
 
     $sha = Publish-Artifact -Path $ClientZip
 
-    # Прежняя версия — в список архивов, которые лаунчер принимает из локального файла.
-    if ($previousVersion -and $previousSha -and $previousVersion -ne $clientVersion) {
-        $history = @($manifest.historicalClientArchives | Where-Object { $_ -and $_.version -ne $previousVersion })
-        $entry = [pscustomobject][ordered]@{ version = $previousVersion; sha256 = $previousSha }
-        Set-Field $manifest 'historicalClientArchives' (@($entry) + $history)
-    }
+    # Публикуется только текущая сборка клиента (решение от 07.10.2026): прежняя
+    # версия в список принимаемых архивов больше не переносится, а её файлы на
+    # сервере убираются после публичной проверки — см. конец скрипта.
+    Set-Field $manifest 'historicalClientArchives' @()
 
     Set-Field $manifest.client 'version' $clientVersion
     Set-Field $manifest.client 'zip_url' "$CdnBase/releases/$zipName"
@@ -224,6 +222,20 @@ if ($LauncherSetup) { $urls += $manifest.launcher.setup_url, $manifest.launcher.
 $failed = @($urls | Where-Object { -not (Test-PublicUrl $_) })
 if ($failed.Count -gt 0) {
     throw "Манифест выложен, но файлы недоступны публично: $($failed -join ', ')"
+}
+
+# --- Уборка прежней сборки клиента ---------------------------------------------
+# Только после публичной проверки новой: до неё прежняя сборка — единственная рабочая.
+# Версия подставляется в команду на сервере, поэтому принимается только вида X.Y.Z.
+if ($ClientZip -and $previousVersion -and $previousVersion -ne $clientVersion -and $previousVersion -match '^\d+\.\d+\.\d+$') {
+    $oldZip = "$RemoteReleases/Ven4Tools-Client-$previousVersion.zip"
+    $oldFiles = "$RemoteClientFiles/$previousVersion"
+    ssh jump "rm -f '$oldZip' && rm -rf '$oldFiles'"
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Прежняя сборка клиента $previousVersion убрана с сервера."
+    } else {
+        Write-Warning "Прежняя сборка клиента $previousVersion с сервера не убрана (ssh, код $LASTEXITCODE) — уберите вручную: $oldZip и $oldFiles"
+    }
 }
 
 Write-Host ''

@@ -174,9 +174,11 @@ namespace Ven4Tools.ClientUITests
             File.WriteAllText(answerFile, "{\"apps\":[],\"silent\":true,\"wifi\":\"WiFi\"}");
             string reportPath = Path.Combine(_workDir, "report-kit.json");
 
-            int? exitCode = Run($"--answer-file \"{answerFile}\" --report \"{reportPath}\"", TimeSpan.FromMinutes(2));
+            // --silent задаётся запуском: одного слова файла ответа для возврата без
+            // вопроса недостаточно (файл может прийти откуда угодно).
+            int? exitCode = Run($"--answer-file \"{answerFile}\" --silent --report \"{reportPath}\"", TimeSpan.FromMinutes(2));
 
-            Assert.AreEqual(0, exitCode, "Набор без программ должен завершаться кодом 0 и без вопросов.");
+            Assert.AreEqual(1, exitCode, "Профиль не добавился — тихий режим не должен сообщать об успехе (код 1), и вопросов быть не должно.");
             var report = ReadReport(reportPath);
             string restored = report.GetProperty("Restored").ToString();
             StringAssert.Contains(restored, "Профили Wi-Fi", "В итоге не отражён возврат профилей Wi-Fi: " + restored);

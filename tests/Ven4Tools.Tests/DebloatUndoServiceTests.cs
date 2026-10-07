@@ -150,6 +150,70 @@ public sealed class DebloatUndoServiceTests : IDisposable
         Assert.Equal(new[] { "advertising_id" }, afterRestart.RecordedTweaks());
     }
 
+    /// <summary>
+    /// Файл записей лежит в профиле и доступен на запись без прав администратора, а
+    /// откат идёт с ними. Строки, которых нет в описании твика, не выполняются:
+    /// иначе правкой файла можно записать что угодно в HKLM или включить любую службу.
+    /// </summary>
+    [Fact]
+    public async Task ЧужиеСтрокиВФайлеЗаписей_НеВыполняются()
+    {
+        const string foreignPath = @"HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System";
+        _system.WriteDword(PolicyPath, "AllowTelemetry", 0);
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(_path, System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object>
+        {
+            ["telemetry"] = new
+            {
+                AppliedUtc = DateTime.UtcNow,
+                Registry = new object[]
+                {
+                    new { Path = PolicyPath, Name = "AllowTelemetry", Existed = true, Value = 3 },
+                    new { Path = foreignPath, Name = "EnableLUA", Existed = true, Value = 0 }
+                },
+                Services = new object[] { new { Name = "RemoteRegistry", StartMode = 2 } }
+            }
+        }));
+
+        await _undo.UndoAsync("telemetry");
+
+        Assert.Equal(3, _system.Get(PolicyPath, "AllowTelemetry"));
+        Assert.False(_system.Has(foreignPath, "EnableLUA"));
+        Assert.DoesNotContain("RemoteRegistry", _system.Services.Keys);
+    }
+
+    [Fact]
+    public async Task ЗаписьТолькоИзЧужихСтрок_НеОткатывается()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(_path, System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object>
+        {
+            ["advertising_id"] = new
+            {
+                AppliedUtc = DateTime.UtcNow,
+                Registry = new object[] { new { Path = PolicyPath, Name = "AllowTelemetry", Existed = false, Value = 0 } },
+                Services = Array.Empty<object>()
+            }
+        }));
+        _system.WriteDword(PolicyPath, "AllowTelemetry", 0);
+
+        Assert.False(await _undo.UndoAsync("advertising_id"));
+        Assert.True(_system.Has(PolicyPath, "AllowTelemetry"));
+    }
+
+    [Fact]
+    public void ИспорченныйФайл_ОткладываетсяИНеМешаетНовымЗаписям()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(_path, "не json");
+
+        _system.WriteDword(AdsPath, "Enabled", 1);
+        _undo.Capture("advertising_id", AdsTweak, service: null);
+
+        Assert.Equal(new[] { "advertising_id" }, _undo.RecordedTweaks());
+        Assert.True(File.Exists(_path + ".bad"));
+    }
+
     [Fact]
     public async Task ИспорченныйФайл_НеРоняет()
     {

@@ -123,7 +123,7 @@ namespace Ven4Tools.Services
             {
                 progress?.Report("Копирование клиента…");
                 await Task.Run(() => OfflineKitBuilder.CopyClient(
-                    clientDirectory, Path.Combine(root, OfflineKitBuilder.ClientFolderName), root, ct), ct);
+                    clientDirectory, Path.Combine(root, OfflineKitBuilder.ClientFolderName), ct), ct);
             }
 
             return result;
@@ -132,6 +132,7 @@ namespace Ven4Tools.Services
         private static async Task ExportDriversAsync(string root, IKitCommandRunner runner, Result result, CancellationToken ct)
         {
             string folder = Path.Combine(root, DriversFolderName);
+            ClearPreviousExport(folder);
             Directory.CreateDirectory(folder);
 
             // Драйверы одной видеокарты — это гигабайты; на заполненной флешке pnputil
@@ -149,13 +150,15 @@ namespace Ven4Tools.Services
 
             // Считаем по факту: pnputil возвращает ненулевой код и тогда, когда часть
             // пакетов выгрузилась, а один не дался.
-            var infFiles = Directory.Exists(folder)
-                ? Directory.GetFiles(folder, "*.inf", SearchOption.AllDirectories)
-                : Array.Empty<string>();
-            result.Drivers = infFiles.Select(Path.GetDirectoryName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
-            result.DriversBytes = Directory.Exists(folder)
-                ? Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length)
-                : 0;
+            // Обход идёт не в потоке окна: на медленной флешке это гигабайты файлов.
+            (result.Drivers, result.DriversBytes) = await Task.Run(() =>
+            {
+                if (!Directory.Exists(folder)) return (0, 0L);
+                int packages = Directory.GetFiles(folder, "*.inf", SearchOption.AllDirectories)
+                    .Select(Path.GetDirectoryName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+                long bytes = Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length);
+                return (packages, bytes);
+            }, ct);
 
             if (result.Drivers == 0)
                 result.Warnings.Add($"Драйверы не выгружены (pnputil, код {code}). {LastLine(output)}".TrimEnd());
@@ -179,17 +182,39 @@ namespace Ven4Tools.Services
         private static async Task ExportWifiAsync(string root, IKitCommandRunner runner, Result result, CancellationToken ct)
         {
             string folder = Path.Combine(root, WifiFolderName);
+            ClearPreviousExport(folder);
             Directory.CreateDirectory(folder);
             // key=clear: без него профиль переносится без пароля и на новой системе бесполезен.
-            await runner.RunAsync(
+            var (code, _) = await runner.RunAsync(
                 KitCommands.Netsh, new[] { "wlan", "export", "profile", "key=clear", "folder=" + folder },
                 TimeSpan.FromMinutes(2), ct);
 
             result.WifiProfiles = Directory.Exists(folder) ? Directory.GetFiles(folder, "*.xml").Length : 0;
-            // Не предупреждение: на компьютере без Wi-Fi профилей и не должно быть.
             if (result.WifiProfiles == 0)
             {
+                // Код 0 и ни одного файла — профилей действительно нет (компьютер без
+                // Wi-Fi). Утилита не запустилась или не уложилась во время (отрицательный
+                // код) — это уже не «профилей нет», и молчать об этом нельзя.
+                if (code < 0)
+                    result.Warnings.Add("Профили Wi-Fi не выгружены: netsh не ответил. Проверьте, что служба беспроводной сети работает, и соберите набор ещё раз.");
                 try { Directory.Delete(folder); } catch { /* папка непуста или занята — оставляем */ }
+            }
+        }
+
+        /// <summary>
+        /// Убирает выгруженное прошлой сборкой в ту же папку. Иначе в набор попали бы
+        /// драйверы и сети, которых на компьютере уже нет, а счёт выгруженного был бы завышен.
+        /// Удаляются только файлы тех видов, которые кладёт сама выгрузка.
+        /// </summary>
+        private static void ClearPreviousExport(string folder)
+        {
+            try
+            {
+                if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[Набор] Прошлая выгрузка не убрана ({Path.GetFileName(folder)}): {ex.Message}");
             }
         }
 
@@ -323,7 +348,14 @@ namespace Ven4Tools.Services
     /// </summary>
     public static class ReinstallKitRestorer
     {
-        public sealed record Outcome(int? DriverPackages, bool DriversRebootNeeded, int? WifiAdded, int WifiFailed, IReadOnlyList<string> Log);
+        public sealed record Outcome(int? DriverPackages, bool DriversRebootNeeded, int? WifiAdded, int WifiFailed, IReadOnlyList<string> Log)
+        {
+            /// <summary>pnputil не запустился или вернул код ошибки.</summary>
+            public bool DriversFailed { get; init; }
+
+            /// <summary>Что-то из набора не вернулось — тихий режим не должен сообщать об успехе.</summary>
+            public bool Failed => DriversFailed || WifiFailed > 0;
+        }
 
         /// <summary>Сколько пакетов драйверов и профилей Wi-Fi лежит в наборе.</summary>
         public static (int Drivers, int Wifi) Describe(string? driversPath, string? wifiPath)
@@ -348,6 +380,7 @@ namespace Ven4Tools.Services
             bool reboot = false;
             int? wifiAdded = null;
             int wifiFailed = 0;
+            bool driversFailed = false;
 
             if (driverCount > 0)
             {
@@ -362,10 +395,13 @@ namespace Ven4Tools.Services
                 // pnputil сообщает о перезагрузке не только кодом 3010: проверено вживую —
                 // при коде 259 он тоже может просить перезапуск текстом. Поэтому совет
                 // перезагрузиться даётся всегда, а не только по коду.
-                log.Add(code is 0 or 3010 or 259
+                driversFailed = code is not (0 or 3010 or 259);
+                log.Add(!driversFailed
                     ? $"Драйверы возвращены: пакетов в наборе {driverCount}. " +
                       (reboot ? "Нужна перезагрузка." : "Если какое-то устройство не заработало, перезагрузите компьютер.")
-                    : $"Драйверы возвращены не полностью (pnputil, код {code}): часть устройств могла уже иметь более новый драйвер");
+                    : code < 0
+                        ? "Драйверы не возвращены: pnputil не запустился или не уложился в отведённое время"
+                        : $"Драйверы возвращены не полностью (pnputil, код {code}): часть устройств могла уже иметь более новый драйвер");
             }
 
             if (wifiCount > 0)
@@ -383,7 +419,7 @@ namespace Ven4Tools.Services
                 log.Add($"Профили Wi-Fi возвращены: {wifiAdded}" + (wifiFailed > 0 ? $", не добавлено: {wifiFailed}" : ""));
             }
 
-            return new Outcome(driverPackages, reboot, wifiAdded, wifiFailed, log);
+            return new Outcome(driverPackages, reboot, wifiAdded, wifiFailed, log) { DriversFailed = driversFailed };
         }
     }
 

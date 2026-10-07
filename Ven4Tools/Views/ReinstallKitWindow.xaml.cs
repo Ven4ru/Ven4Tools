@@ -141,15 +141,17 @@ namespace Ven4Tools.Views
 
                 var catalogApps = new List<(string Id, string Name, string WingetId)>();
                 var installed = new List<KitInstalledProgram>();
+                string? programsWarning = null;
                 if (options.Apps)
                 {
                     ShowStatus("⏳ Список установленных программ…", error: false);
-                    (catalogApps, installed) = await CollectProgramsAsync();
+                    (catalogApps, installed, programsWarning) = await CollectProgramsAsync();
                 }
 
                 var result = await ReinstallKitBuilder.BuildAsync(
                     options, catalogApps, installed, AppContext.BaseDirectory,
                     KitCommandRunner.Default, progress, _cts.Token, ExportWingetAsync);
+                if (programsWarning != null) result.Warnings.Add(programsWarning);
 
                 _builtFolder = Path.GetFullPath(folder);
                 btnOpenKitFolder.IsEnabled = true;
@@ -196,11 +198,19 @@ namespace Ven4Tools.Views
         /// Что стоит на компьютере: программы каталога (их вернёт файл ответа) и всё,
         /// что видит winget (по нему строится список «поставить вручную»).
         /// </summary>
-        private static async Task<(List<(string Id, string Name, string WingetId)> Catalog, List<KitInstalledProgram> Installed)>
+        private static async Task<(List<(string Id, string Name, string WingetId)> Catalog, List<KitInstalledProgram> Installed, string? Warning)>
             CollectProgramsAsync()
         {
-            var (_, output) = await WingetRunner.RunAsync($"list {WingetArgs.NonInteractiveLine}");
+            var (code, output) = await WingetRunner.RunAsync($"list {WingetArgs.NonInteractiveLine}");
             var rows = InstalledViewModel.ParseWingetList(output);
+
+            // Пустой список — это не «программ нет», а несработавший winget или
+            // незагруженный каталог: набор с нулём программ выглядел бы исправным.
+            string? warning = null;
+            if (rows.Count == 0)
+                warning = $"Список программ не получен (winget, код {code}) — в наборе нет программ. Проверьте winget и соберите набор ещё раз.";
+            else if (CatalogLoaderService.State.UsableCatalog == null)
+                warning = "Каталог Ven4Tools не загружен — программы каталога в набор не попали. Дождитесь загрузки каталога и соберите набор ещё раз.";
             var installedIds = new HashSet<string>(rows.Select(r => r.WingetId), StringComparer.OrdinalIgnoreCase);
 
             var catalog = CatalogLoaderService.State.UsableCatalog;
@@ -211,7 +221,7 @@ namespace Ven4Tools.Views
                     .Select(a => (a.Id, a.Name, a.WingetId))
                     .ToList();
 
-            return (catalogApps, rows.Select(r => new KitInstalledProgram(r.Name, r.WingetId, r.Source)).ToList());
+            return (catalogApps, rows.Select(r => new KitInstalledProgram(r.Name, r.WingetId, r.Source)).ToList(), warning);
         }
 
         private static async Task<bool> ExportWingetAsync(string path)
@@ -230,7 +240,7 @@ namespace Ven4Tools.Views
 
         private static string Describe(ReinstallKitBuilder.Result result)
         {
-            var text = new StringBuilder("✅ Набор собран.\n");
+            var text = new StringBuilder(result.Warnings.Count == 0 ? "✅ Набор собран.\n" : "⚠️ Набор собран не полностью — см. ниже.\n");
             if (result.Drivers is { } drivers)
                 text.Append($"\nДрайверы: {drivers} ({result.DriversBytes / 1024 / 1024} МБ)");
             if (result.WifiProfiles is { } wifi)

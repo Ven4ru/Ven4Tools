@@ -177,6 +177,13 @@ namespace Ven4Tools.Services
             }
             if (!hashOk)
             {
+                // Переносной набор — чужой носитель: с флешки ничего не удаляется. Файл
+                // мог быть скачан по прежней версии каталога, и взять его заново офлайн негде.
+                if (OfflineService.IsSessionOffline)
+                {
+                    Log($"❌ Контрольная сумма не сошлась в наборе: {app.DisplayName} — установщик не запущен");
+                    return null;
+                }
                 Log($"❌ SHA256 mismatch в кэше: {app.DisplayName}, удаляю");
                 try { File.Delete(cachedPath); } catch { }
                 return null;

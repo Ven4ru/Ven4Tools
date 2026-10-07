@@ -138,6 +138,14 @@ namespace Ven4Tools.Services
             int count = await CountWingetUpgradesAsync(ct);
             ct.ThrowIfCancellationRequested();
 
+            // Проверка не состоялась: прошлое число для сравнения сохраняется, а
+            // «Обзор» показывает «не проверено».
+            if (count < 0)
+            {
+                SetAvailableCount(-1);
+                return;
+            }
+
             // Уведомляем только при ИЗМЕНЕНИИ числа обновлений относительно прошлой
             // проверки — иначе одно и то же уведомление всплывало бы каждые 3 часа.
             // Сравнение именно на неравенство, а не «стало больше»: после частичного
@@ -179,15 +187,23 @@ namespace Ven4Tools.Services
         {
             try
             {
-                var (_, output) = await WingetRunner.RunAsync(
+                var (code, output) = await WingetRunner.RunAsync(
                     $"upgrade --include-unknown {WingetArgs.NonInteractiveLine}",
                     TimeSpan.FromMinutes(3));
                 ct.ThrowIfCancellationRequested();
 
-                return Ven4Tools.Shared.WingetOutputParser.ParseUpgradeTableRows(output).Count;
+                int count = Ven4Tools.Shared.WingetOutputParser.ParseUpgradeTableRows(output).Count;
+                // winget не запустился или не уложился во время: это «не проверено»,
+                // а не «обновлений нет» — иначе «Обзор» сообщал бы, что всё актуально.
+                if (code == -1 && count == 0)
+                {
+                    AppLogger.Write("[UpdateBg] winget upgrade не ответил — число обновлений неизвестно");
+                    return -1;
+                }
+                return count;
             }
             catch (OperationCanceledException) { throw; }
-            catch (Exception ex) { AppLogger.Write($"[UpdateBg] Ошибка winget upgrade: {ex.Message}"); return 0; }
+            catch (Exception ex) { AppLogger.Write($"[UpdateBg] Ошибка winget upgrade: {ex.Message}"); return -1; }
         }
 
         // ── Вспомогательное ─────────────────────────────────────────────────────
