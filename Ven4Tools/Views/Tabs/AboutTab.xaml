@@ -36,7 +36,7 @@
                         • Каталог популярных приложений
                         • Добавление своих программ
                         • Установка Microsoft Office
-                        • Активация Windows и Office
+                        • Состояние лицензий Windows и Office
                         • Автоматическая проверка доступности
                         • Альтернативные источники для недоступных приложений
                     </TextBlock>
@@ -53,7 +53,6 @@
                         • .NET 10.0 / WPF
                         • winget (Windows Package Manager)
                         • PowerShell Core
-                        • Microsoft Activation Scripts (MAS)
                     </TextBlock>
                 </StackPanel>
             </Border>

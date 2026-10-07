@@ -37,7 +37,8 @@ namespace Ven4Tools.Services
         {
             lock (_gate)
             {
-                var all = Load();
+                var all = Load(out bool readable);
+                if (!readable) return;
                 all[tweakId] = DateTime.UtcNow;
                 Save(all);
             }
@@ -48,13 +49,18 @@ namespace Ven4Tools.Services
         {
             lock (_gate)
             {
-                var all = Load();
-                if (all.Remove(tweakId)) Save(all);
+                var all = Load(out bool readable);
+                if (readable && all.Remove(tweakId)) Save(all);
             }
         }
 
-        private Dictionary<string, DateTime> Load()
+        private Dictionary<string, DateTime> Load() => Load(out _);
+
+        // readable == false — файл есть, но сейчас не читается; сохранять поверх
+        // него нельзя, иначе журнал применённого обнулится.
+        private Dictionary<string, DateTime> Load(out bool readable)
         {
+            readable = true;
             try
             {
                 if (!File.Exists(_path)) return new(StringComparer.OrdinalIgnoreCase);
@@ -63,9 +69,16 @@ namespace Ven4Tools.Services
                     ? new(StringComparer.OrdinalIgnoreCase)
                     : new Dictionary<string, DateTime>(data, StringComparer.OrdinalIgnoreCase);
             }
+            catch (JsonException ex)
+            {
+                AppLogger.Write($"[Очистка] Журнал применённых твиков испорчен и отложен: {ex.Message}");
+                FileHelper.SetAsideBroken(_path);
+                return new(StringComparer.OrdinalIgnoreCase);
+            }
             catch (Exception ex)
             {
                 AppLogger.Write($"[Очистка] Журнал применённых твиков не прочитан: {ex.Message}");
+                readable = false;
                 return new(StringComparer.OrdinalIgnoreCase);
             }
         }
@@ -74,7 +87,6 @@ namespace Ven4Tools.Services
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
                 FileHelper.WriteAllTextAtomic(_path, JsonSerializer.Serialize(all, new JsonSerializerOptions { WriteIndented = true }));
             }
             catch (Exception ex)

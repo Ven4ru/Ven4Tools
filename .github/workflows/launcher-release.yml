@@ -4,9 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Версия лаунчера без префикса (например 2.1.0)'
+        description: 'Версия лаунчера без префикса (например 3.9.0)'
         required: true
-        default: '2.1.0'
       local_check:
         description: 'Введите RELEASE-APPROVED после полного локального прохода'
         required: true

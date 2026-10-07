@@ -98,8 +98,10 @@ namespace Ven4Tools.Services
 
             lock (_gate)
             {
-                var all = Load();
-                if (all.ContainsKey(tweakId)) return;
+                var all = Load(out bool readable);
+                // Файл есть, но сейчас не читается: сохранить поверх него значило бы
+                // потерять прежние записи отката.
+                if (!readable || all.ContainsKey(tweakId)) return;
 
                 var record = new UndoRecord { AppliedUtc = DateTime.UtcNow };
                 foreach (var change in registry)
@@ -128,30 +130,51 @@ namespace Ven4Tools.Services
             lock (_gate) Load().TryGetValue(tweakId, out record);
             if (record == null) return false;
 
+            // Файл записей лежит в профиле пользователя, а откат идёт с правами
+            // администратора. Из файла берётся только «как было» (значение, режим
+            // запуска); ЧТО менять — только из описания самого твика. Иначе правкой
+            // файла можно было бы записать любое значение в HKLM или включить любую службу.
+            var (knownRegistry, knownServices) = DebloatTweakExecutor.KnownChangesOf(tweakId);
+            var registry = record.Registry.Where(state => knownRegistry.Any(change =>
+                change.Path.Equals(state.Path, StringComparison.OrdinalIgnoreCase)
+                && change.Name.Equals(state.Name, StringComparison.OrdinalIgnoreCase))).ToList();
+            var services = record.Services.Where(state =>
+                knownServices.Contains(state.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+
+            if (registry.Count != record.Registry.Count || services.Count != record.Services.Count)
+                AppLogger.Write($"[Очистка] В записи отката «{tweakId}» есть строки, которых нет в описании твика, — они пропущены.");
+            if (registry.Count == 0 && services.Count == 0) return false;
+
             bool ok = true;
-            foreach (var state in record.Registry)
+            foreach (var state in registry)
             {
                 ok &= state.Existed
                     ? _system.WriteDword(state.Path, state.Name, state.Value)
                     : _system.DeleteValue(state.Path, state.Name);
             }
-            foreach (var state in record.Services)
+            foreach (var state in services)
                 ok &= await _system.SetServiceStartModeAsync(state.Name, state.StartMode, ct);
 
             if (ok)
             {
                 lock (_gate)
                 {
-                    var all = Load();
-                    all.Remove(tweakId);
-                    Save(all);
+                    var all = Load(out bool readable);
+                    if (readable && all.Remove(tweakId)) Save(all);
                 }
             }
             return ok;
         }
 
-        private Dictionary<string, UndoRecord> Load()
+        private Dictionary<string, UndoRecord> Load() => Load(out _);
+
+        /// <param name="readable">
+        /// false — файл есть, но прочитать его сейчас не удалось (занят, нет доступа).
+        /// Тогда сохранять поверх нельзя: пропали бы все прежние записи.
+        /// </param>
+        private Dictionary<string, UndoRecord> Load(out bool readable)
         {
+            readable = true;
             try
             {
                 if (!File.Exists(_path)) return new(StringComparer.OrdinalIgnoreCase);
@@ -161,9 +184,18 @@ namespace Ven4Tools.Services
                     : new Dictionary<string, UndoRecord>(
                         data.Where(pair => pair.Value != null), StringComparer.OrdinalIgnoreCase);
             }
+            catch (JsonException ex)
+            {
+                // Испорченный файл уже ничего не вернёт; он откладывается в сторону,
+                // чтобы новые записи было куда сохранять.
+                AppLogger.Write($"[Очистка] Записи отката испорчены и отложены: {ex.Message}");
+                FileHelper.SetAsideBroken(_path);
+                return new(StringComparer.OrdinalIgnoreCase);
+            }
             catch (Exception ex)
             {
                 AppLogger.Write($"[Очистка] Записи отката не прочитаны: {ex.Message}");
+                readable = false;
                 return new(StringComparer.OrdinalIgnoreCase);
             }
         }
@@ -172,7 +204,6 @@ namespace Ven4Tools.Services
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
                 FileHelper.WriteAllTextAtomic(_path, JsonSerializer.Serialize(all, new JsonSerializerOptions { WriteIndented = true }));
             }
             catch (Exception ex)

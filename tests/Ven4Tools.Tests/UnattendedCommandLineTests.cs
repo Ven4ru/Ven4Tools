@@ -100,7 +100,7 @@ public class UnattendedCommandLineTests
               "restorePoint": true,
               "drive": "d:",
               "allowPackageManagers": false,
-              "report": "C:\\Temp\\итог.json",
+              "report": "итог.json",
             }
             """;
 
@@ -112,7 +112,9 @@ public class UnattendedCommandLineTests
         Assert.True(request.RestorePoint);
         Assert.Equal("D:", request.InstallDrive);
         Assert.False(request.AllowPackageManagers);
-        Assert.Equal("C:\\Temp\\итог.json", request.ReportPath);
+        Assert.False(request.SilentFromCommandLine);
+        // Отчёт из файла ответа кладётся рядом с самим файлом.
+        Assert.Equal(System.IO.Path.GetFullPath("итог.json"), request.ReportPath);
     }
 
     [Fact]

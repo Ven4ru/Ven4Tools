@@ -39,6 +39,8 @@ namespace Ven4Tools
             bool silentRequested = Array.Exists(e.Args, a => string.Equals(a, "--silent", StringComparison.OrdinalIgnoreCase));
             var parseStatus = UnattendedCommandLine.Parse(
                 e.Args, System.IO.File.ReadAllText, out var unattended, out string parseError);
+            // Тихий режим мог быть задан и файлом ответа — окна с вопросом тогда тоже не ждут.
+            silentRequested |= unattended?.Silent == true;
             if (parseStatus == UnattendedCommandLine.ParseStatus.Error)
             {
                 AppLogger.Write($"[App] Задание на установку не разобрано: {parseError}");
@@ -212,9 +214,9 @@ namespace Ven4Tools
             {
                 // Набор «Перед переустановкой»: драйверы и Wi-Fi возвращаются раньше
                 // программ — без сетевого драйвера программам неоткуда скачиваться.
-                var restored = request.HasRestore
+                var (restored, restoreFailed) = request.HasRestore
                     ? await RestoreKitAsync(main, request)
-                    : new System.Collections.Generic.List<string>();
+                    : (new System.Collections.Generic.List<string>(), false);
 
                 if (request.UpdateApps)
                     report = await RunUpdateAppsAsync();
@@ -229,6 +231,13 @@ namespace Ven4Tools
                         FinishedUtc = DateTime.UtcNow.ToString("o")
                     };
                 report.Restored.AddRange(restored);
+                // Невозвращённые драйверы или Wi-Fi — не успех, даже если программы встали.
+                if (restoreFailed && report.ExitCode == UnattendedExitCode.Success)
+                {
+                    report.ExitCode = UnattendedExitCode.PartialFailure;
+                    report.Message = "драйверы или Wi-Fi возвращены не полностью" +
+                                     (string.IsNullOrEmpty(report.Message) ? "" : "; " + report.Message);
+                }
             }
             catch (Exception ex)
             {
@@ -266,12 +275,27 @@ namespace Ven4Tools
         /// после вопроса: драйверы подходят только к тому компьютеру, с которого сняты,
         /// и набор могли открыть на другом.
         /// </summary>
-        private static async System.Threading.Tasks.Task<System.Collections.Generic.List<string>> RestoreKitAsync(
+        private static async System.Threading.Tasks.Task<(System.Collections.Generic.List<string> Log, bool Failed)> RestoreKitAsync(
             MainWindow main, UnattendedRequest request)
         {
             var log = new System.Collections.Generic.List<string>();
             var (drivers, wifi) = ReinstallKitRestorer.Describe(request.RestoreDriversPath, request.RestoreWifiPath);
-            if (drivers == 0 && wifi == 0) return log;
+            if (drivers == 0 && wifi == 0)
+            {
+                // Задание назвало папки, а в них пусто или их нет — это сбой набора, а не «нечего возвращать».
+                log.Add("В наборе не найдено ни драйверов, ни профилей Wi-Fi, хотя задание на них ссылается");
+                AppLogger.Write("[Набор] " + log[0]);
+                return (log, true);
+            }
+
+            if (request.Silent && !request.SilentFromCommandLine)
+            {
+                // Тихий режим включён только файлом ответа: спросить некого, а ставить
+                // драйверы по одному слову файла нельзя.
+                log.Add("Возврат драйверов и Wi-Fi пропущен: без вопроса он выполняется только при запуске с --silent");
+                AppLogger.Write("[Набор] " + log[0]);
+                return (log, true);
+            }
 
             if (!request.Silent)
             {
@@ -286,7 +310,7 @@ namespace Ven4Tools
                 {
                     log.Add("Возврат драйверов и Wi-Fi пропущен по решению пользователя");
                     AppLogger.Write("[Набор] " + log[0]);
-                    return log;
+                    return (log, false);
                 }
             }
 
@@ -308,7 +332,7 @@ namespace Ven4Tools
                 MessageBox.Show(main, string.Join("\n", outcome.Log),
                     "Ven4Tools — набор «Перед переустановкой»", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            return log;
+            return (log, outcome.Failed);
         }
 
         /// <summary>

@@ -107,6 +107,36 @@ public sealed class OfflineKitBuilderTests : IDisposable
             () => OfflineKitBuilder.Build(kitRoot, new[] { "firefox" }, _client));
     }
 
+    /// <summary>
+    /// Кэш по умолчанию лежит в %LocalAppData%\Ven4Tools, а клиент — в его подпапке.
+    /// Раньше при такой раскладке пропускались все файлы клиента, и набор «собирался» без него.
+    /// </summary>
+    [Fact]
+    public void КлиентВнутриПапкиНабора_КопируетсяЦеликом()
+    {
+        var result = OfflineKitBuilder.Build(_root, new[] { "firefox" }, _client);
+
+        Assert.True(result.ClientFiles >= 2);
+        Assert.True(File.Exists(Path.Combine(_root, "Ven4Tools", "Ven4Tools.exe")));
+        Assert.True(File.Exists(Path.Combine(_root, "Ven4Tools", "Data", "master.json")));
+    }
+
+    [Theory]
+    [InlineData("report", "C:\\\\Windows\\\\win.ini")]
+    [InlineData("report", "..\\\\итог.json")]
+    [InlineData("offlineCache", "C:\\\\чужая")]
+    [InlineData("offlineCache", "..")]
+    public void ПутиИзФайлаОтвета_НеВыходятЗаЕгоПапку(string field, string value)
+    {
+        string json = "{ \"apps\": [\"vlc\"], \"" + field + "\": \"" + value + "\" }";
+
+        var status = UnattendedCommandLine.Parse(
+            new[] { "--answer-file", Path.Combine(_root, "набор.json") }, _ => json, out _, out string error);
+
+        Assert.Equal(UnattendedCommandLine.ParseStatus.Error, status);
+        Assert.Contains("относительно самого файла", error);
+    }
+
     [Fact]
     public void ПапкаОфлайнНабора_ИзКоманднойСтроки()
     {
