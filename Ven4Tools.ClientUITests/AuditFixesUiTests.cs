@@ -202,9 +202,11 @@ namespace Ven4Tools.ClientUITests
             // ещё enabled сразу после клика, проверка либо не запустилась, либо
             // была мгновенной (оба варианта проверяем ниже через лог и итоговое enabled).
 
-            bool refreshDone = WaitForLogContains(t1, "Проверка завершена", TimeSpan.FromSeconds(60));
+            // 180 с: на раннере CI проверка 87 адресов с медленной сетью занимает больше минуты,
+            // а зависание семафора за три минуты всё равно отличимо от медленной проверки.
+            bool refreshDone = WaitForLogContains(t1, "Проверка завершена", TimeSpan.FromSeconds(180));
             Assert.IsTrue(refreshDone,
-                "#4: явный запуск «Проверить доступность» не завершился за 60с — SemaphoreSlim мог не освободиться (зависание).");
+                "#4: явный запуск «Проверить доступность» не завершился за 180с — SemaphoreSlim мог не освободиться (зависание).");
 
             bool buttonReEnabled = Retry.WhileFalse(
                 () => refreshBtn.AsButton().IsEnabled,

@@ -139,9 +139,13 @@ namespace Ven4Tools.ClientUITests
             // названия приложений в чекбоксах реально приходят из JSON-каталога.
             // Имя приложения — TextBlock-СОСЕД чекбокса в той же StackPanel (колонка 0
             // строки), а не потомок самого чекбокса — искать нужно от родителя.
+            // Берутся ВСЕ тексты рядом с чекбоксом, а не первый: на машине без кэша значков
+            // (чистый раннер) карточка нового вида показывает вместо значка букву-заглушку,
+            // и первым текстом оказывалась она — «B», «G», «L» вместо названий.
             var appNames = checkBoxes!
-                .Select(cb => cb.Parent?.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Text))?.Name ?? "")
-                .Where(t => !string.IsNullOrEmpty(t))
+                .SelectMany(cb => cb.Parent?.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Text))
+                    .Select(t => t.Name ?? "") ?? Enumerable.Empty<string>())
+                .Where(t => t.Length > 1)
                 .ToList();
             Assert.IsTrue(appNames.Any(t => t.Contains("AIDA64") || t.Contains("AutoHotkey") || t.Contains("Firefox")),
                 "Среди названий приложений офлайн-каталога не нашлось ни одного ожидаемого — " +
