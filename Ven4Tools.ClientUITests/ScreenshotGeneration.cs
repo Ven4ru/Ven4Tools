@@ -157,11 +157,48 @@ namespace Ven4Tools.ClientUITests
                             try { Save($"{section}-partial"); } catch { }
                         }
                     }
+
+                    // Диалоговые окна — один раз, в новой оболочке: они от оболочки не зависят.
+                    if (modern)
+                    {
+                        CaptureDialog(s, "btnOverviewTab", () => UiNav.Find(s, "btnOverviewReinstallKit"), Path.Combine(dir, "90-dialog-ReinstallKit.png"));
+                        CaptureDialog(s, "btnCatalogTab", () => UiNav.FindCatalogTool(s, "btnPresetByCode"), Path.Combine(dir, "91-dialog-PresetCode.png"));
+                        CaptureDialog(s, "btnCatalogTab", () => UiNav.FindCatalogTool(s, "btnSetFromInstalled"), Path.Combine(dir, "92-dialog-InstalledSet.png"));
+                        CaptureDialog(s, "btnAboutTab", () => UiNav.Find(s, "btnFeedback"), Path.Combine(dir, "93-dialog-Feedback.png"));
+                    }
                 }
                 finally
                 {
                     s.Dispose();
                 }
+            }
+        }
+
+        // Открывает диалог кнопкой раздела, снимает его и закрывает, ничего в нём не нажимая.
+        private static void CaptureDialog(AppSession s, string sectionId, Func<AutomationElement?> opener, string path)
+        {
+            try
+            {
+                UiNav.Find(s, sectionId)?.AsButton().Invoke();
+                Thread.Sleep(1200);
+                var button = opener();
+                if (button == null) return;
+                button.AsButton().Invoke();
+
+                var dialog = FlaUI.Core.Tools.Retry.WhileNull(
+                    () => s.MainWindow.ModalWindows.FirstOrDefault(),
+                    timeout: TimeSpan.FromSeconds(20), interval: TimeSpan.FromMilliseconds(300),
+                    throwOnTimeout: false).Result;
+                if (dialog == null) return;
+
+                Thread.Sleep(1500);
+                using (var capture = dialog.Capture()) capture.Save(path);
+                dialog.Close();
+                Thread.Sleep(700);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Диалог {Path.GetFileName(path)} не снят: {ex.GetType().Name}: {ex.Message}");
             }
         }
 
