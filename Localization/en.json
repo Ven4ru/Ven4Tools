@@ -7524,20 +7524,40 @@
     "t": "• Alternative sources for unavailable apps"
   },
   {
+    "s": "• Браузеры",
+    "t": "• Browsers"
+  },
+  {
     "s": "• Браузеры • Офис • Мультимедиа • Системные утилиты",
     "t": "• Browsers • Office • Multimedia • System utilities"
+  },
+  {
+    "s": "• Все категории",
+    "t": "• All categories"
   },
   {
     "s": "• Все категории • Игровые сервисы • Драйверпаки • Пользовательские",
     "t": "• All categories • Gaming services • Driver packs • Custom"
   },
   {
+    "s": "• Всё базовое",
+    "t": "• Everything in Basic"
+  },
+  {
     "s": "• Всё базовое • Разработка • Графика • Мессенджеры",
     "t": "• Everything in Basic • Development • Graphics • Messengers"
   },
   {
+    "s": "• Графика",
+    "t": "• Graphics"
+  },
+  {
     "s": "• Добавление своих программ",
     "t": "• Adding your own apps"
+  },
+  {
+    "s": "• Драйверпаки",
+    "t": "• Driver packs"
   },
   {
     "s": "• Задержка вычислена из пропускной способности и глубины очереди по закону Литтла, а не измерена отдельно по каждой операции.",
@@ -7548,12 +7568,28 @@
     "t": "• Single random read latency — {0}. It affects system responsiveness and app launch speed more than sequential speed does."
   },
   {
+    "s": "• Игровые сервисы",
+    "t": "• Gaming services"
+  },
+  {
     "s": "• Каталог популярных приложений",
     "t": "• Catalog of popular apps"
   },
   {
+    "s": "• Мессенджеры",
+    "t": "• Messengers"
+  },
+  {
+    "s": "• Мультимедиа",
+    "t": "• Multimedia"
+  },
+  {
     "s": "• Накопитель выбирает {0}% пропускной способности интерфейса.",
     "t": "• The drive uses {0}% of the interface bandwidth."
+  },
+  {
+    "s": "• Офис",
+    "t": "• Office"
   },
   {
     "s": "• Паттерны с очередью 1 измеряются синхронным вводом-выводом: на такой глубине накладные расходы асинхронного пути попали бы в результат целиком и занизили бы его почти вдвое.",
@@ -7564,12 +7600,24 @@
     "t": "• Support for winget and direct links"
   },
   {
+    "s": "• Пользовательские",
+    "t": "• Custom apps"
+  },
+  {
     "s": "• Последовательное чтение {0} МБ/с — {1}.",
     "t": "• Sequential read {0} MB/s — {1}."
   },
   {
     "s": "• При нескольких проходах в таблицу попадает лучший результат каждого замера, а не среднее по проходам.",
     "t": "• With multiple passes, the table shows the best result of each measurement, not the average across passes."
+  },
+  {
+    "s": "• Разработка",
+    "t": "• Development"
+  },
+  {
+    "s": "• Системные утилиты",
+    "t": "• System utilities"
   },
   {
     "s": "• Состояние лицензий Windows и Office",

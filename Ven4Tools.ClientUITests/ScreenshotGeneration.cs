@@ -86,7 +86,7 @@ namespace Ven4Tools.ClientUITests
         private static readonly string[] TourSections =
         {
             "btnOverviewTab", "btnCatalogTab", "btnInstalledTab", "btnSystemTab", "btnDiagnosticsTab",
-            "btnBenchmarkTab", "btnWindowsUpdateTab", "btnOfficeTab", "btnDebloaterTab",
+            "btnBenchmarkTab", "btnWindowsUpdateTab", "btnOfficeTab", "btnActivationTab", "btnDebloaterTab",
             "btnNetworkTab", "btnHistoryTab", "btnAboutTab",
         };
 

@@ -104,10 +104,14 @@ VIAddVersionKey /LANG=1033 "LegalCopyright"  "© ${PUBLISHER}"
 
 ; Окно выбора языка. Подписи сразу на двух языках: до выбора язык ещё неизвестен.
 !define MUI_LANGDLL_WINDOWTITLE "Язык / Language"
-!define MUI_LANGDLL_INFO "Выберите язык установщика и программы.$\r$\nChoose the language for setup and the app."
+; Текст короткий: в окне помещаются две неширокие строки, длинная обрезается.
+!define MUI_LANGDLL_INFO "Выберите язык программы.$\r$\nChoose the app language."
 
 ; Страницы установщика
 !insertmacro MUI_PAGE_WELCOME
+; Описание компонента — под списком, а не справа: в узком списке названия
+; компонентов обрезались на обоих языках.
+!define MUI_COMPONENTSPAGE_SMALLDESC
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${EXE_NAME}"
