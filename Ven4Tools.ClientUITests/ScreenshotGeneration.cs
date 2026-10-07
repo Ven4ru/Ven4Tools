@@ -126,25 +126,35 @@ namespace Ven4Tools.ClientUITests
 
                     foreach (string sectionId in TourSections)
                     {
-                        var button = UiNav.Find(s, sectionId);
-                        if (button == null) continue;   // раздела нет в этой оболочке или без сети
-                        button.AsButton().Invoke();
-                        Thread.Sleep(1800);
-                        DismissDialogs(s);
-
                         string section = sectionId.Replace("btn", "").Replace("Tab", "");
-                        Save(section);
-                        ScrollAndSave(s, name => Save($"{section}-{name}"));
-
-                        var innerTabs = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.TabItem));
-                        for (int i = 1; i < innerTabs.Length; i++)
+                        // Сбой автоматизации на одном разделе (окно занято, элемент исчез
+                        // посреди обхода) не должен лишать снимков все остальные.
+                        try
                         {
-                            try { innerTabs[i].AsTabItem().Select(); }
-                            catch { continue; }
-                            Thread.Sleep(900);
+                            var button = UiNav.Find(s, sectionId);
+                            if (button == null) continue;   // раздела нет в этой оболочке или без сети
+                            button.AsButton().Invoke();
+                            Thread.Sleep(1800);
                             DismissDialogs(s);
-                            Save($"{section}-tab{i}");
-                            ScrollAndSave(s, name => Save($"{section}-tab{i}-{name}"));
+
+                            Save(section);
+                            ScrollAndSave(s, name => Save($"{section}-{name}"));
+
+                            var innerTabs = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.TabItem));
+                            for (int i = 1; i < innerTabs.Length; i++)
+                            {
+                                try { innerTabs[i].AsTabItem().Select(); }
+                                catch { continue; }
+                                Thread.Sleep(900);
+                                DismissDialogs(s);
+                                Save($"{section}-tab{i}");
+                                ScrollAndSave(s, name => Save($"{section}-tab{i}-{name}"));
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Раздел {section} снят не полностью: {ex.GetType().Name}: {ex.Message}");
+                            try { Save($"{section}-partial"); } catch { }
                         }
                     }
                 }

@@ -68,9 +68,12 @@ public sealed class LauncherLanguageTour
                 Thread.Sleep(500);
 
                 window.FindFirstDescendant(c => c.ByAutomationId("btnOpenSettings"))?.AsButton().Invoke();
+                // Окно настроек принадлежит главному и в дереве автоматизации лежит внутри
+                // него: ищем его как дочернее окно, а не среди окон верхнего уровня.
                 Window? settings = Retry.WhileNull(
-                    () => application.GetAllTopLevelWindows(automation)
-                        .FirstOrDefault(w => w.FindFirstDescendant(c => c.ByAutomationId("cmbDownloadSource")) != null),
+                    () => window.FindAllDescendants(c => c.ByControlType(FlaUI.Core.Definitions.ControlType.Window))
+                        .FirstOrDefault(w => w.FindFirstDescendant(c => c.ByAutomationId("cmbDownloadSource")) != null)
+                        ?.AsWindow(),
                     timeout: TimeSpan.FromSeconds(8), interval: TimeSpan.FromMilliseconds(250)).Result;
                 if (settings != null)
                 {
