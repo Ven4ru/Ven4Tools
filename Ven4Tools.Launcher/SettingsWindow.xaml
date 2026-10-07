@@ -1,7 +1,7 @@
 <Window x:Class="Ven4Tools.Launcher.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Настройки — Ven4Tools Launcher" Height="640" Width="380"
+        Title="Настройки — Ven4Tools Launcher" Height="700" Width="380"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{DynamicResource WindowBackground}"
         FontFamily="Segoe UI Variable Text, Segoe UI">
@@ -23,6 +23,18 @@
                       Checked="ChkAutostart_Changed" Unchecked="ChkAutostart_Changed">
                 <TextBlock Text="Запускать при старте Windows" TextWrapping="Wrap"/>
             </CheckBox>
+
+            <TextBlock Text="ЯЗЫК ИНТЕРФЕЙСА" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
+            <ComboBox x:Name="cmbLanguage" Margin="0,4" SelectedValuePath="Tag"
+                      AutomationProperties.Name="Язык интерфейса"
+                      SelectionChanged="CmbLanguage_SelectionChanged">
+                <ComboBoxItem Content="Автоматически" Tag="auto"/>
+                <ComboBoxItem Content="Русский" Tag="ru"/>
+                <ComboBoxItem Content="English" Tag="en"/>
+            </ComboBox>
+            <TextBlock Text="Действует и для клиента. Английский — отдельный языковой пакет: он скачивается при выборе и включается после перезапуска."
+                       TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
 
             <TextBlock Text="ОБНОВЛЕНИЕ КЛИЕНТА" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
             <RadioButton x:Name="rbAutoUpdateManual" GroupName="AutoUpdateMode" Margin="0,4"

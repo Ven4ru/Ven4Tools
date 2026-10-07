@@ -232,6 +232,8 @@ namespace Ven4Tools.Launcher
                 string currentVersion = versionInfo.FileVersion ?? "unknown";
                 txtInstalledVersion.Text = $"Текущая версия: {currentVersion}";
                 SetLaunchButtonState(LaunchButtonState.Launch);
+                if (!_isUiTestMode)
+                    LauncherLanguage.PrefetchClientPack(currentVersion);
                 if (!quiet)
                     AddLog($"✅ Найден клиент версии {currentVersion}");
             }

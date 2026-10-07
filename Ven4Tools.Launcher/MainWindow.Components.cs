@@ -203,7 +203,7 @@ namespace Ven4Tools.Launcher
             bool needsAdminComponents = !IsVcRedistInstalled();
             if (!isAdmin && needsAdminComponents)
             {
-                var restartResult = System.Windows.MessageBox.Show(
+                var restartResult = MessageBox.Show(
                     "Для установки системного компонента (Visual C++ Redistributable)\n" +
                     "потребуются права администратора.\n\n" +
                     "Можно перезапустить лаунчер с правами администратора,\n" +
@@ -217,7 +217,7 @@ namespace Ven4Tools.Launcher
             var wingetInfo = await CheckWingetWithVersionAsync();
             if (!wingetInfo.IsInstalled)
             {
-                var installResult = System.Windows.MessageBox.Show(
+                var installResult = MessageBox.Show(
                     "Winget (Windows Package Manager) не установлен!\n\n" +
                     "Winget необходим для установки большинства приложений.\n\n" +
                     "Установить winget сейчас?",
@@ -239,7 +239,7 @@ namespace Ven4Tools.Launcher
             }
             else if (wingetInfo.IsOutdated)
             {
-                var updateResult = System.Windows.MessageBox.Show(
+                var updateResult = MessageBox.Show(
                     $"Ваша версия winget ({wingetInfo.Version}) устарела.\n\nОбновить winget сейчас?",
                     "Обновление winget", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (updateResult == MessageBoxResult.Yes)
@@ -255,7 +255,7 @@ namespace Ven4Tools.Launcher
 
             if (!IsWebView2Installed())
             {
-                var r = System.Windows.MessageBox.Show(
+                var r = MessageBox.Show(
                     "WebView2 Runtime не установлен.\n\n" +
                     "Для работы Ven4Tools он не нужен, но требуется части стороннего ПО,\n" +
                     "которое можно установить через каталог.\n\n" +
@@ -273,7 +273,7 @@ namespace Ven4Tools.Launcher
 
             if (!IsVcRedistInstalled())
             {
-                var r = System.Windows.MessageBox.Show(
+                var r = MessageBox.Show(
                     "Visual C++ Redistributable 2015-2022 x64 не установлен!\n\nУстановить сейчас?",
                     "Требуется Visual C++ Redistributable", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (r == MessageBoxResult.Yes)
@@ -293,7 +293,7 @@ namespace Ven4Tools.Launcher
 
             if (!CheckWindowsVersionOk())
             {
-                System.Windows.MessageBox.Show(
+                MessageBox.Show(
                     $"Ваша версия Windows (Build {Environment.OSVersion.Version.Build}) " +
                     "ниже минимально поддерживаемой (Windows 10 Build 17763).\n\n" +
                     "Некоторые функции могут работать некорректно.\nРекомендуется обновить Windows.",
@@ -302,7 +302,7 @@ namespace Ven4Tools.Launcher
 
             if (btnInstallUpdate.Visibility == Visibility.Visible)
             {
-                var updateResult = System.Windows.MessageBox.Show(
+                var updateResult = MessageBox.Show(
                     "Доступно обновление лаунчера. Установить сейчас?",
                     "Обновление лаунчера", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (updateResult == MessageBoxResult.Yes)

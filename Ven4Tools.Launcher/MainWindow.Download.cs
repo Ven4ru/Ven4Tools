@@ -189,7 +189,7 @@ namespace Ven4Tools.Launcher
             SetOperationStage(0);
             AddLog($"⛔ Версия {version} не установлена: {reason}");
             if (!silent)
-                System.Windows.MessageBox.Show(
+                MessageBox.Show(
                     $"Не удалось подтвердить целостность архива версии {version}: {reason}.\n\n{advice}",
                     "Целостность не подтверждена", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
@@ -245,7 +245,7 @@ namespace Ven4Tools.Launcher
                     SetOperationStage(0);
                     AddLog($"⛔ Версия {version.Version} не установлена: она старее установленной {installedVersion} — понижение версии не выполняется");
                     if (!silent)
-                        System.Windows.MessageBox.Show(
+                        MessageBox.Show(
                             $"Версия {version.Version} старее установленной {installedVersion}.\n\n" +
                             "Загрузка не понижает версию клиента. Если нужна именно она — поставьте её " +
                             "подписанный архив через «Установить из файла».",
@@ -264,7 +264,7 @@ namespace Ven4Tools.Launcher
                 if (deltaOutcome == DeltaUpdateOutcome.Installed)
                 {
                     if (!silent)
-                        System.Windows.MessageBox.Show(
+                        MessageBox.Show(
                             $"Клиент {version.Version} успешно обновлён в:\n{_clientPath}",
                             "Обновление завершено", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
@@ -369,7 +369,7 @@ namespace Ven4Tools.Launcher
                 if (!installed) return;
 
                 if (!silent)
-                    System.Windows.MessageBox.Show(
+                    MessageBox.Show(
                         $"Клиент {version.Version} успешно установлен в:\n{_clientPath}",
                         "Установка завершена", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -386,7 +386,7 @@ namespace Ven4Tools.Launcher
                 SetOperationStage(0);
                 AddLog($"❌ Ошибка скачивания: {ex.Message}");
                 if (!silent)
-                    System.Windows.MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -441,7 +441,7 @@ namespace Ven4Tools.Launcher
                     return false;
                 }
 
-                var answer = Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                var answer = Dispatcher.Invoke(() => MessageBox.Show(
                     "Ven4Tools сейчас запущен.\n\nЗакрыть клиент сейчас, чтобы установить эту версию?",
                     "Клиент запущен", MessageBoxButton.YesNo, MessageBoxImage.Question));
 
@@ -462,7 +462,7 @@ namespace Ven4Tools.Launcher
                     });
                     AddLog("⚠️ Клиент не закрылся за отведённое время — установка отменена");
                     if (!silent)
-                        Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                        Dispatcher.Invoke(() => MessageBox.Show(
                             "Не удалось закрыть клиент автоматически (возможно, он свёрнут в трей).\n\n" +
                             "Закройте его вручную и повторите установку.",
                             "Клиент не закрылся", MessageBoxButton.OK, MessageBoxImage.Warning));
@@ -480,7 +480,7 @@ namespace Ven4Tools.Launcher
                 });
                 AddLog($"⛔ Папка установки клиента пересекается с папкой данных — установка отменена: {_clientPath}");
                 if (!silent)
-                    Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                    Dispatcher.Invoke(() => MessageBox.Show(
                         $"Папка установки клиента:\n{_clientPath}\n\nсовпадает или вложена в папку данных Ven4Tools. " +
                         "Установка отменена во избежание потери настроек.\n\nВыберите другую папку установки.",
                         "Небезопасный путь установки", MessageBoxButton.OK, MessageBoxImage.Error));
@@ -550,7 +550,7 @@ namespace Ven4Tools.Launcher
                     });
                     AddLog($"⛔ Распакованные файлы изменились после проверки архива — установка отменена: {difference}");
                     if (!silent)
-                        Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                        Dispatcher.Invoke(() => MessageBox.Show(
                             "Содержимое распакованного архива изменилось между проверкой и установкой " +
                             $"({difference}).\n\nУстановка отменена. Проверьте компьютер антивирусом и " +
                             "повторите установку.",

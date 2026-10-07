@@ -26,3 +26,7 @@ Catalog/master.json.sig -text
 # (fail-closed, без диагностики), и уведомление просто не показывается.
 Catalog/notifications.json -text
 Catalog/notifications.json.sig -text
+
+# Языковые пакеты: контрольная сумма файла вшита в программу при сборке, поэтому его
+# байты должны быть одинаковы на любой машине — без преобразования окончаний строк.
+Localization/packs/*.json -text

@@ -68,6 +68,24 @@ internal static class FileHelper
         File.AppendAllText(path, content, System.Text.Encoding.UTF8);
     }
 
+    public static void WriteAllBytesAtomic(string path, byte[] content)
+    {
+        var dir = Path.GetDirectoryName(path)!;
+        Directory.CreateDirectory(dir);
+        EnsureNotRedirected(dir, path);
+        var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
+        try
+        {
+            File.WriteAllBytes(tmp, content);
+            File.Move(tmp, path, overwrite: true);
+        }
+        catch
+        {
+            try { File.Delete(tmp); } catch { }
+            throw;
+        }
+    }
+
     public static void WriteAllTextAtomic(string path, string content)
     {
         var dir = Path.GetDirectoryName(path)!;

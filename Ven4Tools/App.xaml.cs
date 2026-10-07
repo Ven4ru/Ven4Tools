@@ -34,6 +34,9 @@ namespace Ven4Tools
             // остаётся светлым поверх тёмной темы приложения даже при тёмной теме Windows.
             try { WindowChromeHelper.RegisterGlobalDarkTitleBar(); } catch { }
 
+            // Язык — до первого сообщения: даже отказ в запуске показывается на выбранном языке.
+            try { LocalizationService.Start(); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось определить язык интерфейса"); }
+
             // Задание тихого режима разбирается до всего остального: ошибка в нём не
             // должна заканчиваться открытым окном, которого сценарий установки не ждёт.
             bool silentRequested = Array.Exists(e.Args, a => string.Equals(a, "--silent", StringComparison.OrdinalIgnoreCase));
@@ -102,6 +105,12 @@ namespace Ven4Tools
                 // Эти вызовы не должны валить старт — каждый best-effort, но сбой
                 // молча лишает пользователя локализации/темы/восстановленного
                 // региона на весь сеанс — без записи в журнал причину не найти.
+                // Английский пакет докачивается до первого окна; в тихом режиме окон нет — не ждём.
+                if (!IsSilentRun)
+                {
+                    try { await LocalizationService.EnsurePackAsync(TimeSpan.FromSeconds(6)); }
+                    catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось получить языковой пакет"); }
+                }
                 try { LocalizationService.Init(); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось инициализировать локализацию"); }
                 try { ThemeService.Apply(ProfileService.Current.Theme); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось применить тему"); }
                 try { _heartbeat = new HeartbeatService(); } catch { }

@@ -390,7 +390,9 @@ namespace Ven4Tools.ViewModels
                 Ven4Tools.Shared.MotionService.Enabled = !ProfileService.Current.ReduceMotion;
                 ThemeService.Apply(ProfileService.Current.Theme);
                 ThemeApplied?.Invoke();
-                LocalizationService.Init();
+                // Язык из импортированных настроек становится выбором и для лаунчера;
+                // сам интерфейс сменит язык при следующем запуске.
+                LocalizationService.Choose(ProfileService.Current.Language);
 
                 MessageBox.Show(
                     result.Message + "\n\nНастройки применены. Избранное обновится после перезапуска приложения.",

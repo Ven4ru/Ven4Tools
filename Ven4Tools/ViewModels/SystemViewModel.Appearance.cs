@@ -30,10 +30,13 @@ namespace Ven4Tools.ViewModels
                 SetField(ref _languageTag, value);
                 ProfileService.Current.Language = value;
                 ProfileService.Save();
-                var language = value;
-                if (language == "auto")
-                    language = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ru" ? "ru" : "en";
-                LocalizationService.Apply(language);
+                // Окна на лету не переводятся: новый язык включается при следующем запуске.
+                // Сообщение сразу на двух языках и мимо перевода: его должен понять и тот,
+                // кто уходит с языка, и тот, кто на него приходит.
+                if (LocalizationService.Choose(value))
+                    System.Windows.MessageBox.Show(
+                        "Язык интерфейса сменится после перезапуска Ven4Tools.\n\nThe interface language will change after you restart Ven4Tools.",
+                        "Ven4Tools", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
         }
 

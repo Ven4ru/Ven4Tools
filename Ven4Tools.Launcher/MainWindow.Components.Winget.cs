@@ -145,7 +145,7 @@ namespace Ven4Tools.Launcher
 
                     if (interactive)
                     {
-                        var reboot = System.Windows.MessageBox.Show(
+                        var reboot = MessageBox.Show(
                             "Winget не обнаружен после установки.\n\nПерезагрузить компьютер сейчас?",
                             "Требуется перезагрузка", MessageBoxButton.YesNo, MessageBoxImage.Question);
                         if (reboot == MessageBoxResult.Yes)

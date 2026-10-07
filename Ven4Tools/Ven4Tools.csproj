@@ -50,6 +50,30 @@
     <Compile Include="..\Shared\WindowChromeHelper.cs" Link="Services\WindowChromeHelper.cs" />
     <Compile Include="..\Shared\AuthenticodeVerifier.cs" Link="Services\AuthenticodeVerifier.cs" />
     <Compile Include="..\Shared\WingetOutputParser.cs" Link="Services\WingetOutputParser.cs" />
+    <Compile Include="..\Shared\Localization\*.cs" Link="Localization\%(Filename)%(Extension)" />
   </ItemGroup>
+
+  <!-- Языковой пакет поставляется отдельным файлом (Localization\packs\client-en.json), а его
+       контрольная сумма вшивается в программу: принимается только пакет этой самой сборки. -->
+  <Target Name="EmbedLanguagePackHash" BeforeTargets="CoreCompile">
+    <GetFileHash Files="$(MSBuildThisFileDirectory)..\Localization\packs\client-en.json" Algorithm="SHA256" HashEncoding="hex">
+      <Output TaskParameter="Items" ItemName="_LanguagePack" />
+    </GetFileHash>
+    <PropertyGroup>
+      <_LanguagePackHash>@(_LanguagePack->'%(FileHash)')</_LanguagePackHash>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)LanguagePackInfo.g.cs" Overwrite="true" WriteOnlyWhenDifferent="true"
+                      Lines="namespace Ven4Tools.Services { internal static class LanguagePackInfo { public const string Component = &quot;client&quot;%3B public const string EnSha256 = &quot;$(_LanguagePackHash)&quot;%3B } }" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)LanguagePackInfo.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Сборка для разработки и проверок кладёт пакет рядом с программой (lang/en.json).
+       В публикуемый набор файлов он не входит: пользователь получает пакет отдельно. -->
+  <Target Name="CopyLanguagePackNextToBuild" AfterTargets="Build">
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)../Localization/packs/client-en.json"
+          DestinationFiles="$(OutDir)lang/en.json" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>
