@@ -460,6 +460,10 @@
     "t": "GitHub unavailable"
   },
   {
+    "s": "GitHub недоступен; по данным CDN актуальная версия лаунчера — {0}, обновления нет.",
+    "t": "GitHub is unavailable; according to the CDN the current launcher version is {0}, no update."
+  },
+  {
     "s": "JSON файлы (*.json)|*.json",
     "t": "JSON files (*.json)|*.json"
   },
@@ -658,6 +662,10 @@
   {
     "s": "Ven4Tools — установка по заданию",
     "t": "Ven4Tools — install job"
+  },
+  {
+    "s": "Ven4Tools — это удобный установщик программ для Windows.",
+    "t": "Ven4Tools is a handy app installer for Windows."
   },
   {
     "s": "Ven4Tools — это удобный установщик программ для Windows. • Поддержка winget и прямых ссылок • Каталог популярных приложений • Добавление своих программ • Установка Microsoft Office • Состояние лицензий Windows и Office • Автоматическая проверка доступности • Альтернативные источники для недоступных приложений",
@@ -1654,6 +1662,10 @@
   {
     "s": "© 2024-2025 Ven4ru. Свободное программное обеспечение.",
     "t": "© 2024-2025 Ven4ru. Free software."
+  },
+  {
+    "s": "© 2024-2026 Ven4ru. Свободное программное обеспечение.",
+    "t": "© 2024-2026 Ven4ru. Free software."
   },
   {
     "s": "«Только уведомлять» — клиент сообщает о найденных патчах, ничего не скачивая. «Уведомлять и скачивать в фоне» — патчи заранее загружаются в кэш Windows, и установка по кнопке на вкладке «Обновления Windows» стартует сразу, без ожидания загрузки. Устанавливаются патчи в обоих режимах только вручную.",
@@ -7100,6 +7112,10 @@
     "t": "entry too large, extraction aborted"
   },
   {
+    "s": "запрос к CDN отменён",
+    "t": "CDN request canceled"
+  },
+  {
     "s": "запрос к CDN отменён или истёк таймаут",
     "t": "the CDN request was canceled or timed out"
   },
@@ -7114,6 +7130,10 @@
   {
     "s": "исправен",
     "t": "healthy"
+  },
+  {
+    "s": "истёк таймаут запроса к CDN — повтор по прямому IP",
+    "t": "CDN request timed out — retrying by direct IP"
   },
   {
     "s": "к загрузке {0} файлов, к удалению {1}, без изменений {2} из {3}",
@@ -7292,6 +7312,10 @@
     "t": "nothing to update; excluded apps with updates: {0}"
   },
   {
+    "s": "обход по прямому IP не удался — {0}: {1}",
+    "t": "direct IP fallback failed — {0}: {1}"
+  },
+  {
     "s": "определяется...",
     "t": "detecting..."
   },
@@ -7314,6 +7338,10 @@
   {
     "s": "память класса хранения",
     "t": "storage class memory"
+  },
+  {
+    "s": "по прямому IP {0} подпись манифеста не подтверждена",
+    "t": "manifest signature not confirmed via direct IP {0}"
   },
   {
     "s": "подписанный манифест CDN подтверждает только текущую версию {0}, для более старой {1} хеша нет",
@@ -7488,6 +7516,14 @@
     "t": "read"
   },
   {
+    "s": "• Автоматическая проверка доступности",
+    "t": "• Automatic availability check"
+  },
+  {
+    "s": "• Альтернативные источники для недоступных приложений",
+    "t": "• Alternative sources for unavailable apps"
+  },
+  {
     "s": "• Браузеры • Офис • Мультимедиа • Системные утилиты",
     "t": "• Browsers • Office • Multimedia • System utilities"
   },
@@ -7500,12 +7536,20 @@
     "t": "• Everything in Basic • Development • Graphics • Messengers"
   },
   {
+    "s": "• Добавление своих программ",
+    "t": "• Adding your own apps"
+  },
+  {
     "s": "• Задержка вычислена из пропускной способности и глубины очереди по закону Литтла, а не измерена отдельно по каждой операции.",
     "t": "• Latency is calculated from throughput and queue depth using Little's law, not measured per operation."
   },
   {
     "s": "• Задержка одиночного случайного чтения — {0}. От неё зависит отзывчивость системы и скорость запуска программ сильнее, чем от последовательной скорости.",
     "t": "• Single random read latency — {0}. It affects system responsiveness and app launch speed more than sequential speed does."
+  },
+  {
+    "s": "• Каталог популярных приложений",
+    "t": "• Catalog of popular apps"
   },
   {
     "s": "• Накопитель выбирает {0}% пропускной способности интерфейса.",
@@ -7516,6 +7560,10 @@
     "t": "• Patterns with queue depth 1 are measured with synchronous I/O: at this depth the async path overhead would be fully included in the result and nearly halve it."
   },
   {
+    "s": "• Поддержка winget и прямых ссылок",
+    "t": "• Support for winget and direct links"
+  },
+  {
     "s": "• Последовательное чтение {0} МБ/с — {1}.",
     "t": "• Sequential read {0} MB/s — {1}."
   },
@@ -7524,8 +7572,16 @@
     "t": "• With multiple passes, the table shows the best result of each measurement, not the average across passes."
   },
   {
+    "s": "• Состояние лицензий Windows и Office",
+    "t": "• Windows and Office license status"
+  },
+  {
     "s": "• Сравнивая с другими программами, учитывайте, что совпадение подписи паттерна не гарантирует одинаковую фактически достигнутую глубину очереди.",
     "t": "• When comparing with other tools, note that a matching pattern label does not guarantee the same queue depth was actually reached."
+  },
+  {
+    "s": "• Установка Microsoft Office",
+    "t": "• Microsoft Office installation"
   },
   {
     "s": "• Через временный файл на выбранном томе, полностью в обход кэша файловой системы. Файл удалён после теста.",

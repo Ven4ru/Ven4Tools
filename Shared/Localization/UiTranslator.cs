@@ -73,9 +73,10 @@ namespace Ven4Tools.Localization
             {
                 _collectPath = collect;
                 _missed = new ConcurrentDictionary<string, byte>(StringComparer.Ordinal);
-                pack.Missed = text => _missed.TryAdd(text, 0);
-                AppDomain.CurrentDomain.ProcessExit += (_, _) => FlushMissed();
             }
+            // Каждая новая строка пишется в файл сразу: проверки интерфейса завершают
+            // программу принудительно, и до события выхода из процесса дело не доходит.
+            if (_missed != null) pack.Missed = RecordMissed;
 
             _pack = pack;
             if (_hooked) return;
@@ -100,15 +101,15 @@ namespace Ven4Tools.Localization
             return true;
         }
 
-        /// <summary>Сбрасывает собранные непереведённые строки в файл (режим сбора).</summary>
-        public static void FlushMissed()
+        private static readonly object CollectLock = new();
+
+        private static void RecordMissed(string text)
         {
-            if (_missed == null || _collectPath == null) return;
+            if (_missed == null || _collectPath == null || !_missed.TryAdd(text, 0)) return;
+            string line = text.Replace("\\", "\\\\").Replace("\r", "\\r").Replace("\n", "\\n") + Environment.NewLine;
             try
             {
-                var lines = _missed.Keys.Select(k => k.Replace("\\", "\\\\").Replace("\r", "\\r").Replace("\n", "\\n"));
-                File.AppendAllLines(_collectPath, lines, new UTF8Encoding(false));
-                _missed.Clear();
+                lock (CollectLock) File.AppendAllText(_collectPath, line, new UTF8Encoding(false));
             }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }

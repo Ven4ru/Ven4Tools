@@ -92,10 +92,19 @@ namespace Ven4Tools.Launcher.Services
                     _log?.Invoke("подпись манифеста CDN не подтверждена (version.json.sig)");
                 return info;
             }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                _log?.Invoke("запрос к CDN отменён");
+                return null;
+            }
             catch (OperationCanceledException)
             {
-                _log?.Invoke("запрос к CDN отменён или истёк таймаут");
-                return null;
+                // Таймаут. Частая причина — медленный ответ DNS (первый запрос после
+                // включения сети, «холодный» кэш): имя разрешается дольше, чем отведено на
+                // весь запрос. Раньше это был окончательный отказ, и без GitHub лаунчер
+                // оставался вовсе без сведений о версиях. Теперь — та же попытка по
+                // прямому IP, что и при отказе DNS: она имя не разрешает.
+                _log?.Invoke("истёк таймаут запроса к CDN — повтор по прямому IP");
             }
             catch (Exception ex)
             {
@@ -107,8 +116,8 @@ namespace Ven4Tools.Launcher.Services
                 }
             }
 
-            // Сюда попадаем только при ошибке резолвинга DNS домена cdn.ven4tools.ru:
-            // повторяем через прямой IP в обход DNS.
+            // Сюда попадаем при отказе или таймауте на пути через DNS домена
+            // cdn.ven4tools.ru: повторяем через прямой IP в обход DNS.
             try
             {
                 string ip = _lastKnownCdnIp ?? IpPinnedHttpClientFactory.FallbackCdnIp;
@@ -116,12 +125,12 @@ namespace Ven4Tools.Launcher.Services
                 var info = await FetchAndVerifyAsync(pinned, token);
                 CacheCdnIp(info?.CdnIp);
                 if (info == null)
-                    _log?.Invoke($"домен не резолвится, по прямому IP {ip} подпись манифеста не подтверждена");
+                    _log?.Invoke($"по прямому IP {ip} подпись манифеста не подтверждена");
                 return info;
             }
             catch (Exception ex)
             {
-                _log?.Invoke($"домен не резолвится, обход по прямому IP не удался — {ex.GetType().Name}: {ex.Message}");
+                _log?.Invoke($"обход по прямому IP не удался — {ex.GetType().Name}: {ex.Message}");
                 return null;
             }
         }

@@ -78,7 +78,7 @@ namespace Ven4Tools.Launcher.Services
         internal async Task<UpdateInfo?> ResolveSetupUpdateAsync(string currentVersion)
         {
             // 1. CDN version.json — основной источник обнаружения версии лаунчера.
-            var cdnUpdate = await TryCheckViaCdnAsync(currentVersion);
+            var (cdnUpdate, cdnVersion) = await TryCheckViaCdnAsync(currentVersion);
             if (cdnUpdate != null) return cdnUpdate;
 
             // 2. GitHub Releases — резерв (или CDN не показал обновления / лаг CDN,
@@ -87,6 +87,14 @@ namespace Ven4Tools.Launcher.Services
             var info = await gitHub.CheckLauncherUpdate(currentVersion);
             if (info == null)
             {
+                if (cdnVersion != null)
+                {
+                    // CDN ответил и новой версии не показал: проверка состоялась, просто
+                    // без второго мнения GitHub. Раньше и этот случай записывался как
+                    // «CDN и GitHub недоступны», хотя CDN как раз ответил.
+                    Log($"GitHub недоступен; по данным CDN актуальная версия лаунчера — {cdnVersion}, обновления нет.");
+                    return new UpdateInfo { HasUpdate = false, CurrentVersion = currentVersion, LatestVersion = cdnVersion };
+                }
                 Log("Не удалось получить информацию о релизах (CDN и GitHub недоступны).");
                 return null;
             }
@@ -110,20 +118,22 @@ namespace Ven4Tools.Launcher.Services
         /// Обнаружение обновления через подписанный version.json CDN. Возвращает
         /// UpdateInfo с обновлением ТОЛЬКО если CDN доступен, подписан, содержит
         /// валидный SHA256 и версию новее текущей. Иначе — null (проверит GitHub).
+        /// Вторым значением — версия лаунчера по данным CDN, если CDN ответил вообще:
+        /// по ней вызывающий отличает «CDN недоступен» от «CDN обновления не показал».
         /// </summary>
-        private static async Task<UpdateInfo?> TryCheckViaCdnAsync(string currentVersion)
+        private static async Task<(UpdateInfo? Update, string? CdnVersion)> TryCheckViaCdnAsync(string currentVersion)
         {
             using var cdn = new CdnService();
             CdnVersionInfo? cdnInfo = await cdn.GetVersionInfoAsync();
             var l = cdnInfo?.Launcher;
             if (l == null || string.IsNullOrEmpty(l.Version) ||
                 !DownloadValidator.IsValidSha256(l.SetupSha256))
-                return null;
+                return (null, null);
 
             if (!VersionComparer.IsNewer(l.Version, currentVersion))
-                return null; // CDN не показывает обновления — пусть решает GitHub (мог обогнать CDN)
+                return (null, l.Version); // CDN не показывает обновления — пусть решает GitHub (мог обогнать CDN)
 
-            return new UpdateInfo
+            return (new UpdateInfo
             {
                 HasUpdate = true,
                 CurrentVersion = currentVersion,
@@ -135,7 +145,7 @@ namespace Ven4Tools.Launcher.Services
                 SetupMirrorHostingUrl = l.SetupMirrorHosting,
                 SetupGithubUrl = l.SetupFallback,
                 ExpectedSha256 = l.SetupSha256
-            };
+            }, l.Version);
         }
 
         /// <summary>

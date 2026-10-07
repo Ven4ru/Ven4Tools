@@ -30,14 +30,14 @@
                     <TextBlock Text="📋 О программе" FontWeight="Bold" FontSize="13"
                                Foreground="{DynamicResource HeaderForeground}" Margin="0,0,0,10"/>
                     <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}">
-                        Ven4Tools — это удобный установщик программ для Windows.
+                        Ven4Tools — это удобный установщик программ для Windows.<LineBreak/><LineBreak/>
 
-                        • Поддержка winget и прямых ссылок
-                        • Каталог популярных приложений
-                        • Добавление своих программ
-                        • Установка Microsoft Office
-                        • Состояние лицензий Windows и Office
-                        • Автоматическая проверка доступности
+                        • Поддержка winget и прямых ссылок<LineBreak/>
+                        • Каталог популярных приложений<LineBreak/>
+                        • Добавление своих программ<LineBreak/>
+                        • Установка Microsoft Office<LineBreak/>
+                        • Состояние лицензий Windows и Office<LineBreak/>
+                        • Автоматическая проверка доступности<LineBreak/>
                         • Альтернативные источники для недоступных приложений
                     </TextBlock>
                 </StackPanel>
@@ -50,8 +50,8 @@
                     <TextBlock Text="🔧 Используемые технологии" FontWeight="Bold" FontSize="13"
                                Foreground="{DynamicResource HeaderForeground}" Margin="0,0,0,10"/>
                     <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}">
-                        • .NET 10.0 / WPF
-                        • winget (Windows Package Manager)
+                        • .NET 10.0 / WPF<LineBreak/>
+                        • winget (Windows Package Manager)<LineBreak/>
                         • PowerShell Core
                     </TextBlock>
                 </StackPanel>
@@ -108,7 +108,7 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="© 2024-2025 Ven4ru. Свободное программное обеспечение."
+            <TextBlock Text="© 2024-2026 Ven4ru. Свободное программное обеспечение."
                        Foreground="{DynamicResource TextSecondary}" FontSize="10" Margin="0,20,0,10"/>
         </StackPanel>
     </ScrollViewer>
