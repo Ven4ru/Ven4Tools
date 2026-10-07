@@ -220,14 +220,24 @@ namespace Ven4Tools.Services
             // Делаем это в конце — после замены путей на переменные окружения,
             // иначе имя внутри путей пропало бы и %LOCALAPPDATA%/%USERPROFILE% не сработали.
             // Короткие значения (< 3 символов) не заменяем — слишком много ложных срабатываний.
-            var userName = Environment.UserName;
-            if (!string.IsNullOrEmpty(userName) && userName.Length >= 3)
-                text = text.Replace(userName, "<пользователь>", StringComparison.OrdinalIgnoreCase);
+            return ReplaceIdentity(text, Environment.UserName, Environment.MachineName);
+        }
 
-            var machineName = Environment.MachineName;
-            if (!string.IsNullOrEmpty(machineName) && machineName.Length >= 3)
-                text = text.Replace(machineName, "<машина>", StringComparison.OrdinalIgnoreCase);
-
+        /// <summary>
+        /// Замена имени пользователя и имени машины. Сначала — более длинное из двух:
+        /// имя пользователя часто входит в имя машины («Ivan» и «IVAN-PC»), и замена его
+        /// первым оставляла от имени машины хвост «&lt;пользователь&gt;-PC». Та же логика —
+        /// в лаунчере (PersonalDataSanitizer.ReplaceIdentity).
+        /// </summary>
+        internal static string ReplaceIdentity(string text, string? user, string? machine)
+        {
+            var replacements = new[] { (Value: user, Mark: "<пользователь>"), (Value: machine, Mark: "<машина>") };
+            Array.Sort(replacements, (a, b) => (b.Value?.Length ?? 0).CompareTo(a.Value?.Length ?? 0));
+            foreach (var (value, mark) in replacements)
+            {
+                if (!string.IsNullOrEmpty(value) && value.Length >= 3)
+                    text = text.Replace(value, mark, StringComparison.OrdinalIgnoreCase);
+            }
             return text;
         }
 

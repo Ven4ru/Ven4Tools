@@ -36,6 +36,33 @@ public sealed class LauncherReportSanitizerTests
         Assert.Contains("line 42", clean);
     }
 
+    /// <summary>
+    /// Имя пользователя входит в имя машины — обычное дело («Ivan» и «IVAN-PC»). Раньше
+    /// имя пользователя заменялось первым, и от имени машины оставался хвост
+    /// «&lt;пользователь&gt;-PC»: по нему компьютер по-прежнему узнаваем. Поймано на стенде
+    /// с учётной записью «v4t» и машиной «V4T-STAND».
+    /// </summary>
+    [Theory]
+    [InlineData("Ivan", "IVAN-PC")]
+    [InlineData("v4t", "V4T-STAND")]
+    [InlineData("DESKTOP-ABC1234", "ABC")]   // и наоборот: имя машины внутри имени пользователя
+    public void ИмяПользователяВнутриИмениМашины_НеОставляетХвоста(string user, string machine)
+    {
+        string text = $"сбой на {machine}, профиль {user}, снова {machine}";
+
+        string launcher = PersonalDataSanitizer.ReplaceIdentity(text, user, machine);
+        string client = Ven4Tools.Services.CrashReportService.ReplaceIdentity(text, user, machine);
+
+        foreach (string clean in new[] { launcher, client })
+        {
+            Assert.DoesNotContain(machine, clean, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(user, clean, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("-PC", clean);
+            Assert.DoesNotContain("-STAND", clean);
+        }
+        Assert.Equal(launcher, client);
+    }
+
     [Fact]
     public void Sanitize_RemovesMachineName()
     {
