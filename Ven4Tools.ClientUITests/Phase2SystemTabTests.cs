@@ -71,6 +71,27 @@ namespace Ven4Tools.ClientUITests
             return _session!;
         }
 
+        /// <summary>Закрывает окна Проводника, открытые на папке с таким именем.</summary>
+        private static void CloseExplorerWindows(string folderName)
+        {
+            try
+            {
+                var shellType = Type.GetTypeFromProgID("Shell.Application");
+                if (shellType == null) return;
+                dynamic shell = Activator.CreateInstance(shellType)!;
+                foreach (dynamic window in shell.Windows())
+                {
+                    try
+                    {
+                        if (string.Equals((string)window.LocationName, folderName, StringComparison.OrdinalIgnoreCase))
+                            window.Quit();
+                    }
+                    catch { /* окно уже закрыто или это не Проводник */ }
+                }
+            }
+            catch { /* нет оболочки (серверная сборка без Проводника) — закрывать нечего */ }
+        }
+
         private static void GoToSystemSubTab(AppSession s, string subTabName)
         {
             var systemBtn = UiNav.Find(s, "btnSystemTab");
@@ -82,7 +103,11 @@ namespace Ven4Tools.ClientUITests
                 () => s.MainWindow.FindFirstDescendant(cf => cf.ByControlType(ControlType.TabItem).And(cf.ByName(subTabName))),
                 timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(subTab, $"Не найдена под-вкладка «{subTabName}».");
-            subTab!.Click();
+            // Выбор через автоматизацию, а не щелчком мыши: поверх клиента может стоять
+            // чужое окно (Проводник после «Открыть папку кэша» из соседнего теста), и
+            // щелчок по координатам уходил в него — раздел не переключался.
+            try { subTab!.AsTabItem().Select(); }
+            catch { subTab!.Click(); }
             System.Threading.Thread.Sleep(400);
         }
 
@@ -119,6 +144,9 @@ namespace Ven4Tools.ClientUITests
             Assert.IsNotNull(openCacheBtn, "Не найдена кнопка «Открыть» (папка кэша).");
             openCacheBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(1000); // откроет окно проводника
+            // Окно Проводника закрывается сразу: оставшись поверх клиента, оно перехватывало
+            // щелчки следующих тестов.
+            CloseExplorerWindows("Ven4ToolsCache");
 
             // Очистка кэша — только подтверждение-отказ, как и для логов.
             var clearCacheBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnClearCache"));
@@ -141,7 +169,11 @@ namespace Ven4Tools.ClientUITests
             var s = Require();
             GoToSystemSubTab(s, "Профиль и снимки");
 
-            var saveSnapBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnSaveSnapshot"));
+            // Раздел настроек после переключения появляется в дереве не мгновенно: разовый
+            // поиск на медленной машине (раннер CI) возвращал null.
+            var saveSnapBtn = Retry.WhileNull(
+                () => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnSaveSnapshot")),
+                timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(saveSnapBtn, "Не найдена кнопка «Сохранить снапшот».");
             saveSnapBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);
@@ -166,18 +198,36 @@ namespace Ven4Tools.ClientUITests
                 timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(snapLabel, $"Снапшот «{snapName}» не появился в списке.");
 
-            var row = snapLabel!.Parent;
-            var deleteBtn = row?.FindAllChildren(cf => cf.ByControlType(ControlType.Button))
-                .FirstOrDefault(b => (b.Name ?? "") == "✕");
+            // Список после добавления строки перестраивается: строка и её кнопки появляются
+            // в дереве не одновременно, поэтому кнопка ищется с ожиданием. Строки списка в
+            // дереве автоматизации не сгруппированы (FlatItemsControl), так что кнопка «✕»
+            // нужной строки определяется по положению — та, что на одной высоте с подписью;
+            // иначе при нескольких снимках удалялся бы первый попавшийся.
+            var deleteBtn = Retry.WhileNull(
+                () =>
+                {
+                    var label = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Text))
+                        .FirstOrDefault(e => (e.Name ?? "").Contains(snapName));
+                    if (label == null) return null;
+                    var labelBox = label.BoundingRectangle;
+                    double labelY = labelBox.Top + labelBox.Height / 2.0;
+                    return s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                        .Where(b => (b.Name ?? "") == "✕")
+                        .Select(b => (Button: b, Box: b.BoundingRectangle))
+                        .Where(x => Math.Abs(x.Box.Top + x.Box.Height / 2.0 - labelY) <= Math.Max(labelBox.Height, x.Box.Height))
+                        .Select(x => x.Button)
+                        .FirstOrDefault();
+                },
+                timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(deleteBtn, "Не найдена кнопка удаления снапшота.");
-            deleteBtn!.Click();
+            deleteBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);
             var confirmBox = s.MainWindow.ModalWindows.FirstOrDefault();
             if (confirmBox != null)
             {
                 var yes = confirmBox.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
                     .FirstOrDefault(b => (b.Name ?? "") == "Да" || (b.Name ?? "") == "Yes");
-                yes?.Click();
+                yes?.AsButton().Invoke();
                 System.Threading.Thread.Sleep(500);
             }
         }
