@@ -58,7 +58,7 @@
                 <ComboBoxItem Content="CDN (прямой IP)"/>
                 <ComboBoxItem Content="Хостинг (зеркало ven4tools.ru)"/>
             </ComboBox>
-            <TextBlock Text="Автоматически выбирает самый быстрый доступный источник, переключаясь на другие при сбое."
+            <TextBlock Text="Пробует источники по порядку — CDN, CDN по прямому адресу, зеркало ven4tools.ru, GitHub — и при сбое переходит к следующему."
                        TextWrapping="Wrap" FontSize="11"
                        Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
 
