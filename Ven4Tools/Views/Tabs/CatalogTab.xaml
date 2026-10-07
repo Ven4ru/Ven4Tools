@@ -137,7 +137,9 @@
                          каждого приложения выравнивается по самому длинному во всём списке,
                          поэтому кнопки у всех строк (во всех категориях) начинаются с одного
                          и того же места по X, как в таблице с двумя колонками. -->
-                    <views:FlatItemsControl Grid.IsSharedSizeScope="True" ItemsSource="{Binding AppsView}">
+                    <!-- Обычный ItemsControl намеренно: это список с группами (GroupStyle), и с FlatItemsControl
+                         средства автоматизации перестают находить его строки — проверено прогоном UI-тестов. -->
+                    <ItemsControl Grid.IsSharedSizeScope="True" ItemsSource="{Binding AppsView}">
                         <ItemsControl.GroupStyle>
                             <GroupStyle>
                                 <GroupStyle.ContainerStyle>
@@ -361,7 +363,7 @@
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
-                    </views:FlatItemsControl>
+                    </ItemsControl>
                 </ScrollViewer>
             </DockPanel>
         </GroupBox>

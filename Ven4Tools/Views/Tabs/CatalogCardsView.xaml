@@ -254,7 +254,9 @@
             </Border>
 
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <views:FlatItemsControl x:Name="lstCatalogCards" ItemsSource="{Binding AppsView}" Margin="0,0,6,16">
+                <!-- Обычный ItemsControl намеренно: это список с группами (GroupStyle), и с FlatItemsControl
+                     средства автоматизации перестают находить его строки — проверено прогоном UI-тестов. -->
+                <ItemsControl x:Name="lstCatalogCards" ItemsSource="{Binding AppsView}" Margin="0,0,6,16">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <views:AdaptiveCardPanel MinItemWidth="208" Gap="12"/>
@@ -464,7 +466,7 @@
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
-                </views:FlatItemsControl>
+                </ItemsControl>
             </ScrollViewer>
         </DockPanel>
 
