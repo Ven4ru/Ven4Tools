@@ -69,6 +69,12 @@ namespace Ven4Tools.Localization
             // строки записываются второй раз — без значка в начале исходника и перевода.
             foreach (var (source, target) in literals)
             {
+                // Отступ в начале строки журнала («   ✅ Готово») — тоже не часть ключа:
+                // перед поиском пробелы по краям строки снимаются.
+                string trimmed = source.Trim();
+                if (trimmed.Length != source.Length && HasCyrillic(trimmed) && !literals.ContainsKey(trimmed))
+                    _plainLiterals.TryAdd(trimmed, target.Trim());
+
                 int mark = MarkLength(source);
                 if (mark == 0 || mark >= source.Length) continue;
                 string plain = source[mark..];
@@ -85,6 +91,10 @@ namespace Ven4Tools.Localization
             }
             foreach (var (source, target) in original)
             {
+                string trimmed = source.Trim();
+                if (trimmed.Length != source.Length && HasCyrillic(trimmed) && known.Add(trimmed))
+                    all.Add((trimmed, target.Trim(), true));
+
                 int mark = MarkLength(source);
                 if (mark == 0 || mark >= source.Length) continue;
                 string plain = source[mark..];
@@ -165,10 +175,26 @@ namespace Ven4Tools.Localization
         /// <summary>Перевод строки; строка без русского текста возвращается как есть.</summary>
         public string Translate(string? text)
         {
-            if (string.IsNullOrEmpty(text) || !HasCyrillic(text)) return text ?? "";
+            if (string.IsNullOrEmpty(text)) return "";
+            // Размер без русского текста («12,7 MB» из каталога) в перевод не попадает вовсе,
+            // но десятичная запятая в английском интерфейсе неуместна и там.
+            if (!HasCyrillic(text)) return _decimalPoint ? WithDecimalPoint(text) : text;
             string result = TranslateCore(text, 0, out bool complete);
             if (!complete && Missed != null) ReportMissed(text);
-            return result;
+            return _decimalPoint ? WithDecimalPoint(result) : result;
+        }
+
+        // «12,7 MB», «≈ 4,5 GB», «512,5 MB/s», «0,4 ms», «12,5%» → с точкой. Только число перед
+        // единицей измерения: перечисления и обычные запятые в тексте не затрагиваются.
+        private static readonly Regex DecimalBeforeUnit = new(
+            @"(?<![\d.,])(\d{1,7}),(\d{1,2})(?=\s?(?:[KMGT]i?B(?:/s)?|B|ms|µs|%)(?![A-Za-z]))",
+            RegexOptions.CultureInvariant | RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
+
+        private static string WithDecimalPoint(string text)
+        {
+            if (text.Length > 4000 || text.IndexOf(',') < 1) return text;
+            try { return DecimalBeforeUnit.Replace(text, "$1.$2"); }
+            catch (RegexMatchTimeoutException) { return text; }
         }
 
         // О многострочном тексте сообщаем построчно: журнал в окне растёт, и целиком он
@@ -220,8 +246,11 @@ namespace Ven4Tools.Localization
                 return ReferenceEquals(inner, core) ? text : string.Concat(text.AsSpan(0, start), inner, text.AsSpan(end));
             }
 
-            if (depth < MaxDepth && (!multiline || text.Length <= MaxPatternLength)
-                && TryPattern(text, depth, out string? byPattern)) return byPattern!;
+            bool patterns = depth < MaxDepth && (!multiline || text.Length <= MaxPatternLength);
+            // Сначала шаблоны, которые начинаются с текста. Шаблон, начинающийся с подстановки
+            // («{0} ГБ»), подходит почти к чему угодно — он примеряется последним, иначе
+            // «✅ Свободно ≈73 ГБ» разбирается как «нечто + ГБ», и слово остаётся русским.
+            if (patterns && TryPattern(text, depth, general: false, out string? byPattern)) return byPattern!;
 
             if (_plainLiterals.TryGetValue(text, out string? withoutMark)) return withoutMark;
 
@@ -233,12 +262,17 @@ namespace Ven4Tools.Localization
                 // без того и другого.
                 int lead = MarkLength(text);
                 int tail = lead < text.Length ? TailLength(text, lead) : 0;
-                if (lead > 0 && lead < text.Length && TryBody(text[lead..], depth, out string? body))
-                    return string.Concat(text.AsSpan(0, lead), body);
-                if (tail > 0 && TryBody(text[..^tail], depth, out body))
-                    return string.Concat(body, text.AsSpan(text.Length - tail));
-                if (lead > 0 && tail > 0 && lead < text.Length - tail && TryBody(text[lead..^tail], depth, out body))
-                    return string.Concat(text.AsSpan(0, lead), body, text.AsSpan(text.Length - tail));
+                foreach (bool general in new[] { false, true })
+                {
+                    if (lead > 0 && lead < text.Length && TryBody(text[lead..], depth, general, out string? body))
+                        return string.Concat(text.AsSpan(0, lead), body);
+                    if (tail > 0 && TryBody(text[..^tail], depth, general, out body))
+                        return string.Concat(body, text.AsSpan(text.Length - tail));
+                    if (lead > 0 && tail > 0 && lead < text.Length - tail && TryBody(text[lead..^tail], depth, general, out body))
+                        return string.Concat(text.AsSpan(0, lead), body, text.AsSpan(text.Length - tail));
+                    // Между двумя заходами — общие шаблоны для строки целиком.
+                    if (!general && patterns && TryPattern(text, depth, general: true, out string? generic)) return generic!;
+                }
 
                 // Строка, собранная из частей через разделитель («Чтение — 512 МБ/с»,
                 // «Установлено: Имя»): шаблона для неё в коде нет, но сами части в пакете
@@ -252,6 +286,7 @@ namespace Ven4Tools.Localization
 
             if (multiline)
             {
+                if (patterns && TryPattern(text, depth, general: true, out string? genericMultiline)) return genericMultiline!;
                 string[] lines = text.Split('\n');
                 bool changed = false, all = true;
                 for (int i = 0; i < lines.Length; i++)
@@ -285,10 +320,10 @@ namespace Ven4Tools.Localization
 
         private static readonly string[] Separators = { " — ", " · ", " | ", ": ", ", " };
 
-        private bool TryBody(string body, int depth, out string? result)
+        private bool TryBody(string body, int depth, bool general, out string? result)
         {
-            if (_literals.TryGetValue(body, out result) || _plainLiterals.TryGetValue(body, out result)) return true;
-            if (depth < MaxDepth && TryPattern(body, depth, out result)) return true;
+            if (!general && (_literals.TryGetValue(body, out result) || _plainLiterals.TryGetValue(body, out result))) return true;
+            if (depth < MaxDepth && TryPattern(body, depth, general, out result)) return true;
             result = null;
             return false;
         }
@@ -392,15 +427,22 @@ namespace Ven4Tools.Localization
         private string TranslateLine(string line, int depth, out bool complete) =>
             TranslateCore(line, depth, out complete);
 
-        private bool TryPattern(string text, int depth, out string? result)
+        // general: false — шаблоны, начинающиеся с текста; true — начинающиеся с подстановки.
+        private bool TryPattern(string text, int depth, bool general, out string? result)
         {
-            if (text.Length >= PrefixLength && _byPrefix.TryGetValue(text[..PrefixLength], out var candidates))
+            if (!general)
             {
-                foreach (var pattern in candidates)
+                if (text.Length >= PrefixLength && _byPrefix.TryGetValue(text[..PrefixLength], out var candidates))
                 {
-                    if (pattern.TryApply(text, this, depth, out result)) return true;
+                    foreach (var pattern in candidates)
+                    {
+                        if (pattern.TryApply(text, this, depth, out result)) return true;
+                    }
                 }
+                result = null;
+                return false;
             }
+
             foreach (var pattern in _floating)
             {
                 if (pattern.TryApply(text, this, depth, out result)) return true;

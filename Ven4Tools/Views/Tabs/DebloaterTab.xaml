@@ -23,7 +23,7 @@
                 <TextBlock TextWrapping="Wrap" Margin="0,4,0,0"
                            Foreground="{DynamicResource TextSecondary}" FontSize="12">
                     Удаление предустановленного мусора и настройка конфиденциальности.
-                    Все действия обратимы через «Обновление Windows» или реестр.
+                    Изменённые настройки возвращаются кнопкой «Вернуть», удалённые приложения — из Microsoft Store.
                 </TextBlock>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">

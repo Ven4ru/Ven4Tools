@@ -97,7 +97,7 @@
             </GroupBox>
 
             <!-- Язык -->
-            <GroupBox Header="🌐 Язык интерфейса" Margin="0,0,0,15">
+            <GroupBox Header="🌐 Язык Office" Margin="0,0,0,15">
                 <Grid Margin="10">
                     <ComboBox x:Name="cmbOfficeLanguage" Height="35"
                               ItemsSource="{Binding OfficeLanguages}"

@@ -2169,7 +2169,7 @@
   },
   {
     "s": "Вручную",
-    "t": "Manually"
+    "t": "Manual"
   },
   {
     "s": "Все",
@@ -2189,7 +2189,7 @@
   },
   {
     "s": "Все сторонние драйверы, включая сетевой: без него на свежей системе не будет интернета. От одного до нескольких гигабайт и пара минут.",
-    "t": "All third-party drivers, including the network one: without it, a fresh system has no internet. One to several gigabytes and a couple of minutes."
+    "t": "All third-party drivers, including the network one: without it, a fresh system has no internet. It takes one to several gigabytes and a couple of minutes."
   },
   {
     "s": "Всегда считать соединение активным (для сетей, где автоопределение ошибается). Игнорирует автодетект сети, чтобы онлайн-вкладки не скрывались при ложноотрицательном определении.",
@@ -2593,7 +2593,7 @@
   },
   {
     "s": "Ещё не запускалось.",
-    "t": "Not run yet."
+    "t": "Has not run yet."
   },
   {
     "s": "ЖУРНАЛ ЛАУНЧЕРА",
@@ -6013,11 +6013,11 @@
   },
   {
     "s": "Соберите набор до переустановки Windows. На свежей системе откройте в нём restore.cmd: Ven4Tools вернёт драйверы и Wi-Fi, а затем поставит программы.",
-    "t": "Build the kit before reinstalling Windows. On the fresh system, open restore.cmd in it: Ven4Tools restores drivers and Wi-Fi, then installs the apps."
+    "t": "Build the kit before reinstalling Windows. On the fresh system, run restore.cmd from the kit: Ven4Tools restores drivers and Wi-Fi, then installs the apps."
   },
   {
     "s": "Соберите подборку на ven4tools.ru, скопируйте код и вставьте его сюда — отметим те же приложения. Код разбирается на месте, ничего никуда не отправляется.",
-    "t": "Build a selection on ven4tools.ru, copy the code and paste it here — the same apps will be selected. The code is parsed locally; nothing is sent anywhere."
+    "t": "Build a set on ven4tools.ru, copy the code and paste it here — the same apps will be selected. The code is parsed locally; nothing is sent anywhere."
   },
   {
     "s": "Соберёт на флешку драйверы этого компьютера, профили Wi-Fi и список программ, чтобы вернуть их после переустановки.",
@@ -6468,6 +6468,10 @@
     "t": "Removes preinstalled bloat and adjusts privacy settings. All actions can be undone via “Windows Update” or the registry."
   },
   {
+    "s": "Удаление предустановленного мусора и настройка конфиденциальности. Изменённые настройки возвращаются кнопкой «Вернуть», удалённые приложения — из Microsoft Store.",
+    "t": "Removes preinstalled bloat and adjusts privacy settings. Changed settings are restored with the “Revert” button; removed apps can be reinstalled from Microsoft Store."
+  },
+  {
     "s": "Удаление...",
     "t": "Uninstalling..."
   },
@@ -6633,7 +6637,7 @@
   },
   {
     "s": "Установка",
-    "t": "Installing"
+    "t": "Installation"
   },
   {
     "s": "Установка Microsoft Office",
@@ -9400,6 +9404,10 @@
     "t": "\uD83C\uDF10 Version list taken from CDN ({0}): client {1} from the signed version.json"
   },
   {
+    "s": "\uD83C\uDF10 Язык Office",
+    "t": "\uD83C\uDF10 Office language"
+  },
+  {
     "s": "\uD83C\uDF10 Язык интерфейса",
     "t": "\uD83C\uDF10 Interface language"
   },
@@ -10029,7 +10037,7 @@
   },
   {
     "s": "\uD83D\uDD04 Сбросить сетевые настройки (winsock, IP)",
-    "t": "\uD83D\uDD04 Reset network settings (winsock, IP)"
+    "t": "\uD83D\uDD04 Reset network settings (Winsock, IP)"
   },
   {
     "s": "\uD83D\uDD04 Статус активации обновлён",

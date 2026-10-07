@@ -119,6 +119,34 @@ public class LanguagePackTests
         Assert.Equal(expected, Sample.Translate(source));
     }
 
+    [Theory]
+    [InlineData("12,7 MB", "12.7 MB")]                      // размер из каталога: русского текста нет вовсе
+    [InlineData("≈ 4,5 GB", "≈ 4.5 GB")]
+    [InlineData("512,5 MB/s", "512.5 MB/s")]
+    [InlineData("0,4 ms", "0.4 ms")]
+    [InlineData("12,5%", "12.5%")]
+    [InlineData("Disk 0: Msft Virtual Disk — 103,1 GB", "Disk 0: Msft Virtual Disk — 103.1 GB")]
+    [InlineData("Firefox, Chrome, Edge", "Firefox, Chrome, Edge")]   // перечисление
+    [InlineData("1,234,567 B", "1,234,567 B")]                      // разряды, не дробь
+    [InlineData("v1,5 Beta", "v1,5 Beta")]                          // «B» — начало слова, не единица
+    public void PlainSizes_GetDecimalPointInEnglish(string source, string expected)
+    {
+        Assert.Equal(expected, Sample.Translate(source));
+    }
+
+    [Fact]
+    public void LeadingIndent_AndGenericUnitPattern_DoNotHideSpecificPattern()
+    {
+        // В коде строка с отступом и значком; общий шаблон «{0} ГБ» не должен перехватить её.
+        var pack = Pack("""
+            {"lang":"en","literals":{},
+             "patterns":[["   ✅ Свободно ≈{0} ГБ","   ✅ Free: ≈{0} GB"],["{0} ГБ","{0} GB"]]}
+            """);
+        Assert.Equal("   ✅ Free: ≈73 GB", pack.Translate("   ✅ Свободно ≈73 ГБ"));
+        Assert.Equal("[10:00:00]    ✅ Free: ≈73 GB", pack.Translate("[10:00:00]    ✅ Свободно ≈73 ГБ"));
+        Assert.Equal("120 GB", pack.Translate("120 ГБ"));
+    }
+
     [Fact]
     public void DecimalComma_IsKeptForOtherLanguages()
     {
