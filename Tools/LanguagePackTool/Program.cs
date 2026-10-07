@@ -96,6 +96,38 @@ if (command == "merge")
     return 0;
 }
 
+if (command == "check")
+{
+    // Файл сбора (VEN4TOOLS_L10N_COLLECT) против пакета: какие из показанных строк
+    // пакет так и не переведёт. Переводит тем же кодом, что и сама программа.
+    if (args.Length < 4) { Console.Error.WriteLine("Нужны: программа (client или launcher) и файл сбора."); return 2; }
+    string scope = args[2];
+    var pack = Ven4Tools.Localization.LanguagePack.Parse(File.ReadAllBytes(Path.Combine(root, "Localization", "packs", $"{scope}-en.json")));
+    var left = new SortedSet<string>(StringComparer.Ordinal);
+    pack.Missed = text => left.Add(text);
+    int total = 0;
+    foreach (string line in File.ReadLines(args[3]))
+    {
+        if (line.Length == 0) continue;
+        total++;
+        // Обратное преобразование записи файла сбора: \\ → \, \r и \n → переводы строк.
+        var text = new StringBuilder(line.Length);
+        for (int i = 0; i < line.Length; i++)
+        {
+            if (line[i] == '\\' && i + 1 < line.Length)
+            {
+                char next = line[++i];
+                text.Append(next switch { 'n' => '\n', 'r' => '\r', _ => next });
+            }
+            else text.Append(line[i]);
+        }
+        pack.Translate(text.ToString());
+    }
+    foreach (string text in left) Console.WriteLine(text.Replace("\r", "").Replace("\n", "\\n"));
+    Console.Error.WriteLine($"{scope}: строк в файле {total}, без перевода осталось {left.Count}");
+    return 0;
+}
+
 Console.Error.WriteLine("Неизвестная команда: " + command);
 return 2;
 

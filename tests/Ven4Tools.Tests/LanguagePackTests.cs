@@ -126,6 +126,80 @@ public class LanguagePackTests
         Assert.Equal("12,7 MB", german.Translate("12,7 МБ"));
     }
 
+    // Строки, собранные в коде из кусков: значок рисуется отдельно, к тексту дописано
+    // многоточие, части соединены разделителем, впереди отметка времени журнала.
+    private static readonly LanguagePack Composite = Pack("""
+        {
+          "lang": "en",
+          "literals": {
+            "✅ Готово": "✅ Done",
+            "ℹ️ Уже установлено": "ℹ️ Already installed",
+            "Список программ": "App list",
+            "запись": "write",
+            "исправен": "healthy",
+            "Установлено": "Installed",
+            "Скорость:": "Speed:"
+          },
+          "patterns": [
+            ["✅ Версии загружены для {0} приложений", "✅ Versions loaded for {0} apps"],
+            ["{0} МБ/с", "{0} MB/s"]
+          ]
+        }
+        """);
+
+    [Theory]
+    [InlineData("Готово", "Done")]                                   // в коде строка со значком, на экране — без
+    [InlineData("Уже установлено", "Already installed")]             // «ℹ» по Юникоду буква, но это значок
+    [InlineData("Версии загружены для 80 приложений", "Versions loaded for 80 apps")]
+    [InlineData("⏳ Список программ…", "⏳ App list…")]               // значок и многоточие дописаны в коде
+    [InlineData("Список программ...", "App list...")]
+    [InlineData("RND4K Q1T1 — запись", "RND4K Q1T1 — write")]        // части через разделитель
+    [InlineData("🟢 Msft Virtual Disk — исправен", "🟢 Msft Virtual Disk — healthy")]
+    [InlineData("Установлено: AutoHotkey", "Installed: AutoHotkey")]
+    [InlineData("Скорость: 512,5 МБ/с", "Speed: 512.5 MB/s")]        // «Слово:» записано в пакете с двоеточием
+    [InlineData("[12:34:56] ✅ Готово", "[12:34:56] ✅ Done")]         // отметка времени журнала
+    [InlineData("[12:34:56] Версии загружены для 3 приложений", "[12:34:56] Versions loaded for 3 apps")]
+    public void TextAssembledInCode_IsStillTranslated(string source, string expected)
+    {
+        Assert.Equal(expected, Composite.Translate(source));
+    }
+
+    [Fact]
+    public void BracketWithText_IsPartOfTheString_NotAMark()
+    {
+        // «[Сеть] …» — метка раздела, часть самой строки: без записи в пакете она не переводится.
+        Assert.Equal("[Сеть] Готово к работе", Composite.Translate("[Сеть] Готово к работе"));
+    }
+
+    [Fact]
+    public void PartlyKnownParts_AreTranslated_AndTheRestIsReported()
+    {
+        var missed = new List<string>();
+        var pack = Pack("""{"lang":"en","literals":{"Установлено":"Installed"},"patterns":[]}""");
+        pack.Missed = missed.Add;
+
+        Assert.Equal("Installed: МояПрограмма", pack.Translate("Установлено: МояПрограмма"));
+        Assert.Single(missed);
+    }
+
+    [Fact]
+    public void GrowingLog_IsTranslatedLineByLine_AndReportsOnlyUnknownLines()
+    {
+        var missed = new List<string>();
+        var pack = Pack("""{"lang":"en","literals":{"Готово":"Done"},"patterns":[["Шаг {0}","Step {0}"]]}""");
+        pack.Missed = missed.Add;
+
+        var log = new StringBuilder();
+        for (int i = 1; i <= 300; i++) log.Append("[10:00:00] Шаг ").Append(i).Append('\n');
+        log.Append("[10:00:01] Неизвестная строка\n[10:00:02] Готово\n");
+
+        string translated = pack.Translate(log.ToString());
+
+        Assert.StartsWith("[10:00:00] Step 1\n[10:00:00] Step 2\n", translated);
+        Assert.EndsWith("[10:00:01] Неизвестная строка\n[10:00:02] Done\n", translated);
+        Assert.Equal(new[] { "[10:00:01] Неизвестная строка" }, missed);
+    }
+
     [Fact]
     public void UnknownRussianText_StaysAndIsReported()
     {

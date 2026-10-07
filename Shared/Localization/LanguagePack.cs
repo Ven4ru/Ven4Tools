@@ -32,11 +32,19 @@ namespace Ven4Tools.Localization
     {
         private const int MaxDepth = 3;
         private const int CacheLimit = 8000;
+        // В кэш идут только короткие однострочные строки. Журнал в окне — один растущий
+        // многострочный текст: кэшировать каждое его состояние значило бы копить мегабайты.
+        private const int MaxCachedLength = 400;
+        // Шаблоны к длинному многострочному тексту не примеряются: регулярное выражение на
+        // десятках килобайт журнала — это заметная пауза в интерфейсе. Такой текст
+        // переводится построчно.
+        private const int MaxPatternLength = 2000;
 
         private readonly Dictionary<string, string> _literals;
+        private readonly Dictionary<string, string> _plainLiterals = new(StringComparer.Ordinal);
         private readonly Dictionary<string, List<Pattern>> _byPrefix = new(StringComparer.Ordinal);
         private readonly List<Pattern> _floating = new();
-        private readonly ConcurrentDictionary<string, string> _cache = new(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, (string Text, bool Complete)> _cache = new(StringComparer.Ordinal);
 
         public string Language { get; }
         public int LiteralCount => _literals.Count;
@@ -55,14 +63,43 @@ namespace Ven4Tools.Localization
             Language = language;
             _decimalPoint = string.Equals(language, "en", StringComparison.OrdinalIgnoreCase);
             _literals = literals;
+
+            // Строка в коде часто начинается со значка («✅ Готово»), а на экран попадает
+            // без него: значок рисуется отдельным элементом. Для таких случаев те же
+            // строки записываются второй раз — без значка в начале исходника и перевода.
+            foreach (var (source, target) in literals)
+            {
+                int mark = MarkLength(source);
+                if (mark == 0 || mark >= source.Length) continue;
+                string plain = source[mark..];
+                if (HasCyrillic(plain) && !literals.ContainsKey(plain))
+                    _plainLiterals.TryAdd(plain, target[Math.Min(MarkLength(target), target.Length)..]);
+            }
+
+            var original = patterns.ToList();
+            var all = new List<(string Source, string Target, bool Derived)>(original.Count * 2);
+            var known = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var (source, target) in original)
+            {
+                if (known.Add(source)) all.Add((source, target, false));
+            }
+            foreach (var (source, target) in original)
+            {
+                int mark = MarkLength(source);
+                if (mark == 0 || mark >= source.Length) continue;
+                string plain = source[mark..];
+                if (HasCyrillic(plain) && known.Add(plain))
+                    all.Add((plain, target[Math.Min(MarkLength(target), target.Length)..], true));
+            }
+
             int count = 0;
             // Более определённые шаблоны (больше обычного текста) проверяются первыми:
             // «{0} МБ свободно» должен победить «{0} МБ».
-            foreach (var (source, target) in patterns.OrderByDescending(p => LiteralLength(p.Source)))
+            foreach (var (source, target, derived) in all.OrderByDescending(p => LiteralLength(p.Source)))
             {
                 var pattern = Pattern.TryCreate(source, target);
                 if (pattern == null) continue;
-                count++;
+                if (!derived) count++;
                 if (pattern.Prefix.Length >= PrefixLength)
                 {
                     string key = pattern.Prefix[..PrefixLength];
@@ -129,12 +166,23 @@ namespace Ven4Tools.Localization
         public string Translate(string? text)
         {
             if (string.IsNullOrEmpty(text) || !HasCyrillic(text)) return text ?? "";
-            if (_cache.TryGetValue(text, out string? cached)) return cached;
-
             string result = TranslateCore(text, 0, out bool complete);
-            if (!complete) Missed?.Invoke(text);
-            if (_cache.Count < CacheLimit) _cache[text] = result;
+            if (!complete && Missed != null) ReportMissed(text);
             return result;
+        }
+
+        // О многострочном тексте сообщаем построчно: журнал в окне растёт, и целиком он
+        // «новая строка без перевода» при каждом добавлении.
+        private void ReportMissed(string text)
+        {
+            if (!text.Contains('\n')) { Missed?.Invoke(text); return; }
+            foreach (string line in text.Split('\n'))
+            {
+                string trimmed = line.Trim();
+                if (trimmed.Length == 0 || !HasCyrillic(trimmed)) continue;
+                TranslateCore(trimmed, 0, out bool lineComplete);
+                if (!lineComplete) Missed?.Invoke(trimmed);
+            }
         }
 
         private string TranslateCore(string text, int depth, out bool complete)
@@ -142,6 +190,23 @@ namespace Ven4Tools.Localization
             complete = true;
             if (!HasCyrillic(text)) return text;
             if (_literals.TryGetValue(text, out string? exact)) return exact;
+
+            bool multiline = text.Contains('\n');
+            bool cacheable = depth == 0 && !multiline && text.Length <= MaxCachedLength;
+            if (cacheable && _cache.TryGetValue(text, out var hit))
+            {
+                complete = hit.Complete;
+                return hit.Text;
+            }
+
+            string result = TranslateUncached(text, depth, multiline, out complete);
+            if (cacheable && _cache.Count < CacheLimit) _cache[text] = (result, complete);
+            return result;
+        }
+
+        private string TranslateUncached(string text, int depth, bool multiline, out bool complete)
+        {
+            complete = true;
 
             // Пробелы и переводы строк по краям не входят в ключ: на экран строка
             // часто попадает с отступом или хвостовым переводом строки.
@@ -155,20 +220,37 @@ namespace Ven4Tools.Localization
                 return ReferenceEquals(inner, core) ? text : string.Concat(text.AsSpan(0, start), inner, text.AsSpan(end));
             }
 
-            if (depth < MaxDepth && TryPattern(text, depth, out string? byPattern)) return byPattern!;
+            if (depth < MaxDepth && (!multiline || text.Length <= MaxPatternLength)
+                && TryPattern(text, depth, out string? byPattern)) return byPattern!;
 
-            // Значок или маркер перед текстом («• …», «⚠ …», «— …») часто приставляется в
-            // коде отдельно от самой строки: ищем перевод без него и возвращаем его на место.
-            int lead = 0;
-            while (lead < text.Length && !char.IsLetterOrDigit(text[lead]) && !IsOpeningMark(text[lead])) lead++;
-            if (lead > 0 && lead < text.Length && !text.Contains('\n'))
+            if (_plainLiterals.TryGetValue(text, out string? withoutMark)) return withoutMark;
+
+            if (!multiline)
             {
-                string body = text[lead..];
-                if (_literals.TryGetValue(body, out string? plain)) return string.Concat(text.AsSpan(0, lead), plain);
-                if (depth < MaxDepth && TryPattern(body, depth, out string? bodyByPattern)) return string.Concat(text.AsSpan(0, lead), bodyByPattern);
+                // Значок перед текстом («• …», «⚠ …») и многоточие или двоеточие после него
+                // часто приставляются в коде отдельно от самой строки: ищем перевод без
+                // них и возвращаем их на место. Сначала без начала, затем без конца, затем
+                // без того и другого.
+                int lead = MarkLength(text);
+                int tail = lead < text.Length ? TailLength(text, lead) : 0;
+                if (lead > 0 && lead < text.Length && TryBody(text[lead..], depth, out string? body))
+                    return string.Concat(text.AsSpan(0, lead), body);
+                if (tail > 0 && TryBody(text[..^tail], depth, out body))
+                    return string.Concat(body, text.AsSpan(text.Length - tail));
+                if (lead > 0 && tail > 0 && lead < text.Length - tail && TryBody(text[lead..^tail], depth, out body))
+                    return string.Concat(text.AsSpan(0, lead), body, text.AsSpan(text.Length - tail));
+
+                // Строка, собранная из частей через разделитель («Чтение — 512 МБ/с»,
+                // «Установлено: Имя»): шаблона для неё в коде нет, но сами части в пакете
+                // есть. Переводится то, что нашлось; остальное остаётся как есть.
+                if (depth < MaxDepth && TryParts(text, depth, out string? joined, out bool partsComplete))
+                {
+                    complete = partsComplete;
+                    return joined!;
+                }
             }
 
-            if (text.Contains('\n'))
+            if (multiline)
             {
                 string[] lines = text.Split('\n');
                 bool changed = false, all = true;
@@ -187,8 +269,123 @@ namespace Ven4Tools.Localization
             return text;
         }
 
-        // Скобка или кавычка в начале — часть самой строки («[Сеть] …», «„Имя“ …»), а не маркер.
+        // Ровно «цифры, запятая, одна-две цифры»: дробное число, а не перечисление.
+        private static bool IsDecimalWithComma(string value)
+        {
+            int comma = value.IndexOf(',');
+            if (comma <= 0 || comma != value.LastIndexOf(',')) return false;
+            int fraction = value.Length - comma - 1;
+            if (fraction is < 1 or > 2) return false;
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (i != comma && !char.IsAsciiDigit(value[i])) return false;
+            }
+            return true;
+        }
+
+        private static readonly string[] Separators = { " — ", " · ", " | ", ": ", ", " };
+
+        private bool TryBody(string body, int depth, out string? result)
+        {
+            if (_literals.TryGetValue(body, out result) || _plainLiterals.TryGetValue(body, out result)) return true;
+            if (depth < MaxDepth && TryPattern(body, depth, out result)) return true;
+            result = null;
+            return false;
+        }
+
+        private bool TryParts(string text, int depth, out string? result, out bool complete)
+        {
+            foreach (string separator in Separators)
+            {
+                int at = text.IndexOf(separator, StringComparison.Ordinal);
+                if (at <= 0 || at + separator.Length >= text.Length) continue;
+
+                string[] parts = text.Split(separator);
+                bool changed = false, all = true;
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    string part = parts[i];
+                    if (!HasCyrillic(part))
+                    {
+                        if (_decimalPoint && IsDecimalWithComma(part)) { parts[i] = part.Replace(',', '.'); changed = true; }
+                        continue;
+                    }
+
+                    string translated = TranslateCore(part, depth + 1, out bool partComplete);
+                    // «Слово:» в пакете обычно записано вместе с двоеточием.
+                    if (!partComplete && separator == ": " && i < parts.Length - 1)
+                    {
+                        string withColon = TranslateCore(part + ":", depth + 1, out bool colonComplete);
+                        if (colonComplete && withColon.EndsWith(':')) { translated = withColon[..^1]; partComplete = true; }
+                    }
+
+                    all &= partComplete;
+                    if (!ReferenceEquals(translated, part) && translated != part) { parts[i] = translated; changed = true; }
+                }
+                if (!changed) continue;
+
+                result = string.Join(separator, parts);
+                complete = all;
+                return true;
+            }
+            result = null;
+            complete = false;
+            return false;
+        }
+
+        // Сколько знаков в начале строки — значок или маркер, а не сам текст. Скобка или
+        // кавычка — часть самой строки («[Сеть] …», «„Имя“ …»), на них счёт останавливается.
+        private static int MarkLength(string text)
+        {
+            int length = 0;
+            while (length < text.Length)
+            {
+                char c = text[length];
+                // Отметка времени журнала «[12:34:56] » — тоже не текст: в скобках только цифры и знаки.
+                if (c == '[')
+                {
+                    int close = text.IndexOf(']', length);
+                    if (close > length && close - length <= 24 && !ContainsLetter(text, length + 1, close))
+                    {
+                        length = close + 1;
+                        continue;
+                    }
+                }
+                if (IsTextChar(c) || IsOpeningMark(c)) break;
+                length++;
+            }
+            return length;
+        }
+
+        // Буква или цифра текста. Значки вроде «ℹ» и «№» по правилам Юникода тоже «буквы»
+        // (блок буквоподобных символов), но для нас это оформление, а не текст.
+        private static bool IsTextChar(char c) => char.IsLetterOrDigit(c) && c is not (>= '\u2100' and <= '\u214F');
+
+        private static bool ContainsLetter(string text, int from, int to)
+        {
+            for (int i = from; i < to; i++)
+            {
+                if (char.IsLetter(text[i])) return true;
+            }
+            return false;
+        }
+
+        // То же с конца строки: многоточие, двоеточие, значок после текста.
+        private static int TailLength(string text, int lead)
+        {
+            int length = 0;
+            while (length < text.Length - lead - 1)
+            {
+                char c = text[text.Length - 1 - length];
+                if (IsTextChar(c) || IsClosingMark(c)) break;
+                length++;
+            }
+            return length;
+        }
+
         private static bool IsOpeningMark(char c) => c is '[' or '(' or '{' or '«' or '"' or '\'' or '“' or '„' or '<';
+
+        private static bool IsClosingMark(char c) => c is ']' or ')' or '}' or '»' or '"' or '\'' or '”' or '“' or '>' or '%';
 
         // Строка многострочного текста — тот же поиск, что и для отдельной строки:
         // целиком, без пробелов по краям, по шаблонам, без значка в начале.
@@ -313,19 +510,6 @@ namespace Ven4Tools.Localization
                 return true;
             }
 
-            // Ровно «цифры, запятая, одна-две цифры»: дробное число, а не перечисление.
-            private static bool IsDecimalWithComma(string value)
-            {
-                int comma = value.IndexOf(',');
-                if (comma <= 0 || comma != value.LastIndexOf(',')) return false;
-                int fraction = value.Length - comma - 1;
-                if (fraction is < 1 or > 2) return false;
-                for (int i = 0; i < value.Length; i++)
-                {
-                    if (i != comma && !char.IsAsciiDigit(value[i])) return false;
-                }
-                return true;
-            }
         }
     }
 }
