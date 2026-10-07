@@ -1348,6 +1348,10 @@
     "t": "[Language] {0}: response {1}"
   },
   {
+    "s": "[Язык] Включён перевод «{0}»: строк {1}, шаблонов {2}",
+    "t": "[Language] Translation “{0}” enabled: {1} strings, {2} patterns"
+  },
+  {
     "s": "[Язык] Не удалось определить язык интерфейса: {0}",
     "t": "[Language] Could not determine the interface language: {0}"
   },

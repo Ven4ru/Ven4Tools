@@ -26,7 +26,7 @@ namespace Ven4Tools.Launcher
                     Text    = "Ven4Tools Launcher"
                 };
 
-                _trayItemAutostart = new ToolStripMenuItem("Запускать при старте Windows")
+                _trayItemAutostart = new ToolStripMenuItem(Tr("Запускать при старте Windows"))
                 {
                     Checked      = GetAutostart(),
                     CheckOnClick = true
@@ -39,7 +39,7 @@ namespace Ven4Tools.Launcher
                     Dispatcher.Invoke(SyncSettingsWindow);
                 };
 
-                _trayItemBgUpdates = new ToolStripMenuItem("Проверять обновления в фоне")
+                _trayItemBgUpdates = new ToolStripMenuItem(Tr("Проверять обновления в фоне"))
                 {
                     Checked      = _backgroundUpdates,
                     CheckOnClick = true
@@ -59,8 +59,8 @@ namespace Ven4Tools.Launcher
                 var itemBgUpdates = _trayItemBgUpdates;
 
                 var contextMenu = new ContextMenuStrip();
-                contextMenu.Items.Add("Показать окно", null, (s, e) => Dispatcher.Invoke(ShowWindow));
-                contextMenu.Items.Add("Проверить обновления", null, (s, e) =>
+                contextMenu.Items.Add(Tr("Показать окно"), null, (s, e) => Dispatcher.Invoke(ShowWindow));
+                contextMenu.Items.Add(Tr("Проверить обновления"), null, (s, e) =>
                 {
                     // Единый путь ручной проверки — тот же, что кнопка «Проверить
                     // обновления» в окне (BtnCheckUpdates_Click → CheckForUpdatesAsync):
@@ -74,7 +74,7 @@ namespace Ven4Tools.Launcher
                 contextMenu.Items.Add(itemAutostart);
                 contextMenu.Items.Add(itemBgUpdates);
                 contextMenu.Items.Add("-");
-                contextMenu.Items.Add("Выход", null, (s, e) => ExitApplication());
+                contextMenu.Items.Add(Tr("Выход"), null, (s, e) => ExitApplication());
 
                 _notifyIcon.ContextMenuStrip = contextMenu;
                 _notifyIcon.DoubleClick      += (s, e) => Dispatcher.Invoke(ShowWindow);
@@ -121,7 +121,7 @@ namespace Ven4Tools.Launcher
                     // Счётчик относится к обновлениям winget-пакетов в целом, а не к
                     // самому Ven4Tools — уточняем текст, чтобы не вводить в заблуждение (L5).
                     if (_notifyIcon != null && count > 0)
-                        _notifyIcon.Text = $"Ven4Tools · winget: {count} обновл.";
+                        _notifyIcon.Text = Tr($"Ven4Tools · winget: {count} обновл.");
                     else if (_notifyIcon != null)
                         _notifyIcon.Text = "Ven4Tools Launcher";
                 });
@@ -178,8 +178,8 @@ namespace Ven4Tools.Launcher
 
                     _notifyIcon?.ShowBalloonTip(
                         8000,
-                        title,
-                        $"v{info.CurrentVersion} → v{info.LatestVersion}\n\n{notes}",
+                        Tr(title),
+                        Tr($"v{info.CurrentVersion} → v{info.LatestVersion}\n\n{notes}"),
                         ToolTipIcon.Info);
 
                     if (type == "launcher")

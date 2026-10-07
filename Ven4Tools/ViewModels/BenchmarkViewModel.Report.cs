@@ -15,7 +15,7 @@ namespace Ven4Tools.ViewModels
 
             try
             {
-                Clipboard.SetText(BenchmarkReportBuilder.Build(_lastResult));
+                Clipboard.SetText(Tr(BenchmarkReportBuilder.Build(_lastResult)));
                 AppLogger.Write("📤 Отчёт теста скорости диска скопирован в буфер обмена");
                 MessageBox.Show("Отчёт скопирован в буфер обмена.", "Готово",
                     MessageBoxButton.OK, MessageBoxImage.Information);
@@ -36,15 +36,15 @@ namespace Ven4Tools.ViewModels
             {
                 var dialog = new Microsoft.Win32.SaveFileDialog
                 {
-                    Title = "Сохранить отчёт теста скорости диска",
-                    Filter = "Текстовый файл (*.txt)|*.txt",
+                    Title = Tr("Сохранить отчёт теста скорости диска"),
+                    Filter = Tr("Текстовый файл (*.txt)|*.txt"),
                     DefaultExt = ".txt",
-                    FileName = $"Ven4Tools_тест_диска_{DateTime.Now:yyyy-MM-dd_HH-mm}.txt"
+                    FileName = Tr($"Ven4Tools_тест_диска_{DateTime.Now:yyyy-MM-dd_HH-mm}.txt")
                 };
 
                 if (dialog.ShowDialog() != true) return;
 
-                File.WriteAllText(dialog.FileName, BenchmarkReportBuilder.Build(_lastResult), Encoding.UTF8);
+                File.WriteAllText(dialog.FileName, Tr(BenchmarkReportBuilder.Build(_lastResult)), Encoding.UTF8);
                 AppLogger.Write("💾 Отчёт теста скорости диска сохранён в файл");
                 MessageBox.Show("Отчёт сохранён.", "Готово",
                     MessageBoxButton.OK, MessageBoxImage.Information);

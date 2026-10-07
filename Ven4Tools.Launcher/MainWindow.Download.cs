@@ -39,7 +39,7 @@ namespace Ven4Tools.Launcher
         {
             using var dialog = new FolderBrowserDialog
             {
-                Description      = "Выберите папку для установки Ven4Tools",
+                Description      = Tr("Выберите папку для установки Ven4Tools"),
                 ShowNewFolderButton = true,
                 // Открываем диалог на текущей папке установки. Без этого он каждый раз
                 // стартовал с «Рабочего стола», и пользователь заново искал место,

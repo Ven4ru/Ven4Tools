@@ -213,7 +213,7 @@ namespace Ven4Tools.ViewModels
         {
             using var dlg = new System.Windows.Forms.FolderBrowserDialog
             {
-                Description         = "Выберите папку установки приложений по умолчанию",
+                Description         = Tr("Выберите папку установки приложений по умолчанию"),
                 ShowNewFolderButton = true
             };
             if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
@@ -326,9 +326,9 @@ namespace Ven4Tools.ViewModels
             {
                 var dlg = new SaveFileDialog
                 {
-                    Title    = "Экспорт настроек Ven4Tools",
-                    Filter   = "Архив настроек Ven4Tools (*.zip)|*.zip",
-                    FileName = $"Ven4Tools-настройки-{DateTime.Now:yyyy-MM-dd}.zip"
+                    Title    = Tr("Экспорт настроек Ven4Tools"),
+                    Filter   = Tr("Архив настроек Ven4Tools (*.zip)|*.zip"),
+                    FileName = Tr($"Ven4Tools-настройки-{DateTime.Now:yyyy-MM-dd}.zip")
                 };
                 if (dlg.ShowDialog() != true) return;
 
@@ -353,8 +353,8 @@ namespace Ven4Tools.ViewModels
             {
                 var dlg = new OpenFileDialog
                 {
-                    Title  = "Импорт настроек Ven4Tools",
-                    Filter = "Архив настроек Ven4Tools (*.zip)|*.zip|Все файлы (*.*)|*.*"
+                    Title  = Tr("Импорт настроек Ven4Tools"),
+                    Filter = Tr("Архив настроек Ven4Tools (*.zip)|*.zip|Все файлы (*.*)|*.*")
                 };
                 if (dlg.ShowDialog() != true) return;
 

@@ -57,6 +57,7 @@ namespace Ven4Tools.Services
             var pack = LanguagePackStore.TryLoadLocal(EnglishPack, AppContext.BaseDirectory, AppLogger.Write);
             if (pack == null) return;
             UiTranslator.Activate(pack, collectOnly);
+            if (!collectOnly) AppLogger.Write($"[Язык] Включён перевод «{pack.Language}»: строк {pack.LiteralCount}, шаблонов {pack.PatternCount}");
             if (!collectOnly) Current = AppLanguage.English;
         }
 

@@ -241,7 +241,7 @@ namespace Ven4Tools.ViewModels
         {
             using var dlg = new System.Windows.Forms.FolderBrowserDialog
             {
-                Description         = "Выберите папку для кэша установщиков",
+                Description         = Tr("Выберите папку для кэша установщиков"),
                 ShowNewFolderButton = true
             };
             if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;

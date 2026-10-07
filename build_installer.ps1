@@ -107,6 +107,11 @@ New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
 
 $setupAsset = Join-Path $releaseDir "Ven4Tools.Setup-$Version.exe"
 
+# Английский языковой пакет лаунчера: тот же файл вшивается в установщик (ставится, если
+# при установке выбран английский) и публикуется отдельно — для тех, кто сменит язык
+# позже. Скрипт заодно сверяет, что пакет в репозитории — тот, с которым собран exe.
+& (Join-Path $root "Tools\export-language-pack.ps1") -Component launcher -Version $Version -Binary $publishedExe -OutDir $releaseDir
+
 # /INPUTCHARSET UTF8 — в .nsi русские строки в кодировке UTF-8
 & $makensis `
     "/INPUTCHARSET" "UTF8" `

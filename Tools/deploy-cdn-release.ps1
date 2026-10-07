@@ -19,6 +19,11 @@
          (там же — публичная проверка подписи).
       5. Проверяет публичную доступность файлов по адресам из манифеста.
 
+    Вместе с архивом клиента или установщиком выкладывается английский языковой пакет
+    этой сборки (releases/lang/<программа>-<версия>-en.json): программа скачивает его,
+    когда пользователь выбирает английский. Пакеты прежних версий с сервера не
+    убираются — они нужны тем, кто ещё не обновился.
+
     Файлы дельта-обновления клиента (client-files/<версия>/) этот скрипт не
     выкладывает — сначала Tools\deploy-client-manifest.ps1. Если манифеста файлов
     новой версии на CDN нет, выкладка клиента останавливается: иначе лаунчер
@@ -38,6 +43,11 @@
     Не требовать манифест файлов клиента на CDN. Поля manifest_url и files_base_*
     тогда из блока клиента убираются, и лаунчер обновляет клиента полным архивом.
 
+.PARAMETER SkipLanguagePack
+    Не выкладывать английский языковой пакет. Без ключа пакет обязателен: он должен
+    лежать рядом с выкладываемым файлом (его кладёт Tools\export-language-pack.ps1,
+    а для лаунчера — build_installer.ps1).
+
 .EXAMPLE
     .\Tools\deploy-cdn-release.ps1 -ClientZip .\_release\Ven4Tools-Client-5.4.0.zip
 
@@ -51,7 +61,8 @@ param(
     [string]$ClientZip,
     [string]$LauncherSetup,
     [string]$VersionJsonPath = (Join-Path $PSScriptRoot '..\version.json'),
-    [switch]$SkipClientFilesCheck
+    [switch]$SkipClientFilesCheck,
+    [switch]$SkipLanguagePack
 )
 
 $ErrorActionPreference = 'Stop'
@@ -101,6 +112,37 @@ function Publish-Artifact {
     return $sha
 }
 
+function Publish-LanguagePack {
+    <# Языковой пакет сборки: лежит рядом с релизным файлом. Возвращает публичные адреса. #>
+    param([string]$ArtifactPath, [string]$Component, [string]$Version)
+
+    $kind = if ($Component -eq 'launcher') { 'Launcher' } else { 'Client' }
+    $local = Join-Path (Split-Path -Parent (Resolve-Path -LiteralPath $ArtifactPath).Path) "Ven4Tools-$kind-$Version-lang-en.json"
+    if (-not (Test-Path -LiteralPath $local)) {
+        throw "Языковой пакет не найден: $local. Сначала Tools\export-language-pack.ps1 " +
+              '(он сверит пакет со сборкой), либо ключ -SkipLanguagePack.'
+    }
+
+    $name = "$Component-$Version-en.json"
+    $sha = (Get-FileHash -LiteralPath $local -Algorithm SHA256).Hash.ToLowerInvariant()
+    Write-Host "Заливка языкового пакета $name (sha256 $sha)..."
+
+    ssh jump "mkdir -p '$RemoteReleases/lang'"
+    if ($LASTEXITCODE -ne 0) { throw "Не удалось создать папку языковых пакетов на сервере — ssh завершился с кодом $LASTEXITCODE." }
+    scp $local "jump:$RemoteReleases/lang/$name.tmp"
+    if ($LASTEXITCODE -ne 0) { throw "Заливка $name не удалась — scp завершился с кодом $LASTEXITCODE." }
+
+    $remote = ssh jump "sha256sum '$RemoteReleases/lang/$name.tmp' | cut -d' ' -f1"
+    if ($LASTEXITCODE -ne 0 -or ([string]$remote).Trim() -ne $sha) {
+        ssh jump "rm -f '$RemoteReleases/lang/$name.tmp'" | Out-Null
+        throw "SHA256 $name на сервере не совпал с локальным: $remote против $sha. Временный файл удалён."
+    }
+
+    ssh jump "chmod 644 '$RemoteReleases/lang/$name.tmp' && mv '$RemoteReleases/lang/$name.tmp' '$RemoteReleases/lang/$name'"
+    if ($LASTEXITCODE -ne 0) { throw "Не удалось переименовать $name на сервере — ssh завершился с кодом $LASTEXITCODE." }
+    return @("$CdnBase/releases/lang/$name", "$MirrorBase/releases/lang/$name")
+}
+
 function Test-PublicUrl {
     param([string]$Url)
     try {
@@ -121,6 +163,7 @@ function Set-Field {
 
 $clientVersion = $null
 $launcherVersion = $null
+$languagePackUrls = @()
 if ($ClientZip) {
     $clientVersion = Get-ArtifactVersion -Path $ClientZip -Kind 'клиента' `
         -Pattern '^Ven4Tools-Client-(?<version>\d+\.\d+\.\d+)\.zip$'
@@ -160,6 +203,7 @@ if ($ClientZip) {
     }
 
     $sha = Publish-Artifact -Path $ClientZip
+    if (-not $SkipLanguagePack) { $languagePackUrls += Publish-LanguagePack -ArtifactPath $ClientZip -Component 'client' -Version $clientVersion }
 
     # Публикуется только текущая сборка клиента (решение от 07.10.2026): прежняя
     # версия в список принимаемых архивов больше не переносится, а её файлы на
@@ -194,6 +238,7 @@ if ($LauncherSetup) {
     }
 
     $sha = Publish-Artifact -Path $LauncherSetup
+    if (-not $SkipLanguagePack) { $languagePackUrls += Publish-LanguagePack -ArtifactPath $LauncherSetup -Component 'launcher' -Version $launcherVersion }
 
     Set-Field $manifest.launcher 'version' $launcherVersion
     Set-Field $manifest.launcher 'setup_url' "$CdnBase/releases/$setupName"
@@ -219,6 +264,7 @@ if ($LASTEXITCODE -ne 0) { throw "deploy-version-manifest.ps1 завершилс
 $urls = @()
 if ($ClientZip) { $urls += $manifest.client.zip_url, $manifest.client.zip_mirror_hosting }
 if ($LauncherSetup) { $urls += $manifest.launcher.setup_url, $manifest.launcher.setup_mirror_hosting }
+$urls += $languagePackUrls
 $failed = @($urls | Where-Object { -not (Test-PublicUrl $_) })
 if ($failed.Count -gt 0) {
     throw "Манифест выложен, но файлы недоступны публично: $($failed -join ', ')"
@@ -242,3 +288,6 @@ Write-Host ''
 if ($ClientZip) { Write-Host "Клиент $clientVersion выложен: $($manifest.client.zip_url)" -ForegroundColor Green }
 if ($LauncherSetup) { Write-Host "Лаунчер $launcherVersion выложен: $($manifest.launcher.setup_url)" -ForegroundColor Green }
 Write-Host 'Запасной источник — GitHub: ассет релиза должен быть ТЕМ ЖЕ файлом (сверить SHA256 после gh release).' -ForegroundColor Yellow
+if ($languagePackUrls.Count -gt 0) {
+    Write-Host 'Языковой пакет (Ven4Tools-*-lang-en.json рядом с релизным файлом) приложите к тому же релизу на GitHub.' -ForegroundColor Yellow
+}

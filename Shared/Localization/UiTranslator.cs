@@ -17,7 +17,7 @@ namespace Ven4Tools.Localization
     /// Исходники остаются русскими, а перевод применяется в одном месте — там, где текст
     /// попадает на экран. Почти весь текст WPF в итоге рисует <see cref="TextBlock"/>
     /// (подпись кнопки, заголовок вкладки, подсказка, строка списка), поэтому достаточно
-    /// следить за ним: при появлении элемента и при каждой смене текста строка ищется в
+    /// следить за ним: при первой раскладке элемента и при каждой смене текста строка ищется в
     /// языковом пакете. Заголовки окон, поля только для чтения (журналы) и подписи для
     /// программ чтения с экрана обрабатываются так же.
     ///
@@ -80,10 +80,24 @@ namespace Ven4Tools.Localization
             _pack = pack;
             if (_hooked) return;
             _hooked = true;
-            EventManager.RegisterClassHandler(typeof(TextBlock), FrameworkElement.LoadedEvent, new RoutedEventHandler(OnTextBlockLoaded));
-            EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent, new RoutedEventHandler(OnWindowLoaded));
-            EventManager.RegisterClassHandler(typeof(TextBox), FrameworkElement.LoadedEvent, new RoutedEventHandler(OnTextBoxLoaded));
-            EventManager.RegisterClassHandler(typeof(Control), FrameworkElement.LoadedEvent, new RoutedEventHandler(OnControlLoaded));
+            // Точка входа — первое изменение размера элемента, то есть его первая раскладка.
+            // Событие Loaded для этого не годится: WPF рассылает его только тем элементам,
+            // у которых (или у чьих потомков) есть собственный обработчик Loaded, а общий
+            // обработчик класса в расчёт не берёт. Размер же получает всё, что видно на
+            // экране, и происходит это до первой отрисовки — русский текст не мелькает.
+            EventManager.RegisterClassHandler(typeof(TextBlock), FrameworkElement.SizeChangedEvent, new SizeChangedEventHandler(OnTextBlockSized));
+            EventManager.RegisterClassHandler(typeof(Control), FrameworkElement.SizeChangedEvent, new SizeChangedEventHandler(OnControlSized));
+        }
+
+        // Элемент уже подключён к переводу: событие размера приходит много раз, работа нужна один.
+        private static readonly DependencyProperty HookedProperty = DependencyProperty.RegisterAttached(
+            "Hooked", typeof(bool), typeof(UiTranslator), new PropertyMetadata(false));
+
+        private static bool TakeHook(DependencyObject element)
+        {
+            if ((bool)element.GetValue(HookedProperty)) return false;
+            element.SetValue(HookedProperty, true);
+            return true;
         }
 
         /// <summary>Сбрасывает собранные непереведённые строки в файл (режим сбора).</summary>
@@ -111,9 +125,9 @@ namespace Ven4Tools.Localization
         private static readonly DependencyProperty AppliedProperty = DependencyProperty.RegisterAttached(
             "Applied", typeof(string), typeof(UiTranslator), new PropertyMetadata(null));
 
-        private static void OnTextBlockLoaded(object sender, RoutedEventArgs e)
+        private static void OnTextBlockSized(object sender, SizeChangedEventArgs e)
         {
-            if (_pack == null || sender is not TextBlock block) return;
+            if (_pack == null || sender is not TextBlock block || !TakeHook(block)) return;
             if (HasInlineContent(block))
             {
                 // Текст с оформлением собран из кусков — переводится по кускам, свойство
@@ -121,16 +135,7 @@ namespace Ven4Tools.Localization
                 TranslateInlines(block.Inlines);
                 return;
             }
-            if (BindingOperations.GetBindingExpressionBase(block, WatchedTextProperty) == null)
-            {
-                block.SetBinding(WatchedTextProperty, new Binding
-                {
-                    Path = new PropertyPath(TextBlock.TextProperty),
-                    RelativeSource = RelativeSource.Self,
-                    Mode = BindingMode.OneWay
-                });
-            }
-            else ApplyTo(block, TextBlock.TextProperty, block.Text);
+            Watch(block, TextBlock.TextProperty);
         }
 
         // Простой текст TextBlock хранит строкой; куски (Run, Span, Hyperlink) — логическими
@@ -151,10 +156,18 @@ namespace Ven4Tools.Localization
             {
                 if (inline is Run run)
                 {
-                    string text = run.Text;
-                    string translated = Tr(text);
-                    if (!ReferenceEquals(translated, text) && translated != text)
-                        run.SetCurrentValue(Run.TextProperty, translated);
+                    // Кусок может быть привязан к данным и меняться после показа — за ним
+                    // следим так же, как за текстом целого элемента.
+                    if (BindingOperations.GetBindingExpressionBase(run, WatchedTextProperty) == null)
+                    {
+                        BindingOperations.SetBinding(run, WatchedTextProperty, new Binding
+                        {
+                            Path = new PropertyPath(Run.TextProperty),
+                            RelativeSource = RelativeSource.Self,
+                            Mode = BindingMode.OneWay
+                        });
+                    }
+                    else ApplyTo(run, Run.TextProperty, run.Text);
                 }
                 else if (inline is Span span) TranslateInlines(span.Inlines);
             }
@@ -166,6 +179,7 @@ namespace Ven4Tools.Localization
             if (d is TextBlock block) ApplyTo(block, TextBlock.TextProperty, text);
             else if (d is Window window) ApplyTo(window, Window.TitleProperty, text);
             else if (d is TextBox box) ApplyTo(box, TextBox.TextProperty, text);
+            else if (d is Run run) ApplyTo(run, Run.TextProperty, text);
         }
 
         private static void ApplyTo(DependencyObject target, DependencyProperty property, string text)
@@ -180,17 +194,17 @@ namespace Ven4Tools.Localization
 
         // ── Окна, поля только для чтения, подписи для программ чтения с экрана ───
 
-        private static void OnWindowLoaded(object sender, RoutedEventArgs e)
+        private static void OnControlSized(object sender, SizeChangedEventArgs e)
         {
-            if (_pack == null || sender is not Window window) return;
-            Watch(window, Window.TitleProperty);
-        }
+            if (_pack == null || sender is not Control control || !TakeHook(control)) return;
 
-        private static void OnTextBoxLoaded(object sender, RoutedEventArgs e)
-        {
+            if (control is Window window) Watch(window, Window.TitleProperty);
             // Только поля для чтения: журналы и отчёты. То, что вводит человек, не трогаем.
-            if (_pack == null || sender is not TextBox box || !box.IsReadOnly) return;
-            Watch(box, TextBox.TextProperty);
+            else if (control is TextBox { IsReadOnly: true } box) Watch(box, TextBox.TextProperty);
+
+            TranslateProperty(control, AutomationProperties.NameProperty);
+            TranslateProperty(control, AutomationProperties.HelpTextProperty);
+            WatchSpokenName(control);
         }
 
         private static void Watch(FrameworkElement element, DependencyProperty property)
@@ -202,14 +216,6 @@ namespace Ven4Tools.Localization
                 RelativeSource = RelativeSource.Self,
                 Mode = BindingMode.OneWay
             });
-        }
-
-        private static void OnControlLoaded(object sender, RoutedEventArgs e)
-        {
-            if (_pack == null || sender is not Control control) return;
-            TranslateProperty(control, AutomationProperties.NameProperty);
-            TranslateProperty(control, AutomationProperties.HelpTextProperty);
-            WatchSpokenName(control);
         }
 
         // ── Имя элемента для программ чтения с экрана ────────────────────────────
@@ -281,5 +287,15 @@ namespace Ven4Tools.Localization
             if (!ReferenceEquals(translated, text) && translated != text)
                 target.SetCurrentValue(property, translated);
         }
+    }
+
+    /// <summary>
+    /// Короткое имя перевода для кода: <c>Tr("…")</c> там, где текст уходит мимо окон WPF —
+    /// в системные диалоги выбора файла, меню и подсказки значка в трее, имена файлов.
+    /// Подключается на весь проект через <c>global using static</c>.
+    /// </summary>
+    public static class TranslationShortcut
+    {
+        public static string Tr(string? text) => UiTranslator.Tr(text);
     }
 }

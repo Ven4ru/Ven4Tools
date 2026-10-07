@@ -60,7 +60,7 @@ public partial class App : Application
             _mutex = new Mutex(true, "Ven4Tools.Launcher.SingleInstance", out bool createdNewCli);
             if (!createdNewCli)
             {
-                Console.Error.WriteLine("Ven4Tools Launcher уже запущен.");
+                Console.Error.WriteLine(Tr("Ven4Tools Launcher уже запущен."));
                 _mutex.Dispose();
                 _mutex = null;
                 Shutdown(3);

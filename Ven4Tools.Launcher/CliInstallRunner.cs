@@ -45,12 +45,12 @@ internal static class CliInstallRunner
         {
             var result = await window.InstallFromLocalArchiveCliAsync(archivePath, silent, allowDowngrade);
             if (result.Status != LocalArchiveInstallStatus.Installed && !string.IsNullOrEmpty(result.Message))
-                Console.Error.WriteLine($"Ошибка: {result.Message}");
+                Console.Error.WriteLine(Tr($"Ошибка: {result.Message}"));
             return ToExitCode(result.Status);
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Ошибка: {ex.Message}");
+            Console.Error.WriteLine(Tr($"Ошибка: {ex.Message}"));
             return ExitFailed;
         }
     }

@@ -132,8 +132,8 @@ namespace Ven4Tools.ViewModels
             }
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
-                Title = "Экспорт списка приложений",
-                Filter = "JSON файлы (*.json)|*.json",
+                Title = Tr("Экспорт списка приложений"),
+                Filter = Tr("JSON файлы (*.json)|*.json"),
                 FileName = $"ven4tools_list_{DateTime.Now:yyyyMMdd_HHmm}.json",
                 DefaultExt = ".json"
             };
@@ -227,7 +227,7 @@ namespace Ven4Tools.ViewModels
 
         private void ImportList()
         {
-            var dlg = new Microsoft.Win32.OpenFileDialog { Title = "Импорт списка приложений", Filter = "JSON файлы (*.json)|*.json" };
+            var dlg = new Microsoft.Win32.OpenFileDialog { Title = Tr("Импорт списка приложений"), Filter = Tr("JSON файлы (*.json)|*.json") };
             if (dlg.ShowDialog() != true) return;
             try
             {

@@ -53,9 +53,9 @@ namespace Ven4Tools.Views
                 };
 
                 var menu = new Forms.ContextMenuStrip();
-                menu.Items.Add("Открыть", null, (_, _) => _dispatcher.Invoke(_showRequested));
+                menu.Items.Add(Tr("Открыть"), null, (_, _) => _dispatcher.Invoke(_showRequested));
                 menu.Items.Add("-");
-                menu.Items.Add("Выход", null, (_, _) => _dispatcher.Invoke(_exitRequested));
+                menu.Items.Add(Tr("Выход"), null, (_, _) => _dispatcher.Invoke(_exitRequested));
 
                 _icon.ContextMenuStrip = menu;
                 _icon.DoubleClick += (_, _) => _dispatcher.Invoke(_showRequested);
@@ -67,7 +67,7 @@ namespace Ven4Tools.Views
                     {
                         try
                         {
-                            _icon?.ShowBalloonTip(8000, title, body, Forms.ToolTipIcon.Info);
+                            _icon?.ShowBalloonTip(8000, Tr(title), Tr(body), Forms.ToolTipIcon.Info);
                         }
                         catch { }
                     }));
@@ -79,7 +79,7 @@ namespace Ven4Tools.Views
         }
 
         public void ShowBalloon(int timeoutMs, string title, string body) =>
-            _icon?.ShowBalloonTip(timeoutMs, title, body, Forms.ToolTipIcon.Info);
+            _icon?.ShowBalloonTip(timeoutMs, Tr(title), Tr(body), Forms.ToolTipIcon.Info);
 
         /// <summary>
         /// Снимает подписку фонового сервиса на балуны. Отдельно от <see cref="Dispose"/>:

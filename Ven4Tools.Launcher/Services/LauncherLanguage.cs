@@ -79,6 +79,7 @@ namespace Ven4Tools.Launcher.Services
             if (pack == null) return;
 
             UiTranslator.Activate(pack, collectOnly);
+            if (!collectOnly) LauncherLog.Write($"[Язык] Включён перевод «{pack.Language}»: строк {pack.LiteralCount}, шаблонов {pack.PatternCount}");
             if (!collectOnly) Current = AppLanguage.English;
         }
 

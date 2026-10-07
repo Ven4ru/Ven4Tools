@@ -95,7 +95,7 @@ namespace Ven4Tools.Views
         {
             using var dialog = new System.Windows.Forms.FolderBrowserDialog
             {
-                Description = "Папка набора «Перед переустановкой»",
+                Description = Tr("Папка набора «Перед переустановкой»"),
                 ShowNewFolderButton = true
             };
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)

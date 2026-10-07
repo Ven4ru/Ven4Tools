@@ -55,8 +55,8 @@ namespace Ven4Tools.Launcher
 
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "Архив клиента Ven4Tools (*.zip)|*.zip",
-                Title = "Выберите архив клиента"
+                Filter = Tr("Архив клиента Ven4Tools (*.zip)|*.zip"),
+                Title = Tr("Выберите архив клиента")
             };
             if (dialog.ShowDialog() != true) return;
 
