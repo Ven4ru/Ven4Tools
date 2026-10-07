@@ -94,6 +94,8 @@ namespace Ven4Tools.ViewModels
         /// <summary>Подписки живут, пока экран показан: главное окно держит его весь сеанс.</summary>
         public void Attach()
         {
+            // Повторный Loaded без Unloaded между ними не должен подписывать второй раз.
+            Detach();
             UpdateBackgroundService.CountChanged += OnCountsChanged;
             WindowsUpdateBackgroundService.CountChanged += OnCountsChanged;
             CatalogLoaderService.CatalogReady += OnCatalogReady;

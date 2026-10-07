@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/github/license/Ven4ru/Ven4Tools" />
   <img src="https://img.shields.io/github/last-commit/Ven4ru/Ven4Tools" />
   <img src="https://badgen.net/badge/platform/Windows%2010%2B/0078D6">
-  <img src="https://badgen.net/badge/.NET/8.0/512BD4">
+  <img src="https://badgen.net/badge/.NET/10.0/512BD4">
   <img src="https://badgen.net/badge/UI/WPF/5C2D91">
   <img src="https://badgen.net/badge/PRs/welcome/green">
 </p>
@@ -159,7 +159,7 @@ Ven4Tools.exe
 
 - Поддерживаемые версии: **Office 365, 2016, 2019, 2021, 2024**
 - Выбор языка установки
-- Установка с возможностью отмены в любой момент
+- Установка с возможностью отмены до запуска установщика
 
 ---
 
@@ -304,7 +304,7 @@ Ven4Tools.exe
 
 Вкладка **«Лицензия»** показывает, активированы ли Windows и Microsoft Office. Ven4Tools ничего не активирует и не ссылается на инструменты активации: для активации нужен ваш ключ или цифровая лицензия.
 
-Office со вкладки **«Office»** скачивается с серверов Microsoft официальным Office Deployment Tool и устанавливается без активации.
+Office со вкладки **«Office»** скачивается с серверов Microsoft официальным загрузчиком и устанавливается без активации.
 
 ---
 

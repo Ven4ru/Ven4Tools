@@ -65,10 +65,27 @@ namespace Ven4Tools.ViewModels
 
         private async Task BuildOfflineKitAsync()
         {
-            var cached = _cacheAppItems.Where(a => OfflineService.HasCachedInstaller(a.Id)).Select(a => a.Id).ToList();
-            if (cached.Count == 0)
+            var candidates = _cacheAppItems.Where(a => OfflineService.HasCachedInstaller(a.Id)).ToList();
+            if (candidates.Count == 0)
             {
                 OfflineKitStatusText = "❌ В кэше нет ни одного установщика. Отметьте программы и нажмите «Скачать выбранные в кэш».";
+                return;
+            }
+
+            // Установщик мог быть скачан по прежней версии каталога: на другом компьютере
+            // он не прошёл бы проверку, а взять его заново без сети негде. Поэтому в набор
+            // идут только те, чья контрольная сумма сходится с каталогом прямо сейчас.
+            OfflineKitStatusText = "⏳ Проверка установщиков…";
+            var cached = new List<string>();
+            var stale = new List<string>();
+            foreach (var item in candidates)
+            {
+                if (await IsCachedInstallerCurrentAsync(item)) cached.Add(item.Id);
+                else stale.Add(item.DisplayName);
+            }
+            if (cached.Count == 0)
+            {
+                OfflineKitStatusText = "❌ Установщики в кэше устарели: их контрольные суммы не сходятся с каталогом. Скачайте их в кэш заново.";
                 return;
             }
 
@@ -88,7 +105,10 @@ namespace Ven4Tools.ViewModels
                     kitRoot, cached, AppContext.BaseDirectory, progress));
                 OfflineKitStatusText =
                     $"✅ Набор готов: программ {result.Apps}, клиент {result.ClientBytes / 1024 / 1024} МБ. " +
-                    $"На другом компьютере откройте {OfflineKitBuilder.LauncherFileName} из этой папки.";
+                    $"На другом компьютере откройте {OfflineKitBuilder.LauncherFileName} из этой папки." +
+                    (stale.Count > 0
+                        ? $"\n⚠️ Не вошли (установщик в кэше устарел, скачайте заново): {string.Join(", ", stale)}."
+                        : "");
                 AppLogger.Write($"💾 Переносной офлайн-набор собран: программ {result.Apps}, файлов клиента {result.ClientFiles}");
             }
             catch (Exception ex)
@@ -100,6 +120,22 @@ namespace Ven4Tools.ViewModels
             {
                 _buildingKit = false;
                 BuildOfflineKitCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        private static async Task<bool> IsCachedInstallerCurrentAsync(CacheAppItem item)
+        {
+            try
+            {
+                string? path = OfflineService.GetCachedInstallerPath(item.Id);
+                if (path == null || string.IsNullOrWhiteSpace(item.Sha256)) return false;
+                await using var stream = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read);
+                return await HashHelper.VerifyHashAsync(stream, item.Sha256);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[Офлайн-набор] Установщик {item.Id} не проверен: {ex.Message}");
+                return false;
             }
         }
 

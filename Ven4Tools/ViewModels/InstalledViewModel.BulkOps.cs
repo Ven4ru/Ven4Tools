@@ -135,7 +135,9 @@ namespace Ven4Tools.ViewModels
                 }
 
                 // RunStreamingAsync: живой прогресс в лог + 15-минутный таймаут
-                string args = $"upgrade --id \"{app.WingetId}\" --exact --silent {WingetArgs.ModifyLine}";
+                // --include-unknown — как у списка обновлений и «Обновить всё»: иначе программу с
+                // неопределяемой версией список показывает, а поштучная команда отвергает.
+                string args = $"upgrade --id \"{app.WingetId}\" --exact --silent --include-unknown {WingetArgs.ModifyLine}";
                 int code = await WingetRunner.RunStreamingAsync(args, line => AppLogger.Write($"  {line}"),
                     TimeSpan.FromMinutes(15));
                 var exit = DescribeWingetExitCode(code);

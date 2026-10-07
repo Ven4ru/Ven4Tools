@@ -89,6 +89,8 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunCheckStatusAsync()
         {
+            // Вкладка запускает проверку при каждом показе — две сразу не нужны.
+            if (IsCheckingStatus) return;
             IsCheckingStatus = true;
             try
             {

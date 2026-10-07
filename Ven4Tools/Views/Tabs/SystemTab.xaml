@@ -1,6 +1,7 @@
 <UserControl x:Class="Ven4Tools.Views.Tabs.SystemTab"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Ven4Tools.Views"
              Background="{DynamicResource ContentBackground}">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -63,7 +64,7 @@
                               Content="Обновлять установленные программы автоматически"
                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"
                               IsChecked="{Binding AutoUpdateApps, Mode=TwoWay}"/>
-                    <TextBlock Text="Выключено по умолчанию. Когда включено, клиент сам ставит обновления через winget, пока он запущен (в том числе свёрнутый в трей). Программы из списка исключений не трогает."
+                    <TextBlock Text="Выключено по умолчанию. Когда включено, клиент сам ставит обновления через winget, пока он запущен (в том числе свёрнутый в трей). Программы из списка исключений не трогает. Условия источников winget при этом принимаются автоматически. В параноидальном режиме автообновление не работает."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
                                FontSize="11" Margin="0,0,0,10"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -419,7 +420,7 @@
                                             ToolTip="Снимет отметки со всех приложений для загрузки в кэш."
                                             Grid.Column="2" Command="{Binding SelectNoneCacheCommand}"/>
                                 </Grid>
-                                <ItemsControl x:Name="listCacheApps" ItemsSource="{Binding FilteredCacheApps}">
+                                <views:FlatItemsControl x:Name="listCacheApps" ItemsSource="{Binding FilteredCacheApps}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
@@ -427,7 +428,7 @@
                                                       Margin="2,2"/>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                </views:FlatItemsControl>
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
@@ -550,7 +551,7 @@
                     <Border Background="{DynamicResource CardBackground}" CornerRadius="8"
                             Padding="6" MaxHeight="260">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <ItemsControl x:Name="lstSnapshots" ItemsSource="{Binding Snapshots}">
+                            <views:FlatItemsControl x:Name="lstSnapshots" ItemsSource="{Binding Snapshots}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Margin="0,2" Padding="8,6"
@@ -587,7 +588,7 @@
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            </views:FlatItemsControl>
                         </ScrollViewer>
                     </Border>
 
