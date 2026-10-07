@@ -93,6 +93,39 @@ public class LanguagePackTests
         Assert.Equal("First line\n  Second line\n512 MB", Sample.Translate("Первая строка\n  Вторая строка\n512 МБ"));
     }
 
+    [Theory]
+    [InlineData("• Готово", "• Done")]
+    [InlineData("⚠ Готово", "⚠ Done")]
+    [InlineData("— 512 МБ", "— 512 MB")]
+    [InlineData("🔍 Статус: Установлено", "🔍 Status: Installed")]
+    public void MarkerBeforeText_DoesNotHideTranslation(string source, string expected)
+    {
+        Assert.Equal(expected, Sample.Translate(source));
+    }
+
+    [Fact]
+    public void MarkedLines_AreTranslatedLineByLine()
+    {
+        Assert.Equal("• Done\n• Installed", Sample.Translate("• Готово\n• Установлено"));
+    }
+
+    [Theory]
+    [InlineData("12,7 МБ", "12.7 MB")]          // дробное число: в английском тексте — точка
+    [InlineData("1024 МБ", "1024 MB")]
+    [InlineData("1,2,3 МБ", "1,2,3 MB")]        // перечисление — не трогаем
+    [InlineData("1,234 МБ", "1,234 MB")]        // три знака после запятой — не дробь
+    public void DecimalComma_BecomesPointInEnglish(string source, string expected)
+    {
+        Assert.Equal(expected, Sample.Translate(source));
+    }
+
+    [Fact]
+    public void DecimalComma_IsKeptForOtherLanguages()
+    {
+        var german = Pack("""{"lang":"de","literals":{},"patterns":[["{0} МБ","{0} MB"]]}""");
+        Assert.Equal("12,7 MB", german.Translate("12,7 МБ"));
+    }
+
     [Fact]
     public void UnknownRussianText_StaysAndIsReported()
     {

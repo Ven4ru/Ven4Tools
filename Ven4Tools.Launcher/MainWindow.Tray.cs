@@ -137,15 +137,20 @@ namespace Ven4Tools.Launcher
                     // Заголовок/тип уведомления подписаны в notifications.json (ECDSA), но
                     // раньше игнорировались — балон всегда показывал "Ven4Tools"/Info,
                     // хотя содержимое уже несёт нужные данные (Gap Analysis).
-                    string title = string.IsNullOrWhiteSpace(notif.Title) ? "Ven4Tools" : notif.Title;
+                    // Уведомление приходит с сервера, а не с программой: в языковом пакете его
+                    // текста нет. Английский вариант — в самом уведомлении, если его написали.
+                    bool english = LauncherLanguage.Current == Ven4Tools.Localization.AppLanguage.English;
+                    string message = english && !string.IsNullOrWhiteSpace(notif.MessageEn) ? notif.MessageEn : notif.Message;
+                    string notifTitle = english && !string.IsNullOrWhiteSpace(notif.TitleEn) ? notif.TitleEn : notif.Title;
+                    string title = string.IsNullOrWhiteSpace(notifTitle) ? "Ven4Tools" : notifTitle;
                     ToolTipIcon icon = notif.Type?.ToLowerInvariant() switch
                     {
                         "warning" => ToolTipIcon.Warning,
                         "error"   => ToolTipIcon.Error,
                         _         => ToolTipIcon.Info
                     };
-                    _notifyIcon?.ShowBalloonTip(8000, title, notif.Message, icon);
-                    AddLog($"📢 Уведомление: {notif.Message}");
+                    _notifyIcon?.ShowBalloonTip(8000, title, message, icon);
+                    AddLog($"📢 Уведомление: {message}");
                 });
             };
 
@@ -169,7 +174,7 @@ namespace Ven4Tools.Launcher
                         ? $"Обновление лаунчера {info.LatestVersion}"
                         : $"Новая версия Ven4Tools {info.LatestVersion}";
 
-                    string notes = info.ReleaseNotes ?? "Подробности — в окне лаунчера.";
+                    string notes = ReleaseNotesText.ForLanguage(info.ReleaseNotes, LauncherLanguage.Current) ?? "Подробности — в окне лаунчера.";
                     notes = Regex.Replace(notes, @"[#*`\-]", "").Trim();
                     if (notes.Length > 250) notes = notes.Substring(0, 247) + "...";
 

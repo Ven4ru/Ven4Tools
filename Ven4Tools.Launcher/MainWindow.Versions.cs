@@ -296,7 +296,7 @@ namespace Ven4Tools.Launcher
 
         private void ShowReleaseNotes(string? notes)
         {
-            fdvReleaseNotes.Document = ParseMarkdown(notes);
+            fdvReleaseNotes.Document = ParseMarkdown(ReleaseNotesText.ForLanguage(notes, LauncherLanguage.Current));
         }
 
         private void BtnChangelog_Click(object sender, RoutedEventArgs e)
