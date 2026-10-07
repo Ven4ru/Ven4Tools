@@ -141,7 +141,11 @@ namespace Ven4Tools.ClientUITests
             var s = Require();
             GoToSystemSubTab(s, "Профиль и снимки");
 
-            var saveSnapBtn = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnSaveSnapshot"));
+            // Раздел настроек после переключения появляется в дереве не мгновенно: разовый
+            // поиск на медленной машине (раннер CI) возвращал null.
+            var saveSnapBtn = Retry.WhileNull(
+                () => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnSaveSnapshot")),
+                timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(saveSnapBtn, "Не найдена кнопка «Сохранить снапшот».");
             saveSnapBtn!.AsButton().Invoke();
             System.Threading.Thread.Sleep(500);
