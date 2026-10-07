@@ -44,16 +44,26 @@ public static class PersonalDataSanitizer
             "$1<пользователь>",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-        // Имя пользователя и имя машины в произвольных местах текста.
-        // Короткие значения (< 3 символов) не заменяем — слишком много ложных срабатываний.
-        string user = Environment.UserName;
-        if (!string.IsNullOrEmpty(user) && user.Length >= 3)
-            text = text.Replace(user, "<пользователь>", StringComparison.OrdinalIgnoreCase);
+        return ReplaceIdentity(text, Environment.UserName, Environment.MachineName);
+    }
 
-        string machine = Environment.MachineName;
-        if (!string.IsNullOrEmpty(machine) && machine.Length >= 3)
-            text = text.Replace(machine, "<машина>", StringComparison.OrdinalIgnoreCase);
-
+    /// <summary>
+    /// Имя пользователя и имя машины в произвольных местах текста. Короткие значения
+    /// (&lt; 3 символов) не заменяются — слишком много ложных срабатываний.
+    ///
+    /// Сначала заменяется более длинное из двух. Имя пользователя часто входит в имя
+    /// машины («Ivan» и «IVAN-PC»): если заменить его первым, от имени машины остаётся
+    /// хвост — «&lt;пользователь&gt;-PC», и вторая замена его уже не находит.
+    /// </summary>
+    internal static string ReplaceIdentity(string text, string? user, string? machine)
+    {
+        var replacements = new[] { (Value: user, Mark: "<пользователь>"), (Value: machine, Mark: "<машина>") };
+        Array.Sort(replacements, (a, b) => (b.Value?.Length ?? 0).CompareTo(a.Value?.Length ?? 0));
+        foreach (var (value, mark) in replacements)
+        {
+            if (!string.IsNullOrEmpty(value) && value.Length >= 3)
+                text = text.Replace(value, mark, StringComparison.OrdinalIgnoreCase);
+        }
         return text;
     }
 
