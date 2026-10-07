@@ -157,7 +157,7 @@ namespace Ven4Tools.ViewModels
         internal static (string Status, string Hint, bool NeedsAttention) DescribeAppUpdates(int count, bool backgroundEnabled)
         {
             if (count > 0)
-                return ($"Можно обновить: {count}", "Список — в «Установленных», с фильтром «есть обновление».", true);
+                return ($"Можно обновить: {count}", "Список — в «Установленных», с отметкой «Только с обновлениями».", true);
             if (count == 0)
                 return ("Все программы актуальны", "По данным последней фоновой проверки.", false);
             return backgroundEnabled

@@ -102,7 +102,7 @@ namespace Ven4Tools.ViewModels
                     // Тот же сырой дамп журнала Windows — та же очистка, что выше.
                     sb.AppendLine(CrashReportService.SanitizePath(HardwareRawText));
 
-                Clipboard.SetText(sb.ToString());
+                Clipboard.SetText(Tr(sb.ToString()));
                 AppLogger.Write("📤 Полный отчёт диагностики скопирован в буфер обмена");
                 MessageBox.Show("✅ Отчёт скопирован в буфер обмена.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
             }

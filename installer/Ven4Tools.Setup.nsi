@@ -54,6 +54,12 @@ Unicode true
 ; (MainWindow.Settings.cs → SetAutostart), чтобы галка в трее и установщик
 ; управляли одной и той же записью реестра.
 !define RUN_VALUE   "Ven4Tools.Launcher"
+; Выбор языка — общий для установщика, лаунчера и клиента ("ru" или "en").
+!define LANG_KEY    "Software\Ven4Tools"
+!define LANG_VALUE  "Language"
+!ifndef LANG_PACK_EN
+  !define LANG_PACK_EN "..\Localization\packs\launcher-en.json"
+!endif
 !define DATA_DIR    "$LOCALAPPDATA\Ven4Tools"
 !define SM_DIR      "$SMPROGRAMS\Ven4Tools"
 
@@ -74,6 +80,12 @@ VIAddVersionKey /LANG=1049 "FileVersion"     "${VERSION}.0"
 VIAddVersionKey /LANG=1049 "FileDescription" "Установщик ${APP_NAME}"
 VIAddVersionKey /LANG=1049 "CompanyName"     "${PUBLISHER}"
 VIAddVersionKey /LANG=1049 "LegalCopyright"  "© ${PUBLISHER}"
+VIAddVersionKey /LANG=1033 "ProductName"     "${APP_NAME}"
+VIAddVersionKey /LANG=1033 "ProductVersion"  "${VERSION}"
+VIAddVersionKey /LANG=1033 "FileVersion"     "${VERSION}.0"
+VIAddVersionKey /LANG=1033 "FileDescription" "${APP_NAME} Setup"
+VIAddVersionKey /LANG=1033 "CompanyName"     "${PUBLISHER}"
+VIAddVersionKey /LANG=1033 "LegalCopyright"  "© ${PUBLISHER}"
 
 ; ============================================================================
 ; Интерфейс (Modern UI 2)
@@ -85,15 +97,25 @@ VIAddVersionKey /LANG=1049 "LegalCopyright"  "© ${PUBLISHER}"
 !define MUI_UNICON "..\Ven4Tools.Launcher\icon.ico"
 !define MUI_ABORTWARNING
 
-!define MUI_WELCOMEPAGE_TITLE "Установка ${APP_NAME} ${VERSION}"
-!define MUI_WELCOMEPAGE_TEXT "Мастер установит ${APP_NAME} — бесплатный установщик программ для Windows.$\r$\n$\r$\nЛаунчер будет установлен в профиль пользователя и не требует прав администратора.$\r$\n$\r$\nНажмите «Далее» для продолжения."
+; Тексты страниц — языковыми строками (см. «Тексты на двух языках» ниже):
+; установщик говорит на языке, выбранном в первом окне.
+!define MUI_WELCOMEPAGE_TITLE "$(TEXT_WelcomeTitle)"
+!define MUI_WELCOMEPAGE_TEXT "$(TEXT_WelcomeText)"
+
+; Окно выбора языка. Подписи сразу на двух языках: до выбора язык ещё неизвестен.
+!define MUI_LANGDLL_WINDOWTITLE "Язык / Language"
+; Текст короткий: в окне помещаются две неширокие строки, длинная обрезается.
+!define MUI_LANGDLL_INFO "Выберите язык программы.$\r$\nChoose the app language."
 
 ; Страницы установщика
 !insertmacro MUI_PAGE_WELCOME
+; Описание компонента — под списком, а не справа: в узком списке названия
+; компонентов обрезались на обоих языках.
+!define MUI_COMPONENTSPAGE_SMALLDESC
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${EXE_NAME}"
-!define MUI_FINISHPAGE_RUN_TEXT "Запустить ${APP_NAME}"
+!define MUI_FINISHPAGE_RUN_TEXT "$(TEXT_FinishRun)"
 !insertmacro MUI_PAGE_FINISH
 
 ; Страницы деинсталлятора
@@ -105,7 +127,38 @@ VIAddVersionKey /LANG=1049 "LegalCopyright"  "© ${PUBLISHER}"
 ; Определение обязано идти ДО MUI_LANGUAGE, сама функция описана ниже, после секций.
 !define MUI_CUSTOMFUNCTION_GUIINIT Ven4GuiInit
 
+; Русский идёт первым: он язык исходных текстов. Какой язык показать, решает .onInit.
 !insertmacro MUI_LANGUAGE "Russian"
+!insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_RESERVEFILE_LANGDLL
+
+; ============================================================================
+; Тексты на двух языках
+; ============================================================================
+LangString TEXT_WelcomeTitle ${LANG_RUSSIAN} "Установка ${APP_NAME} ${VERSION}"
+LangString TEXT_WelcomeTitle ${LANG_ENGLISH} "${APP_NAME} ${VERSION} Setup"
+LangString TEXT_WelcomeText  ${LANG_RUSSIAN} "Мастер установит ${APP_NAME} — бесплатный установщик программ для Windows.$\r$\n$\r$\nЛаунчер будет установлен в профиль пользователя и не требует прав администратора.$\r$\n$\r$\nНажмите «Далее» для продолжения."
+LangString TEXT_WelcomeText  ${LANG_ENGLISH} "This wizard will install ${APP_NAME}, a free app installer for Windows.$\r$\n$\r$\nThe launcher is installed into your user profile and does not need administrator rights.$\r$\n$\r$\nClick Next to continue."
+LangString TEXT_FinishRun    ${LANG_RUSSIAN} "Запустить ${APP_NAME}"
+LangString TEXT_FinishRun    ${LANG_ENGLISH} "Launch ${APP_NAME}"
+
+LangString NAME_SecMain      ${LANG_RUSSIAN} "Лаунчер Ven4Tools (обязательно)"
+LangString NAME_SecMain      ${LANG_ENGLISH} "Ven4Tools Launcher (required)"
+LangString NAME_SecAutorun   ${LANG_RUSSIAN} "Автозапуск при входе в Windows"
+LangString NAME_SecAutorun   ${LANG_ENGLISH} "Start when you sign in to Windows"
+LangString NAME_SecWinget    ${LANG_RUSSIAN} "Установить Winget (рекомендуется)"
+LangString NAME_SecWinget    ${LANG_ENGLISH} "Install Winget (recommended)"
+LangString NAME_SecWingetHas ${LANG_RUSSIAN} "Установить Winget (уже установлен — будет пропущено)"
+LangString NAME_SecWingetHas ${LANG_ENGLISH} "Install Winget (already installed — will be skipped)"
+LangString NAME_SecChoco     ${LANG_RUSSIAN} "Установить Chocolatey (опционально)"
+LangString NAME_SecChoco     ${LANG_ENGLISH} "Install Chocolatey (optional)"
+
+; Имя ярлыка удаления в меню «Пуск». Деинсталлятор убирает оба варианта.
+LangString NAME_UninstallLink ${LANG_RUSSIAN} "Удалить ${APP_NAME}"
+LangString NAME_UninstallLink ${LANG_ENGLISH} "Uninstall ${APP_NAME}"
+
+LangString TEXT_RemoveData ${LANG_RUSSIAN} "Удалить пользовательские данные?$\r$\n$\r$\nБудут удалены: логи, настройки и сохранённая сессия.$\r$\nПапка: ${DATA_DIR}$\r$\n$\r$\nПапка клиента Ven4Tools, если она находится вне этой папки (по умолчанию — в «Документах»), не удаляется — её можно удалить кнопкой «Удалить клиент» в лаунчере до деинсталляции."
+LangString TEXT_RemoveData ${LANG_ENGLISH} "Delete user data?$\r$\n$\r$\nThis removes logs, settings and the saved session.$\r$\nFolder: ${DATA_DIR}$\r$\n$\r$\nThe Ven4Tools client folder, if it is outside this folder (by default it is in Documents), is not removed — you can remove it with the “Uninstall client” button in the launcher before uninstalling."
 
 ; ============================================================================
 ; Параметры командной строки (режим самообновления)
@@ -148,6 +201,42 @@ Function .onInit
   StrCmp $R2 $WaitPid pid_checked
   StrCpy $WaitPid ""
   pid_checked:
+
+  ; Язык. Сохранённый выбор (прошлая установка или настройки программ) важнее
+  ; языка системы. Без выбора: русская Windows — русский, любая другая —
+  ; английский (сам NSIS для незнакомого языка взял бы первый из списка, русский).
+  ; Затем — окно выбора языка; в тихом режиме (/S, самообновление) его нет.
+  Call ResolveLanguage
+  !insertmacro MUI_LANGDLL_DISPLAY
+FunctionEnd
+
+Function ResolveLanguage
+  ReadRegStr $R1 HKCU "${LANG_KEY}" "${LANG_VALUE}"
+  StrCmp $R1 "en" language_english
+  StrCmp $R1 "ru" language_russian
+  StrCmp $LANGUAGE ${LANG_RUSSIAN} language_done language_english
+  language_russian:
+    StrCpy $LANGUAGE ${LANG_RUSSIAN}
+    Goto language_done
+  language_english:
+    StrCpy $LANGUAGE ${LANG_ENGLISH}
+  language_done:
+FunctionEnd
+
+; Английский языковой пакет лаунчера: ставится, только если выбран английский.
+; Русский встроен в саму программу. Пакет лежит рядом с exe (lang\en.json), и
+; лаунчер принимает его, только если пакет собран вместе с этим самым exe.
+Function InstallLanguagePack
+  StrCmp $LANGUAGE ${LANG_ENGLISH} 0 language_pack_remove
+    SetOutPath "$INSTDIR\lang"
+    SetOverwrite on
+    File "/oname=en.json" "${LANG_PACK_EN}"
+    SetOutPath "$INSTDIR"
+    Goto language_pack_done
+  language_pack_remove:
+    Delete "$INSTDIR\lang\en.json"
+    RMDir "$INSTDIR\lang"
+  language_pack_done:
 FunctionEnd
 
 ; ----------------------------------------------------------------------------
@@ -334,6 +423,8 @@ Function UpdateInstall
   update_ok:
   ; 6. Успех: удаляем бэкап, обновляем деинсталлятор и версию в реестре
   Delete "$INSTDIR\${EXE_NAME}.bak"
+  ; Языковой пакет меняется вместе с exe: прежний пакет новой сборке не подходит.
+  Call InstallLanguagePack
   Call WriteUninstallRegistry
   DetailPrint "Обновление до ${VERSION} завершено"
   Call RelaunchInstalled
@@ -356,7 +447,7 @@ FunctionEnd
 ; Секции установки
 ; ============================================================================
 
-Section "Лаунчер Ven4Tools (обязательно)" SEC_MAIN
+Section "$(NAME_SecMain)" SEC_MAIN
   SectionIn RO
 
   ; Режим самообновления: только замена exe с бэкапом и откатом.
@@ -375,6 +466,16 @@ Section "Лаунчер Ven4Tools (обязательно)" SEC_MAIN
   SetOverwrite on
   File "${PUBLISH_DIR}\${EXE_NAME}"
 
+  ; Язык: пакет перевода — по выбранному языку. Сам выбор запоминается, только если
+  ; его сделал человек: тихая установка (/S) оставляет «как в системе».
+  Call InstallLanguagePack
+  IfSilent language_choice_done
+  StrCmp $LANGUAGE ${LANG_ENGLISH} 0 +3
+    WriteRegStr HKCU "${LANG_KEY}" "${LANG_VALUE}" "en"
+    Goto language_choice_done
+  WriteRegStr HKCU "${LANG_KEY}" "${LANG_VALUE}" "ru"
+  language_choice_done:
+
   ; Удаляем задания от предыдущей незавершённой установки. Выбранные ниже
   ; опциональные секции создадут актуальные одноразовые маркеры заново.
   Delete "$INSTDIR\install-winget.pending"
@@ -385,7 +486,10 @@ Section "Лаунчер Ven4Tools (обязательно)" SEC_MAIN
   CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}" "" "$INSTDIR\${EXE_NAME}" 0
   CreateDirectory "${SM_DIR}"
   CreateShortCut "${SM_DIR}\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}" "" "$INSTDIR\${EXE_NAME}" 0
-  CreateShortCut "${SM_DIR}\Удалить ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
+  ; Ярлык удаления — на выбранном языке; вариант на другом языке мог остаться от прошлой установки.
+  Delete "${SM_DIR}\Удалить ${APP_NAME}.lnk"
+  Delete "${SM_DIR}\Uninstall ${APP_NAME}.lnk"
+  CreateShortCut "${SM_DIR}\$(NAME_UninstallLink).lnk" "$INSTDIR\uninstall.exe"
 
   ; Деинсталлятор + регистрация в «Программы и компоненты»
   Call WriteUninstallRegistry
@@ -393,13 +497,13 @@ Section "Лаунчер Ven4Tools (обязательно)" SEC_MAIN
   section_done:
 SectionEnd
 
-Section /o "Автозапуск при входе в Windows" SEC_AUTORUN
+Section /o "$(NAME_SecAutorun)" SEC_AUTORUN
   ; Та же запись, которой управляет галка «Запускать при старте Windows»
   ; в трее лаунчера — конфликтов не будет.
   WriteRegStr HKCU "${RUN_KEY}" "${RUN_VALUE}" '"$INSTDIR\${EXE_NAME}"'
 SectionEnd
 
-Section "Установить Winget (рекомендуется)" SEC_WINGET
+Section "$(NAME_SecWinget)" SEC_WINGET
   ; Компонент устанавливает launcher после первого запуска: Winget является
   ; MSIX/App Installer и требует собственной логики регистрации.
   StrCmp $UpdateMode "1" winget_section_done
@@ -409,7 +513,7 @@ Section "Установить Winget (рекомендуется)" SEC_WINGET
   winget_section_done:
 SectionEnd
 
-Section /o "Установить Chocolatey (опционально)" SEC_CHOCO
+Section /o "$(NAME_SecChoco)" SEC_CHOCO
   ; Launcher запросит UAC только для установки Chocolatey.
   StrCmp $UpdateMode "1" choco_section_done
   FileOpen $0 "$INSTDIR\install-chocolatey.pending" w
@@ -432,7 +536,7 @@ Function Ven4GuiInit
   Call IsWingetInstalled
   StrCmp $R3 "1" 0 winget_check_done
   SectionSetFlags ${SEC_WINGET} 0
-  SectionSetText  ${SEC_WINGET} "Установить Winget (уже установлен — будет пропущено)"
+  SectionSetText  ${SEC_WINGET} "$(NAME_SecWingetHas)"
   winget_check_done:
 FunctionEnd
 
@@ -441,6 +545,10 @@ LangString DESC_SecMain    ${LANG_RUSSIAN} "Файлы лаунчера, ярл�
 LangString DESC_SecAutorun ${LANG_RUSSIAN} "Запускать лаунчер автоматически при входе в Windows (значок в трее). Можно изменить позже в настройках лаунчера."
 LangString DESC_SecWinget  ${LANG_RUSSIAN} "Установить Winget после первого запуска launcher. Если Winget уже установлен, действие будет безопасно пропущено."
 LangString DESC_SecChoco   ${LANG_RUSSIAN} "Установить Chocolatey как дополнительный источник программ. Потребуется отдельное подтверждение UAC."
+LangString DESC_SecMain    ${LANG_ENGLISH} "Launcher files, shortcuts and the entry in Apps & features. Required."
+LangString DESC_SecAutorun ${LANG_ENGLISH} "Start the launcher automatically when you sign in to Windows (tray icon). You can change this later in the launcher settings."
+LangString DESC_SecWinget  ${LANG_ENGLISH} "Install Winget after the launcher starts for the first time. If Winget is already installed, this step is safely skipped."
+LangString DESC_SecChoco   ${LANG_ENGLISH} "Install Chocolatey as an additional app source. A separate UAC confirmation will be required."
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAIN}    $(DESC_SecMain)
@@ -452,6 +560,20 @@ LangString DESC_SecChoco   ${LANG_RUSSIAN} "Установить Chocolatey ка
 ; ============================================================================
 ; Деинсталляция
 ; ============================================================================
+
+; Деинсталлятор говорит на том же языке, что и программы: выбор читается из реестра.
+Function un.onInit
+  ReadRegStr $R1 HKCU "${LANG_KEY}" "${LANG_VALUE}"
+  StrCmp $R1 "en" un_language_english
+  StrCmp $R1 "ru" un_language_russian
+  StrCmp $LANGUAGE ${LANG_RUSSIAN} un_language_done un_language_english
+  un_language_russian:
+    StrCpy $LANGUAGE ${LANG_RUSSIAN}
+    Goto un_language_done
+  un_language_english:
+    StrCpy $LANGUAGE ${LANG_ENGLISH}
+  un_language_done:
+FunctionEnd
 
 Section "Uninstall"
   ; Закрываем лаунчер и клиент, чтобы файлы и папки не были заняты
@@ -467,16 +589,21 @@ Section "Uninstall"
   Delete "$INSTDIR\uninstall.exe"
   Delete "$INSTDIR\install-winget.pending"
   Delete "$INSTDIR\install-chocolatey.pending"
+  Delete "$INSTDIR\lang\en.json"
+  RMDir  "$INSTDIR\lang"
 
   ; Ярлыки
   Delete "$DESKTOP\${APP_NAME}.lnk"
   Delete "${SM_DIR}\${APP_NAME}.lnk"
   Delete "${SM_DIR}\Удалить ${APP_NAME}.lnk"
+  Delete "${SM_DIR}\Uninstall ${APP_NAME}.lnk"
   RMDir "${SM_DIR}"
 
-  ; Реестр: автозапуск + запись в «Программы и компоненты»
+  ; Реестр: автозапуск, запись в «Программы и компоненты», выбор языка
   DeleteRegValue HKCU "${RUN_KEY}" "${RUN_VALUE}"
   DeleteRegKey   HKCU "${UNINST_KEY}"
+  DeleteRegValue HKCU "${LANG_KEY}" "${LANG_VALUE}"
+  DeleteRegKey /ifempty HKCU "${LANG_KEY}"
 
   ; Папка установки (удалится, только если пуста — лишнего не трогаем)
   RMDir "$INSTDIR"
@@ -486,9 +613,7 @@ Section "Uninstall"
   ; Клиент по умолчанию ставится в «Документы» (или в папку, выбранную в лаунчере),
   ; а не в ${DATA_DIR} — обещать его удаление здесь нельзя: удаляется только то,
   ; что лежит внутри этой папки (клиент — лишь при старой раскладке рядом с лаунчером).
-  MessageBox MB_YESNO|MB_ICONQUESTION \
-    "Удалить пользовательские данные?$\r$\n$\r$\nБудут удалены: логи, настройки и сохранённая сессия.$\r$\nПапка: ${DATA_DIR}$\r$\n$\r$\nПапка клиента Ven4Tools, если она находится вне этой папки (по умолчанию — в «Документах»), не удаляется — её можно удалить кнопкой «Удалить клиент» в лаунчере до деинсталляции." \
-    /SD IDNO IDNO skip_data
+  MessageBox MB_YESNO|MB_ICONQUESTION "$(TEXT_RemoveData)" /SD IDNO IDNO skip_data
     RMDir /r "${DATA_DIR}"
   skip_data:
 SectionEnd

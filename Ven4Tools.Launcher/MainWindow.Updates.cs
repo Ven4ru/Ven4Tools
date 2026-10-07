@@ -25,7 +25,7 @@ namespace Ven4Tools.Launcher
                 if (updateInfo != null && updateInfo.HasUpdate)
                 {
                     AddLog($"📢 Найдено обновление лаунчера: {updateInfo.LatestVersion}");
-                    AddLog($"📝 {updateInfo.ReleaseNotes}");
+                    AddLog($"📝 {ReleaseNotesText.ForLanguage(updateInfo.ReleaseNotes, LauncherLanguage.Current)}");
                     btnInstallUpdate.Visibility = Visibility.Visible;
                 }
                 else

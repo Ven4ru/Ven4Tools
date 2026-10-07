@@ -66,7 +66,7 @@ namespace Ven4Tools.ViewModels
                               $"ОЗУ: {RAMText}\n" +
                               $"Ven4Tools: {AppVersionText}";
 
-                Clipboard.SetText(info);
+                Clipboard.SetText(Tr(info));
                 AppLogger.Write("📋 Информация о системе скопирована в буфер обмена");
             }
             catch (Exception ex)

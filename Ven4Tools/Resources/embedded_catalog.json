@@ -1,7 +1,15 @@
 {
-  "version": 24,
-  "lastUpdated": "2026-10-07 00:30:00",
+  "version": 25,
+  "lastUpdated": "2026-10-07 17:30:00",
   "changelog": [
+    {
+      "version": 25,
+      "date": "2026-10-07",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "У каждой программы появилось описание на английском (поле descriptionEn) — для английского интерфейса клиента. Состав каталога не менялся.",
+      "messageEn": "Every app now has an English description (the descriptionEn field) for the English interface of the client. The set of apps did not change."
+    },
     {
       "version": 24,
       "date": "2026-10-07",
@@ -245,6 +253,7 @@
       "size": "89.6 MB",
       "iconUrl": "https://cdn.simpleicons.org/firefox",
       "description": "Быстрый, безопасный и приватный браузер с открытым исходным кодом.",
+      "descriptionEn": "Fast, secure, and private open-source browser.",
       "profile": "basic",
       "sha256": "",
       "chocoId": "firefox"
@@ -259,6 +268,7 @@
       "size": "12.7 MB",
       "iconUrl": "https://cdn.simpleicons.org/googlechrome",
       "description": "Самый популярный браузер с интеграцией сервисов Google.",
+      "descriptionEn": "The most popular browser, integrated with Google services.",
       "profile": "basic",
       "sha256": "",
       "chocoId": "googlechrome"
@@ -273,6 +283,7 @@
       "size": "194.7 MB",
       "iconUrl": "https://cdn.simpleicons.org/microsoftedge",
       "description": "Современный браузер от Microsoft на базе Chromium.",
+      "descriptionEn": "Modern Chromium-based browser from Microsoft.",
       "profile": "basic",
       "sha256": "94a406cdc1ab9c1c8ac8aa48b42d89e4e35cee68622cda718b301e5e3ed93b49",
       "chocoId": "microsoft-edge"
@@ -287,6 +298,7 @@
       "size": "131.8 MB",
       "iconUrl": "https://cdn.simpleicons.org/opera",
       "description": "Браузер со встроенным блокировщиком рекламы и мессенджерами в боковой панели.",
+      "descriptionEn": "Browser with a built-in ad blocker and messengers in the sidebar.",
       "profile": "basic",
       "sha256": "eddd5dd8298c489fe7d0c27ce434620fab4af94626d880ba19c31dc102d24162",
       "chocoId": "opera"
@@ -301,6 +313,7 @@
       "size": "146.3 MB",
       "iconUrl": "https://cdn.simpleicons.org/brave",
       "description": "Браузер с фокусом на приватность и встроенным блокировщиком рекламы.",
+      "descriptionEn": "Privacy-focused browser with a built-in ad blocker.",
       "profile": "extended",
       "sha256": "4726e28a23da1b0b253efb63736efc9b20a580f26017f93f72ebdacf471c657a",
       "chocoId": "brave"
@@ -315,6 +328,7 @@
       "size": "202.3 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=browser.yandex.ru&sz=64",
       "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
+      "descriptionEn": "Browser with Alice, a smart feed, and built-in Yandex services.",
       "profile": "basic",
       "sha256": "d718a564d52559232a8b5532fa13684338d7d5d4bd777969d6418726f4e4d858",
       "chocoId": "yandex-browser"
@@ -329,6 +343,7 @@
       "size": "88.0 MB",
       "iconUrl": "https://cdn.simpleicons.org/librewolf",
       "description": "Firefox-форк с максимальной приватностью и без телеметрии.",
+      "descriptionEn": "Firefox fork with maximum privacy and no telemetry.",
       "profile": "full",
       "sha256": "",
       "chocoId": "librewolf"
@@ -343,6 +358,7 @@
       "size": "356.3 MB",
       "iconUrl": "https://cdn.simpleicons.org/onlyoffice",
       "description": "Совместимый с MS Office редактор с облачной интеграцией.",
+      "descriptionEn": "MS Office-compatible editor with cloud integration.",
       "profile": "basic",
       "sha256": "a3b4a7353946a2d836eadfb8f59799f98b906ab961421c05c0bee00be9307a9f",
       "chocoId": "onlyoffice"
@@ -357,6 +373,7 @@
       "size": "~210 MB",
       "iconUrl": "https://cdn.simpleicons.org/adobeacrobatreader",
       "description": "Стандарт для работы с PDF-документами от Adobe.",
+      "descriptionEn": "Adobe's standard for working with PDF documents.",
       "profile": "basic",
       "sha256": "",
       "chocoId": "adobereader"
@@ -371,6 +388,7 @@
       "size": "10.6 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=sumatrapdfreader.org&sz=64",
       "description": "Минималистичный и быстрый просмотрщик PDF, EPUB, MOBI.",
+      "descriptionEn": "Minimalist and fast viewer for PDF, EPUB, and MOBI.",
       "profile": "basic",
       "sha256": "1eee71cccd2ea6e94d5bcea54ee2f759844da3e1a0ee2f6045035b1d17b94381",
       "chocoId": "sumatrapdf"
@@ -385,6 +403,7 @@
       "size": "130.3 MB",
       "iconUrl": "https://cdn.simpleicons.org/diagramsdotnet",
       "description": "Создание диаграмм, схем и визуализаций.",
+      "descriptionEn": "Creation of diagrams, flowcharts, and visualizations.",
       "profile": "extended",
       "sha256": "3888e64403569f778bcf44752921790010b9de308d524c5855c5bff29df59b0e",
       "chocoId": "drawio"
@@ -399,6 +418,7 @@
       "size": "",
       "iconUrl": "https://cdn.simpleicons.org/foxit",
       "description": "Мощная программа для чтения PDF.",
+      "descriptionEn": "Powerful PDF reader.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "foxitreader"
@@ -413,6 +433,7 @@
       "size": "350.0 MB",
       "iconUrl": "https://cdn.simpleicons.org/libreoffice",
       "description": "Бесплатный офисный пакет с полным аналогом Word, Excel, PowerPoint.",
+      "descriptionEn": "Free office suite with full equivalents of Word, Excel, and PowerPoint.",
       "profile": "basic",
       "sha256": "",
       "chocoId": "libreoffice-fresh"
@@ -427,6 +448,7 @@
       "size": "82.0 MB",
       "iconUrl": "https://cdn.simpleicons.org/obsidian",
       "description": "База знаний и заметки в Markdown с двусвязными ссылками.",
+      "descriptionEn": "Knowledge base and Markdown notes with bidirectional links.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "obsidian"
@@ -441,6 +463,7 @@
       "size": "100.9 MB",
       "iconUrl": "https://cdn.simpleicons.org/notion",
       "description": "Всё-в-одном: заметки, задачи, базы данных и вики.",
+      "descriptionEn": "All-in-one: notes, tasks, databases, and wikis.",
       "profile": "extended",
       "sha256": "33793d645f7b63d54327551e0bd2e34d37577c34e97c7bdc7226312b7836083d",
       "chocoId": "notion"
@@ -455,6 +478,7 @@
       "size": "179.4 MB",
       "iconUrl": "https://cdn.simpleicons.org/gimp",
       "description": "Мощный бесплатный редактор изображений, альтернатива Photoshop.",
+      "descriptionEn": "Powerful free image editor, an alternative to Photoshop.",
       "profile": "extended",
       "sha256": "ec31d757dd82831d201ffcf47ffeac4175df739e0c02d5122e89aeeadfb988cc",
       "chocoId": "gimp"
@@ -469,6 +493,7 @@
       "size": "156.5 MB",
       "iconUrl": "https://cdn.simpleicons.org/krita",
       "description": "Цифровая живопись и иллюстрации. Поддержка графических планшетов.",
+      "descriptionEn": "Digital painting and illustration. Supports graphics tablets.",
       "profile": "extended",
       "sha256": "b68c3c1000a0660c79ccb82f7a85e9ede0b9dde055561ceacd0ff2a147040fb8",
       "chocoId": "krita"
@@ -483,6 +508,7 @@
       "size": "354.3 MB",
       "iconUrl": "https://cdn.simpleicons.org/blender",
       "description": "Полноценный 3D-пакет: моделирование, анимация, рендеринг.",
+      "descriptionEn": "Full-featured 3D suite: modeling, animation, rendering.",
       "profile": "full",
       "sha256": "7d1bb468057a3ac8fd19809e90544f6064cc215053b7732cc8a1ccc83b651ab5",
       "chocoId": "blender"
@@ -497,6 +523,7 @@
       "size": "110.0 MB",
       "iconUrl": "https://cdn.simpleicons.org/inkscape",
       "description": "Профессиональный редактор векторной графики SVG.",
+      "descriptionEn": "Professional SVG vector graphics editor.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "inkscape"
@@ -511,6 +538,7 @@
       "size": "120.0 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=getpaint.net&sz=64",
       "description": "Простой и мощный редактор изображений с поддержкой плагинов.",
+      "descriptionEn": "Simple yet powerful image editor with plugin support.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "paint.net"
@@ -525,6 +553,7 @@
       "size": "156.5 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=icons8.com&sz=64",
       "description": "Российский аналог Figma от Icons8. Дизайн интерфейсов, прототипирование, работает офлайн.",
+      "descriptionEn": "Russian alternative to Figma from Icons8. Interface design, prototyping, works offline.",
       "profile": "full",
       "sha256": "",
       "chocoId": "lunacy"
@@ -539,6 +568,7 @@
       "size": "67.0 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=xnview.com&sz=64",
       "description": "Просмотрщик и конвертер изображений с поддержкой 500+ форматов.",
+      "descriptionEn": "Image viewer and converter with support for 500+ formats.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "xnviewmp"
@@ -553,6 +583,7 @@
       "size": "233.1 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=code.visualstudio.com&sz=64",
       "description": "Легкий, но мощный редактор кода от Microsoft.",
+      "descriptionEn": "Lightweight yet powerful code editor from Microsoft.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "vscode"
@@ -567,6 +598,7 @@
       "size": "4.3 MB",
       "iconUrl": "https://cdn.simpleicons.org/visualstudio",
       "description": "Полноценная IDE для .NET, C++, Python и других языков.",
+      "descriptionEn": "Full-featured IDE for .NET, C++, Python, and other languages.",
       "profile": "full",
       "sha256": "8e02d19620a1d1affe5b226bcc7a764404df0cf089317d7d01459ad030eabc3c",
       "chocoId": "visualstudio2022community"
@@ -581,6 +613,7 @@
       "size": "27.9 MB",
       "iconUrl": "https://cdn.simpleicons.org/python",
       "description": "Интерпретатор Python с установщиком и добавлением в PATH.",
+      "descriptionEn": "Python interpreter with an installer and an option to add it to PATH.",
       "profile": "extended",
       "sha256": "c54d9b9bbb8a36e6489363ddd01139707fd781d72f1f9e90c7ec65d0061368e0",
       "chocoId": "python3"
@@ -595,6 +628,7 @@
       "size": "34.6 MB",
       "iconUrl": "https://cdn.simpleicons.org/nodedotjs",
       "description": "JavaScript-среда для разработки серверных приложений.",
+      "descriptionEn": "JavaScript runtime for building server-side applications.",
       "profile": "extended",
       "sha256": "c9df873c4cf0463c63b79774d96b2e126ca6ba9d9f86529846864d41775101d6",
       "chocoId": "nodejs"
@@ -609,6 +643,7 @@
       "size": "62.4 MB",
       "iconUrl": "https://cdn.simpleicons.org/git",
       "description": "Система контроля версий с Bash-эмулятором.",
+      "descriptionEn": "Version control system with a Bash emulator.",
       "profile": "extended",
       "sha256": "0c66e4a5875da5a74f9754386de7555ba301503b03bbdcdbafa69dc6464e548d",
       "chocoId": "git"
@@ -623,6 +658,7 @@
       "size": "598.7 MB",
       "iconUrl": "https://cdn.simpleicons.org/docker",
       "description": "Контейнеризация приложений для разработки и тестирования.",
+      "descriptionEn": "App containerization for development and testing.",
       "profile": "full",
       "sha256": "",
       "chocoId": "docker-desktop"
@@ -637,6 +673,7 @@
       "size": "200.2 MB",
       "iconUrl": "https://cdn.simpleicons.org/postman",
       "description": "Платформа для тестирования API и работы с запросами.",
+      "descriptionEn": "Platform for API testing and working with requests.",
       "profile": "full",
       "sha256": "",
       "chocoId": "postman"
@@ -651,6 +688,7 @@
       "size": "6.6 MB",
       "iconUrl": "https://cdn.simpleicons.org/notepadplusplus",
       "description": "Мощный текстовый редактор с подсветкой синтаксиса.",
+      "descriptionEn": "Powerful text editor with syntax highlighting.",
       "profile": "extended",
       "sha256": "cb902f8a9628324dbe5233b5202e716ea469720c9a1ac968007df2288e4ed2ea",
       "chocoId": "notepadplusplus"
@@ -665,6 +703,7 @@
       "size": "293.3 MB",
       "iconUrl": "https://cdn.simpleicons.org/github",
       "description": "Официальный клиент GitHub для работы с репозиториями.",
+      "descriptionEn": "Official GitHub client for working with repositories.",
       "profile": "full",
       "sha256": "",
       "chocoId": "github-desktop"
@@ -679,6 +718,7 @@
       "size": "3.8 MB",
       "iconUrl": "https://cdn.simpleicons.org/putty",
       "description": "SSH и Telnet клиент для подключения к серверам.",
+      "descriptionEn": "SSH and Telnet client for connecting to servers.",
       "profile": "full",
       "sha256": "",
       "chocoId": "putty"
@@ -693,6 +733,7 @@
       "size": "53.1 MB",
       "iconUrl": "https://cdn.simpleicons.org/telegram",
       "description": "Быстрый и безопасный мессенджер с облачными хранилищами.",
+      "descriptionEn": "Fast and secure messenger with cloud storage.",
       "profile": "basic",
       "sha256": "",
       "chocoId": "telegram"
@@ -707,6 +748,7 @@
       "size": "116.4 MB",
       "iconUrl": "https://cdn.simpleicons.org/discord",
       "description": "Голосовой и текстовый чат для геймеров и сообществ.",
+      "descriptionEn": "Voice and text chat for gamers and communities.",
       "profile": "basic",
       "sha256": "7872a4f9fba2483fbfe0e2e08ee23f03558a7c45fed26e077429363e83176ff9",
       "chocoId": "discord"
@@ -721,6 +763,7 @@
       "size": "146.1 MB",
       "iconUrl": "https://cdn.simpleicons.org/slack",
       "description": "Корпоративный мессенджер с интеграциями.",
+      "descriptionEn": "Business messenger with integrations.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "slack"
@@ -735,6 +778,7 @@
       "size": "203.1 MB",
       "iconUrl": "https://cdn.simpleicons.org/zoom",
       "description": "Видеоконференции, вебинары и командная работа.",
+      "descriptionEn": "Video conferencing, webinars, and team collaboration.",
       "profile": "basic",
       "sha256": "e0b18dc33c828a0606d6678f6d511ef66e133d900a512bed31798b4e7c24b093",
       "chocoId": "zoom"
@@ -749,6 +793,7 @@
       "size": "157.3 MB",
       "iconUrl": "https://cdn.simpleicons.org/microsoftteams",
       "description": "Платформа для совместной работы и видеозвонков.",
+      "descriptionEn": "Platform for collaboration and video calls.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "microsoft-teams"
@@ -763,6 +808,7 @@
       "size": "199.1 MB",
       "iconUrl": "https://cdn.simpleicons.org/element",
       "description": "Децентрализованный мессенджер на базе Matrix.",
+      "descriptionEn": "Decentralized messenger based on Matrix.",
       "profile": "full",
       "sha256": "",
       "chocoId": "element-desktop"
@@ -777,6 +823,7 @@
       "size": "100.0 MB",
       "iconUrl": "https://cdn.simpleicons.org/whatsapp",
       "description": "Официальный клиент WhatsApp для Windows.",
+      "descriptionEn": "Official WhatsApp client for Windows.",
       "profile": "basic",
       "sha256": "",
       "chocoId": "whatsapp"
@@ -791,6 +838,7 @@
       "size": "43.8 MB",
       "iconUrl": "https://cdn.simpleicons.org/vlcmediaplayer",
       "description": "Универсальный плеер, воспроизводящий все форматы.",
+      "descriptionEn": "Versatile player that plays all formats.",
       "profile": "basic",
       "sha256": "20ad191348684b470ddc4e05204316f3d8e39655f412b3e392a0eef97639daaf",
       "chocoId": "vlc"
@@ -805,6 +853,7 @@
       "size": "104.0 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=music.yandex.ru&sz=64",
       "description": "Стриминговый музыкальный сервис с огромной библиотекой. Работает в России без ограничений.",
+      "descriptionEn": "Music streaming service with a huge library. Works in Russia without restrictions.",
       "profile": "basic",
       "sha256": "",
       "chocoId": ""
@@ -819,6 +868,7 @@
       "size": "150.5 MB",
       "iconUrl": "https://cdn.simpleicons.org/obsstudio",
       "description": "Запись видео и стриминг с профессиональными настройками.",
+      "descriptionEn": "Video recording and streaming with professional settings.",
       "profile": "extended",
       "sha256": "94d180c1fc481ccc307b95513f795d088d63ac4f61ad3253c2ac0d94d0844110",
       "chocoId": "obs-studio"
@@ -833,6 +883,7 @@
       "size": "24.2 MB",
       "iconUrl": "https://cdn.simpleicons.org/handbrake",
       "description": "Конвертер видео с поддержкой большинства форматов.",
+      "descriptionEn": "Video converter with support for most formats.",
       "profile": "extended",
       "sha256": "6becb8e5a041941d5f2fd6fe83c66fc15b2b16190e2e79f5ad47eb4cd18df8cd",
       "chocoId": "handbrake"
@@ -847,6 +898,7 @@
       "size": "19.5 MB",
       "iconUrl": "https://cdn.simpleicons.org/audacity",
       "description": "Бесплатный редактор аудио для записи и обработки звука.",
+      "descriptionEn": "Free audio editor for recording and processing sound.",
       "profile": "extended",
       "sha256": "4a6d77f023c0209a396fcf2f3c7c04e240b6ba9897b3231a6ed18e14c10caa16",
       "chocoId": "audacity"
@@ -861,6 +913,7 @@
       "size": "8.5 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=foobar2000.org&sz=64",
       "description": "Мощный аудиоплеер для требовательных меломанов.",
+      "descriptionEn": "Powerful audio player for demanding music lovers.",
       "profile": "full",
       "sha256": "",
       "chocoId": "foobar2000"
@@ -875,6 +928,7 @@
       "size": "32.0 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=sourceforge.net&sz=64",
       "description": "Лёгкий медиаплеер на базе Media Player Classic с современными кодеками.",
+      "descriptionEn": "Lightweight media player based on Media Player Classic with modern codecs.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "mpc-be"
@@ -889,6 +943,7 @@
       "size": "1.6 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=7-zip.org&sz=64",
       "description": "Архиватор с высокой степенью сжатия. Поддерживает множество форматов.",
+      "descriptionEn": "High-compression file archiver. Supports many formats.",
       "profile": "basic",
       "sha256": "6745fa76dc2ea031596d8678f6f6b99c3c1b435b4164a63485adbbc7b8d82ef0",
       "chocoId": "7zip"
@@ -903,6 +958,7 @@
       "size": "3.8 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=win-rar.com&sz=64",
       "description": "Популярный архиватор с поддержкой RAR и ZIP.",
+      "descriptionEn": "Popular archiver with RAR and ZIP support.",
       "profile": "basic",
       "sha256": "b76813600ecf38a6b0d9af92d3daf3dd8a4a1830d45f5bdf863d1d533b7e8a33",
       "chocoId": "winrar"
@@ -917,6 +973,7 @@
       "size": "2.2 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=voidtools.com&sz=64",
       "description": "Мгновенный поиск файлов по имени.",
+      "descriptionEn": "Instant file search by name.",
       "profile": "basic",
       "sha256": "4e7a80885aab8566b750c56a2a2b3e7c3c1f4920bcc53777e07f5eeb9e1f7485",
       "chocoId": "everything"
@@ -931,6 +988,7 @@
       "size": "~4.5 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=crystalmark.info&sz=64",
       "description": "Мониторинг состояния жёстких дисков и SSD.",
+      "descriptionEn": "Health monitoring for hard drives and SSDs.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "crystaldiskinfo"
@@ -945,6 +1003,7 @@
       "size": "~4 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=crystalmark.info&sz=64",
       "description": "Тестирование производительности накопителей.",
+      "descriptionEn": "Storage drive performance testing.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "crystaldiskmark"
@@ -959,6 +1018,7 @@
       "size": "3.8 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=getgreenshot.org&sz=64",
       "description": "Мощный инструмент для создания скриншотов.",
+      "descriptionEn": "Powerful tool for taking screenshots.",
       "profile": "basic",
       "sha256": "9bb4971e729a2ad1612e8aa2fa490b69c33af7f42515f9b642c7d0f80f8c0fd3",
       "chocoId": "greenshot"
@@ -973,6 +1033,7 @@
       "size": "120.3 MB",
       "iconUrl": "https://cdn.simpleicons.org/sharex",
       "description": "Скриншоты, запись экрана, загрузка файлов.",
+      "descriptionEn": "Screenshots, screen recording, file uploads.",
       "profile": "extended",
       "sha256": "7c0dcaa05806de80cfb5829d243a62496d64bf2ed5cecc10185d9e769f365621",
       "chocoId": "sharex"
@@ -987,6 +1048,7 @@
       "size": "69.2 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=disk.yandex.ru&sz=64",
       "description": "Облачное хранилище с синхронизацией файлов.",
+      "descriptionEn": "Cloud storage with file sync.",
       "profile": "basic",
       "sha256": "1b0889a804870ec7f0fd9fd0290ed60942b42e7160d1dae3f456fa090bf20257",
       "chocoId": "yandexdisk"
@@ -1001,6 +1063,7 @@
       "size": "271.7 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=learn.microsoft.com&sz=64",
       "description": "Набор утилит для повышения производительности Windows.",
+      "descriptionEn": "Set of utilities for greater productivity in Windows.",
       "profile": "extended",
       "sha256": "945fdf327e4d38e4ced61b0727b7ab8a1222958782982052989ddf7cb7096f62",
       "chocoId": "powertoys"
@@ -1015,6 +1078,7 @@
       "size": "36.6 MB",
       "iconUrl": "https://cdn.simpleicons.org/tailscale",
       "description": "Защищённая частная сеть между своими устройствами: доступ к домашнему или рабочему компьютеру без проброса портов.",
+      "descriptionEn": "Secure private network between your devices: access your home or work computer without port forwarding.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "tailscale"
@@ -1029,6 +1093,7 @@
       "size": "1.9 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=rufus.ie&sz=64",
       "description": "Создание загрузочных USB-флешек из ISO-образов.",
+      "descriptionEn": "Creation of bootable USB drives from ISO images.",
       "profile": "extended",
       "sha256": "84c8a437f8af89257524478489e5c85f1edf25f761d299e2bcde46ac0afbe106",
       "chocoId": "rufus"
@@ -1043,6 +1108,7 @@
       "size": "8.0 MB",
       "iconUrl": "https://cdn.simpleicons.org/anydesk",
       "description": "Быстрый и надёжный клиент для удалённого доступа к компьютеру.",
+      "descriptionEn": "Fast and reliable client for remote access to a computer.",
       "profile": "basic",
       "sha256": "",
       "chocoId": "anydesk"
@@ -1057,6 +1123,7 @@
       "size": "30.3 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=rudesktop.ru&sz=64",
       "description": "Российское приложение для удалённого доступа и управления компьютером — аналог AnyDesk/TeamViewer.",
+      "descriptionEn": "Russian app for remote access and computer control — an alternative to AnyDesk/TeamViewer.",
       "profile": "extended",
       "sha256": "f02e1b8d1a1b446e599d0edcfec64ca005dea0ca8e6b9e4d9c8bc367fc7b6aad",
       "chocoId": ""
@@ -1071,6 +1138,7 @@
       "size": "38.5 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=raidrive.com&sz=64",
       "description": "Подключает облачные хранилища (Google Drive, Яндекс.Диск, OneDrive и др.) как обычный локальный диск.",
+      "descriptionEn": "Mounts cloud storage (Google Drive, Yandex Disk, OneDrive, etc.) as a regular local drive.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "raidrive"
@@ -1085,6 +1153,7 @@
       "size": "2.3 MB",
       "iconUrl": "https://cdn.simpleicons.org/steam",
       "description": "Крупнейший игровой магазин и платформа для игр.",
+      "descriptionEn": "The largest game store and gaming platform.",
       "profile": "basic",
       "sha256": "",
       "chocoId": "steam"
@@ -1099,6 +1168,7 @@
       "size": "6.6 MB",
       "iconUrl": "https://cdn.simpleicons.org/itchdotio",
       "description": "Платформа инди-игр. Тысячи бесплатных и платных игр без региональных ограничений.",
+      "descriptionEn": "Indie game platform. Thousands of free and paid games with no regional restrictions.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "itch"
@@ -1113,6 +1183,7 @@
       "size": "~70 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=playnite.link&sz=64",
       "description": "Менеджер игровых библиотек. Объединяет Steam, GOG, itch.io и другие платформы в одном интерфейсе.",
+      "descriptionEn": "Game library manager. Combines Steam, GOG, itch.io, and other platforms in one interface.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "playnite"
@@ -1127,6 +1198,7 @@
       "size": "276.7 MB",
       "iconUrl": "https://cdn.simpleicons.org/gogdotcom",
       "description": "Лаунчер без DRM и агрегатор библиотек из других платформ.",
+      "descriptionEn": "DRM-free launcher and aggregator of libraries from other platforms.",
       "profile": "extended",
       "sha256": "d04645ef5e4ada875f48d74828edd62222b2787eff09cb6e1c48e591949fd8f6",
       "chocoId": "goggalaxy"
@@ -1141,6 +1213,7 @@
       "size": "",
       "iconUrl": "https://cdn.simpleicons.org/epicgames",
       "description": "Магазин и лаунчер Epic Games — еженедельные бесплатные раздачи игр, Fortnite и другие проекты Epic.",
+      "descriptionEn": "Epic Games store and launcher — weekly free game giveaways, Fortnite, and other Epic titles.",
       "profile": "basic",
       "sha256": "",
       "chocoId": "epicgameslauncher"
@@ -1155,6 +1228,7 @@
       "size": "92.1 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=exitlag.com&sz=64",
       "description": "Оптимизация маршрута сетевого трафика для снижения пинга и потерь пакетов в онлайн-играх.",
+      "descriptionEn": "Network traffic route optimization to reduce ping and packet loss in online games.",
       "profile": "extended",
       "sha256": "b75b6f4a08be43692496281d3d4efc5d57a77ef7a0598dd8dc738cb982483786",
       "chocoId": ""
@@ -1169,6 +1243,7 @@
       "size": "",
       "iconUrl": "https://www.google.com/s2/favicons?domain=sdi-tool.org&sz=64",
       "description": "Мощный офлайн-инсталлятор драйверов с огромной базой.",
+      "descriptionEn": "Powerful offline driver installer with a huge database.",
       "profile": "full",
       "sha256": "",
       "chocoId": "snappy-driver-installer"
@@ -1183,6 +1258,7 @@
       "size": "4.5 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=wagnardsoft.com&sz=64",
       "description": "Полное удаление драйверов видеокарты без остатков.",
+      "descriptionEn": "Complete removal of graphics card drivers with no leftovers.",
       "profile": "full",
       "sha256": "",
       "chocoId": "ddu"
@@ -1197,6 +1273,7 @@
       "size": "~5 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=techpowerup.com&sz=64",
       "description": "Установка чистых драйверов NVIDIA без телеметрии, GeForce Experience и лишних компонентов.",
+      "descriptionEn": "Installs clean NVIDIA drivers without telemetry, GeForce Experience, or extra components.",
       "profile": "full",
       "sha256": "",
       "chocoId": ""
@@ -1211,6 +1288,7 @@
       "size": "",
       "iconUrl": "https://cdn.simpleicons.org/amd",
       "description": "Официальное ПО AMD для видеокарт Radeon: драйверы, игровые настройки, запись и трансляция.",
+      "descriptionEn": "Official AMD software for Radeon graphics cards: drivers, game settings, recording, and streaming.",
       "profile": "full",
       "sha256": "",
       "chocoId": "amd-software-adrenalin-edition"
@@ -1225,6 +1303,7 @@
       "size": "",
       "iconUrl": "https://cdn.simpleicons.org/nvidia",
       "description": "Официальное приложение NVIDIA для видеокарт GeForce: драйверы, игровые настройки, запись и оверлей.",
+      "descriptionEn": "Official NVIDIA app for GeForce graphics cards: drivers, game settings, recording, and overlay.",
       "profile": "full",
       "sha256": "",
       "chocoId": "nvidia-app"
@@ -1239,6 +1318,7 @@
       "size": "2.8 MB",
       "iconUrl": "https://cdn.simpleicons.org/malwarebytes",
       "description": "Антивирус для защиты от вредоносного ПО.",
+      "descriptionEn": "Antivirus for protection against malware.",
       "profile": "basic",
       "sha256": "",
       "chocoId": "malwarebytes"
@@ -1253,6 +1333,7 @@
       "size": "59.4 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=aida64.com&sz=64",
       "description": "Диагностика и тестирование компонентов компьютера.",
+      "descriptionEn": "Diagnostics and testing of computer components.",
       "profile": "extended",
       "sha256": "3d65d00033551745e567c3d8e0764b44b060e20bd07f76626b22e93573d860fd",
       "chocoId": "aida64"
@@ -1267,6 +1348,7 @@
       "size": "3.5 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=cpuid.com&sz=64",
       "description": "Мониторинг температуры, напряжений и частот.",
+      "descriptionEn": "Monitoring of temperatures, voltages, and frequencies.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "hwmonitor"
@@ -1281,6 +1363,7 @@
       "size": "28.0 MB",
       "iconUrl": "https://cdn.simpleicons.org/rclone",
       "description": "Консольный клиент для облачных хранилищ.",
+      "descriptionEn": "Command-line client for cloud storage.",
       "profile": "full",
       "sha256": "",
       "chocoId": "rclone"
@@ -1295,6 +1378,7 @@
       "size": "0.7 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=justgetflux.com&sz=64",
       "description": "Автоматическая настройка цветовой температуры экрана.",
+      "descriptionEn": "Automatic screen color temperature adjustment.",
       "profile": "basic",
       "sha256": "f035d1c4cd78468d76407afbb90ce4b73b2d04b7647c0d6143969a1823cff1ae",
       "chocoId": "f.lux"
@@ -1309,6 +1393,7 @@
       "size": "2.9 MB",
       "iconUrl": "https://cdn.simpleicons.org/autohotkey",
       "description": "Скриптовый язык для автоматизации действий.",
+      "descriptionEn": "Scripting language for automating actions.",
       "profile": "full",
       "sha256": "2bf1b89b1047136490fc321d2fdc988b42dd86f693eea7872746ac6adf722bc3",
       "chocoId": "autohotkey",
@@ -1324,6 +1409,7 @@
       "size": "4.9 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=diskanalyzer.com&sz=64",
       "description": "Самый быстрый анализатор дискового пространства.",
+      "descriptionEn": "The fastest disk space analyzer.",
       "profile": "extended",
       "sha256": "4a9da8c34a038cdd51f103be3edc09a9643ed42358ea4a01a2a30e0817714b4b",
       "chocoId": "wiztree"
@@ -1338,6 +1424,7 @@
       "size": "4.6 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=cpuid.com&sz=64",
       "description": "Детальная информация о процессоре, памяти и материнской плате.",
+      "descriptionEn": "Detailed information about the processor, memory, and motherboard.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "cpu-z"
@@ -1352,6 +1439,7 @@
       "size": "14.9 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=fpsmon.com&sz=64",
       "description": "Оверлей мониторинга состояния оборудования (FPS, температуры, нагрузка) поверх игры или на рабочем столе.",
+      "descriptionEn": "Hardware monitoring overlay (FPS, temperatures, load) on top of a game or on the desktop.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "fpsmonitor"
@@ -1366,6 +1454,7 @@
       "size": "",
       "iconUrl": "https://www.google.com/s2/favicons?domain=guru3d.com&sz=64",
       "description": "Оверлей FPS и статистики поверх игр — стандарт де-факто для мониторинга производительности.",
+      "descriptionEn": "FPS and stats overlay for games — the de facto standard for performance monitoring.",
       "profile": "extended",
       "sha256": "",
       "chocoId": ""
@@ -1380,6 +1469,7 @@
       "size": "",
       "iconUrl": "https://www.google.com/s2/favicons?domain=msi.com&sz=64",
       "description": "Разгон, мониторинг и управление вентиляторами видеокарты — самый популярный инструмент для GPU.",
+      "descriptionEn": "Overclocking, monitoring, and fan control for graphics cards — the most popular GPU tool.",
       "profile": "extended",
       "sha256": "",
       "chocoId": "msiafterburner"
@@ -1394,6 +1484,7 @@
       "size": "32.4 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=geeks3d.com&sz=64",
       "description": "Стресс-тест и бенчмарк видеокарты (OpenGL/Vulkan) — проверка стабильности, температур и троттлинга под максимальной нагрузкой.",
+      "descriptionEn": "GPU stress test and benchmark (OpenGL/Vulkan) — checks stability, temperatures, and throttling under maximum load.",
       "profile": "extended",
       "sha256": "",
       "chocoId": ""
@@ -1408,6 +1499,7 @@
       "size": "216.2 MB",
       "iconUrl": "https://cdn.simpleicons.org/claude",
       "description": "Agentic-инструмент Anthropic для написания и правки кода прямо в терминале.",
+      "descriptionEn": "Anthropic's agentic tool for writing and editing code right in the terminal.",
       "profile": "full",
       "sha256": "",
       "chocoId": ""
@@ -1422,6 +1514,7 @@
       "size": "114.2 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=openai.com&sz=64",
       "description": "Agentic-инструмент OpenAI для написания и правки кода прямо в терминале.",
+      "descriptionEn": "OpenAI's agentic tool for writing and editing code right in the terminal.",
       "profile": "full",
       "sha256": "",
       "chocoId": ""
@@ -1436,6 +1529,7 @@
       "size": "81.2 MB",
       "iconUrl": "https://cdn.simpleicons.org/githubcopilot",
       "description": "Agentic-инструмент GitHub Copilot для написания и правки кода прямо в терминале.",
+      "descriptionEn": "GitHub Copilot's agentic tool for writing and editing code right in the terminal.",
       "profile": "full",
       "sha256": "",
       "chocoId": ""
@@ -1450,6 +1544,7 @@
       "size": "65.9 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=github.com&sz=64",
       "description": "Управление OpenWrt-роутерами, Ubuntu-серверами и Windows-машинами из одного окна: SSH-терминал, файлы по SFTP, журналы, сервисы, температура и RDP внутри SSH-туннеля.",
+      "descriptionEn": "Manage OpenWrt routers, Ubuntu servers, and Windows machines from one window: SSH terminal, files over SFTP, logs, services, temperature, and RDP inside an SSH tunnel.",
       "profile": "extended",
       "sha256": "9f128646c166bf0b54b62dc44b9254c0e81573750b24c5e35b0f91076fbecf20",
       "chocoId": "",

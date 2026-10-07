@@ -1,7 +1,7 @@
 <Window x:Class="Ven4Tools.Views.CategorySelectionWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ven4Tools" Height="520" Width="720"
+        Title="Ven4Tools" Height="590" Width="720"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{DynamicResource WindowBackground}"
         ShowInTaskbar="False">
@@ -58,7 +58,7 @@
                     <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
                     <TextBlock FontSize="11" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondary}">
-                        • Браузеры&#x0a;• Офис&#x0a;• Мультимедиа&#x0a;• Системные утилиты
+                        • Браузеры<LineBreak/>• Офис<LineBreak/>• Мультимедиа<LineBreak/>• Системные утилиты
                     </TextBlock>
                 </StackPanel>
             </Border>
@@ -86,7 +86,7 @@
                     <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
                     <TextBlock FontSize="11" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondary}">
-                        • Всё базовое&#x0a;• Разработка&#x0a;• Графика&#x0a;• Мессенджеры
+                        • Всё базовое<LineBreak/>• Разработка<LineBreak/>• Графика<LineBreak/>• Мессенджеры
                     </TextBlock>
                 </StackPanel>
             </Border>
@@ -114,7 +114,7 @@
                     <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
                     <TextBlock FontSize="11" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondary}">
-                        • Все категории&#x0a;• Игровые сервисы&#x0a;• Драйверпаки&#x0a;• Пользовательские
+                        • Все категории<LineBreak/>• Игровые сервисы<LineBreak/>• Драйверпаки<LineBreak/>• Пользовательские
                     </TextBlock>
                 </StackPanel>
             </Border>

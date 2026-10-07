@@ -309,7 +309,7 @@ namespace Ven4Tools.ViewModels
                     {
                         IconUrl = catalogApp.IconUrl,
                         Profile = catalogApp.Profile,
-                        Description = catalogApp.Description,
+                        Description = catalogApp.LocalizedDescription,
                         CatalogVersion = catalogApp.Version,
                         CatalogSizeText = catalogApp.Size
                     };

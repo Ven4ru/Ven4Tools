@@ -108,8 +108,8 @@ namespace Ven4Tools.Services
                 // Полный список winget в его собственном формате: его принимает и
                 // «Импорт» на вкладке «Установленные», и сам winget import.
                 bool exported = exportWinget != null && await exportWinget(Path.Combine(root, WingetExportFileName));
-                File.WriteAllText(Path.Combine(root, ManualListFileName),
-                    BuildManualList(catalogApps.Select(a => a.Name).ToList(), wingetOnly, manual, exported),
+                File.WriteAllText(Path.Combine(root, Tr(ManualListFileName)),
+                    Tr(BuildManualList(catalogApps.Select(a => a.Name).ToList(), wingetOnly, manual, exported)),
                     new UTF8Encoding(true));
             }
 
@@ -117,7 +117,7 @@ namespace Ven4Tools.Services
                 BuildAnswerFile(catalogIds, result.Drivers > 0, result.WifiProfiles > 0), new UTF8Encoding(false));
             // Только ASCII: cmd.exe читает пакетный файл в OEM-кодировке.
             File.WriteAllText(Path.Combine(root, LauncherFileName), LauncherScript, Encoding.ASCII);
-            File.WriteAllText(Path.Combine(root, ReadmeFileName), BuildReadme(result), new UTF8Encoding(true));
+            File.WriteAllText(Path.Combine(root, Tr(ReadmeFileName)), Tr(BuildReadme(result)), new UTF8Encoding(true));
 
             if (options.CopyClient)
             {

@@ -29,8 +29,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Ven4Tools\Ven4Tools.csproj" />
+    <!-- Второе имя «client»: типы из Shared есть и в клиенте, и в лаунчере; проверки
+         перевода берут их из клиента явно (extern alias client). -->
+    <ProjectReference Include="..\..\Ven4Tools\Ven4Tools.csproj" Aliases="global,client" />
     <ProjectReference Include="..\..\Ven4Tools.Launcher\Ven4Tools.Launcher.csproj" />
+    <!-- Сборщик языковых пакетов: проверка, что перевод не отстал от исходников. -->
+    <ProjectReference Include="..\..\Tools\LanguagePackTool\LanguagePackTool.csproj" />
   </ItemGroup>
 
   <ItemGroup>

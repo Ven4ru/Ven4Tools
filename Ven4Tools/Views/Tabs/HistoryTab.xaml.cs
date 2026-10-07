@@ -31,6 +31,9 @@ namespace Ven4Tools.Views.Tabs
             Loaded += HistoryTab_Loaded;
             Unloaded += HistoryTab_Unloaded;
 
+            // Подсказка живёт в самом поле ввода и сверяется с Tag — переводим её в одном
+            // месте, до первого использования.
+            txtHistorySearch.Tag = Tr((string)txtHistorySearch.Tag);
             txtHistorySearch.GotFocus  += (_, _) => { if (txtHistorySearch.Text == (string)txtHistorySearch.Tag) txtHistorySearch.Text = ""; };
             txtHistorySearch.LostFocus += (_, _) => { if (string.IsNullOrWhiteSpace(txtHistorySearch.Text)) txtHistorySearch.Text = (string)txtHistorySearch.Tag; };
             txtHistorySearch.Text = (string)txtHistorySearch.Tag;

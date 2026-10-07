@@ -90,7 +90,7 @@ namespace Ven4Tools.Views
             // «Бенчмарка» и «Диагностики».
             try
             {
-                Clipboard.SetText(text);
+                Clipboard.SetText(Tr(text));
             }
             catch (Exception ex)
             {

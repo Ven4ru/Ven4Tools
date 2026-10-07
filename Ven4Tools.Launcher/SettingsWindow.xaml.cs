@@ -23,6 +23,11 @@ namespace Ven4Tools.Launcher
         // настройка молча не сохранялась. Checked/Unchecked покрывают все три способа.
         private bool _suppressSourceChange;
         private bool _suppressToggleChange;
+        private bool _suppressLanguageChange;
+
+        private const string LanguageChangeNotice =
+            "Язык интерфейса сменится после перезапуска лаунчера и клиента.\n\n" +
+            "The interface language will change after you restart the launcher and the client.";
 
         // Отчёт последней проверки: по нему работает кнопка «Исправить». Хранится
         // именно отчёт, а не флаг «есть что чинить» — починка обязана применять тот
@@ -39,6 +44,10 @@ namespace Ven4Tools.Launcher
             InitializeComponent();
             _owner = owner;
             Sync(backgroundUpdates, startMinimized, autostart, autoUpdateClient, downloadSource);
+
+            _suppressLanguageChange = true;
+            cmbLanguage.SelectedValue = LauncherLanguage.Setting;
+            _suppressLanguageChange = false;
         }
 
         // Значения расставляет владелец (в т.ч. из меню трея, пока окно открыто) —
@@ -94,6 +103,18 @@ namespace Ven4Tools.Launcher
             if (_suppressSourceChange) return;
             if (cmbDownloadSource.SelectedIndex < 0) return;
             _owner.OnDownloadSourceChanged((DownloadSource)cmbDownloadSource.SelectedIndex);
+        }
+
+        private void CmbLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressLanguageChange) return;
+            if (cmbLanguage.SelectedValue is not string setting) return;
+            // Окна на лету не переводятся: новый язык включается при следующем запуске.
+            // Сообщение сразу на двух языках и мимо перевода: его должен понять и тот,
+            // кто уходит с языка, и тот, кто на него приходит.
+            if (LauncherLanguage.Choose(setting))
+                System.Windows.MessageBox.Show(this,
+                    LanguageChangeNotice, "Ven4Tools", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();

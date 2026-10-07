@@ -55,7 +55,7 @@ namespace Ven4Tools.Launcher
                 if (found.Count == 0)
                 {
                     AddLog("❌ Ven4Tools.exe не найден в стандартных папках");
-                    System.Windows.MessageBox.Show(
+                    MessageBox.Show(
                         "Ven4Tools.exe не найден в:\n" +
                         "• Program Files / Program Files (x86)\n" +
                         "• Документы / Documents\n" +
@@ -86,7 +86,7 @@ namespace Ven4Tools.Launcher
                       string.Join("\n", ordered.Skip(1).Select((f, i) => $"{i + 2}. {f}"))
                     : $"Найдено:\n{chosen}\n\nИспользовать эту папку?";
 
-                if (System.Windows.MessageBox.Show(
+                if (MessageBox.Show(
                         question, ordered.Count > 1 ? "Найдено несколько" : "Ven4Tools найден",
                         MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 {
@@ -102,7 +102,7 @@ namespace Ven4Tools.Launcher
                 if (!InstallPathGuard.IsClientPathSafe(candidatePath, _dataFolderPath))
                 {
                     AddLog($"⛔ Найденный Ven4Tools.exe лежит прямо в защищённой папке ({candidatePath}) — путь не принят");
-                    System.Windows.MessageBox.Show(
+                    MessageBox.Show(
                         $"Ven4Tools.exe найден прямо в:\n{candidatePath}\n\n" +
                         "Эта папка не может стать папкой установки клиента целиком — при обновлении " +
                         "или удалении её содержимое было бы уничтожено.\n\n" +

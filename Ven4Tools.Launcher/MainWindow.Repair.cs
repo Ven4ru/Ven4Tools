@@ -178,7 +178,7 @@ namespace Ven4Tools.Launcher
                 // закрывают клиента — здесь тот же штатный путь, с вопросом пользователю.
                 if (IsClientRunning())
                 {
-                    var answer = System.Windows.MessageBox.Show(
+                    var answer = MessageBox.Show(
                         "Ven4Tools сейчас запущен.\n\nЗакрыть клиент, чтобы восстановить его файлы?",
                         "Клиент запущен", MessageBoxButton.YesNo, MessageBoxImage.Question);
                     if (answer != MessageBoxResult.Yes)

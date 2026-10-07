@@ -23,6 +23,14 @@ public partial class App : Application
         // остаётся светлым поверх тёмной темы приложения даже при тёмной теме Windows.
         try { WindowChromeHelper.RegisterGlobalDarkTitleBar(); } catch { }
 
+        // Язык — до первого окна и сообщения. Пакета перевода на диске может не быть
+        // (язык сменили, а пакет не успел скачаться): тогда коротко ждём загрузку, но
+        // не в проверках интерфейса и не в режиме командной строки — там окон нет.
+        bool noWindow = Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1"
+            || Array.Exists(e.Args, a => a.StartsWith("--install-from=", StringComparison.OrdinalIgnoreCase));
+        try { Services.LauncherLanguage.Start(noWindow ? TimeSpan.Zero : TimeSpan.FromSeconds(4)); }
+        catch (Exception ex) { Services.LauncherLog.Write($"[Язык] Не удалось определить язык интерфейса: {ex.Message}"); }
+
         if (Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1")
         {
             base.OnStartup(e);
@@ -52,7 +60,7 @@ public partial class App : Application
             _mutex = new Mutex(true, "Ven4Tools.Launcher.SingleInstance", out bool createdNewCli);
             if (!createdNewCli)
             {
-                Console.Error.WriteLine("Ven4Tools Launcher уже запущен.");
+                Console.Error.WriteLine(Tr("Ven4Tools Launcher уже запущен."));
                 _mutex.Dispose();
                 _mutex = null;
                 Shutdown(3);

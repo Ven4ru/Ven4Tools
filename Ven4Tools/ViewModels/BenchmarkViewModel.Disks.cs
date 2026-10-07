@@ -151,11 +151,14 @@ namespace Ven4Tools.ViewModels
                 if (!volume.IsReady) continue;
 
                 string label = string.IsNullOrWhiteSpace(volume.Label) ? "" : $" «{volume.Label}»";
-                string system = volume.IsSystem ? ", системный" : "";
+                string free = BenchmarkReportBuilder.FormatCapacity(volume.FreeBytes);
                 options.Add(new VolumeOptionItem
                 {
-                    Label = $"{volume.Letter}{label} — свободно " +
-                            BenchmarkReportBuilder.FormatCapacity(volume.FreeBytes) + system,
+                    // Две цельные строки, а не склейка с хвостом «, системный»: каждая
+                    // переводится целиком, по своему шаблону.
+                    Label = volume.IsSystem
+                        ? $"{volume.Letter}{label} — свободно {free}, системный"
+                        : $"{volume.Letter}{label} — свободно {free}",
                     Volume = volume
                 });
             }

@@ -22,8 +22,19 @@ namespace Ven4Tools.ViewModels
         public ChangelogEntryViewModel(CatalogChangelogEntry entry)
         {
             HeaderText = $"v{entry.Version}  ·  {entry.Date}";
-            Message = entry.Message;
-            HasMessage = !string.IsNullOrEmpty(entry.Message);
+            // Заметки к версиям каталога приходят вместе с каталогом, а не с программой,
+            // поэтому в языковом пакете их нет. При английском интерфейсе берётся английская
+            // заметка из каталога; у старых записей её нет — тогда заметка показывается,
+            // только если перевод для неё всё же нашёлся: строка на чужом языке посреди
+            // переведённого окна хуже, чем её отсутствие.
+            string message = entry.Message ?? "";
+            if (Ven4Tools.Localization.UiTranslator.IsActive)
+            {
+                string translated = !string.IsNullOrWhiteSpace(entry.MessageEn) ? entry.MessageEn : Tr(message);
+                message = Ven4Tools.Localization.LanguagePack.HasCyrillic(translated) ? "" : translated;
+            }
+            Message = message;
+            HasMessage = !string.IsNullOrEmpty(message);
             HasAddedApps = entry.AddedApps?.Count > 0;
             AddedAppsText = HasAddedApps ? $"+ {string.Join(", ", entry.AddedApps!)}" : "";
         }

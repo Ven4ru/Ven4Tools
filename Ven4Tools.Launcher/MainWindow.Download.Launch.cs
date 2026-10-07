@@ -127,7 +127,7 @@ namespace Ven4Tools.Launcher
             catch (Exception ex)
             {
                 AddLog($"❌ Ошибка запуска: {ex.Message}");
-                System.Windows.MessageBox.Show($"Не удалось запустить клиент: {ex.Message}", "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Не удалось запустить клиент: {ex.Message}", "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

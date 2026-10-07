@@ -50,7 +50,7 @@ namespace Ven4Tools.Services
             // Только ASCII: cmd.exe читает пакетный файл в OEM-кодировке, и кириллица
             // в путях превратилась бы в мусор.
             File.WriteAllText(Path.Combine(kitRoot, LauncherFileName), LauncherScript, Encoding.ASCII);
-            File.WriteAllText(Path.Combine(kitRoot, ReadmeFileName), BuildReadme(cachedAppIds.Count), new UTF8Encoding(true));
+            File.WriteAllText(Path.Combine(kitRoot, Tr(ReadmeFileName)), Tr(BuildReadme(cachedAppIds.Count)), new UTF8Encoding(true));
 
             return new Result(cachedAppIds.Count, files, bytes);
         }

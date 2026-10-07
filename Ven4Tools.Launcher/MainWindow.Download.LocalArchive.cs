@@ -46,7 +46,7 @@ namespace Ven4Tools.Launcher
             if (_operations.IsBusy)
             {
                 AddLog("⏳ Уже идёт другая операция — установка из файла отложена до её завершения");
-                System.Windows.MessageBox.Show(
+                MessageBox.Show(
                     $"Сейчас выполняется другая операция: {_operations.CurrentOperation ?? "загрузка или установка"}.\n\n" +
                     "Дождитесь её завершения и повторите.",
                     "Лаунчер занят", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -55,8 +55,8 @@ namespace Ven4Tools.Launcher
 
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "Архив клиента Ven4Tools (*.zip)|*.zip",
-                Title = "Выберите архив клиента"
+                Filter = Tr("Архив клиента Ven4Tools (*.zip)|*.zip"),
+                Title = Tr("Выберите архив клиента")
             };
             if (dialog.ShowDialog() != true) return;
 
@@ -136,7 +136,7 @@ namespace Ven4Tools.Launcher
                     Dispatcher.Invoke(() => SetOperationStage(0));
                     AddLog($"⛔ {result.RejectionReason}");
                     if (!silent)
-                        Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                        Dispatcher.Invoke(() => MessageBox.Show(
                             result.RejectionReason, "Установка отклонена",
                             MessageBoxButton.OK, MessageBoxImage.Error));
                     return new LocalArchiveInstallResult(
@@ -186,7 +186,7 @@ namespace Ven4Tools.Launcher
                     {
                         // Кнопка по умолчанию — «Нет»: Enter по привычке не должен
                         // откатывать клиента на старую сборку.
-                        var answer = Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                        var answer = Dispatcher.Invoke(() => MessageBox.Show(
                             ClientDowngradePolicy.BuildQuestion(older), "Более старая версия",
                             MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No));
                         if (answer != MessageBoxResult.Yes)
@@ -210,7 +210,7 @@ namespace Ven4Tools.Launcher
 
                     if (!silent)
                     {
-                        var answer = Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                        var answer = Dispatcher.Invoke(() => MessageBox.Show(
                             warning, "Архивная версия", MessageBoxButton.YesNo, MessageBoxImage.Warning));
                         if (answer != MessageBoxResult.Yes)
                         {
@@ -226,7 +226,7 @@ namespace Ven4Tools.Launcher
                 // Архив больше не нужен — не держим его занятым, пока висит сообщение ниже.
                 archiveGuard.Dispose();
                 if (installed && !silent)
-                    Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                    Dispatcher.Invoke(() => MessageBox.Show(
                         $"Клиент {result.Version} успешно установлен в:\n{_clientPath}",
                         "Установка завершена", MessageBoxButton.OK, MessageBoxImage.Information));
                 return LocalArchiveInstallResult.Of(installed);
@@ -244,7 +244,7 @@ namespace Ven4Tools.Launcher
                 Dispatcher.Invoke(() => SetOperationStage(0));
                 AddLog($"❌ Ошибка установки из файла: {ex.Message}");
                 if (!silent)
-                    Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                    Dispatcher.Invoke(() => MessageBox.Show(
                         $"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error));
                 return new LocalArchiveInstallResult(LocalArchiveInstallStatus.Failed, ex.Message);
             }

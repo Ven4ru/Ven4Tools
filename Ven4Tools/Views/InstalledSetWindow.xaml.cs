@@ -43,9 +43,9 @@ namespace Ven4Tools.Views
         {
             var dialog = new SaveFileDialog
             {
-                Title = "Файл ответа для тихой установки",
-                Filter = "Файл ответа Ven4Tools (*.json)|*.json",
-                FileName = "ven4tools-набор.json",
+                Title = Tr("Файл ответа для тихой установки"),
+                Filter = Tr("Файл ответа Ven4Tools (*.json)|*.json"),
+                FileName = Tr("ven4tools-набор.json"),
                 OverwritePrompt = true
             };
             if (dialog.ShowDialog(this) != true) return;

@@ -26,7 +26,7 @@ namespace Ven4Tools.Launcher
                     Text    = "Ven4Tools Launcher"
                 };
 
-                _trayItemAutostart = new ToolStripMenuItem("Запускать при старте Windows")
+                _trayItemAutostart = new ToolStripMenuItem(Tr("Запускать при старте Windows"))
                 {
                     Checked      = GetAutostart(),
                     CheckOnClick = true
@@ -39,7 +39,7 @@ namespace Ven4Tools.Launcher
                     Dispatcher.Invoke(SyncSettingsWindow);
                 };
 
-                _trayItemBgUpdates = new ToolStripMenuItem("Проверять обновления в фоне")
+                _trayItemBgUpdates = new ToolStripMenuItem(Tr("Проверять обновления в фоне"))
                 {
                     Checked      = _backgroundUpdates,
                     CheckOnClick = true
@@ -59,8 +59,8 @@ namespace Ven4Tools.Launcher
                 var itemBgUpdates = _trayItemBgUpdates;
 
                 var contextMenu = new ContextMenuStrip();
-                contextMenu.Items.Add("Показать окно", null, (s, e) => Dispatcher.Invoke(ShowWindow));
-                contextMenu.Items.Add("Проверить обновления", null, (s, e) =>
+                contextMenu.Items.Add(Tr("Показать окно"), null, (s, e) => Dispatcher.Invoke(ShowWindow));
+                contextMenu.Items.Add(Tr("Проверить обновления"), null, (s, e) =>
                 {
                     // Единый путь ручной проверки — тот же, что кнопка «Проверить
                     // обновления» в окне (BtnCheckUpdates_Click → CheckForUpdatesAsync):
@@ -74,7 +74,7 @@ namespace Ven4Tools.Launcher
                 contextMenu.Items.Add(itemAutostart);
                 contextMenu.Items.Add(itemBgUpdates);
                 contextMenu.Items.Add("-");
-                contextMenu.Items.Add("Выход", null, (s, e) => ExitApplication());
+                contextMenu.Items.Add(Tr("Выход"), null, (s, e) => ExitApplication());
 
                 _notifyIcon.ContextMenuStrip = contextMenu;
                 _notifyIcon.DoubleClick      += (s, e) => Dispatcher.Invoke(ShowWindow);
@@ -121,7 +121,7 @@ namespace Ven4Tools.Launcher
                     // Счётчик относится к обновлениям winget-пакетов в целом, а не к
                     // самому Ven4Tools — уточняем текст, чтобы не вводить в заблуждение (L5).
                     if (_notifyIcon != null && count > 0)
-                        _notifyIcon.Text = $"Ven4Tools · winget: {count} обновл.";
+                        _notifyIcon.Text = Tr($"Ven4Tools · winget: {count} обновл.");
                     else if (_notifyIcon != null)
                         _notifyIcon.Text = "Ven4Tools Launcher";
                 });
@@ -137,15 +137,20 @@ namespace Ven4Tools.Launcher
                     // Заголовок/тип уведомления подписаны в notifications.json (ECDSA), но
                     // раньше игнорировались — балон всегда показывал "Ven4Tools"/Info,
                     // хотя содержимое уже несёт нужные данные (Gap Analysis).
-                    string title = string.IsNullOrWhiteSpace(notif.Title) ? "Ven4Tools" : notif.Title;
+                    // Уведомление приходит с сервера, а не с программой: в языковом пакете его
+                    // текста нет. Английский вариант — в самом уведомлении, если его написали.
+                    bool english = LauncherLanguage.Current == Ven4Tools.Localization.AppLanguage.English;
+                    string message = english && !string.IsNullOrWhiteSpace(notif.MessageEn) ? notif.MessageEn : notif.Message;
+                    string notifTitle = english && !string.IsNullOrWhiteSpace(notif.TitleEn) ? notif.TitleEn : notif.Title;
+                    string title = string.IsNullOrWhiteSpace(notifTitle) ? "Ven4Tools" : notifTitle;
                     ToolTipIcon icon = notif.Type?.ToLowerInvariant() switch
                     {
                         "warning" => ToolTipIcon.Warning,
                         "error"   => ToolTipIcon.Error,
                         _         => ToolTipIcon.Info
                     };
-                    _notifyIcon?.ShowBalloonTip(8000, title, notif.Message, icon);
-                    AddLog($"📢 Уведомление: {notif.Message}");
+                    _notifyIcon?.ShowBalloonTip(8000, title, message, icon);
+                    AddLog($"📢 Уведомление: {message}");
                 });
             };
 
@@ -169,7 +174,7 @@ namespace Ven4Tools.Launcher
                         ? $"Обновление лаунчера {info.LatestVersion}"
                         : $"Новая версия Ven4Tools {info.LatestVersion}";
 
-                    string notes = info.ReleaseNotes ?? "Подробности — в окне лаунчера.";
+                    string notes = ReleaseNotesText.ForLanguage(info.ReleaseNotes, LauncherLanguage.Current) ?? "Подробности — в окне лаунчера.";
                     notes = Regex.Replace(notes, @"[#*`\-]", "").Trim();
                     if (notes.Length > 250) notes = notes.Substring(0, 247) + "...";
 
@@ -178,8 +183,8 @@ namespace Ven4Tools.Launcher
 
                     _notifyIcon?.ShowBalloonTip(
                         8000,
-                        title,
-                        $"v{info.CurrentVersion} → v{info.LatestVersion}\n\n{notes}",
+                        Tr(title),
+                        Tr($"v{info.CurrentVersion} → v{info.LatestVersion}\n\n{notes}"),
                         ToolTipIcon.Info);
 
                     if (type == "launcher")
@@ -309,7 +314,9 @@ namespace Ven4Tools.Launcher
 
             Dispatcher.Invoke(() =>
             {
-                txtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
+                // В окно строка идёт уже на языке интерфейса (в файл выше — как есть, по-русски):
+                // так переводится одна новая строка, а не весь накопленный журнал заново.
+                txtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {Tr(message)}\n");
                 if (txtLog.LineCount > MaxLogLines)
                 {
                     int cutIndex = txtLog.GetCharacterIndexFromLineIndex(txtLog.LineCount - MaxLogLines);

@@ -97,6 +97,16 @@ jobs:
             -o _release/client_${{ steps.ver.outputs.VERSION }} `
             --nologo
 
+      # Английский языковой пакет публикуется отдельным файлом рядом с архивом. Скрипт
+      # сверяет, что пакет из репозитория — тот самый, с которым собран клиент.
+      - name: Языковой пакет
+        shell: pwsh
+        run: |
+          ./Tools/export-language-pack.ps1 -Component client `
+            -Version ${{ steps.ver.outputs.VERSION }} `
+            -Binary "_release/client_${{ steps.ver.outputs.VERSION }}/Ven4Tools.dll" `
+            -OutDir _release
+
       - name: Создать ZIP
         shell: pwsh
         run: |
@@ -137,6 +147,7 @@ jobs:
             # с другой ветки/коммита тег и исходники релиза разошлись бы с бинарником.
             gh release create ${{ steps.ver.outputs.TAG }} `
               "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}.zip" `
+              "_release/Ven4Tools-Client-${{ steps.ver.outputs.VERSION }}-lang-en.json" `
               --target "$env:GITHUB_SHA" `
               --title "Ven4Tools ${{ steps.ver.outputs.VERSION }}" `
               --generate-notes `

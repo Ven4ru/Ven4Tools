@@ -343,7 +343,7 @@ namespace Ven4Tools.Launcher
             string busy = _operations.CurrentOperation ?? "другая операция";
             AddLog($"⏳ «{name}»: сейчас выполняется «{busy}» — операция отложена");
             if (!silent)
-                System.Windows.MessageBox.Show(
+                MessageBox.Show(
                     $"Сейчас выполняется другая операция: {busy}.\n\n" +
                     "Дождитесь её завершения и повторите.",
                     "Лаунчер занят", MessageBoxButton.OK, MessageBoxImage.Information);

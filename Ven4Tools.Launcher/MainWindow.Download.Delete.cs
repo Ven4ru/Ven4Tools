@@ -20,7 +20,7 @@ namespace Ven4Tools.Launcher
                 return;
             }
 
-            var answer = System.Windows.MessageBox.Show(
+            var answer = MessageBox.Show(
                 "Будет удалено:\n" +
                 $"• Папка клиента: {_clientPath}\n" +
                 "• Ярлыки на рабочем столе\n" +
@@ -37,7 +37,7 @@ namespace Ven4Tools.Launcher
             if (!InstallPathGuard.IsClientPathSafe(_clientPath, _dataFolderPath))
             {
                 AddLog($"⛔ Удаление отменено: папка клиента указывает на защищённую папку ({_clientPath})");
-                System.Windows.MessageBox.Show(
+                MessageBox.Show(
                     $"Папка клиента:\n{_clientPath}\n\n" +
                     "совпадает с защищённой пользовательской папкой (Downloads/Документы/Рабочий стол " +
                     "и т.п.) целиком. Удаление отменено во избежание потери данных.",
@@ -56,7 +56,7 @@ namespace Ven4Tools.Launcher
             if (IsClientRunning())
             {
                 AddLog("⏸ Удаление отменено: клиент запущен");
-                System.Windows.MessageBox.Show(
+                MessageBox.Show(
                     "Ven4Tools сейчас запущен.\n\nЗакройте клиент и повторите удаление.",
                     "Клиент запущен", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;

@@ -37,6 +37,8 @@ public sealed class LauncherSmokeTests : IDisposable
         LauncherTestEnvironment.PrepareShell(_testRoot);
         var startInfo = new ProcessStartInfo(executable);
         startInfo.Environment["VEN4TOOLS_UI_TEST"] = "1";
+        // Проверки ищут элементы по русским подписям; на нерусской Windows лаунчер выбрал бы английский.
+        startInfo.Environment["VEN4TOOLS_LANG"] = Environment.GetEnvironmentVariable("VEN4TOOLS_LANG") ?? "ru";
         startInfo.Environment["VEN4TOOLS_UI_TEST_ROOT"] = _testRoot;
         _application = Application.Launch(startInfo);
         _automation = new UIA3Automation();

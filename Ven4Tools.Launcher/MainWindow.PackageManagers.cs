@@ -246,7 +246,7 @@ namespace Ven4Tools.Launcher
             var chocoInfo = await CheckChocoInstalledAsync();
             if (!chocoInfo.IsInstalled)
             {
-                var r = System.Windows.MessageBox.Show(
+                var r = MessageBox.Show(
                     "Chocolatey не установлен.\n\n" +
                     "Это необязательный дополнительный источник установки приложений —\n" +
                     "клиент Ven4Tools полноценно работает и без него.\n\n" +
