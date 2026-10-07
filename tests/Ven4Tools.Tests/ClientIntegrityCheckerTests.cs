@@ -230,6 +230,97 @@ public sealed class ClientIntegrityCheckerTests
     }
 
     [Fact]
+    public async Task Check_InstalledVersionIsNotCurrent_TellsToUpdateInsteadOfBlamingServer()
+    {
+        // Публикуется только текущая сборка: у установленной 6.0.1 эталона на сервере
+        // нет и не будет. Раньше это выглядело как «не опубликован файловый манифест»
+        // под заголовком «сервер недоступен, попробуйте позже» — совет ждать того,
+        // что не наступит. Нужен прямой ответ: обновите клиент.
+        var environment = new FakeEnvironment { Acl = true };
+        var sources = new ClientIntegritySources { CurrentPublishedVersion = "6.0.2" };
+
+        var report = await Checker(environment)
+            .CheckAsync(ClientPath, "6.0.1.0", sources, CancellationToken.None);
+
+        Assert.Equal(ClientIntegrityStatus.VersionNotCurrent, report.Status);
+        Assert.True(report.IsClientInstalled);
+        Assert.False(report.ManifestAvailable);
+        Assert.Null(report.Plan);
+        Assert.False(report.HasRepairableFindings);
+        Assert.Equal("Проверка доступна только для текущей версии клиента (6.0.2)", report.Headline);
+        Assert.Equal(
+            "У вас установлена 6.0.1.0 — обновите клиент, после этого проверка заработает",
+            report.Detail);
+        Assert.Contains("6.0.2", report.Summary);
+        Assert.Contains("6.0.1.0", report.Summary);
+        Assert.Contains("обновите клиент", report.Summary);
+        // ACL — независимая находка, обязана дойти и при этом исходе.
+        Assert.True(report.AclCompromised);
+        // Сверять не с чем — ни хеширования папки, ни похода в сеть.
+        Assert.Equal(0, environment.BuildCalls);
+        Assert.Equal(0, environment.FetchCalls);
+    }
+
+    [Fact]
+    public async Task Check_InstalledVersionIsNewerThanPublished_DoesNotAdviseUpdate()
+    {
+        // Сборка новее опубликованной (ещё не выложена на сервер): эталона тоже нет,
+        // но совет «обновите клиент» был бы неправдой.
+        var environment = new FakeEnvironment();
+        var sources = new ClientIntegritySources { CurrentPublishedVersion = "6.0.2" };
+
+        var report = await Checker(environment)
+            .CheckAsync(ClientPath, "6.1.0.0", sources, CancellationToken.None);
+
+        Assert.Equal(ClientIntegrityStatus.VersionNotCurrent, report.Status);
+        Assert.DoesNotContain("обновите клиент", report.Summary);
+        Assert.Contains("новее опубликованной", report.Detail);
+    }
+
+    [Fact]
+    public async Task Check_CurrentVersionWithoutManifest_StaysManifestUnavailable()
+    {
+        // Установлена именно текущая версия, но адресов манифеста нет (релиз выпущен
+        // без него): обновляться не на что, прежний вердикт остаётся в силе.
+        var environment = new FakeEnvironment
+        {
+            Local = Manifest("6.0.2", Publication(HashA, HashA)),
+        };
+        var sources = new ClientIntegritySources { CurrentPublishedVersion = "6.0.2" };
+
+        var report = await Checker(environment)
+            .CheckAsync(ClientPath, "6.0.2.0", sources, CancellationToken.None);
+
+        Assert.Equal(ClientIntegrityStatus.ManifestUnavailable, report.Status);
+        Assert.Null(report.Headline);
+    }
+
+    [Fact]
+    public async Task Check_ManifestKnownForInstalledVersion_IgnoresCurrentPublishedVersion()
+    {
+        // Адреса манифеста для установленной версии есть — сверка идёт обычным путём,
+        // какая бы версия ни значилась текущей (CDN мог отстать от GitHub).
+        var files = Publication(HashA, HashA);
+        var environment = new FakeEnvironment
+        {
+            Local = Manifest("5.0.0", files),
+            Remote = Manifest("5.0.0", files),
+        };
+        var sources = new ClientIntegritySources
+        {
+            ManifestUrl = FullSources().ManifestUrl,
+            ManifestSignatureUrl = FullSources().ManifestSignatureUrl,
+            FilesBaseUrl = FullSources().FilesBaseUrl,
+            CurrentPublishedVersion = "5.0.1",
+        };
+
+        var report = await Checker(environment)
+            .CheckAsync(ClientPath, "5.0.0.0", sources, CancellationToken.None);
+
+        Assert.Equal(ClientIntegrityStatus.Healthy, report.Status);
+    }
+
+    [Fact]
     public async Task Check_ManifestFetchFails_ReportsUnavailableNotDamage()
     {
         var environment = new FakeEnvironment

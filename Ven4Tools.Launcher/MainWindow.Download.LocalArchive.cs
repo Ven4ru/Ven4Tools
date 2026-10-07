@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -7,6 +8,27 @@ using Ven4Tools.Launcher.Services;
 
 namespace Ven4Tools.Launcher
 {
+    /// <summary>
+    /// Чем закончилась установка клиента из локального архива. Отказ из-за понижения
+    /// версии выделен отдельно от прочих неудач: командной строке нужен свой код
+    /// возврата, по которому скрипт отличит «архив старый» от «установка сломалась».
+    /// </summary>
+    internal enum LocalArchiveInstallStatus
+    {
+        Installed,
+        Failed,
+        DowngradeRefused,
+    }
+
+    /// <param name="Status">Исход установки.</param>
+    /// <param name="Message">Пояснение для командной строки, если оно есть.</param>
+    internal readonly record struct LocalArchiveInstallResult(
+        LocalArchiveInstallStatus Status, string? Message = null)
+    {
+        public static LocalArchiveInstallResult Of(bool installed) =>
+            new(installed ? LocalArchiveInstallStatus.Installed : LocalArchiveInstallStatus.Failed);
+    }
+
     public partial class MainWindow
     {
         private void BtnInstallFromFile_Click(object sender, RoutedEventArgs e)
@@ -53,22 +75,33 @@ namespace Ven4Tools.Launcher
         private async Task RunLocalArchiveInstallAsync(string archivePath, OperationLease lease)
         {
             using (lease)
-                await InstallFromLocalArchiveAsync(archivePath, lease.Token, silent: false);
+                await InstallFromLocalArchiveAsync(
+                    archivePath, lease.Token, silent: false, LocalArchiveDowngradeMode.Ask);
         }
 
         // Точка входа headless-режима --install-from (CliInstallRunner). Слот нужен и
         // здесь: конструктор окна уже запустил фоновую проверку обновлений, и тихое
         // автообновление клиента без занятого слота пошло бы в ту же папку параллельно.
-        internal async Task<bool> InstallFromLocalArchiveCliAsync(string archivePath, bool silent)
+        //
+        // Архив более старой версии здесь не ставится без ключа --allow-downgrade и
+        // без вопросов: скрипту отвечать на диалог некому, а молча откатить клиента
+        // на старую сборку — худший из исходов.
+        internal async Task<LocalArchiveInstallResult> InstallFromLocalArchiveCliAsync(
+            string archivePath, bool silent, bool allowDowngrade)
         {
             using var lease = TryBeginOperation(
                 "Установка клиента из файла (командная строка)", Timeout.InfiniteTimeSpan, silent: true);
-            if (lease == null) return false;
+            if (lease == null)
+                return new LocalArchiveInstallResult(
+                    LocalArchiveInstallStatus.Failed, "лаунчер занят другой операцией");
 
-            return await InstallFromLocalArchiveAsync(archivePath, lease.Token, silent);
+            return await InstallFromLocalArchiveAsync(
+                archivePath, lease.Token, silent,
+                allowDowngrade ? LocalArchiveDowngradeMode.Allow : LocalArchiveDowngradeMode.Refuse);
         }
 
-        internal async Task<bool> InstallFromLocalArchiveAsync(string archivePath, CancellationToken token, bool silent)
+        internal async Task<LocalArchiveInstallResult> InstallFromLocalArchiveAsync(
+            string archivePath, CancellationToken token, bool silent, LocalArchiveDowngradeMode downgradeMode)
         {
             Dispatcher.Invoke(() =>
             {
@@ -106,12 +139,66 @@ namespace Ven4Tools.Launcher
                         Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
                             result.RejectionReason, "Установка отклонена",
                             MessageBoxButton.OK, MessageBoxImage.Error));
-                    return false;
+                    return new LocalArchiveInstallResult(
+                        LocalArchiveInstallStatus.Failed, result.RejectionReason);
                 }
 
                 AddLog(result.Outcome == LocalArchiveOutcome.Offline
                     ? $"✅ Офлайн-подпись подтверждена (версия {result.Version})"
                     : $"✅ Подтверждено по списку исторических версий (версия {result.Version})");
+
+                // Понижение версии. Подпись говорит, что архив подлинный, но не что он
+                // свежий: старая сборка подписана так же правильно, а исправлений после
+                // выпуска не получает. Раньше такой архив ставился молча — в отличие от
+                // сетевого пути, где откат отсекается (SignedArchiveFallbackPolicy).
+                // Опубликованная версия — самая новая из известных: из манифеста,
+                // полученного при этой проверке, и из последней загрузки списка версий
+                // (в режиме командной строки окно не показывается и списка нет).
+                var downgrade = ClientDowngradePolicy.Check(
+                    result.Version,
+                    ReadInstalledClientVersion(),
+                    ClientDowngradePolicy.Newest(
+                        result.PublishedClientVersion,
+                        _cdnClientVersion,
+                        _availableVersions.FirstOrDefault(v => v.IsLatest)?.Version));
+                if (downgrade is { } older)
+                {
+                    // Спросить можно только в окне: тихому запуску отвечать некому.
+                    if (downgradeMode == LocalArchiveDowngradeMode.Ask && silent)
+                        downgradeMode = LocalArchiveDowngradeMode.Refuse;
+
+                    if (downgradeMode == LocalArchiveDowngradeMode.Refuse)
+                    {
+                        string refusal = ClientDowngradePolicy.BuildRefusal(older);
+                        Dispatcher.Invoke(() => txtDownloadStatus.Text = "Отклонено");
+                        Dispatcher.Invoke(() => SetOperationStage(0));
+                        AddLog($"⛔ {refusal}");
+                        return new LocalArchiveInstallResult(
+                            LocalArchiveInstallStatus.DowngradeRefused, refusal);
+                    }
+
+                    AddLog($"⚠️ {older.Describe()}");
+                    if (downgradeMode == LocalArchiveDowngradeMode.Allow)
+                    {
+                        AddLog($"⚠️ Понижение версии разрешено ключом {ClientDowngradePolicy.AllowDowngradeSwitch}");
+                    }
+                    else
+                    {
+                        // Кнопка по умолчанию — «Нет»: Enter по привычке не должен
+                        // откатывать клиента на старую сборку.
+                        var answer = Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                            ClientDowngradePolicy.BuildQuestion(older), "Более старая версия",
+                            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No));
+                        if (answer != MessageBoxResult.Yes)
+                        {
+                            Dispatcher.Invoke(() => txtDownloadStatus.Text = "Отменено");
+                            Dispatcher.Invoke(() => SetOperationStage(0));
+                            AddLog("⏹ Установка более старой версии отменена пользователем");
+                            return LocalArchiveInstallResult.Of(false);
+                        }
+                        AddLog("⚠️ Установка более старой версии подтверждена пользователем");
+                    }
+                }
 
                 if (result.Outcome == LocalArchiveOutcome.Historical)
                 {
@@ -130,7 +217,7 @@ namespace Ven4Tools.Launcher
                             Dispatcher.Invoke(() => txtDownloadStatus.Text = "Отменено");
                             Dispatcher.Invoke(() => SetOperationStage(0));
                             AddLog("⏹ Установка архивной версии отменена пользователем");
-                            return false;
+                            return LocalArchiveInstallResult.Of(false);
                         }
                     }
                 }
@@ -142,14 +229,14 @@ namespace Ven4Tools.Launcher
                     Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
                         $"Клиент {result.Version} успешно установлен в:\n{_clientPath}",
                         "Установка завершена", MessageBoxButton.OK, MessageBoxImage.Information));
-                return installed;
+                return LocalArchiveInstallResult.Of(installed);
             }
             catch (OperationCanceledException)
             {
                 Dispatcher.Invoke(() => { txtDownloadStatus.Text = "Отменено"; progressDownload.Value = 0; });
                 Dispatcher.Invoke(() => SetOperationStage(0));
                 AddLog("⏹ Установка из файла отменена");
-                return false;
+                return LocalArchiveInstallResult.Of(false);
             }
             catch (Exception ex)
             {
@@ -159,7 +246,7 @@ namespace Ven4Tools.Launcher
                 if (!silent)
                     Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
                         $"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error));
-                return false;
+                return new LocalArchiveInstallResult(LocalArchiveInstallStatus.Failed, ex.Message);
             }
             finally
             {

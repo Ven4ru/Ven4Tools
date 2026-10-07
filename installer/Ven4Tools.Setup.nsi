@@ -432,7 +432,7 @@ Function Ven4GuiInit
   Call IsWingetInstalled
   StrCmp $R3 "1" 0 winget_check_done
   SectionSetFlags ${SEC_WINGET} 0
-  SectionSetText  ${SEC_WINGET} "Переустановить Winget (уже установлен)"
+  SectionSetText  ${SEC_WINGET} "Установить Winget (уже установлен — будет пропущено)"
   winget_check_done:
 FunctionEnd
 

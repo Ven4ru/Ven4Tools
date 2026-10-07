@@ -49,6 +49,16 @@ internal enum ClientIntegrityStatus
     /// хотя проблема здесь целиком на диске пользователя.
     /// </summary>
     ExecutableCorrupted,
+
+    /// <summary>
+    /// Установлена не текущая версия клиента. Файловый манифест публикуется только
+    /// для текущей сборки, поэтому сверять установленную не с чем — и это не сбой
+    /// сервера и не поломка клиента, а известное заранее положение дел с понятным
+    /// выходом: обновить клиент. Отдельно от ManifestUnavailable именно поэтому — та
+    /// формулировка («сервер недоступен, попробуйте позже») советует ждать того,
+    /// что не наступит.
+    /// </summary>
+    VersionNotCurrent,
 }
 
 /// <summary>
@@ -64,6 +74,13 @@ internal sealed class ClientIntegritySources
     public string? ManifestSignatureUrl { get; init; }
     public string? FilesBaseUrl { get; init; }
     public string? FilesBaseMirrorHostingUrl { get; init; }
+
+    /// <summary>
+    /// Текущая опубликованная версия клиента, если она известна. В сверке не
+    /// участвует: нужна, только чтобы объяснить, почему для установленной версии
+    /// эталона нет (см. <see cref="ClientIntegrityStatus.VersionNotCurrent"/>).
+    /// </summary>
+    public string? CurrentPublishedVersion { get; init; }
 
     /// <summary>Манифест и его подпись известны — проверку есть с чем сверять.</summary>
     public bool CanVerify =>
@@ -132,6 +149,16 @@ internal sealed class ClientIntegrityReport
     /// <summary>Одна строка для журнала лаунчера.</summary>
     public string Summary { get; }
 
+    /// <summary>
+    /// Заголовок и пояснение для окна настроек — только у исходов, где текст зависит
+    /// от данных отчёта (версий). У остальных заголовок постоянный и живёт в самом
+    /// окне, а пояснением служит <see cref="Summary"/>.
+    /// </summary>
+    public string? Headline { get; private init; }
+
+    /// <inheritdoc cref="Headline"/>
+    public string? Detail { get; private init; }
+
     /// <summary>Эталон, по которому строился план — нужен починке.</summary>
     internal ClientFileManifest? RemoteManifest { get; }
 
@@ -172,6 +199,28 @@ internal sealed class ClientIntegrityReport
         new(ClientIntegrityStatus.ExecutableCorrupted, true, false, null, aclCompromised,
             "исполняемый файл клиента повреждён — версия не читается, переустановите клиент полностью",
             null, null);
+
+    /// <summary>
+    /// Установлена не текущая версия: эталон опубликован только для текущей.
+    /// Обычный случай — клиент старее, и совет один: обновить. Если же на диске
+    /// версия новее опубликованной (сборка ещё не выложена на сервер), советовать
+    /// обновление было бы неправдой — формулировка другая.
+    /// </summary>
+    internal static ClientIntegrityReport VersionNotCurrent(
+        string installedVersion, string currentVersion, bool aclCompromised)
+    {
+        string advice = VersionComparer.Compare(installedVersion, currentVersion) < 0
+            ? $"установлена {installedVersion} — обновите клиент, после этого проверка заработает"
+            : $"установлена {installedVersion} — она новее опубликованной, эталона для неё на сервере нет";
+
+        return new(ClientIntegrityStatus.VersionNotCurrent, true, false, null, aclCompromised,
+            $"проверка доступна только для текущей версии клиента ({currentVersion}): {advice}",
+            null, null)
+        {
+            Headline = $"Проверка доступна только для текущей версии клиента ({currentVersion})",
+            Detail = $"У вас {advice}",
+        };
+    }
 
     internal static ClientIntegrityReport FromPlan(
         ClientDeltaPlan plan,

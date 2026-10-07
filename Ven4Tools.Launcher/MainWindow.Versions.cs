@@ -25,6 +25,8 @@ namespace Ven4Tools.Launcher
                 // CDN — основной источник ссылки на текущую версию (быстрее GitHub).
                 // Список всех версий по-прежнему берём из GitHub-релизов; для версии,
                 // совпадающей с CDN, основной ссылкой ставим CDN, а GitHub — резервом.
+                // Если релизы GitHub списка не дали — запись о текущей версии строится
+                // из одного подписанного манифеста CDN (см. TryUseCdnAsVersionList).
                 CdnVersionInfo? cdnInfo = null;
                 try
                 {
@@ -67,9 +69,14 @@ namespace Ven4Tools.Launcher
                 if (error != null)
                 {
                     AddLog($"❌ {error}");
-                    // Список версий не получен (офлайн/GitHub rate-limit 403 и т.п.),
-                    // но уже установленный на диске клиент должен оставаться запускаемым:
-                    // отражаем его в панели версии и в состоянии кнопки независимо от сети.
+                    // Список релизов не получен (GitHub недоступен, rate-limit 403 и
+                    // т.п.), но подписанный version.json CDN описывает текущую версию
+                    // клиента полностью — установка и обновление идут по нему.
+                    if (TryUseCdnAsVersionList(cdnInfo, "GitHub недоступен"))
+                        return;
+                    // Нет ни GitHub, ни CDN (офлайн). Уже установленный на диске клиент
+                    // должен оставаться запускаемым: отражаем его в панели версии и в
+                    // состоянии кнопки независимо от сети.
                     CheckExistingClient();
                     return;
                 }
@@ -106,35 +113,10 @@ namespace Ven4Tools.Launcher
                         // Если CDN знает эту версию — качаем с CDN (быстрее),
                         // остальные источники (прямой IP, зеркало, GitHub) остаются
                         // резервом в цепочке кандидатов (см. DownloadVersionAsync).
-                        if (cdnInfo?.Client != null &&
-                            string.Equals(cdnInfo.Client.Version, version, StringComparison.OrdinalIgnoreCase) &&
-                            !string.IsNullOrWhiteSpace(cdnInfo.Client.ZipUrl) &&
-                            DownloadValidator.IsAllowedDownloadHost(cdnInfo.Client.ZipUrl))
-                        {
-                            info.DownloadUrl = cdnInfo.Client.ZipUrl!;
-                            info.CdnUrl = cdnInfo.Client.ZipUrl;
-                            info.MirrorHostingUrl = cdnInfo.Client.ZipMirrorHosting;
-                            // Хеш из version.json относится к одному и тому же zip
-                            // (CDN, зеркало и GitHub отдают идентичный архив), поэтому
-                            // годится для всех источников. Это не свойство кода, а
-                            // условие выпуска: в релиз, на CDN и на зеркало кладётся
-                            // один и тот же файл. Если на GitHub окажется отдельно
-                            // собранный архив (два `dotnet publish` не воспроизводимы
-                            // побайтово), GitHub-кандидат будет молча отбраковываться
-                            // проверкой целостности — см. защиту от перезаписи ассета
-                            // в .github/workflows/release.yml.
-                            info.ExpectedSha256 = cdnInfo.Client.ZipSha256;
-
-                            // Ссылки блочного (дельта-) обновления. Опциональны: релиз
-                            // мог быть выпущен без файлового манифеста — тогда поля
-                            // останутся пустыми и обновление пойдёт полным путём.
-                            info.ManifestUrl = cdnInfo.Client.ManifestUrl;
-                            info.ManifestSignatureUrl = cdnInfo.Client.ManifestSignatureUrl;
-                            info.FilesBaseUrl = cdnInfo.Client.FilesBaseUrl;
-                            info.FilesBaseMirrorHostingUrl = cdnInfo.Client.FilesBaseMirrorHosting;
-
+                        // Какие поля манифеста куда ложатся — в одном месте,
+                        // ClientVersionMapper.ApplyCdnClientInfo.
+                        if (ClientVersionMapper.ApplyCdnClientInfo(info, cdnInfo?.Client))
                             AddLog($"   ⚡ {version} → CDN (резерв: прямой IP, хостинг, GitHub)");
-                        }
 
                         AddLog($"   ✅ {version}{(release.prerelease ? " [PRE]" : "")} → {clientAsset.name}");
                         _availableVersions.Add(info);
@@ -159,14 +141,52 @@ namespace Ven4Tools.Launcher
                 }
                 else
                 {
-                    UpdateVersionDisplay(null);
                     AddLog("⚠️ Нет релизов с подходящим .zip-активом (см. детали выше)");
+                    // GitHub ответил, но ни одного пригодного архива клиента в его
+                    // релизах нет — тот же запасной путь, что и при недоступном GitHub.
+                    if (!TryUseCdnAsVersionList(cdnInfo, "в релизах GitHub нет архива клиента"))
+                        UpdateVersionDisplay(null);
                 }
             }
             catch (Exception ex)
             {
                 AddLog($"❌ Ошибка загрузки версий: {ex.Message}");
             }
+        }
+
+        // Запасной источник списка версий: подписанный version.json CDN. Применяется,
+        // только когда релизы GitHub список не дали. Запись строится тем же типом и
+        // тем же кодом, что и подстановка CDN поверх релиза (ClientVersionMapper), и
+        // дальше идёт обычным путём — установка, обновление, дельта, «Проверить и
+        // восстановить». Проверки не ослабляются: cdnInfo бывает только с
+        // подтверждённой подписью (CdnService), запись без SHA256 из него не строится,
+        // а загрузчик сверяет с этим хешем каждый источник.
+        //
+        // Защита от понижения версии остаётся прежней: обновление предлагается, только
+        // если версия из манифеста новее установленной (CheckClientUpdateAvailable), а
+        // DownloadVersionAsync отказывается ставить версию старее той, что на диске, —
+        // подписанный, но устаревший манифест клиента не откатит.
+        //
+        // Возвращает false, если пригодной записи в манифесте нет — список версий
+        // остаётся как был.
+        private bool TryUseCdnAsVersionList(CdnVersionInfo? cdnInfo, string why)
+        {
+            var current = ClientVersionMapper.BuildFromCdnManifest(cdnInfo);
+            if (current == null)
+            {
+                if (cdnInfo != null)
+                    AddLog("⚠️ В подписанном манифесте CDN нет пригодных сведений о клиенте (версия, ссылка, SHA256) — список версий недоступен");
+                return false;
+            }
+
+            _availableVersions = new System.Collections.Generic.List<ClientVersionInfo> { current };
+            AddLog($"🌐 Список версий взят с CDN ({why}): клиент {current.Version} из подписанного version.json");
+            AddLog("   ↳ Описание и дата релиза недоступны — их даёт только GitHub");
+
+            UpdateVersionDisplay(current.IsLatest ? current : null);
+            CheckExistingClient();
+            CheckClientUpdateAvailable();
+            return true;
         }
 
         // Три состояния кнопки запуска/загрузки клиента с фиксированными текстом и

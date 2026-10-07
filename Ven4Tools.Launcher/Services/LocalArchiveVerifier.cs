@@ -18,6 +18,15 @@ internal readonly struct LocalArchiveVerificationResult
     public string? Version { get; init; }
     public string? RejectionReason { get; init; }
 
+    /// <summary>
+    /// Текущая опубликованная версия клиента из подписанного version.json — если он
+    /// был получен при этой проверке (для офлайн-подписи сеть необязательна, тогда
+    /// null). Сама проверка от неё не зависит: подписанный архив старой версии
+    /// остаётся подлинным. Нужна вызывающему коду, чтобы предупредить о понижении
+    /// версии — см. <see cref="ClientDowngradePolicy"/>.
+    /// </summary>
+    public string? PublishedClientVersion { get; init; }
+
     public static LocalArchiveVerificationResult Reject(string reason) =>
         new() { Outcome = LocalArchiveOutcome.Rejected, RejectionReason = reason };
 }
@@ -58,7 +67,8 @@ internal static class LocalArchiveVerifier
             return new LocalArchiveVerificationResult
             {
                 Outcome = LocalArchiveOutcome.Offline,
-                Version = signatureFile!.Version
+                Version = signatureFile!.Version,
+                PublishedClientVersion = info?.Client?.Version
             };
         }
 
@@ -82,7 +92,8 @@ internal static class LocalArchiveVerifier
         return new LocalArchiveVerificationResult
         {
             Outcome = LocalArchiveOutcome.Historical,
-            Version = historicalMatch.Version
+            Version = historicalMatch.Version,
+            PublishedClientVersion = networkInfo.Client?.Version
         };
     }
 
