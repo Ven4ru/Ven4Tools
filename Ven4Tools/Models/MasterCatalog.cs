@@ -27,5 +27,8 @@ namespace Ven4Tools.Models
         public List<string> AddedApps { get; set; } = new List<string>();
 
         public string Message { get; set; } = string.Empty;
+
+        /// <summary>Та же заметка на английском; у старых записей её нет.</summary>
+        public string MessageEn { get; set; } = string.Empty;
     }
 }

@@ -20,6 +20,20 @@ namespace Ven4Tools.Models
 
         public string Description { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Описание на английском. Приходит вместе с каталогом: каталог обновляется чаще
+        /// программы, и в её языковом пакете описаний новых приложений ещё нет.
+        /// </summary>
+        public string DescriptionEn { get; set; } = string.Empty;
+
+        /// <summary>Описание на языке интерфейса; русское, если английского в каталоге нет.</summary>
+        [Newtonsoft.Json.JsonIgnore]
+        public string LocalizedDescription =>
+            Ven4Tools.Localization.UiTranslator.Language == Ven4Tools.Localization.AppLanguage.English
+            && !string.IsNullOrWhiteSpace(DescriptionEn)
+                ? DescriptionEn
+                : Description;
+
         public string Version { get; set; } = string.Empty;
 
         public string Profile { get; set; } = "full";
