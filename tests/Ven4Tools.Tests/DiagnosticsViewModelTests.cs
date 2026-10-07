@@ -1,3 +1,4 @@
+using Ven4Tools.Services;
 using Ven4Tools.ViewModels;
 using Xunit;
 
@@ -28,7 +29,11 @@ namespace Ven4Tools.Tests
             Assert.Equal("Нажмите «Запустить диагностику»", vm.HardwareSummaryText);
             Assert.Equal("", vm.HardwareRawText);
             Assert.False(vm.HardwareRawVisible);
-            Assert.Equal("Текущее состояние: определяется...", vm.TurboBoostStatusText);
+            Assert.Equal("Текущий режим: определяется...", vm.TurboBoostStatusText);
+            Assert.Empty(vm.TurboBoostModeOptions);
+            Assert.Null(vm.SelectedTurboBoostMode);
+            // Пока режим не прочитан, применять нечего.
+            Assert.False(vm.ApplyTurboBoostModeCommand.CanExecute(null));
             Assert.False(vm.IsRunningDiagnostics);
             Assert.False(vm.IsClearingWuCache);
         }
@@ -42,8 +47,6 @@ namespace Ven4Tools.Tests
             Assert.True(vm.OpenLogsCommand.CanExecute(null));
             Assert.True(vm.OpenLatestLogCommand.CanExecute(null));
             Assert.True(vm.ClearLogsCommand.CanExecute(null));
-            Assert.True(vm.DisableTurboBoostCommand.CanExecute(null));
-            Assert.True(vm.EnableTurboBoostCommand.CanExecute(null));
             Assert.True(vm.OpenWindowsUpdateCommand.CanExecute(null));
             Assert.True(vm.CopyFullReportCommand.CanExecute(null));
             Assert.True(vm.DisableFastStartupCommand.CanExecute(null));
@@ -60,16 +63,27 @@ namespace Ven4Tools.Tests
             Assert.False(vm.IsDisablingFastStartup);
         }
 
-        // Обе кнопки турбобуста правят одну настройку схемы электропитания через
-        // powercfg — быстрый двойной клик запускал два процесса с правами администратора
-        // параллельно. Флаг общий: занятость одной кнопки закрывает и вторую.
-        [Fact]
-        public void IsApplyingTurboBoost_ЗакрываетОбеКнопкиТурбобуста()
+        // Сбалансированная схема, сейчас «Включён», Windows сама задаёт «Агрессивный».
+        private static DiagnosticsViewModel WithTurboState(int? ac = 1, int? dc = 1, int? windowsDefault = 2)
         {
-            var vm = new DiagnosticsViewModel { IsApplyingTurboBoost = true };
+            var vm = new DiagnosticsViewModel();
+            vm.ApplyTurboBoostState(
+                new TurboBoostState("381b4222-f694-41f0-9685-ff5bb260df2e", new[] { 0, 1, 2, 3, 4, 5, 6 }, ac, dc),
+                windowsDefault);
+            return vm;
+        }
 
-            Assert.False(vm.DisableTurboBoostCommand.CanExecute(null));
-            Assert.False(vm.EnableTurboBoostCommand.CanExecute(null));
+        // Смена режима правит схему электропитания через powercfg — быстрый двойной клик
+        // запускал два процесса с правами администратора параллельно.
+        [Fact]
+        public void IsApplyingTurboBoost_ЗакрываетПрименениеРежима()
+        {
+            var vm = WithTurboState();
+            Assert.True(vm.ApplyTurboBoostModeCommand.CanExecute(null));
+
+            vm.IsApplyingTurboBoost = true;
+
+            Assert.False(vm.ApplyTurboBoostModeCommand.CanExecute(null));
             // Соседние операции к турбобусту отношения не имеют и блокироваться не должны.
             Assert.True(vm.DisableFastStartupCommand.CanExecute(null));
             Assert.True(vm.RunDiagnosticsCommand.CanExecute(null));
@@ -78,24 +92,79 @@ namespace Ven4Tools.Tests
         [Fact]
         public void IsDisablingFastStartup_ЗакрываетТолькоСвоюКоманду()
         {
-            var vm = new DiagnosticsViewModel { IsDisablingFastStartup = true };
+            var vm = WithTurboState();
+            vm.IsDisablingFastStartup = true;
 
             Assert.False(vm.DisableFastStartupCommand.CanExecute(null));
-            Assert.True(vm.DisableTurboBoostCommand.CanExecute(null));
-            Assert.True(vm.EnableTurboBoostCommand.CanExecute(null));
+            Assert.True(vm.ApplyTurboBoostModeCommand.CanExecute(null));
         }
 
         [Fact]
         public void ФлагиДлительныхОпераций_СнятыеВозвращаютCanExecute()
         {
-            var vm = new DiagnosticsViewModel { IsApplyingTurboBoost = true, IsDisablingFastStartup = true };
+            var vm = WithTurboState();
+            vm.IsApplyingTurboBoost = true;
+            vm.IsDisablingFastStartup = true;
 
             vm.IsApplyingTurboBoost = false;
             vm.IsDisablingFastStartup = false;
 
-            Assert.True(vm.DisableTurboBoostCommand.CanExecute(null));
-            Assert.True(vm.EnableTurboBoostCommand.CanExecute(null));
+            Assert.True(vm.ApplyTurboBoostModeCommand.CanExecute(null));
             Assert.True(vm.DisableFastStartupCommand.CanExecute(null));
+        }
+
+        [Fact]
+        public void РежимыТурбобуста_ТекущийИЗаводскойПомеченыВСписке()
+        {
+            var vm = WithTurboState(ac: 1, dc: 1, windowsDefault: 2);
+
+            Assert.Equal(7, vm.TurboBoostModeOptions.Count);
+            Assert.Equal("Отключён", vm.TurboBoostModeOptions[0].Label);
+            Assert.Equal("Включён — текущий", vm.TurboBoostModeOptions[1].Label);
+            Assert.Equal("Агрессивный — по умолчанию в Windows", vm.TurboBoostModeOptions[2].Label);
+            // В списке сразу выбран текущий режим, под ним — его описание.
+            Assert.Equal(1, vm.SelectedTurboBoostMode?.Mode);
+            Assert.Equal(TurboBoostModes.Description(1), vm.SelectedTurboBoostDescription);
+            Assert.Equal("Текущий режим: Включён", vm.TurboBoostStatusText);
+        }
+
+        [Fact]
+        public void РежимыТурбобуста_ТекущийСовпадаетСЗаводским_ОбеПометки()
+        {
+            var vm = WithTurboState(ac: 2, dc: 2, windowsDefault: 2);
+
+            Assert.Equal("Агрессивный — текущий, по умолчанию в Windows", vm.TurboBoostModeOptions[2].Label);
+        }
+
+        [Fact]
+        public void РежимыТурбобуста_ОтБатареиДругойРежим_СказаноВСтроке()
+        {
+            var vm = WithTurboState(ac: 2, dc: 0);
+
+            Assert.Equal("Текущий режим: Агрессивный (от батареи — Отключён)", vm.TurboBoostStatusText);
+        }
+
+        [Fact]
+        public void РежимыТурбобуста_РежимНеПрочитан_СписокЕстьНоНичегоНеВыбрано()
+        {
+            var vm = new DiagnosticsViewModel();
+            vm.ApplyTurboBoostState(TurboBoostModes.Parse(null), windowsDefault: null);
+
+            Assert.Equal("Текущий режим: не удалось определить", vm.TurboBoostStatusText);
+            Assert.Equal(new[] { 0, 1, 2, 3, 4 }, vm.TurboBoostModeOptions.Select(o => o.Mode));
+            Assert.Null(vm.SelectedTurboBoostMode);
+            Assert.False(vm.ApplyTurboBoostModeCommand.CanExecute(null));
+            Assert.Equal("", vm.SelectedTurboBoostDescription);
+        }
+
+        [Fact]
+        public void РежимыТурбобуста_ВыборДругогоРежима_МеняетОписание()
+        {
+            var vm = WithTurboState();
+
+            vm.SelectedTurboBoostMode = vm.TurboBoostModeOptions[0];
+
+            Assert.Equal(TurboBoostModes.Description(0), vm.SelectedTurboBoostDescription);
         }
 
         [Fact]

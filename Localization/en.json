@@ -1712,6 +1712,14 @@
     "t": "Auto-check is off (paranoid mode). Click “Check for updates” manually."
   },
   {
+    "s": "Агрессивный",
+    "t": "Aggressive"
+  },
+  {
+    "s": "Агрессивный при гарантированном",
+    "t": "Aggressive At Guaranteed"
+  },
+  {
     "s": "Адрес: {0}",
     "t": "Address: {0}"
   },
@@ -2106,6 +2114,10 @@
   {
     "s": "Включить новый вид окна: обзор и шесть пунктов меню. Обратно — этой же кнопкой.",
     "t": "Switch to the new layout: an overview and six menu items. Use this button to switch back."
+  },
+  {
+    "s": "Включён",
+    "t": "Enabled"
   },
   {
     "s": "Влияет только на окно выбора профиля каталога, которое показывается при первом запуске. Остальной интерфейс приложения переведён не полностью и остаётся на русском.",
@@ -2748,6 +2760,10 @@
     "t": "Write, MB/s"
   },
   {
+    "s": "Запишет выбранный режим в схему электропитания — для питания от сети и от батареи. Применяется сразу, перезагрузка не требуется.",
+    "t": "Writes the selected mode to the power plan — for both plugged-in and battery power. Applied immediately, no restart required."
+  },
+  {
     "s": "Запрос прав администратора отклонён",
     "t": "Administrator rights request declined"
   },
@@ -3010,6 +3026,10 @@
   {
     "s": "КЛИЕНТ VEN4TOOLS",
     "t": "VEN4TOOLS CLIENT"
+  },
+  {
+    "s": "Как «Включён», но на процессорах без собственного управления частотой Windows сразу запрашивает наибольшую.",
+    "t": "Like “Enabled”, but on processors without their own frequency control Windows requests the highest frequency right away."
   },
   {
     "s": "Как измерено",
@@ -3496,6 +3516,10 @@
     "t": "Example: V4T:google-chrome,telegram,vlc"
   },
   {
+    "s": "Насколько охотно процессор поднимает частоту выше номинальной. Это настройка схемы электропитания Windows.",
+    "t": "How readily the processor raises its frequency above the nominal one. This is a Windows power plan setting."
+  },
+  {
     "s": "Настоящий сбой системы (BSOD) — Windows зафиксировала критическую ошибку ядра.",
     "t": "A real system crash (BSOD) — Windows recorded a critical kernel error."
   },
@@ -3594,6 +3618,10 @@
   {
     "s": "Не удалось запустить установщик",
     "t": "Could not start the installer"
+  },
+  {
+    "s": "Не удалось изменить режим Turbo Boost. Запустите приложение от имени администратора и попробуйте ещё раз.",
+    "t": "Could not change the Turbo Boost mode. Run the app as administrator and try again."
   },
   {
     "s": "Не удалось импортировать настройки: {0}",
@@ -4304,6 +4332,10 @@
     "t": "Turn off “Fast startup”? This removes the hibernation file and the resume mechanism — “Shut down” becomes a full cold shutdown."
   },
   {
+    "s": "Отключён",
+    "t": "Disabled"
+  },
+  {
     "s": "Открепить от панели быстрого доступа.",
     "t": "Unpin from the quick access bar."
   },
@@ -4882,6 +4914,14 @@
   {
     "s": "По данным последней фоновой проверки.",
     "t": "According to the latest background check."
+  },
+  {
+    "s": "По документации Microsoft работает как «Агрессивный».",
+    "t": "According to Microsoft documentation it works like “Aggressive”."
+  },
+  {
+    "s": "По документации Microsoft работает как «Включён».",
+    "t": "According to Microsoft documentation it works like “Enabled”."
   },
   {
     "s": "Повторит установку этого приложения тем же способом, что и обычная установка из каталога. Кнопка недоступна, пока идёт другая установка.",
@@ -5600,6 +5640,14 @@
     "t": "The process was killed externally — no stack trace available."
   },
   {
+    "s": "Процессор не поднимает частоту выше номинальной: меньше нагрев и шум, ниже скорость.",
+    "t": "The processor does not raise its frequency above the nominal one: less heat and noise, lower speed."
+  },
+  {
+    "s": "Процессор поднимает частоту выше номинальной, когда нагрузке это нужно.",
+    "t": "The processor raises its frequency above the nominal one when the load needs it."
+  },
+  {
     "s": "Процессор:",
     "t": "Processor:"
   },
@@ -5694,6 +5742,18 @@
   {
     "s": "Редирект на небезопасный хост: {0}",
     "t": "Redirect to an insecure host: {0}"
+  },
+  {
+    "s": "Режим Turbo Boost",
+    "t": "Turbo Boost mode"
+  },
+  {
+    "s": "Режим {0}",
+    "t": "Mode {0}"
+  },
+  {
+    "s": "Режим есть в Windows, но в документации Microsoft не описан.",
+    "t": "The mode exists in Windows but is not described in Microsoft documentation."
   },
   {
     "s": "Результат установки",
@@ -6318,6 +6378,18 @@
   {
     "s": "Текущие локальные настройки (профиль, пресеты, избранное, параметры приложения) будут перезаписаны данными из архива.\n\nПродолжить?",
     "t": "Current local settings (profile, presets, favorites, app settings) will be overwritten with data from the archive.\n\nContinue?"
+  },
+  {
+    "s": "Текущий режим:",
+    "t": "Current mode:"
+  },
+  {
+    "s": "Текущий режим: не удалось определить",
+    "t": "Current mode: could not be determined"
+  },
+  {
+    "s": "Текущий режим: определяется...",
+    "t": "Current mode: detecting..."
   },
   {
     "s": "Телеметрия Windows",
@@ -7044,6 +7116,18 @@
     "t": "This does not look like a set code. A code starts with “V4T:” — for example V4T:google-chrome,telegram,vlc."
   },
   {
+    "s": "Эффективно агрессивный",
+    "t": "Efficient Aggressive"
+  },
+  {
+    "s": "Эффективно агрессивный при гарантированном",
+    "t": "Efficient Aggressive At Guaranteed"
+  },
+  {
+    "s": "Эффективно включённый",
+    "t": "Efficient Enabled"
+  },
+  {
     "s": "ЯЗЫК ИНТЕРФЕЙСА",
     "t": "INTERFACE LANGUAGE"
   },
@@ -7384,6 +7468,10 @@
     "t": "detecting..."
   },
   {
+    "s": "от батареи",
+    "t": "on battery"
+  },
+  {
     "s": "отключено",
     "t": "disabled"
   },
@@ -7406,6 +7494,10 @@
   {
     "s": "по прямому IP {0} подпись манифеста не подтверждена",
     "t": "manifest signature not confirmed via direct IP {0}"
+  },
+  {
+    "s": "по умолчанию в Windows",
+    "t": "Windows default"
   },
   {
     "s": "подписанный манифест CDN подтверждает только текущую версию {0}, для более старой {1} хеша нет",
@@ -7534,6 +7626,10 @@
   {
     "s": "твиков: {0}, пресетов: {1}",
     "t": "tweaks: {0}, presets: {1}"
+  },
+  {
+    "s": "текущий",
+    "t": "current"
   },
   {
     "s": "у архива нет встроенной подписи — без подтверждения CDN установить его нельзя",
@@ -7762,6 +7858,10 @@
   {
     "s": "ℹ️ На время установки меняются региональные параметры Windows и Office: по ним загрузчик Microsoft выбирает сервер. После установки прежние значения возвращаются.",
     "t": "ℹ️ During installation, the Windows and Office regional settings are changed: the Microsoft downloader uses them to pick a server. The previous values are restored afterwards."
+  },
+  {
+    "s": "ℹ️ На процессорах, которые сами управляют частотой (у Intel — Speed Shift, Core 6-го поколения и новее), режимы «Включён» и «Агрессивный» по документации Microsoft работают одинаково: заметная разница — только между «Отключён» и остальными.",
+    "t": "ℹ️ On processors that manage their own frequency (Intel Speed Shift, 6th-generation Core and newer), the “Enabled” and “Aggressive” modes work the same according to Microsoft documentation: the noticeable difference is only between “Disabled” and the rest."
   },
   {
     "s": "ℹ️ Старый Office не удалён — установка новой версии не запускается. Скачанный установщик сохранён, можно повторить через «Установить».",
@@ -8492,6 +8592,14 @@
     "t": "⚡ {0} to download instead of the full archive"
   },
   {
+    "s": "⚡ Применить режим",
+    "t": "⚡ Apply mode"
+  },
+  {
+    "s": "⚡ Режим Turbo Boost: {0}",
+    "t": "⚡ Turbo Boost mode: {0}"
+  },
+  {
     "s": "⚡ Турбобуст включён",
     "t": "⚡ Turbo Boost turned on"
   },
@@ -8796,6 +8904,10 @@
     "t": "✅ Check complete: {0} available, {1} unavailable, {2} blocked in your region"
   },
   {
+    "s": "✅ Режим Turbo Boost: {0}.\nИзменение применено немедленно — перезагрузка не требуется.",
+    "t": "✅ Turbo Boost mode: {0}.\nThe change was applied immediately — no restart required."
+  },
+  {
     "s": "✅ Скачано! Нажмите «Установить»",
     "t": "✅ Downloaded! Click “Install”"
   },
@@ -9040,6 +9152,10 @@
     "t": "❌ Could not update the contents of preset “{0}”"
   },
   {
+    "s": "❌ Не удалось определить режим турбобуста",
+    "t": "❌ Could not determine the Turbo Boost mode"
+  },
+  {
     "s": "❌ Не удалось определить состояние турбобуста",
     "t": "❌ Could not determine the Turbo Boost state"
   },
@@ -9054,6 +9170,10 @@
   {
     "s": "❌ Не удалось подтвердить подлинность установщика Microsoft — скачайте заново",
     "t": "❌ Could not verify the Microsoft installer's authenticity — download it again"
+  },
+  {
+    "s": "❌ Не удалось прочитать режим турбобуста по умолчанию",
+    "t": "❌ Could not read the default Turbo Boost mode"
   },
   {
     "s": "❌ Не удалось сохранить пресет",
@@ -9190,6 +9310,10 @@
   {
     "s": "❌ Ошибка при отключении турбобуста: {0}",
     "t": "❌ Could not turn off Turbo Boost: {0}"
+  },
+  {
+    "s": "❌ Ошибка при смене режима турбобуста: {0}",
+    "t": "❌ Error changing the Turbo Boost mode: {0}"
   },
   {
     "s": "❌ Ошибка проверки Office: {0}",
