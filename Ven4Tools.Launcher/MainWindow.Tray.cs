@@ -314,7 +314,9 @@ namespace Ven4Tools.Launcher
 
             Dispatcher.Invoke(() =>
             {
-                txtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
+                // В окно строка идёт уже на языке интерфейса (в файл выше — как есть, по-русски):
+                // так переводится одна новая строка, а не весь накопленный журнал заново.
+                txtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {Tr(message)}\n");
                 if (txtLog.LineCount > MaxLogLines)
                 {
                     int cutIndex = txtLog.GetCharacterIndexFromLineIndex(txtLog.LineCount - MaxLogLines);
