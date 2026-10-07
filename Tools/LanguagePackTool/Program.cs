@@ -244,7 +244,10 @@ static class CSharpSource
 {
     public static void Collect(string file, Collector found)
     {
-        var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(file));
+        // Окончания строк приводятся к одному виду: многострочная строка в коде не должна
+        // давать разный ключ на машинах, где git выдал файл с LF и с CRLF (в репозитории
+        // для *.cs закреплён CRLF — см. .gitattributes).
+        var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(file).ReplaceLineEndings("\r\n"));
         foreach (var node in tree.GetRoot().DescendantNodes())
         {
             // Склейка "..." + x + "..." разбирается целиком от самого внешнего «+»:
