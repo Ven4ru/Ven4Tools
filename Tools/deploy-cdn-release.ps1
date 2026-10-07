@@ -18,6 +18,8 @@
       4. Подписывает и выкладывает манифест через deploy-version-manifest.ps1
          (там же — публичная проверка подписи).
       5. Проверяет публичную доступность файлов по адресам из манифеста.
+      6. Убирает с сервера прежнюю сборку выкладываемого компонента: на CDN лежат
+         только текущие архив клиента и установщик лаунчера.
 
     Вместе с архивом клиента или установщиком выкладывается английский языковой пакет
     этой сборки (releases/lang/<программа>-<версия>-en.json): программа скачивает его,
@@ -276,14 +278,27 @@ if ($failed.Count -gt 0) {
 if ($ClientZip -and $previousVersion -and $previousVersion -ne $clientVersion -and $previousVersion -match '^\d+\.\d+\.\d+$') {
     $oldZip = "$RemoteReleases/Ven4Tools-Client-$previousVersion.zip"
     $oldFiles = "$RemoteClientFiles/$previousVersion"
-    # Языковой пакет прежней сборки новой не подходит (программа принимает только пакет
-    # своей сборки) и на GitHub снимается вместе с архивом — здесь убирается так же.
-    $oldPack = "$RemoteReleases/lang/client-$previousVersion-en.json"
-    ssh jump "rm -f '$oldZip' '$oldPack' && rm -rf '$oldFiles'"
+    # Языковой пакет прежней сборки остаётся: уже установленный клиент этой версии
+    # скачивает его при смене языка, а на GitHub пакет снимается вместе с архивом.
+    ssh jump "rm -f '$oldZip' && rm -rf '$oldFiles'"
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Прежняя сборка клиента $previousVersion убрана с сервера."
     } else {
-        Write-Warning "Прежняя сборка клиента $previousVersion с сервера не убрана (ssh, код $LASTEXITCODE) — уберите вручную: $oldZip, $oldPack и $oldFiles"
+        Write-Warning "Прежняя сборка клиента $previousVersion с сервера не убрана (ssh, код $LASTEXITCODE) — уберите вручную: $oldZip и $oldFiles"
+    }
+}
+
+# --- Уборка прежнего установщика лаунчера --------------------------------------
+# На тех же условиях, что и у клиента: после публичной проверки нового. Манифест
+# версий ссылается только на текущий установщик, сайт берёт адрес из манифеста,
+# а прежние версии остаются в релизах на GitHub.
+if ($LauncherSetup -and $previousLauncher -and $previousLauncher -ne $launcherVersion -and $previousLauncher -match '^\d+\.\d+\.\d+$') {
+    $oldSetup = "$RemoteReleases/Ven4Tools.Setup-$previousLauncher.exe"
+    ssh jump "rm -f '$oldSetup'"
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Прежний установщик лаунчера $previousLauncher убран с сервера."
+    } else {
+        Write-Warning "Прежний установщик лаунчера $previousLauncher с сервера не убран (ssh, код $LASTEXITCODE) — уберите вручную: $oldSetup"
     }
 }
 
