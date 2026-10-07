@@ -170,9 +170,27 @@ namespace Ven4Tools.ClientUITests
                 timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(snapLabel, $"Снапшот «{snapName}» не появился в списке.");
 
-            var row = snapLabel!.Parent;
-            var deleteBtn = row?.FindAllChildren(cf => cf.ByControlType(ControlType.Button))
-                .FirstOrDefault(b => (b.Name ?? "") == "✕");
+            // Список после добавления строки перестраивается: строка и её кнопки появляются
+            // в дереве не одновременно, поэтому кнопка ищется с ожиданием. Строки списка в
+            // дереве автоматизации не сгруппированы (FlatItemsControl), так что кнопка «✕»
+            // нужной строки определяется по положению — та, что на одной высоте с подписью;
+            // иначе при нескольких снимках удалялся бы первый попавшийся.
+            var deleteBtn = Retry.WhileNull(
+                () =>
+                {
+                    var label = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Text))
+                        .FirstOrDefault(e => (e.Name ?? "").Contains(snapName));
+                    if (label == null) return null;
+                    var labelBox = label.BoundingRectangle;
+                    double labelY = labelBox.Top + labelBox.Height / 2.0;
+                    return s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                        .Where(b => (b.Name ?? "") == "✕")
+                        .Select(b => (Button: b, Box: b.BoundingRectangle))
+                        .Where(x => Math.Abs(x.Box.Top + x.Box.Height / 2.0 - labelY) <= Math.Max(labelBox.Height, x.Box.Height))
+                        .Select(x => x.Button)
+                        .FirstOrDefault();
+                },
+                timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
             Assert.IsNotNull(deleteBtn, "Не найдена кнопка удаления снапшота.");
             deleteBtn!.Click();
             System.Threading.Thread.Sleep(500);
