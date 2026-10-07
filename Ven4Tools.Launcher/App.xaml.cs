@@ -29,14 +29,22 @@ public partial class App : Application
             return;
         }
 
+        // Ключи режима командной строки (подробно и с кодами возврата — CliInstallRunner):
+        //   --install-from=<путь>  установить клиент из подписанного архива без окна;
+        //   --silent               без диалогов и сообщений;
+        //   --allow-downgrade      разрешить архив старее установленной или
+        //                          опубликованной версии (без ключа — отказ, код 4).
         string? installFromPath = null;
         bool silentInstall = false;
+        bool allowDowngrade = false;
         foreach (var arg in e.Args)
         {
             if (arg.StartsWith("--install-from=", StringComparison.OrdinalIgnoreCase))
                 installFromPath = arg["--install-from=".Length..].Trim('"');
             else if (string.Equals(arg, "--silent", StringComparison.OrdinalIgnoreCase))
                 silentInstall = true;
+            else if (string.Equals(arg, Services.ClientDowngradePolicy.AllowDowngradeSwitch, StringComparison.OrdinalIgnoreCase))
+                allowDowngrade = true;
         }
 
         if (installFromPath != null)
@@ -68,7 +76,8 @@ public partial class App : Application
             // запускает Dispatcher.Run(), и только тогда колбэк реально выполняется.
             Dispatcher.BeginInvoke(new Action(async () =>
             {
-                int exitCode = await CliInstallRunner.RunAsync(window, installFromPath, silentInstall);
+                int exitCode = await CliInstallRunner.RunAsync(
+                    window, installFromPath, silentInstall, allowDowngrade);
                 ReleaseSingleInstanceMutex();
                 Shutdown(exitCode);
             }));

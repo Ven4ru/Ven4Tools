@@ -152,6 +152,20 @@ internal sealed class ClientIntegrityChecker
             return ClientIntegrityReport.ExecutableCorrupted(aclCompromised);
         }
 
+        // 2.7. Установлена не текущая версия, и эталона для неё нет. Файловый манифест
+        //      публикуется только для текущей сборки, так что это не «манифест не
+        //      опубликован» и не «сервер недоступен», а заранее известный ответ:
+        //      проверка заработает после обновления. Хешировать папку ради него
+        //      незачем — сверять всё равно не с чем. Если адреса манифеста есть
+        //      (CanVerify) — идём обычным путём: версию эталона проверит шаг 5.
+        if (!sources.CanVerify &&
+            !string.IsNullOrWhiteSpace(sources.CurrentPublishedVersion) &&
+            VersionComparer.Compare(sources.CurrentPublishedVersion, installedVersionLabel) != 0)
+        {
+            return ClientIntegrityReport.VersionNotCurrent(
+                installedVersionLabel, sources.CurrentPublishedVersion, aclCompromised);
+        }
+
         // 3. Реальный состав папки клиента: хеш каждого файла, посчитанный сейчас.
         //    Это и есть то, чего не делает обычное обновление — оно верит кэшу.
         ClientFileManifest local;

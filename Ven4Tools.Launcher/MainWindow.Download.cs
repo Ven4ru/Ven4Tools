@@ -229,6 +229,30 @@ namespace Ven4Tools.Launcher
 
             try
             {
+                // Защита от понижения версии. Хеш из подписанного манифеста подтверждает,
+                // что архив настоящий, но не что манифест свежий: его старая копия
+                // подписана так же правильно. Сюда и так приходят только за более новой
+                // версией (CheckClientUpdateAvailable, фоновая проверка), но запись о
+                // версии к моменту установки могла устареть или прийти из одного CDN, без
+                // сверки с GitHub, — поэтому решение принимается ещё раз, по версии на
+                // диске, и до дельты: она точно так же вернула бы старые файлы.
+                // Без подтверждённого хеша то же самое решает политика ниже.
+                bool hashConfirmed = DownloadValidator.IsValidSha256(version.ExpectedSha256);
+                string? installedVersion = ReadInstalledClientVersion();
+                if (hashConfirmed && ClientDowngradePolicy.IsOlderThanInstalled(version.Version, installedVersion))
+                {
+                    txtDownloadStatus.Text = "Версия старее установленной";
+                    SetOperationStage(0);
+                    AddLog($"⛔ Версия {version.Version} не установлена: она старее установленной {installedVersion} — понижение версии не выполняется");
+                    if (!silent)
+                        System.Windows.MessageBox.Show(
+                            $"Версия {version.Version} старее установленной {installedVersion}.\n\n" +
+                            "Загрузка не понижает версию клиента. Если нужна именно она — поставьте её " +
+                            "подписанный архив через «Установить из файла».",
+                            "Версия старее установленной", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 // Попытка блочного (дельта-) обновления ДО полной загрузки: если CDN
                 // отдал подписанный файловый манифест и на диске есть подтверждённый
                 // состав установленной версии — качаем только изменившиеся файлы.
@@ -251,12 +275,9 @@ namespace Ven4Tools.Launcher
                 // доверия — встроенная ECDSA-подпись архива (как у «Установить из
                 // файла»): архив проверяется ею после загрузки, см. ниже. Даунгрейд так
                 // не ставится никогда — его отсекаем до загрузки, не тратя минуты.
-                bool hashConfirmed = DownloadValidator.IsValidSha256(version.ExpectedSha256);
-                string? installedVersion = null;
                 if (!hashConfirmed)
                 {
                     var why = ClientHashAvailability.Explain(version.Version, _cdnManifestLoaded, _cdnClientVersion);
-                    installedVersion = ReadInstalledClientVersion();
                     string? refusal = SignedArchiveFallbackPolicy.CheckBeforeDownload(version.Version, installedVersion);
                     if (refusal != null)
                     {

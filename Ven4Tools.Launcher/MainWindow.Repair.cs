@@ -86,6 +86,14 @@ namespace Ven4Tools.Launcher
                     ManifestSignatureUrl = installedRelease?.ManifestSignatureUrl,
                     FilesBaseUrl = installedRelease?.FilesBaseUrl,
                     FilesBaseMirrorHostingUrl = installedRelease?.FilesBaseMirrorHostingUrl,
+                    // Публикуется только текущая сборка — файлового манифеста у прежних
+                    // версий на сервере нет. Текущую версию передаём, чтобы проверка
+                    // сказала об этом прямо («обновите клиент»), а не «манифест не
+                    // опубликован». Самая новая из известных: из списка версий и из
+                    // подписанного манифеста CDN (он может отставать от GitHub и наоборот).
+                    CurrentPublishedVersion = ClientDowngradePolicy.Newest(
+                        _availableVersions.FirstOrDefault(v => v.IsLatest)?.Version,
+                        _cdnClientVersion),
                 };
 
                 string checkedClientPath = _clientPath;

@@ -6,9 +6,10 @@ namespace Ven4Tools.Launcher.Models
     /// <summary>
     /// Модель version.json с CDN: информация о версиях и ссылки на загрузку
     /// клиента и лаунчера. У ссылки установщика лаунчера есть GitHub-резерв
-    /// (<see cref="CdnLauncherInfo.SetupFallback"/>); GitHub-ссылка клиента
-    /// строится независимо (см. MainWindow.Versions.cs/UpdateBackgroundService),
-    /// поэтому у клиента поля zip_fallback в модели нет.
+    /// (<see cref="CdnLauncherInfo.SetupFallback"/>). GitHub-ссылка клиента обычно
+    /// берётся из самого релиза GitHub (см. MainWindow.Versions.cs), а
+    /// <see cref="CdnClientInfo.ZipFallback"/> нужен только там, где списка релизов
+    /// нет вовсе — см. ClientVersionMapper.BuildFromCdnManifest.
     /// </summary>
     public class CdnVersionInfo
     {
@@ -42,6 +43,13 @@ namespace Ven4Tools.Launcher.Models
 
         [JsonPropertyName("zip_url")]
         public string? ZipUrl { get; set; }
+
+        // Тот же архив в релизе на GitHub (github.com/.../releases/download/...).
+        // Раньше в модели отсутствовал: ссылку давал список релизов GitHub. Нужен,
+        // когда сам список получить не удалось (api.github.com недоступен или
+        // исчерпан лимит запросов), а скачивание с github.com при этом работает.
+        [JsonPropertyName("zip_fallback")]
+        public string? ZipFallback { get; set; }
 
         // Зеркало клиента на хостинге (независимый провайдер, только путь /releases/).
         [JsonPropertyName("zip_mirror_hosting")]
