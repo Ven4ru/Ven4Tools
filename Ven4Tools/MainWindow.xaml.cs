@@ -269,7 +269,7 @@ namespace Ven4Tools
         private void NavigateToSystem(object? sender, RoutedEventArgs? e)
         {
             SetActiveButton(btnSystemTab);
-            AppLogger.Write("📂 Открыта вкладка: Система");
+            AppLogger.Write("📂 Открыта вкладка: Настройки");
             if (_systemTab == null) _systemTab = new SystemTab();
             MainFrame.Content = (_systemTab);
             UpdateMascot("system");

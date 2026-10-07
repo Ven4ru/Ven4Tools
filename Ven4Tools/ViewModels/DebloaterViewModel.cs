@@ -177,7 +177,7 @@ namespace Ven4Tools.ViewModels
             var selected = _allItems.Where(i => i.IsSelected).ToList();
             if (selected.Count == 0)
             {
-                MessageBox.Show("Ничего не выбрано.", "Debloater",
+                MessageBox.Show("Ничего не выбрано.", "Очистка",
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
