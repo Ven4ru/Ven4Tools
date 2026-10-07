@@ -139,6 +139,98 @@ namespace Ven4Tools.ClientUITests
         }
 
         // ─────────────────────────────────────────────────────────────────────
+        // 2а. «Диагностика»: выбор режима Turbo Boost
+        // ─────────────────────────────────────────────────────────────────────
+
+        /// <summary>Закрывает окно «Успех» после смены режима и возвращает его текст.</summary>
+        private static string CloseTurboBoostMessage(AppSession s)
+        {
+            var box = Retry.WhileNull(
+                () => s.MainWindow.ModalWindows.FirstOrDefault(w => w.Title == "Успех" || w.Title == "Ошибка")
+                      ?? s.Automation.GetDesktop()
+                          .FindAllChildren(cf => cf.ByControlType(ControlType.Window))
+                          .FirstOrDefault(w => w.Name == "Успех" || w.Name == "Ошибка")
+                          ?.AsWindow(),
+                timeout: TimeSpan.FromSeconds(20), interval: TimeSpan.FromMilliseconds(250),
+                throwOnTimeout: false).Result;
+            if (box == null) return "";
+
+            string text = box.Title + ": " + string.Join(" | ",
+                box.FindAllDescendants(cf => cf.ByControlType(ControlType.Text)).Select(t => t.Name));
+            box.FindFirstDescendant(cf => cf.ByControlType(ControlType.Button))?.AsButton().Invoke();
+            System.Threading.Thread.Sleep(500);
+            return text;
+        }
+
+        private static string TurboBoostStatus(AppSession s) =>
+            s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("txtTurboBoostStatus"))?.Name ?? "";
+
+        private static string ApplyTurboBoostMode(AppSession s, ComboBox combo, string modeName)
+        {
+            var item = combo.Items.FirstOrDefault(i => (i.Text ?? "") == modeName || (i.Text ?? "").StartsWith(modeName + " —"));
+            Assert.IsNotNull(item, $"В списке режимов нет «{modeName}».");
+            item!.Select();
+            combo.Collapse();
+            System.Threading.Thread.Sleep(300);
+
+            var apply = s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("btnApplyTurboBoost"));
+            Assert.IsNotNull(apply, "Не найдена кнопка «Применить режим».");
+            apply!.AsButton().Invoke();
+            return CloseTurboBoostMessage(s);
+        }
+
+        [TestMethod]
+        public void Диагностика_TurboBoost_СменаРежимаПомечаетЕгоТекущим()
+        {
+            var s = Require();
+            NavigateTo(s, "btnDiagnosticsTab");
+
+            var comboElement = Retry.WhileNull(
+                () => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("cmbTurboBoostMode")),
+                timeout: TimeSpan.FromSeconds(15), interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
+            Assert.IsNotNull(comboElement, "Не найден список режимов Turbo Boost (cmbTurboBoostMode).");
+            var combo = comboElement!.AsComboBox();
+
+            // Режим читается у powercfg при открытии раздела — дожидаемся результата.
+            Retry.WhileTrue(() => TurboBoostStatus(s).Contains("определяется"),
+                timeout: TimeSpan.FromSeconds(20), interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false);
+            string statusBefore = TurboBoostStatus(s);
+            const string prefix = "Текущий режим: ";
+            if (!statusBefore.StartsWith(prefix) || statusBefore.Contains("не удалось"))
+                Assert.Inconclusive($"Режим Turbo Boost на этой машине не читается («{statusBefore}») — менять нечего.");
+
+            // На чистой Windows настройка скрыта: раньше до первого применения здесь было «неизвестно».
+            string original = statusBefore.Substring(prefix.Length).Split(" (")[0];
+            string currentLabel = combo.SelectedItem?.Text ?? "";
+            StringAssert.StartsWith(currentLabel, original, "В списке должен быть выбран текущий режим.");
+            StringAssert.Contains(currentLabel, "текущий", "Текущий режим в списке должен быть помечен.");
+
+            // Меняем между двумя соседними режимами: на современных процессорах они равнозначны,
+            // так что проверка не отнимает у машины производительность даже на время теста.
+            string target = original == "Включён" ? "Агрессивный" : "Включён";
+            try
+            {
+                string message = ApplyTurboBoostMode(s, combo, target);
+                StringAssert.Contains(message, "Успех", $"Смена режима не подтверждена окном «Успех»: «{message}».");
+
+                Assert.AreEqual(prefix + target, TurboBoostStatus(s).Split(" (")[0],
+                    "Строка состояния не показывает применённый режим.");
+                string newLabel = combo.SelectedItem?.Text ?? "";
+                StringAssert.StartsWith(newLabel, target, "После применения в списке должен быть выбран новый режим.");
+                StringAssert.Contains(newLabel, "текущий", "Пометка «текущий» должна перейти на применённый режим.");
+                Assert.IsFalse(combo.Items.Any(i => (i.Text ?? "").StartsWith(original) && (i.Text ?? "").Contains("текущий")),
+                    "Пометка «текущий» осталась на прежнем режиме.");
+            }
+            finally
+            {
+                // Возвращаем режим, с которым машина пришла в тест.
+                ApplyTurboBoostMode(s, combo, original);
+            }
+
+            Assert.AreEqual(prefix + original, TurboBoostStatus(s).Split(" (")[0], "Исходный режим не вернулся.");
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
         // 3. Блок неуспешных установок в каталоге
         // ─────────────────────────────────────────────────────────────────────
 

@@ -17,6 +17,10 @@ namespace Ven4Tools.ViewModels
         public required string Label { get; init; }
 
         public required string Description { get; init; }
+
+        // Имя строки списка для экранного диктора и средств автоматизации: без этого
+        // они читают имя класса, а не подпись режима.
+        public override string ToString() => Label;
     }
 
     public sealed partial class DiagnosticsViewModel
