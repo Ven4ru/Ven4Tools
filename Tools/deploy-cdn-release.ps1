@@ -276,11 +276,14 @@ if ($failed.Count -gt 0) {
 if ($ClientZip -and $previousVersion -and $previousVersion -ne $clientVersion -and $previousVersion -match '^\d+\.\d+\.\d+$') {
     $oldZip = "$RemoteReleases/Ven4Tools-Client-$previousVersion.zip"
     $oldFiles = "$RemoteClientFiles/$previousVersion"
-    ssh jump "rm -f '$oldZip' && rm -rf '$oldFiles'"
+    # Языковой пакет прежней сборки новой не подходит (программа принимает только пакет
+    # своей сборки) и на GitHub снимается вместе с архивом — здесь убирается так же.
+    $oldPack = "$RemoteReleases/lang/client-$previousVersion-en.json"
+    ssh jump "rm -f '$oldZip' '$oldPack' && rm -rf '$oldFiles'"
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Прежняя сборка клиента $previousVersion убрана с сервера."
     } else {
-        Write-Warning "Прежняя сборка клиента $previousVersion с сервера не убрана (ssh, код $LASTEXITCODE) — уберите вручную: $oldZip и $oldFiles"
+        Write-Warning "Прежняя сборка клиента $previousVersion с сервера не убрана (ssh, код $LASTEXITCODE) — уберите вручную: $oldZip, $oldPack и $oldFiles"
     }
 }
 
