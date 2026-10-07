@@ -6136,6 +6136,10 @@
     "t": "Saves and reapplies a set of settings on this machine: it remembers the selected Cleanup tweaks and local presets. This is not an undo — tweaks applied after the snapshot was created are not reverted. Independent of the Windows restore point."
   },
   {
+    "s": "Сохранение и повторное применение набора настроек на этой машине: запоминает отмеченные твики раздела «Очистка» и локальные пресеты. Это не отмена изменений — твики, применённые после создания снапшота, назад не возвращаются. Не зависит от точки восстановления Windows.",
+    "t": "Saves and reapplies a set of settings on this machine: it remembers the selected tweaks of the “Cleanup” section and local presets. This is not an undo — tweaks applied after the snapshot was created are not reverted. Independent of the Windows restore point."
+  },
+  {
     "s": "Сохранено. Установка без вопросов: Ven4Tools.exe --answer-file \"{0}\"",
     "t": "Saved. Install with no prompts: Ven4Tools.exe --answer-file \"{0}\""
   },
@@ -9658,6 +9662,10 @@
   {
     "s": "\uD83D\uDCC2 Открыта вкладка: Лицензия",
     "t": "\uD83D\uDCC2 Tab opened: License"
+  },
+  {
+    "s": "\uD83D\uDCC2 Открыта вкладка: Настройки",
+    "t": "\uD83D\uDCC2 Tab opened: Settings"
   },
   {
     "s": "\uD83D\uDCC2 Открыта вкладка: О программе",

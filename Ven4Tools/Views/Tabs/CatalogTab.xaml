@@ -39,7 +39,7 @@
                              Foreground="{DynamicResource TextPrimary}"
                              BorderBrush="{DynamicResource BorderBrush}"
                              VerticalContentAlignment="Center" Padding="5,0"
-                             Tag="Поиск по названию или категории"/>
+                             Tag="Поиск: название, описание или идентификатор пакета"/>
                     <Button x:Name="btnClearSearch" Grid.Column="1" Content="&#xE711;" ContentTemplate="{StaticResource IconGlyphTemplate}"
                             Width="28" Height="28" Margin="4,0,0,0"
                             ToolTip="Очистит строку поиска и снова покажет полный список текущей категории."
