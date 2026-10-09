@@ -1,5 +1,3 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using System.Runtime.InteropServices;
 
 namespace Ven4Tools.UITests;
@@ -13,9 +11,8 @@ namespace Ven4Tools.UITests;
 /// собственный контекст устройства независимо от z-порядка и перекрытий.
 /// </para>
 /// <para>
-/// System.Drawing.Common сознательно НЕ используется: её убрали из проекта
-/// из-за уязвимости в транзитивной зависимости. Пиксели читаются из DIB-секции
-/// напрямую и отдаются в ImageSharp.
+/// Сторонние библиотеки для картинок не используются: пиксели читаются из
+/// DIB-секции напрямую и складываются в <see cref="PixelFrame"/>.
 /// </para>
 /// </summary>
 internal static class WindowCapture
@@ -26,7 +23,7 @@ internal static class WindowCapture
     private const int BI_RGB = 0;
     private const uint DIB_RGB_COLORS = 0;
 
-    public static Image<Rgba32> Capture(IntPtr windowHandle)
+    public static PixelFrame Capture(IntPtr windowHandle)
     {
         if (!GetWindowRect(windowHandle, out RECT rect))
             throw new InvalidOperationException("Не удалось получить границы окна.");
@@ -47,7 +44,7 @@ internal static class WindowCapture
             {
                 biSize = Marshal.SizeOf<BITMAPINFOHEADER>(),
                 biWidth = width,
-                // Отрицательная высота — строки сверху вниз, как ожидает ImageSharp.
+                // Отрицательная высота — строки сверху вниз, как в PixelFrame.
                 biHeight = -height,
                 biPlanes = 1,
                 biBitCount = 32,
@@ -67,14 +64,13 @@ internal static class WindowCapture
             byte[] buffer = new byte[byteCount];
             Marshal.Copy(bits, buffer, 0, byteCount);
 
-            // GDI отдаёт BGRA, ImageSharp здесь ждёт RGBA — меняем местами каналы.
-            for (int i = 0; i < byteCount; i += 4)
+            // GDI отдаёт BGRA — тот же порядок, что в PixelFrame, каналы не трогаем.
+            for (int i = 3; i < byteCount; i += 4)
             {
-                (buffer[i], buffer[i + 2]) = (buffer[i + 2], buffer[i]);
-                buffer[i + 3] = 255; // альфа от GDI недостоверна, кадр непрозрачный
+                buffer[i] = 255; // альфа от GDI недостоверна, кадр непрозрачный
             }
 
-            return Image.LoadPixelData<Rgba32>(buffer, width, height);
+            return new PixelFrame(width, height, buffer);
         }
         finally
         {
