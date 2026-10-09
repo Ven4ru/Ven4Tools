@@ -19,6 +19,17 @@ public sealed class ChocoErrorMapperTests
     }
 
     [Fact]
+    public void MapExitCode_Код404_СообщаетОСбоеЗагрузкиАНеОбОтсутствииФайла()
+    {
+        // 404 у Chocolatey — общий код любого сбоя загрузки установщика, в том числе
+        // обрыва соединения. «Файл не найден» здесь было бы неверной подсказкой.
+        var message = ChocoErrorMapper.MapExitCode(404);
+        Assert.Contains("не смог скачать", message);
+        Assert.DoesNotContain("404", message);
+        Assert.DoesNotContain("не найден", message);
+    }
+
+    [Fact]
     public void MapExitCode_СинтетическийКодОтсутствияЗапуска_НеУтверждаетКонкретнуюПричину()
     {
         // -1 покрывает несколько разных причин (невалидный ID, choco не найден,

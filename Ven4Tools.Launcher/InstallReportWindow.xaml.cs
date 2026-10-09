@@ -25,7 +25,9 @@ namespace Ven4Tools.Launcher
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            txtTitle.Text = $"{_failures.Count} приложений не удалось установить";
+            // Число стоит после двоеточия, а не перед словом: «1 приложений» читалось
+            // с ошибкой, а так слово не нужно склонять ни по-русски, ни в переводе.
+            txtTitle.Text = $"Не удалось установить приложений: {_failures.Count}";
 
             foreach (var f in _failures)
             {
@@ -93,7 +95,7 @@ namespace Ven4Tools.Launcher
             txtStatus.Text    = "⏳ Отправка на GitHub...";
 
             var first   = _failures.First();
-            string title = $"[Install Failures] Ven4Tools {first.Version} — {_failures.Count} приложений";
+            string title = $"[Install Failures] Ven4Tools {first.Version} — не установлено приложений: {_failures.Count}";
             string body  = BuildBody();
 
             try

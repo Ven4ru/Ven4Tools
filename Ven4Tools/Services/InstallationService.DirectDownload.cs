@@ -13,12 +13,15 @@ namespace Ven4Tools.Services
     public partial class InstallationService
     {
         // ── Источник: прямая загрузка ──────────────────────────────────────────
-        private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromDirectDownloadAsync(
+        // Причина неудачи (FailureDetail) у прямой ссылки своя, без таблицы кодов:
+        // чаще всего источник не проваливается, а пропускается — в каталоге нет ссылки
+        // или SHA256, — и без этой строки в отчёте не видно, что его не пробовали.
+        private async Task<SourceAttempt> InstallFromDirectDownloadAsync(
             AppInfo app, string primaryId, AppInstallProgress appProgress,
             IProgress<AppInstallProgress> progress, string installDrive,
             string outcomeCheckId, InstalledBaseline baseline, CancellationToken token)
         {
-            if (!app.InstallerUrls.Any()) return null;
+            if (!app.InstallerUrls.Any()) return SourceAttempt.Failed("в каталоге нет ссылки");
 
             // Прямые ссылки без SHA256 в каталоге не выполняем:
             // скачанный установщик нечем верифицировать, запускать его небезопасно.
@@ -45,12 +48,14 @@ namespace Ven4Tools.Services
             {
                 Log($"⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, пробую следующий");
                 AppLogger.Write($"[InstallationService] ⚠ Прямая ссылка без SHA256 для {app.DisplayName} — источник пропущен, продолжаю через winget");
-                return null;
+                return SourceAttempt.Failed("пропущена, в каталоге нет SHA256");
             }
 
             // Несовпадение SHA256 у нескольких зеркал — одна запись
             // об ошибке после перебора всех ссылок, а не по одной на URL.
             int hashMismatchCount = 0;
+            // Причина неудачи последней из перебранных ссылок — для итога цепочки.
+            string? lastFailureDetail = null;
             foreach (var url in app.InstallerUrls)
             {
                 token.ThrowIfCancellationRequested();
@@ -58,6 +63,7 @@ namespace Ven4Tools.Services
                 if (!DownloadValidator.ValidateUrl(url))
                 {
                     AppLogger.Write($"[InstallationService] ⚠ Пропущен небезопасный URL (не HTTPS): {url}");
+                    lastFailureDetail = "пропущена, ссылка не HTTPS";
                     continue;
                 }
 
@@ -79,6 +85,8 @@ namespace Ven4Tools.Services
                 // Не голый %TEMP%: установщик запускается elevated, а соседняя DLL в каталоге
                 // запуска грузится им по порядку поиска — см. InstallerTempDirectory.
                 string tempFile = "";
+                // До этой отметки сбой — это сбой загрузки, после неё — проверки и запуска.
+                bool downloaded = false;
                 try
                 {
                     // Внутри try: сбой создания каталога — обычная неудача источника.
@@ -132,6 +140,7 @@ namespace Ven4Tools.Services
                         }
                     }
 
+                    downloaded = true;
                     double downloadedMb = Math.Round(totalRead / 1_048_576.0, 1);
                     AppLogger.Write($"📥 Загружен установщик — {downloadedMb} МБ: {Path.GetFileName(tempFile)}");
 
@@ -212,6 +221,7 @@ namespace Ven4Tools.Services
                         appProgress.IsIndeterminate = false;
                         progress.Report(appProgress);
                         hashMismatchCount++;
+                        lastFailureDetail = "SHA256 скачанного файла не совпал с каталогом";
                         continue;
                     }
                     // Удаляем и тогда, когда процесс не запустился (run == null): раньше
@@ -219,8 +229,12 @@ namespace Ven4Tools.Services
                     // установщик оставался лежать во временной папке.
                     try { File.Delete(tempFile); } catch { }
                     if (run is { Ok: true })
-                        return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
-                            true, run.Value.Reboot, "direct", token, url);
+                        return SourceAttempt.Finished(await ReportInstallOutcomeAsync(
+                            app, appProgress, progress, outcomeCheckId, baseline,
+                            true, run.Value.Reboot, "direct", token, url));
+                    lastFailureDetail = run == null
+                        ? "установщик не запустился"
+                        : $"установщик завершился с кодом {run.Value.ExitCode}";
                 }
                 // Отмена пользователем — пробрасываем; таймаут заголовков — пробуем следующий источник
                 catch (OperationCanceledException) when (token.IsCancellationRequested)
@@ -234,6 +248,9 @@ namespace Ven4Tools.Services
                 {
                     Log($"❌ Прямая ссылка {url}: {ex.Message}");
                     try { File.Delete(tempFile); } catch { }
+                    lastFailureDetail = downloaded
+                        ? "не удалось запустить установщик"
+                        : "не удалось скачать установщик";
                 }
             }
             if (hashMismatchCount > 0)
@@ -241,7 +258,7 @@ namespace Ven4Tools.Services
                     hashMismatchCount == 1
                         ? "SHA256 mismatch"
                         : $"SHA256 mismatch ({hashMismatchCount} зеркал)");
-            return null;
+            return SourceAttempt.Failed(lastFailureDetail);
         }
     }
 }

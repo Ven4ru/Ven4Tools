@@ -15,7 +15,7 @@ namespace Ven4Tools.Services
             IProgress<AppInstallProgress> progress, string installDrive, string? version,
             string outcomeCheckId, InstalledBaseline baseline, CancellationToken token)
         {
-            if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) return SourceAttempt.Failed(null);
+            if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) return SourceAttempt.Failed("в каталоге нет пакета");
             string? lastFailureDetail = null;
             foreach (var wsrc in wingetSources)
             {
