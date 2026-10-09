@@ -4,10 +4,6 @@ using FlaUI.Core.Capturing;
 using FlaUI.Core.Definitions;
 using FlaUI.Core.Tools;
 using FlaUI.UIA3;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Advanced;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -89,20 +85,13 @@ public sealed class LauncherSmokeTests : IDisposable
         FlaUI.Core.Input.Mouse.MoveTo(new System.Drawing.Point(bounds.Left + (bounds.Width / 2), bounds.Top + 12));
         Thread.Sleep(TimeSpan.FromMilliseconds(400));
 
-        using (Image<Rgba32> frame = WindowCapture.Capture(windowHandle))
-        {
-            frame.SaveAsPng(actual);
-        }
-        using (Image<Rgba32> captured = Image.Load<Rgba32>(actual))
-        {
-            const int frameMargin = 10;
-            captured.Mutate(operation => operation.Crop(new Rectangle(
-                frameMargin,
-                frameMargin,
-                captured.Width - (frameMargin * 2),
-                captured.Height - (frameMargin * 2))));
-            captured.Save(actual);
-        }
+        const int frameMargin = 10;
+        PixelFrame captured = WindowCapture.Capture(windowHandle);
+        captured.Crop(
+            frameMargin,
+            frameMargin,
+            captured.Width - (frameMargin * 2),
+            captured.Height - (frameMargin * 2)).SavePng(actual);
 
         if (Environment.GetEnvironmentVariable("UPDATE_SNAPSHOTS") == "1")
         {
@@ -111,11 +100,9 @@ public sealed class LauncherSmokeTests : IDisposable
 
         Assert.True(File.Exists(baseline),
             $"Эталон отсутствует. Запустите тест с UPDATE_SNAPSHOTS=1 и проверьте {actual}.");
-        using Image<Rgba32> expected = Image.Load<Rgba32>(baseline);
-        using Image<Rgba32> observed = Image.Load<Rgba32>(actual);
-        Assert.Equal(expected.Size, observed.Size);
-        Assert.True(expected.DangerousTryGetSinglePixelMemory(out Memory<Rgba32> expectedPixels));
-        Assert.True(observed.DangerousTryGetSinglePixelMemory(out Memory<Rgba32> observedPixels));
+        PixelFrame expected = PixelFrame.LoadPng(baseline);
+        PixelFrame observed = PixelFrame.LoadPng(actual);
+        Assert.Equal((expected.Width, expected.Height), (observed.Width, observed.Height));
 
         const int channelTolerance = 10;
         int compared = 0;
@@ -124,14 +111,13 @@ public sealed class LauncherSmokeTests : IDisposable
         {
             for (int x = 0; x < expected.Width; x++)
             {
-                int index = (y * expected.Width) + x;
-                Rgba32 expectedPixel = expectedPixels.Span[index];
-                Rgba32 observedPixel = observedPixels.Span[index];
+                // Четыре байта на пиксель: B, G, R, A — каждый канал сверяется отдельно.
+                int index = ((y * expected.Width) + x) * 4;
                 compared++;
-                if (Math.Abs(expectedPixel.R - observedPixel.R) > channelTolerance ||
-                    Math.Abs(expectedPixel.G - observedPixel.G) > channelTolerance ||
-                    Math.Abs(expectedPixel.B - observedPixel.B) > channelTolerance ||
-                    Math.Abs(expectedPixel.A - observedPixel.A) > channelTolerance)
+                if (Math.Abs(expected.Pixels[index] - observed.Pixels[index]) > channelTolerance ||
+                    Math.Abs(expected.Pixels[index + 1] - observed.Pixels[index + 1]) > channelTolerance ||
+                    Math.Abs(expected.Pixels[index + 2] - observed.Pixels[index + 2]) > channelTolerance ||
+                    Math.Abs(expected.Pixels[index + 3] - observed.Pixels[index + 3]) > channelTolerance)
                 {
                     changed++;
                 }

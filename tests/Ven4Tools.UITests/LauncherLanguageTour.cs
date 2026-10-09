@@ -2,8 +2,6 @@ using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Tools;
 using FlaUI.UIA3;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using System.Diagnostics;
 using Xunit;
 
@@ -94,7 +92,6 @@ public sealed class LauncherLanguageTour
     private static void Save(Window window, string path)
     {
         IntPtr handle = new(window.Properties.NativeWindowHandle.Value);
-        using Image<Rgba32> frame = WindowCapture.Capture(handle);
-        frame.SaveAsPng(path);
+        WindowCapture.Capture(handle).SavePng(path);
     }
 }
