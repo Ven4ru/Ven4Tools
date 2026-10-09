@@ -5,11 +5,6 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
-    ignore:
-      # v4+ требует платной лицензии Six Labors — проект использует бесплатную
-      # v3.x, апгрейд мажора невозможен без покупки лицензии.
-      - dependency-name: "SixLabors.ImageSharp"
-        update-types: ["version-update:semver-major"]
     groups:
       # TestAdapter и TestFramework должны бампиться одним PR — раздельные
       # версии двух пакетов из одного пакета MSTest не тестировались вместе
