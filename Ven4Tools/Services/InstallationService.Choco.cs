@@ -13,7 +13,7 @@ namespace Ven4Tools.Services
             Func<string, Task<bool>>? confirmPmInstall, string outcomeCheckId, InstalledBaseline baseline,
             CancellationToken token)
         {
-            if (string.IsNullOrWhiteSpace(app.ChocoId)) return SourceAttempt.Failed(null);
+            if (string.IsNullOrWhiteSpace(app.ChocoId)) return SourceAttempt.Failed("в каталоге нет пакета");
             // Как и Winget — единый чёрный ящик. RunChocoInstallAsync запускает choco
             // с --no-progress --limit-output и только логирует строки, без парсинга
             // процентов скачивания. Честный IsIndeterminate вместо выдуманной разбивки.
@@ -53,7 +53,7 @@ namespace Ven4Tools.Services
                 Log($"❌ Choco ({app.ChocoId}): {failureDetail}");
                 return SourceAttempt.Failed(failureDetail);
             }
-            return SourceAttempt.Failed(null);
+            return SourceAttempt.Failed("Chocolatey не установлен");
         }
     }
 }

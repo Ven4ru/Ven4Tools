@@ -420,6 +420,14 @@
     "t": "Chocolatey (optional)"
   },
   {
+    "s": "Chocolatey не смог скачать установщик — сервер загрузки недоступен или соединение оборвалось.",
+    "t": "Chocolatey could not download the installer — the download server is unavailable or the connection dropped."
+  },
+  {
+    "s": "Chocolatey не установлен",
+    "t": "Chocolatey is not installed"
+  },
+  {
     "s": "Chocolatey не установлен.\n\nЭто необязательный дополнительный источник установки приложений —\nклиент Ven4Tools полноценно работает и без него.\n\nУстановить Chocolatey сейчас?",
     "t": "Chocolatey is not installed.\n\nIt is an optional extra source for installing apps —\nthe Ven4Tools client works fully without it.\n\nInstall Chocolatey now?"
   },
@@ -510,6 +518,10 @@
   {
     "s": "SHA256 не совпадает — файл изменён с момента добавления",
     "t": "SHA256 mismatch — file changed since it was added"
+  },
+  {
+    "s": "SHA256 скачанного файла не совпал с каталогом",
+    "t": "SHA256 of the downloaded file did not match the catalog"
   },
   {
     "s": "SSH и Telnet клиент для подключения к серверам.",
@@ -882,6 +894,10 @@
   {
     "s": "[Install Failures] Ven4Tools {0} — {1} приложений",
     "t": "[Install Failures] Ven4Tools {0} — {1} apps"
+  },
+  {
+    "s": "[Install Failures] Ven4Tools {0} — не установлено приложений: {1}",
+    "t": "[Install Failures] Ven4Tools {0} — apps not installed: {1}"
   },
   {
     "s": "[InstallationService] ⚠ SilentArgs содержит недопустимые символы для {0} — использую /S",
@@ -3782,6 +3798,10 @@
   {
     "s": "Не удалось установить Office. Попробуйте ещё раз или установите вручную.",
     "t": "Could not install Office. Try again or install it manually."
+  },
+  {
+    "s": "Не удалось установить приложений: {0}",
+    "t": "Apps that failed to install: {0}"
   },
   {
     "s": "Не удалось установить: ",
@@ -7152,6 +7172,14 @@
     "t": "Yandex Music"
   },
   {
+    "s": "в каталоге нет пакета",
+    "t": "no package in the catalog"
+  },
+  {
+    "s": "в каталоге нет ссылки",
+    "t": "no link in the catalog"
+  },
+  {
     "s": "в папке клиента версия {0}, а сохранённый состав описывает {1}",
     "t": "version in the client folder is {0}, but the saved file list describes {1}"
   },
@@ -7190,6 +7218,10 @@
   {
     "s": "все источники исчерпаны",
     "t": "all sources exhausted"
+  },
+  {
+    "s": "все источники исчерпаны — Winget: {0} · Chocolatey: {1} · Прямая ссылка: {2}",
+    "t": "all sources exhausted — Winget: {0} · Chocolatey: {1} · Direct link: {2}"
   },
   {
     "s": "все источники исчерпаны — последняя причина: {0}",
@@ -7352,6 +7384,10 @@
     "t": "not detected"
   },
   {
+    "s": "не пробовался",
+    "t": "not tried"
+  },
+  {
     "s": "не прошёл проверку целостности",
     "t": "failed the integrity check"
   },
@@ -7360,12 +7396,20 @@
     "t": "nothing to compare against: {0}"
   },
   {
+    "s": "не сработал, подробности — в логе установки",
+    "t": "did not work, details are in the installation log"
+  },
+  {
     "s": "не удалось",
     "t": "failed"
   },
   {
     "s": "не удалось запустить {0}",
     "t": "failed to start {0}"
+  },
+  {
+    "s": "не удалось запустить установщик",
+    "t": "could not start the installer"
   },
   {
     "s": "не удалось прочитать сертификат: {0}",
@@ -7378,6 +7422,10 @@
   {
     "s": "не удалось скачать зависимость «{0}»: {1}.{2}",
     "t": "failed to download dependency “{0}”: {1}.{2}"
+  },
+  {
+    "s": "не удалось скачать установщик",
+    "t": "could not download the installer"
   },
   {
     "s": "не читается",
@@ -7564,6 +7612,14 @@
     "t": "the job has no apps"
   },
   {
+    "s": "пропущена, в каталоге нет SHA256",
+    "t": "skipped, no SHA256 in the catalog"
+  },
+  {
+    "s": "пропущена, ссылка не HTTPS",
+    "t": "skipped, the link is not HTTPS"
+  },
+  {
     "s": "прямая ссылка",
     "t": "direct link"
   },
@@ -7662,6 +7718,14 @@
   {
     "s": "установлено {0}, не удалось {1}, нет в каталоге {2}, недоступно {3}",
     "t": "installed {0}, failed {1}, not in the catalog {2}, unavailable {3}"
+  },
+  {
+    "s": "установщик завершился с кодом {0}",
+    "t": "the installer exited with code {0}"
+  },
+  {
+    "s": "установщик не запустился",
+    "t": "the installer did not start"
   },
   {
     "s": "файл {0} не совпадает с сохранённым составом установки",
