@@ -14,7 +14,7 @@ body:
     attributes:
       label: Версия
       description: Версия клиента и/или лаунчера (см. вкладку «О программе»)
-      placeholder: "клиент 3.5.1, лаунчер 2.1.0"
+      placeholder: "клиент 6.2.0, лаунчер 3.10.1"
     validations:
       required: true
 
