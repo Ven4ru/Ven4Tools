@@ -5476,10 +5476,6 @@
     "t": "Checking DNS..."
   },
   {
-    "s": "Проверка WebView2...",
-    "t": "Checking WebView2..."
-  },
-  {
     "s": "Проверка winget...",
     "t": "Checking winget..."
   },
