@@ -114,12 +114,67 @@ namespace Ven4Tools.Services
             out UnattendedRequest? request, out string error)
         {
             request = null;
-            error = "";
 
-            string? install = null, answerFile = null, drive = null, report = null, offlineCache = null;
-            bool silent = false, updateApps = false;
-            bool? restorePoint = null;
-            bool sawAny = false;
+            if (!TryReadArguments(args, out Arguments line, out error)) return ParseStatus.Error;
+
+            // --silent, --drive и прочие сами по себе ничего не значат: без набора
+            // устанавливать нечего, и это обычный запуск клиента.
+            if (!line.SawAny) return ParseStatus.None;
+
+            AnswerFile? file = null;
+            if (line.AnswerFile != null && !TryReadAnswerFile(line.AnswerFile, readFile, out file, out error))
+                return ParseStatus.Error;
+
+            if (!TryCollectAppIds(line.Install, file, out List<string> ids, out error)) return ParseStatus.Error;
+            if (line.UpdateApps && ids.Count > 0)
+            {
+                error = "--update-apps и набор для установки задаются разными запусками.";
+                return ParseStatus.Error;
+            }
+            if (!TryResolveAnswerFilePaths(file, line.AnswerFile, out AnswerFilePaths paths, out error))
+                return ParseStatus.Error;
+            bool hasRestore = paths.Drivers != null || paths.Wifi != null;
+
+            if (!line.UpdateApps && ids.Count == 0 && !hasRestore)
+            {
+                error = "В задании нет ни одного приложения.";
+                return ParseStatus.Error;
+            }
+            if (line.UpdateApps && hasRestore)
+            {
+                error = "--update-apps и возврат драйверов задаются разными запусками.";
+                return ParseStatus.Error;
+            }
+
+            string? resolvedDrive = line.Drive ?? file?.Drive;
+            if (resolvedDrive != null && !TryNormalizeDrive(resolvedDrive, out resolvedDrive))
+            {
+                error = "Диск установки задаётся буквой, например D:.";
+                return ParseStatus.Error;
+            }
+
+            request = new UnattendedRequest
+            {
+                AppIds = ids,
+                UpdateApps = line.UpdateApps,
+                Silent = line.Silent || file?.Silent == true,
+                RestorePoint = line.RestorePoint ?? file?.RestorePoint,
+                InstallDrive = resolvedDrive,
+                AllowPackageManagers = file?.AllowPackageManagers ?? true,
+                SilentFromCommandLine = line.Silent,
+                ReportPath = line.Report ?? paths.Report,
+                OfflineCachePath = line.OfflineCache ?? paths.OfflineCache,
+                RestoreDriversPath = paths.Drivers,
+                RestoreWifiPath = paths.Wifi
+            };
+            return ParseStatus.Ok;
+        }
+
+        /// <summary>Шаг 1: параметры командной строки как они заданы, без проверки смысла.</summary>
+        private static bool TryReadArguments(IReadOnlyList<string> args, out Arguments line, out string error)
+        {
+            line = new Arguments();
+            error = "";
 
             for (int i = 0; i < args.Count; i++)
             {
@@ -134,106 +189,120 @@ namespace Ven4Tools.Services
                 switch (arg.ToLowerInvariant())
                 {
                     case "--install":
-                        sawAny = true;
-                        install = Value();
-                        if (install == null) { error = "После --install нужен код набора (V4T:…) или список идентификаторов через запятую."; return ParseStatus.Error; }
+                        line.SawAny = true;
+                        line.Install = Value();
+                        if (line.Install == null) { error = "После --install нужен код набора (V4T:…) или список идентификаторов через запятую."; return false; }
                         break;
                     case "--answer-file":
-                        sawAny = true;
-                        answerFile = Value();
-                        if (answerFile == null) { error = "После --answer-file нужен путь к файлу ответа."; return ParseStatus.Error; }
+                        line.SawAny = true;
+                        line.AnswerFile = Value();
+                        if (line.AnswerFile == null) { error = "После --answer-file нужен путь к файлу ответа."; return false; }
                         break;
                     case "--drive":
-                        drive = Value();
-                        if (drive == null) { error = "После --drive нужна буква диска, например D:."; return ParseStatus.Error; }
+                        line.Drive = Value();
+                        if (line.Drive == null) { error = "После --drive нужна буква диска, например D:."; return false; }
                         break;
                     case "--report":
-                        report = Value();
-                        if (report == null) { error = "После --report нужен путь к файлу итога."; return ParseStatus.Error; }
+                        line.Report = Value();
+                        if (line.Report == null) { error = "После --report нужен путь к файлу итога."; return false; }
                         break;
                     case "--offline-cache":
-                        offlineCache = Value();
-                        if (offlineCache == null) { error = "После --offline-cache нужна папка офлайн-набора."; return ParseStatus.Error; }
+                        line.OfflineCache = Value();
+                        if (line.OfflineCache == null) { error = "После --offline-cache нужна папка офлайн-набора."; return false; }
                         break;
                     case "--update-apps":
-                        sawAny = true;
-                        updateApps = true;
+                        line.SawAny = true;
+                        line.UpdateApps = true;
                         break;
                     case "--silent":
-                        silent = true;
+                        line.Silent = true;
                         break;
                     case "--restore-point":
-                        restorePoint = true;
+                        line.RestorePoint = true;
                         break;
                     case "--no-restore-point":
-                        restorePoint = false;
+                        line.RestorePoint = false;
                         break;
                 }
             }
 
-            // --silent, --drive и прочие сами по себе ничего не значат: без набора
-            // устанавливать нечего, и это обычный запуск клиента.
-            if (!sawAny) return ParseStatus.None;
+            return true;
+        }
 
-            AnswerFile? file = null;
-            if (answerFile != null)
+        /// <summary>Шаг 2: файл ответа — чтение с ограничением размера и разбор JSON.</summary>
+        private static bool TryReadAnswerFile(
+            string answerFile, Func<string, string> readFile, out AnswerFile? file, out string error)
+        {
+            file = null;
+            error = "";
+            try
             {
-                try
+                // Размер проверяется до чтения: огромный файл не должен целиком
+                // попадать в память ради отказа.
+                if (System.IO.File.Exists(answerFile)
+                    && new System.IO.FileInfo(answerFile).Length > MaxAnswerFileLength * 4L)
                 {
-                    // Размер проверяется до чтения: огромный файл не должен целиком
-                    // попадать в память ради отказа.
-                    if (System.IO.File.Exists(answerFile)
-                        && new System.IO.FileInfo(answerFile).Length > MaxAnswerFileLength * 4L)
-                    {
-                        error = "Файл ответа слишком велик.";
-                        return ParseStatus.Error;
-                    }
-                    string json = readFile(answerFile);
-                    if (json.Length > MaxAnswerFileLength)
-                    {
-                        error = "Файл ответа слишком велик.";
-                        return ParseStatus.Error;
-                    }
-                    file = JsonSerializer.Deserialize<AnswerFile>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true,
-                        ReadCommentHandling = JsonCommentHandling.Skip,
-                        AllowTrailingCommas = true
-                    });
+                    error = "Файл ответа слишком велик.";
+                    return false;
                 }
-                catch (Exception ex)
+                string json = readFile(answerFile);
+                if (json.Length > MaxAnswerFileLength)
                 {
-                    error = $"Не удалось прочитать файл ответа: {ex.Message}";
-                    return ParseStatus.Error;
+                    error = "Файл ответа слишком велик.";
+                    return false;
                 }
-                if (file == null)
+                file = JsonSerializer.Deserialize<AnswerFile>(json, new JsonSerializerOptions
                 {
-                    error = "Файл ответа пуст.";
-                    return ParseStatus.Error;
-                }
+                    PropertyNameCaseInsensitive = true,
+                    ReadCommentHandling = JsonCommentHandling.Skip,
+                    AllowTrailingCommas = true
+                });
             }
+            catch (Exception ex)
+            {
+                error = $"Не удалось прочитать файл ответа: {ex.Message}";
+                return false;
+            }
+            if (file == null)
+            {
+                error = "Файл ответа пуст.";
+                return false;
+            }
+            return true;
+        }
 
-            var ids = new List<string>();
-            if (!TryAddIds(ids, install, out error)) return ParseStatus.Error;
+        /// <summary>
+        /// Шаг 3: идентификаторы приложений — сначала из командной строки, затем код и
+        /// список из файла ответа; повторы убираются.
+        /// </summary>
+        private static bool TryCollectAppIds(string? install, AnswerFile? file, out List<string> ids, out string error)
+        {
+            ids = new List<string>();
+            if (!TryAddIds(ids, install, out error)) return false;
             if (file != null)
             {
-                if (!TryAddIds(ids, file.Code, out error)) return ParseStatus.Error;
-                if (file.Apps != null && !TryAddIds(ids, string.Join(",", file.Apps), out error)) return ParseStatus.Error;
+                if (!TryAddIds(ids, file.Code, out error)) return false;
+                if (file.Apps != null && !TryAddIds(ids, string.Join(",", file.Apps), out error)) return false;
             }
 
             ids = ids.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            if (updateApps && ids.Count > 0)
-            {
-                error = "--update-apps и набор для установки задаются разными запусками.";
-                return ParseStatus.Error;
-            }
+            return true;
+        }
+
+        /// <summary>Шаг 4: пути из файла ответа — только внутри его собственной папки.</summary>
+        private static bool TryResolveAnswerFilePaths(
+            AnswerFile? file, string? answerFile, out AnswerFilePaths paths, out string error)
+        {
+            paths = default;
+            error = "";
+
             // Драйверы и Wi-Fi берутся только из папки самого файла ответа: файл может
             // прийти откуда угодно, а установка драйверов идёт с правами администратора.
             if (!TryResolveInsideAnswerFolder(file?.Drivers, answerFile, out string? driversPath)
                 || !TryResolveInsideAnswerFolder(file?.Wifi, answerFile, out string? wifiPath))
             {
                 error = "Папки драйверов и Wi-Fi в файле ответа задаются относительно самого файла и не могут выходить за его папку.";
-                return ParseStatus.Error;
+                return false;
             }
             // То же для отчёта и офлайн-кэша ИЗ ФАЙЛА: отчёт пишется с правами
             // администратора, а несошедшийся по хешу установщик из кэша удаляется.
@@ -242,43 +311,11 @@ namespace Ven4Tools.Services
                 || !TryResolveBesideAnswerFile(file?.OfflineCache, answerFile, out string? fileOfflineCache))
             {
                 error = "Отчёт и офлайн-кэш в файле ответа задаются относительно самого файла и не могут выходить за его папку.";
-                return ParseStatus.Error;
-            }
-            bool hasRestore = driversPath != null || wifiPath != null;
-
-            if (!updateApps && ids.Count == 0 && !hasRestore)
-            {
-                error = "В задании нет ни одного приложения.";
-                return ParseStatus.Error;
-            }
-            if (updateApps && hasRestore)
-            {
-                error = "--update-apps и возврат драйверов задаются разными запусками.";
-                return ParseStatus.Error;
+                return false;
             }
 
-            string? resolvedDrive = drive ?? file?.Drive;
-            if (resolvedDrive != null && !TryNormalizeDrive(resolvedDrive, out resolvedDrive))
-            {
-                error = "Диск установки задаётся буквой, например D:.";
-                return ParseStatus.Error;
-            }
-
-            request = new UnattendedRequest
-            {
-                AppIds = ids,
-                UpdateApps = updateApps,
-                Silent = silent || file?.Silent == true,
-                RestorePoint = restorePoint ?? file?.RestorePoint,
-                InstallDrive = resolvedDrive,
-                AllowPackageManagers = file?.AllowPackageManagers ?? true,
-                SilentFromCommandLine = silent,
-                ReportPath = report ?? fileReport,
-                OfflineCachePath = offlineCache ?? fileOfflineCache,
-                RestoreDriversPath = driversPath,
-                RestoreWifiPath = wifiPath
-            };
-            return ParseStatus.Ok;
+            paths = new AnswerFilePaths(driversPath, wifiPath, fileReport, fileOfflineCache);
+            return true;
         }
 
         /// <summary>
@@ -359,6 +396,24 @@ namespace Ven4Tools.Services
             drive = char.ToUpperInvariant(text[0]) + ":";
             return true;
         }
+
+        /// <summary>Параметры командной строки как они заданы.</summary>
+        private sealed class Arguments
+        {
+            public string? Install { get; set; }
+            public string? AnswerFile { get; set; }
+            public string? Drive { get; set; }
+            public string? Report { get; set; }
+            public string? OfflineCache { get; set; }
+            public bool Silent { get; set; }
+            public bool UpdateApps { get; set; }
+            public bool? RestorePoint { get; set; }
+            /// <summary>Назван хотя бы один параметр, с которого начинается задание.</summary>
+            public bool SawAny { get; set; }
+        }
+
+        /// <summary>Пути из файла ответа, приведённые к полным; null — не задан.</summary>
+        private readonly record struct AnswerFilePaths(string? Drivers, string? Wifi, string? Report, string? OfflineCache);
 
         private sealed class AnswerFile
         {
