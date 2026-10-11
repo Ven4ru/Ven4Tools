@@ -231,14 +231,5 @@ namespace Ven4Tools.ClientUITests
                 System.Threading.Thread.Sleep(500);
             }
         }
-
-        [TestMethod]
-        public void НативныеДиалогиФайлов_ИзвестноеОграничение()
-        {
-            // btnBrowseCachePath / btnExportSettings / btnImportSettings — то же
-            // ограничение FlaUI с COM IFileDialog, что и в Фазе 1 (CatalogTab
-            // экспорт/импорт списка). Не тратим время на повторное расследование.
-            Assert.Inconclusive("Нативные Save/OpenFileDialog не автоматизируются через FlaUI — известное ограничение (см. Фазу 1).");
-        }
     }
 }
