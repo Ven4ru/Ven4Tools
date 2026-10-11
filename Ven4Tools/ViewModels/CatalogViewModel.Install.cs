@@ -86,24 +86,11 @@ namespace Ven4Tools.ViewModels
             OverallProgressPercentage = 0;
             IsInstalling = true;
 
-            // Точка восстановления: задание может ответить заранее. Без ответа тихий
-            // режим её не создаёт (спросить некого), обычный — спрашивает, как всегда.
-            if (unattended?.RestorePoint == true)
+            // Шаг 1: точка восстановления. Отказ на вопросе — установка не начинается.
+            if (!await PrepareRestorePointAsync(unattended, silent, selected.Count))
             {
-                Log("🛡️ Создаю точку восстановления...");
-                bool created = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед установкой");
-                Log(created ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (установка продолжается)");
-            }
-            else if (unattended?.RestorePoint == null && !silent && selected.Count >= 2)
-            {
-                var rpOutcome = await Views.UiGuards.ConfirmAndCreateRestorePointAsync(
-                    $"Будет установлено {selected.Count} приложений.\n\nСоздать точку восстановления Windows перед установкой?",
-                    "Ven4Tools — перед установкой", Log);
-                if (rpOutcome == Views.RestorePointOutcome.Cancelled)
-                {
-                    IsInstalling = false;
-                    return null;
-                }
+                IsInstalling = false;
+                return null;
             }
 
             // Состав пачки — в очередь на случай перезагрузки: если клиент не дойдёт до
@@ -112,10 +99,121 @@ namespace Ven4Tools.ViewModels
 
             _installCts = new CancellationTokenSource();
             var token = _installCts.Token;
-            int completed = 0, failed = 0;
             InstallStatusText = $"⏳ Установка 0/{selected.Count}...";
 
-            var progress = new Progress<AppInstallProgress>(p =>
+            // Шаг 2: приём хода установки от каждой программы.
+            var progress = CreateBatchProgress();
+
+            var pmConsentCache = new Dictionary<string, bool>();
+            using var pmConsentLock = new SemaphoreSlim(1, 1);
+            async Task<bool> ConfirmPmInstall(string pmName)
+            {
+                await pmConsentLock.WaitAsync();
+                try
+                {
+                    if (pmConsentCache.TryGetValue(pmName, out bool cached)) return cached;
+                    bool consented = silent
+                        ? unattended!.AllowPackageManagers
+                        : await Views.UiGuards.ConfirmPackageManagerInstallAsync(pmName);
+                    pmConsentCache[pmName] = consented;
+                    return consented;
+                }
+                finally { pmConsentLock.Release(); }
+            }
+
+            // Момент старта пачки — граница, по которой из общего журнала сбоев
+            // отбираются записи именно этой установки, а не прошлых сеансов.
+            var batchStartedUtc = DateTime.UtcNow;
+            var tally = new InstallBatchTally();
+            bool cancelled = false;
+
+            // Шаг 3: сами установки.
+            // Одна задача на весь набор, программы — строго по очереди. Раньше на каждую
+            // программу заводилась своя задача, и порядок определяло то, какая из них
+            // первой дождётся общей блокировки установки: он менялся от запуска к запуску.
+            // Блокировка по-прежнему берётся на каждую программу отдельно, чтобы между
+            // программами набора могли пройти другие установки (повтор, Windows Update).
+            var batch = Task.Run(async () =>
+            {
+              foreach (var row in selected)
+              {
+                await InstallBatchRowAsync(row, selected.Count, tally, progress, ConfirmPmInstall, token);
+              }
+            }, token);
+
+            try
+            {
+                await batch;
+                // Шаг 4: итог.
+                ReportBatchFinished(tally);
+
+                await UpdateInstalledStatusAsync();
+            }
+            catch (OperationCanceledException) { InstallStatusText = "⏹️ Установка отменена"; cancelled = true; }
+            finally
+            {
+                IsInstalling = false;
+                _installCts?.Dispose();
+                _installCts = null;
+                // Пачка дошла до конца — пусть и с ошибками или отменой: неудачи видны в
+                // блоке «Не установлено» с повтором, а очередь нужна только на случай,
+                // когда до этого места клиент не добрался.
+                PendingInstallQueue.Default.Clear();
+                // И после обычного завершения, и после отмены: то, что не встало,
+                // пользователь должен увидеть здесь же, а не только в логе.
+                PublishFailedInstalls(tally.FailedRows, batchStartedUtc);
+                _ = UpdateSpaceStatusAsync();
+            }
+
+            return new InstallBatchResult(tally.InstalledRows, tally.FailedRows, cancelled, tally.RebootRows);
+        }
+
+        /// <summary>Счётчики и списки одной пачки установок: заполняются по ходу, читаются в конце.</summary>
+        private sealed class InstallBatchTally
+        {
+            public int Completed;
+            public int Failed;
+            public List<(AppRowViewModel Row, string Message)> FailedRows { get; } = new();
+            public List<AppRowViewModel> InstalledRows { get; } = new();
+            public List<AppRowViewModel> RebootRows { get; } = new();
+            /// <summary>Замок на три списка: их дополняет задача установки.</summary>
+            public object RowsLock { get; } = new();
+        }
+
+        /// <summary>
+        /// Точка восстановления перед установкой: по ответу из задания либо по вопросу.
+        /// </summary>
+        /// <returns>false — на вопросе выбрана отмена, установку начинать нельзя.</returns>
+        private async Task<bool> PrepareRestorePointAsync(UnattendedRequest? unattended, bool silent, int appCount)
+        {
+            // Точка восстановления: задание может ответить заранее. Без ответа тихий
+            // режим её не создаёт (спросить некого), обычный — спрашивает, как всегда.
+            if (unattended?.RestorePoint == true)
+            {
+                Log("🛡️ Создаю точку восстановления...");
+                bool created = await SystemRestoreService.CreateRestorePointAsync("Ven4Tools — перед установкой");
+                Log(created ? "✅ Точка восстановления создана" : "⚠️ Точка восстановления не создана (установка продолжается)");
+            }
+            else if (unattended?.RestorePoint == null && !silent && appCount >= 2)
+            {
+                var rpOutcome = await Views.UiGuards.ConfirmAndCreateRestorePointAsync(
+                    $"Будет установлено {appCount} приложений.\n\nСоздать точку восстановления Windows перед установкой?",
+                    "Ven4Tools — перед установкой", Log);
+                if (rpOutcome == Views.RestorePointOutcome.Cancelled)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Приёмник хода установки: обновляет строку программы в списке «Прогресс установки»
+        /// и общую полоску. Создаётся в потоке интерфейса — туда же приходят и сообщения.
+        /// </summary>
+        private Progress<AppInstallProgress> CreateBatchProgress() =>
+            new Progress<AppInstallProgress>(p =>
             {
                 var existing = InstallProgress.FirstOrDefault(x => x.AppId == p.AppId);
                 if (existing != null)
@@ -150,118 +248,67 @@ namespace Ven4Tools.ViewModels
                     : InstallProgress.Average(x => x.EffectiveProgress);
             });
 
-            var pmConsentCache = new Dictionary<string, bool>();
-            using var pmConsentLock = new SemaphoreSlim(1, 1);
-            async Task<bool> ConfirmPmInstall(string pmName)
-            {
-                await pmConsentLock.WaitAsync();
-                try
-                {
-                    if (pmConsentCache.TryGetValue(pmName, out bool cached)) return cached;
-                    bool consented = silent
-                        ? unattended!.AllowPackageManagers
-                        : await Views.UiGuards.ConfirmPackageManagerInstallAsync(pmName);
-                    pmConsentCache[pmName] = consented;
-                    return consented;
-                }
-                finally { pmConsentLock.Release(); }
-            }
-
-            // Момент старта пачки — граница, по которой из общего журнала сбоев
-            // отбираются записи именно этой установки, а не прошлых сеансов.
-            var batchStartedUtc = DateTime.UtcNow;
-            var failedRows = new List<(AppRowViewModel Row, string Message)>();
-            var installedRows = new List<AppRowViewModel>();
-            var rebootRows = new List<AppRowViewModel>();
-            var failedRowsLock = new object();
-            bool cancelled = false;
-
-            // Одна задача на весь набор, программы — строго по очереди. Раньше на каждую
-            // программу заводилась своя задача, и порядок определяло то, какая из них
-            // первой дождётся общей блокировки установки: он менялся от запуска к запуску.
-            // Блокировка по-прежнему берётся на каждую программу отдельно, чтобы между
-            // программами набора могли пройти другие установки (повтор, Windows Update).
-            var batch = Task.Run(async () =>
-            {
-              foreach (var row in selected)
-              {
-                // Отмена во время ожидания и между программами — это отмена, а не
-                // штатное завершение: иначе итог сообщал бы об успехе без неначатых программ.
-                await InstallationService.InstallSemaphore.WaitAsync(token);
-                try
-                {
-                    token.ThrowIfCancellationRequested();
-                    var result = await _installService!.InstallAppAsync(
-                        row.App, _wingetSources, token, progress, SelectedInstallDrive, row.PinnedVersion, ConfirmPmInstall);
-                    if (result.Success)
-                    {
-                        completed++;
-                        lock (failedRowsLock)
-                        {
-                            installedRows.Add(row);
-                            if (result.Progress.RebootRequired) rebootRows.Add(row);
-                        }
-                        PendingInstallQueue.Default.MarkDone(row.AppId);
-                        if (row.PinnedVersion != null && row.VersionOptions.Count > 1)
-                            _versionTracker.TrackInstall(row.AppId, row.PinnedVersion, row.VersionOptions[1]);
-                        row.JustInstalled = true;
-                    }
-                    else
-                    {
-                        failed++;
-                        lock (failedRowsLock) failedRows.Add((row, result.Message));
-                    }
-                    InstallStatusText = $"⏳ Установка: {completed + failed}/{selected.Count} (✅ {completed} | ❌ {failed})";
-                }
-                finally { InstallationService.InstallSemaphore.Release(); }
-              }
-            }, token);
-
+        /// <summary>Установка одной программы пачки под общей блокировкой установки.</summary>
+        private async Task InstallBatchRowAsync(
+            AppRowViewModel row, int total, InstallBatchTally tally, IProgress<AppInstallProgress> progress,
+            Func<string, Task<bool>> confirmPmInstall, CancellationToken token)
+        {
+            // Отмена во время ожидания и между программами — это отмена, а не
+            // штатное завершение: иначе итог сообщал бы об успехе без неначатых программ.
+            await InstallationService.InstallSemaphore.WaitAsync(token);
             try
             {
-                await batch;
-                // При ошибках сразу указываем, где смотреть причину и как повторить —
-                // иначе итог «ошибок: N» остаётся числом без объяснения.
-                InstallStatusText = failed > 0
-                    ? $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed} — причины в блоке «Не установлено»"
-                    : $"✅ Установка завершена. Успешно: {completed}, ошибок: {failed}";
-                // Одна просьба о перезагрузке на весь набор — в конце, а не посреди установки.
-                if (rebootRows.Count > 0)
-                    InstallStatusText += $". Нужна перезагрузка: {string.Join(", ", rebootRows.Select(r => r.DisplayName))}";
-                Log(InstallStatusText);
-
-                // Чекбокс "Показывать уведомления о завершении установки" на «Настройках»
-                // раньше сохранялся, но ничего не включал — уведомления не существовало.
-                // Тост идёт через тот же механизм, что и уведомления об обновлениях
-                // (трей-балун либо запись в лог как fallback без трея).
-                if (completed > 0 && ProfileService.Current.NotifyInstallComplete)
+                token.ThrowIfCancellationRequested();
+                var result = await _installService!.InstallAppAsync(
+                    row.App, _wingetSources, token, progress, SelectedInstallDrive, row.PinnedVersion, confirmPmInstall);
+                if (result.Success)
                 {
-                    UpdateBackgroundService.ShowNotification(
-                        "Установка завершена",
-                        failed > 0
-                            ? $"Успешно установлено: {completed}, не удалось: {failed}."
-                            : $"Успешно установлено: {completed}.");
+                    tally.Completed++;
+                    lock (tally.RowsLock)
+                    {
+                        tally.InstalledRows.Add(row);
+                        if (result.Progress.RebootRequired) tally.RebootRows.Add(row);
+                    }
+                    PendingInstallQueue.Default.MarkDone(row.AppId);
+                    if (row.PinnedVersion != null && row.VersionOptions.Count > 1)
+                        _versionTracker.TrackInstall(row.AppId, row.PinnedVersion, row.VersionOptions[1]);
+                    row.JustInstalled = true;
                 }
-
-                await UpdateInstalledStatusAsync();
+                else
+                {
+                    tally.Failed++;
+                    lock (tally.RowsLock) tally.FailedRows.Add((row, result.Message));
+                }
+                InstallStatusText = $"⏳ Установка: {tally.Completed + tally.Failed}/{total} (✅ {tally.Completed} | ❌ {tally.Failed})";
             }
-            catch (OperationCanceledException) { InstallStatusText = "⏹️ Установка отменена"; cancelled = true; }
-            finally
+            finally { InstallationService.InstallSemaphore.Release(); }
+        }
+
+        /// <summary>Итог пачки: строка состояния, запись в журнал и уведомление.</summary>
+        private void ReportBatchFinished(InstallBatchTally tally)
+        {
+            // При ошибках сразу указываем, где смотреть причину и как повторить —
+            // иначе итог «ошибок: N» остаётся числом без объяснения.
+            InstallStatusText = tally.Failed > 0
+                ? $"✅ Установка завершена. Успешно: {tally.Completed}, ошибок: {tally.Failed} — причины в блоке «Не установлено»"
+                : $"✅ Установка завершена. Успешно: {tally.Completed}, ошибок: {tally.Failed}";
+            // Одна просьба о перезагрузке на весь набор — в конце, а не посреди установки.
+            if (tally.RebootRows.Count > 0)
+                InstallStatusText += $". Нужна перезагрузка: {string.Join(", ", tally.RebootRows.Select(r => r.DisplayName))}";
+            Log(InstallStatusText);
+
+            // Чекбокс "Показывать уведомления о завершении установки" на «Настройках»
+            // раньше сохранялся, но ничего не включал — уведомления не существовало.
+            // Тост идёт через тот же механизм, что и уведомления об обновлениях
+            // (трей-балун либо запись в лог как fallback без трея).
+            if (tally.Completed > 0 && ProfileService.Current.NotifyInstallComplete)
             {
-                IsInstalling = false;
-                _installCts?.Dispose();
-                _installCts = null;
-                // Пачка дошла до конца — пусть и с ошибками или отменой: неудачи видны в
-                // блоке «Не установлено» с повтором, а очередь нужна только на случай,
-                // когда до этого места клиент не добрался.
-                PendingInstallQueue.Default.Clear();
-                // И после обычного завершения, и после отмены: то, что не встало,
-                // пользователь должен увидеть здесь же, а не только в логе.
-                PublishFailedInstalls(failedRows, batchStartedUtc);
-                _ = UpdateSpaceStatusAsync();
+                UpdateBackgroundService.ShowNotification(
+                    "Установка завершена",
+                    tally.Failed > 0
+                        ? $"Успешно установлено: {tally.Completed}, не удалось: {tally.Failed}."
+                        : $"Успешно установлено: {tally.Completed}.");
             }
-
-            return new InstallBatchResult(installedRows, failedRows, cancelled, rebootRows);
         }
 
         // ── Неуспешные установки: список причин и повтор ────────────────────────
