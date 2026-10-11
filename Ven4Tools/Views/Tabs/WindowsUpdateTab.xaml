@@ -4,7 +4,6 @@
              xmlns:wu="clr-namespace:Ven4Tools.Services.WindowsUpdate"
              Background="{DynamicResource ContentBackground}">
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <HierarchicalDataTemplate DataType="{x:Type wu:WindowsUpdateCategoryNode}" ItemsSource="{Binding Items}">
             <CheckBox Content="{Binding HeaderText}"
                       IsThreeState="True"

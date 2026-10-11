@@ -3,19 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Ven4Tools.ViewModels"
              xmlns:views="clr-namespace:Ven4Tools.Views"
-             xmlns:local="clr-namespace:Ven4Tools.Views.Tabs"
              Background="{DynamicResource ContentBackground}">
     <!-- Каталог нового интерфейса: карточки вместо строк и панель «Ваш набор» справа.
          Данные и команды — те же, что у прежнего вида (CatalogTab.xaml): оба привязаны к
          одному CatalogViewModel, который отдаёт им CatalogTab. Имена элементов для
          автоматизации совпадают с прежними намеренно — в дереве всегда только один вид. -->
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <local:InverseBoolToVisibility x:Key="InverseBoolToVis"/>
+        <!-- Объявлен здесь, а не в App.xaml вместе с остальными конвертерами: у него есть
+             состояние — словарь заголовков категорий, который вид передаёт ему при создании. -->
         <vm:CategoryNameToHeaderConverter x:Key="CategoryHeaderConverter"/>
-        <vm:StringToVisibilityConverter x:Key="StringToVis"/>
-        <vm:InstallPhaseToBrushConverter x:Key="PhaseToBrush"/>
-        <vm:InstallOutcomeToBrushConverter x:Key="OutcomeToBrush"/>
 
         <Style x:Key="SidePanel" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
