@@ -18,7 +18,7 @@ namespace Ven4Tools.ViewModels
 
         // ── Доступность сервисов ─────────────────────────────────────────────
 
-        // Оригинальный XAML давал строкам сервисов пустой Text (txtSvcMs1..5 Text=""),
+        // Разметка до перехода на MVVM давала строкам сервисов пустой Text,
         // в отличие от строк пинга с "—" — сохраняем это различие.
         public NetworkCheckResult Svc1 { get; } = new(initialText: "");
         public NetworkCheckResult Svc2 { get; } = new(initialText: "");

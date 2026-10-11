@@ -188,8 +188,8 @@
                                                             <!-- DataContext контейнера — CollectionViewGroup; Name — ключ
                                                                  группировки (AppRowViewModel.CategoryString). Конвертер
                                                                  превращает его в готовую CategoryHeaderViewModel — так же,
-                                                                 как раньше ApplyCategorySourceHeaders строил заголовок
-                                                                 Expander'а императивно в CatalogTab.Catalog.cs. -->
+                                                                 как до перехода на MVVM заголовок Expander'а императивно
+                                                                 строил code-behind вкладки (ApplyCategorySourceHeaders). -->
                                                             <Expander x:Name="expCategory" IsExpanded="True"
                                                                       Margin="0" Background="Transparent" BorderThickness="0"
                                                                       Header="{Binding Name, Converter={StaticResource CategoryHeaderConverter}}">

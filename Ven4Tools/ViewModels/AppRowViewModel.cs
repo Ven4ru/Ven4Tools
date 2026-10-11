@@ -9,7 +9,7 @@ using Ven4Tools.Services;
 
 namespace Ven4Tools.ViewModels
 {
-    // Модель строки каталога. До перехода на MVVM (2026-07-13) CatalogTab.AppList.cs
+    // Модель строки каталога. До перехода на MVVM (2026-07-13) code-behind вкладки
     // строил StackPanel на каждое приложение императивно в коде — здесь то же самое
     // поведение выражено как биндящиеся свойства, а CatalogTab.xaml (DataTemplate)
     // сам решает, как их отрисовать. Это разделение позволяет добавлять новые
@@ -82,7 +82,7 @@ namespace Ven4Tools.ViewModels
         // Из каталога (Models.App.Profile) — "basic"/"extended"/"full", для фильтра
         // ApplyProfileFilters. У пользовательских приложений всегда "full" (видимы
         // в любом режиме — так же вело себя вычисление profileOk=true при appId==null
-        // в исходном CatalogTab.Search.cs).
+        // в прежнем code-behind вкладки, до перехода на MVVM).
         public string Profile { get; set; } = "full";
 
         private bool _matchesProfile = true;
@@ -356,8 +356,8 @@ namespace Ven4Tools.ViewModels
             return brush;
         }
 
-        // Тот же набор цветов, что в CatalogTab.Availability.cs/Install.cs — сведено
-        // в одно вычисляемое свойство вместо императивной установки Foreground
+        // Тот же набор цветов, что был в code-behind вкладки до перехода на MVVM, —
+        // сведено в одно вычисляемое свойство вместо императивной установки Foreground
         // в десятке разных мест.
         //
         // Цвета берутся из темы, а не из зашитых констант: пастельные LightGreen/
@@ -440,7 +440,7 @@ namespace Ven4Tools.ViewModels
 
         // Размер загрузки (МБ) доступного приложения — заполняется проверкой
         // доступности (CheckAppAvailabilityWithSize) и подставляется в StatusTooltip,
-        // как раньше делал CatalogTab.Availability.cs. 0 → «размер неизвестен».
+        // как раньше делал code-behind вкладки. 0 → «размер неизвестен».
         private long _availableSizeMB;
         public long AvailableSizeMB
         {

@@ -150,8 +150,8 @@ namespace Ven4Tools.ViewModels
                     finally { sem.Release(); }
                 }));
             var results = await Task.WhenAll(tasks);
-            // Соответствует оригинальному AddLog($"✅ Версии загружены для {loaded}
-            // приложений") из удалённого при MVVM-переносе CatalogTab.Availability.cs —
+            // Соответствует AddLog($"✅ Версии загружены для {loaded} приложений") из
+            // code-behind вкладки, удалённого при переносе на MVVM, — строка
             // потерялась при рефакторинге, её ждёт AuditFixesUiTests (первичная загрузка
             // каталога считается завершённой только по этой строке).
             Log($"✅ Версии загружены для {results.Count(ok => ok)} приложений");

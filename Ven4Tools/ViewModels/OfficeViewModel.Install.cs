@@ -59,8 +59,8 @@ namespace Ven4Tools.ViewModels
 
                 // FileShare.Read держим открытым от проверки подписи до запуска
                 // установщика — запрещает подмену файла другим процессом того же
-                // пользователя в этом окне (TOCTOU), как в MainWindow.Components.cs
-                // (InstallWebView2Async/InstallVcRedistAsync лаунчера). Хендл
+                // пользователя в этом окне (TOCTOU), как в лаунчере
+                // (MainWindow.Components.MicrosoftInstallers.cs, DownloadVerifyAndRunElevatedAsync). Хендл
                 // закрывается явно (не using var на весь блок), чтобы не держать
                 // файл заблокированным для удаления в ветке отказа проверки ниже.
                 installerHandle = new FileStream(installerPath, FileMode.Open, FileAccess.Read, FileShare.Read);

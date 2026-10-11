@@ -16,9 +16,9 @@ namespace Ven4Tools.ViewModels
     {
         private string _text;
         private string _iconText = "⬜";
-        // Оригинальные txtPingIcon*/txtSvc* не задавали Foreground в XAML явно —
-        // цвет наследовался от глобального Style TargetType="TextBlock" (App.xaml:60),
-        // который ставит DynamicResource TextPrimary. Явный биндинг на IconBrush
+        // До перехода на MVVM значки строк пинга и сервисов не задавали Foreground
+        // в XAML явно — цвет наследовался от глобального Style TargetType="TextBlock"
+        // (App.xaml), который ставит DynamicResource TextPrimary. Явный биндинг на IconBrush
         // заменяет этот неявный канал, поэтому дефолт берётся из того же ресурса
         // с фолбэком на замороженный (frozen, потокобезопасный) Brushes.White.
         //
@@ -30,9 +30,9 @@ namespace Ven4Tools.ViewModels
         private Brush _iconBrushFallback = Brushes.White;
 
         /// <summary>
-        /// Начальный текст строки. Оригинальный XAML задавал разные дефолты:
-        /// <c>txtPing1..4 Text="—"</c>, но <c>txtSvcMs1..5 Text=""</c> (пусто),
-        /// поэтому дефолт параметризован.
+        /// Начальный текст строки. Разметка до перехода на MVVM задавала разные
+        /// значения: строкам пинга — «—», строкам сервисов — пустую строку,
+        /// поэтому значение по умолчанию параметризовано.
         /// </summary>
         public NetworkCheckResult(string initialText = "—")
         {

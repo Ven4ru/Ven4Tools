@@ -353,8 +353,8 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        // Соответствует GetOriginalExpanderHeader (удалённый CatalogTab.UI.cs, до
-        // перехода на MVVM) — эмодзи в заголовке категории потерялись при переносе
+        // Соответствует GetOriginalExpanderHeader из code-behind вкладки, удалённого
+        // при переходе на MVVM, — эмодзи в заголовке категории потерялись при переносе
         // на голый CategoryString.
         private static string GetCategoryHeaderText(AppCategory cat) => cat switch
         {
