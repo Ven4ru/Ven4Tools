@@ -5,9 +5,16 @@
              xmlns:vm="clr-namespace:Ven4Tools.ViewModels"
              Background="{DynamicResource ContentBackground}">
     <UserControl.Resources>
-        <!-- Объявлен здесь, а не в App.xaml вместе с остальными конвертерами: у него есть
-             состояние — словарь заголовков категорий, который вид передаёт ему при создании. -->
-        <vm:CategoryNameToHeaderConverter x:Key="CategoryHeaderConverter"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Шаблоны и стили, общие для обоих видов каталога. -->
+                <ResourceDictionary Source="CatalogShared.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Объявлен здесь, а не в App.xaml вместе с остальными конвертерами: у него есть
+                 состояние — словарь заголовков категорий, который вид передаёт ему при создании. -->
+            <vm:CategoryNameToHeaderConverter x:Key="CategoryHeaderConverter"/>
+        </ResourceDictionary>
     </UserControl.Resources>
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -103,27 +110,7 @@
                         <TextBlock Text="🔍 Не нашли в каталоге? Поиск по источникам:"
                                    Foreground="{DynamicResource AccentColor}"
                                    FontSize="11" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                        <views:FlatItemsControl ItemsSource="{Binding Suggestions}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:SearchSuggestionViewModel}">
-                                    <Button HorizontalAlignment="Left" Margin="0,1" Height="26" Padding="6,0"
-                                            Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                            FontSize="12" ToolTip="{Binding SourceLabel}"
-                                            AutomationProperties.Name="{Binding Name}"
-                                            AutomationProperties.HelpText="{Binding SourceLabel}"
-                                            Command="{Binding AddCommand}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding SourceLabel}" Foreground="{DynamicResource TextSecondary}"
-                                                       FontSize="10" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="➕  " Foreground="{DynamicResource AccentColor}" VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding Hint, StringFormat='  {0}'}" Foreground="{DynamicResource TextSecondary}"
-                                                       FontSize="10" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </views:FlatItemsControl>
+                        <views:FlatItemsControl ItemsSource="{Binding Suggestions}" ItemTemplate="{StaticResource SearchSuggestionTemplate}"/>
                         <TextBlock x:Name="txtWingetStatus" Text="{Binding SuggestionsStatus}"
                                    Foreground="{DynamicResource TextSecondary}" FontSize="11"
                                    Visibility="{Binding SuggestionsStatus, Converter={StaticResource StringToVis}}"/>
@@ -256,18 +243,7 @@
 
                                         <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
                                                    ToolTip="{Binding StatusTooltip}" VerticalAlignment="Center"
-                                                   Margin="4,0,0,0" Cursor="Hand">
-                                            <!-- Подчёркивание при наведении подсказывает, что имя кликабельно
-                                                 (открывает карточку). Кликабельная область и логика не меняются. -->
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Style.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="TextDecorations" Value="Underline"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
+                                                   Margin="4,0,0,0" Cursor="Hand" Style="{StaticResource HoverUnderlineTextStyle}">
                                             <TextBlock.InputBindings>
                                                 <MouseBinding MouseAction="LeftClick"
                                                               Command="{Binding DataContext.OpenCardCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -488,6 +464,7 @@
                              Background="{DynamicResource CardBackground}"
                              Foreground="{DynamicResource TextPrimary}"
                              BorderThickness="0"
+                             ItemTemplate="{StaticResource InstallProgressRowTemplate}"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem">
@@ -495,33 +472,6 @@
                                 <Setter Property="Padding" Value="4,3"/>
                             </Style>
                         </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Text="{Binding AppName}"
-                                               FontSize="11" Foreground="{DynamicResource TextPrimary}"
-                                               TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding Status}" Grid.Column="1"
-                                               FontSize="10"
-                                               Foreground="{Binding Outcome, Converter={StaticResource OutcomeToBrush}}"
-                                               Margin="6,0,0,0"/>
-                                    <ProgressBar Grid.Row="1" Grid.ColumnSpan="2"
-                                                 Height="4" Margin="0,3,0,0"
-                                                 Value="{Binding Percentage, Mode=OneWay}"
-                                                 IsIndeterminate="{Binding IsIndeterminate}"
-                                                 Background="{DynamicResource BorderBrush}"
-                                                 Foreground="{Binding Phase, Converter={StaticResource PhaseToBrush}}"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
                     </ListBox>
                 </GroupBox>
 
