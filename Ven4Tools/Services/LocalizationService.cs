@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
-using System.Windows;
 using Ven4Tools.Helpers;
 using Ven4Tools.Localization;
 
@@ -24,15 +22,6 @@ namespace Ven4Tools.Services
 
         /// <summary>Язык, который выбран (пользователем, установщиком или по языку Windows).</summary>
         public static string Wanted { get; private set; } = AppLanguage.Russian;
-
-        // Единственные реально существующие словари (Resources/Lang/*.xaml).
-        // ProfileService.Current.Language читается из profile.json — файла,
-        // который целиком заменяется при импорте настроек (ProfileExportService.Import).
-        // Без allowlist невалидное значение ("auto" не пройдёт нормально, либо
-        // произвольная строка из повреждённого/специально подделанного архива
-        // экспорта) уронило бы приложение уже на старте — pack-URI на
-        // несуществующий ресурс кидает исключение при добавлении в MergedDictionaries.
-        private static readonly HashSet<string> SupportedLanguages = new(StringComparer.OrdinalIgnoreCase) { "ru", "en" };
 
         private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
         private static Task<LanguagePack?>? _download;
@@ -105,47 +94,18 @@ namespace Ven4Tools.Services
             return Wanted != Current;
         }
 
-        /// <summary>Подключает словарь окна выбора профиля на показанном языке.</summary>
-        public static void Init()
+        /// <summary>
+        /// Выбор языка общий с лаунчером: если его сменили там, список в настройках
+        /// клиента должен показывать то же самое.
+        /// </summary>
+        public static void SyncSavedChoice()
         {
-            // Выбор языка общий с лаунчером: если его сменили там, список в настройках
-            // клиента должен показывать то же самое.
             string? saved = AppLanguage.SavedChoice();
             if (AppLanguage.IsSupported(saved)
                 && !string.Equals(ProfileService.Current.Language, saved, StringComparison.OrdinalIgnoreCase))
             {
                 ProfileService.Current.Language = saved!.ToLowerInvariant();
                 ProfileService.Save();
-            }
-            Apply(Current);
-        }
-
-        public static void Apply(string lang)
-        {
-            if (string.IsNullOrWhiteSpace(lang) || !SupportedLanguages.Contains(lang))
-                lang = "ru";
-
-            var toRemove = new List<ResourceDictionary>();
-            foreach (ResourceDictionary d in Application.Current.Resources.MergedDictionaries)
-            {
-                if (d.Source?.OriginalString.Contains("/Resources/Lang/") == true)
-                    toRemove.Add(d);
-            }
-            foreach (var d in toRemove)
-                Application.Current.Resources.MergedDictionaries.Remove(d);
-
-            try
-            {
-                Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary
-                {
-                    Source = new Uri($"pack://application:,,,/Resources/Lang/{lang}.xaml")
-                });
-            }
-            catch (Exception ex)
-            {
-                // Не должно происходить при валидном lang из allowlist выше — но
-                // не даём этому уронить старт приложения, если всё же произойдёт.
-                AppLogger.Write($"[LocalizationService] Не удалось загрузить словарь '{lang}': {ex.Message}");
             }
         }
     }

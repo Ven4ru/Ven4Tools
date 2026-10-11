@@ -912,10 +912,6 @@
     "t": "[InstalledTab] Preloading the installed apps list failed"
   },
   {
-    "s": "[LocalizationService] Не удалось загрузить словарь '{0}': {1}",
-    "t": "[LocalizationService] Could not load dictionary '{0}': {1}"
-  },
-  {
     "s": "[NotificationService] {0}: недоступен ({1}).",
     "t": "[NotificationService] {0}: unavailable ({1})."
   },
@@ -1865,7 +1861,7 @@
   },
   {
     "s": "Браузеры, офис, мультимедиа и системные утилиты — всё необходимое для быстрого ввода ПК в работу",
-    "t": "Browsers, office, multimedia, and system utilities — everything needed to get a PC up and running fast"
+    "t": "Browsers, office, multimedia and system utilities — everything needed to get your PC running fast"
   },
   {
     "s": "Будет запущена массовая установка всех пакетов из файла:\n\n{0}\n\nПродолжить?",
@@ -1921,7 +1917,7 @@
   },
   {
     "s": "Быстрый старт Windows",
-    "t": "Quick start for Windows"
+    "t": "Quick Windows Setup"
   },
   {
     "s": "Быстрый — 1 проход, около минуты",
@@ -2073,7 +2069,7 @@
   },
   {
     "s": "Весь каталог",
-    "t": "Entire catalog"
+    "t": "Full catalog"
   },
   {
     "s": "Видеоконференции, вебинары и командная работа.",
@@ -2193,7 +2189,7 @@
   },
   {
     "s": "Все доступные приложения без исключений, включая игровые сервисы и пакеты драйверов",
-    "t": "All available apps without exception, including game services and driver packs"
+    "t": "All available apps without exception, including gaming services and driver packages"
   },
   {
     "s": "Все источники",
@@ -2221,7 +2217,7 @@
   },
   {
     "s": "Всё базовое плюс инструменты разработки, редакторы, графика и мессенджеры",
-    "t": "Everything in Basic plus development tools, editors, graphics, and messengers"
+    "t": "Everything basic plus development tools, editors, graphics apps and messengers"
   },
   {
     "s": "Всё-в-одном: заметки, задачи, базы данных и вики.",
@@ -2273,7 +2269,7 @@
   },
   {
     "s": "Выберите режим отображения каталога приложений",
-    "t": "Choose the app catalog display mode"
+    "t": "Choose the catalog display mode"
   },
   {
     "s": "Выберите хотя бы одну программу!",

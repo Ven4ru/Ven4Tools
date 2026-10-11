@@ -111,7 +111,7 @@ namespace Ven4Tools
                     try { await LocalizationService.EnsurePackAsync(TimeSpan.FromSeconds(6)); }
                     catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось получить языковой пакет"); }
                 }
-                try { LocalizationService.Init(); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось инициализировать локализацию"); }
+                try { LocalizationService.SyncSavedChoice(); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось инициализировать локализацию"); }
                 try { ThemeService.Apply(ProfileService.Current.Theme); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось применить тему"); }
                 try { _heartbeat = new HeartbeatService(); } catch { }
                 // Регион Windows, подменённый вкладкой «Office» на время загрузки

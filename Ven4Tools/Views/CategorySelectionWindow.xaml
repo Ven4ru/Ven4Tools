@@ -15,11 +15,11 @@
 
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
-            <TextBlock Text="{DynamicResource cat_window_title}"
+            <TextBlock Text="Добро пожаловать в Ven4Tools!"
                        FontSize="22" FontWeight="Bold"
                        Foreground="{DynamicResource TextPrimary}"
                        HorizontalAlignment="Center"/>
-            <TextBlock Text="{DynamicResource cat_window_subtitle}"
+            <TextBlock Text="Выберите режим отображения каталога приложений"
                        FontSize="13" Margin="0,6,0,0"
                        Foreground="{DynamicResource TextSecondary}"
                        HorizontalAlignment="Center"/>
@@ -42,17 +42,17 @@
                     CornerRadius="10" Cursor="Hand"
                     MouseDown="Card_MouseDown" Tag="basic">
                 <StackPanel Margin="16,20,16,20">
-                    <TextBlock Text="{DynamicResource cat_basic_icon}"
+                    <TextBlock Text="🚀"
                                FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                    <TextBlock Text="{DynamicResource cat_basic_title}"
+                    <TextBlock Text="Базовый"
                                FontSize="16" FontWeight="Bold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="{DynamicResource cat_basic_sub}"
+                    <TextBlock Text="Быстрый старт Windows"
                                FontSize="11" Margin="0,4,0,12"
                                Foreground="{DynamicResource AccentColor}"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="{DynamicResource cat_basic_desc}"
+                    <TextBlock Text="Браузеры, офис, мультимедиа и системные утилиты — всё необходимое для быстрого ввода ПК в работу"
                                FontSize="11" TextWrapping="Wrap" TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondary}"/>
                     <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
@@ -70,17 +70,17 @@
                     CornerRadius="10" Cursor="Hand"
                     MouseDown="Card_MouseDown" Tag="extended">
                 <StackPanel Margin="16,20,16,20">
-                    <TextBlock Text="{DynamicResource cat_ext_icon}"
+                    <TextBlock Text="⚙️"
                                FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                    <TextBlock Text="{DynamicResource cat_ext_title}"
+                    <TextBlock Text="Расширенный"
                                FontSize="16" FontWeight="Bold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="{DynamicResource cat_ext_sub}"
+                    <TextBlock Text="Для энтузиастов"
                                FontSize="11" Margin="0,4,0,12"
                                Foreground="{DynamicResource AccentColor}"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="{DynamicResource cat_ext_desc}"
+                    <TextBlock Text="Всё базовое плюс инструменты разработки, редакторы, графика и мессенджеры"
                                FontSize="11" TextWrapping="Wrap" TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondary}"/>
                     <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
@@ -98,17 +98,17 @@
                     CornerRadius="10" Cursor="Hand"
                     MouseDown="Card_MouseDown" Tag="full">
                 <StackPanel Margin="16,20,16,20">
-                    <TextBlock Text="{DynamicResource cat_full_icon}"
+                    <TextBlock Text="💎"
                                FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                    <TextBlock Text="{DynamicResource cat_full_title}"
+                    <TextBlock Text="Полный"
                                FontSize="16" FontWeight="Bold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="{DynamicResource cat_full_sub}"
+                    <TextBlock Text="Весь каталог"
                                FontSize="11" Margin="0,4,0,12"
                                Foreground="{DynamicResource AccentColor}"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="{DynamicResource cat_full_desc}"
+                    <TextBlock Text="Все доступные приложения без исключений, включая игровые сервисы и пакеты драйверов"
                                FontSize="11" TextWrapping="Wrap" TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondary}"/>
                     <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
@@ -122,7 +122,7 @@
 
         <!-- Footer -->
         <Button x:Name="btnContinue" Grid.Row="2"
-                Content="{DynamicResource cat_continue}"
+                Content="Продолжить"
                 ToolTip="Сохранит выбранные категории и откроет основной интерфейс клиента."
                 Height="42" Width="200" Margin="0,20,0,0"
                 HorizontalAlignment="Center"
