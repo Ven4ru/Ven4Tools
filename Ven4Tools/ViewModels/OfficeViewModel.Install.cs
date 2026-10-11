@@ -55,29 +55,10 @@ namespace Ven4Tools.ViewModels
             await InstallationService.InstallSemaphore.WaitAsync();
             try
             {
-                SetPhase("🔐 Проверка подлинности установщика...");
+                // Шаг 1: подпись установщика. Не подтверждена — дальше не идём.
+                if (!TryOpenVerifiedInstaller(installerPath, ref installerHandle)) return;
 
-                // FileShare.Read держим открытым от проверки подписи до запуска
-                // установщика — запрещает подмену файла другим процессом того же
-                // пользователя в этом окне (TOCTOU), как в лаунчере
-                // (MainWindow.Components.MicrosoftInstallers.cs, DownloadVerifyAndRunElevatedAsync). Хендл
-                // закрывается явно (не using var на весь блок), чтобы не держать
-                // файл заблокированным для удаления в ветке отказа проверки ниже.
-                installerHandle = new FileStream(installerPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-                if (!AuthenticodeVerifier.IsSignedByMicrosoft(installerPath, out string signatureError))
-                {
-                    installerHandle.Dispose();
-                    AppLogger.Write("❌ Не удалось подтвердить подлинность установщика Microsoft — скачайте заново");
-                    AppLogger.Write($"   Причина: {signatureError}");
-                    TryDeleteDownloadedInstaller();
-                    SetProgress(true, "❌ Подлинность не подтверждена", 0, "Скачайте установщик заново.");
-                    MessageBox.Show("Не удалось подтвердить подлинность установщика Microsoft — скачайте заново.",
-                        "Проверка установщика", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-                AppLogger.Write("✅ Подпись установщика Microsoft подтверждена");
-
+                // Шаг 2: регион Windows на время загрузки установщиком.
                 SaveRegion();
                 regionChanged = true; // до SetRegionUS — чтобы finally откатил даже при исключении внутри
                 SetRegionUS();
@@ -86,69 +67,17 @@ namespace Ven4Tools.ViewModels
                 SetPhase("🚀 Запуск установщика...");
                 var existingPids = GetC2RProcessPids();
 
-                // Последняя точка, где отмена ещё безопасна: если пользователь нажал
-                // «Отмена» на этапе проверки подписи — прерываемся ДО запуска установщика
-                // (регион восстановит finally). После Process.Start отмена уже недоступна.
-                token.ThrowIfCancellationRequested();
-
-                using var bootstrapper = System.Diagnostics.Process.Start(
-                    new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName        = installerPath,
-                        UseShellExecute = true,
-                        Verb            = "runas"
-                    });
-                // ShellExecuteEx уже открыл/запустил файл к моменту возврата
-                // из Process.Start — хендл-защита от подмены больше не нужна.
-                installerHandle.Dispose();
-
-                if (bootstrapper != null)
-                {
-                    // M3: elevated-процесс установщика уже запущен — реальную установку
-                    // отменить нельзя (регион будет восстановлен только после её завершения).
-                    // Прячем «Отмена», чтобы UI не обещал невозможного.
-                    // `?.` — см. комментарий у SetProgress в OfficeViewModel.cs
-                    Application.Current?.Dispatcher.Invoke(() =>
-                    {
-                        CancelEnabled = false;
-                        CancelVisible = false;
-                    });
-                    SetPhase("⚙️ Установка Office запущена — отменить нельзя, дождитесь завершения");
-
-                    await bootstrapper.WaitForExitAsync(token);
-                    if (bootstrapper.ExitCode != 0)
-                    {
-                        AppLogger.Write($"❌ Установщик завершился с кодом {bootstrapper.ExitCode}");
-                        AppLogger.Write("   Вероятная причина: серверы загрузки Microsoft недоступны из вашей сети.");
-                        AppLogger.Write("   Повторите установку позже или из другой сети.");
-                        SetProgress(true, $"❌ Сбой установки (код {bootstrapper.ExitCode})", 0,
-                            "Серверы загрузки Microsoft могут быть недоступны. Повторите позже или из другой сети.");
-                        return;
-                    }
-                }
+                // Шаг 3: запуск установщика с повышением прав. Ненулевой код — сбой, выходим.
+                if (!await RunBootstrapperAsync(installerPath, installerHandle!, token)) return;
 
                 token.ThrowIfCancellationRequested();
 
-                SetPhase("⚙️ Установка Office... не закрывайте приложение");
-                AppLogger.Write("⏳ Ожидаем запуск C2R-установщика...");
-
-                using var installProc = await WaitForC2RProcess(existingPids, TimeSpan.FromMinutes(3), token);
-
-                if (installProc == null)
-                {
-                    AppLogger.Write("⚠️ Процесс установки не обнаружен — возможно Office уже установлен или завершился мгновенно");
-                }
-                else
-                {
-                    AppLogger.Write($"🔍 Мониторинг: {installProc.ProcessName} (PID {installProc.Id})");
-                    SetProgress(true, "⚙️ Установка Office...", 0, "Идёт установка, пожалуйста подождите...");
-                    ProgressIndeterminate = true;
-                    await MonitorInstallation(installProc, token);
-                    ProgressIndeterminate = false;
-                }
+                // Шаг 4: ожидание и наблюдение за самой установкой Office.
+                await MonitorOfficeSetupAsync(existingPids, token);
 
                 token.ThrowIfCancellationRequested();
 
+                // Шаг 5: итог.
                 RestoreRegion();
                 regionChanged = false;
                 AppLogger.Write("✅ Установка завершена — регион восстановлен");
@@ -198,6 +127,116 @@ namespace Ven4Tools.ViewModels
                     CancelEnabled = false;
                     HasDownloadedInstaller = _downloadedFilePath != null && File.Exists(_downloadedFilePath);
                 });
+            }
+        }
+
+        /// <summary>
+        /// Открывает установщик на чтение и проверяет подпись Microsoft. false — подпись
+        /// не подтверждена: файл удалён, пользователю показано сообщение.
+        /// </summary>
+        /// <param name="installerHandle">
+        /// Хендл записывается в переменную вызывающего сразу после открытия: её finally
+        /// закроет файл, даже если проверка подписи бросит исключение.
+        /// </param>
+        private bool TryOpenVerifiedInstaller(string installerPath, ref FileStream? installerHandle)
+        {
+            SetPhase("🔐 Проверка подлинности установщика...");
+
+            // FileShare.Read держим открытым от проверки подписи до запуска
+            // установщика — запрещает подмену файла другим процессом того же
+            // пользователя в этом окне (TOCTOU), как в лаунчере
+            // (MainWindow.Components.MicrosoftInstallers.cs, DownloadVerifyAndRunElevatedAsync). Хендл
+            // закрывается явно (не using var на весь блок), чтобы не держать
+            // файл заблокированным для удаления в ветке отказа проверки ниже.
+            installerHandle = new FileStream(installerPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            if (!AuthenticodeVerifier.IsSignedByMicrosoft(installerPath, out string signatureError))
+            {
+                installerHandle.Dispose();
+                AppLogger.Write("❌ Не удалось подтвердить подлинность установщика Microsoft — скачайте заново");
+                AppLogger.Write($"   Причина: {signatureError}");
+                TryDeleteDownloadedInstaller();
+                SetProgress(true, "❌ Подлинность не подтверждена", 0, "Скачайте установщик заново.");
+                MessageBox.Show("Не удалось подтвердить подлинность установщика Microsoft — скачайте заново.",
+                    "Проверка установщика", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+            AppLogger.Write("✅ Подпись установщика Microsoft подтверждена");
+            return true;
+        }
+
+        /// <summary>
+        /// Запускает установщик с повышением прав и ждёт его завершения. false — установщик
+        /// завершился с ненулевым кодом (причина уже записана и показана).
+        /// </summary>
+        private async Task<bool> RunBootstrapperAsync(string installerPath, FileStream installerHandle, CancellationToken token)
+        {
+            // Последняя точка, где отмена ещё безопасна: если пользователь нажал
+            // «Отмена» на этапе проверки подписи — прерываемся ДО запуска установщика
+            // (регион восстановит finally). После Process.Start отмена уже недоступна.
+            token.ThrowIfCancellationRequested();
+
+            using var bootstrapper = System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName        = installerPath,
+                    UseShellExecute = true,
+                    Verb            = "runas"
+                });
+            // ShellExecuteEx уже открыл/запустил файл к моменту возврата
+            // из Process.Start — хендл-защита от подмены больше не нужна.
+            installerHandle.Dispose();
+
+            if (bootstrapper != null)
+            {
+                // M3: elevated-процесс установщика уже запущен — реальную установку
+                // отменить нельзя (регион будет восстановлен только после её завершения).
+                // Прячем «Отмена», чтобы UI не обещал невозможного.
+                // `?.` — см. комментарий у SetProgress в OfficeViewModel.cs
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    CancelEnabled = false;
+                    CancelVisible = false;
+                });
+                SetPhase("⚙️ Установка Office запущена — отменить нельзя, дождитесь завершения");
+
+                await bootstrapper.WaitForExitAsync(token);
+                if (bootstrapper.ExitCode != 0)
+                {
+                    AppLogger.Write($"❌ Установщик завершился с кодом {bootstrapper.ExitCode}");
+                    AppLogger.Write("   Вероятная причина: серверы загрузки Microsoft недоступны из вашей сети.");
+                    AppLogger.Write("   Повторите установку позже или из другой сети.");
+                    SetProgress(true, $"❌ Сбой установки (код {bootstrapper.ExitCode})", 0,
+                        "Серверы загрузки Microsoft могут быть недоступны. Повторите позже или из другой сети.");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Ждёт появления процесса установки Office (C2R), которого не было до запуска, и
+        /// наблюдает за ним до завершения.
+        /// </summary>
+        private async Task MonitorOfficeSetupAsync(HashSet<int> existingPids, CancellationToken token)
+        {
+            SetPhase("⚙️ Установка Office... не закрывайте приложение");
+            AppLogger.Write("⏳ Ожидаем запуск C2R-установщика...");
+
+            using var installProc = await WaitForC2RProcess(existingPids, TimeSpan.FromMinutes(3), token);
+
+            if (installProc == null)
+            {
+                AppLogger.Write("⚠️ Процесс установки не обнаружен — возможно Office уже установлен или завершился мгновенно");
+            }
+            else
+            {
+                AppLogger.Write($"🔍 Мониторинг: {installProc.ProcessName} (PID {installProc.Id})");
+                SetProgress(true, "⚙️ Установка Office...", 0, "Идёт установка, пожалуйста подождите...");
+                ProgressIndeterminate = true;
+                await MonitorInstallation(installProc, token);
+                ProgressIndeterminate = false;
             }
         }
 
