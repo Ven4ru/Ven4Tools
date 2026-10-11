@@ -179,7 +179,7 @@ namespace Ven4Tools.Tests
         public void CancelCommand_CanExecute_ИзначальноFalse()
         {
             // Прямо требуется существующим UI-тестом OfficeTab_ОтменаИПереходКАктивации
-            // (Ven4Tools.ClientUITests/Phase3RemainingTabsTests.cs) — кнопка «Отмена»
+            // (tests/Ven4Tools.ClientUITests/Phase3RemainingTabsTests.cs) — кнопка «Отмена»
             // обязана быть задизейблена вне активной операции.
             var vm = new OfficeViewModel();
 
