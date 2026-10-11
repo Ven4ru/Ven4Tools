@@ -165,7 +165,7 @@ namespace Ven4Tools.ViewModels
             {
                 // Пользовательские приложения видимы в ЛЮБОМ режиме каталога (см.
                 // комментарий у AppRowViewModel.MatchesProfile) — как раньше вело себя
-                // вычисление profileOk=true при appId==null в исходном CatalogTab.Search.cs.
+                // вычисление profileOk=true при appId==null в прежнем code-behind вкладки.
                 // Профильный фильтр применяем только к каталожным приложениям.
                 if (row.IsUserAdded)
                     row.MatchesProfile = true;

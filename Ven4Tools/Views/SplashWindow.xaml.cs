@@ -10,8 +10,6 @@ namespace Ven4Tools.Views
 {
     public partial class SplashWindow : Window
     {
-        private static readonly Uri _loadingUri =
-            new Uri("pack://application:,,,/Resources/Mascots/loading.png");
         private static readonly Uri _readyUri =
             new Uri("pack://application:,,,/Resources/Mascots/ready.png");
 
@@ -52,7 +50,7 @@ namespace Ven4Tools.Views
                 }
                 ct.ThrowIfCancellationRequested();
 
-                // 3. Права администратора
+                // 2. Права администратора
                 SetStatus("Проверка прав администратора...");
                 if (!IsRunningAsAdmin())
                 {
@@ -61,16 +59,7 @@ namespace Ven4Tools.Views
                 }
                 ct.ThrowIfCancellationRequested();
 
-                // 4. WebView2 — только справочно. Ven4Tools его не использует
-                // (пакет убран, элементов WebView2 в интерфейсе нет), поэтому его
-                // отсутствие больше не показывается как предупреждение: раньше строка
-                // «⚠ WebView2 не установлен» на splash-экране выглядела как проблема
-                // клиента, которой на самом деле нет.
-                SetStatus("Проверка WebView2...");
-                GetWebView2Version();
-                ct.ThrowIfCancellationRequested();
-
-                // 5. winget
+                // 3. winget
                 SetStatus("Проверка winget...");
                 bool wingetOk = await Task.Run(async () =>
                 {
@@ -113,49 +102,6 @@ namespace Ven4Tools.Views
             using var identity = WindowsIdentity.GetCurrent();
             var principal = new WindowsPrincipal(identity);
             return principal.IsInRole(WindowsBuiltInRole.Administrator);
-        }
-
-        /// <summary>
-        /// Версия установленного WebView2 Runtime или null, если он отсутствует.
-        ///
-        /// Читается из реестра EdgeUpdate — ровно так же, как это делает
-        /// MainWindow.Components.MicrosoftInstallers.IsWebView2Installed в лаунчере
-        /// (он же WebView2 и устанавливает). Раньше клиент решал ту же задачу через
-        /// CoreWebView2Environment.GetAvailableBrowserVersionString, из-за чего в
-        /// сборку тянулся пакет Microsoft.Web.WebView2 (три управляемых сборки плюс
-        /// нативный WebView2Loader.dll, ~1,2 МБ в self-contained публикации) —
-        /// единственная зависимость клиента, существовавшая ради одной справочной
-        /// строки на splash-экране. Никакого элемента WebView2 в интерфейсе нет.
-        ///
-        /// Порядок ключей — как в лаунчере: сначала машинные (WOW6432Node и обычный),
-        /// затем пользовательская установка. "0.0.0.0" в pv означает «удалён,
-        /// запись осталась» и наличием не считается.
-        /// </summary>
-        private static string? GetWebView2Version()
-        {
-            const string clientKey =
-                @"Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}";
-            try
-            {
-                string[] machinePaths =
-                {
-                    @"SOFTWARE\WOW6432Node\" + clientKey,
-                    @"SOFTWARE\" + clientKey
-                };
-                foreach (var path in machinePaths)
-                {
-                    using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(path);
-                    if (key?.GetValue("pv") is string v && !string.IsNullOrEmpty(v) && v != "0.0.0.0")
-                        return v;
-                }
-
-                using var userKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\" + clientKey);
-                if (userKey?.GetValue("pv") is string uv && !string.IsNullOrEmpty(uv) && uv != "0.0.0.0")
-                    return uv;
-
-                return null;
-            }
-            catch { return null; }
         }
 
         /// <summary>

@@ -13,8 +13,8 @@ namespace Ven4Tools.ViewModels
 
     // Заголовок группы категории в GroupStyle. В обычном режиме — просто текст,
     // в режиме SourceOrderService.Mode == "per_category" — ещё и комбобокс выбора
-    // приоритетного источника для этой категории (раньше строился императивно в
-    // CatalogTab.Catalog.cs → ApplyCategorySourceHeaders).
+    // приоритетного источника для этой категории (до перехода на MVVM строился
+    // императивно в code-behind вкладки, метод ApplyCategorySourceHeaders).
     public sealed class CategoryHeaderViewModel : ViewModelBase
     {
         public string CategoryName { get; }
@@ -23,8 +23,8 @@ namespace Ven4Tools.ViewModels
         // иначе уже сохранённые пользователем настройки порядка источников по
         // категориям перестанут находиться по ключу.
         public string Label { get; }
-        // Текст заголовка Expander'а — с эмодзи, как в оригинальном
-        // GetOriginalExpanderHeader (CatalogTab.UI.cs до MVVM-рефакторинга).
+        // Текст заголовка Expander'а — с эмодзи, как в прежнем
+        // GetOriginalExpanderHeader (code-behind вкладки до перехода на MVVM).
         public string HeaderText { get; }
         public ObservableCollection<SourceOrderOption> Options { get; } = new();
 

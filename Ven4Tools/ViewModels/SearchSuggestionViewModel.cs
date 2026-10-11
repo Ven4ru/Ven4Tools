@@ -2,9 +2,9 @@ using System;
 
 namespace Ven4Tools.ViewModels
 {
-    // Строка панели "не нашли в каталоге? поиск по источникам" — раньше строилась
-    // императивно в CatalogTab.Search.cs (AddSuggestionRow), теперь просто данные
-    // для DataTemplate.
+    // Строка панели "не нашли в каталоге? поиск по источникам" — до перехода на
+    // MVVM строилась императивно в code-behind вкладки (AddSuggestionRow), теперь
+    // просто данные для DataTemplate.
     public sealed class SearchSuggestionViewModel
     {
         public string Name { get; }

@@ -8,7 +8,7 @@ namespace Ven4Tools.Tests;
 /// <c>Ven4Tools\snapshots\x.json</c>). Раньше проверялся только ближайший каталог:
 /// его атрибуты читались уже в цели подмены, и запись уходила туда.
 /// </summary>
-public sealed class VwFileHelperAncestorReparseTests
+public sealed class FileHelperAncestorReparseTests
 {
     [Fact]
     public void ПодменённыйПредок_ЗаписьОтклоняетсяИКаталогиВЦелиНеСоздаются()

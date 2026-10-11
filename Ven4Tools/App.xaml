@@ -1,14 +1,26 @@
 <Application x:Class="Ven4Tools.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Ven4Tools.ViewModels"
+             xmlns:tabs="clr-namespace:Ven4Tools.Views.Tabs"
              Startup="App_Startup">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/DesignTokens.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+        <!-- Конвертеры привязок без собственного состояния, общие для окон и вкладок:
+             объявляются один раз здесь, в разметке на них ссылаются как на
+             {StaticResource …}. -->
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <tabs:InverseBoolToVisibility x:Key="InverseBoolToVis"/>
+        <vm:StringToVisibilityConverter x:Key="StringToVis"/>
+        <vm:InstallPhaseToBrushConverter x:Key="PhaseToBrush"/>
+        <vm:InstallOutcomeToBrushConverter x:Key="OutcomeToBrush"/>
+
         <!-- Стартовые значения темизируемых ключей: соответствуют теме «Как на
-             ven4tools.ru» — она выбрана по умолчанию.
+             ven4tools.ru». По умолчанию выбрана другая тема — «Бирюзовая»
+             (UserProfile.Theme = "teal").
              Реальные значения проставляет ThemeService.Apply() при запуске и при
              каждом переключении темы (Services/ThemeService.cs — там же полный
              список ключей и правила вывода производных оттенков). Значения здесь

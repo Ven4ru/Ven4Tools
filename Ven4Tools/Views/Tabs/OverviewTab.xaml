@@ -1,12 +1,9 @@
 <UserControl x:Class="Ven4Tools.Views.Tabs.OverviewTab"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Ven4Tools.Views.Tabs"
              xmlns:views="clr-namespace:Ven4Tools.Views"
              Background="{DynamicResource ContentBackground}">
     <UserControl.Resources>
-        <local:InverseBoolToVisibility x:Key="InverseBoolToVis"/>
-
         <!-- Карточка обзора. Рамка становится жёлтой, когда блок требует внимания:
              цвет — второй признак, первый — сам текст статуса. -->
         <Style x:Key="OverviewCard" TargetType="Border">

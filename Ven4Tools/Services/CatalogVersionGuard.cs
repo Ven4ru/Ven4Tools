@@ -73,11 +73,6 @@ namespace Ven4Tools.Services
             {
                 if (File.Exists(_path))
                     return TryUnprotect(File.ReadAllText(_path)) ?? 0;
-
-                // Разовая миграция: наследуем значение из legacy-профиля, чтобы апгрейд
-                // не обнулил уже накопленную защиту от отката.
-                int legacy = ProfileService.Current.LastCatalogVersion;
-                if (legacy > 0) { Persist(legacy); return legacy; }
             }
             catch (Exception ex) { AppLogger.Write($"[CatalogVersionGuard] Read: {ex.Message}"); }
             return 0;

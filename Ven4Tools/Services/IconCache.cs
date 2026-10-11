@@ -11,9 +11,9 @@ using Ven4Tools.Helpers;
 
 namespace Ven4Tools.Services
 {
-    // Вынесено из CatalogTab.Icons.cs при переходе каталога на MVVM: раньше кэш и
-    // очередь загрузки жили в code-behind вкладки, теперь строки каталога сами
-    // запрашивают иконку у общего кэша по URL.
+    // Вынесено из code-behind вкладки каталога при её переходе на MVVM: раньше кэш и
+    // очередь загрузки жили там, теперь строки каталога сами запрашивают иконку у
+    // общего кэша по URL.
     public static class IconCache
     {
         private static readonly Dictionary<string, BitmapImage?> _cache = new();

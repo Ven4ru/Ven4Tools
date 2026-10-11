@@ -10,7 +10,7 @@ namespace Ven4Tools.Tests;
 /// обязана видеть его, иначе строка каталога становится невыбираемой и файл,
 /// добавленный пользователем, поставить нельзя.
 /// </summary>
-public sealed class V2ClientAvailabilityLocalInstallerTests
+public sealed class AvailabilityCheckerLocalInstallerTests
 {
     private static AvailabilityChecker CheckerWithoutNetwork() =>
         new(new HttpClient(new FailingHandler()));

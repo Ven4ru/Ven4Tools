@@ -5,8 +5,6 @@
              Background="{DynamicResource ContentBackground}">
 
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-
         <!-- Стиль кнопок-фильтров -->
         <Style x:Key="FilterTabStyle" TargetType="RadioButton">
             <Setter Property="GroupName" Value="InstalledFilter"/>

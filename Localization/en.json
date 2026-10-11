@@ -320,10 +320,6 @@
     "t": ", skipped by exclusions {0}"
   },
   {
-    "s": ", системный",
-    "t": ", system"
-  },
-  {
     "s": ", тихий режим",
     "t": ", silent mode"
   },
@@ -668,10 +664,6 @@
     "t": "Ven4Tools is a handy app installer for Windows."
   },
   {
-    "s": "Ven4Tools — это удобный установщик программ для Windows. • Поддержка winget и прямых ссылок • Каталог популярных приложений • Добавление своих программ • Установка Microsoft Office • Состояние лицензий Windows и Office • Автоматическая проверка доступности • Альтернативные источники для недоступных приложений",
-    "t": "Ven4Tools — a handy app installer for Windows. • winget and direct link support • Catalog of popular apps • Add your own apps • Microsoft Office installation • Windows and Office license status • Automatic availability check • Alternative sources for unavailable apps"
-  },
-  {
     "s": "Ven4Tools-настройки-{0}.zip",
     "t": "Ven4Tools-settings-{0}.zip"
   },
@@ -910,10 +902,6 @@
   {
     "s": "[InstalledTab] Предзагрузка списка установленных приложений не удалась",
     "t": "[InstalledTab] Preloading the installed apps list failed"
-  },
-  {
-    "s": "[LocalizationService] Не удалось загрузить словарь '{0}': {1}",
-    "t": "[LocalizationService] Could not load dictionary '{0}': {1}"
   },
   {
     "s": "[NotificationService] {0}: недоступен ({1}).",
@@ -1668,10 +1656,6 @@
     "t": "~{0} MB"
   },
   {
-    "s": "© 2024-2025 Ven4ru. Свободное программное обеспечение.",
-    "t": "© 2024-2025 Ven4ru. Free software."
-  },
-  {
     "s": "© 2024-2026 Ven4ru. Свободное программное обеспечение.",
     "t": "© 2024-2026 Ven4ru. Free software."
   },
@@ -1694,10 +1678,6 @@
   {
     "s": "Автоматически",
     "t": "Automatic"
-  },
-  {
-    "s": "Автоматически выбирает самый быстрый доступный источник, переключаясь на другие при сбое.",
-    "t": "Automatically picks the fastest available source and switches to others on failure."
   },
   {
     "s": "Автоматическое обновление клиента",
@@ -1865,7 +1845,7 @@
   },
   {
     "s": "Браузеры, офис, мультимедиа и системные утилиты — всё необходимое для быстрого ввода ПК в работу",
-    "t": "Browsers, office, multimedia, and system utilities — everything needed to get a PC up and running fast"
+    "t": "Browsers, office, multimedia and system utilities — everything needed to get your PC running fast"
   },
   {
     "s": "Будет запущена массовая установка всех пакетов из файла:\n\n{0}\n\nПродолжить?",
@@ -1921,7 +1901,7 @@
   },
   {
     "s": "Быстрый старт Windows",
-    "t": "Quick start for Windows"
+    "t": "Quick Windows Setup"
   },
   {
     "s": "Быстрый — 1 проход, около минуты",
@@ -2073,7 +2053,7 @@
   },
   {
     "s": "Весь каталог",
-    "t": "Entire catalog"
+    "t": "Full catalog"
   },
   {
     "s": "Видеоконференции, вебинары и командная работа.",
@@ -2118,10 +2098,6 @@
   {
     "s": "Включён",
     "t": "Enabled"
-  },
-  {
-    "s": "Влияет только на окно выбора профиля каталога, которое показывается при первом запуске. Остальной интерфейс приложения переведён не полностью и остаётся на русском.",
-    "t": "Affects only the catalog profile selection window shown on first launch. The rest of the app interface is not fully translated and remains in Russian."
   },
   {
     "s": "Внешний вид",
@@ -2193,7 +2169,7 @@
   },
   {
     "s": "Все доступные приложения без исключений, включая игровые сервисы и пакеты драйверов",
-    "t": "All available apps without exception, including game services and driver packs"
+    "t": "All available apps without exception, including gaming services and driver packages"
   },
   {
     "s": "Все источники",
@@ -2221,7 +2197,7 @@
   },
   {
     "s": "Всё базовое плюс инструменты разработки, редакторы, графика и мессенджеры",
-    "t": "Everything in Basic plus development tools, editors, graphics, and messengers"
+    "t": "Everything basic plus development tools, editors, graphics apps and messengers"
   },
   {
     "s": "Всё-в-одном: заметки, задачи, базы данных и вики.",
@@ -2273,7 +2249,7 @@
   },
   {
     "s": "Выберите режим отображения каталога приложений",
-    "t": "Choose the app catalog display mode"
+    "t": "Choose the catalog display mode"
   },
   {
     "s": "Выберите хотя бы одну программу!",
@@ -2644,10 +2620,6 @@
     "t": "Loads a JSON list and selects the apps found in the catalog."
   },
   {
-    "s": "Загрузит настройки из JSON-файла и применит поддерживаемые параметры.",
-    "t": "Loads settings from a JSON file and applies the supported options."
-  },
-  {
     "s": "Загрузит настройки из сохранённого архива (.zip) и применит поддерживаемые параметры.",
     "t": "Loads settings from a saved archive (.zip) and applies the supported options."
   },
@@ -2846,14 +2818,6 @@
   {
     "s": "Идёт установка, пожалуйста подождите...",
     "t": "Installing, please wait..."
-  },
-  {
-    "s": "Изменит параметры электропитания и немедленно включит Turbo Boost процессора. Перезагрузка не требуется.",
-    "t": "Changes the power settings and immediately enables the processor's Turbo Boost. No restart required."
-  },
-  {
-    "s": "Изменит параметры электропитания и немедленно отключит Turbo Boost процессора.",
-    "t": "Changes the power settings and immediately disables the processor's Turbo Boost."
   },
   {
     "s": "Изменить папку установки",
@@ -3564,10 +3528,6 @@
     "t": "Do not leave the USB drive unattended, and delete the folder when you no longer need it."
   },
   {
-    "s": "Не удалось включить турбобуст. Запустите приложение от имени администратора и попробуйте ещё раз.",
-    "t": "Could not turn on Turbo Boost. Run the app as administrator and try again."
-  },
-  {
     "s": "Не удалось восстановиться из «Быстрого запуска» — Windows перешла на полную холодную загрузку. Само завершение работы прошло штатно.",
     "t": "Could not resume from “Fast startup” — Windows fell back to a full cold boot. The shutdown itself was normal."
   },
@@ -3658,10 +3618,6 @@
   {
     "s": "Не удалось отключить быстрый запуск. Запустите приложение от имени администратора и попробуйте ещё раз.",
     "t": "Could not turn off fast startup. Run the app as administrator and try again."
-  },
-  {
-    "s": "Не удалось отключить турбобуст. Запустите приложение от имени администратора и попробуйте ещё раз.",
-    "t": "Could not turn off Turbo Boost. Run the app as administrator and try again."
   },
   {
     "s": "Не удалось открыть папку журнала:\n{0}\n\nПуть: {1}",
@@ -4360,10 +4316,6 @@
     "t": "Opens the “License” tab, which shows whether Windows and Office are activated. Ven4Tools does not activate anything."
   },
   {
-    "s": "Откроет вкладку «Обновления Windows», где можно заново проверить и установить не установившиеся патчи.",
-    "t": "Opens the “Windows Update” tab, where you can recheck and install updates that failed to install."
-  },
-  {
     "s": "Откроет выбор другого источника установки для этого приложения.",
     "t": "Opens a choice of another install source for this app."
   },
@@ -4442,10 +4394,6 @@
   {
     "s": "Откроет текущую папку офлайн-кэша в Проводнике.",
     "t": "Opens the current offline cache folder in File Explorer."
-  },
-  {
-    "s": "Откроет форму для оценки и отправки комментария разработчику.",
-    "t": "Opens a form to rate the app and send a comment to the developer."
   },
   {
     "s": "Открыть",
@@ -5072,10 +5020,6 @@
     "t": "Update search failed (code {0})."
   },
   {
-    "s": "Поиск по названию или категории",
-    "t": "Search by name or category"
-  },
-  {
     "s": "Поиск по названию...",
     "t": "Search by name..."
   },
@@ -5474,10 +5418,6 @@
   {
     "s": "Проверка DNS...",
     "t": "Checking DNS..."
-  },
-  {
-    "s": "Проверка WebView2...",
-    "t": "Checking WebView2..."
   },
   {
     "s": "Проверка winget...",
@@ -6192,10 +6132,6 @@
     "t": "License status"
   },
   {
-    "s": "Сохранение и повторное применение набора настроек на этой машине: запоминает отмеченные твики Debloater и локальные пресеты. Это не отмена изменений — твики, применённые после создания снапшота, назад не возвращаются. Не зависит от точки восстановления Windows.",
-    "t": "Saves and reapplies a set of settings on this machine: it remembers the selected Cleanup tweaks and local presets. This is not an undo — tweaks applied after the snapshot was created are not reverted. Independent of the Windows restore point."
-  },
-  {
     "s": "Сохранение и повторное применение набора настроек на этой машине: запоминает отмеченные твики раздела «Очистка» и локальные пресеты. Это не отмена изменений — твики, применённые после создания снапшота, назад не возвращаются. Не зависит от точки восстановления Windows.",
     "t": "Saves and reapplies a set of settings on this machine: it remembers the selected tweaks of the “Cleanup” section and local presets. This is not an undo — tweaks applied after the snapshot was created are not reverted. Independent of the Windows restore point."
   },
@@ -6222,10 +6158,6 @@
   {
     "s": "Сохранит набор в файл для тихой установки: Ven4Tools.exe --answer-file «файл».",
     "t": "Saves the set to a file for silent installation: Ven4Tools.exe --answer-file “file”."
-  },
-  {
-    "s": "Сохранит настройки Ven4Tools в выбранный JSON-файл.",
-    "t": "Saves Ven4Tools settings to the selected JSON file."
   },
   {
     "s": "Сохранит настройки Ven4Tools в выбранный архив (.zip).",
@@ -6296,10 +6228,6 @@
     "t": "The list is in “Installed”, with “With updates only” checked."
   },
   {
-    "s": "Список — в «Установленных», с фильтром «есть обновление».",
-    "t": "The list is in “Installed”, with the “update available” filter."
-  },
-  {
     "s": "Способ: {0}",
     "t": "Method: {0}"
   },
@@ -6358,22 +6286,6 @@
   {
     "s": "Текущая версия: —",
     "t": "Current version: —"
-  },
-  {
-    "s": "Текущее состояние: неизвестно",
-    "t": "Current state: unknown"
-  },
-  {
-    "s": "Текущее состояние: определяется...",
-    "t": "Current state: detecting..."
-  },
-  {
-    "s": "Текущее состояние: ⚡ включён",
-    "t": "Current state: ⚡ on"
-  },
-  {
-    "s": "Текущее состояние: ❌ отключён",
-    "t": "Current state: ❌ off"
   },
   {
     "s": "Текущие локальные настройки (профиль, пресеты, избранное, параметры приложения) будут перезаписаны данными из архива.\n\nПродолжить?",
@@ -6564,10 +6476,6 @@
     "t": "Removing the Ven4Tools client"
   },
   {
-    "s": "Удаление предустановленного мусора и настройка конфиденциальности. Все действия обратимы через «Обновление Windows» или реестр.",
-    "t": "Removes preinstalled bloat and adjusts privacy settings. All actions can be undone via “Windows Update” or the registry."
-  },
-  {
     "s": "Удаление предустановленного мусора и настройка конфиденциальности. Изменённые настройки возвращаются кнопкой «Вернуть», удалённые приложения — из Microsoft Store.",
     "t": "Removes preinstalled bloat and adjusts privacy settings. Changed settings are restored with the “Revert” button; removed apps can be reinstalled from Microsoft Store."
   },
@@ -6658,10 +6566,6 @@
   {
     "s": "Управление приложениями и Windows",
     "t": "Manage apps and Windows"
-  },
-  {
-    "s": "Управление технологией Intel Turbo Boost",
-    "t": "Intel Turbo Boost control"
   },
   {
     "s": "Успех",
@@ -7216,14 +7120,6 @@
     "t": "added manually"
   },
   {
-    "s": "домен не резолвится, обход по прямому IP не удался — {0}: {1}",
-    "t": "the domain does not resolve, the direct IP fallback failed — {0}: {1}"
-  },
-  {
-    "s": "домен не резолвится, по прямому IP {0} подпись манифеста не подтверждена",
-    "t": "the domain does not resolve; via direct IP {0} the manifest signature was not verified"
-  },
-  {
     "s": "драйверы или Wi-Fi возвращены не полностью{0}",
     "t": "drivers or Wi-Fi were not fully restored{0}"
   },
@@ -7258,10 +7154,6 @@
   {
     "s": "запрос к CDN отменён",
     "t": "CDN request canceled"
-  },
-  {
-    "s": "запрос к CDN отменён или истёк таймаут",
-    "t": "the CDN request was canceled or timed out"
   },
   {
     "s": "исполняемый файл клиента повреждён — версия не читается, переустановите клиент полностью",
@@ -7692,24 +7584,12 @@
     "t": "• Browsers"
   },
   {
-    "s": "• Браузеры • Офис • Мультимедиа • Системные утилиты",
-    "t": "• Browsers • Office • Multimedia • System utilities"
-  },
-  {
     "s": "• Все категории",
     "t": "• All categories"
   },
   {
-    "s": "• Все категории • Игровые сервисы • Драйверпаки • Пользовательские",
-    "t": "• All categories • Gaming services • Drivers • Custom"
-  },
-  {
     "s": "• Всё базовое",
     "t": "• Everything in Basic"
-  },
-  {
-    "s": "• Всё базовое • Разработка • Графика • Мессенджеры",
-    "t": "• Everything in Basic • Development • Graphics • Messengers"
   },
   {
     "s": "• Графика",
@@ -7850,10 +7730,6 @@
   {
     "s": "ℹ️ Доступен опциональный источник (Chocolatey) — при желании нажмите «Установить Chocolatey».",
     "t": "ℹ️ An optional source (Chocolatey) is available — click “Install Chocolatey” if you want it."
-  },
-  {
-    "s": "ℹ️ Изменение применяется немедленно, перезагрузка не требуется",
-    "t": "ℹ️ The change takes effect immediately, no restart required"
   },
   {
     "s": "ℹ️ На время установки меняются региональные параметры Windows и Office: по ним загрузчик Microsoft выбирает сервер. После установки прежние значения возвращаются.",
@@ -8600,14 +8476,6 @@
     "t": "⚡ Turbo Boost mode: {0}"
   },
   {
-    "s": "⚡ Турбобуст включён",
-    "t": "⚡ Turbo Boost turned on"
-  },
-  {
-    "s": "⚡ Турбобуст отключён",
-    "t": "⚡ Turbo Boost turned off"
-  },
-  {
     "s": "⛔ Версия {0} не установлена: {1}",
     "t": "⛔ Version {0} was not installed: {1}"
   },
@@ -8726,10 +8594,6 @@
   {
     "s": "✅ Версии загружены для {0} приложений",
     "t": "✅ Versions loaded for {0} apps"
-  },
-  {
-    "s": "✅ Включить Turbo Boost",
-    "t": "✅ Enable Turbo Boost"
   },
   {
     "s": "✅ Восстановлено {0}: твиков {1}/{2}",
@@ -8944,14 +8808,6 @@
     "t": "✅ Restore point created"
   },
   {
-    "s": "✅ Турбобуст включён.\nИзменение применено немедленно — перезагрузка не требуется.",
-    "t": "✅ Turbo Boost turned on.\nThe change took effect immediately — no restart needed."
-  },
-  {
-    "s": "✅ Турбобуст отключён.\nИзменение применено немедленно — перезагрузка не требуется.",
-    "t": "✅ Turbo Boost turned off.\nThe change took effect immediately — no restart needed."
-  },
-  {
     "s": "✅ У вас последняя версия лаунчера",
     "t": "✅ You have the latest launcher version"
   },
@@ -9156,10 +9012,6 @@
     "t": "❌ Could not determine the Turbo Boost mode"
   },
   {
-    "s": "❌ Не удалось определить состояние турбобуста",
-    "t": "❌ Could not determine the Turbo Boost state"
-  },
-  {
     "s": "❌ Не удалось переименовать пресет «{0}»",
     "t": "❌ Could not rename preset “{0}”"
   },
@@ -9222,10 +9074,6 @@
   {
     "s": "❌ Обновление не выполнено — подробности выше в журнале",
     "t": "❌ Update not completed — see the log above for details"
-  },
-  {
-    "s": "❌ Отключить Turbo Boost",
-    "t": "❌ Disable Turbo Boost"
   },
   {
     "s": "❌ Ошибка",
@@ -9296,20 +9144,12 @@
     "t": "❌ Search error: {0}"
   },
   {
-    "s": "❌ Ошибка при включении турбобуста: {0}",
-    "t": "❌ Could not turn on Turbo Boost: {0}"
-  },
-  {
     "s": "❌ Ошибка при запуске лаунчера: {0}",
     "t": "❌ Launcher startup error: {0}"
   },
   {
     "s": "❌ Ошибка при отключении быстрого запуска: {0}",
     "t": "❌ Could not turn off fast startup: {0}"
-  },
-  {
-    "s": "❌ Ошибка при отключении турбобуста: {0}",
-    "t": "❌ Could not turn off Turbo Boost: {0}"
   },
   {
     "s": "❌ Ошибка при смене режима турбобуста: {0}",
@@ -9572,10 +9412,6 @@
     "t": "\uD83C\uDF10 Office language"
   },
   {
-    "s": "\uD83C\uDF10 Язык интерфейса",
-    "t": "\uD83C\uDF10 Interface language"
-  },
-  {
     "s": "\uD83C\uDF6B Choco: установка {0}...",
     "t": "\uD83C\uDF6B Choco: installing {0}..."
   },
@@ -9806,10 +9642,6 @@
   {
     "s": "\uD83D\uDCC2 Открыта вкладка: Сеть",
     "t": "\uD83D\uDCC2 Tab opened: Network"
-  },
-  {
-    "s": "\uD83D\uDCC2 Открыта вкладка: Система",
-    "t": "\uD83D\uDCC2 Tab opened: System"
   },
   {
     "s": "\uD83D\uDCC2 Открыта вкладка: Установленные",
@@ -10638,13 +10470,5 @@
   {
     "s": "\uD83E\uDE7A Проверка: {0}",
     "t": "\uD83E\uDE7A Check: {0}"
-  },
-  {
-    "s": "\uD83E\uDE9F Открыть Windows Update →",
-    "t": "\uD83E\uDE9F Open Windows Update →"
-  },
-  {
-    "s": "\uD83E\uDE9F Ошибки Windows Update (7 дней)",
-    "t": "\uD83E\uDE9F Windows Update errors (7 days)"
   }
 ]

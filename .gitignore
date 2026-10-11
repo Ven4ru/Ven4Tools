@@ -43,27 +43,11 @@ ghp_*
 TestResults/
 *.actual.png
 
-# NuGet packages
-packages/
-*.nupkg
-
 # Publish output
 publish/
 
-# Admin tool lives in its own separate repository
-Ven4Admin/
-
-# Секреты — реальные токены не коммитим никогда.
-# Класса Secrets в проекте больше нет: подход «зашить GitHub PAT в лаунчер»
-# отменён (токен из распространяемого exe извлекается кем угодно), краш-репорты
-# идут через серверный прокси ven4tools.ru/api/db.php, токен живёт на сервере.
-# Запись оставлена страховкой — если Secrets.cs когда-нибудь появится локально,
-# он не уедет в публичный репозиторий.
+# Страховка: класса Secrets в проекте нет, но локальный Secrets.cs с токенами в репозиторий попасть не должен.
 **/Secrets.cs
-
-# Local publish artifacts
-_publish*/
-_publish_*/
 
 # Локальные копии манифеста обновлений (генерируются при релизе, боевые версии живут на CDN)
 /version.json
@@ -75,10 +59,8 @@ _backups
 _backups/
 _backup_*/
 
-# Screenshots
-_screenshots/
+# Локальная папка сборки релиза
 _release/
-_release_dl/
 
 # Служебные заметки локальных инструментов разработки: в репозиторий попадают
 # только перечисленные ниже корневые документы, любой другой .md в корне —
@@ -101,15 +83,6 @@ _release_dl/
 # Внутренние ops-скрипты (не для публичного репо)
 deploy_cdn.ps1
 _deploy_env.ps1
-scripts/
-!tests/scripts/
-!tests/scripts/*.ps1
-
-# Артефакты OneDrive-конфликтов (дубли файлов)
-* (2).*
-
-# Карты функциональности и внутренние справочники
-feature-map.md
 
 # Изолированные рабочие копии (worktree) для параллельной разработки
 .worktrees/

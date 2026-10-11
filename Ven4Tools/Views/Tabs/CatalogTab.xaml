@@ -5,11 +5,9 @@
              xmlns:vm="clr-namespace:Ven4Tools.ViewModels"
              Background="{DynamicResource ContentBackground}">
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <!-- Объявлен здесь, а не в App.xaml вместе с остальными конвертерами: у него есть
+             состояние — словарь заголовков категорий, который вид передаёт ему при создании. -->
         <vm:CategoryNameToHeaderConverter x:Key="CategoryHeaderConverter"/>
-        <vm:StringToVisibilityConverter x:Key="StringToVis"/>
-        <vm:InstallPhaseToBrushConverter x:Key="PhaseToBrush"/>
-        <vm:InstallOutcomeToBrushConverter x:Key="OutcomeToBrush"/>
     </UserControl.Resources>
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -190,8 +188,8 @@
                                                             <!-- DataContext контейнера — CollectionViewGroup; Name — ключ
                                                                  группировки (AppRowViewModel.CategoryString). Конвертер
                                                                  превращает его в готовую CategoryHeaderViewModel — так же,
-                                                                 как раньше ApplyCategorySourceHeaders строил заголовок
-                                                                 Expander'а императивно в CatalogTab.Catalog.cs. -->
+                                                                 как до перехода на MVVM заголовок Expander'а императивно
+                                                                 строил code-behind вкладки (ApplyCategorySourceHeaders). -->
                                                             <Expander x:Name="expCategory" IsExpanded="True"
                                                                       Margin="0" Background="Transparent" BorderThickness="0"
                                                                       Header="{Binding Name, Converter={StaticResource CategoryHeaderConverter}}">

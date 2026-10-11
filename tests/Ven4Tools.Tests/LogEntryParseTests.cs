@@ -7,7 +7,7 @@ namespace Ven4Tools.Tests;
 /// Раньше срезы были зашиты (text[2..]/text[3..]) и не совпадали с длиной
 /// однобуквенных значков и значков без U+FE0F.
 /// </summary>
-public sealed class VwLogEntryParseTests
+public sealed class LogEntryParseTests
 {
     [Theory]
     [InlineData("✅ Готово", "✅", "Готово")]

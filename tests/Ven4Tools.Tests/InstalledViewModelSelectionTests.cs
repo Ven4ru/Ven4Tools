@@ -10,7 +10,7 @@ namespace Ven4Tools.Tests
     /// CanUpdateSelected/CanUninstallSelected обязаны пересчитываться по новому
     /// списку, а не оставаться от строк, которых на экране уже нет.
     /// </summary>
-    public class ViewModelsZone_InstalledSelectionTests
+    public class InstalledViewModelSelectionTests
     {
         [Fact]
         public void СменаФильтра_СбрасываетДоступностьГрупповыхКнопокПоСкрытымСтрокам()
