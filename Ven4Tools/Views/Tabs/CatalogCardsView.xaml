@@ -9,123 +9,130 @@
          одному CatalogViewModel, который отдаёт им CatalogTab. Имена элементов для
          автоматизации совпадают с прежними намеренно — в дереве всегда только один вид. -->
     <UserControl.Resources>
-        <!-- Объявлен здесь, а не в App.xaml вместе с остальными конвертерами: у него есть
-             состояние — словарь заголовков категорий, который вид передаёт ему при создании. -->
-        <vm:CategoryNameToHeaderConverter x:Key="CategoryHeaderConverter"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Шаблоны и стили, общие для обоих видов каталога. -->
+                <ResourceDictionary Source="CatalogShared.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
 
-        <Style x:Key="SidePanel" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="14"/>
-            <Setter Property="Margin" Value="0,0,0,12"/>
-        </Style>
-        <Style x:Key="SidePanelTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        </Style>
-        <Style x:Key="SideHint" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-        </Style>
-        <Style x:Key="SideButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Margin" Value="0,6,0,0"/>
-        </Style>
-        <!-- Мелкая кнопка действия на карточке: значок без рамки. -->
-        <Style x:Key="CardAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Width" Value="24"/>
-            <Setter Property="Height" Value="24"/>
-            <Setter Property="Margin" Value="4,0,0,0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-        </Style>
+            <!-- Объявлен здесь, а не в App.xaml вместе с остальными конвертерами: у него есть
+                 состояние — словарь заголовков категорий, который вид передаёт ему при создании. -->
+            <vm:CategoryNameToHeaderConverter x:Key="CategoryHeaderConverter"/>
 
-        <!-- Кнопка-категория — элемент списка с одиночным выбором: выбранная залита
-             акцентом, стрелки на клавиатуре переходят между категориями. Список, а не
-             набор кнопок в ItemsControl: у кнопок внутри ItemsControl после возврата на
-             вкладку пропадали узлы автоматизации, и категории переставали существовать
-             для программ чтения с экрана. У ListBoxItem узел свой и не теряется. -->
-        <Style x:Key="CategoryChip" TargetType="ListBoxItem">
-            <Setter Property="Margin" Value="0,0,6,6"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-            <Setter Property="AutomationProperties.AutomationId" Value="{Binding AutomationId}"/>
-            <Setter Property="AutomationProperties.Name" Value="{Binding Label}"/>
-            <Setter Property="ToolTip" Value="Покажет только программы этой категории. «Все» возвращает полный каталог."/>
-            <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border Height="30" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="1" CornerRadius="15" Padding="12,0">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Label}" Foreground="{TemplateBinding Foreground}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding Count}" Foreground="{TemplateBinding Foreground}" Opacity="0.7" Margin="6,0,0,0"/>
-                            </StackPanel>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
-                                <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                                <Setter Property="Foreground" Value="{DynamicResource AccentForeground}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <Style x:Key="SidePanel" TargetType="Border">
+                <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="10"/>
+                <Setter Property="Padding" Value="14"/>
+                <Setter Property="Margin" Value="0,0,0,12"/>
+            </Style>
+            <Style x:Key="SidePanelTitle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            </Style>
+            <Style x:Key="SideHint" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+            <Style x:Key="SideButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Margin" Value="0,6,0,0"/>
+            </Style>
+            <!-- Мелкая кнопка действия на карточке: значок без рамки. -->
+            <Style x:Key="CardAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Width" Value="24"/>
+                <Setter Property="Height" Value="24"/>
+                <Setter Property="Margin" Value="4,0,0,0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
 
-        <!-- Переключатель «в набор» на карточке. Остаётся CheckBox'ом — для клавиатуры,
-             программ чтения с экрана и автоматизации это та же отметка, что в прежнем
-             списке, — но выглядит кнопкой во всю ширину карточки. -->
-        <Style x:Key="SetToggle" TargetType="CheckBox">
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <Border x:Name="frame" Background="Transparent" BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1" CornerRadius="7">
-                            <TextBlock Text="{Binding SelectLabel}" FontSize="12" FontWeight="SemiBold"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource TextPrimary}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="frame" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="frame" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="frame" Property="Background" Value="{DynamicResource AccentSoftBackground}"/>
-                                <Setter TargetName="frame" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <!-- Кнопка-категория — элемент списка с одиночным выбором: выбранная залита
+                 акцентом, стрелки на клавиатуре переходят между категориями. Список, а не
+                 набор кнопок в ItemsControl: у кнопок внутри ItemsControl после возврата на
+                 вкладку пропадали узлы автоматизации, и категории переставали существовать
+                 для программ чтения с экрана. У ListBoxItem узел свой и не теряется. -->
+            <Style x:Key="CategoryChip" TargetType="ListBoxItem">
+                <Setter Property="Margin" Value="0,0,6,6"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="AutomationProperties.AutomationId" Value="{Binding AutomationId}"/>
+                <Setter Property="AutomationProperties.Name" Value="{Binding Label}"/>
+                <Setter Property="ToolTip" Value="Покажет только программы этой категории. «Все» возвращает полный каталог."/>
+                <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <Border Height="30" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" CornerRadius="15" Padding="12,0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Label}" Foreground="{TemplateBinding Foreground}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding Count}" Foreground="{TemplateBinding Foreground}" Opacity="0.7" Margin="6,0,0,0"/>
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource AccentForeground}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Переключатель «в набор» на карточке. Остаётся CheckBox'ом — для клавиатуры,
+                 программ чтения с экрана и автоматизации это та же отметка, что в прежнем
+                 списке, — но выглядит кнопкой во всю ширину карточки. -->
+            <Style x:Key="SetToggle" TargetType="CheckBox">
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Margin" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="CheckBox">
+                            <Border x:Name="frame" Background="Transparent" BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="7">
+                                <TextBlock Text="{Binding SelectLabel}" FontSize="12" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextPrimary}"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="frame" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="frame" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="frame" Property="Background" Value="{DynamicResource AccentSoftBackground}"/>
+                                    <Setter TargetName="frame" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid Margin="20,16,20,0">
@@ -222,27 +229,7 @@
                     <TextBlock Text="🔍 Не нашли в каталоге? Поиск по источникам:"
                                Foreground="{DynamicResource AccentColor}"
                                FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                    <views:FlatItemsControl ItemsSource="{Binding Suggestions}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type vm:SearchSuggestionViewModel}">
-                                <Button HorizontalAlignment="Left" Margin="0,1" Height="26" Padding="6,0"
-                                        Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                        FontSize="12" ToolTip="{Binding SourceLabel}"
-                                        AutomationProperties.Name="{Binding Name}"
-                                        AutomationProperties.HelpText="{Binding SourceLabel}"
-                                        Command="{Binding AddCommand}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding SourceLabel}" Foreground="{DynamicResource TextSecondary}"
-                                                   FontSize="10" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="➕  " Foreground="{DynamicResource AccentColor}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding Hint, StringFormat='  {0}'}" Foreground="{DynamicResource TextSecondary}"
-                                                   FontSize="10" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </views:FlatItemsControl>
+                    <views:FlatItemsControl ItemsSource="{Binding Suggestions}" ItemTemplate="{StaticResource SearchSuggestionTemplate}"/>
                     <TextBlock x:Name="txtWingetStatus" Text="{Binding SuggestionsStatus}"
                                Foreground="{DynamicResource TextSecondary}" FontSize="11"
                                Visibility="{Binding SuggestionsStatus, Converter={StaticResource StringToVis}}"/>
@@ -363,16 +350,7 @@
                                                        FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        MaxHeight="36" TextTrimming="CharacterEllipsis"
                                                        HorizontalAlignment="Left"
-                                                       ToolTip="{Binding StatusTooltip}" Cursor="Hand">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Style.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="TextDecorations" Value="Underline"/>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
+                                                       ToolTip="{Binding StatusTooltip}" Cursor="Hand" Style="{StaticResource HoverUnderlineTextStyle}">
                                                 <TextBlock.InputBindings>
                                                     <MouseBinding MouseAction="LeftClick"
                                                                   Command="{Binding DataContext.OpenCardCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -580,6 +558,7 @@
                                  Background="Transparent"
                                  Foreground="{DynamicResource TextPrimary}"
                                  BorderThickness="0"
+                                 ItemTemplate="{StaticResource InstallProgressRowTemplate}"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
@@ -587,33 +566,6 @@
                                     <Setter Property="Padding" Value="2,3"/>
                                 </Style>
                             </ListBox.ItemContainerStyle>
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Text="{Binding AppName}"
-                                                   FontSize="11" Foreground="{DynamicResource TextPrimary}"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding Status}" Grid.Column="1"
-                                                   FontSize="10"
-                                                   Foreground="{Binding Outcome, Converter={StaticResource OutcomeToBrush}}"
-                                                   Margin="6,0,0,0"/>
-                                        <ProgressBar Grid.Row="1" Grid.ColumnSpan="2"
-                                                     Height="4" Margin="0,3,0,0"
-                                                     Value="{Binding Percentage, Mode=OneWay}"
-                                                     IsIndeterminate="{Binding IsIndeterminate}"
-                                                     Background="{DynamicResource BorderBrush}"
-                                                     Foreground="{Binding Phase, Converter={StaticResource PhaseToBrush}}"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
                         </ListBox>
                     </StackPanel>
                 </Border>
