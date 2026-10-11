@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Newtonsoft.Json;
 using Ven4Tools.Helpers;
 using Ven4Tools.Models;
@@ -37,29 +36,6 @@ namespace Ven4Tools.Services
                         File.ReadAllText(_path));
                     if (loaded != null)
                     {
-                        // Переносим прежний порядок по умолчанию, если пользователь его
-                        // не трогал. Любой действительно настроенный порядок сохраняем.
-                        var legacyDefault = new[]
-                        {
-                            SourceOrderSettings.Winget,
-                            SourceOrderSettings.Choco,
-                            "scoop",
-                            SourceOrderSettings.Direct
-                        };
-                        if (loaded.GlobalOrder.SequenceEqual(legacyDefault))
-                            loaded.GlobalOrder = new List<string>(SourceOrderSettings.AllSources);
-
-                        // Защитная очистка для сохранённых настроек, где ещё остался
-                        // удалённый источник Scoop: убираем "scoop" из глобального порядка
-                        // и все категории, где он был назначен основным (GetOrderForCategory
-                        // корректно фолбэкнется на глобальный порядок).
-                        loaded.GlobalOrder.RemoveAll(s => s == "scoop");
-                        foreach (var key in loaded.CategoryPrimary
-                                     .Where(kv => kv.Value == "scoop")
-                                     .Select(kv => kv.Key)
-                                     .ToList())
-                            loaded.CategoryPrimary.Remove(key);
-
                         // Дополняем порядок источниками, которых в сохранённом файле
                         // ещё нет (совместимость с будущими версиями каталога).
                         foreach (var s in SourceOrderSettings.AllSources)

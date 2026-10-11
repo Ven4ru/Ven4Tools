@@ -60,13 +60,6 @@ namespace Ven4Tools.Models
         public bool OfflineMode { get; set; } = false;
         public string OfflineCachePath { get; set; } = "";
 
-        // LEGACY: защита от отката каталога (anti-rollback) переехала в отдельный
-        // DPAPI-защищённый CatalogVersionGuard (catalog_guard.dat) — plaintext-поле
-        // здесь можно было сбросить правкой profile.json, снимая защиту. Поле оставлено
-        // только для разовой миграции: при первом запуске новой версии его значение
-        // наследуется в защищённое хранилище. Больше не обновляется.
-        public int LastCatalogVersion { get; set; } = 0;
-
         // Принудительный онлайн-режим: игнорировать результат ConnectivityMonitor
         // и всегда считать соединение активным. Нужен для VPN/прокси, где детект
         // сети даёт ложноотрицательные результаты и онлайн-вкладки ошибочно скрываются.
