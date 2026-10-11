@@ -8,7 +8,7 @@ namespace Ven4Tools.Tests;
 /// дописываться за ним (поведение Newtonsoft по умолчанию для списка, уже
 /// заполненного инициализатором свойства).
 /// </summary>
-public sealed class VwSourceOrderSettingsDeserializationTests
+public sealed class SourceOrderSettingsDeserializationTests
 {
     [Fact]
     public void СохранённыйПорядок_ЗаменяетПорядокПоУмолчанию()

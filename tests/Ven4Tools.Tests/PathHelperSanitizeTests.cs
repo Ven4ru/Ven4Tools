@@ -6,7 +6,7 @@ namespace Ven4Tools.Tests;
 /// «.» и «..» проходят фильтр недопустимых символов, но как компонент пути ведут
 /// на текущий/родительский каталог — санитайзер обязан их обезвредить.
 /// </summary>
-public sealed class VwPathHelperSanitizeTests
+public sealed class PathHelperSanitizeTests
 {
     [Theory]
     [InlineData(".", "_")]

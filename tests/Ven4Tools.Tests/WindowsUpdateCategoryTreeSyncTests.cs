@@ -6,7 +6,7 @@ namespace Ven4Tools.Tests;
 /// Один патч под несколькими категориями — несколько узлов дерева с одним общим
 /// выбором: снятая в одной категории галка не должна оставлять патч выбранным в другой.
 /// </summary>
-public sealed class S2WindowsUpdateTreeSyncTests
+public sealed class WindowsUpdateCategoryTreeSyncTests
 {
     private static IReadOnlyList<WindowsUpdateCategoryNode> BuildTwoCategoryTree() =>
         WindowsUpdateCategoryTreeBuilder.Build(new[]
