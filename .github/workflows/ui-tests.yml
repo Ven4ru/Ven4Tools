@@ -55,14 +55,14 @@ jobs:
         env:
           VEN4TOOLS_UITEST_SHELL: classic
           CLIENT_FILTER: ${{ inputs.client_filter || 'FullyQualifiedName!~ScreenshotGeneration' }}
-        run: dotnet test Ven4Tools.ClientUITests/Ven4Tools.ClientUITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --filter "$env:CLIENT_FILTER" --logger "trx;LogFileName=client-ui-classic.trx" --results-directory TestResults/ClientUI
+        run: dotnet test tests/Ven4Tools.ClientUITests/Ven4Tools.ClientUITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --filter "$env:CLIENT_FILTER" --logger "trx;LogFileName=client-ui-classic.trx" --results-directory TestResults/ClientUI
 
       - name: UI-тесты клиента — новый интерфейс
         if: always()
         env:
           VEN4TOOLS_UITEST_SHELL: modern
           CLIENT_FILTER: ${{ inputs.client_filter || 'FullyQualifiedName!~ScreenshotGeneration' }}
-        run: dotnet test Ven4Tools.ClientUITests/Ven4Tools.ClientUITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --filter "$env:CLIENT_FILTER" --logger "trx;LogFileName=client-ui-modern.trx" --results-directory TestResults/ClientUI
+        run: dotnet test tests/Ven4Tools.ClientUITests/Ven4Tools.ClientUITests.csproj -c Release -p:Platform=x64 --no-build --no-restore --nologo --filter "$env:CLIENT_FILTER" --logger "trx;LogFileName=client-ui-modern.trx" --results-directory TestResults/ClientUI
 
       # Журнал клиента лежит вне рабочей папки — кладём его рядом со следами падений.
       - name: Журнал клиента

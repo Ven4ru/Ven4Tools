@@ -20,9 +20,9 @@
 
 ## Тесты
 
-- Тестовые проекты и fixtures размещаются в `tests/`; исключение — проверки интерфейса клиента, они лежат в корне, в `Ven4Tools.ClientUITests/`.
+- Все тестовые проекты и fixtures размещаются в `tests/`.
 - `tests/Ven4Tools.Tests` содержит быстрые детерминированные тесты и запускается на каждом push и pull request.
-- `tests/Ven4Tools.UITests` содержит Windows UI smoke/snapshot лаунчера, `Ven4Tools.ClientUITests` — проверки интерфейса клиента. Оба набора запускаются локально, вручную через GitHub Actions и раз в неделю по расписанию (`ui-tests.yml`), каждый дважды: в прежнем и в новом виде окна (`VEN4TOOLS_UITEST_SHELL=classic` или `modern`).
+- `tests/Ven4Tools.UITests` содержит Windows UI smoke/snapshot лаунчера, `tests/Ven4Tools.ClientUITests` — проверки интерфейса клиента. Оба набора запускаются локально, вручную через GitHub Actions и раз в неделю по расписанию (`ui-tests.yml`), каждый дважды: в прежнем и в новом виде окна (`VEN4TOOLS_UITEST_SHELL=classic` или `modern`).
 - Тестовый режим лаунчера активируется только явно заданной переменной `VEN4TOOLS_UI_TEST=1`.
 - У клиента отдельного тестового режима нет: проверки запускают обычную сборку и задают ей только язык (`VEN4TOOLS_LANG`) и вид окна (`VEN4TOOLS_UI_CLASSIC=1` — прежний).
 - Код test-mode не должен менять поведение обычной пользовательской сборки.

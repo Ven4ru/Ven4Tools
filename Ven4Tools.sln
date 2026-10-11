@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.UITests", "tests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.Tests", "tests\Ven4Tools.Tests\Ven4Tools.Tests.csproj", "{6B4F5D34-9213-4E60-A1D0-8D4743397631}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.ClientUITests", "Ven4Tools.ClientUITests\Ven4Tools.ClientUITests.csproj", "{B0207973-EB65-4D3F-AB7E-EDD8065BEBDA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.ClientUITests", "tests\Ven4Tools.ClientUITests\Ven4Tools.ClientUITests.csproj", "{B0207973-EB65-4D3F-AB7E-EDD8065BEBDA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{48E0BF90-942F-4A56-8481-72E55E47B375}"
 EndProject
