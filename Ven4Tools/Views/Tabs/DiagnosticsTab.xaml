@@ -64,8 +64,25 @@
                 </GroupBox>
 
                 <!-- Датчики: опрос раз в 2 секунды, только пока вкладка на экране -->
-                <GroupBox Header="🌡 Датчики" Margin="0,0,0,15">
+                <GroupBox Header="🌡 Датчики и оверлей · 🧪 эксперимент" Margin="0,0,0,15">
                     <StackPanel Margin="10">
+                        <!-- Экспериментальный модуль: задача плашки — собрать отзывы, чего не хватает -->
+                        <Border Background="{DynamicResource CardBackground}" CornerRadius="6" Padding="12,10" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock x:Name="txtExperiment" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}"
+                                           Text="🧪 Экспериментальный модуль. Датчики и оверлей работают без драйвера ядра — так они не мешают играм с античитом. Поэтому пока нет температур и частот процессора и вентиляторов платы. Расскажите, чего вам не хватает и стоит ли развивать модуль дальше."/>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Button x:Name="btnModuleFeedbackGitHub" Content="💬 Отзыв о модуле на GitHub"
+                                            ToolTip="Откроет на GitHub форму отзыва об экспериментальном модуле датчиков и оверлея с уже заполненной версией программы."
+                                            Height="30" Padding="12,0" Margin="0,0,10,0"
+                                            Command="{Binding ModuleFeedbackGitHubCommand}"/>
+                                    <Button x:Name="btnModuleFeedbackSite" Content="⭐ Отзыв о модуле на сайте"
+                                            ToolTip="Откроет раздел отзывов на сайте ven4tools.ru — без регистрации."
+                                            Height="30" Padding="12,0"
+                                            Command="{Binding ModuleFeedbackSiteCommand}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
                         <ItemsControl x:Name="lstSensorCards" ItemsSource="{Binding SensorCards}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>

@@ -76,9 +76,11 @@ namespace Ven4Tools.Services
             }
             else
             {
+                // Без кнопки установки драйвера (экспериментальная версия) «нужен драйвер»
+                // звало бы туда, куда в программе пути нет.
                 lines.Add(new SensorLine(Tr("Температура"), driver
                     ? Tr("датчик не отвечает")
-                    : Tr("нужен драйвер датчиков")));
+                    : PawnIoDriver.FeatureEnabled ? Tr("нужен драйвер датчиков") : Tr("недоступна без драйвера ядра")));
             }
 
             string? clocks = CpuClocks(s);

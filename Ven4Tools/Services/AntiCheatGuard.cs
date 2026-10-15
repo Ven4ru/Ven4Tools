@@ -36,7 +36,7 @@ namespace Ven4Tools.Services
         private static async System.Threading.Tasks.Task TickAsync()
         {
             bool overlay = OverlayService.Instance.IsVisible;
-            bool driver = PawnIoDriver.IsInstalled();
+            bool driver = PawnIoDriver.FeatureEnabled && PawnIoDriver.IsInstalled();
             if (!overlay && !driver) { _current = null; return; }
 
             AntiCheat? now;

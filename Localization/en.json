@@ -2088,6 +2088,10 @@
     "t": "Release {0} has no Ven4Tools.Setup installer — update skipped."
   },
   {
+    "s": "В экспериментальной версии температуры и частоты процессора не показываются: для них нужен драйвер ядра, а его мы пока не ставим, чтобы не мешать играм с античитом. Видеокарта, диски, загрузка процессора, FPS и оверлей работают.",
+    "t": "In the experimental version CPU temperatures and clocks are not shown: they need a kernel driver, and we do not install it yet so as not to interfere with games with anti-cheat. Graphics card, disks, CPU load, FPS and the overlay work."
+  },
+  {
     "s": "ВЕРСИЯ КЛИЕНТА",
     "t": "CLIENT VERSION"
   },
@@ -3672,6 +3676,10 @@
     "t": "App name:"
   },
   {
+    "s": "Найден драйвер датчиков другой программы (PawnIO, например от FanControl): температуры и частоты процессора видны через него. Ven4Tools этот драйвер не ставит и не выключает.",
+    "t": "A sensor driver from another program was found (PawnIO, for example from FanControl): CPU temperatures and clocks are visible through it. Ven4Tools does not install or turn off this driver."
+  },
+  {
     "s": "Найденные варианты в winget:",
     "t": "Matches found in winget:"
   },
@@ -3894,6 +3902,10 @@
   {
     "s": "Не удалось отключить быстрый запуск. Запустите приложение от имени администратора и попробуйте ещё раз.",
     "t": "Could not turn off fast startup. Run the app as administrator and try again."
+  },
+  {
+    "s": "Не удалось открыть браузер: {0}",
+    "t": "Could not open the browser: {0}"
   },
   {
     "s": "Не удалось открыть папку журнала:\n{0}\n\nПуть: {1}",
@@ -4564,6 +4576,10 @@
     "t": "Feedback on Ven4Tools {0}"
   },
   {
+    "s": "Отзыв: датчики и оверлей (эксперимент)",
+    "t": "Feedback: sensors and overlay (experiment)"
+  },
+  {
     "s": "Отказано в доступе — команда требует прав администратора.",
     "t": "Access denied — the command requires administrator rights."
   },
@@ -4672,6 +4688,10 @@
     "t": "Opens a new issue page on GitHub: the app and Windows versions are already filled in, you only need to write your message."
   },
   {
+    "s": "Откроет на GitHub форму отзыва об экспериментальном модуле датчиков и оверлея с уже заполненной версией программы.",
+    "t": "Opens the feedback form for the experimental sensors and overlay module on GitHub with the program version already filled in."
+  },
+  {
     "s": "Откроет настройки фоновых проверок, автозапуска, обновления клиента и источника загрузки.",
     "t": "Opens settings for background checks, autostart, client updates and the download source."
   },
@@ -4694,6 +4714,10 @@
   {
     "s": "Откроет раздел «Windows Update», где можно заново проверить и установить не установившиеся патчи.",
     "t": "Opens the “Windows Update” section, where you can recheck and install updates that failed to install."
+  },
+  {
+    "s": "Откроет раздел отзывов на сайте ven4tools.ru — без регистрации.",
+    "t": "Opens the reviews section on ven4tools.ru — no registration needed."
   },
   {
     "s": "Откроет раздел очистки: встроенные приложения, твики и точка восстановления.",
@@ -7720,6 +7744,10 @@
     "t": "unavailable"
   },
   {
+    "s": "недоступна без драйвера ядра",
+    "t": "unavailable without a kernel driver"
+  },
+  {
     "s": "неизвестен адрес отдельных файлов этой версии — починка невозможна",
     "t": "the address of this version's individual files is unknown — repair is not possible"
   },
@@ -7926,6 +7954,10 @@
   {
     "s": "расхождений слишком много для пофайловой починки — переустановите клиент обычным обновлением",
     "t": "too many differences for a file-by-file repair — reinstall the client with a regular update"
+  },
+  {
+    "s": "сайт",
+    "t": "site"
   },
   {
     "s": "самое горячее ядро {0}",
@@ -9840,6 +9872,10 @@
     "t": "⬇️ Downloading dependencies..."
   },
   {
+    "s": "⭐ Отзыв о модуле на сайте",
+    "t": "⭐ Module feedback on the site"
+  },
+  {
     "s": "\uD83C\uDD99 Доступно обновлений: {0}",
     "t": "\uD83C\uDD99 Updates available: {0}"
   },
@@ -9894,6 +9930,10 @@
   {
     "s": "\uD83C\uDF21 Датчики",
     "t": "\uD83C\uDF21 Sensors"
+  },
+  {
+    "s": "\uD83C\uDF21 Датчики и оверлей · \uD83E\uDDEA эксперимент",
+    "t": "\uD83C\uDF21 Sensors and overlay · \uD83E\uDDEA experiment"
   },
   {
     "s": "\uD83C\uDF21 Датчики открыты за {0} с (драйвер датчиков: {1})",
@@ -10034,6 +10074,14 @@
   {
     "s": "\uD83D\uDCAC Мессенджеры",
     "t": "\uD83D\uDCAC Messengers"
+  },
+  {
+    "s": "\uD83D\uDCAC Отзыв о модуле на GitHub",
+    "t": "\uD83D\uDCAC Module feedback on GitHub"
+  },
+  {
+    "s": "\uD83D\uDCAC Открыт отзыв о модуле датчиков и оверлея: {0}",
+    "t": "\uD83D\uDCAC Module feedback opened for sensors and overlay: {0}"
   },
   {
     "s": "\uD83D\uDCBB Информация о системе",
@@ -10986,6 +11034,10 @@
   {
     "s": "\uD83E\uDDE0 Что это значит",
     "t": "\uD83E\uDDE0 What this means"
+  },
+  {
+    "s": "\uD83E\uDDEA Экспериментальный модуль. Датчики и оверлей работают без драйвера ядра — так они не мешают играм с античитом. Поэтому пока нет температур и частот процессора и вентиляторов платы. Расскажите, чего вам не хватает и стоит ли развивать модуль дальше.",
+    "t": "\uD83E\uDDEA Experimental module. Sensors and the overlay work without a kernel driver, so they do not interfere with games with anti-cheat. That is why there are no CPU temperatures and clocks or motherboard fans yet. Tell us what you are missing and whether the module is worth developing further."
   },
   {
     "s": "\uD83E\uDDF3 Перед переустановкой Windows…",

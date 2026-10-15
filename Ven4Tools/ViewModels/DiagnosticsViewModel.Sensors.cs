@@ -62,6 +62,33 @@ namespace Ven4Tools.ViewModels
             }
         }
 
+        // ── Отзывы об экспериментальном модуле ───────────────────────────────────
+        // Модуль вышел без драйвера датчиков; отзывы покажут, нужна ли полная версия.
+
+        public RelayCommand ModuleFeedbackGitHubCommand { get; private set; } = null!;
+        public RelayCommand ModuleFeedbackSiteCommand { get; private set; } = null!;
+
+        internal static string ModuleFeedbackGitHubUrl(string version) =>
+            "https://github.com/Ven4ru/Ven4Tools/issues/new?template=module_feedback.yml" +
+            "&title=" + Uri.EscapeDataString("Отзыв: датчики и оверлей (эксперимент)") +
+            "&version=" + Uri.EscapeDataString(version);
+
+        internal const string ModuleFeedbackSiteUrl = "https://ven4tools.ru/#scene-reviews";
+
+        private static void OpenModuleFeedback(string url, string where)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = url, UseShellExecute = true });
+                AppLogger.Write($"💬 Открыт отзыв о модуле датчиков и оверлея: {where}");
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "DiagnosticsViewModel.OpenModuleFeedback");
+                MessageBox.Show("Не удалось открыть браузер: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         public RelayCommand ToggleOverlayCommand { get; private set; } = null!;
         public RelayCommand InstallFpsCounterCommand { get; private set; } = null!;
 
@@ -83,6 +110,9 @@ namespace Ven4Tools.ViewModels
             InstallSensorDriverCommand = RelayCommand.FromAsync(_ => InstallSensorDriverAsync(), _ => !IsChangingSensorDriver);
             RemoveSensorDriverCommand = RelayCommand.FromAsync(_ => RemoveSensorDriverAsync(), _ => !IsChangingSensorDriver);
             ToggleOverlayCommand = new RelayCommand(_ => OverlayService.Instance.Toggle());
+            ModuleFeedbackGitHubCommand = new RelayCommand(_ =>
+                OpenModuleFeedback(ModuleFeedbackGitHubUrl(ChannelService.InstalledVersion), "GitHub"));
+            ModuleFeedbackSiteCommand = new RelayCommand(_ => OpenModuleFeedback(ModuleFeedbackSiteUrl, "сайт"));
             InstallFpsCounterCommand = RelayCommand.FromAsync(_ => InstallFpsCounterAsync(), _ => !IsInstallingFpsCounter);
             // Оверлей переключается и сочетанием клавиш — подпись кнопки должна это видеть.
             // Отписки нет: экземпляр ViewModel вкладки один на весь сеанс.
@@ -189,8 +219,16 @@ namespace Ven4Tools.ViewModels
         private void RefreshSensorDriverState()
         {
             bool installed = PawnIoDriver.IsInstalled();
-            ShowInstallSensorDriver = !installed;
-            ShowRemoveSensorDriver = installed;
+            ShowInstallSensorDriver = PawnIoDriver.FeatureEnabled && !installed;
+            ShowRemoveSensorDriver = PawnIoDriver.FeatureEnabled && installed;
+            if (!PawnIoDriver.FeatureEnabled)
+            {
+                // Экспериментальный модуль: драйвер Ven4Tools не ставит и не трогает.
+                SensorDriverText = installed && PawnIoDriver.IsRunning()
+                    ? "Найден драйвер датчиков другой программы (PawnIO, например от FanControl): температуры и частоты процессора видны через него. Ven4Tools этот драйвер не ставит и не выключает."
+                    : "В экспериментальной версии температуры и частоты процессора не показываются: для них нужен драйвер ядра, а его мы пока не ставим, чтобы не мешать играм с античитом. Видеокарта, диски, загрузка процессора, FPS и оверлей работают.";
+                return;
+            }
             if (!installed)
             {
                 SensorDriverText = "Температуры и частоты процессора и датчики платы Windows без драйвера не отдаёт. Драйвер необязателен: без него работают оверлей, FPS, видеокарта и диски. Ставится только по кнопке и удаляется так же.";
