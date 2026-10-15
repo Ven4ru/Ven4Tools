@@ -81,6 +81,64 @@ namespace Ven4Tools.Services
             finally { _lock.Release(); }
         }
 
+        // ── Кто сейчас пользуется датчиками ──────────────────────────────────────
+        // «Диагностика» на экране и оверлей. Пока хоть кто-то есть, драйвер датчиков
+        // процессора включён; когда никого не осталось — библиотека закрывается, а
+        // устройство драйвера выключается (если человек не попросил держать его всегда).
+        private readonly HashSet<string> _users = new();
+
+        /// <summary>Датчики нужны <paramref name="who"/>: включить драйвер, если он установлен и выключен.</summary>
+        public async Task AcquireAsync(string who)
+        {
+            bool first;
+            lock (_users) { first = _users.Count == 0; _users.Add(who); }
+            if (!first || !PawnIoDriver.IsInstalled() || PawnIoDriver.IsDeviceEnabled()) return;
+            try
+            {
+                // Пока идёт игра с античитом, драйвер не включаем: оверлей и без него покажет FPS и видеокарту.
+                if (AntiCheatDetector.Active() is { } game)
+                {
+                    AppLogger.Write($"🛡 Драйвер датчиков не включён: запущена игра с античитом {AntiCheatDetector.ShortName(game)}");
+                    return;
+                }
+                bool on = await PawnIoDriver.EnableDeviceAsync(KitCommandRunner.Default);
+                AppLogger.Write($"🌡 Драйвер датчиков включён на время работы датчиков: {(on ? "да" : "не удалось")}");
+                await ResetAsync();
+            }
+            catch (Exception ex) { AppLogger.Write(ex, "HardwareSensorService.Acquire"); }
+        }
+
+        /// <summary><paramref name="who"/> больше не нужны датчики; последний — выключает драйвер.</summary>
+        public async Task ReleaseAsync(string who)
+        {
+            bool last;
+            lock (_users) { _users.Remove(who); last = _users.Count == 0; }
+            if (last) await ReleaseDriverAsync();
+        }
+
+        /// <summary>
+        /// Закрыть библиотеку и выключить устройство драйвера, если им больше никто не
+        /// пользуется: ни Ven4Tools, ни FanControl и подобные программы на том же драйвере.
+        /// </summary>
+        public async Task ReleaseDriverAsync()
+        {
+            await ResetAsync();
+            try
+            {
+                if (!PawnIoDriver.IsInstalled() || ProfileService.Current.SensorDriverAlwaysOn || !PawnIoDriver.IsDeviceEnabled())
+                    return;
+                var others = AntiCheatDetector.OtherPawnIoUsers();
+                if (others.Count > 0)
+                {
+                    AppLogger.Write($"🌡 Драйвер датчиков оставлен включённым: им пользуется {string.Join(", ", others)}");
+                    return;
+                }
+                bool off = await PawnIoDriver.DisableDeviceAsync(KitCommandRunner.Default);
+                AppLogger.Write($"🌡 Драйвер датчиков выключен до следующего использования: {(off ? "да" : "не удалось")}");
+            }
+            catch (Exception ex) { AppLogger.Write(ex, "HardwareSensorService.ReleaseDriver"); }
+        }
+
         /// <summary>Закрыть библиотеку: при следующем чтении она откроется заново.</summary>
         public async Task ResetAsync()
         {

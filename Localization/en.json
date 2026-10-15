@@ -396,6 +396,10 @@
     "t": "OpenAI's agentic tool for writing and editing code right in the terminal."
   },
   {
+    "s": "BattlEye (PUBG, Rainbow Six Siege, DayZ, Escape from Tarkov и др.)",
+    "t": "BattlEye (PUBG, Rainbow Six Siege, DayZ, Escape from Tarkov, etc.)"
+  },
+  {
     "s": "CDN (домен)",
     "t": "CDN (domain)"
   },
@@ -442,6 +446,14 @@
   {
     "s": "Cortana (реестр)",
     "t": "Cortana (registry)"
+  },
+  {
+    "s": "Easy Anti-Cheat (Fortnite, Apex Legends, Elden Ring и др.)",
+    "t": "Easy Anti-Cheat (Fortnite, Apex Legends, Elden Ring, etc.)"
+  },
+  {
+    "s": "FACEIT может не запускаться, пока в системе установлен драйвер датчиков PawnIO. Если клиент FACEIT сообщит о несовместимом драйвере — удалите драйвер в «Диагностике» и перезагрузите компьютер.",
+    "t": "FACEIT may refuse to start while the PawnIO sensor driver is installed. If the FACEIT client reports an incompatible driver, remove the driver in Diagnostics and restart the computer."
   },
   {
     "s": "FPS: нужен счётчик (кнопка в «Диагностике»)",
@@ -974,6 +986,14 @@
   {
     "s": "[PawnIO] pnputil /delete-driver {0}: код {1}",
     "t": "[PawnIO] pnputil /delete-driver {0}: code {1}"
+  },
+  {
+    "s": "[PawnIO] pnputil /disable-device {0}: код {1}",
+    "t": "[PawnIO] pnputil /disable-device {0}: code {1}"
+  },
+  {
+    "s": "[PawnIO] pnputil /enable-device {0}: код {1}",
+    "t": "[PawnIO] pnputil /enable-device {0}: code {1}"
   },
   {
     "s": "[PawnIO] pnputil /remove-device {0}: код {1}",
@@ -1812,6 +1832,10 @@
     "t": "Antivirus for protection against malware."
   },
   {
+    "s": "Античитов игр на этом компьютере не найдено.",
+    "t": "No game anti-cheat systems were found on this computer."
+  },
+  {
     "s": "Аппаратных ошибок (WHEA): {0}. Сбоев видеодрайвера: {1}.",
     "t": "Hardware errors (WHEA): {0}. Display driver crashes: {1}."
   },
@@ -2504,6 +2528,10 @@
     "t": "Applies to the client as well. English is a separate language pack: it is downloaded when you select it and applied after a restart."
   },
   {
+    "s": "Держать драйвер датчиков включённым всегда (нужно, если им пользуется FanControl)",
+    "t": "Keep the sensor driver always on (needed if FanControl uses it)"
+  },
+  {
     "s": "Детальная информация о процессоре, памяти и материнской плате.",
     "t": "Detailed information about the processor, memory, and motherboard."
   },
@@ -2558,6 +2586,10 @@
   {
     "s": "Для датчиков процессора нужен драйвер PawnIO.\n\n• Это драйвер ядра стороннего автора (namazso) с открытым исходным кодом, подписанный Microsoft. Его же используют LibreHardwareMonitor, FanControl и OpenRGB.\n• Он ставится через winget из официального пакета, после установки Ven4Tools проверит подпись.\n• Удалить его можно в любой момент кнопкой «Удалить драйвер» — полностью, вместе с пакетом в хранилище драйверов.\n\nНекоторые онлайн-игры с античитом могут отказываться запускаться, пока в системе есть драйверы ядра для датчиков. Если это случится — удалите драйвер.\n\nУстановить драйвер?",
     "t": "CPU sensors need the PawnIO driver.\n\n• It is an open-source kernel driver by a third-party author (namazso), signed by Microsoft. LibreHardwareMonitor, FanControl and OpenRGB use it too.\n• It is installed through winget from the official package; after installation Ven4Tools will check its signature.\n• You can remove it at any time with the “Remove driver” button — completely, together with the package in the driver store.\n\nSome online games with anti-cheat may refuse to start while kernel drivers for sensors are present. If that happens, remove the driver.\n\nInstall the driver?"
+  },
+  {
+    "s": "Для датчиков процессора нужен драйвер PawnIO. Он необязателен: без него работают оверлей, FPS, видеокарта и диски — пропадут только температуры и частоты процессора и вентиляторы платы.\n\n• Драйвер ядра стороннего автора (namazso) с открытым исходным кодом, подписанный Microsoft. Его же используют FanControl, LibreHardwareMonitor и OpenRGB.\n• Ставится через winget из официального пакета (если GitHub недоступен — та же версия с сайта Ven4Tools), подпись проверяется.\n• Включается только пока открыты датчики или оверлей и после перезагрузки Windows не загружается — античиты, которые проверяют драйверы при загрузке, его не увидят.\n• Когда запускается игра с античитом, Ven4Tools сам выключает драйвер и скрывает оверлей.\n• Удаляется полностью одной кнопкой.\n\n{0}\n\nУстановить драйвер?",
+    "t": "CPU sensors need the PawnIO driver. It is optional: without it the overlay, FPS, graphics card and disks work — only CPU temperatures and clocks and motherboard fans disappear.\n\n• An open-source kernel driver by a third-party author (namazso), signed by Microsoft. FanControl, LibreHardwareMonitor and OpenRGB use it too.\n• Installed through winget from the official package (if GitHub is unavailable, the same version from the Ven4Tools site); the signature is checked.\n• It is on only while sensors or the overlay are open and is not loaded after Windows restarts — anti-cheat systems that check drivers at boot will not see it.\n• When a game with anti-cheat starts, Ven4Tools turns the driver off and hides the overlay automatically.\n• Removed completely with one button.\n\n{0}\n\nInstall the driver?"
   },
   {
     "s": "Для дома",
@@ -2664,8 +2696,28 @@
     "t": "Windows updates available"
   },
   {
+    "s": "Драйвер будет загружаться при каждом запуске Windows. Это нужно, если им пользуются другие программы (например, FanControl).\n\nАнтичиты, которые проверяют драйверы с момента загрузки Windows, будут его видеть. Если игра откажется запускаться — снимите эту галочку и перезагрузите компьютер.\n\nДержать драйвер включённым всегда?",
+    "t": "The driver will load every time Windows starts. This is needed if other programs use it (for example, FanControl).\n\nAnti-cheat systems that check drivers from Windows boot will see it. If a game refuses to start, clear this checkbox and restart the computer.\n\nKeep the driver always on?"
+  },
+  {
     "s": "Драйвер датчиков",
     "t": "Sensor driver"
+  },
+  {
+    "s": "Драйвер датчиков (PawnIO) включён, пока открыты датчики, и выключится, когда вы уйдёте из раздела и выключите оверлей.",
+    "t": "The sensor driver (PawnIO) is on while sensors are open and will turn off when you leave this section and turn the overlay off."
+  },
+  {
+    "s": "Драйвер датчиков (PawnIO) включён: им пользуется {0}.",
+    "t": "The sensor driver (PawnIO) is on: it is used by {0}."
+  },
+  {
+    "s": "Драйвер датчиков (PawnIO) установлен и включён всегда — так попросили в настройке ниже.",
+    "t": "The sensor driver (PawnIO) is installed and always on, as set in the option below."
+  },
+  {
+    "s": "Драйвер датчиков (PawnIO) установлен и выключен. Он включается только пока открыты датчики или оверлей и после перезагрузки Windows не загружается.",
+    "t": "The sensor driver (PawnIO) is installed and off. It turns on only while sensors or the overlay are open and is not loaded after Windows restarts."
   },
   {
     "s": "Драйвер датчиков (PawnIO) установлен, но не запущен — перезагрузите компьютер.",
@@ -2674,6 +2726,14 @@
   {
     "s": "Драйвер датчиков (PawnIO) установлен: видны температуры и частоты процессора и вентиляторы платы.",
     "t": "The sensor driver (PawnIO) is installed: CPU temperatures and clocks and motherboard fans are visible."
+  },
+  {
+    "s": "Драйвер датчиков выключен",
+    "t": "Sensor driver turned off"
+  },
+  {
+    "s": "Драйвер датчиков и FACEIT",
+    "t": "Sensor driver and FACEIT"
   },
   {
     "s": "Драйвер датчиков удалён полностью.",
@@ -2962,6 +3022,18 @@
   {
     "s": "Запустите тест, чтобы увидеть разбор результата",
     "t": "Run the test to see the result breakdown"
+  },
+  {
+    "s": "Запущена игра с античитом {0}. Драйвер датчиков процессора загружался после старта Windows. Если игра не запустится или сообщит о несовместимом драйвере — перезагрузите компьютер: драйвер уже выключен и после перезагрузки не загрузится.",
+    "t": "A game with {0} anti-cheat has started. The CPU sensor driver was loaded after Windows started. If the game does not start or reports an incompatible driver, restart the computer: the driver is already off and will not load after the restart."
+  },
+  {
+    "s": "Запущена игра с античитом {0}. Оверлей скрыт, чтобы античит не принял его за постороннюю программу. Разрешить его в таких играх можно галочкой в «Диагностике» — на свой риск.",
+    "t": "A game with {0} anti-cheat has started. The overlay is hidden so the anti-cheat does not take it for a foreign program. You can allow it in such games with a checkbox in Diagnostics — at your own risk."
+  },
+  {
+    "s": "Запущена игра с античитом {0}. Разрешить оверлей в таких играх можно галочкой в «Диагностике» — на свой риск.",
+    "t": "A game with {0} anti-cheat is running. You can allow the overlay in such games with a checkbox in Diagnostics — at your own risk."
   },
   {
     "s": "Защищённая частная сеть между своими устройствами: доступ к домашнему или рабочему компьютеру без проброса портов.",
@@ -3530,6 +3602,14 @@
   {
     "s": "На томе {0} недостаточно свободного места: нужно {1} ГиБ, доступно {2} ГиБ. Освободите место или выберите тестовый файл меньшего размера.",
     "t": "Not enough free space on volume {0}: {1} GiB needed, {2} GiB available. Free up space or choose a smaller test file."
+  },
+  {
+    "s": "На этой версии Windows драйвер датчиков не ставится: на сборках Windows 10 старше 2004 он вызывал синий экран. Без драйвера работают оверлей, FPS, видеокарта и диски.",
+    "t": "The sensor driver is not installed on this version of Windows: on Windows 10 builds older than 2004 it caused a blue screen. Without the driver the overlay, FPS, graphics card and disks work."
+  },
+  {
+    "s": "На этом компьютере найдены античиты:\n{0}",
+    "t": "Anti-cheat systems found on this computer:\n{0}"
   },
   {
     "s": "На этом накопителе нет тома, пригодного для теста. Тест выполняется через файл, поэтому нужен размеченный том с файловой системой.",
@@ -4352,8 +4432,24 @@
     "t": "Xbox overlay for recording and screenshots. Does not affect gameplay."
   },
   {
+    "s": "Оверлей и античиты",
+    "t": "Overlay and anti-cheat"
+  },
+  {
     "s": "Оверлей мониторинга состояния оборудования (FPS, температуры, нагрузка) поверх игры или на рабочем столе.",
     "t": "Hardware monitoring overlay (FPS, temperatures, load) on top of a game or on the desktop."
+  },
+  {
+    "s": "Оверлей не включён",
+    "t": "Overlay not turned on"
+  },
+  {
+    "s": "Оверлей не внедряется в игру, но античиты видят окна поверх игры. Случаев блокировки за такие окна не известно, но и гарантий никто не даёт.\n\nПоказывать оверлей в играх с античитом на свой риск?",
+    "t": "The overlay does not inject into the game, but anti-cheat systems see windows on top of the game. No bans for such windows are known, but nobody gives guarantees either.\n\nShow the overlay in games with anti-cheat at your own risk?"
+  },
+  {
+    "s": "Оверлей скрыт",
+    "t": "Overlay hidden"
   },
   {
     "s": "Оверлей — маленькое окно в углу экрана поверх игры: FPS, температура и загрузка процессора и видеокарты. Щелчки проходят сквозь него, в игру ничего не внедряется. Виден в оконном режиме и «полноэкранном в окне».",
@@ -5096,6 +5192,14 @@
     "t": "According to Microsoft documentation it works like “Enabled”."
   },
   {
+    "s": "По умолчанию драйвер включается только пока открыты датчики или оверлей и после перезагрузки Windows не загружается. Включённый всегда драйвер видят античиты, которые проверяют драйверы при загрузке Windows.",
+    "t": "By default the driver turns on only while sensors or the overlay are open and is not loaded after Windows restarts. An always-on driver is visible to anti-cheat systems that check drivers at Windows boot."
+  },
+  {
+    "s": "По умолчанию оверлей сам скрывается, когда запущена игра с античитом (Vanguard, Easy Anti-Cheat, BattlEye, FACEIT и др.): античиты видят окна поверх игры.",
+    "t": "By default the overlay hides itself when a game with anti-cheat starts (Vanguard, Easy Anti-Cheat, BattlEye, FACEIT, etc.): anti-cheat systems see windows on top of the game."
+  },
+  {
     "s": "Повторит установку этого приложения тем же способом, что и обычная установка из каталога. Кнопка недоступна, пока идёт другая установка.",
     "t": "Retries installing this app the same way as a regular install from the catalog. The button is unavailable while another installation is running."
   },
@@ -5232,6 +5336,10 @@
     "t": "Confirm installation"
   },
   {
+    "s": "Подтверждённых конфликтов с этими античитами не известно, но и гарантий никто не даёт.",
+    "t": "No confirmed conflicts with these anti-cheat systems are known, but nobody gives guarantees either."
+  },
+  {
     "s": "Позже",
     "t": "Later"
   },
@@ -5294,6 +5402,10 @@
   {
     "s": "Показывать Венчика в оверлее: жарко, нормально или холодно — по температурам",
     "t": "Show Venchik in the overlay: hot, fine or cold — by temperatures"
+  },
+  {
+    "s": "Показывать оверлей в играх с античитом (на свой риск)",
+    "t": "Show the overlay in games with anti-cheat (at your own risk)"
   },
   {
     "s": "Показывать уведомления о завершении установки",
@@ -6590,6 +6702,10 @@
   {
     "s": "Температура",
     "t": "Temperature"
+  },
+  {
+    "s": "Температуры и частоты процессора и датчики платы Windows без драйвера не отдаёт. Драйвер необязателен: без него работают оверлей, FPS, видеокарта и диски. Ставится только по кнопке и удаляется так же.",
+    "t": "Windows does not expose CPU temperatures and clocks or motherboard sensors without a driver. The driver is optional: without it the overlay, FPS, graphics card and disks work. It is installed only with the button and removed the same way."
   },
   {
     "s": "Температуры и частоты процессора и датчики платы Windows без драйвера не отдаёт. Драйвер ставится только по кнопке и удаляется так же.",
@@ -8440,6 +8556,10 @@
     "t": "⚠ Chocolatey did not respond in time, showing Winget results"
   },
   {
+    "s": "⚠ FACEIT отказывался запускаться, пока драйвер PawnIO установлен (не загружен — именно установлен). Автор драйвера считает это исправленным, но подтверждений нет. Если вы играете через FACEIT — драйвер лучше не ставить.",
+    "t": "⚠ FACEIT refused to start while the PawnIO driver was installed (not loaded — just installed). The driver author considers this fixed, but there is no confirmation. If you play through FACEIT, better not to install the driver."
+  },
+  {
     "s": "⚠ SHA256 не совпал — пробуем следующий источник",
     "t": "⚠ SHA256 mismatch — trying the next source"
   },
@@ -9784,6 +9904,18 @@
     "t": "\uD83C\uDF21 Add driver for CPU sensors"
   },
   {
+    "s": "\uD83C\uDF21 Драйвер датчиков включён на время работы датчиков: {0}",
+    "t": "\uD83C\uDF21 Sensor driver turned on while sensors are in use: {0}"
+  },
+  {
+    "s": "\uD83C\uDF21 Драйвер датчиков выключен до следующего использования: {0}",
+    "t": "\uD83C\uDF21 Sensor driver turned off until next use: {0}"
+  },
+  {
+    "s": "\uD83C\uDF21 Драйвер датчиков оставлен включённым: им пользуется {0}",
+    "t": "\uD83C\uDF21 Sensor driver left on: it is used by {0}"
+  },
+  {
     "s": "\uD83C\uDF21 Драйвер датчиков: {0}",
     "t": "\uD83C\uDF21 Sensor driver: {0}"
   },
@@ -10778,6 +10910,18 @@
   {
     "s": "\uD83D\uDEE0 Восстановление файлов клиента...",
     "t": "\uD83D\uDEE0 Repairing client files..."
+  },
+  {
+    "s": "\uD83D\uDEE1 Драйвер датчиков не включён: запущена игра с античитом {0}",
+    "t": "\uD83D\uDEE1 Sensor driver not turned on: a game with {0} anti-cheat is running"
+  },
+  {
+    "s": "\uD83D\uDEE1 Запущена игра с античитом {0}",
+    "t": "\uD83D\uDEE1 A game with {0} anti-cheat has started"
+  },
+  {
+    "s": "\uD83D\uDEE1 Оверлей не включён: запущена игра с античитом {0}",
+    "t": "\uD83D\uDEE1 Overlay not turned on: a game with {0} anti-cheat is running"
   },
   {
     "s": "\uD83D\uDEE1️ Windows Update: найдено патчей — {0}, из них скачано — {1}",

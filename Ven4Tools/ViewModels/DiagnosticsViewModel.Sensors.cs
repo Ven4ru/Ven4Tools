@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
@@ -144,11 +145,22 @@ namespace Ven4Tools.ViewModels
                 _sensorTimer.Tick += async (_, _) => await ReadSensorsAsync();
             }
             _sensorTimer.Start();
-            _ = ReadSensorsAsync();
+            _ = AcquireAndReadAsync();
+        }
+
+        private async Task AcquireAndReadAsync()
+        {
+            await HardwareSensorService.Instance.AcquireAsync("diagnostics");
+            RefreshSensorDriverState();
+            await ReadSensorsAsync();
         }
 
         /// <summary>Вкладка скрыта: опрос останавливается.</summary>
-        public void StopSensors() => _sensorTimer?.Stop();
+        public void StopSensors()
+        {
+            _sensorTimer?.Stop();
+            _ = HardwareSensorService.Instance.ReleaseAsync("diagnostics");
+        }
 
         private async Task ReadSensorsAsync()
         {
@@ -179,25 +191,99 @@ namespace Ven4Tools.ViewModels
             bool installed = PawnIoDriver.IsInstalled();
             ShowInstallSensorDriver = !installed;
             ShowRemoveSensorDriver = installed;
-            SensorDriverText = installed
-                ? (PawnIoDriver.IsRunning()
-                    ? "Драйвер датчиков (PawnIO) установлен: видны температуры и частоты процессора и вентиляторы платы."
-                    : "Драйвер датчиков (PawnIO) установлен, но не запущен — перезагрузите компьютер.")
-                : "Температуры и частоты процессора и датчики платы Windows без драйвера не отдаёт. Драйвер ставится только по кнопке и удаляется так же.";
+            if (!installed)
+            {
+                SensorDriverText = "Температуры и частоты процессора и датчики платы Windows без драйвера не отдаёт. Драйвер необязателен: без него работают оверлей, FPS, видеокарта и диски. Ставится только по кнопке и удаляется так же.";
+                return;
+            }
+            var others = AntiCheatDetector.OtherPawnIoUsers();
+            SensorDriverText = ProfileService.Current.SensorDriverAlwaysOn
+                ? "Драйвер датчиков (PawnIO) установлен и включён всегда — так попросили в настройке ниже."
+                : PawnIoDriver.IsDeviceEnabled()
+                    ? (others.Count > 0
+                        ? $"Драйвер датчиков (PawnIO) включён: им пользуется {string.Join(", ", others)}."
+                        : "Драйвер датчиков (PawnIO) включён, пока открыты датчики, и выключится, когда вы уйдёте из раздела и выключите оверлей.")
+                    : "Драйвер датчиков (PawnIO) установлен и выключен. Он включается только пока открыты датчики или оверлей и после перезагрузки Windows не загружается.";
+        }
+
+        /// <summary>Показывать оверлей в играх с античитом (по умолчанию — нет).</summary>
+        public bool OverlayInAntiCheatGames
+        {
+            get => ProfileService.Current.OverlayInAntiCheatGames;
+            set
+            {
+                if (ProfileService.Current.OverlayInAntiCheatGames == value) return;
+                if (value && MessageBox.Show(
+                        "Оверлей не внедряется в игру, но античиты видят окна поверх игры. Случаев блокировки за такие окна не известно, но и гарантий никто не даёт.\n\nПоказывать оверлей в играх с античитом на свой риск?",
+                        "Оверлей и античиты", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                {
+                    OnPropertyChanged();
+                    return;
+                }
+                ProfileService.Current.OverlayInAntiCheatGames = value;
+                ProfileService.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>Держать драйвер датчиков включённым всегда (по умолчанию — нет).</summary>
+        public bool SensorDriverAlwaysOn
+        {
+            get => ProfileService.Current.SensorDriverAlwaysOn;
+            set
+            {
+                if (ProfileService.Current.SensorDriverAlwaysOn == value) return;
+                if (value && MessageBox.Show(
+                        "Драйвер будет загружаться при каждом запуске Windows. Это нужно, если им пользуются другие программы (например, FanControl).\n\nАнтичиты, которые проверяют драйверы с момента загрузки Windows, будут его видеть. Если игра откажется запускаться — снимите эту галочку и перезагрузите компьютер.\n\nДержать драйвер включённым всегда?",
+                        "Драйвер датчиков", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                {
+                    OnPropertyChanged();
+                    return;
+                }
+                ProfileService.Current.SensorDriverAlwaysOn = value;
+                ProfileService.Save();
+                OnPropertyChanged();
+                _ = value
+                    ? PawnIoDriver.EnableDeviceAsync(KitCommandRunner.Default)
+                    : HardwareSensorService.Instance.ReleaseDriverAsync();
+                RefreshSensorDriverState();
+            }
         }
 
         private async Task InstallSensorDriverAsync()
         {
+            // PawnIO 2.2.0 исправлял синий экран на старых Windows 10 (до версии 2004):
+            // на них драйвер не предлагаем вовсе.
+            if (Environment.OSVersion.Version.Build < PawnIoDriver.MinWindowsBuild)
+            {
+                MessageBox.Show(
+                    "На этой версии Windows драйвер датчиков не ставится: на сборках Windows 10 старше 2004 он вызывал синий экран. " +
+                    "Без драйвера работают оверлей, FPS, видеокарта и диски.",
+                    "Драйвер датчиков", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var games = AntiCheatDetector.Installed();
+            // Окно собирается из кусков — каждый переводится сам, а потом подставляется в шаблон:
+            // склеенный русский текст переводчик целиком не узнал бы.
+            string gamesText = games.Count == 0
+                ? Tr("Античитов игр на этом компьютере не найдено.")
+                : string.Format(Tr("На этом компьютере найдены античиты:\n{0}"),
+                      string.Join("\n", games.Select(g => "  • " + Tr(AntiCheatDetector.Name(g))))) + "\n\n" +
+                  (games.Contains(AntiCheat.Faceit)
+                      ? Tr("⚠ FACEIT отказывался запускаться, пока драйвер PawnIO установлен (не загружен — именно установлен). Автор драйвера считает это исправленным, но подтверждений нет. Если вы играете через FACEIT — драйвер лучше не ставить.")
+                      : Tr("Подтверждённых конфликтов с этими античитами не известно, но и гарантий никто не даёт."));
+
             var answer = MessageBox.Show(
-                "Для датчиков процессора нужен драйвер PawnIO.\n\n" +
-                "• Это драйвер ядра стороннего автора (namazso) с открытым исходным кодом, подписанный Microsoft. " +
-                "Его же используют LibreHardwareMonitor, FanControl и OpenRGB.\n" +
-                "• Он ставится через winget из официального пакета, после установки Ven4Tools проверит подпись.\n" +
-                "• Удалить его можно в любой момент кнопкой «Удалить драйвер» — полностью, вместе с пакетом в хранилище драйверов.\n\n" +
-                "Некоторые онлайн-игры с античитом могут отказываться запускаться, пока в системе есть драйверы ядра для датчиков. " +
-                "Если это случится — удалите драйвер.\n\n" +
-                "Установить драйвер?",
-                "Драйвер датчиков", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                string.Format(Tr("Для датчиков процессора нужен драйвер PawnIO. Он необязателен: без него работают оверлей, FPS, видеокарта и диски — пропадут только температуры и частоты процессора и вентиляторы платы.\n\n" +
+                    "• Драйвер ядра стороннего автора (namazso) с открытым исходным кодом, подписанный Microsoft. Его же используют FanControl, LibreHardwareMonitor и OpenRGB.\n" +
+                    "• Ставится через winget из официального пакета (если GitHub недоступен — та же версия с сайта Ven4Tools), подпись проверяется.\n" +
+                    "• Включается только пока открыты датчики или оверлей и после перезагрузки Windows не загружается — античиты, которые проверяют драйверы при загрузке, его не увидят.\n" +
+                    "• Когда запускается игра с античитом, Ven4Tools сам выключает драйвер и скрывает оверлей.\n" +
+                    "• Удаляется полностью одной кнопкой.\n\n{0}\n\nУстановить драйвер?"), gamesText),
+                Tr("Драйвер датчиков"), MessageBoxButton.YesNo,
+                games.Contains(AntiCheat.Faceit) ? MessageBoxImage.Warning : MessageBoxImage.Question,
+                games.Contains(AntiCheat.Faceit) ? MessageBoxResult.No : MessageBoxResult.Yes);
             if (answer != MessageBoxResult.Yes) return;
 
             IsChangingSensorDriver = true;

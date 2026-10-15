@@ -25,6 +25,9 @@ namespace Ven4Tools.Services
     {
         public const string ServiceName = "PawnIO";
         public const string WingetId = "namazso.PawnIO";
+
+        /// <summary>Windows 10 2004 (19041): на более старых сборках PawnIO до 2.2.0 вызывал синий экран.</summary>
+        public const int MinWindowsBuild = 19041;
         private const string DeviceEnumKey = @"SYSTEM\CurrentControlSet\Enum\ROOT\PAWNIO";
 
         // ServiceController.GetServices() служб драйверов ядра не видит (только обычные
@@ -65,6 +68,63 @@ namespace Ven4Tools.Services
                 return service.Status == ServiceControllerStatus.Running;
             }
             catch { return false; }
+        }
+
+        // ── Драйвер «только когда нужен» ─────────────────────────────────────────
+        // Проверено на стенде 15.10.2026: отключение устройства ROOT\PAWNIO\0000 выгружает
+        // драйвер сразу (служба останавливается за десятки миллисекунд), включение — грузит
+        // обратно; отключённое устройство не грузится и после перезагрузки. Поэтому по
+        // умолчанию устройство включено только пока Ven4Tools читает датчики процессора:
+        // античиты, которые смотрят драйверы с момента загрузки Windows (Vanguard), после
+        // перезагрузки его не увидят, если датчиками в этом сеансе не пользовались.
+
+        private const uint ConfigFlagDisabled = 0x1;
+
+        /// <summary>Устройство драйвера включено (выключенное не грузится ни сейчас, ни при старте Windows).</summary>
+        public static bool IsDeviceEnabled()
+        {
+            foreach (string instance in DeviceInstances())
+            {
+                using var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{instance}");
+                if (key?.GetValue("ConfigFlags") is int flags && (flags & ConfigFlagDisabled) != 0) continue;
+                if (key != null) return true;
+            }
+            return false;
+        }
+
+        /// <summary>Загружался ли драйвер после последнего старта Windows (им или нами).</summary>
+        public static bool LoadedSinceBoot()
+        {
+            if (IsRunning()) return true;
+            var bootUtc = DateTime.UtcNow - TimeSpan.FromMilliseconds(Environment.TickCount64);
+            return ProfileService.Current.PawnIoLastEnabledUtc is { } last && last > bootUtc;
+        }
+
+        public static async Task<bool> EnableDeviceAsync(IKitCommandRunner runner, CancellationToken ct = default)
+        {
+            bool ok = true;
+            foreach (string instance in DeviceInstances())
+            {
+                var (code, _) = await runner.RunAsync(TrustedExecutablePaths.PnpUtilExe, new[] { "/enable-device", instance }, TimeSpan.FromSeconds(30), ct);
+                AppLogger.Write($"[PawnIO] pnputil /enable-device {instance}: код {code}");
+                ok &= code == 0;
+            }
+            for (int i = 0; i < 20 && !IsRunning(); i++) await Task.Delay(100, ct);
+            ProfileService.Current.PawnIoLastEnabledUtc = DateTime.UtcNow;
+            ProfileService.Save();
+            return ok && IsRunning();
+        }
+
+        public static async Task<bool> DisableDeviceAsync(IKitCommandRunner runner, CancellationToken ct = default)
+        {
+            bool ok = true;
+            foreach (string instance in DeviceInstances())
+            {
+                var (code, _) = await runner.RunAsync(TrustedExecutablePaths.PnpUtilExe, new[] { "/disable-device", instance }, TimeSpan.FromSeconds(30), ct);
+                AppLogger.Write($"[PawnIO] pnputil /disable-device {instance}: код {code}");
+                ok &= code == 0;
+            }
+            return ok;
         }
 
         /// <summary>Файл драйвера по записи службы; null — службы нет.</summary>
