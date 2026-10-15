@@ -54,6 +54,16 @@ namespace Ven4Tools.Services
         {
             if (_window != null) return;
             EnsureHotkey();
+            // В игре с античитом оверлей не включается, пока человек сам не разрешил это
+            // в «Диагностике»: окно поверх игры античиты видят.
+            if (AntiCheatDetector.Active() is { } game && !ProfileService.Current.OverlayInAntiCheatGames)
+            {
+                AppLogger.Write($"🛡 Оверлей не включён: запущена игра с античитом {AntiCheatDetector.ShortName(game)}");
+                AntiCheatGuard.Notify?.Invoke(Tr("Оверлей не включён"),
+                    string.Format(Tr("Запущена игра с античитом {0}. Разрешить оверлей в таких играх можно галочкой в «Диагностике» — на свой риск."), AntiCheatDetector.ShortName(game)));
+                return;
+            }
+            _ = HardwareSensorService.Instance.AcquireAsync("overlay");
             IsExtended = false;
             _session = new OverlaySessionMax();
             _cpuLoad.Clear(); _gpuLoad.Clear();
@@ -77,6 +87,7 @@ namespace Ven4Tools.Services
             _window = null;
             IsExtended = false;
             PresentMonService.Instance.Stop();
+            _ = HardwareSensorService.Instance.ReleaseAsync("overlay");
             AppLogger.Write("🎮 Оверлей выключен");
             StateChanged?.Invoke();
         }

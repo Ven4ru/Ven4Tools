@@ -89,6 +89,17 @@ namespace Ven4Tools
                 return;
             }
 
+            // Защита игр с античитом: уведомления — в трее, не окном поверх игры. Драйвер
+            // датчиков, оставшийся включённым после сбоя прошлого запуска, выключается сразу.
+            AntiCheatGuard.Notify = (title, body) => _tray.ShowBalloon(10000, title, body);
+            AntiCheatGuard.Start();
+            _ = HardwareSensorService.Instance.ReleaseDriverAsync();
+            // Ждём в фоновом потоке: продолжения внутри ReleaseDriverAsync иначе ждали бы
+            // этот же, заблокированный поток окна, и выход висел бы до таймаута.
+            Application.Current.Exit += (_, _) =>
+                System.Threading.Tasks.Task.Run(() => HardwareSensorService.Instance.ReleaseDriverAsync())
+                    .Wait(TimeSpan.FromSeconds(5));
+
             // Оболочку выбираем до первой навигации: ApplyUiMode раскладывает кнопки меню.
             ApplyUiMode();
             // Каталог создаётся в обоих видах: его загрузка стартует здесь, а не при первом

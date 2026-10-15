@@ -56,6 +56,22 @@ namespace Ven4Tools.Models
         /// <summary>Венчик в оверлее поверх игр: жарко, нормально или холодно по температурам.</summary>
         public bool OverlayShowMascot { get; set; } = true;
 
+        /// <summary>
+        /// Показывать оверлей в играх с античитом. По умолчанию — нет: оверлей сам скрывается,
+        /// как только запущена защищённая игра (окно поверх игры античиты видят).
+        /// </summary>
+        public bool OverlayInAntiCheatGames { get; set; } = false;
+
+        /// <summary>
+        /// Держать драйвер датчиков PawnIO включённым всегда. По умолчанию — нет: устройство
+        /// включается только пока Ven4Tools читает датчики процессора. Включать, если драйвер
+        /// нужен и другим программам (FanControl).
+        /// </summary>
+        public bool SensorDriverAlwaysOn { get; set; } = false;
+
+        /// <summary>Когда Ven4Tools последний раз включал устройство драйвера датчиков (UTC).</summary>
+        public System.DateTime? PawnIoLastEnabledUtc { get; set; }
+
         // Первый запуск
         public bool HasSelectedCategory { get; set; } = false;
 

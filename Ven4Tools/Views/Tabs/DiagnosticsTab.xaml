@@ -130,6 +130,15 @@
                                     Visibility="{Binding ShowInstallFpsCounter, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding InstallFpsCounterCommand}"/>
                         </StackPanel>
+                        <CheckBox x:Name="chkOverlayInAntiCheat" Content="Показывать оверлей в играх с античитом (на свой риск)"
+                                  ToolTip="По умолчанию оверлей сам скрывается, когда запущена игра с античитом (Vanguard, Easy Anti-Cheat, BattlEye, FACEIT и др.): античиты видят окна поверх игры."
+                                  IsChecked="{Binding OverlayInAntiCheatGames, Mode=TwoWay}" Margin="0,10,0,0"
+                                  Foreground="{DynamicResource TextPrimary}"/>
+                        <CheckBox x:Name="chkSensorDriverAlwaysOn" Content="Держать драйвер датчиков включённым всегда (нужно, если им пользуется FanControl)"
+                                  ToolTip="По умолчанию драйвер включается только пока открыты датчики или оверлей и после перезагрузки Windows не загружается. Включённый всегда драйвер видят античиты, которые проверяют драйверы при загрузке Windows."
+                                  IsChecked="{Binding SensorDriverAlwaysOn, Mode=TwoWay}" Margin="0,6,0,0"
+                                  Visibility="{Binding ShowRemoveSensorDriver, Converter={StaticResource BoolToVis}}"
+                                  Foreground="{DynamicResource TextPrimary}"/>
                         <CheckBox x:Name="chkOverlayMascot" Content="Показывать Венчика в оверлее: жарко, нормально или холодно — по температурам"
                                   ToolTip="Рядом с цифрами сидит Венчик: вытирает пот, когда процессор или видеокарта сильно греются, показывает лайк при нормальной температуре и мёрзнет в шарфе, когда компьютер почти без нагрузки."
                                   IsChecked="{Binding ShowOverlayMascot, Mode=TwoWay}" Margin="0,10,0,0"
