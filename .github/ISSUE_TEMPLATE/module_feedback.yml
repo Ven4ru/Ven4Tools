@@ -1,0 +1,59 @@
+name: 🧪 Отзыв о модуле «Датчики и оверлей»
+description: Экспериментальный модуль в «Диагностике» — датчики, оверлей поверх игр, счётчик FPS
+labels: ["feedback", "experiment"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо, что попробовали экспериментальный модуль. Сейчас он работает без драйвера ядра, чтобы не мешать играм с античитом, поэтому температур и частот процессора и вентиляторов платы в нём пока нет. Ваш отзыв поможет решить, как развивать модуль дальше.
+
+  - type: input
+    id: version
+    attributes:
+      label: Версия Ven4Tools
+      description: Подставляется сама, если вы открыли форму из программы
+    validations:
+      required: false
+
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Процессор и видеокарта
+      description: Например, «Intel Core i5-12400F, NVIDIA RTX 3060». Можно скопировать из «Диагностики» → «Скопировать информацию»
+
+  - type: checkboxes
+    id: used
+    attributes:
+      label: Чем пользовались
+      options:
+        - label: Блок «Датчики» в «Диагностике»
+        - label: Компактный оверлей поверх игр
+        - label: Расширенный оверлей (ядра, графики, максимумы за сеанс)
+        - label: Счётчик FPS (Intel PresentMon)
+        - label: Венчик в оверлее
+
+  - type: dropdown
+    id: driver
+    attributes:
+      label: Нужны ли вам температуры и частоты процессора?
+      description: Для них нужен драйвер ядра PawnIO. Некоторые игры с античитом (например, через FACEIT) могут не запускаться, пока такой драйвер установлен — поэтому сейчас его нет.
+      options:
+        - Да, нужны — готов поставить драйвер по кнопке
+        - Нужны, но только если он не помешает играм
+        - Не нужны, хватает того, что есть
+    validations:
+      required: true
+
+  - type: textarea
+    id: missing
+    attributes:
+      label: Чего не хватает и что мешает
+      description: Каких цифр нет, что неудобно, где оверлей неправ или не виден
+    validations:
+      required: true
+
+  - type: textarea
+    id: games
+    attributes:
+      label: В каких играх пробовали оверлей
+      description: Особенно интересны игры с античитом — Valorant, игры на FACEIT, Fortnite, Apex, PUBG, Rainbow Six и другие. Скрывался ли оверлей сам?

@@ -60,7 +60,7 @@ namespace Ven4Tools.Tests
             var cpu = cards.Single();
 
             Assert.Equal("Процессор · " + Cpu, cpu.Title);
-            Assert.Equal("нужен драйвер датчиков", Value(cpu, "Температура"));
+            Assert.Equal(PawnIoDriver.FeatureEnabled ? "нужен драйвер датчиков" : "недоступна без драйвера ядра", Value(cpu, "Температура"));
             Assert.Equal("≈ 2960 МГц (оценка Windows)", Value(cpu, "Частота"));
             Assert.Equal("6 %", Value(cpu, "Загрузка"));
             // Нулевое потребление без драйвера — не показание, строки нет.

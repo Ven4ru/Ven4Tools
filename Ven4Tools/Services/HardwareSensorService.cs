@@ -92,7 +92,7 @@ namespace Ven4Tools.Services
         {
             bool first;
             lock (_users) { first = _users.Count == 0; _users.Add(who); }
-            if (!first || !PawnIoDriver.IsInstalled() || PawnIoDriver.IsDeviceEnabled()) return;
+            if (!first || !PawnIoDriver.FeatureEnabled || !PawnIoDriver.IsInstalled() || PawnIoDriver.IsDeviceEnabled()) return;
             try
             {
                 // Пока идёт игра с античитом, драйвер не включаем: оверлей и без него покажет FPS и видеокарту.
@@ -125,7 +125,7 @@ namespace Ven4Tools.Services
             await ResetAsync();
             try
             {
-                if (!PawnIoDriver.IsInstalled() || ProfileService.Current.SensorDriverAlwaysOn || !PawnIoDriver.IsDeviceEnabled())
+                if (!PawnIoDriver.FeatureEnabled || !PawnIoDriver.IsInstalled() || ProfileService.Current.SensorDriverAlwaysOn || !PawnIoDriver.IsDeviceEnabled())
                     return;
                 var others = AntiCheatDetector.OtherPawnIoUsers();
                 if (others.Count > 0)

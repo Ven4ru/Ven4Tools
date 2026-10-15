@@ -24,6 +24,16 @@ namespace Ven4Tools.Services
     public static class PawnIoDriver
     {
         public const string ServiceName = "PawnIO";
+        /// <summary>
+        /// Установка и управление драйвером в этой сборке. Выключено (решение владельца
+        /// 15.10.2026): пока конфликты драйвера с античитами не проверены на играх, в
+        /// программе экспериментальный модуль без драйвера — без кнопки установки, без
+        /// включения и выключения устройства. Если PawnIO уже поставила другая программа
+        /// (FanControl и т. п.), библиотека датчиков им пользуется только на чтение, а сам
+        /// драйвер Ven4Tools не трогает. Полная версия — ветка feat/hardware-sensors (PR №108).
+        /// </summary>
+        public static bool FeatureEnabled { get; } = false;
+
         public const string WingetId = "namazso.PawnIO";
 
         /// <summary>Windows 10 2004 (19041): на более старых сборках PawnIO до 2.2.0 вызывал синий экран.</summary>
