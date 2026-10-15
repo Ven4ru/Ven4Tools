@@ -403,7 +403,9 @@ namespace Ven4Tools
             // «Лицензия» в их число не входит: состояние активации читается с самого
             // компьютера, сеть для этого не нужна.
             btnOfficeTab.Visibility     = online ? Visibility.Visible : Visibility.Collapsed;
-            btnNetworkTab.Visibility    = online ? Visibility.Visible : Visibility.Collapsed;
+            // «Сеть» нужна именно тогда, когда интернет пропал, поэтому без связи она
+            // остаётся. Скрывает её только офлайн режим, включённый самим человеком.
+            btnNetworkTab.Visibility    = OfflineService.IsOffline ? Visibility.Collapsed : Visibility.Visible;
 
             btnHistoryTab.Visibility = Visibility.Visible;
 
@@ -414,7 +416,7 @@ namespace Ven4Tools
                     : "🔌 Офлайн режим — часть вкладок скрыта";
                 AppLogger.Write(reason);
 
-                if (_currentTab is "office" or "network")
+                if (_currentTab == "office" || (_currentTab == "network" && OfflineService.IsOffline))
                     NavigateToCatalog(null, null);
             }
 
@@ -618,9 +620,11 @@ namespace Ven4Tools
 
         private void ShowCategorySelectionIfNeeded()
         {
-            // Тихий режим: выбор режима каталога откладывается до обычного запуска —
-            // модальное окно под свёрнутым клиентом ждало бы ответа, которого не будет.
-            if (App.IsSilentRun) return;
+            // Запуск по заданию (набор с флешки, restore.cmd, тихий режим): выбор режима
+            // каталога откладывается до обычного запуска. В тихом режиме модальное окно
+            // ждало бы ответа, которого не будет, а с окном оно встаёт перед возвратом
+            // набора и задерживает то, ради чего человек запустил набор.
+            if (App.Unattended != null) return;
             if (_categorySelectionShown) return;
             if (ProfileService.Current.HasSelectedCategory) return;
             _categorySelectionShown = true;
