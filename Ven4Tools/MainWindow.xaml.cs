@@ -89,6 +89,17 @@ namespace Ven4Tools
                 return;
             }
 
+            // Защита игр с античитом: уведомления — в трее, не окном поверх игры. Драйвер
+            // датчиков, оставшийся включённым после сбоя прошлого запуска, выключается сразу.
+            AntiCheatGuard.Notify = (title, body) => _tray.ShowBalloon(10000, title, body);
+            AntiCheatGuard.Start();
+            _ = HardwareSensorService.Instance.ReleaseDriverAsync();
+            // Ждём в фоновом потоке: продолжения внутри ReleaseDriverAsync иначе ждали бы
+            // этот же, заблокированный поток окна, и выход висел бы до таймаута.
+            Application.Current.Exit += (_, _) =>
+                System.Threading.Tasks.Task.Run(() => HardwareSensorService.Instance.ReleaseDriverAsync())
+                    .Wait(TimeSpan.FromSeconds(5));
+
             // Оболочку выбираем до первой навигации: ApplyUiMode раскладывает кнопки меню.
             ApplyUiMode();
             // Каталог создаётся в обоих видах: его загрузка стартует здесь, а не при первом
@@ -403,7 +414,9 @@ namespace Ven4Tools
             // «Лицензия» в их число не входит: состояние активации читается с самого
             // компьютера, сеть для этого не нужна.
             btnOfficeTab.Visibility     = online ? Visibility.Visible : Visibility.Collapsed;
-            btnNetworkTab.Visibility    = online ? Visibility.Visible : Visibility.Collapsed;
+            // «Сеть» нужна именно тогда, когда интернет пропал, поэтому без связи она
+            // остаётся. Скрывает её только офлайн режим, включённый самим человеком.
+            btnNetworkTab.Visibility    = OfflineService.IsOffline ? Visibility.Collapsed : Visibility.Visible;
 
             btnHistoryTab.Visibility = Visibility.Visible;
 
@@ -414,7 +427,7 @@ namespace Ven4Tools
                     : "🔌 Офлайн режим — часть вкладок скрыта";
                 AppLogger.Write(reason);
 
-                if (_currentTab is "office" or "network")
+                if (_currentTab == "office" || (_currentTab == "network" && OfflineService.IsOffline))
                     NavigateToCatalog(null, null);
             }
 
@@ -618,9 +631,11 @@ namespace Ven4Tools
 
         private void ShowCategorySelectionIfNeeded()
         {
-            // Тихий режим: выбор режима каталога откладывается до обычного запуска —
-            // модальное окно под свёрнутым клиентом ждало бы ответа, которого не будет.
-            if (App.IsSilentRun) return;
+            // Запуск по заданию (набор с флешки, restore.cmd, тихий режим): выбор режима
+            // каталога откладывается до обычного запуска. В тихом режиме модальное окно
+            // ждало бы ответа, которого не будет, а с окном оно встаёт перед возвратом
+            // набора и задерживает то, ради чего человек запустил набор.
+            if (App.Unattended != null) return;
             if (_categorySelectionShown) return;
             if (ProfileService.Current.HasSelectedCategory) return;
             _categorySelectionShown = true;

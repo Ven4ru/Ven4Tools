@@ -14,7 +14,14 @@ namespace Ven4Tools.Shared
     /// </summary>
     internal static class AuthenticodeVerifier
     {
-        public static bool IsSignedByMicrosoft(string filePath, out string error)
+        public static bool IsSignedByMicrosoft(string filePath, out string error) =>
+            IsSignedByOrganization(filePath, new[] { "Microsoft Corporation" }, out error);
+
+        /// <summary>
+        /// Подпись файла действительна, и издатель (поле O= сертификата встроенной
+        /// подписи) — одна из перечисленных организаций.
+        /// </summary>
+        public static bool IsSignedByOrganization(string filePath, string[] organizations, out string error)
         {
             if (!File.Exists(filePath))
             {
@@ -48,7 +55,7 @@ namespace Ven4Tools.Shared
 #pragma warning disable SYSLIB0057
                 using var certificate = new X509Certificate2(X509Certificate.CreateFromSignedFile(filePath));
 #pragma warning restore SYSLIB0057
-                if (HasExactOrganization(certificate.SubjectName, "Microsoft Corporation"))
+                if (Array.Exists(organizations, o => HasExactOrganization(certificate.SubjectName, o)))
                 {
                     error = "";
                     return true;
