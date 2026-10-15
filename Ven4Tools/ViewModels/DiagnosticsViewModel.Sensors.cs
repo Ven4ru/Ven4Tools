@@ -48,11 +48,90 @@ namespace Ven4Tools.ViewModels
         public RelayCommand InstallSensorDriverCommand { get; private set; } = null!;
         public RelayCommand RemoveSensorDriverCommand { get; private set; } = null!;
 
+        /// <summary>Венчик в оверлее: жарко, нормально или холодно. Запоминается в профиле.</summary>
+        public bool ShowOverlayMascot
+        {
+            get => ProfileService.Current.OverlayShowMascot;
+            set
+            {
+                if (ProfileService.Current.OverlayShowMascot == value) return;
+                ProfileService.Current.OverlayShowMascot = value;
+                ProfileService.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        public RelayCommand ToggleOverlayCommand { get; private set; } = null!;
+        public RelayCommand InstallFpsCounterCommand { get; private set; } = null!;
+
+        private string _overlayButtonText = "";
+        public string OverlayButtonText { get => _overlayButtonText; private set => SetField(ref _overlayButtonText, value); }
+
+        private bool _showInstallFpsCounter;
+        public bool ShowInstallFpsCounter { get => _showInstallFpsCounter; private set => SetField(ref _showInstallFpsCounter, value); }
+
+        private bool _isInstallingFpsCounter;
+        public bool IsInstallingFpsCounter
+        {
+            get => _isInstallingFpsCounter;
+            private set { if (SetField(ref _isInstallingFpsCounter, value)) InstallFpsCounterCommand.RaiseCanExecuteChanged(); }
+        }
+
         private void InitSensorCommands()
         {
             InstallSensorDriverCommand = RelayCommand.FromAsync(_ => InstallSensorDriverAsync(), _ => !IsChangingSensorDriver);
             RemoveSensorDriverCommand = RelayCommand.FromAsync(_ => RemoveSensorDriverAsync(), _ => !IsChangingSensorDriver);
+            ToggleOverlayCommand = new RelayCommand(_ => OverlayService.Instance.Toggle());
+            InstallFpsCounterCommand = RelayCommand.FromAsync(_ => InstallFpsCounterAsync(), _ => !IsInstallingFpsCounter);
+            // Оверлей переключается и сочетанием клавиш — подпись кнопки должна это видеть.
+            // Отписки нет: экземпляр ViewModel вкладки один на весь сеанс.
+            OverlayService.Instance.StateChanged += RefreshOverlayState;
             RefreshSensorDriverState();
+            RefreshOverlayState();
+        }
+
+        private void RefreshOverlayState()
+        {
+            OverlayButtonText = !OverlayService.Instance.IsVisible
+                ? $"🎮 Показать оверлей поверх игр ({OverlayService.HotkeyText})"
+                : !OverlayService.Instance.IsExtended
+                    ? $"🎮 Расширенный оверлей ({OverlayService.HotkeyText})"
+                    : $"🎮 Скрыть оверлей ({OverlayService.HotkeyText})";
+            ShowInstallFpsCounter = PresentMonService.FindExecutable() == null;
+        }
+
+        private async Task InstallFpsCounterAsync()
+        {
+            var answer = MessageBox.Show(
+                "Для счётчика FPS нужен Intel PresentMon — бесплатная программа Intel с открытым исходным кодом.\n\n" +
+                "• Она читает события Windows о показе кадров и в игры не внедряется: античиты такой способ не трогают.\n" +
+                "• Ставится через winget из официального пакета, перед каждым запуском Ven4Tools проверяет подпись Intel.\n" +
+                "• Работает только пока включён оверлей.\n\n" +
+                "Установить PresentMon?",
+                "Счётчик FPS", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer != MessageBoxResult.Yes) return;
+
+            IsInstallingFpsCounter = true;
+            try
+            {
+                var result = await PresentMonService.InstallAsync();
+                AppLogger.Write($"🎮 Счётчик FPS: {result.Message}");
+                RefreshOverlayState();
+                // Оверлей уже показан без счётчика — перезапустить, чтобы появился FPS.
+                if (result.Ok && OverlayService.Instance.IsVisible)
+                {
+                    OverlayService.Instance.Hide();
+                    OverlayService.Instance.Show();
+                }
+                MessageBox.Show(result.Message, "Счётчик FPS", MessageBoxButton.OK,
+                    result.Ok ? MessageBoxImage.Information : MessageBoxImage.Warning);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write(ex, "DiagnosticsViewModel.InstallFpsCounter");
+                MessageBox.Show("Не удалось установить счётчик FPS: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally { IsInstallingFpsCounter = false; }
         }
 
         /// <summary>Вкладка показана: сразу прочитать датчики и дальше раз в 2 секунды.</summary>

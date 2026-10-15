@@ -53,6 +53,9 @@ namespace Ven4Tools.Models
         // скачивание/установка приложений продолжают работать всегда.
         public bool ParanoidMode { get; set; } = false;
 
+        /// <summary>Венчик в оверлее поверх игр: жарко, нормально или холодно по температурам.</summary>
+        public bool OverlayShowMascot { get; set; } = true;
+
         // Первый запуск
         public bool HasSelectedCategory { get; set; } = false;
 

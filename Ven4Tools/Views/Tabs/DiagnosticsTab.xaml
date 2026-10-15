@@ -117,6 +117,23 @@
                                     Visibility="{Binding ShowRemoveSensorDriver, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding RemoveSensorDriverCommand}"/>
                         </StackPanel>
+                        <TextBlock Text="Оверлей — маленькое окно в углу экрана поверх игры: FPS, температура и загрузка процессора и видеокарты. Щелчки проходят сквозь него, в игру ничего не внедряется. Виден в оконном режиме и «полноэкранном в окне»."
+                                   TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,14,0,0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button x:Name="btnToggleOverlay" Content="{Binding OverlayButtonText}"
+                                    ToolTip="Показывает или скрывает оверлей. То же делает сочетание Ctrl+Shift+O — оно работает, пока Ven4Tools запущен, даже свёрнутый в трей."
+                                    Height="32" MinWidth="320" Padding="12,0" HorizontalAlignment="Left" Margin="0,0,10,0"
+                                    Command="{Binding ToggleOverlayCommand}"/>
+                            <Button x:Name="btnInstallFpsCounter" Content="📈 Добавить счётчик FPS (Intel PresentMon)"
+                                    ToolTip="После объяснения и подтверждения поставит Intel PresentMon через winget. Без него оверлей показывает только датчики."
+                                    Height="32" MinWidth="300" Padding="12,0" HorizontalAlignment="Left"
+                                    Visibility="{Binding ShowInstallFpsCounter, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding InstallFpsCounterCommand}"/>
+                        </StackPanel>
+                        <CheckBox x:Name="chkOverlayMascot" Content="Показывать Венчика в оверлее: жарко, нормально или холодно — по температурам"
+                                  ToolTip="Рядом с цифрами сидит Венчик: вытирает пот, когда процессор или видеокарта сильно греются, показывает лайк при нормальной температуре и мёрзнет в шарфе, когда компьютер почти без нагрузки."
+                                  IsChecked="{Binding ShowOverlayMascot, Mode=TwoWay}" Margin="0,10,0,0"
+                                  Foreground="{DynamicResource TextPrimary}"/>
                     </StackPanel>
                 </GroupBox>
 

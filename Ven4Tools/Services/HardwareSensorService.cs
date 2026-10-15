@@ -51,6 +51,36 @@ namespace Ven4Tools.Services
             finally { _lock.Release(); }
         }
 
+        /// <summary>Сырые показания — для расширенного оверлея.</summary>
+        public async Task<IReadOnlyList<RawSensor>> ReadRawAsync(CancellationToken ct = default)
+        {
+            await _lock.WaitAsync(ct);
+            try
+            {
+                return await Task.Run(() =>
+                {
+                    _computer ??= Open();
+                    return (IReadOnlyList<RawSensor>)Collect(_computer);
+                }, ct);
+            }
+            finally { _lock.Release(); }
+        }
+
+        /// <summary>Короткие строки для оверлея поверх игр.</summary>
+        public async Task<IReadOnlyList<string>> ReadOverlayAsync(CancellationToken ct = default)
+        {
+            await _lock.WaitAsync(ct);
+            try
+            {
+                return await Task.Run(() =>
+                {
+                    _computer ??= Open();
+                    return HardwareSnapshotBuilder.OverlayLines(Collect(_computer));
+                }, ct);
+            }
+            finally { _lock.Release(); }
+        }
+
         /// <summary>Закрыть библиотеку: при следующем чтении она откроется заново.</summary>
         public async Task ResetAsync()
         {
@@ -100,6 +130,7 @@ namespace Ven4Tools.Services
                         SensorType.Load => SensorKind.Load,
                         SensorType.Fan => SensorKind.Fan,
                         SensorType.Power => SensorKind.Power,
+                        SensorType.SmallData => SensorKind.Data,
                         _ => SensorKind.Other
                     };
                     if (kind != SensorKind.Other)
