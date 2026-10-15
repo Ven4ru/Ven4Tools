@@ -91,6 +91,7 @@ namespace Ven4Tools.Services
                 "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity"
             }, TimeSpan.FromMinutes(5), ct);
             AppLogger.Write($"[PawnIO] winget install: код {code}");
+            if (!IsInstalled()) await InstallFromMirrorAsync(ct);
 
             if (!IsInstalled())
                 return new Result(false, code == -1
@@ -124,6 +125,41 @@ namespace Ven4Tools.Services
 
             await InstallHistoryService.Instance.TrackAsync("pawnio", "PawnIO — драйвер датчиков", "winget", "Драйверы");
             return new Result(true, Tr("Драйвер датчиков установлен."));
+        }
+
+        /// <summary>
+        /// winget не скачал установщик (GitHub из России открывается через раз) — та же
+        /// версия с нашего CDN: сумма из <see cref="MirrorDownload"/>, подпись автора, тихая установка.
+        /// </summary>
+        private static async Task InstallFromMirrorAsync(CancellationToken ct)
+        {
+            string setup = Path.Combine(Path.GetTempPath(), "Ven4Tools", MirrorDownload.PawnIo.FileName);
+            if (!await MirrorDownload.DownloadAsync(MirrorDownload.PawnIo, setup, ct)) return;
+            try
+            {
+                if (!AuthenticodeVerifier.IsSignedByOrganization(setup, new[] { "namazso" }, out string error))
+                {
+                    AppLogger.Write($"[PawnIO] установщик с CDN не запущен: подпись не подтверждена ({error})");
+                    return;
+                }
+                var psi = new System.Diagnostics.ProcessStartInfo(setup) { UseShellExecute = false, CreateNoWindow = true };
+                psi.ArgumentList.Add("-install");
+                psi.ArgumentList.Add("-silent");
+                using var process = System.Diagnostics.Process.Start(psi);
+                if (process == null) return;
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeout.CancelAfter(TimeSpan.FromMinutes(3));
+                await process.WaitForExitAsync(timeout.Token);
+                AppLogger.Write($"[PawnIO] установщик с CDN: код {process.ExitCode}");
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                AppLogger.Write("[PawnIO] установщик с CDN не уложился в 3 минуты");
+            }
+            finally
+            {
+                try { File.Delete(setup); } catch { }
+            }
         }
 
         /// <summary>Полное удаление: winget, затем устройство, пакет в хранилище драйверов и служба.</summary>

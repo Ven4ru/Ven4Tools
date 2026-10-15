@@ -36,16 +36,23 @@ namespace Ven4Tools.Services
 
         public bool IsRunning { get { lock (_gate) return _process is { HasExited: false }; } }
 
-        /// <summary>Установленный через winget PresentMon; null — не установлен.</summary>
+        /// <summary>Копия с CDN, если winget не справился: %LOCALAPPDATA%\Ven4Tools\Tools\PresentMon.</summary>
+        private static string MirrorPath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "Tools", "PresentMon", MirrorDownload.PresentMon.FileName);
+
+        /// <summary>Установленный PresentMon (winget или копия с CDN); null — не установлен.</summary>
         public static string? FindExecutable()
         {
             string packages = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "Microsoft", "WinGet", "Packages");
-            if (!Directory.Exists(packages)) return null;
-            return Directory.EnumerateDirectories(packages, WingetId + "_*")
-                .SelectMany(d => Directory.EnumerateFiles(d, "PresentMon*.exe", SearchOption.AllDirectories))
-                .OrderByDescending(File.GetLastWriteTimeUtc)
-                .FirstOrDefault();
+            string? winget = Directory.Exists(packages)
+                ? Directory.EnumerateDirectories(packages, WingetId + "_*")
+                    .SelectMany(d => Directory.EnumerateFiles(d, "PresentMon*.exe", SearchOption.AllDirectories))
+                    .OrderByDescending(File.GetLastWriteTimeUtc)
+                    .FirstOrDefault()
+                : null;
+            return winget ?? (File.Exists(MirrorPath) ? MirrorPath : null);
         }
 
         public static async Task<PawnIoDriver.Result> InstallAsync(CancellationToken ct = default)
@@ -56,6 +63,8 @@ namespace Ven4Tools.Services
                 "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity"
             }, TimeSpan.FromMinutes(5), ct);
             AppLogger.Write($"[PresentMon] winget install: код {code}");
+            // winget не скачал файл с GitHub — та же версия с нашего CDN (сумма сверяется).
+            if (FindExecutable() == null) await MirrorDownload.DownloadAsync(MirrorDownload.PresentMon, MirrorPath, ct);
             string? exe = FindExecutable();
             if (exe == null)
                 return new PawnIoDriver.Result(false, string.Format(Tr("Счётчик FPS не установился (winget, код {0})."), code));

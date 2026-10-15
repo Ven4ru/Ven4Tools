@@ -1000,6 +1000,18 @@
     "t": "[PawnIO] driver signature not confirmed ({0}): {1} — removing"
   },
   {
+    "s": "[PawnIO] установщик с CDN не запущен: подпись не подтверждена ({0})",
+    "t": "[PawnIO] installer from CDN not started: signature not confirmed ({0})"
+  },
+  {
+    "s": "[PawnIO] установщик с CDN не уложился в 3 минуты",
+    "t": "[PawnIO] installer from CDN did not finish in 3 minutes"
+  },
+  {
+    "s": "[PawnIO] установщик с CDN: код {0}",
+    "t": "[PawnIO] installer from CDN: code {0}"
+  },
+  {
     "s": "[PendingInstallQueue] Очередь испорчена и сброшена: {0}",
     "t": "[PendingInstallQueue] Queue is corrupted and was reset: {0}"
   },
@@ -1202,6 +1214,18 @@
   {
     "s": "[Деблоатер] Ошибка в ApplyItemAsync [{0}]: {1}",
     "t": "[Debloater] Error in ApplyItemAsync [{0}]: {1}"
+  },
+  {
+    "s": "[Зеркало] {0}: HTTP {1}",
+    "t": "[Mirror] {0}: HTTP {1}"
+  },
+  {
+    "s": "[Зеркало] {0}: скачан с CDN, сумма совпала",
+    "t": "[Mirror] {0}: downloaded from CDN, checksum matches"
+  },
+  {
+    "s": "[Зеркало] {0}: сумма не совпала ({1}…) — файл удалён",
+    "t": "[Mirror] {0}: checksum mismatch ({1}…) — file deleted"
   },
   {
     "s": "[История] Запись истории установок включена",
