@@ -217,6 +217,7 @@ namespace Ven4Tools.ViewModels
             OpenWindowsUpdateCommand  = new RelayCommand(_ => GoToWindowsUpdate?.Invoke());
             CopyFullReportCommand     = new RelayCommand(_ => CopyFullReport());
             DisableFastStartupCommand = RelayCommand.FromAsync(_ => RunDisableFastStartupAsync(), _ => !IsDisablingFastStartup);
+            InitSensorCommands();
 
             // Результаты диагностики держат ключи темы, но перечитать их должен
             // кто-то извне. Отписки нет: экземпляр ViewModel вкладки один на весь
