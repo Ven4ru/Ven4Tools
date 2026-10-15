@@ -211,7 +211,7 @@ namespace Ven4Tools.ClientUITests
                 ("btnSystemTab",     null,        false),
                 ("btnOfficeTab",     null,        true),   // скрыта без сети
                 ("btnActivationTab", null,        true),   // скрыта без сети
-                ("btnNetworkTab",    null,        true),   // скрыта без сети
+                ("btnNetworkTab",    null,        true),   // скрыта в офлайн режиме
                 ("btnDebloaterTab",  null,        false),
                 ("btnHistoryTab",    null,        true),   // скрыта без авторизации
                 ("btnAboutTab",      null,        false),
