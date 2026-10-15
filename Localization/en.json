@@ -444,6 +444,10 @@
     "t": "Cortana (registry)"
   },
   {
+    "s": "FPS: нужен счётчик (кнопка в «Диагностике»)",
+    "t": "FPS: counter needed (button in Diagnostics)"
+  },
+  {
     "s": "Firefox-форк с максимальной приватностью и без телеметрии.",
     "t": "Firefox fork with maximum privacy and no telemetry."
   },
@@ -462,6 +466,10 @@
   {
     "s": "GitHub недоступен; по данным CDN актуальная версия лаунчера — {0}, обновления нет.",
     "t": "GitHub is unavailable; according to the CDN the current launcher version is {0}, no update."
+  },
+  {
+    "s": "Intel PresentMon — счётчик FPS",
+    "t": "Intel PresentMon — FPS counter"
   },
   {
     "s": "JSON файлы (*.json)|*.json",
@@ -622,6 +630,10 @@
   {
     "s": "Ven4Tools — незавершённая установка",
     "t": "Ven4Tools — unfinished installation"
+  },
+  {
+    "s": "Ven4Tools — оверлей",
+    "t": "Ven4Tools — overlay"
   },
   {
     "s": "Ven4Tools — откат твика",
@@ -1002,6 +1014,18 @@
   {
     "s": "[PendingInstallQueue] Очередь сейчас не прочитана: {0}",
     "t": "[PendingInstallQueue] Queue could not be read right now: {0}"
+  },
+  {
+    "s": "[PresentMon] winget install: код {0}",
+    "t": "[PresentMon] winget install: code {0}"
+  },
+  {
+    "s": "[PresentMon] не запущен: подпись не подтверждена ({0})",
+    "t": "[PresentMon] not started: signature not confirmed ({0})"
+  },
+  {
+    "s": "[PresentMon] подпись не подтверждена ({0}): {1}",
+    "t": "[PresentMon] signature not confirmed ({0}): {1}"
   },
   {
     "s": "[PresetService] Сохранение локальных пресетов: {0}",
@@ -2120,6 +2144,10 @@
     "t": "Video conferencing, webinars, and team collaboration."
   },
   {
+    "s": "Видеопамять {0} из {1}",
+    "t": "VRAM {0} of {1}"
+  },
+  {
     "s": "Видеоплеер UWP.",
     "t": "UWP video player."
   },
@@ -2210,6 +2238,10 @@
   {
     "s": "Временный каталог установщиков уже существует: {0}",
     "t": "Installer temp folder already exists: {0}"
+  },
+  {
+    "s": "Время кадра, мс",
+    "t": "Frame time, ms"
   },
   {
     "s": "Время:",
@@ -2520,6 +2552,10 @@
     "t": "For development"
   },
   {
+    "s": "Для счётчика FPS нужен Intel PresentMon — бесплатная программа Intel с открытым исходным кодом.\n\n• Она читает события Windows о показе кадров и в игры не внедряется: античиты такой способ не трогают.\n• Ставится через winget из официального пакета, перед каждым запуском Ven4Tools проверяет подпись Intel.\n• Работает только пока включён оверлей.\n\nУстановить PresentMon?",
+    "t": "The FPS counter needs Intel PresentMon — a free open-source program by Intel.\n\n• It reads Windows events about displayed frames and does not inject into games: anti-cheat systems leave this method alone.\n• It is installed through winget from the official package; before every start Ven4Tools checks the Intel signature.\n• It runs only while the overlay is on.\n\nInstall PresentMon?"
+  },
+  {
     "s": "Для установки приложения требуется {0}, который сейчас не установлен.\n\nРазрешить автоматическую установку {1}?",
     "t": "Installing this app requires {0}, which is not installed.\n\nAllow automatic installation of {1}?"
   },
@@ -2774,6 +2810,10 @@
   {
     "s": "Загрузка прервана ошибкой: {0}\nНажмите «Повторить загрузку».",
     "t": "Loading was interrupted by an error: {0}\nClick “Retry loading”."
+  },
+  {
+    "s": "Загрузка, 60 с: ",
+    "t": "Load, 60 s: "
   },
   {
     "s": "Загрузка...",
@@ -3316,6 +3356,10 @@
     "t": "Business messenger with integrations."
   },
   {
+    "s": "Корпус",
+    "t": "Case"
+  },
+  {
     "s": "Крупнейший игровой магазин и платформа для игр.",
     "t": "The largest game store and gaming platform."
   },
@@ -3382,6 +3426,10 @@
   {
     "s": "Магазины игр, голосовой чат, запись и мониторинг видеокарты.",
     "t": "Game stores, voice chat, recording and graphics card monitoring."
+  },
+  {
+    "s": "Максимум за сеанс",
+    "t": "Session maximum"
   },
   {
     "s": "Материнская плата · {0}",
@@ -3876,6 +3924,10 @@
     "t": "Could not install the driver: {0}"
   },
   {
+    "s": "Не удалось установить счётчик FPS: {0}",
+    "t": "Could not install the FPS counter: {0}"
+  },
+  {
     "s": "Не удалось установить: ",
     "t": "Failed to install: "
   },
@@ -4280,12 +4332,20 @@
     "t": "Hardware monitoring overlay (FPS, temperatures, load) on top of a game or on the desktop."
   },
   {
+    "s": "Оверлей — маленькое окно в углу экрана поверх игры: FPS, температура и загрузка процессора и видеокарты. Щелчки проходят сквозь него, в игру ничего не внедряется. Виден в оконном режиме и «полноэкранном в окне».",
+    "t": "The overlay is a small window in the corner of the screen on top of a game: FPS, CPU and graphics card temperature and load. Clicks pass through it, nothing is injected into the game. Visible in windowed and borderless fullscreen modes."
+  },
+  {
     "s": "Окно скрывается в трей вместо закрытия. Двойной клик по иконке для открытия.",
     "t": "The window hides to the tray instead of closing. Double-click the icon to open it."
   },
   {
     "s": "Онлайн-режим принудительно",
     "t": "Force online mode"
+  },
+  {
+    "s": "Оперативная память {0} из {1}",
+    "t": "RAM {0} of {1}"
   },
   {
     "s": "Операция winget прервана сигналом завершения.",
@@ -5092,6 +5152,10 @@
     "t": "ODT signature not verified: {0}"
   },
   {
+    "s": "Подпись PresentMon не подтвердилась — счётчик FPS не будет запускаться.",
+    "t": "The PresentMon signature could not be confirmed — the FPS counter will not start."
+  },
+  {
     "s": "Подпись setup.exe не подтверждена: {0}",
     "t": "setup.exe signature not verified: {0}"
   },
@@ -5196,8 +5260,16 @@
     "t": "Show window"
   },
   {
+    "s": "Показывает или скрывает оверлей. То же делает сочетание Ctrl+Shift+O — оно работает, пока Ven4Tools запущен, даже свёрнутый в трей.",
+    "t": "Shows or hides the overlay. Ctrl+Shift+O does the same — it works while Ven4Tools is running, even minimized to the tray."
+  },
+  {
     "s": "Показывает состояние активации Windows и Office. Ven4Tools не активирует программы: для активации используйте свой ключ или цифровую лицензию.",
     "t": "Shows the activation status of Windows and Office. Ven4Tools does not activate software: use your own key or a digital license to activate."
+  },
+  {
+    "s": "Показывать Венчика в оверлее: жарко, нормально или холодно — по температурам",
+    "t": "Show Venchik in the overlay: hot, fine or cold — by temperatures"
   },
   {
     "s": "Показывать уведомления о завершении установки",
@@ -5290,6 +5362,10 @@
   {
     "s": "После общего подтверждения удалит все отмеченные приложения по очереди.",
     "t": "After a single confirmation, uninstalls all selected apps one by one."
+  },
+  {
+    "s": "После объяснения и подтверждения поставит Intel PresentMon через winget. Без него оверлей показывает только датчики.",
+    "t": "After an explanation and your confirmation, installs Intel PresentMon through winget. Without it the overlay shows only sensors."
   },
   {
     "s": "После объяснения и подтверждения поставит драйвер PawnIO через winget и проверит его подпись. Без него температуры процессора не видны.",
@@ -5904,6 +5980,10 @@
     "t": "Manual entry"
   },
   {
+    "s": "Рядом с цифрами сидит Венчик: вытирает пот, когда процессор или видеокарта сильно греются, показывает лайк при нормальной температуре и мёрзнет в шарфе, когда компьютер почти без нагрузки.",
+    "t": "Venchik sits next to the numbers: he wipes sweat when the CPU or graphics card gets very hot, gives a thumbs up at normal temperatures and shivers in a scarf when the computer is almost idle."
+  },
+  {
     "s": "СЕРВИС",
     "t": "TOOLS"
   },
@@ -6422,6 +6502,18 @@
   {
     "s": "Стриминговый музыкальный сервис с огромной библиотекой. Работает в России без ограничений.",
     "t": "Music streaming service with a huge library. Works in Russia without restrictions."
+  },
+  {
+    "s": "Счётчик FPS",
+    "t": "FPS counter"
+  },
+  {
+    "s": "Счётчик FPS (Intel PresentMon) установлен.",
+    "t": "The FPS counter (Intel PresentMon) has been installed."
+  },
+  {
+    "s": "Счётчик FPS не установился (winget, код {0}).",
+    "t": "The FPS counter was not installed (winget, code {0})."
   },
   {
     "s": "Таймаут загрузки каталога:",
@@ -7288,6 +7380,10 @@
     "t": "all sources exhausted — last reason: {0}"
   },
   {
+    "s": "горячая точка",
+    "t": "hot spot"
+  },
+  {
     "s": "да",
     "t": "yes"
   },
@@ -7418,6 +7514,10 @@
   {
     "s": "манифест новой версии пуст или не разобран",
     "t": "the new version's manifest is empty or could not be parsed"
+  },
+  {
+    "s": "мс",
+    "t": "ms"
   },
   {
     "s": "на сервере манифест версии {0}, а установлена {1}",
@@ -7690,6 +7790,10 @@
   {
     "s": "самое горячее ядро {0}",
     "t": "hottest core {0}"
+  },
+  {
+    "s": "сеанс",
+    "t": "session"
   },
   {
     "s": "сейчас выполняется другая операция: {0}",
@@ -8426,6 +8530,10 @@
   {
     "s": "⚠ Установлено: {0}, не удалось: {1}",
     "t": "⚠ Installed: {0}, failed: {1}"
+  },
+  {
+    "s": "⚠ процессор у предела температуры — частота снижается",
+    "t": "⚠ CPU at its temperature limit — clocks are being reduced"
   },
   {
     "s": "⚠️ CDN недоступен, использую GitHub как основной источник",
@@ -9684,6 +9792,46 @@
     "t": "\uD83C\uDFAE Game services"
   },
   {
+    "s": "\uD83C\uDFAE Оверлей включён",
+    "t": "\uD83C\uDFAE Overlay on"
+  },
+  {
+    "s": "\uD83C\uDFAE Оверлей выключен",
+    "t": "\uD83C\uDFAE Overlay off"
+  },
+  {
+    "s": "\uD83C\uDFAE Оверлей: расширенный вид",
+    "t": "\uD83C\uDFAE Overlay: extended view"
+  },
+  {
+    "s": "\uD83C\uDFAE Показать оверлей поверх игр ({0})",
+    "t": "\uD83C\uDFAE Show in-game overlay ({0})"
+  },
+  {
+    "s": "\uD83C\uDFAE Расширенный оверлей ({0})",
+    "t": "\uD83C\uDFAE Extended overlay ({0})"
+  },
+  {
+    "s": "\uD83C\uDFAE Скрыть оверлей ({0})",
+    "t": "\uD83C\uDFAE Hide overlay ({0})"
+  },
+  {
+    "s": "\uD83C\uDFAE Сочетание {0} занято другой программой — оверлей включается только кнопкой",
+    "t": "\uD83C\uDFAE The {0} shortcut is taken by another program — the overlay can be turned on only with the button"
+  },
+  {
+    "s": "\uD83C\uDFAE Счётчик FPS запущен",
+    "t": "\uD83C\uDFAE FPS counter started"
+  },
+  {
+    "s": "\uD83C\uDFAE Счётчик FPS остановлен",
+    "t": "\uD83C\uDFAE FPS counter stopped"
+  },
+  {
+    "s": "\uD83C\uDFAE Счётчик FPS: {0}",
+    "t": "\uD83C\uDFAE FPS counter: {0}"
+  },
+  {
     "s": "\uD83C\uDFB5 Мультимедиа",
     "t": "\uD83C\uDFB5 Multimedia"
   },
@@ -9910,6 +10058,10 @@
   {
     "s": "\uD83D\uDCC5 История изменений каталога",
     "t": "\uD83D\uDCC5 Catalog changelog"
+  },
+  {
+    "s": "\uD83D\uDCC8 Добавить счётчик FPS (Intel PresentMon)",
+    "t": "\uD83D\uDCC8 Add FPS counter (Intel PresentMon)"
   },
   {
     "s": "\uD83D\uDCCA Прогресс установки",

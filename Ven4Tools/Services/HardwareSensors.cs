@@ -9,7 +9,8 @@ namespace Ven4Tools.Services
     public enum SensorDevice { Cpu, GpuNvidia, GpuAmd, GpuIntel, Storage, Board, Other }
 
     /// <summary>Вид величины датчика.</summary>
-    public enum SensorKind { Temperature, Clock, Load, Fan, Power, Other }
+    /// <summary>Вид величины датчика. Data — объём в мегабайтах (видеопамять).</summary>
+    public enum SensorKind { Temperature, Clock, Load, Fan, Power, Data, Other }
 
     /// <summary>
     /// Одно показание как есть: от какого устройства, что меряет, как называется у
@@ -166,7 +167,7 @@ namespace Ven4Tools.Services
                 new[] { new SensorLine(Tr("Вентиляторы корпуса"), string.Join(" · ", fans.Select(Rpm))) });
         }
 
-        private static float? Find(List<RawSensor> s, SensorKind kind, params string[] names)
+        internal static float? Find(List<RawSensor> s, SensorKind kind, params string[] names)
         {
             foreach (string name in names)
             {
@@ -183,6 +184,41 @@ namespace Ven4Tools.Services
         internal static string Pct(float v) => $"{Math.Round(v):0} %";
         internal static string Rpm(float v) => $"{Math.Round(v):0} {Tr("об/мин")}";
         internal static string Watt(float v) => v < 10 ? $"{v.ToString("0.0", Ru)} {Tr("Вт")}" : $"{Math.Round(v):0} {Tr("Вт")}";
+
+        /// <summary>
+        /// Две короткие строки для оверлея поверх игр: процессор и видеокарта. Видеокарта —
+        /// дискретная (NVIDIA, AMD), если есть: встроенная в играх обычно не работает.
+        /// </summary>
+        public static IReadOnlyList<string> OverlayLines(IReadOnlyList<RawSensor> sensors)
+        {
+            var lines = new List<string>();
+            var cpu = sensors.Where(x => x.Device == SensorDevice.Cpu).ToList();
+            if (cpu.Count > 0)
+            {
+                var parts = new List<string>();
+                float? t = Find(cpu, SensorKind.Temperature, "CPU Package", "Package", "Core (Tctl/Tdie)", "Core (Tctl)", "Tctl/Tdie", "Core Max");
+                if (t != null) parts.Add(Deg(t.Value));
+                float? load = Find(cpu, SensorKind.Load, "CPU Total");
+                if (load != null) parts.Add(Pct(load.Value));
+                if (parts.Count > 0) lines.Add("CPU  " + string.Join(" · ", parts));
+            }
+
+            var gpus = sensors.Where(x => x.Device is SensorDevice.GpuNvidia or SensorDevice.GpuAmd).ToList();
+            if (gpus.Count == 0) gpus = sensors.Where(x => x.Device == SensorDevice.GpuIntel).ToList();
+            var gpu = gpus.GroupBy(x => x.DeviceName).Select(g => g.ToList()).FirstOrDefault();
+            if (gpu != null)
+            {
+                var parts = new List<string>();
+                float? t = Find(gpu, SensorKind.Temperature, "GPU Core");
+                if (t != null) parts.Add(Deg(t.Value));
+                float? load = Find(gpu, SensorKind.Load, "GPU Core");
+                if (load != null) parts.Add(Pct(load.Value));
+                float? clock = Find(gpu, SensorKind.Clock, "GPU Core");
+                if (clock is > 0) parts.Add(Mhz(clock.Value));
+                if (parts.Count > 0) lines.Add("GPU  " + string.Join(" · ", parts));
+            }
+            return lines;
+        }
 
         /// <summary>Карточки текстом — для «Скопировать полный отчёт».</summary>
         public static string ToReport(IReadOnlyList<SensorCard> cards) =>
