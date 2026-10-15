@@ -328,6 +328,10 @@
     "t": "--- Hardware and driver events ---"
   },
   {
+    "s": "--- Датчики ---",
+    "t": "--- Sensors ---"
+  },
+  {
     "s": "--- Диски ---",
     "t": "--- Drives ---"
   },
@@ -474,6 +478,14 @@
   {
     "s": "Office уже установлен? Посмотрите состояние его лицензии.",
     "t": "Office already installed? Check its license status."
+  },
+  {
+    "s": "P-ядра {0} · E-ядра {1}",
+    "t": "P-cores {0} · E-cores {1}"
+  },
+  {
+    "s": "PawnIO — драйвер датчиков",
+    "t": "PawnIO — sensor driver"
   },
   {
     "s": "Prefetch-служба. На SSD нет смысла. На HDD может ухудшить произв-ть.",
@@ -946,6 +958,34 @@
   {
     "s": "[PackageManagerService] Проверка наличия Chocolatey не удалась",
     "t": "[PackageManagerService] Could not check whether Chocolatey is installed"
+  },
+  {
+    "s": "[PawnIO] pnputil /delete-driver {0}: код {1}",
+    "t": "[PawnIO] pnputil /delete-driver {0}: code {1}"
+  },
+  {
+    "s": "[PawnIO] pnputil /remove-device {0}: код {1}",
+    "t": "[PawnIO] pnputil /remove-device {0}: code {1}"
+  },
+  {
+    "s": "[PawnIO] sc delete: код {0}",
+    "t": "[PawnIO] sc delete: code {0}"
+  },
+  {
+    "s": "[PawnIO] winget install: код {0}",
+    "t": "[PawnIO] winget install: code {0}"
+  },
+  {
+    "s": "[PawnIO] winget uninstall: код {0}",
+    "t": "[PawnIO] winget uninstall: code {0}"
+  },
+  {
+    "s": "[PawnIO] запуск службы",
+    "t": "[PawnIO] starting the service"
+  },
+  {
+    "s": "[PawnIO] подпись драйвера не подтверждена ({0}): {1} — удаляю",
+    "t": "[PawnIO] driver signature not confirmed ({0}): {1} — removing"
   },
   {
     "s": "[PendingInstallQueue] Очередь испорчена и сброшена: {0}",
@@ -1424,6 +1464,10 @@
     "t": "winget not found or did not respond — updates not checked"
   },
   {
+    "s": "winget не найден или не ответил. Проверьте интернет и попробуйте ещё раз.",
+    "t": "winget was not found or did not respond. Check your internet connection and try again."
+  },
+  {
     "s": "winget не ответил вовремя",
     "t": "winget did not respond in time"
   },
@@ -1474,6 +1518,10 @@
   {
     "s": "{0} {1} Установка отменена; чтобы всё равно установить этот архив, добавьте ключ {2}.",
     "t": "{0} {1} Installation canceled; to install this archive anyway, add the {2} switch."
+  },
+  {
+    "s": "{0} · горячая точка {1}",
+    "t": "{0} · hot spot {1}"
   },
   {
     "s": "{0} Б",
@@ -2004,6 +2052,14 @@
     "t": "Enter a name."
   },
   {
+    "s": "Вентиляторы",
+    "t": "Fans"
+  },
+  {
+    "s": "Вентиляторы корпуса",
+    "t": "Case fans"
+  },
+  {
     "s": "Вернутся сами — их поставит {0}: {1}",
     "t": "Will come back automatically — {0} installs them: {1}"
   },
@@ -2054,6 +2110,10 @@
   {
     "s": "Весь каталог",
     "t": "Full catalog"
+  },
+  {
+    "s": "Видеокарта · {0}",
+    "t": "Graphics card · {0}"
   },
   {
     "s": "Видеоконференции, вебинары и командная работа.",
@@ -2202,6 +2262,10 @@
   {
     "s": "Всё-в-одном: заметки, задачи, базы данных и вики.",
     "t": "All-in-one: notes, tasks, databases, and wikis."
+  },
+  {
+    "s": "Вт",
+    "t": "W"
   },
   {
     "s": "Вы выбрали:\n\nНазвание: {0}\nID: {1}\nВерсия: {2}\n\nБудет сохранён ID: {3}",
@@ -2364,6 +2428,18 @@
     "t": "Date: {0}"
   },
   {
+    "s": "Датчики не найдены",
+    "t": "No sensors found"
+  },
+  {
+    "s": "Датчики не прочитаны (раздел «Диагностика» ещё не открывался).",
+    "t": "Sensors not read (the Diagnostics section has not been opened yet)."
+  },
+  {
+    "s": "Датчики опрашиваются…",
+    "t": "Reading sensors…"
+  },
+  {
     "s": "Действия",
     "t": "Actions"
   },
@@ -2412,12 +2488,20 @@
     "t": "The install drive is given as a letter, for example D:."
   },
   {
+    "s": "Диски",
+    "t": "Drives"
+  },
+  {
     "s": "Диски не найдены.",
     "t": "No drives found."
   },
   {
     "s": "Длительность:   {0}",
     "t": "Duration:       {0}"
+  },
+  {
+    "s": "Для датчиков процессора нужен драйвер PawnIO.\n\n• Это драйвер ядра стороннего автора (namazso) с открытым исходным кодом, подписанный Microsoft. Его же используют LibreHardwareMonitor, FanControl и OpenRGB.\n• Он ставится через winget из официального пакета, после установки Ven4Tools проверит подпись.\n• Удалить его можно в любой момент кнопкой «Удалить драйвер» — полностью, вместе с пакетом в хранилище драйверов.\n\nНекоторые онлайн-игры с античитом могут отказываться запускаться, пока в системе есть драйверы ядра для датчиков. Если это случится — удалите драйвер.\n\nУстановить драйвер?",
+    "t": "CPU sensors need the PawnIO driver.\n\n• It is an open-source kernel driver by a third-party author (namazso), signed by Microsoft. LibreHardwareMonitor, FanControl and OpenRGB use it too.\n• It is installed through winget from the official package; after installation Ven4Tools will check its signature.\n• You can remove it at any time with the “Remove driver” button — completely, together with the package in the driver store.\n\nSome online games with anti-cheat may refuse to start while kernel drivers for sensors are present. If that happens, remove the driver.\n\nInstall the driver?"
   },
   {
     "s": "Для дома",
@@ -2520,7 +2604,39 @@
     "t": "Windows updates available"
   },
   {
+    "s": "Драйвер датчиков",
+    "t": "Sensor driver"
+  },
+  {
+    "s": "Драйвер датчиков (PawnIO) установлен, но не запущен — перезагрузите компьютер.",
+    "t": "The sensor driver (PawnIO) is installed but not running — restart the computer."
+  },
+  {
+    "s": "Драйвер датчиков (PawnIO) установлен: видны температуры и частоты процессора и вентиляторы платы.",
+    "t": "The sensor driver (PawnIO) is installed: CPU temperatures and clocks and motherboard fans are visible."
+  },
+  {
+    "s": "Драйвер датчиков удалён полностью.",
+    "t": "The sensor driver has been removed completely."
+  },
+  {
+    "s": "Драйвер датчиков удалён. Запись о нём Windows сотрёт при следующей перезагрузке.",
+    "t": "The sensor driver has been removed. Windows will erase its record at the next restart."
+  },
+  {
+    "s": "Драйвер датчиков установлен.",
+    "t": "The sensor driver has been installed."
+  },
+  {
+    "s": "Драйвер удалён не полностью — перезагрузите компьютер и нажмите «Удалить драйвер» ещё раз.",
+    "t": "The driver was not removed completely — restart the computer and press “Remove driver” again."
+  },
+  {
     "s": "Драйверпаки",
+    "t": "Drivers"
+  },
+  {
+    "s": "Драйверы",
     "t": "Drivers"
   },
   {
@@ -3256,12 +3372,20 @@
     "t": "Lightweight media player based on Media Player Classic with modern codecs."
   },
   {
+    "s": "МГц",
+    "t": "MHz"
+  },
+  {
     "s": "Магазин и лаунчер Epic Games — еженедельные бесплатные раздачи игр, Fortnite и другие проекты Epic.",
     "t": "Epic Games store and launcher — weekly free game giveaways, Fortnite, and other Epic titles."
   },
   {
     "s": "Магазины игр, голосовой чат, запись и мониторинг видеокарты.",
     "t": "Game stores, voice chat, recording and graphics card monitoring."
+  },
+  {
+    "s": "Материнская плата · {0}",
+    "t": "Motherboard · {0}"
   },
   {
     "s": "Машина:",
@@ -3676,6 +3800,10 @@
     "t": "Could not check integrity — the server is unavailable, try again later"
   },
   {
+    "s": "Не удалось прочитать датчики — подробности в логе",
+    "t": "Could not read sensors — see the log for details"
+  },
+  {
     "s": "Не удалось прочитать лог",
     "t": "Could not read the log"
   },
@@ -3732,12 +3860,20 @@
     "t": "Could not save the file: {0}"
   },
   {
+    "s": "Не удалось удалить драйвер: {0}",
+    "t": "Could not remove the driver: {0}"
+  },
+  {
     "s": "Не удалось удалить ни одного файла кэша — возможно, службы Windows Update не остановились",
     "t": "No cache files could be deleted — the Windows Update services may not have stopped"
   },
   {
     "s": "Не удалось установить Office. Попробуйте ещё раз или установите вручную.",
     "t": "Could not install Office. Try again or install it manually."
+  },
+  {
+    "s": "Не удалось установить драйвер: {0}",
+    "t": "Could not install the driver: {0}"
   },
   {
     "s": "Не удалось установить: ",
@@ -4094,6 +4230,10 @@
   {
     "s": "Обновлено: {0}, не удалось: {1}. Подробности — в журнале.",
     "t": "Updated: {0}, failed: {1}. See the log for details."
+  },
+  {
+    "s": "Обновляется раз в 2 секунды, пока открыт этот раздел",
+    "t": "Updates every 2 seconds while this section is open"
   },
   {
     "s": "Обновлять установленные программы автоматически",
@@ -4956,6 +5096,10 @@
     "t": "setup.exe signature not verified: {0}"
   },
   {
+    "s": "Подпись драйвера не подтвердилась — он удалён. Датчики процессора останутся недоступны.",
+    "t": "The driver signature could not be confirmed — the driver has been removed. CPU sensors will stay unavailable."
+  },
+  {
     "s": "Подробности",
     "t": "Details"
   },
@@ -5148,6 +5292,10 @@
     "t": "After a single confirmation, uninstalls all selected apps one by one."
   },
   {
+    "s": "После объяснения и подтверждения поставит драйвер PawnIO через winget и проверит его подпись. Без него температуры процессора не видны.",
+    "t": "After an explanation and your confirmation, installs the PawnIO driver through winget and checks its signature. Without it CPU temperatures are not visible."
+  },
+  {
     "s": "После подтверждения восстановит твики очистки и пресеты из этого снапшота.",
     "t": "After confirmation, restores the cleanup tweaks and presets from this snapshot."
   },
@@ -5166,6 +5314,10 @@
   {
     "s": "После подтверждения отключит быстрый запуск Windows и удалит файл гибернации.",
     "t": "After confirmation, disables Windows Fast Startup and deletes the hibernation file."
+  },
+  {
+    "s": "После подтверждения полностью удалит драйвер PawnIO: службу, устройство и пакет в хранилище драйверов.",
+    "t": "After confirmation, completely removes the PawnIO driver: the service, the device and the package in the driver store."
   },
   {
     "s": "После подтверждения сбросит Winsock и параметры IP. Сеть временно отключится, может потребоваться перезагрузка.",
@@ -5266,6 +5418,10 @@
   {
     "s": "Потолок шины:   {0} МБ/с",
     "t": "Bus limit:      {0} MB/s"
+  },
+  {
+    "s": "Потребление",
+    "t": "Power"
   },
   {
     "s": "Потребуются права администратора и перезагрузка",
@@ -5578,6 +5734,10 @@
   {
     "s": "Процесс был убит извне — стек недоступен.",
     "t": "The process was killed externally — no stack trace available."
+  },
+  {
+    "s": "Процессор · {0}",
+    "t": "Processor · {0}"
   },
   {
     "s": "Процессор не поднимает частоту выше номинальной: меньше нагрев и шум, ниже скорость.",
@@ -6312,6 +6472,14 @@
     "t": "Theme"
   },
   {
+    "s": "Температура",
+    "t": "Temperature"
+  },
+  {
+    "s": "Температуры и частоты процессора и датчики платы Windows без драйвера не отдаёт. Драйвер ставится только по кнопке и удаляется так же.",
+    "t": "Windows does not expose CPU temperatures and clocks or motherboard sensors without a driver. The driver is installed only with the button and removed the same way."
+  },
+  {
     "s": "Тест",
     "t": "Test"
   },
@@ -6468,6 +6636,10 @@
     "t": "Uninstall Office"
   },
   {
+    "s": "Удаление драйвера датчиков…",
+    "t": "Removing the sensor driver…"
+  },
+  {
     "s": "Удаление клиента",
     "t": "Removing the client"
   },
@@ -6506,6 +6678,10 @@
   {
     "s": "Удалить все файлы логов?",
     "t": "Delete all log files?"
+  },
+  {
+    "s": "Удалить драйвер датчиков PawnIO?\n\nТемпературы и частоты процессора и датчики платы станут недоступны. Если драйвер ставила другая программа (например, FanControl), она тоже перестанет видеть датчики.",
+    "t": "Remove the PawnIO sensor driver?\n\nCPU temperatures and clocks and motherboard sensors will become unavailable. If another program installed the driver (for example, FanControl), it will stop seeing the sensors too."
   },
   {
     "s": "Удалить клиент",
@@ -6660,6 +6836,10 @@
     "t": "Installation in progress"
   },
   {
+    "s": "Установка драйвера датчиков…",
+    "t": "Installing the sensor driver…"
+  },
+  {
     "s": "Установка драйверов: {0}…",
     "t": "Installing drivers: {0}…"
   },
@@ -6698,6 +6878,10 @@
   {
     "s": "Установка не выполнена",
     "t": "Installation not completed"
+  },
+  {
+    "s": "Установка не удалась (winget, код {0}).",
+    "t": "Installation failed (winget, code {0})."
   },
   {
     "s": "Установка не удалась: перезагрузите компьютер и попробуйте снова.",
@@ -6920,6 +7104,10 @@
     "t": "Digital painting and illustration. Supports graphics tablets."
   },
   {
+    "s": "Частота",
+    "t": "Clock"
+  },
+  {
     "s": "Часть драйверов могла не выгрузиться (pnputil, код {0}).",
     "t": "Some drivers may not have been exported (pnputil, code {0})."
   },
@@ -7104,6 +7292,10 @@
     "t": "yes"
   },
   {
+    "s": "датчик не отвечает",
+    "t": "sensor does not respond"
+  },
+  {
     "s": "диск {0} недоступен",
     "t": "drive {0} is unavailable"
   },
@@ -7130,6 +7322,10 @@
   {
     "s": "другая проверка ещё выполняется",
     "t": "another check is still running"
+  },
+  {
+    "s": "есть",
+    "t": "yes"
   },
   {
     "s": "ещё не загружен",
@@ -7324,8 +7520,20 @@
     "t": "no local manifest for the installed version"
   },
   {
+    "s": "нет файла драйвера",
+    "t": "no driver file"
+  },
+  {
     "s": "ни одно приложение из задания не найдено в каталоге или недоступно для установки",
     "t": "no app from the job was found in the catalog or is available to install"
+  },
+  {
+    "s": "нужен драйвер датчиков",
+    "t": "sensor driver needed"
+  },
+  {
+    "s": "об/мин",
+    "t": "RPM"
   },
   {
     "s": "обновление",
@@ -7480,6 +7688,10 @@
     "t": "too many differences for a file-by-file repair — reinstall the client with a regular update"
   },
   {
+    "s": "самое горячее ядро {0}",
+    "t": "hottest core {0}"
+  },
+  {
     "s": "сейчас выполняется другая операция: {0}",
     "t": "another operation is in progress: {0}"
   },
@@ -7510,6 +7722,10 @@
   {
     "s": "сопоставимо с уровнем жёсткого диска",
     "t": "comparable to a hard drive"
+  },
+  {
+    "s": "стоят (тихий режим)",
+    "t": "stopped (silent mode)"
   },
   {
     "s": "таймаут",
@@ -7570,6 +7786,14 @@
   {
     "s": "чтение",
     "t": "read"
+  },
+  {
+    "s": "ядро {0}",
+    "t": "core {0}"
+  },
+  {
+    "s": "ядро {0} · память {1}",
+    "t": "core {0} · memory {1}"
   },
   {
     "s": "• Автоматическая проверка доступности",
@@ -7778,6 +8002,10 @@
   {
     "s": "↻ Обновить «{0}»",
     "t": "↻ Update “{0}”"
+  },
+  {
+    "s": "≈ {0} (оценка Windows)",
+    "t": "≈ {0} (Windows estimate)"
   },
   {
     "s": "⏱️ Choco: установка «{0}» превысила таймаут {1} мин — прервана",
@@ -9412,6 +9640,22 @@
     "t": "\uD83C\uDF10 Office language"
   },
   {
+    "s": "\uD83C\uDF21 Датчики",
+    "t": "\uD83C\uDF21 Sensors"
+  },
+  {
+    "s": "\uD83C\uDF21 Датчики открыты за {0} с (драйвер датчиков: {1})",
+    "t": "\uD83C\uDF21 Sensors opened in {0} s (sensor driver: {1})"
+  },
+  {
+    "s": "\uD83C\uDF21 Добавить драйвер для датчиков процессора",
+    "t": "\uD83C\uDF21 Add driver for CPU sensors"
+  },
+  {
+    "s": "\uD83C\uDF21 Драйвер датчиков: {0}",
+    "t": "\uD83C\uDF21 Sensor driver: {0}"
+  },
+  {
     "s": "\uD83C\uDF6B Choco: установка {0}...",
     "t": "\uD83C\uDF6B Choco: installing {0}..."
   },
@@ -10318,6 +10562,10 @@
   {
     "s": "\uD83D\uDDD1️ Удалено пользовательское приложение",
     "t": "\uD83D\uDDD1️ Custom app removed"
+  },
+  {
+    "s": "\uD83D\uDDD1️ Удалить драйвер датчиков",
+    "t": "\uD83D\uDDD1️ Remove sensor driver"
   },
   {
     "s": "\uD83D\uDE15 Ничего не найдено по запросу «{0}» ни в одном источнике",

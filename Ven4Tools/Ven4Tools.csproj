@@ -30,6 +30,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Management" Version="10.0.12" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.12" />
@@ -62,8 +63,7 @@
     <PropertyGroup>
       <_LanguagePackHash>@(_LanguagePack->'%(FileHash)')</_LanguagePackHash>
     </PropertyGroup>
-    <WriteLinesToFile File="$(IntermediateOutputPath)LanguagePackInfo.g.cs" Overwrite="true" WriteOnlyWhenDifferent="true"
-                      Lines="namespace Ven4Tools.Services { internal static class LanguagePackInfo { public const string Component = &quot;client&quot;%3B public const string EnSha256 = &quot;$(_LanguagePackHash)&quot;%3B } }" />
+    <WriteLinesToFile File="$(IntermediateOutputPath)LanguagePackInfo.g.cs" Overwrite="true" WriteOnlyWhenDifferent="true" Lines="namespace Ven4Tools.Services { internal static class LanguagePackInfo { public const string Component = &quot;client&quot;%3B public const string EnSha256 = &quot;$(_LanguagePackHash)&quot;%3B } }" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)LanguagePackInfo.g.cs" />
     </ItemGroup>
@@ -72,8 +72,7 @@
   <!-- Сборка для разработки и проверок кладёт пакет рядом с программой (lang/en.json).
        В публикуемый набор файлов он не входит: пользователь получает пакет отдельно. -->
   <Target Name="CopyLanguagePackNextToBuild" AfterTargets="Build">
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)../Localization/packs/client-en.json"
-          DestinationFiles="$(OutDir)lang/en.json" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)../Localization/packs/client-en.json" DestinationFiles="$(OutDir)lang/en.json" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

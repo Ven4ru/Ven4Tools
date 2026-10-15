@@ -32,6 +32,11 @@ namespace Ven4Tools.Views.Tabs
             Loaded += (_, _) => TabInitGuard.RunOnce(
                 ref _initialized, _viewModel.InitializeAsync,
                 "DiagnosticsTab.InitializeAsync");
+
+            // Датчики опрашиваются только пока вкладка на экране: MainWindow держит её
+            // один экземпляр и снимает с экрана при переходе в другой раздел.
+            Loaded += (_, _) => _viewModel.StartSensors();
+            Unloaded += (_, _) => _viewModel.StopSensors();
         }
     }
 }

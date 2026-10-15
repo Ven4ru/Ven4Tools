@@ -22,6 +22,12 @@ Ven4Tools распространяется в виде самодостаточ�
 | Newtonsoft.Json | 13.0.4 | MIT |
 | System.Management | 10.0.12 | MIT |
 | System.ServiceProcess.ServiceController | 10.0.12 | MIT |
+| LibreHardwareMonitorLib | 0.9.6 | MPL-2.0 |
+| DiskInfoToolkit | 1.1.2 | MPL-2.0 |
+| RAMSPDToolkit-NDD | 1.4.2 | MPL-2.0 |
+| HidSharp | 2.6.4 | Apache-2.0 |
+| Mono.Posix.NETStandard | 1.0.0 | MIT |
+| System.IO.Ports, System.Threading.AccessControl, System.IO.FileSystem.AccessControl, Microsoft.Win32.Registry, System.Memory | 10.x / 5.x / 4.x | MIT |
 | Среда выполнения .NET 10 (self-contained) | 10.x | MIT |
 
 ## Лаунчер (Ven4Tools.Launcher.exe)
@@ -37,7 +43,7 @@ Ven4Tools распространяется в виде самодостаточ�
 
 ### MIT License
 
-Под лицензией MIT распространяются: Newtonsoft.Json, а также компоненты .NET
+Под лицензией MIT распространяются: Newtonsoft.Json, Mono.Posix.NETStandard, а также компоненты .NET
 (System.Management, System.ServiceProcess.ServiceController) и сама среда выполнения .NET 10.
 
 **Newtonsoft.Json** — Copyright (c) 2007 James Newton-King
@@ -67,3 +73,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+### Mozilla Public License 2.0
+
+Под лицензией MPL-2.0 распространяются библиотеки датчиков: LibreHardwareMonitorLib
+(Copyright (c) LibreHardwareMonitor and Contributors, исходный код —
+https://github.com/LibreHardwareMonitor/LibreHardwareMonitor), DiskInfoToolkit и
+RAMSPDToolkit-NDD (Copyright (c) Florian K., исходный код —
+https://github.com/Blacktempel/DiskInfoToolkit и https://github.com/Blacktempel/RAMSPDToolkit).
+Ven4Tools использует их без изменений, в виде отдельных сборок. Полный текст лицензии —
+https://mozilla.org/MPL/2.0/.
+
+### Apache License 2.0
+
+Под лицензией Apache-2.0 распространяется HidSharp (Copyright 2010-2025 James F. Bellinger,
+https://software.seekye.com/hidsharp) — зависимость LibreHardwareMonitorLib, используется
+без изменений. Полный текст лицензии — https://www.apache.org/licenses/LICENSE-2.0.
+
+### Драйвер PawnIO
+
+Драйвер датчиков PawnIO (namazso, GPL-2.0 или новее, https://github.com/namazso/PawnIO) в
+дистрибутив Ven4Tools не входит: по кнопке пользователя он устанавливается через winget
+из официального пакета `namazso.PawnIO`. Ven4Tools обращается к нему только через
+стандартный интерфейс драйвера (DeviceIoControl).

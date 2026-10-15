@@ -63,6 +63,63 @@
                     </StackPanel>
                 </GroupBox>
 
+                <!-- Датчики: опрос раз в 2 секунды, только пока вкладка на экране -->
+                <GroupBox Header="🌡 Датчики" Margin="0,0,0,15">
+                    <StackPanel Margin="10">
+                        <ItemsControl x:Name="lstSensorCards" ItemsSource="{Binding SensorCards}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource CardBackground}" CornerRadius="6" Padding="12,10"
+                                            Margin="0,0,10,10" Width="330">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding Title}"
+                                                       Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,6"/>
+                                            <ItemsControl ItemsSource="{Binding Lines}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,2">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="130"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Label}" Foreground="{DynamicResource TextSecondary}"
+                                                                       TextTrimming="CharacterEllipsis" ToolTip="{Binding Label}"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap"
+                                                                       Foreground="{DynamicResource TextPrimary}"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="txtSensorStatus" Text="{Binding SensorStatusText}" FontSize="11"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                        <TextBlock x:Name="txtSensorDriver" Text="{Binding SensorDriverText}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextSecondary}" Margin="0,10,0,0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button x:Name="btnInstallSensorDriver" Content="🌡 Добавить драйвер для датчиков процессора"
+                                    ToolTip="После объяснения и подтверждения поставит драйвер PawnIO через winget и проверит его подпись. Без него температуры процессора не видны."
+                                    Height="32" Width="320" HorizontalAlignment="Left"
+                                    Visibility="{Binding ShowInstallSensorDriver, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding InstallSensorDriverCommand}"/>
+                            <Button x:Name="btnRemoveSensorDriver" Content="🗑️ Удалить драйвер датчиков"
+                                    ToolTip="После подтверждения полностью удалит драйвер PawnIO: службу, устройство и пакет в хранилище драйверов."
+                                    Height="32" Width="240" HorizontalAlignment="Left"
+                                    Visibility="{Binding ShowRemoveSensorDriver, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding RemoveSensorDriverCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
                 <!-- История перезагрузок и сбоев -->
                 <GroupBox Header="🔁 История перезагрузок и сбоев (7 дней)" Margin="0,0,0,15">
                     <StackPanel x:Name="pnlRebootHistory" Margin="10">

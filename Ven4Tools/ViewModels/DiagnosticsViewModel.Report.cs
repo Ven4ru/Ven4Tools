@@ -67,6 +67,9 @@ namespace Ven4Tools.ViewModels
                 sb.AppendLine($"ОЗУ: {RAMText}");
                 sb.AppendLine($"Ven4Tools: {AppVersionText}");
                 sb.AppendLine();
+                sb.AppendLine("--- Датчики ---");
+                sb.AppendLine(SensorsReportText());
+                sb.AppendLine();
                 sb.AppendLine("--- История перезагрузок и сбоев ---");
                 if (_lastRebootDiagnoses.Count == 0)
                 {
