@@ -436,6 +436,8 @@ namespace Ven4Tools.Services
         public int ExitCode { get; set; }
         public string Message { get; set; } = "";
         public List<string> Installed { get; set; } = new();
+        /// <summary>Уже стояли до запуска — набор их не переустанавливал.</summary>
+        public List<string> AlreadyInstalled { get; set; } = new();
         public List<UnattendedFailure> Failed { get; set; } = new();
         /// <summary>Идентификаторы из задания, которых нет в каталоге.</summary>
         public List<string> NotFound { get; set; } = new();

@@ -94,6 +94,14 @@
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
                                FontSize="11" Margin="0,0,0,14"/>
 
+                    <CheckBox x:Name="chkRemoveDesktopShortcuts"
+                              Content="Не создавать ярлыки на рабочем столе"
+                              Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"
+                              IsChecked="{Binding RemoveNewDesktopShortcuts, Mode=TwoWay}"/>
+                    <TextBlock Text="После установки через Ven4Tools убирает с рабочего стола ярлыки, которые появились во время этой установки. Ярлыки, которые были раньше, не трогаются. Программа остаётся в меню «Пуск»."
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" Margin="0,0,0,14"/>
+
                     <TextBlock Text="Папка установки по умолчанию (только winget):"
                                Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
                     <Grid Margin="0,0,0,4">

@@ -15,6 +15,12 @@ namespace Ven4Tools.Services
         /// </summary>
         public const int InstallLocationRequired = unchecked((int)0x8A15005F);
 
+        /// <summary>
+        /// Не код winget, а признак клиента: процесс winget завис и прерван сторожем
+        /// (InstallationService.WaitForWingetAsync). -1 занят под «winget не запускался».
+        /// </summary>
+        public const int StalledByClient = -2;
+
         private static readonly Dictionary<int, string> KnownExitCodes = new(MsiExitCodes.Known)
         {
             // Коды APPINSTALLER_CLI_ERROR_* сверены с официальным списком winget-cli
@@ -30,6 +36,7 @@ namespace Ven4Tools.Services
             { unchecked((int)0x8A15002B), "Обновление недоступно — версия в источнике не подходит для данной системы." },
             { unchecked((int)0x8A15002C), "Обновление части пакетов завершилось с ошибками." },
             { InstallLocationRequired, "Пакет требует явно указать папку установки." },
+            { StalledByClient, "winget завис (скачивание или установщик не подавали признаков работы) и прерван клиентом." },
             { unchecked((int)0x8A150109), "Установлено, для завершения требуется перезагрузка." },
             { unchecked((int)0x8A15010A), "Установка не удалась: перезагрузите компьютер и попробуйте снова." },
             { unchecked((int)0x8A15010B), "Установлено, компьютер будет перезагружен для завершения." },

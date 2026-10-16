@@ -100,6 +100,9 @@ namespace Ven4Tools.Services
             catch { }
         }
 
+        /// <summary>Сообщение итога, когда набор пропустил уже установленную программу.</summary>
+        public const string AlreadyInstalledSkippedMessage = "Уже установлено — пропущено";
+
         // Диспетчер установки: последовательно пробует стратегии в порядке приоритета
         // (локальный файл → офлайн-кэш → строгий офлайн-abort → цепочка источников
         // winget/choco/direct). Сама логика каждой стратегии вынесена в отдельные
@@ -107,9 +110,10 @@ namespace Ven4Tools.Services
         public async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallAppAsync(
             AppInfo app, string[] wingetSources, CancellationToken token,
             IProgress<AppInstallProgress> progress, string installDrive, string? version = null,
-            Func<string, Task<bool>>? confirmPmInstall = null)
+            Func<string, Task<bool>>? confirmPmInstall = null, bool skipIfInstalled = false)
         {
             var appProgress = new AppInstallProgress { AppId = app.Id, AppName = app.DisplayName };
+            var shortcuts = ProfileService.Current.RemoveNewDesktopShortcuts ? DesktopShortcutCleaner.Take() : null;
 
             try
             {
@@ -134,6 +138,23 @@ namespace Ven4Tools.Services
                 // доверяем коду выхода установщика.
                 string outcomeCheckId = app.AlternativeId ?? "";
                 var baseline = await CaptureInstalledBaselineAsync(outcomeCheckId);
+
+                // ── Уже установлено: в наборе не ставим заново ─────────────────
+                // Набор (несколько программ или задание из файла ответа) раньше ставил
+                // поверх уже установленного (7-Zip на стенде 16.10) — лишние минуты и
+                // риск сбросить настройки. Одиночная установка по кнопке и выбранная
+                // вручную версия идут как прежде: там переустановка — осознанный выбор.
+                if (skipIfInstalled && version == null && baseline.VerificationSupported && baseline.WasInstalled)
+                {
+                    appProgress.Status = "ℹ️ Уже установлено — пропущено";
+                    appProgress.Phase = InstallPhase.Done;
+                    appProgress.Outcome = InstallOutcome.AlreadyUpToDate;
+                    appProgress.IsIndeterminate = false;
+                    appProgress.Percentage = 100;
+                    progress.Report(appProgress);
+                    Log($"ℹ️ {app.DisplayName}: уже установлено (версия «{baseline.Version}») — пропущено");
+                    return (true, AlreadyInstalledSkippedMessage, appProgress);
+                }
 
                 // ── Local installer (drag-drop) ────────────────────────────────
                 if (!string.IsNullOrEmpty(app.LocalInstallerPath) && File.Exists(app.LocalInstallerPath))
@@ -176,6 +197,11 @@ namespace Ven4Tools.Services
                 Log($"❌ {app.DisplayName}: {ex.Message}");
                 return (false, ex.Message, appProgress);
             }
+            finally
+            {
+                if (shortcuts != null)
+                    DesktopShortcutCleaner.RemoveNew(shortcuts, Log);
+            }
         }
 
         /// <summary>
@@ -199,12 +225,6 @@ namespace Ven4Tools.Services
             public static SourceAttempt Failed(string? failureDetail)
                 => new() { FailureDetail = failureDetail };
         }
-
-        // Приводит итог источника без расшифровки кодов (прямая загрузка) к общему
-        // виду цепочки: терминальный итог либо «источник не подошёл, идём дальше».
-        private static SourceAttempt WrapDirectAttempt(
-            (bool Success, string Message, AppInstallProgress Progress)? result)
-            => result != null ? SourceAttempt.Finished(result.Value) : SourceAttempt.Failed(null);
 
         // ── Стратегия 3: цепочка источников (winget → choco → direct) ──────────
         private async Task<(bool Success, string Message, AppInstallProgress Progress)> InstallFromSourcesAsync(
@@ -247,10 +267,8 @@ namespace Ven4Tools.Services
                         outcomeCheckId, baseline, token),
                     SourceOrderSettings.Choco => await InstallFromChocoAsync(
                         app, appProgress, progress, confirmPmInstall, outcomeCheckId, baseline, token),
-                    // Прямая загрузка со своей MSI/EXE-спецификой расшифровки кодов не
-                    // даёт — оборачиваем её итог как есть, без причины неудачи.
-                    SourceOrderSettings.Direct => WrapDirectAttempt(await InstallFromDirectDownloadAsync(
-                        app, primaryId, appProgress, progress, installDrive, outcomeCheckId, baseline, token)),
+                    SourceOrderSettings.Direct => await InstallFromDirectAttemptAsync(
+                        app, primaryId, appProgress, progress, installDrive, outcomeCheckId, baseline, token),
                     _ => default
                 };
                 if (attempt.FailureDetail != null) lastFailureDetail = attempt.FailureDetail;

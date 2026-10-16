@@ -28,6 +28,7 @@ namespace Ven4Tools.ViewModels
             CheckTimeoutText   = $"{(int)checkTimeout} сек";
 
             SetField(ref _silentInstall, ProfileService.Current.SilentInstall, nameof(SilentInstall));
+            SetField(ref _removeNewDesktopShortcuts, ProfileService.Current.RemoveNewDesktopShortcuts, nameof(RemoveNewDesktopShortcuts));
             SetField(ref _defaultInstallFolderText, ProfileService.Current.DefaultInstallFolder, nameof(DefaultInstallFolderText));
             DefaultInstallFolderStatusText = "";
 
@@ -195,6 +196,19 @@ namespace Ven4Tools.ViewModels
                 if (_silentInstall == value) return;
                 SetField(ref _silentInstall, value);
                 ProfileService.Current.SilentInstall = value;
+                ProfileService.Save();
+            }
+        }
+
+        private bool _removeNewDesktopShortcuts;
+        public bool RemoveNewDesktopShortcuts
+        {
+            get => _removeNewDesktopShortcuts;
+            set
+            {
+                if (_removeNewDesktopShortcuts == value) return;
+                SetField(ref _removeNewDesktopShortcuts, value);
+                ProfileService.Current.RemoveNewDesktopShortcuts = value;
                 ProfileService.Save();
             }
         }

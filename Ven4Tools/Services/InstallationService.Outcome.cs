@@ -179,7 +179,10 @@ namespace Ven4Tools.Services
                 case InstallOutcome.ConfirmedFailure:
                     status = "❌ Не установлено";
                     logLine = $"❌ {app.DisplayName} — {sourceLabel}: не установлено (код выхода — ошибка, по факту в системе не найдено){detailSuffix}";
-                    message = "Не установлено";
+                    // Причина (расшифровка кода winget/choco) идёт и в сообщение: оно
+                    // попадает в блок «Не установлено» и в отчёт тихой установки, где
+                    // раньше стояло голое «Не установлено» без единой зацепки.
+                    message = string.IsNullOrEmpty(logDetail) ? "Не установлено" : $"Не установлено: {logDetail}";
                     InstallFailureService.Append(app.DisplayName, app.Id, source,
                         string.IsNullOrEmpty(logDetail) ? "Код выхода — ошибка" : logDetail);
                     break;
@@ -197,7 +200,7 @@ namespace Ven4Tools.Services
                     {
                         status = "❌ Ошибка установки";
                         logLine = $"❌ {app.DisplayName} — {sourceLabel}: код выхода — ошибка (проверка по факту недоступна){detailSuffix}";
-                        message = "Ошибка установки";
+                        message = string.IsNullOrEmpty(logDetail) ? "Ошибка установки" : $"Ошибка установки: {logDetail}";
                         InstallFailureService.Append(app.DisplayName, app.Id, source,
                             string.IsNullOrEmpty(logDetail) ? "Код выхода — ошибка" : logDetail);
                     }

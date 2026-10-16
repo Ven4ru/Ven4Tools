@@ -356,6 +356,10 @@
     "t": ". Restart required: {0}"
   },
   {
+    "s": ". Уже были установлены, пропущено: {0}",
+    "t": ". Already installed, skipped: {0}"
+  },
+  {
     "s": "0 МБ",
     "t": "0 MB"
   },
@@ -538,6 +542,10 @@
   {
     "s": "SHA256 не совпадает — файл изменён с момента добавления",
     "t": "SHA256 mismatch — file changed since it was added"
+  },
+  {
+    "s": "SHA256 скачанного установщика не совпал с каталогом.",
+    "t": "SHA256 of the downloaded installer does not match the catalog."
   },
   {
     "s": "SSH и Telnet клиент для подключения к серверам.",
@@ -1528,6 +1536,10 @@
     "t": "winget exited with code {0} (0x{1}). See the log for details."
   },
   {
+    "s": "winget завис (скачивание или установщик не подавали признаков работы) и прерван клиентом.",
+    "t": "winget hung (the download or installer showed no signs of activity) and was stopped by the client."
+  },
+  {
     "s": "winget не найден или не ответил — обновления не проверены",
     "t": "winget not found or did not respond — updates not checked"
   },
@@ -1666,6 +1678,10 @@
   {
     "s": "{0} мин {1} с",
     "t": "{0} min {1} s"
+  },
+  {
+    "s": "{0} мин без признаков работы",
+    "t": "{0} min without signs of activity"
   },
   {
     "s": "{0} мкс",
@@ -3940,6 +3956,10 @@
     "t": "Do not leave the USB drive unattended, and delete the folder when you no longer need it."
   },
   {
+    "s": "Не создавать ярлыки на рабочем столе",
+    "t": "Don't create desktop shortcuts"
+  },
+  {
     "s": "Не удалось восстановиться из «Быстрого запуска» — Windows перешла на полную холодную загрузку. Само завершение работы прошло штатно.",
     "t": "Could not resume from “Fast startup” — Windows fell back to a full cold boot. The shutdown itself was normal."
   },
@@ -4182,6 +4202,10 @@
   {
     "s": "Не установлено",
     "t": "Not installed"
+  },
+  {
+    "s": "Не установлено: {0}",
+    "t": "Not installed: {0}"
   },
   {
     "s": "Небезопасный путь установки",
@@ -5452,6 +5476,10 @@
     "t": "Mounts cloud storage (Google Drive, Yandex Disk, OneDrive, etc.) as a regular local drive."
   },
   {
+    "s": "Подключает облачные хранилища (Google Drive, Яндекс.Диск, OneDrive и др.) как обычный локальный диск. При установке Windows спросит, устанавливать ли драйвер EldoS, — нажмите «Установить».",
+    "t": "Mounts cloud storage (Google Drive, Yandex Disk, OneDrive, etc.) as a regular local drive. During installation Windows will ask whether to install the EldoS driver — click “Install”."
+  },
+  {
     "s": "Подключение:",
     "t": "Connection:"
   },
@@ -5794,6 +5822,10 @@
   {
     "s": "После установки Windows:",
     "t": "After installing Windows:"
+  },
+  {
+    "s": "После установки через Ven4Tools убирает с рабочего стола ярлыки, которые появились во время этой установки. Ярлыки, которые были раньше, не трогаются. Программа остаётся в меню «Пуск».",
+    "t": "After an install through Ven4Tools, removes desktop shortcuts that appeared during that install. Existing shortcuts are left alone. The app stays in the Start menu."
   },
   {
     "s": "Последние действия",
@@ -6186,6 +6218,10 @@
   {
     "s": "Прямая ссылка",
     "t": "Direct link"
+  },
+  {
+    "s": "Прямая ссылка недоступна: {0}",
+    "t": "Direct link unavailable: {0}"
   },
   {
     "s": "Путь из манифеста выходит за пределы папки клиента: {0}",
@@ -7208,6 +7244,10 @@
     "t": "Already installed (version unchanged)"
   },
   {
+    "s": "Уже установлено — пропущено",
+    "t": "Already installed — skipped"
+  },
+  {
     "s": "Укажите имя учётной записи.",
     "t": "Enter an account name."
   },
@@ -7470,6 +7510,10 @@
   {
     "s": "Установщик пакета завершился с фатальной ошибкой.",
     "t": "The package installer failed with a fatal error."
+  },
+  {
+    "s": "Установщик по прямой ссылке завершился с кодом {0}.",
+    "t": "The direct-link installer exited with code {0}."
   },
   {
     "s": "Устаревшая версия Windows",
@@ -8264,6 +8308,10 @@
     "t": "the archive has no embedded signature — it cannot be installed without CDN confirmation"
   },
   {
+    "s": "установка идёт дольше {0} мин",
+    "t": "installation has been running for over {0} min"
+  },
+  {
     "s": "установка не началась",
     "t": "installation did not start"
   },
@@ -8290,6 +8338,10 @@
   {
     "s": "установлено {0}, не удалось {1}, нет в каталоге {2}, недоступно {3}",
     "t": "installed {0}, failed {1}, not in the catalog {2}, unavailable {3}"
+  },
+  {
+    "s": "установлено {0}, уже было {1}, не удалось {2}, нет в каталоге {3}, недоступно {4}",
+    "t": "installed {0}, already present {1}, failed {2}, not in the catalog {3}, unavailable {4}"
   },
   {
     "s": "файл {0} не совпадает с сохранённым составом установки",
@@ -8444,6 +8496,10 @@
     "t": "ℹ️ {0} — {1}: was already installed, version “{2}” unchanged{3}"
   },
   {
+    "s": "ℹ️ {0}: уже установлено (версия «{1}») — пропущено",
+    "t": "ℹ️ {0}: already installed (version “{1}”) — skipped"
+  },
+  {
     "s": "ℹ️ Автоматически найденная папка отклонена — открываю выбор папки вручную",
     "t": "ℹ️ Automatically found folder rejected — opening manual folder selection"
   },
@@ -8500,6 +8556,10 @@
     "t": "ℹ️ Already installed — version unchanged"
   },
   {
+    "s": "ℹ️ Уже установлено — пропущено",
+    "t": "ℹ️ Already installed — skipped"
+  },
+  {
     "s": "ℹ️ нет (запросим при необходимости)",
     "t": "ℹ️ no (will be requested if needed)"
   },
@@ -8528,8 +8588,16 @@
     "t": "≈ {0} (Windows estimate)"
   },
   {
+    "s": "⏭ Winget: у «{0}» нет ID пакета winget — источник пропущен",
+    "t": "⏭ Winget: “{0}” has no winget package ID — source skipped"
+  },
+  {
     "s": "⏱️ Choco: установка «{0}» превысила таймаут {1} мин — прервана",
     "t": "⏱️ Choco: installation of “{0}” exceeded the {1} min timeout — aborted"
+  },
+  {
+    "s": "⏱️ Winget [{0}]: {1} — процесс прерван",
+    "t": "⏱️ Winget [{0}]: {1} — process stopped"
   },
   {
     "s": "⏱️ Запущен тест скорости диска: {0}, том {1}, профиль {2}",
@@ -8906,6 +8974,10 @@
   {
     "s": "⚠ Не удалось скопировать код набора: {0}",
     "t": "⚠ Could not copy the set code: {0}"
+  },
+  {
+    "s": "⚠ Не удалось убрать ярлык {0}: {1}",
+    "t": "⚠ Could not remove shortcut {0}: {1}"
   },
   {
     "s": "⚠ Нет SHA256 в каталоге для {0} — кэш пропущен, пробую следующий источник",
@@ -11316,6 +11388,10 @@
     "t": "\uD83E\uDDF9 Apply selected"
   },
   {
+    "s": "\uD83E\uDDF9 Убран ярлык с рабочего стола: {0}",
+    "t": "\uD83E\uDDF9 Removed desktop shortcut: {0}"
+  },
+  {
     "s": "\uD83E\uDDF9 Удалены временные каталоги установщиков прошлых сеансов: {0}",
     "t": "\uD83E\uDDF9 Removed installer temp folders from previous sessions: {0}"
   },
@@ -11342,5 +11418,9 @@
   {
     "s": "\uD83E\uDE7A Проверка: {0}",
     "t": "\uD83E\uDE7A Check: {0}"
+  },
+  {
+    "s": "\uD83E\uDE9F Закрыто окно, открытое после установки «{0}»: {1}",
+    "t": "\uD83E\uDE9F Closed a window opened after installing “{0}”: {1}"
   }
 ]
