@@ -21,6 +21,12 @@ namespace Ven4Tools.Services
         /// </summary>
         public const int StalledByClient = -2;
 
+        /// <summary>
+        /// APPINSTALLER_CLI_ERROR_ADMIN_CONTEXT_ACTION_PROHIBITED: winget не удаляет и не
+        /// меняет программы из профиля пользователя, если запущен от имени администратора.
+        /// </summary>
+        public const int AdminContextProhibited = unchecked((int)0x8A15007D);
+
         private static readonly Dictionary<int, string> KnownExitCodes = new(MsiExitCodes.Known)
         {
             // Коды APPINSTALLER_CLI_ERROR_* сверены с официальным списком winget-cli
@@ -36,6 +42,7 @@ namespace Ven4Tools.Services
             { unchecked((int)0x8A15002B), "Обновление недоступно — версия в источнике не подходит для данной системы." },
             { unchecked((int)0x8A15002C), "Обновление части пакетов завершилось с ошибками." },
             { InstallLocationRequired, "Пакет требует явно указать папку установки." },
+            { AdminContextProhibited, "Программа установлена в профиль пользователя — winget не меняет её от имени администратора." },
             { StalledByClient, "winget завис (скачивание или установщик не подавали признаков работы) и прерван клиентом." },
             { unchecked((int)0x8A150109), "Установлено, для завершения требуется перезагрузка." },
             { unchecked((int)0x8A15010A), "Установка не удалась: перезагрузите компьютер и попробуйте снова." },

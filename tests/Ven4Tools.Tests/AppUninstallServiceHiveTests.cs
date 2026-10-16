@@ -47,6 +47,53 @@ public sealed class AppUninstallServiceHiveTests
     }
 
     [Fact]
+    public void ОбрезанноеИмя_ЕдинственноеСовпадение_Находится()
+    {
+        // winget list обрезает длинные имена многоточием («Adobe Acrobat Reader…»).
+        string unique = Guid.NewGuid().ToString("N");
+        string fullName = "Ven4Tools обрезка " + unique + " (64-bit) длинное имя";
+        string subKey = "Ven4ToolsTest_" + Guid.NewGuid().ToString("N");
+        using (var root = Registry.CurrentUser.CreateSubKey(UninstallKeyPath + "\\" + subKey))
+        {
+            root!.SetValue("DisplayName", fullName);
+            root.SetValue("UninstallString", @"C:\Windows\System32\cmd.exe /c rem");
+        }
+        try
+        {
+            var found = AppUninstallService.FindUninstallString("Ven4Tools обрезка " + unique + " (64…");
+            Assert.NotNull(found);
+        }
+        finally
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(UninstallKeyPath + "\\" + subKey, throwOnMissingSubKey: false);
+        }
+    }
+
+    [Fact]
+    public void ОбрезанноеИмя_НесколькоСовпадений_НеНаходится()
+    {
+        string prefix = "Ven4Tools двойник " + Guid.NewGuid().ToString("N");
+        string a = "Ven4ToolsTest_" + Guid.NewGuid().ToString("N");
+        string b = "Ven4ToolsTest_" + Guid.NewGuid().ToString("N");
+        foreach (var (key, suffix) in new[] { (a, " x64"), (b, " x86") })
+        {
+            using var root = Registry.CurrentUser.CreateSubKey(UninstallKeyPath + "\\" + key);
+            root!.SetValue("DisplayName", prefix + suffix);
+            root.SetValue("UninstallString", @"C:\Windows\System32\cmd.exe /c rem");
+        }
+        try
+        {
+            // Неоднозначное начало имени — удалять наугад нельзя.
+            Assert.Null(AppUninstallService.FindUninstallString(prefix + "…"));
+        }
+        finally
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(UninstallKeyPath + "\\" + a, throwOnMissingSubKey: false);
+            Registry.CurrentUser.DeleteSubKeyTree(UninstallKeyPath + "\\" + b, throwOnMissingSubKey: false);
+        }
+    }
+
+    [Fact]
     public void НесуществующееПриложение_НеНаходится()
     {
         var found = AppUninstallService.FindUninstallString(

@@ -227,8 +227,8 @@ namespace Ven4Tools.ViewModels
                 await InstallationService.InstallSemaphore.WaitAsync();
                 try
                 {
-                    bool ok = await AppUninstallService.TryUninstallAsync(Row.App.AlternativeId, Row.DisplayName);
-                    if (ok)
+                    var result = await AppUninstallService.UninstallAsync(Row.App.AlternativeId, Row.DisplayName);
+                    if (result.Ok)
                     {
                         Row.IsInstalled = false;
                         Row.LaunchPath = null;
@@ -236,7 +236,8 @@ namespace Ven4Tools.ViewModels
                     }
                     else
                     {
-                        StatusText = "⚠ Деинсталлятор не найден";
+                        StatusText = "⚠ Не удалено";
+                        AppLogger.Write($"⚠ {Row.DisplayName}: не удалено — {result.Reason}");
                     }
                 }
                 finally

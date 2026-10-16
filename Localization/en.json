@@ -752,6 +752,18 @@
     "t": "Winget installed"
   },
   {
+    "s": "[AppUninstallService] «{0}» установлена в профиль пользователя — winget uninstall запущен без прав администратора",
+    "t": "[AppUninstallService] “{0}” is installed in the user profile — winget uninstall started without administrator rights"
+  },
+  {
+    "s": "[AppUninstallService] Закрыто зависших копий деинсталлятора после «{0}»: {1}",
+    "t": "[AppUninstallService] Stuck uninstaller instances closed after “{0}”: {1}"
+  },
+  {
+    "s": "[AppUninstallService] Команда удаления «{0}» из профиля пользователя запущена без прав администратора",
+    "t": "[AppUninstallService] Uninstall command for “{0}” from the user profile started without administrator rights"
+  },
+  {
     "s": "[AppUninstallService] ⚠ Команда деинсталляции для «{0}» найдена только в HKCU — запуск отменён: этот куст реестра доступен на запись непривилегированному процессу, а клиент запустил бы её с правами администратора",
     "t": "[AppUninstallService] ⚠ Uninstall command for “{0}” was found only in HKCU — launch canceled: this registry hive is writable by an unprivileged process, and the client would run the command with administrator rights"
   },
@@ -1122,6 +1134,10 @@
   {
     "s": "[TrustedExecutablePaths] ⚠ Реестр AppModel недоступен ({0}) — пробую перечисление каталога",
     "t": "[TrustedExecutablePaths] ⚠ AppModel registry unavailable ({0}) — trying directory enumeration"
+  },
+  {
+    "s": "[UnelevatedLauncher] Не удалось запустить без прав администратора: {0}",
+    "t": "[UnelevatedLauncher] Could not start without administrator rights: {0}"
   },
   {
     "s": "[UpdateBg] winget upgrade не ответил — число обновлений неизвестно",
@@ -1532,6 +1548,10 @@
     "t": "winget upgrade did not respond within 60 seconds — winget update check skipped."
   },
   {
+    "s": "winget без прав администратора не удалил программу из профиля пользователя.",
+    "t": "winget without administrator rights did not remove the app from the user profile."
+  },
+  {
     "s": "winget завершился с кодом {0} (0x{1}). Подробности — в логе.",
     "t": "winget exited with code {0} (0x{1}). See the log for details."
   },
@@ -1548,8 +1568,16 @@
     "t": "winget was not found or did not respond. Check your internet connection and try again."
   },
   {
+    "s": "winget не найден.",
+    "t": "winget not found."
+  },
+  {
     "s": "winget не ответил вовремя",
     "t": "winget did not respond in time"
+  },
+  {
+    "s": "winget не удаляет программы из профиля пользователя от имени администратора, а запустить его без прав администратора не удалось.",
+    "t": "winget does not remove user-profile apps as administrator, and it could not be started without administrator rights."
   },
   {
     "s": "winget только что установлен/обновлён и ещё не готов к использованию в этой сессии — проверка обновлений отложена.",
@@ -2112,6 +2140,10 @@
     "t": "The code contains no apps. Build the set again on ven4tools.ru."
   },
   {
+    "s": "В команде удаления MSI нет кода продукта.",
+    "t": "The MSI uninstall command has no product code."
+  },
+  {
     "s": "В набор: {0}",
     "t": "Add to set: {0}"
   },
@@ -2594,6 +2626,38 @@
   {
     "s": "Датчики опрашиваются…",
     "t": "Reading sensors…"
+  },
+  {
+    "s": "Деинсталлятор завершился с кодом {0}.",
+    "t": "The uninstaller exited with code {0}."
+  },
+  {
+    "s": "Деинсталлятор завершился с ошибкой.",
+    "t": "The uninstaller failed."
+  },
+  {
+    "s": "Деинсталлятор из профиля пользователя не завершил удаление — вероятно, ждёт ответа в своём окне.",
+    "t": "The user-profile uninstaller did not finish — it is probably waiting for input in its window."
+  },
+  {
+    "s": "Деинсталлятор из профиля пользователя не удалил программу.",
+    "t": "The user-profile uninstaller did not remove the app."
+  },
+  {
+    "s": "Деинсталлятор не завершился за 2 минуты — вероятно, ждёт ответа в своём окне.",
+    "t": "The uninstaller did not finish within 2 minutes — it is probably waiting for input in its window."
+  },
+  {
+    "s": "Деинсталлятор не запустился.",
+    "t": "The uninstaller did not start."
+  },
+  {
+    "s": "Деинсталлятор не найден ни в winget, ни в реестре.",
+    "t": "No uninstaller found in winget or in the registry."
+  },
+  {
+    "s": "Деинсталлятор сообщил об успехе, но программа осталась в системе — вероятно, он ждёт ответа в своём окне.",
+    "t": "The uninstaller reported success, but the app is still installed — it is probably waiting for input in its window."
   },
   {
     "s": "Действия",
@@ -3994,6 +4058,10 @@
   {
     "s": "Не удалось запустить powercfg",
     "t": "Could not start powercfg"
+  },
+  {
+    "s": "Не удалось запустить деинсталлятор без прав администратора.",
+    "t": "Could not start the uninstaller without administrator rights."
   },
   {
     "s": "Не удалось запустить клиент: {0}",
@@ -6116,6 +6184,10 @@
     "t": "Check for updates on startup"
   },
   {
+    "s": "Программа установлена в профиль пользователя — winget не меняет её от имени администратора.",
+    "t": "The app is installed in the user profile — winget does not change it as administrator."
+  },
+  {
     "s": "Программы из каталога вернутся сами. Остальные попадут в файл «Поставить вручную.txt» — с памяткой, что ещё проверить.",
     "t": "Apps from the catalog come back automatically. The rest go into the “Install manually.txt” file — with a checklist of what else to verify."
   },
@@ -7180,6 +7252,10 @@
     "t": "Uninstalls programs together with leftover files and registry entries."
   },
   {
+    "s": "Удаление через winget прервано: деинсталлятор перестал подавать признаки работы — вероятно, ждёт ответа в своём окне.",
+    "t": "Uninstall via winget stopped: the uninstaller stopped responding — it is probably waiting for input in its window."
+  },
+  {
     "s": "Удаление...",
     "t": "Uninstalling..."
   },
@@ -7526,6 +7602,10 @@
   {
     "s": "Утилита 3D-печати.",
     "t": "3D printing utility."
+  },
+  {
+    "s": "Файл деинсталлятора из реестра не найден на диске.",
+    "t": "The uninstaller file listed in the registry was not found on disk."
   },
   {
     "s": "Файл изменён с момента добавления",
@@ -8952,6 +9032,10 @@
     "t": "⚠ {0}: uninstaller not found"
   },
   {
+    "s": "⚠ {0}: не удалено — {1}",
+    "t": "⚠ {0}: not uninstalled — {1}"
+  },
+  {
     "s": "⚠ Деинсталлятор не найден",
     "t": "⚠ Uninstaller not found"
   },
@@ -8962,6 +9046,10 @@
   {
     "s": "⚠ Импорт не выполнен: winget не отработал (причина — в логе выше)",
     "t": "⚠ Import not done: winget did not run (reason — see the log above)"
+  },
+  {
+    "s": "⚠ Не удалено",
+    "t": "⚠ Not uninstalled"
   },
   {
     "s": "⚠ Не удалось выполнить поиск по источникам",

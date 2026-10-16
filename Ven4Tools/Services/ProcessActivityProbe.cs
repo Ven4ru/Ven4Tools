@@ -27,6 +27,28 @@ namespace Ven4Tools.Services
             return total;
         }
 
+        /// <summary>
+        /// Есть ли у процесса или его потомков видимое главное окно. В тихом режиме
+        /// окно означает, что программа ждёт ответа пользователя.
+        /// </summary>
+        public static bool HasVisibleWindow(int rootPid)
+        {
+            try
+            {
+                foreach (int pid in TreeOf(rootPid))
+                {
+                    try
+                    {
+                        using var p = System.Diagnostics.Process.GetProcessById(pid);
+                        if (p.MainWindowHandle != IntPtr.Zero) return true;
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            return false;
+        }
+
         /// <summary>Корень и все его потомки по снимку списка процессов.</summary>
         internal static List<int> TreeOf(int rootPid)
         {

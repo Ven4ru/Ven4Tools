@@ -136,8 +136,17 @@ namespace Ven4Tools.Services
         // Возвращает (ExitCode, Output); ExitCode = -1, если winget не найден, не
         // запустился или убит по таймауту/отмене. Таймаут по умолчанию — 120 с; при
         // срабатывании внешнего токена или таймаута всё дерево процессов завершается.
+        // Сколько терпим видимое окно у процесса, запущенного в тихом режиме.
+        private static readonly TimeSpan WindowWaitLimit = TimeSpan.FromMinutes(2);
+
+        /// <param name="idleLimit">
+        /// Необязательный сторож бездействия: процесс прерывается, если у winget и его
+        /// потомков столько времени нет ввода-вывода (деинсталлятор, ждущий ответа в
+        /// своём окне, — AnyDesk на стенде 16.10.2026 держал клиент весь таймаут).
+        /// </param>
         public static async Task<(int ExitCode, string Output)> RunAsync(
-            IReadOnlyList<string> arguments, TimeSpan? timeout = null, CancellationToken token = default)
+            IReadOnlyList<string> arguments, TimeSpan? timeout = null, CancellationToken token = default,
+            TimeSpan? idleLimit = null)
         {
             var psi = CreateStartInfo(arguments);
             if (psi == null) return (-1, string.Empty);
@@ -145,14 +154,42 @@ namespace Ven4Tools.Services
             using var p = Process.Start(psi);
             if (p == null) return (-1, string.Empty);
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
-            cts.CancelAfter(timeout ?? TimeSpan.FromSeconds(120));
+            var limit = timeout ?? TimeSpan.FromSeconds(120);
+            cts.CancelAfter(limit);
 
             var outputTask = p.StandardOutput.ReadToEndAsync();
             var stderrTask = p.StandardError.ReadToEndAsync();
             int exitCode = -1;
             try
             {
-                await p.WaitForExitAsync(cts.Token);
+                if (idleLimit is { } idle)
+                {
+                    var detector = new InstallStallDetector(DateTime.UtcNow, idle, limit);
+                    var exited = p.WaitForExitAsync(cts.Token);
+                    DateTime? windowSince = null;
+                    while (!exited.IsCompleted)
+                    {
+                        await Task.WhenAny(exited, Task.Delay(TimeSpan.FromSeconds(20), CancellationToken.None));
+                        if (exited.IsCompleted) break;
+                        long activity = await Task.Run(() => ProcessActivityProbe.Sample(p.Id, null));
+                        // Окно, которое держится при тихом режиме, — ожидание ответа
+                        // пользователя: дисковая активность тут не признак работы
+                        // (окно AnyDesk пишет на диск постоянно и обходило сторож).
+                        bool window = await Task.Run(() => ProcessActivityProbe.HasVisibleWindow(p.Id));
+                        windowSince = window ? windowSince ?? DateTime.UtcNow : null;
+                        bool waitsForUser = windowSince is { } since && DateTime.UtcNow - since >= WindowWaitLimit;
+                        if (waitsForUser || detector.Observe(DateTime.UtcNow, activity) != null)
+                        {
+                            cts.Cancel();
+                            break;
+                        }
+                    }
+                    await exited;
+                }
+                else
+                {
+                    await p.WaitForExitAsync(cts.Token);
+                }
                 exitCode = p.ExitCode;
             }
             catch (OperationCanceledException)
