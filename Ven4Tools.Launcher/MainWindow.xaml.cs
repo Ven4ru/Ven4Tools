@@ -71,6 +71,12 @@ namespace Ven4Tools.Launcher
         {
             InitializeComponent();
 
+            // На баннере надписи нарисованы в самой картинке — для английского
+            // интерфейса есть её вариант с английскими надписями.
+            if (LauncherLanguage.Current == Ven4Tools.Localization.AppLanguage.English)
+                imgBanner.Source = new System.Windows.Media.Imaging.BitmapImage(
+                    new Uri("pack://application:,,,/Resources/launcher-en.png"));
+
             // Метка версии в сайдбаре — раньше был захардкожен литерал "LAUNCHER  2.1",
             // расходившийся с реальной версией сборки (Gap Analysis).
             var assemblyVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;

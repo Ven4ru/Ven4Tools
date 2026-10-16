@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <Resource Include="Resources\launcher.png" />
+    <Resource Include="Resources\launcher-en.png" />
   </ItemGroup>
 
   <ItemGroup>

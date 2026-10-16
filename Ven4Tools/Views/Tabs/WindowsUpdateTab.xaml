@@ -26,7 +26,7 @@
         <!-- Header -->
         <Grid Grid.Row="0" Margin="0,0,0,12">
             <StackPanel>
-                <TextBlock Text="Обновления Windows" Style="{StaticResource PageTitleStyle}"/>
+                <TextBlock Text="Windows Update" Style="{StaticResource PageTitleStyle}"/>
                 <TextBlock x:Name="txtLastChecked" Text="{Binding LastCheckedText}"
                            FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
             </StackPanel>

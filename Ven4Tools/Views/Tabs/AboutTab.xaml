@@ -26,17 +26,25 @@
                 <StackPanel>
                     <TextBlock Text="📋 О программе" FontWeight="Bold" FontSize="13"
                                Foreground="{DynamicResource HeaderForeground}" Margin="0,0,0,10"/>
-                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}">
-                        Ven4Tools — это удобный установщик программ для Windows.<LineBreak/><LineBreak/>
-
-                        • Поддержка winget и прямых ссылок<LineBreak/>
-                        • Каталог популярных приложений<LineBreak/>
-                        • Добавление своих программ<LineBreak/>
-                        • Установка Microsoft Office<LineBreak/>
-                        • Состояние лицензий Windows и Office<LineBreak/>
-                        • Автоматическая проверка доступности<LineBreak/>
-                        • Альтернативные источники для недоступных приложений
-                    </TextBlock>
+                    <!-- Каждый пункт — отдельный TextBlock: перевод заменяет текст блока
+                         целиком, и список из одного блока с LineBreak в английском
+                         интерфейсе слипался в одну строку. -->
+                    <StackPanel>
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                            </Style>
+                        </StackPanel.Resources>
+                        <TextBlock Text="Ven4Tools — это удобный установщик программ для Windows." Margin="0,0,0,10"/>
+                        <TextBlock Text="• Поддержка winget и прямых ссылок"/>
+                        <TextBlock Text="• Каталог популярных приложений"/>
+                        <TextBlock Text="• Добавление своих программ"/>
+                        <TextBlock Text="• Установка Microsoft Office"/>
+                        <TextBlock Text="• Состояние лицензий Windows и Office"/>
+                        <TextBlock Text="• Автоматическая проверка доступности"/>
+                        <TextBlock Text="• Альтернативные источники для недоступных приложений"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -46,11 +54,17 @@
                 <StackPanel>
                     <TextBlock Text="🔧 Используемые технологии" FontWeight="Bold" FontSize="13"
                                Foreground="{DynamicResource HeaderForeground}" Margin="0,0,0,10"/>
-                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}">
-                        • .NET 10.0 / WPF<LineBreak/>
-                        • winget (Windows Package Manager)<LineBreak/>
-                        • PowerShell Core
-                    </TextBlock>
+                    <StackPanel>
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                            </Style>
+                        </StackPanel.Resources>
+                        <TextBlock Text="• .NET 10.0 / WPF"/>
+                        <TextBlock Text="• winget (Windows Package Manager)"/>
+                        <TextBlock Text="• PowerShell Core"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

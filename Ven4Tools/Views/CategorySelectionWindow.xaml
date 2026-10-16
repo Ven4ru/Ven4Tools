@@ -52,14 +52,25 @@
                                FontSize="11" Margin="0,4,0,12"
                                Foreground="{DynamicResource AccentColor}"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="Браузеры, офис, мультимедиа и системные утилиты — всё необходимое для быстрого ввода ПК в работу"
+                    <TextBlock Text="Самое нужное, чтобы сразу начать работать: браузер, офис, мессенджеры, плеер, архиватор и библиотеки Windows"
                                FontSize="11" TextWrapping="Wrap" TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondary}"/>
                     <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
-                    <TextBlock FontSize="11" TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextSecondary}">
-                        • Браузеры<LineBreak/>• Офис<LineBreak/>• Мультимедиа<LineBreak/>• Системные утилиты
-                    </TextBlock>
+                    <!-- Состав режима задан у каждой программы отдельно (поле profile каталога),
+                         поэтому здесь примеры программ, а не категории. Каждая строка — свой
+                         TextBlock: перевод заменяет текст блока целиком. -->
+                    <StackPanel>
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                            </Style>
+                        </StackPanel.Resources>
+                        <TextBlock Text="• Firefox, Chrome, Яндекс.Браузер"/>
+                        <TextBlock Text="• Telegram, Discord, Zoom"/>
+                        <TextBlock Text="• VLC, 7-Zip, Steam"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -80,14 +91,25 @@
                                FontSize="11" Margin="0,4,0,12"
                                Foreground="{DynamicResource AccentColor}"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="Всё базовое плюс инструменты разработки, редакторы, графика и мессенджеры"
+                    <TextBlock Text="Всё из базового плюс программы для тех, кто делает больше: разработка, графика, монтаж, диагностика ПК"
                                FontSize="11" TextWrapping="Wrap" TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondary}"/>
                     <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
-                    <TextBlock FontSize="11" TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextSecondary}">
-                        • Всё базовое<LineBreak/>• Разработка<LineBreak/>• Графика<LineBreak/>• Мессенджеры
-                    </TextBlock>
+                    <!-- Состав режима задан у каждой программы отдельно (поле profile каталога),
+                         поэтому здесь примеры программ, а не категории. Каждая строка — свой
+                         TextBlock: перевод заменяет текст блока целиком. -->
+                    <StackPanel>
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                            </Style>
+                        </StackPanel.Resources>
+                        <TextBlock Text="• VS Code, Git, Python"/>
+                        <TextBlock Text="• GIMP, Krita, OBS Studio"/>
+                        <TextBlock Text="• PowerToys, CrystalDiskInfo, MSI Afterburner"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -108,14 +130,25 @@
                                FontSize="11" Margin="0,4,0,12"
                                Foreground="{DynamicResource AccentColor}"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="Все доступные приложения без исключений, включая игровые сервисы и пакеты драйверов"
+                    <TextBlock Text="Весь каталог, включая драйверпаки, инструменты ИИ и узкоспециальные программы"
                                FontSize="11" TextWrapping="Wrap" TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondary}"/>
                     <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
-                    <TextBlock FontSize="11" TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextSecondary}">
-                        • Все категории<LineBreak/>• Игровые сервисы<LineBreak/>• Драйверпаки<LineBreak/>• Пользовательские
-                    </TextBlock>
+                    <!-- Состав режима задан у каждой программы отдельно (поле profile каталога),
+                         поэтому здесь примеры программ, а не категории. Каждая строка — свой
+                         TextBlock: перевод заменяет текст блока целиком. -->
+                    <StackPanel>
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                            </Style>
+                        </StackPanel.Resources>
+                        <TextBlock Text="• Драйверы NVIDIA, AMD, Intel"/>
+                        <TextBlock Text="• Claude Code, Ollama, LM Studio"/>
+                        <TextBlock Text="• Blender, Docker, Visual Studio"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>
