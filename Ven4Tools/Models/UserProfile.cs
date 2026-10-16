@@ -21,6 +21,9 @@ namespace Ven4Tools.Models
         // Установка
         public bool SilentInstall { get; set; } = false;
         public string DefaultInstallFolder { get; set; } = "";
+        // Убирать ярлыки рабочего стола, появившиеся во время установки через клиент.
+        // Выключено по умолчанию: решение владельца 16.10.2026.
+        public bool RemoveNewDesktopShortcuts { get; set; } = false;
 
         // Уведомления
         public bool NotifyAppUpdates { get; set; } = true;

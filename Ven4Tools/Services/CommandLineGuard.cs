@@ -40,6 +40,18 @@ namespace Ven4Tools.Services
             return _allowedId.IsMatch(id);
         }
 
+        // Локальные ID winget для программ, которых нет в его источниках:
+        // «MSIX\Имя_версия_…», «ARP\User\X64\Lesta Game Center», «ARP\Machine\X64\{GUID}».
+        // Только для удаления и только через ArgumentList (каждый аргумент — один токен),
+        // поэтому пробел, обратный слэш и фигурные скобки здесь допустимы; кавычки, &, |,
+        // переводы строк и прочее — нет.
+        private static readonly Regex _localPackageId =
+            new(@"^(MSIX|ARP)\\[A-Za-z0-9.\-+_\\{}~ ]+$", RegexOptions.Compiled);
+
+        /// <summary>Локальный ID winget («MSIX\…», «ARP\…») — только для удаления.</summary>
+        public static bool ValidateLocalPackageId(string? id)
+            => !string.IsNullOrEmpty(id) && id.Length <= 260 && _localPackageId.IsMatch(id);
+
         /// <summary>
         /// Удаляет из запроса все недопустимые символы и обрезает до 100 символов.
         /// </summary>

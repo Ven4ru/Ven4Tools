@@ -66,7 +66,10 @@ namespace Ven4Tools.ViewModels
             if (result == null)
                 return Finish(UnattendedExitCode.NothingToInstall, "установка не началась");
 
-            report.Installed.AddRange(result.Installed.Select(r => r.AppId));
+            // Пропущенные как уже установленные идут отдельным списком: «Installed» —
+            // то, что поставлено в этом запуске.
+            report.Installed.AddRange(result.Installed.Except(result.AlreadyInstalled).Select(r => r.AppId));
+            report.AlreadyInstalled.AddRange(result.AlreadyInstalled.Select(r => r.AppId));
             report.Failed.AddRange(result.Failed.Select(f => new UnattendedFailure { Id = f.Row.AppId, Reason = f.Message }));
             report.RebootRequired.AddRange(result.RebootRequired.Select(r => r.AppId));
 
@@ -82,7 +85,7 @@ namespace Ven4Tools.ViewModels
             bool allGood = report.Failed.Count == 0 && report.NotFound.Count == 0 && report.Unavailable.Count == 0;
             return Finish(
                 allGood ? UnattendedExitCode.Success : UnattendedExitCode.PartialFailure,
-                $"установлено {report.Installed.Count}, не удалось {report.Failed.Count}, " +
+                $"установлено {report.Installed.Count}, уже было {report.AlreadyInstalled.Count}, не удалось {report.Failed.Count}, " +
                 $"нет в каталоге {report.NotFound.Count}, недоступно {report.Unavailable.Count}");
         }
     }

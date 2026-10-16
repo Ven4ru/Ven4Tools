@@ -356,6 +356,10 @@
     "t": ". Restart required: {0}"
   },
   {
+    "s": ". Уже были установлены, пропущено: {0}",
+    "t": ". Already installed, skipped: {0}"
+  },
+  {
     "s": "0 МБ",
     "t": "0 MB"
   },
@@ -538,6 +542,10 @@
   {
     "s": "SHA256 не совпадает — файл изменён с момента добавления",
     "t": "SHA256 mismatch — file changed since it was added"
+  },
+  {
+    "s": "SHA256 скачанного установщика не совпал с каталогом.",
+    "t": "SHA256 of the downloaded installer does not match the catalog."
   },
   {
     "s": "SSH и Telnet клиент для подключения к серверам.",
@@ -742,6 +750,18 @@
   {
     "s": "Winget установлен",
     "t": "Winget installed"
+  },
+  {
+    "s": "[AppUninstallService] «{0}» установлена в профиль пользователя — winget uninstall запущен без прав администратора",
+    "t": "[AppUninstallService] “{0}” is installed in the user profile — winget uninstall started without administrator rights"
+  },
+  {
+    "s": "[AppUninstallService] Закрыто зависших копий деинсталлятора после «{0}»: {1}",
+    "t": "[AppUninstallService] Stuck uninstaller instances closed after “{0}”: {1}"
+  },
+  {
+    "s": "[AppUninstallService] Команда удаления «{0}» из профиля пользователя запущена без прав администратора",
+    "t": "[AppUninstallService] Uninstall command for “{0}” from the user profile started without administrator rights"
   },
   {
     "s": "[AppUninstallService] ⚠ Команда деинсталляции для «{0}» найдена только в HKCU — запуск отменён: этот куст реестра доступен на запись непривилегированному процессу, а клиент запустил бы её с правами администратора",
@@ -1114,6 +1134,10 @@
   {
     "s": "[TrustedExecutablePaths] ⚠ Реестр AppModel недоступен ({0}) — пробую перечисление каталога",
     "t": "[TrustedExecutablePaths] ⚠ AppModel registry unavailable ({0}) — trying directory enumeration"
+  },
+  {
+    "s": "[UnelevatedLauncher] Не удалось запустить без прав администратора: {0}",
+    "t": "[UnelevatedLauncher] Could not start without administrator rights: {0}"
   },
   {
     "s": "[UpdateBg] winget upgrade не ответил — число обновлений неизвестно",
@@ -1524,8 +1548,16 @@
     "t": "winget upgrade did not respond within 60 seconds — winget update check skipped."
   },
   {
+    "s": "winget без прав администратора не удалил программу из профиля пользователя.",
+    "t": "winget without administrator rights did not remove the app from the user profile."
+  },
+  {
     "s": "winget завершился с кодом {0} (0x{1}). Подробности — в логе.",
     "t": "winget exited with code {0} (0x{1}). See the log for details."
+  },
+  {
+    "s": "winget завис (скачивание или установщик не подавали признаков работы) и прерван клиентом.",
+    "t": "winget hung (the download or installer showed no signs of activity) and was stopped by the client."
   },
   {
     "s": "winget не найден или не ответил — обновления не проверены",
@@ -1536,8 +1568,16 @@
     "t": "winget was not found or did not respond. Check your internet connection and try again."
   },
   {
+    "s": "winget не найден.",
+    "t": "winget not found."
+  },
+  {
     "s": "winget не ответил вовремя",
     "t": "winget did not respond in time"
+  },
+  {
+    "s": "winget не удаляет программы из профиля пользователя от имени администратора, а запустить его без прав администратора не удалось.",
+    "t": "winget does not remove user-profile apps as administrator, and it could not be started without administrator rights."
   },
   {
     "s": "winget только что установлен/обновлён и ещё не готов к использованию в этой сессии — проверка обновлений отложена.",
@@ -1666,6 +1706,10 @@
   {
     "s": "{0} мин {1} с",
     "t": "{0} min {1} s"
+  },
+  {
+    "s": "{0} мин без признаков работы",
+    "t": "{0} min without signs of activity"
   },
   {
     "s": "{0} мкс",
@@ -2094,6 +2138,10 @@
   {
     "s": "В коде нет ни одного приложения. Соберите набор заново на ven4tools.ru.",
     "t": "The code contains no apps. Build the set again on ven4tools.ru."
+  },
+  {
+    "s": "В команде удаления MSI нет кода продукта.",
+    "t": "The MSI uninstall command has no product code."
   },
   {
     "s": "В набор: {0}",
@@ -2578,6 +2626,38 @@
   {
     "s": "Датчики опрашиваются…",
     "t": "Reading sensors…"
+  },
+  {
+    "s": "Деинсталлятор завершился с кодом {0}.",
+    "t": "The uninstaller exited with code {0}."
+  },
+  {
+    "s": "Деинсталлятор завершился с ошибкой.",
+    "t": "The uninstaller failed."
+  },
+  {
+    "s": "Деинсталлятор из профиля пользователя не завершил удаление — вероятно, ждёт ответа в своём окне.",
+    "t": "The user-profile uninstaller did not finish — it is probably waiting for input in its window."
+  },
+  {
+    "s": "Деинсталлятор из профиля пользователя не удалил программу.",
+    "t": "The user-profile uninstaller did not remove the app."
+  },
+  {
+    "s": "Деинсталлятор не завершился за 2 минуты — вероятно, ждёт ответа в своём окне.",
+    "t": "The uninstaller did not finish within 2 minutes — it is probably waiting for input in its window."
+  },
+  {
+    "s": "Деинсталлятор не запустился.",
+    "t": "The uninstaller did not start."
+  },
+  {
+    "s": "Деинсталлятор не найден ни в winget, ни в реестре.",
+    "t": "No uninstaller found in winget or in the registry."
+  },
+  {
+    "s": "Деинсталлятор сообщил об успехе, но программа осталась в системе — вероятно, он ждёт ответа в своём окне.",
+    "t": "The uninstaller reported success, but the app is still installed — it is probably waiting for input in its window."
   },
   {
     "s": "Действия",
@@ -3940,6 +4020,10 @@
     "t": "Do not leave the USB drive unattended, and delete the folder when you no longer need it."
   },
   {
+    "s": "Не создавать ярлыки на рабочем столе",
+    "t": "Don't create desktop shortcuts"
+  },
+  {
     "s": "Не удалось восстановиться из «Быстрого запуска» — Windows перешла на полную холодную загрузку. Само завершение работы прошло штатно.",
     "t": "Could not resume from “Fast startup” — Windows fell back to a full cold boot. The shutdown itself was normal."
   },
@@ -3974,6 +4058,10 @@
   {
     "s": "Не удалось запустить powercfg",
     "t": "Could not start powercfg"
+  },
+  {
+    "s": "Не удалось запустить деинсталлятор без прав администратора.",
+    "t": "Could not start the uninstaller without administrator rights."
   },
   {
     "s": "Не удалось запустить клиент: {0}",
@@ -4182,6 +4270,10 @@
   {
     "s": "Не установлено",
     "t": "Not installed"
+  },
+  {
+    "s": "Не установлено: {0}",
+    "t": "Not installed: {0}"
   },
   {
     "s": "Небезопасный путь установки",
@@ -5452,6 +5544,10 @@
     "t": "Mounts cloud storage (Google Drive, Yandex Disk, OneDrive, etc.) as a regular local drive."
   },
   {
+    "s": "Подключает облачные хранилища (Google Drive, Яндекс.Диск, OneDrive и др.) как обычный локальный диск. При установке Windows спросит, устанавливать ли драйвер EldoS, — нажмите «Установить».",
+    "t": "Mounts cloud storage (Google Drive, Yandex Disk, OneDrive, etc.) as a regular local drive. During installation Windows will ask whether to install the EldoS driver — click “Install”."
+  },
+  {
     "s": "Подключение:",
     "t": "Connection:"
   },
@@ -5796,6 +5892,10 @@
     "t": "After installing Windows:"
   },
   {
+    "s": "После установки через Ven4Tools убирает с рабочего стола ярлыки, которые появились во время этой установки. Ярлыки, которые были раньше, не трогаются. Программа остаётся в меню «Пуск».",
+    "t": "After an install through Ven4Tools, removes desktop shortcuts that appeared during that install. Existing shortcuts are left alone. The app stays in the Start menu."
+  },
+  {
     "s": "Последние действия",
     "t": "Recent activity"
   },
@@ -6084,6 +6184,10 @@
     "t": "Check for updates on startup"
   },
   {
+    "s": "Программа установлена в профиль пользователя — winget не меняет её от имени администратора.",
+    "t": "The app is installed in the user profile — winget does not change it as administrator."
+  },
+  {
     "s": "Программы из каталога вернутся сами. Остальные попадут в файл «Поставить вручную.txt» — с памяткой, что ещё проверить.",
     "t": "Apps from the catalog come back automatically. The rest go into the “Install manually.txt” file — with a checklist of what else to verify."
   },
@@ -6186,6 +6290,10 @@
   {
     "s": "Прямая ссылка",
     "t": "Direct link"
+  },
+  {
+    "s": "Прямая ссылка недоступна: {0}",
+    "t": "Direct link unavailable: {0}"
   },
   {
     "s": "Путь из манифеста выходит за пределы папки клиента: {0}",
@@ -7144,6 +7252,10 @@
     "t": "Uninstalls programs together with leftover files and registry entries."
   },
   {
+    "s": "Удаление через winget прервано: деинсталлятор перестал подавать признаки работы — вероятно, ждёт ответа в своём окне.",
+    "t": "Uninstall via winget stopped: the uninstaller stopped responding — it is probably waiting for input in its window."
+  },
+  {
     "s": "Удаление...",
     "t": "Uninstalling..."
   },
@@ -7206,6 +7318,10 @@
   {
     "s": "Уже установлено (версия не изменилась)",
     "t": "Already installed (version unchanged)"
+  },
+  {
+    "s": "Уже установлено — пропущено",
+    "t": "Already installed — skipped"
   },
   {
     "s": "Укажите имя учётной записи.",
@@ -7472,6 +7588,10 @@
     "t": "The package installer failed with a fatal error."
   },
   {
+    "s": "Установщик по прямой ссылке завершился с кодом {0}.",
+    "t": "The direct-link installer exited with code {0}."
+  },
+  {
     "s": "Устаревшая версия Windows",
     "t": "Outdated Windows version"
   },
@@ -7482,6 +7602,10 @@
   {
     "s": "Утилита 3D-печати.",
     "t": "3D printing utility."
+  },
+  {
+    "s": "Файл деинсталлятора из реестра не найден на диске.",
+    "t": "The uninstaller file listed in the registry was not found on disk."
   },
   {
     "s": "Файл изменён с момента добавления",
@@ -8264,6 +8388,10 @@
     "t": "the archive has no embedded signature — it cannot be installed without CDN confirmation"
   },
   {
+    "s": "установка идёт дольше {0} мин",
+    "t": "installation has been running for over {0} min"
+  },
+  {
     "s": "установка не началась",
     "t": "installation did not start"
   },
@@ -8290,6 +8418,10 @@
   {
     "s": "установлено {0}, не удалось {1}, нет в каталоге {2}, недоступно {3}",
     "t": "installed {0}, failed {1}, not in the catalog {2}, unavailable {3}"
+  },
+  {
+    "s": "установлено {0}, уже было {1}, не удалось {2}, нет в каталоге {3}, недоступно {4}",
+    "t": "installed {0}, already present {1}, failed {2}, not in the catalog {3}, unavailable {4}"
   },
   {
     "s": "файл {0} не совпадает с сохранённым составом установки",
@@ -8444,6 +8576,10 @@
     "t": "ℹ️ {0} — {1}: was already installed, version “{2}” unchanged{3}"
   },
   {
+    "s": "ℹ️ {0}: уже установлено (версия «{1}») — пропущено",
+    "t": "ℹ️ {0}: already installed (version “{1}”) — skipped"
+  },
+  {
     "s": "ℹ️ Автоматически найденная папка отклонена — открываю выбор папки вручную",
     "t": "ℹ️ Automatically found folder rejected — opening manual folder selection"
   },
@@ -8500,6 +8636,10 @@
     "t": "ℹ️ Already installed — version unchanged"
   },
   {
+    "s": "ℹ️ Уже установлено — пропущено",
+    "t": "ℹ️ Already installed — skipped"
+  },
+  {
     "s": "ℹ️ нет (запросим при необходимости)",
     "t": "ℹ️ no (will be requested if needed)"
   },
@@ -8528,8 +8668,16 @@
     "t": "≈ {0} (Windows estimate)"
   },
   {
+    "s": "⏭ Winget: у «{0}» нет ID пакета winget — источник пропущен",
+    "t": "⏭ Winget: “{0}” has no winget package ID — source skipped"
+  },
+  {
     "s": "⏱️ Choco: установка «{0}» превысила таймаут {1} мин — прервана",
     "t": "⏱️ Choco: installation of “{0}” exceeded the {1} min timeout — aborted"
+  },
+  {
+    "s": "⏱️ Winget [{0}]: {1} — процесс прерван",
+    "t": "⏱️ Winget [{0}]: {1} — process stopped"
   },
   {
     "s": "⏱️ Запущен тест скорости диска: {0}, том {1}, профиль {2}",
@@ -8884,6 +9032,10 @@
     "t": "⚠ {0}: uninstaller not found"
   },
   {
+    "s": "⚠ {0}: не удалено — {1}",
+    "t": "⚠ {0}: not uninstalled — {1}"
+  },
+  {
     "s": "⚠ Деинсталлятор не найден",
     "t": "⚠ Uninstaller not found"
   },
@@ -8896,6 +9048,10 @@
     "t": "⚠ Import not done: winget did not run (reason — see the log above)"
   },
   {
+    "s": "⚠ Не удалено",
+    "t": "⚠ Not uninstalled"
+  },
+  {
     "s": "⚠ Не удалось выполнить поиск по источникам",
     "t": "⚠ Could not search the sources"
   },
@@ -8906,6 +9062,10 @@
   {
     "s": "⚠ Не удалось скопировать код набора: {0}",
     "t": "⚠ Could not copy the set code: {0}"
+  },
+  {
+    "s": "⚠ Не удалось убрать ярлык {0}: {1}",
+    "t": "⚠ Could not remove shortcut {0}: {1}"
   },
   {
     "s": "⚠ Нет SHA256 в каталоге для {0} — кэш пропущен, пробую следующий источник",
@@ -11316,6 +11476,10 @@
     "t": "\uD83E\uDDF9 Apply selected"
   },
   {
+    "s": "\uD83E\uDDF9 Убран ярлык с рабочего стола: {0}",
+    "t": "\uD83E\uDDF9 Removed desktop shortcut: {0}"
+  },
+  {
     "s": "\uD83E\uDDF9 Удалены временные каталоги установщиков прошлых сеансов: {0}",
     "t": "\uD83E\uDDF9 Removed installer temp folders from previous sessions: {0}"
   },
@@ -11342,5 +11506,9 @@
   {
     "s": "\uD83E\uDE7A Проверка: {0}",
     "t": "\uD83E\uDE7A Check: {0}"
+  },
+  {
+    "s": "\uD83E\uDE9F Закрыто окно, открытое после установки «{0}»: {1}",
+    "t": "\uD83E\uDE9F Closed a window opened after installing “{0}”: {1}"
   }
 ]

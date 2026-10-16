@@ -16,6 +16,15 @@ namespace Ven4Tools.Services
             string outcomeCheckId, InstalledBaseline baseline, CancellationToken token)
         {
             if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) return SourceAttempt.Failed(null);
+            // У записи каталога без wingetId (ExitLag, VK Play, драйверпаки…) primaryId —
+            // внутренний ID каталога: `winget install exitlag` по обоим источникам заведомо
+            // ничего не найдёт и только тратит время. Пользовательские приложения
+            // (IsUserAdded) сюда не попадают: у них ID и есть winget-ID.
+            if (string.IsNullOrEmpty(app.AlternativeId) && !app.IsUserAdded)
+            {
+                Log($"⏭ Winget: у «{app.DisplayName}» нет ID пакета winget — источник пропущен");
+                return SourceAttempt.Failed(null);
+            }
             string? lastFailureDetail = null;
             foreach (var wsrc in wingetSources)
             {
@@ -65,6 +74,45 @@ namespace Ven4Tools.Services
                 Log($"❌ Winget ({wsrc}, {primaryId}): {lastFailureDetail}");
             }
             return SourceAttempt.Failed(lastFailureDetail);
+        }
+
+        // Сторож winget: без него одно зависшее скачивание навсегда останавливало
+        // весь набор (стенд, 16.10.2026). Признак работы — ввод-вывод winget и его
+        // потомков плюс рост папки загрузки %TEMP%\WinGet (скачивание через службу
+        // Delivery Optimization пишет туда, но не из дерева winget).
+        internal static readonly TimeSpan WingetIdleLimit = TimeSpan.FromMinutes(15);
+        internal static readonly TimeSpan WingetHardLimit = TimeSpan.FromMinutes(90);
+        private static readonly TimeSpan WingetSampleInterval = TimeSpan.FromSeconds(30);
+
+        /// <returns>null — winget завершился сам; иначе причина, по которой он прерван.</returns>
+        private static async Task<string?> WaitForWingetAsync(Process process, CancellationToken token)
+        {
+            var detector = new InstallStallDetector(DateTime.UtcNow, WingetIdleLimit, WingetHardLimit);
+            string downloads = Path.Combine(Path.GetTempPath(), "WinGet");
+            var nextSample = DateTime.UtcNow;
+            while (!process.HasExited)
+            {
+                // Та же схема, что WaitForExitRespectingCancellationAsync: пауза без токена,
+                // иначе отмена вылетала бы из паузы мимо Kill.
+                if (token.IsCancellationRequested)
+                {
+                    try { process.Kill(entireProcessTree: true); } catch { }
+                    token.ThrowIfCancellationRequested();
+                }
+                if (DateTime.UtcNow >= nextSample)
+                {
+                    nextSample = DateTime.UtcNow + WingetSampleInterval;
+                    long activity = await Task.Run(() => ProcessActivityProbe.Sample(process.Id, downloads));
+                    string? reason = detector.Observe(DateTime.UtcNow, activity);
+                    if (reason != null && !process.HasExited)
+                    {
+                        try { process.Kill(entireProcessTree: true); } catch { }
+                        return reason;
+                    }
+                }
+                await Task.Delay(100, CancellationToken.None);
+            }
+            return null;
         }
 
         // Возвращает признак перезагрузки отдельно от общего Ok (0 и 3010 — оба
@@ -190,7 +238,12 @@ namespace Ven4Tools.Services
 
                 // Общий хелпер (см. InstallationService.cs) — killает всё дерево процессов
                 // при отмене вместо того, чтобы выбросить исключение прямо из паузы.
-                await WaitForExitRespectingCancellationAsync(process, token);
+                string? stalled = await WaitForWingetAsync(process, token);
+                if (stalled != null)
+                {
+                    Log($"⏱️ Winget [{appId}]: {stalled} — процесс прерван");
+                    return (false, false, WingetErrorMapper.StalledByClient);
+                }
 
                 // 3010 и коды winget «перезагрузите для завершения» — установка прошла успешно.
                 // Раньше успехом считался только 3010, и winget-код перезагрузки уводил

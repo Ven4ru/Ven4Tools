@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Ven4Tools.Helpers;
@@ -13,10 +14,24 @@ namespace Ven4Tools.Services
     public partial class InstallationService
     {
         // ── Источник: прямая загрузка ──────────────────────────────────────────
-        private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromDirectDownloadAsync(
+        // Приводит итог к общему виду цепочки: терминальный итог либо «источник не
+        // подошёл» с причиной (код выхода установщика, SHA256, недоступная ссылка) —
+        // раньше причина прямой загрузки терялась, и в отчёте оставалось «Не установлено».
+        private async Task<SourceAttempt> InstallFromDirectAttemptAsync(
             AppInfo app, string primaryId, AppInstallProgress appProgress,
             IProgress<AppInstallProgress> progress, string installDrive,
             string outcomeCheckId, InstalledBaseline baseline, CancellationToken token)
+        {
+            var failure = new StrongBox<string?>();
+            var result = await InstallFromDirectDownloadAsync(
+                app, primaryId, appProgress, progress, installDrive, outcomeCheckId, baseline, failure, token);
+            return result != null ? SourceAttempt.Finished(result.Value) : SourceAttempt.Failed(failure.Value);
+        }
+
+        private async Task<(bool Success, string Message, AppInstallProgress Progress)?> InstallFromDirectDownloadAsync(
+            AppInfo app, string primaryId, AppInstallProgress appProgress,
+            IProgress<AppInstallProgress> progress, string installDrive,
+            string outcomeCheckId, InstalledBaseline baseline, StrongBox<string?> failure, CancellationToken token)
         {
             if (!app.InstallerUrls.Any()) return null;
 
@@ -212,6 +227,7 @@ namespace Ven4Tools.Services
                         appProgress.IsIndeterminate = false;
                         progress.Report(appProgress);
                         hashMismatchCount++;
+                        failure.Value = "SHA256 скачанного установщика не совпал с каталогом.";
                         continue;
                     }
                     // Удаляем и тогда, когда процесс не запустился (run == null): раньше
@@ -221,6 +237,10 @@ namespace Ven4Tools.Services
                     if (run is { Ok: true })
                         return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
                             true, run.Value.Reboot, "direct", token, url);
+                    if (run is { } failedRun)
+                        failure.Value = MsiExitCodes.Known.TryGetValue(failedRun.ExitCode, out var msiMessage)
+                            ? msiMessage
+                            : $"Установщик по прямой ссылке завершился с кодом {failedRun.ExitCode}.";
                 }
                 // Отмена пользователем — пробрасываем; таймаут заголовков — пробуем следующий источник
                 catch (OperationCanceledException) when (token.IsCancellationRequested)
@@ -233,6 +253,7 @@ namespace Ven4Tools.Services
                 catch (Exception ex)
                 {
                     Log($"❌ Прямая ссылка {url}: {ex.Message}");
+                    failure.Value = $"Прямая ссылка недоступна: {ex.Message}";
                     try { File.Delete(tempFile); } catch { }
                 }
             }

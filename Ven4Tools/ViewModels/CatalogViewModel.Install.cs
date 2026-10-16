@@ -48,7 +48,8 @@ namespace Ven4Tools.ViewModels
             IReadOnlyList<AppRowViewModel> Installed,
             IReadOnlyList<(AppRowViewModel Row, string Message)> Failed,
             bool Cancelled,
-            IReadOnlyList<AppRowViewModel> RebootRequired);
+            IReadOnlyList<AppRowViewModel> RebootRequired,
+            IReadOnlyList<AppRowViewModel> AlreadyInstalled);
 
         /// <param name="unattended">
         /// Задание тихого режима. Когда оно задано с <see cref="UnattendedRequest.Silent"/>,
@@ -134,11 +135,16 @@ namespace Ven4Tools.ViewModels
             // первой дождётся общей блокировки установки: он менялся от запуска к запуску.
             // Блокировка по-прежнему берётся на каждую программу отдельно, чтобы между
             // программами набора могли пройти другие установки (повтор, Windows Update).
+            // Набор (несколько программ или тихий режим) пропускает уже установленное
+            // (InstallationService.InstallAppAsync, skipIfInstalled) и закрывает окна,
+            // которые программы открывают сами после установки (NewAppWindowCloser).
+            // Одиночная установка по кнопке ведёт себя как прежде.
+            bool batchMode = silent || selected.Count > 1;
             var batch = Task.Run(async () =>
             {
               foreach (var row in selected)
               {
-                await InstallBatchRowAsync(row, selected.Count, tally, progress, ConfirmPmInstall, token);
+                await InstallBatchRowAsync(row, selected.Count, tally, progress, ConfirmPmInstall, batchMode, token);
               }
             }, token);
 
@@ -166,7 +172,7 @@ namespace Ven4Tools.ViewModels
                 _ = UpdateSpaceStatusAsync();
             }
 
-            return new InstallBatchResult(tally.InstalledRows, tally.FailedRows, cancelled, tally.RebootRows);
+            return new InstallBatchResult(tally.InstalledRows, tally.FailedRows, cancelled, tally.RebootRows, tally.AlreadyInstalledRows);
         }
 
         /// <summary>Счётчики и списки одной пачки установок: заполняются по ходу, читаются в конце.</summary>
@@ -177,7 +183,9 @@ namespace Ven4Tools.ViewModels
             public List<(AppRowViewModel Row, string Message)> FailedRows { get; } = new();
             public List<AppRowViewModel> InstalledRows { get; } = new();
             public List<AppRowViewModel> RebootRows { get; } = new();
-            /// <summary>Замок на три списка: их дополняет задача установки.</summary>
+            /// <summary>Уже стояли до набора и были пропущены (входят и в InstalledRows).</summary>
+            public List<AppRowViewModel> AlreadyInstalledRows { get; } = new();
+            /// <summary>Замок на списки: их дополняет задача установки.</summary>
             public object RowsLock { get; } = new();
         }
 
@@ -252,7 +260,7 @@ namespace Ven4Tools.ViewModels
         /// <summary>Установка одной программы пачки под общей блокировкой установки.</summary>
         private async Task InstallBatchRowAsync(
             AppRowViewModel row, int total, InstallBatchTally tally, IProgress<AppInstallProgress> progress,
-            Func<string, Task<bool>> confirmPmInstall, CancellationToken token)
+            Func<string, Task<bool>> confirmPmInstall, bool batchMode, CancellationToken token)
         {
             // Отмена во время ожидания и между программами — это отмена, а не
             // штатное завершение: иначе итог сообщал бы об успехе без неначатых программ.
@@ -260,14 +268,20 @@ namespace Ven4Tools.ViewModels
             try
             {
                 token.ThrowIfCancellationRequested();
+                var startedUtc = DateTime.UtcNow;
                 var result = await _installService!.InstallAppAsync(
-                    row.App, _wingetSources, token, progress, SelectedInstallDrive, row.PinnedVersion, confirmPmInstall);
+                    row.App, _wingetSources, token, progress, SelectedInstallDrive, row.PinnedVersion, confirmPmInstall,
+                    skipIfInstalled: batchMode);
+                if (batchMode && result.Success && result.Message != InstallationService.AlreadyInstalledSkippedMessage)
+                    NewAppWindowCloser.ScheduleClose(startedUtc, row.DisplayName, Log);
                 if (result.Success)
                 {
                     tally.Completed++;
                     lock (tally.RowsLock)
                     {
                         tally.InstalledRows.Add(row);
+                        if (result.Message == InstallationService.AlreadyInstalledSkippedMessage)
+                            tally.AlreadyInstalledRows.Add(row);
                         if (result.Progress.RebootRequired) tally.RebootRows.Add(row);
                     }
                     PendingInstallQueue.Default.MarkDone(row.AppId);
@@ -293,6 +307,8 @@ namespace Ven4Tools.ViewModels
             InstallStatusText = tally.Failed > 0
                 ? $"✅ Установка завершена. Успешно: {tally.Completed}, ошибок: {tally.Failed} — причины в блоке «Не установлено»"
                 : $"✅ Установка завершена. Успешно: {tally.Completed}, ошибок: {tally.Failed}";
+            if (tally.AlreadyInstalledRows.Count > 0)
+                InstallStatusText += $". Уже были установлены, пропущено: {tally.AlreadyInstalledRows.Count}";
             // Одна просьба о перезагрузке на весь набор — в конце, а не посреди установки.
             if (tally.RebootRows.Count > 0)
                 InstallStatusText += $". Нужна перезагрузка: {string.Join(", ", tally.RebootRows.Select(r => r.DisplayName))}";

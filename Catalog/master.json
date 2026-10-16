@@ -1,7 +1,15 @@
 {
-  "version": 28,
-  "lastUpdated": "2026-10-16 18:00:00",
+  "version": 29,
+  "lastUpdated": "2026-10-16 22:00:00",
   "changelog": [
+    {
+      "version": 29,
+      "date": "2026-10-16",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "RaiDrive: в описании предупреждение — при установке Windows спрашивает про драйвер EldoS, нужно нажать «Установить». Набор приложений не изменился.",
+      "messageEn": "RaiDrive: the description now warns that during installation Windows asks about the EldoS driver and you need to click \"Install\". The set of apps did not change."
+    },
     {
       "version": 28,
       "date": "2026-10-16",
@@ -1212,8 +1220,8 @@
       "version": "2023.9.256",
       "size": "38.5 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=raidrive.com&sz=64",
-      "description": "Подключает облачные хранилища (Google Drive, Яндекс.Диск, OneDrive и др.) как обычный локальный диск.",
-      "descriptionEn": "Mounts cloud storage (Google Drive, Yandex Disk, OneDrive, etc.) as a regular local drive.",
+      "description": "Подключает облачные хранилища (Google Drive, Яндекс.Диск, OneDrive и др.) как обычный локальный диск. При установке Windows спросит, устанавливать ли драйвер EldoS, — нажмите «Установить».",
+      "descriptionEn": "Mounts cloud storage (Google Drive, Yandex Disk, OneDrive, etc.) as a regular local drive. During installation Windows asks whether to install the EldoS driver — click \"Install\".",
       "profile": "extended",
       "sha256": "",
       "chocoId": "raidrive"
