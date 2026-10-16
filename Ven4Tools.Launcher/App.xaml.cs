@@ -17,8 +17,28 @@ public partial class App : Application
         DispatcherUnhandledException += OnDispatcherException;
     }
 
+    // Имена палитры лаунчера → общие токены Shared/DesignTokens.xaml (те же, что у
+    // клиента). Ссылками в App.xaml их не задать: компилятор XAML падает на
+    // StaticResource в словаре приложения (MC1000). Все обращения к этим именам —
+    // DynamicResource или FindResource, поэтому достаточно проставить их до окон.
+    private static readonly (string Name, string Token)[] PaletteAliases =
+    {
+        ("WindowBackground", "SurfaceBase"),
+        ("SidebarBackground", "SurfaceScene"),
+        ("ContentBackground", "SurfaceBase"),
+        ("CardBackground", "SurfaceCard"),
+        ("AccentColor", "BrandGreen"),
+        ("TextPrimary", "TextStrong"),
+        ("TextSecondary", "TextSoft"),
+        ("BorderBrush", "StrokeSubtle"),
+        ("HeaderForeground", "TextStrong"),
+    };
+
     protected override void OnStartup(StartupEventArgs e)
     {
+        foreach (var (name, token) in PaletteAliases)
+            Resources[name] = FindResource(token);
+
         // Тёмный системный заголовок на всех окнах — иначе native title bar
         // остаётся светлым поверх тёмной темы приложения даже при тёмной теме Windows.
         try { WindowChromeHelper.RegisterGlobalDarkTitleBar(); } catch { }

@@ -2284,6 +2284,10 @@
     "t": "Full catalog"
   },
   {
+    "s": "Весь каталог, включая драйверпаки, инструменты ИИ и узкоспециальные программы",
+    "t": "The whole catalog, including driver packs, AI tools and specialized apps"
+  },
+  {
     "s": "Видеокарта · {0}",
     "t": "Graphics card · {0}"
   },
@@ -2438,6 +2442,10 @@
   {
     "s": "Всё базовое плюс инструменты разработки, редакторы, графика и мессенджеры",
     "t": "Everything basic plus development tools, editors, graphics apps and messengers"
+  },
+  {
+    "s": "Всё из базового плюс программы для тех, кто делает больше: разработка, графика, монтаж, диагностика ПК",
+    "t": "Everything in basic plus apps for those who do more: development, graphics, video editing, PC diagnostics"
   },
   {
     "s": "Всё-в-одном: заметки, задачи, базы данных и вики.",
@@ -6468,6 +6476,10 @@
     "t": "Switches the keyboard layout automatically when you start typing in the wrong language."
   },
   {
+    "s": "Самое нужное, чтобы сразу начать работать: браузер, офис, мессенджеры, плеер, архиватор и библиотеки Windows",
+    "t": "The essentials to get started right away: browser, office, messengers, player, archiver and Windows libraries"
+  },
+  {
     "s": "Самораспаковка ODT завершилась с кодом {0}",
     "t": "ODT self-extraction exited with code {0}"
   },
@@ -8448,6 +8460,10 @@
     "t": "core {0} · memory {1}"
   },
   {
+    "s": "• Firefox, Chrome, Яндекс.Браузер",
+    "t": "• Firefox, Chrome, Yandex Browser"
+  },
+  {
     "s": "• Автоматическая проверка доступности",
     "t": "• Automatic availability check"
   },
@@ -8478,6 +8494,10 @@
   {
     "s": "• Драйверпаки",
     "t": "• Drivers"
+  },
+  {
+    "s": "• Драйверы NVIDIA, AMD, Intel",
+    "t": "• NVIDIA, AMD, Intel drivers"
   },
   {
     "s": "• Задержка вычислена из пропускной способности и глубины очереди по закону Литтла, а не измерена отдельно по каждой операции.",

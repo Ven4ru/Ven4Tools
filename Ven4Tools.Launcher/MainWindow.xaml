@@ -307,8 +307,46 @@
                         </StackPanel>
                         <Border Grid.Column="1" Height="130" Margin="18,0,0,0" CornerRadius="6"
                                 Background="#880A0A14" BorderBrush="#334ADE80" BorderThickness="1">
-                            <Image Source="pack://application:,,,/Resources/launcher.png" Stretch="Uniform"
-                                   Margin="8" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <!-- Сетка в пикселях картинки (1408×768): блик ложится ровно на
+                                 нарисованную полоску загрузки при любом масштабе. -->
+                            <Viewbox Stretch="Uniform" Margin="8">
+                                <Grid Width="1408" Height="768">
+                                    <Image x:Name="imgBanner" Source="pack://application:,,,/Resources/launcher.png"
+                                           Width="1408" Height="768" Stretch="Fill"
+                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <Canvas IsHitTestVisible="False">
+                                        <Border Canvas.Left="260" Canvas.Top="592" Width="718" Height="36" ClipToBounds="True">
+                                            <Rectangle Width="180" Height="36" HorizontalAlignment="Left">
+                                                <Rectangle.Fill>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#00FFFFFF" Offset="0"/>
+                                                        <GradientStop Color="#77FFFFFF" Offset="0.5"/>
+                                                        <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Rectangle.Fill>
+                                                <Rectangle.RenderTransform>
+                                                    <TranslateTransform x:Name="bannerShine" X="-180"/>
+                                                </Rectangle.RenderTransform>
+                                                <Rectangle.Triggers>
+                                                    <EventTrigger RoutedEvent="Loaded">
+                                                        <BeginStoryboard>
+                                                            <Storyboard RepeatBehavior="Forever" Duration="0:0:3">
+                                                                <DoubleAnimation Storyboard.TargetName="bannerShine"
+                                                                                 Storyboard.TargetProperty="X"
+                                                                                 From="-180" To="718" Duration="0:0:1.8">
+                                                                    <DoubleAnimation.EasingFunction>
+                                                                        <SineEase EasingMode="EaseInOut"/>
+                                                                    </DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </EventTrigger>
+                                                </Rectangle.Triggers>
+                                            </Rectangle>
+                                        </Border>
+                                    </Canvas>
+                                </Grid>
+                            </Viewbox>
                         </Border>
                     </Grid>
                 </Border>
