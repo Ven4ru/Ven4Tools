@@ -34,6 +34,21 @@ namespace Ven4Tools.Services
                 progress.Report(appProgress);
 
                 var wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive);
+
+                // Часть пакетов (Battle.net) winget отказывается ставить без явной папки:
+                // «Install location is required by the package». Повторяем один раз
+                // с папкой «Program Files\<название>» на выбранном (или системном) диске.
+                if (!wingetRun.Ok && wingetRun.ExitCode == WingetErrorMapper.InstallLocationRequired)
+                {
+                    string drive = IsNonSystemDrive(installDrive) ? installDrive : GetSystemDriveRoot();
+                    string folder = TargetFolderFor(drive, app.DisplayName);
+                    if (CommandLineGuard.ValidateInstallFolder(folder))
+                    {
+                        Log($"🔁 Winget ({wsrc}, {primaryId}): пакет требует папку установки — повтор с {folder}");
+                        wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive, folder);
+                    }
+                }
+
                 if (wingetRun.Ok)
                     return SourceAttempt.Finished(await ReportInstallOutcomeAsync(
                         app, appProgress, progress, outcomeCheckId, baseline,
@@ -58,7 +73,7 @@ namespace Ven4Tools.Services
         // остальных путей (RunElevatedInstallerAsync возвращает Reboot честно).
         // Код выхода отдаётся третьим полем — по нему WingetErrorMapper строит
         // человекочитаемую причину неудачи (-1 = winget вообще не запустился).
-        private async Task<(bool Ok, bool Reboot, int ExitCode)> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null)
+        private async Task<(bool Ok, bool Reboot, int ExitCode)> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null, string? requiredLocation = null)
         {
             var profile = ProfileService.Current;
 
@@ -79,6 +94,10 @@ namespace Ven4Tools.Services
             }
             else if (!string.IsNullOrWhiteSpace(profile.DefaultInstallFolder) && CommandLineGuard.ValidateInstallFolder(profile.DefaultInstallFolder))
                 location = profile.DefaultInstallFolder;
+
+            // Повтор для пакета, которому winget обязательно нужна папка (см. вызов выше).
+            if (location == null && requiredLocation != null)
+                location = requiredLocation;
 
             // msstore/MSIX игнорируют --location или завершаются с ошибкой
             if (source.Equals("msstore", StringComparison.OrdinalIgnoreCase))

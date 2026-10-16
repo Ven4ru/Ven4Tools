@@ -26,6 +26,15 @@ public sealed class WingetErrorMapperTests
         Assert.Contains("Хеш", message);
     }
 
+    [Fact]
+    public void MapExitCode_ПакетТребуетПапку_СообщаетОПапкеУстановки()
+    {
+        // APPINSTALLER_CLI_ERROR_INSTALL_LOCATION_REQUIRED (Battle.net без --location).
+        Assert.Equal(unchecked((int)0x8A15005F), WingetErrorMapper.InstallLocationRequired);
+        var message = WingetErrorMapper.MapExitCode(WingetErrorMapper.InstallLocationRequired);
+        Assert.Contains("папку установки", message);
+    }
+
     [Theory]
     [InlineData(3010)]
     [InlineData(unchecked((int)0x8A150109))]

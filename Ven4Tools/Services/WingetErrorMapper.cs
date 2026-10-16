@@ -9,6 +9,12 @@ namespace Ven4Tools.Services
     // про ошибку 1618 и общий семафор установки в InstallationService.cs).
     public static class WingetErrorMapper
     {
+        /// <summary>
+        /// APPINSTALLER_CLI_ERROR_INSTALL_LOCATION_REQUIRED: пакет (например, Battle.net)
+        /// ставится только с явным --location. Пойман на стенде 2026-10-16.
+        /// </summary>
+        public const int InstallLocationRequired = unchecked((int)0x8A15005F);
+
         private static readonly Dictionary<int, string> KnownExitCodes = new(MsiExitCodes.Known)
         {
             // Коды APPINSTALLER_CLI_ERROR_* сверены с официальным списком winget-cli
@@ -23,6 +29,7 @@ namespace Ven4Tools.Services
             { unchecked((int)0x8A150019), "Отказано в доступе — команда требует прав администратора." },
             { unchecked((int)0x8A15002B), "Обновление недоступно — версия в источнике не подходит для данной системы." },
             { unchecked((int)0x8A15002C), "Обновление части пакетов завершилось с ошибками." },
+            { InstallLocationRequired, "Пакет требует явно указать папку установки." },
             { unchecked((int)0x8A150109), "Установлено, для завершения требуется перезагрузка." },
             { unchecked((int)0x8A15010A), "Установка не удалась: перезагрузите компьютер и попробуйте снова." },
             { unchecked((int)0x8A15010B), "Установлено, компьютер будет перезагружен для завершения." },
