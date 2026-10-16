@@ -1828,6 +1828,10 @@
     "t": "Latest version: —"
   },
   {
+    "s": "Анализатор сетевого трафика: захват и разбор пакетов сотен протоколов.",
+    "t": "Network traffic analyzer: captures and dissects packets of hundreds of protocols."
+  },
+  {
     "s": "Антивирус для защиты от вредоносного ПО.",
     "t": "Antivirus for protection against malware."
   },
@@ -1920,12 +1924,48 @@
     "t": "Disk test"
   },
   {
+    "s": "Бесплатная параметрическая САПР для 3D-моделирования деталей и чертежей.",
+    "t": "Free parametric CAD for 3D modeling of parts and drawings."
+  },
+  {
+    "s": "Бесплатная сборка Java 21 (LTS): для разработки на Java и запуска Java-программ, в том числе Minecraft.",
+    "t": "Free Java 21 (LTS) build: for Java development and running Java apps, including Minecraft."
+  },
+  {
+    "s": "Бесплатный многодорожечный видеоредактор с эффектами и переходами.",
+    "t": "Free multitrack video editor with effects and transitions."
+  },
+  {
+    "s": "Бесплатный набор для PDF: объединение, сжатие, конвертация и распознавание текста.",
+    "t": "Free PDF toolkit: merge, compress, convert, and OCR."
+  },
+  {
     "s": "Бесплатный офисный пакет с полным аналогом Word, Excel, PowerPoint.",
     "t": "Free office suite with full equivalents of Word, Excel, and PowerPoint."
   },
   {
+    "s": "Бесплатный почтовый клиент от Mozilla: несколько ящиков, календарь и контакты.",
+    "t": "Free email client from Mozilla: multiple accounts, calendar, and contacts."
+  },
+  {
     "s": "Бесплатный редактор аудио для записи и обработки звука.",
     "t": "Free audio editor for recording and processing sound."
+  },
+  {
+    "s": "Бесплатный торрент-клиент без рекламы со встроенным поиском.",
+    "t": "Free ad-free torrent client with built-in search."
+  },
+  {
+    "s": "Библиотека электронных книг: чтение, конвертация форматов и загрузка на читалки.",
+    "t": "E-book library: reading, format conversion, and sending to e-readers."
+  },
+  {
+    "s": "Библиотеки Microsoft Visual C++ для 32-битных программ: нужны многим играм и приложениям даже в 64-битной Windows.",
+    "t": "Microsoft Visual C++ libraries for 32-bit apps: many games and programs need them even on 64-bit Windows."
+  },
+  {
+    "s": "Библиотеки Microsoft Visual C++ для 64-битных программ: без них не запускаются многие игры и приложения.",
+    "t": "Microsoft Visual C++ libraries for 64-bit apps: many games and programs won't start without them."
   },
   {
     "s": "Бирюзовая",
@@ -1938,6 +1978,10 @@
   {
     "s": "Более старая версия",
     "t": "Older version"
+  },
+  {
+    "s": "Браузер на базе Firefox с вертикальными вкладками и разделением окна.",
+    "t": "Firefox-based browser with vertical tabs and split view."
   },
   {
     "s": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
@@ -2018,6 +2062,10 @@
   {
     "s": "Быстрый и надёжный клиент для удалённого доступа к компьютеру.",
     "t": "Fast and reliable client for remote access to a computer."
+  },
+  {
+    "s": "Быстрый просмотрщик изображений с простой правкой, пакетной обработкой и слайд-шоу.",
+    "t": "Fast image viewer with simple editing, batch processing, and slideshows."
   },
   {
     "s": "Быстрый старт Windows",
@@ -2464,6 +2512,14 @@
     "t": "Exit"
   },
   {
+    "s": "Гибкое управление вентиляторами по кривым от температур процессора, видеокарты и дисков.",
+    "t": "Flexible fan control with curves based on CPU, GPU, and drive temperatures."
+  },
+  {
+    "s": "Голосовая связь с низкой задержкой для игр и сообществ на своих или публичных серверах.",
+    "t": "Low-latency voice chat for gaming and communities on your own or public servers."
+  },
+  {
     "s": "Голосовой ввод Xbox.",
     "t": "Xbox voice input."
   },
@@ -2908,6 +2964,10 @@
     "t": "Loading..."
   },
   {
+    "s": "Загрузочная флешка сразу с несколькими ISO-образами: образы просто копируются на неё.",
+    "t": "Bootable USB drive with several ISO images at once: just copy the images onto it."
+  },
+  {
     "s": "Задержка",
     "t": "Latency"
   },
@@ -2972,6 +3032,10 @@
     "t": "Writing the answer file…"
   },
   {
+    "s": "Запись экрана, веб-камеры или рисования в GIF и видео со встроенным редактором кадров.",
+    "t": "Records the screen, webcam, or a drawing board to GIF and video with a built-in frame editor."
+  },
+  {
     "s": "Запись, МБ/с",
     "t": "Write, MB/s"
   },
@@ -2994,6 +3058,10 @@
   {
     "s": "Запуск невозможен — смотрите предупреждение выше",
     "t": "Cannot start — see the warning above"
+  },
+  {
+    "s": "Запуск открытых языковых моделей (Llama, Qwen, Gemma и других) прямо на компьютере.",
+    "t": "Run open language models (Llama, Qwen, Gemma, and more) right on your computer."
   },
   {
     "s": "Запуск отсюда отключён: папка программы доступна на запись обычному пользователю, поэтому запускать её с правами администратора небезопасно — файл можно подменить.{0}Запустите приложение обычным способом (ярлык, меню «Пуск»).{1}",
@@ -3054,6 +3122,14 @@
   {
     "s": "ИСТОЧНИК ЗАГРУЗКИ",
     "t": "DOWNLOAD SOURCE"
+  },
+  {
+    "s": "Игровая платформа VK: магазин игр, лаунчер и облачный гейминг.",
+    "t": "VK's gaming platform: game store, launcher, and cloud gaming."
+  },
+  {
+    "s": "Игровой браузер Opera: ограничение нагрузки на процессор и память, встроенные Discord и Twitch.",
+    "t": "Opera's gaming browser: CPU and RAM limiters, built-in Discord and Twitch."
   },
   {
     "s": "Игровые сервисы",
@@ -3336,6 +3412,10 @@
     "t": "Category:"
   },
   {
+    "s": "Классический двухпанельный файловый менеджер с архивами, FTP и плагинами.",
+    "t": "Classic two-pane file manager with archives, FTP, and plugins."
+  },
+  {
     "s": "Клиент",
     "t": "Client"
   },
@@ -3384,6 +3464,10 @@
     "t": "The client is damaged — reinstall it completely via a regular update"
   },
   {
+    "s": "Клиент соревновательной платформы FACEIT для матчей в Counter-Strike 2 и других играх.",
+    "t": "Client for the FACEIT competitive platform for Counter-Strike 2 and other games."
+  },
+  {
     "s": "Клиент установлен",
     "t": "Client installed"
   },
@@ -3420,8 +3504,16 @@
     "t": "Compact catalog rows"
   },
   {
+    "s": "Компоненты",
+    "t": "Components"
+  },
+  {
     "s": "Конвертер видео с поддержкой большинства форматов.",
     "t": "Video converter with support for most formats."
+  },
+  {
+    "s": "Консольный двухпанельный файловый менеджер с плагинами и встроенным редактором.",
+    "t": "Console two-pane file manager with plugins and a built-in editor."
   },
   {
     "s": "Консольный клиент для облачных хранилищ.",
@@ -3466,6 +3558,22 @@
   {
     "s": "Кэш пуст",
     "t": "Cache is empty"
+  },
+  {
+    "s": "Лаунчер Blizzard: World of Warcraft, Diablo, Overwatch, Hearthstone.",
+    "t": "Blizzard launcher: World of Warcraft, Diablo, Overwatch, Hearthstone."
+  },
+  {
+    "s": "Лаунчер Electronic Arts: игры EA и подписка EA Play.",
+    "t": "Electronic Arts launcher: EA games and the EA Play subscription."
+  },
+  {
+    "s": "Лаунчер Ubisoft для Assassin's Creed, Far Cry и других игр.",
+    "t": "Ubisoft launcher for Assassin's Creed, Far Cry, and other games."
+  },
+  {
+    "s": "Лаунчер «Мира танков» и «Мира кораблей» от Lesta Games.",
+    "t": "Launcher for Mir Tankov and Mir Korabley by Lesta Games."
   },
   {
     "s": "Лаунчер автоматически выберет актуальную версию, проверит целостность и установит клиент без лишних шагов.",
@@ -3528,6 +3636,10 @@
     "t": "Game stores, voice chat, recording and graphics card monitoring."
   },
   {
+    "s": "Магазины игр, голосовой чат, запись, мониторинг видеокарты и библиотеки для запуска игр.",
+    "t": "Game stores, voice chat, recording, graphics card monitoring and libraries games need to run."
+  },
+  {
     "s": "Максимум за сеанс",
     "t": "Session maximum"
   },
@@ -3546,6 +3658,10 @@
   {
     "s": "Медиаплеер Windows — заменён приложением Media Player.",
     "t": "Windows media player — replaced by the Media Player app."
+  },
+  {
+    "s": "Менеджер загрузок: ускорение и докачка, торренты, расписание.",
+    "t": "Download manager: acceleration and resuming, torrents, scheduling."
   },
   {
     "s": "Менеджер игровых библиотек. Объединяет Steam, GOG, itch.io и другие платформы в одном интерфейсе.",
@@ -3586,6 +3702,10 @@
   {
     "s": "Мощный бесплатный редактор изображений, альтернатива Photoshop.",
     "t": "Powerful free image editor, an alternative to Photoshop."
+  },
+  {
+    "s": "Мощный видеоплеер со встроенными кодеками, субтитрами и тонкой настройкой изображения.",
+    "t": "Powerful video player with built-in codecs, subtitles, and fine-grained picture settings."
   },
   {
     "s": "Мощный инструмент для создания скриншотов.",
@@ -3636,6 +3756,10 @@
     "t": "Set of installed apps"
   },
   {
+    "s": "Набор кодеков с плеером MPC-HC: открывает почти любое видео и аудио в Windows.",
+    "t": "Codec pack with the MPC-HC player: plays almost any video and audio in Windows."
+  },
+  {
     "s": "Набор на флешку — чтобы после переустановки ничего не искать",
     "t": "A kit for your USB drive — so there's nothing to hunt for after reinstalling"
   },
@@ -3646,6 +3770,10 @@
   {
     "s": "Набор с сайта",
     "t": "Website set"
+  },
+  {
+    "s": "Набор системных утилит Microsoft: Process Explorer, Autoruns, Process Monitor и другие.",
+    "t": "Microsoft's system utilities: Process Explorer, Autoruns, Process Monitor, and more."
   },
   {
     "s": "Набор утилит для повышения производительности Windows.",
@@ -4228,6 +4356,10 @@
     "t": "New Ven4Tools version {0}"
   },
   {
+    "s": "Новая кроссплатформенная версия PowerShell для скриптов и автоматизации.",
+    "t": "The new cross-platform version of PowerShell for scripting and automation."
+  },
+  {
     "s": "Новый интерфейс",
     "t": "New interface"
   },
@@ -4290,6 +4422,10 @@
   {
     "s": "Облачное хранилище с синхронизацией файлов.",
     "t": "Cloud storage with file sync."
+  },
+  {
+    "s": "Обмен файлами с серверами по SFTP, FTP и SCP в двухпанельном окне.",
+    "t": "File transfer with servers over SFTP, FTP, and SCP in a two-pane window."
   },
   {
     "s": "Обнаружен отчёт о сбое предыдущего запуска.\n\nОтправить разработчику для диагностики?\nОтчёт не содержит личных данных.",
@@ -4740,6 +4876,22 @@
     "t": "Opens the current offline cache folder in File Explorer."
   },
   {
+    "s": "Открытая программа удалённого доступа к компьютеру, можно подключаться через свой сервер.",
+    "t": "Open-source remote desktop app; can connect through your own server."
+  },
+  {
+    "s": "Открытое приложение для заметок и списков дел в Markdown с синхронизацией и шифрованием.",
+    "t": "Open-source Markdown notes and to-do app with sync and encryption."
+  },
+  {
+    "s": "Открытый лаунчер Minecraft: разные версии и сборки модов рядом, без конфликтов.",
+    "t": "Open-source Minecraft launcher: different versions and modpacks side by side without conflicts."
+  },
+  {
+    "s": "Открытый менеджер паролей: зашифрованная база хранится у вас, без облака.",
+    "t": "Open-source password manager: the encrypted database stays with you, no cloud."
+  },
+  {
     "s": "Открыть",
     "t": "Open"
   },
@@ -4838,6 +4990,14 @@
   {
     "s": "Офис",
     "t": "Office"
+  },
+  {
+    "s": "Офисный пакет с интерфейсом в духе MS Office: документы, таблицы и презентации.",
+    "t": "Office suite with an MS Office-like interface: documents, spreadsheets, and presentations."
+  },
+  {
+    "s": "Официальная утилита Intel: находит и ставит свежие драйверы для графики, Wi-Fi и Bluetooth Intel.",
+    "t": "Official Intel utility: finds and installs up-to-date drivers for Intel graphics, Wi-Fi, and Bluetooth."
   },
   {
     "s": "Официальное ПО AMD для видеокарт Radeon: драйверы, игровые настройки, запись и трансляция.",
@@ -5164,6 +5324,10 @@
     "t": "Before reinstalling Windows"
   },
   {
+    "s": "Передача файлов между компьютером и телефоном по локальной сети без интернета.",
+    "t": "Transfer files between a computer and a phone over the local network without internet."
+  },
+  {
     "s": "Передаётся winget как --location. Многие установщики этот параметр игнорируют и ставятся туда, куда заложено в самом пакете; приложения из Microsoft Store (msstore) его не поддерживают вовсе. Если в каталоге выбран несистемный диск установки, папка используется только когда она лежит на этом же диске — иначе подставляется «Program Files» выбранного диска. Путь должен быть абсолютным и локальным: сетевые пути и кавычки не принимаются. Пустое поле — winget выбирает папку сам.",
     "t": "Passed to winget as --location. Many installers ignore this option and install wherever the package itself dictates; Microsoft Store (msstore) apps do not support it at all. If a non-system install drive is selected in the catalog, the folder is used only when it is on that same drive — otherwise “Program Files” on the selected drive is used. The path must be absolute and local: network paths and quotation marks are not accepted. If the field is empty, winget picks the folder itself."
   },
@@ -5328,6 +5492,14 @@
     "t": "Details — see the message above"
   },
   {
+    "s": "Подробные сведения о видеокарте и показания её датчиков.",
+    "t": "Detailed information about the graphics card and its sensor readings."
+  },
+  {
+    "s": "Подробные сведения о железе и показания датчиков: температуры, частоты, напряжения.",
+    "t": "Detailed hardware information and sensor readings: temperatures, clocks, voltages."
+  },
+  {
     "s": "Подсказки Windows. Назойливые всплывающие советы.",
     "t": "Windows tips. Intrusive pop-up hints."
   },
@@ -5386,6 +5558,10 @@
   {
     "s": "Поиск по названию...",
     "t": "Search by name..."
+  },
+  {
+    "s": "Поиск, загрузка и запуск локальных языковых моделей в графическом интерфейсе.",
+    "t": "Find, download, and run local language models in a graphical interface."
   },
   {
     "s": "Поиск: {0}",
@@ -5498,6 +5674,14 @@
   {
     "s": "Популярный архиватор с поддержкой RAR и ZIP.",
     "t": "Popular archiver with RAR and ZIP support."
+  },
+  {
+    "s": "Популярный клиент FTP и SFTP для загрузки файлов на сайты и серверы.",
+    "t": "Popular FTP and SFTP client for uploading files to websites and servers."
+  },
+  {
+    "s": "Популярный российский аудиоплеер: плейлисты, эквалайзер, интернет-радио.",
+    "t": "Popular Russian audio player: playlists, equalizer, internet radio."
   },
   {
     "s": "После --answer-file нужен путь к файлу ответа.",
@@ -5686,6 +5870,10 @@
   {
     "s": "Пресеты",
     "t": "Presets"
+  },
+  {
+    "s": "Приложение Claude от Anthropic: чат с ИИ, работа с файлами и подключение инструментов.",
+    "t": "Anthropic's Claude app: AI chat, working with files, and connecting tools."
   },
   {
     "s": "Приложение Ven4Tools уже запущено.",
@@ -6012,6 +6200,10 @@
     "t": "Workspace"
   },
   {
+    "s": "Рабочие чаты и видеозвонки Яндекс 360 для команд и организаций.",
+    "t": "Yandex 360 work chats and video calls for teams and organizations."
+  },
+  {
     "s": "Раз в день",
     "t": "Once a day"
   },
@@ -6062,6 +6254,10 @@
   {
     "s": "Редактор 3D-моделей. Почти никем не используется.",
     "t": "3D model editor. Hardly anyone uses it."
+  },
+  {
+    "s": "Редактор кода на базе VS Code со встроенным ИИ-помощником.",
+    "t": "VS Code-based code editor with a built-in AI assistant."
   },
   {
     "s": "Редактор кода, Git, Python, Node.js, Postman и Notepad++.",
@@ -6120,8 +6316,16 @@
     "t": "Repository not found (404)"
   },
   {
+    "s": "Российская система видеосвязи для организаций: звонки, конференции и чаты.",
+    "t": "Russian video communication system for organizations: calls, conferences, and chats."
+  },
+  {
     "s": "Российский аналог Figma от Icons8. Дизайн интерфейсов, прототипирование, работает офлайн.",
     "t": "Russian alternative to Figma from Icons8. Interface design, prototyping, works offline."
+  },
+  {
+    "s": "Российский мессенджер: чаты, звонки и каналы.",
+    "t": "Russian messenger: chats, calls, and channels."
   },
   {
     "s": "Российское приложение для удалённого доступа и управления компьютером — аналог AnyDesk/TeamViewer.",
@@ -6146,6 +6350,10 @@
   {
     "s": "СЕРВИС",
     "t": "TOOLS"
+  },
+  {
+    "s": "Сам переключает раскладку, если начали печатать не на том языке.",
+    "t": "Switches the keyboard layout automatically when you start typing in the wrong language."
   },
   {
     "s": "Самораспаковка ODT завершилась с кодом {0}",
@@ -6262,6 +6470,10 @@
   {
     "s": "Системные",
     "t": "System"
+  },
+  {
+    "s": "Сканирование документов в PDF и картинки с распознаванием текста.",
+    "t": "Scan documents to PDF and images with text recognition."
   },
   {
     "s": "Скачает выбранную ниже версию, удалит установленный Office и поставит новую.",
@@ -6476,6 +6688,10 @@
     "t": "Modern Chromium-based browser from Microsoft."
   },
   {
+    "s": "Современный терминал Microsoft: вкладки, PowerShell, командная строка и WSL в одном окне.",
+    "t": "Microsoft's modern terminal: tabs, PowerShell, Command Prompt, and WSL in one window."
+  },
+  {
     "s": "Содержимое распакованного архива изменилось между проверкой и установкой ({0}).\n\nУстановка отменена. Проверьте компьютер антивирусом и повторите установку.",
     "t": "The contents of the extracted archive changed between verification and installation ({0}).\n\nInstallation canceled. Scan the computer with an antivirus and try installing again."
   },
@@ -6632,6 +6848,10 @@
     "t": "Method: {0}"
   },
   {
+    "s": "Среда выполнения .NET 10 для программ Windows, которые без неё не запускаются.",
+    "t": ".NET 10 runtime for Windows apps that won't start without it."
+  },
+  {
     "s": "Среди программ каталога установленных не найдено.\n\nЕсли каталог открыт только что, дождитесь окончания проверки и повторите.",
     "t": "No installed apps found among the catalog apps.\n\nIf the catalog was just opened, wait for the check to finish and try again."
   },
@@ -6646,6 +6866,10 @@
   {
     "s": "Стандарт для работы с PDF-документами от Adobe.",
     "t": "Adobe's standard for working with PDF documents."
+  },
+  {
+    "s": "Старые библиотеки DirectX 9–11 (d3dx9, XAudio и другие), без которых не запускаются игры прошлых лет.",
+    "t": "Legacy DirectX 9–11 libraries (d3dx9, XAudio, and more) that older games need to start."
   },
   {
     "s": "Старые сборки не получают исправлений.",
@@ -6788,6 +7012,10 @@
     "t": "Test file:      {0}"
   },
   {
+    "s": "Технические данные видео- и аудиофайлов: кодеки, битрейт, разрешение, дорожки.",
+    "t": "Technical details of video and audio files: codecs, bitrate, resolution, tracks."
+  },
+  {
     "s": "Тип носителя:",
     "t": "Media type:"
   },
@@ -6908,6 +7136,10 @@
     "t": "Removes preinstalled bloat and adjusts privacy settings. Changed settings are restored with the “Revert” button; removed apps can be reinstalled from Microsoft Store."
   },
   {
+    "s": "Удаление программ вместе с оставшимися файлами и записями реестра.",
+    "t": "Uninstalls programs together with leftover files and registry entries."
+  },
+  {
     "s": "Удаление...",
     "t": "Uninstalling..."
   },
@@ -6986,6 +7218,10 @@
   {
     "s": "Умеренно",
     "t": "Moderate"
+  },
+  {
+    "s": "Универсальный клиент баз данных: PostgreSQL, MySQL, SQLite, SQL Server и десятки других.",
+    "t": "Universal database client: PostgreSQL, MySQL, SQLite, SQL Server, and dozens more."
   },
   {
     "s": "Универсальный плеер, воспроизводящий все форматы.",
@@ -7494,6 +7730,10 @@
   {
     "s": "Яндекс.Диск",
     "t": "Yandex Disk"
+  },
+  {
+    "s": "Яндекс.Мессенджер",
+    "t": "Yandex Messenger"
   },
   {
     "s": "Яндекс.Музыка",
@@ -11034,6 +11274,10 @@
   {
     "s": "\uD83E\uDDE0 Что это значит",
     "t": "\uD83E\uDDE0 What this means"
+  },
+  {
+    "s": "\uD83E\uDDE9 Компоненты",
+    "t": "\uD83E\uDDE9 Components"
   },
   {
     "s": "\uD83E\uDDEA Экспериментальный модуль. Датчики и оверлей работают без драйвера ядра — так они не мешают играм с античитом. Поэтому пока нет температур и частот процессора и вентиляторов платы. Расскажите, чего вам не хватает и стоит ли развивать модуль дальше.",

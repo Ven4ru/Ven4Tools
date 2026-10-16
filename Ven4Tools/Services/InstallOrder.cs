@@ -9,7 +9,8 @@ namespace Ven4Tools.Services
     ///
     /// Программы ставятся в том порядке, в каком их выбрали (или назвали в файле
     /// ответа), — раньше порядок зависел от того, какая задача первой дождётся общей
-    /// блокировки установки, и от запуска к запуску менялся. Исключение одно: то, что
+    /// блокировки установки, и от запуска к запуску менялся. Исключений два: компоненты
+    /// (библиотеки, без которых не запускаются другие программы) идут первыми, а то, что
     /// почти всегда просит перезагрузку (драйверы видеокарт и утилиты для них), уходит в
     /// конец, чтобы просьба о перезагрузке не оказалась посреди набора.
     /// </summary>
@@ -17,6 +18,10 @@ namespace Ven4Tools.Services
     {
         // Категория каталога, программы которой ставят или меняют драйверы.
         private const string RebootProneCategory = "Драйверпаки";
+
+        // Библиотеки (Visual C++, DirectX, .NET), которые нужны другим программам набора
+        // для запуска, — ставятся первыми.
+        private const string PrerequisiteCategory = "Компоненты";
 
         /// <param name="preferredOrder">
         /// Идентификаторы в желаемом порядке (файл ответа, порядок отметок); те, кого в
@@ -35,7 +40,7 @@ namespace Ven4Tools.Services
 
             return items
                 .Select((item, index) => (item, index))
-                .OrderBy(x => IsRebootProne(categoryOf(x.item)) ? 1 : 0)
+                .OrderBy(x => IsPrerequisite(categoryOf(x.item)) ? 0 : IsRebootProne(categoryOf(x.item)) ? 2 : 1)
                 .ThenBy(x => rank.TryGetValue(idOf(x.item), out int position) ? position : int.MaxValue)
                 .ThenBy(x => x.index)
                 .Select(x => x.item)
@@ -44,5 +49,8 @@ namespace Ven4Tools.Services
 
         public static bool IsRebootProne(string? category) =>
             string.Equals(category?.Trim(), RebootProneCategory, StringComparison.OrdinalIgnoreCase);
+
+        public static bool IsPrerequisite(string? category) =>
+            string.Equals(category?.Trim(), PrerequisiteCategory, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -25,9 +25,9 @@ namespace Ven4Tools.ViewModels
 
         // Порядок вывода категорий должен быть фиксированным (как раньше — Expander'ы
         // в CatalogTab.xaml.cs шли в этом же порядке объявления), а не алфавитным.
-        // AppCategory объявлен ровно в этом порядке, поэтому голое приведение к int
-        // и есть нужный ранг сортировки групп.
-        public int CategorySortOrder => (int)App.Category;
+        // Номер в AppCategory с порядком вывода больше не совпадает: новые категории
+        // дописываются в конец перечисления, поэтому ранг берётся из AppCategoryHelper.
+        public int CategorySortOrder => AppCategoryHelper.SortOrder(App.Category);
 
         // AutomationId для FlaUI-тестов (chkApp_{id}) — раньше выставлялся
         // AutomationProperties.SetAutomationId в коде, здесь тот же формат через

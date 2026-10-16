@@ -60,7 +60,8 @@ namespace Ven4Tools.ViewModels
         {
             bool silent = unattended?.Silent == true;
             // Порядок установки — тот, в котором программы выбрали или назвали в файле
-            // ответа; драйверные пакеты, которые почти всегда просят перезагрузку, — в конце.
+            // ответа; компоненты — первыми, драйверные пакеты, которые почти всегда просят
+            // перезагрузку, — в конце.
             var selected = InstallOrder.Arrange(
                 Apps.Where(a => a.IsSelected && a.IsSelectable).ToList(),
                 row => row.AppId, row => row.App.CategoryString,

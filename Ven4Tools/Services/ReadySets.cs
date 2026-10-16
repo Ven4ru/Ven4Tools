@@ -25,8 +25,8 @@ namespace Ven4Tools.Services
                 "Браузер, офис, PDF, видеосвязь, мессенджер, снимки экрана и удалённый доступ.",
                 new[] { "google-chrome", "onlyoffice", "adobe-acrobat-reader", "zoom", "telegram", "7zip", "greenshot", "anydesk" }),
             new ReadySet("games", "Для игр",
-                "Магазины игр, голосовой чат, запись и мониторинг видеокарты.",
-                new[] { "steam", "epic-games", "discord", "7zip", "obs-studio", "msi-afterburner" }),
+                "Магазины игр, голосовой чат, запись, мониторинг видеокарты и библиотеки для запуска игр.",
+                new[] { "steam", "epic-games", "discord", "7zip", "obs-studio", "msi-afterburner", "vcredist-x64", "vcredist-x86", "directx" }),
             new ReadySet("dev", "Для разработки",
                 "Редактор кода, Git, Python, Node.js, Postman и Notepad++.",
                 new[] { "vscode", "git", "python", "nodejs", "postman", "notepad-plus-plus", "7zip", "google-chrome" })

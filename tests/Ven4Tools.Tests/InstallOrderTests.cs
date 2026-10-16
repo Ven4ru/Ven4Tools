@@ -3,7 +3,7 @@ using Ven4Tools.Services;
 namespace Ven4Tools.Tests;
 
 /// <summary>
-/// Порядок установки набора: как выбрали, а драйверные пакеты — в конце.
+/// Порядок установки набора: как выбрали, компоненты — первыми, драйверные пакеты — в конце.
 /// </summary>
 public sealed class InstallOrderTests
 {
@@ -47,6 +47,31 @@ public sealed class InstallOrderTests
 
         Assert.Equal(new[] { "firefox", "7zip", "nvidia-app", "ddu" },
             Arrange(items, new[] { "nvidia-app", "firefox", "ddu", "7zip" }));
+    }
+
+    [Fact]
+    public void Компоненты_ставятся_первыми_а_драйверные_пакеты_последними()
+    {
+        var items = new[]
+        {
+            new Item("steam", "Игровые сервисы"), new Item("nvidia-app", "Драйверпаки"),
+            new Item("vcredist-x64", "Компоненты"), new Item("7zip", "Системные"),
+            new Item("directx", " компоненты ")
+        };
+
+        Assert.Equal(new[] { "vcredist-x64", "directx", "steam", "7zip", "nvidia-app" }, Arrange(items));
+        Assert.Equal(new[] { "directx", "vcredist-x64", "steam", "7zip", "nvidia-app" },
+            Arrange(items, new[] { "nvidia-app", "steam", "directx", "7zip", "vcredist-x64" }));
+    }
+
+    [Theory]
+    [InlineData("Компоненты", true)]
+    [InlineData("компоненты", true)]
+    [InlineData("Драйверпаки", false)]
+    [InlineData(null, false)]
+    public void Категория_компонентов_распознаётся(string? category, bool expected)
+    {
+        Assert.Equal(expected, InstallOrder.IsPrerequisite(category));
     }
 
     [Fact]
