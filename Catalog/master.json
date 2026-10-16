@@ -1,7 +1,22 @@
 {
-  "version": 27,
-  "lastUpdated": "2026-10-16 12:00:00",
+  "version": 28,
+  "lastUpdated": "2026-10-16 18:00:00",
   "changelog": [
+    {
+      "version": 28,
+      "date": "2026-10-16",
+      "addedApps": [],
+      "removedApps": [
+        "cpu-z",
+        "hwmonitor",
+        "total-commander",
+        "foxit-pdf-reader",
+        "snappy-driver",
+        "faceit"
+      ],
+      "message": "Убраны программы, которые не скачиваются из России или ломаются при каждом обновлении производителя: CPU-Z, HWMonitor, Total Commander, Foxit PDF Reader, Snappy Driver Installer и FACEIT. Для датчиков остаётся HWiNFO, для PDF — SumatraPDF, PDF24 и Acrobat. Исправлены ExitLag (ключи тихой установки), WhatsApp (официальный пакет Microsoft Store) и AIMP (прямая ссылка на актуальную сборку с aimp.ru).",
+      "messageEn": "Removed apps that cannot be downloaded from Russia or break with every vendor update: CPU-Z, HWMonitor, Total Commander, Foxit PDF Reader, Snappy Driver Installer, and FACEIT. HWiNFO remains for sensors; SumatraPDF, PDF24, and Acrobat remain for PDF. Fixed ExitLag (silent install switches), WhatsApp (the official Microsoft Store package), and AIMP (a direct link to the current build on aimp.ru)."
+    },
     {
       "version": 27,
       "date": "2026-10-16",
@@ -483,21 +498,6 @@
       "chocoId": "drawio"
     },
     {
-      "id": "foxit-pdf-reader",
-      "name": "Foxit PDF Reader",
-      "category": "Офис",
-      "wingetId": "Foxit.FoxitReader",
-      "downloadUrl": "",
-      "version": "2026.1.1.36485",
-      "size": "",
-      "iconUrl": "https://cdn.simpleicons.org/foxit",
-      "description": "Мощная программа для чтения PDF.",
-      "descriptionEn": "Powerful PDF reader.",
-      "profile": "extended",
-      "sha256": "",
-      "chocoId": "foxitreader"
-    },
-    {
       "id": "libreoffice",
       "name": "LibreOffice",
       "category": "Офис",
@@ -892,7 +892,7 @@
       "id": "whatsapp",
       "name": "WhatsApp Desktop",
       "category": "Мессенджеры",
-      "wingetId": "WhatsApp.WhatsApp",
+      "wingetId": "9NKSQGP7F2NH",
       "downloadUrl": "",
       "version": "2.2422.10",
       "size": "100.0 MB",
@@ -901,7 +901,7 @@
       "descriptionEn": "Official WhatsApp client for Windows.",
       "profile": "basic",
       "sha256": "",
-      "chocoId": "whatsapp"
+      "chocoId": ""
     },
     {
       "id": "vlc",
@@ -1306,22 +1306,8 @@
       "descriptionEn": "Network traffic route optimization to reduce ping and packet loss in online games.",
       "profile": "extended",
       "sha256": "b75b6f4a08be43692496281d3d4efc5d57a77ef7a0598dd8dc738cb982483786",
-      "chocoId": ""
-    },
-    {
-      "id": "snappy-driver",
-      "name": "Snappy Driver Installer",
-      "category": "Драйверпаки",
-      "wingetId": "samlab-ws.SnappyDriverInstaller",
-      "downloadUrl": "",
-      "version": "1.23.9 (R2309)",
-      "size": "",
-      "iconUrl": "https://www.google.com/s2/favicons?domain=sdi-tool.org&sz=64",
-      "description": "Мощный офлайн-инсталлятор драйверов с огромной базой.",
-      "descriptionEn": "Powerful offline driver installer with a huge database.",
-      "profile": "full",
-      "sha256": "",
-      "chocoId": "snappy-driver-installer"
+      "chocoId": "",
+      "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-"
     },
     {
       "id": "ddu",
@@ -1414,21 +1400,6 @@
       "chocoId": "aida64"
     },
     {
-      "id": "hwmonitor",
-      "name": "HWMonitor",
-      "category": "Другое",
-      "wingetId": "CPUID.HWMonitor",
-      "downloadUrl": "",
-      "version": "1.64",
-      "size": "3.5 MB",
-      "iconUrl": "https://www.google.com/s2/favicons?domain=cpuid.com&sz=64",
-      "description": "Мониторинг температуры, напряжений и частот.",
-      "descriptionEn": "Monitoring of temperatures, voltages, and frequencies.",
-      "profile": "extended",
-      "sha256": "",
-      "chocoId": "hwmonitor"
-    },
-    {
       "id": "rclone",
       "name": "Rclone",
       "category": "Другое",
@@ -1488,21 +1459,6 @@
       "profile": "extended",
       "sha256": "4a9da8c34a038cdd51f103be3edc09a9643ed42358ea4a01a2a30e0817714b4b",
       "chocoId": "wiztree"
-    },
-    {
-      "id": "cpu-z",
-      "name": "CPU-Z",
-      "category": "Другое",
-      "wingetId": "CPUID.CPU-Z",
-      "downloadUrl": "",
-      "version": "2.20",
-      "size": "4.6 MB",
-      "iconUrl": "https://www.google.com/s2/favicons?domain=cpuid.com&sz=64",
-      "description": "Детальная информация о процессоре, памяти и материнской плате.",
-      "descriptionEn": "Detailed information about the processor, memory, and motherboard.",
-      "profile": "extended",
-      "sha256": "",
-      "chocoId": "cpu-z"
     },
     {
       "id": "fps-monitor",
@@ -2049,16 +2005,17 @@
       "id": "aimp",
       "name": "AIMP",
       "category": "Мультимедиа",
-      "wingetId": "AIMP.AIMP",
-      "downloadUrl": "",
-      "version": "5.40.2716",
-      "size": "",
+      "wingetId": "",
+      "downloadUrl": "https://aimp.ru/files/desktop/builds/aimp_5.40.2727_w64.exe",
+      "version": "5.40.2727",
+      "size": "21.0 MB",
       "iconUrl": "https://www.google.com/s2/favicons?domain=aimp.ru&sz=64",
       "description": "Популярный российский аудиоплеер: плейлисты, эквалайзер, интернет-радио.",
       "descriptionEn": "Popular Russian audio player: playlists, equalizer, internet radio.",
       "profile": "basic",
-      "sha256": "",
-      "chocoId": "aimp"
+      "sha256": "cc6babde28777edcdf608d09d5abadb188c13a5fcbfe63740b53e76ea026c4cd",
+      "chocoId": "",
+      "silentArgs": "/AUTO /SILENT"
     },
     {
       "id": "kdenlive",
@@ -2089,21 +2046,6 @@
       "profile": "extended",
       "sha256": "",
       "chocoId": "mediainfo"
-    },
-    {
-      "id": "total-commander",
-      "name": "Total Commander",
-      "category": "Системные",
-      "wingetId": "Ghisler.TotalCommander",
-      "downloadUrl": "",
-      "version": "11.58",
-      "size": "7.1 MB",
-      "iconUrl": "https://www.google.com/s2/favicons?domain=ghisler.com&sz=64",
-      "description": "Классический двухпанельный файловый менеджер с архивами, FTP и плагинами.",
-      "descriptionEn": "Classic two-pane file manager with archives, FTP, and plugins.",
-      "profile": "extended",
-      "sha256": "",
-      "chocoId": ""
     },
     {
       "id": "far-manager",
@@ -2301,21 +2243,6 @@
       "profile": "extended",
       "sha256": "",
       "chocoId": "prismlauncher"
-    },
-    {
-      "id": "faceit",
-      "name": "FACEIT",
-      "category": "Игровые сервисы",
-      "wingetId": "FACEITLTD.FACEITClient",
-      "downloadUrl": "",
-      "version": "2.9.2",
-      "size": "163.7 MB",
-      "iconUrl": "https://www.google.com/s2/favicons?domain=faceit.com&sz=64",
-      "description": "Клиент соревновательной платформы FACEIT для матчей в Counter-Strike 2 и других играх.",
-      "descriptionEn": "Client for the FACEIT competitive platform for Counter-Strike 2 and other games.",
-      "profile": "extended",
-      "sha256": "",
-      "chocoId": ""
     },
     {
       "id": "intel-dsa",

@@ -556,9 +556,10 @@ namespace Ven4Tools.ClientUITests
 
     /// <summary>
     /// #8: установка из «пина» должна использовать выбранный в «Каталоге» диск,
-    /// а не жёсткий C:\. Реальная установка cpu-z (крошечный, безопасный,
-    /// одобрено пользователем 2026-07-11) на диск D:\ — проверяем через
-    /// командную строку реального процесса winget.exe (WMI), затем удаляем.
+    /// а не жёсткий C:\. Реальная установка маленькой безопасной программы на диск D:\ —
+    /// проверяем через командную строку реального процесса winget.exe (WMI), затем удаляем.
+    /// До каталога v28 это был cpu-z (одобрено пользователем 2026-07-11); его убрали из
+    /// каталога, потому что download.cpuid.com из России не отдаёт файл, — теперь SumatraPDF.
     /// </summary>
     [TestClass]
     public class AuditFixesPinInstallDriveTests
@@ -578,7 +579,7 @@ namespace Ven4Tools.ClientUITests
             _profileExisted = File.Exists(ProfilePath);
             if (_profileExisted) _profileBackup = File.ReadAllText(ProfilePath);
             File.WriteAllText(ProfilePath,
-                "{\"CatalogMode\":\"full\",\"HasSelectedCategory\":true,\"PinnedAppIds\":[\"cpu-z\"]}");
+                "{\"CatalogMode\":\"full\",\"HasSelectedCategory\":true,\"PinnedAppIds\":[\"sumatra-pdf\"]}");
 
             try { _session = AppSession.Launch(); }
             catch (Exception ex) { _launchError = ex.Message; _session = null; }
@@ -600,7 +601,7 @@ namespace Ven4Tools.ClientUITests
             {
                 var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
-                    FileName = "winget", Arguments = "uninstall --id CPUID.CPU-Z -e --silent --disable-interactivity",
+                    FileName = "winget", Arguments = "uninstall --id SumatraPDF.SumatraPDF -e --silent --disable-interactivity",
                     UseShellExecute = false, CreateNoWindow = true
                 });
                 p?.WaitForExit(30000);
@@ -640,9 +641,9 @@ namespace Ven4Tools.ClientUITests
             var pinInstallBtn = Retry.WhileNull(
                 () => s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
                                    .FirstOrDefault(b => (b.Properties.HelpText.IsSupported) &&
-                                                         (b.Properties.HelpText.Value ?? "").Contains("cpu-z", StringComparison.OrdinalIgnoreCase)),
+                                                         (b.Properties.HelpText.Value ?? "").Contains("sumatra-pdf", StringComparison.OrdinalIgnoreCase)),
                 timeout: TimeSpan.FromSeconds(15), interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
-            Assert.IsNotNull(pinInstallBtn, "Не найдена кнопка установки пина cpu-z (панель пинов пуста или не отрисовалась).");
+            Assert.IsNotNull(pinInstallBtn, "Не найдена кнопка установки пина sumatra-pdf (панель пинов пуста или не отрисовалась).");
 
             pinInstallBtn!.AsButton().Invoke();
 
@@ -651,8 +652,8 @@ namespace Ven4Tools.ClientUITests
             // реально передан (в UI-логе аргументы не печатаются, только stdout/stderr).
             //
             // Фильтр обязан требовать именно `install`. Клиент параллельно гоняет
-            // `winget list --id CPUID.CPU-Z ...` для проверки доступности, и она
-            // подходила под прежнее условие «в командной строке есть CPU-Z» — тест
+            // `winget list --id <id> ...` для проверки доступности, и она
+            // подходила под прежнее условие «в командной строке есть id программы» — тест
             // хватал её, не находил в ней --location (у list его и не может быть) и
             // падал, хотя установка ещё даже не стартовала. Продукт при этом
             // --location передаёт правильно (InstallationService.Winget.cs).
@@ -668,7 +669,7 @@ namespace Ven4Tools.ClientUITests
                     {
                         var cl = mo["CommandLine"] as string;
                         if (string.IsNullOrEmpty(cl)) continue;
-                        if (!cl.Contains("CPU-Z", StringComparison.OrdinalIgnoreCase)) continue;
+                        if (!cl.Contains("SumatraPDF", StringComparison.OrdinalIgnoreCase)) continue;
                         // Именно установка, а не list/show/search той же программы.
                         if (!System.Text.RegularExpressions.Regex.IsMatch(
                                 cl, @"winget\.exe""?\s+install\b",
@@ -682,7 +683,7 @@ namespace Ven4Tools.ClientUITests
             }
 
             Assert.IsNotNull(commandLine,
-                "#8: не удалось поймать `winget install` для CPU-Z за 40с — установка не запустилась вовсе.");
+                "#8: не удалось поймать `winget install` для SumatraPDF за 40с — установка не запустилась вовсе.");
             Assert.IsTrue(commandLine!.Contains("--location", StringComparison.OrdinalIgnoreCase),
                 $"#8: в командной строке winget нет --location — диск не передаётся вовсе. Командная строка: {commandLine}");
             Assert.IsTrue(commandLine.Contains("D:\\", StringComparison.OrdinalIgnoreCase),

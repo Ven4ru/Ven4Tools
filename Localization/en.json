@@ -5248,6 +5248,10 @@
     "t": "Package not found in the source or unavailable for this system."
   },
   {
+    "s": "Пакет требует явно указать папку установки.",
+    "t": "The package requires an explicit install folder."
+  },
+  {
     "s": "Панель быстрого доступа заполнена (максимум {0}).",
     "t": "The quick access bar is full (maximum {0})."
   },
@@ -10826,6 +10830,10 @@
   {
     "s": "\uD83D\uDD00 Порядок источников установки",
     "t": "\uD83D\uDD00 Install source order"
+  },
+  {
+    "s": "\uD83D\uDD01 Winget ({0}, {1}): пакет требует папку установки — повтор с {2}",
+    "t": "\uD83D\uDD01 Winget ({0}, {1}): the package requires an install folder — retrying with {2}"
   },
   {
     "s": "\uD83D\uDD01 История перезагрузок и сбоев (7 дней)",
