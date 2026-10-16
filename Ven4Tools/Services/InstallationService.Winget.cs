@@ -15,7 +15,7 @@ namespace Ven4Tools.Services
             IProgress<AppInstallProgress> progress, string installDrive, string? version,
             string outcomeCheckId, InstalledBaseline baseline, CancellationToken token)
         {
-            if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) return SourceAttempt.Failed(null);
+            if (string.IsNullOrEmpty(primaryId) || primaryId.StartsWith("User.")) return SourceAttempt.Failed("в каталоге нет пакета");
             // У записи каталога без wingetId (ExitLag, VK Play, драйверпаки…) primaryId —
             // внутренний ID каталога: `winget install exitlag` по обоим источникам заведомо
             // ничего не найдёт и только тратит время. Пользовательские приложения
@@ -23,7 +23,7 @@ namespace Ven4Tools.Services
             if (string.IsNullOrEmpty(app.AlternativeId) && !app.IsUserAdded)
             {
                 Log($"⏭ Winget: у «{app.DisplayName}» нет ID пакета winget — источник пропущен");
-                return SourceAttempt.Failed(null);
+                return SourceAttempt.Failed("в каталоге нет пакета");
             }
             string? lastFailureDetail = null;
             foreach (var wsrc in wingetSources)
