@@ -11,20 +11,38 @@ namespace Ven4Tools.Tests;
 public sealed class WindowsUpdateBackgroundServiceTests
 {
     [Fact]
-    public async Task CheckOnceAsync_ModeNotSet_DoesNotSearch()
+    public async Task CheckOnceAsync_ModeNotSet_ЗакрепляетNotifyOnlyИИщет()
     {
+        // До 17.10.2026 при NotSet фоновой проверки не было вовсе, пока раздел
+        // Windows Update ни разу не открывали. Теперь она сама закрепляет режим
+        // «только уведомлять» — ничего не скачивая.
         ProfileService.Current.WindowsUpdateMode = "NotSet";
+        ProfileService.Current.ParanoidMode = false;
+        ProfileService.Current.OfflineMode = false;
         var fake = new FakeWindowsUpdateSource();
         fake.Items.Add(new WindowsUpdateItem { UpdateId = "1", Title = "A" });
         var bg = new WindowsUpdateBackgroundService(new WindowsUpdateService(fake));
 
         await bg.CheckOnceAsync(CancellationToken.None);
 
-        // Поиск не должен был случиться — при NotSet просто нечего проверять.
-        // (Косвенная проверка: счётчик не должен был обновиться до 1.)
-        Assert.NotEqual(1, WindowsUpdateBackgroundService.AvailableCount);
-        // Прямая проверка: SearchAsync не вызывался вовсе.
+        Assert.Equal("NotifyOnly", ProfileService.Current.WindowsUpdateMode);
+        Assert.Equal(1, fake.SearchCallCount);
+        Assert.Empty(fake.InstallCallsReceived);
+    }
+
+    [Fact]
+    public async Task CheckOnceAsync_ModeNotSetИПараноидальныйРежим_НичегоНеМеняет()
+    {
+        ProfileService.Current.WindowsUpdateMode = "NotSet";
+        ProfileService.Current.ParanoidMode = true;
+        var fake = new FakeWindowsUpdateSource();
+        var bg = new WindowsUpdateBackgroundService(new WindowsUpdateService(fake));
+
+        await bg.CheckOnceAsync(CancellationToken.None);
+
+        Assert.Equal("NotSet", ProfileService.Current.WindowsUpdateMode);
         Assert.Equal(0, fake.SearchCallCount);
+        ProfileService.Current.ParanoidMode = false;
     }
 
     [Fact]
@@ -109,8 +127,10 @@ public sealed class WindowsUpdateBackgroundServiceTests
     }
 
     [Fact]
-    public async Task CheckOnceAsync_ModeNotSet_DoesNotDownload()
+    public async Task CheckOnceAsync_ModeNotSet_ИщетНоНеСкачивает()
     {
+        // Невыбранный режим закрепляется как «только уведомлять»: поиск идёт,
+        // а скачивания без явного выбора пользователя нет.
         ArrangeProfile("NotSet");
         var fake = new FakeWindowsUpdateSource();
         fake.Items.Add(new WindowsUpdateItem { UpdateId = "1", Title = "A" });
@@ -118,7 +138,7 @@ public sealed class WindowsUpdateBackgroundServiceTests
 
         await bg.CheckOnceAsync(CancellationToken.None);
 
-        Assert.Equal(0, fake.SearchCallCount);
+        Assert.Equal(1, fake.SearchCallCount);
         Assert.Equal(0, fake.DownloadCallCount);
     }
 

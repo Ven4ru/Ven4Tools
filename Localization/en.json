@@ -428,6 +428,14 @@
     "t": "Chocolatey (optional)"
   },
   {
+    "s": "Chocolatey не смог скачать установщик — сервер загрузки недоступен или соединение оборвалось.",
+    "t": "Chocolatey could not download the installer — the download server is unavailable or the connection dropped."
+  },
+  {
+    "s": "Chocolatey не установлен",
+    "t": "Chocolatey is not installed"
+  },
+  {
     "s": "Chocolatey не установлен.\n\nЭто необязательный дополнительный источник установки приложений —\nклиент Ven4Tools полноценно работает и без него.\n\nУстановить Chocolatey сейчас?",
     "t": "Chocolatey is not installed.\n\nIt is an optional extra source for installing apps —\nthe Ven4Tools client works fully without it.\n\nInstall Chocolatey now?"
   },
@@ -618,6 +626,10 @@
   {
     "s": "Ven4Tools найден",
     "t": "Ven4Tools found"
+  },
+  {
+    "s": "Ven4Tools сейчас запущен.\n\nДля восстановления клиент придётся закрыть — это произойдёт, когда файлы будут скачаны и проверены. Продолжить?",
+    "t": "Ven4Tools is running.\n\nThe client has to be closed for the repair — this will happen once the files are downloaded and verified. Continue?"
   },
   {
     "s": "Ven4Tools сейчас запущен.\n\nЗакройте клиент и повторите удаление.",
@@ -930,6 +942,10 @@
   {
     "s": "[Install Failures] Ven4Tools {0} — {1} приложений",
     "t": "[Install Failures] Ven4Tools {0} — {1} apps"
+  },
+  {
+    "s": "[Install Failures] Ven4Tools {0} — не установлено приложений: {1}",
+    "t": "[Install Failures] Ven4Tools {0} — apps not installed: {1}"
   },
   {
     "s": "[InstallationService] ⚠ SilentArgs содержит недопустимые символы для {0} — использую /S",
@@ -4088,6 +4104,10 @@
     "t": "Could not start the installer"
   },
   {
+    "s": "Не удалось запустить установщик: {0}",
+    "t": "Could not start the installer: {0}"
+  },
+  {
     "s": "Не удалось изменить режим Turbo Boost. Запустите приложение от имени администратора и попробуйте ещё раз.",
     "t": "Could not change the Turbo Boost mode. Run the app as administrator and try again."
   },
@@ -4262,6 +4282,10 @@
   {
     "s": "Не удалось установить драйвер: {0}",
     "t": "Could not install the driver: {0}"
+  },
+  {
+    "s": "Не удалось установить приложений: {0}",
+    "t": "Apps failed to install: {0}"
   },
   {
     "s": "Не удалось установить счётчик FPS: {0}",
@@ -5418,6 +5442,10 @@
   {
     "s": "Патчи никогда не ставятся без вашего решения.",
     "t": "Updates are never installed without your decision."
+  },
+  {
+    "s": "Первая проверка ещё не прошла",
+    "t": "The first check has not run yet"
   },
   {
     "s": "Перед переустановкой",
@@ -7684,6 +7712,10 @@
     "t": "The background check runs every six hours."
   },
   {
+    "s": "Фоновая проверка начнётся вскоре после запуска — только уведомит, ничего не скачивая. Режим меняется в настройках «Windows Update».",
+    "t": "The background check starts soon after launch — it only notifies you and downloads nothing. Change the mode in the “Windows Update” settings."
+  },
+  {
     "s": "Фоновая проверка обновлений Windows раз в 6 часов. Установка ни в одном из режимов автоматически не запускается.",
     "t": "Windows updates are checked in the background every 6 hours. Installation never starts automatically in either mode."
   },
@@ -7880,6 +7912,14 @@
     "t": "Yandex Music"
   },
   {
+    "s": "в каталоге нет пакета",
+    "t": "no package in the catalog"
+  },
+  {
+    "s": "в каталоге нет ссылки",
+    "t": "no link in the catalog"
+  },
+  {
     "s": "в папке клиента версия {0}, а сохранённый состав описывает {1}",
     "t": "version in the client folder is {0}, but the saved file list describes {1}"
   },
@@ -7918,6 +7958,10 @@
   {
     "s": "все источники исчерпаны",
     "t": "all sources exhausted"
+  },
+  {
+    "s": "все источники исчерпаны — Winget: {0} · Chocolatey: {1} · Прямая ссылка: {2}",
+    "t": "all sources exhausted — Winget: {0} · Chocolatey: {1} · Direct link: {2}"
   },
   {
     "s": "все источники исчерпаны — последняя причина: {0}",
@@ -8084,12 +8128,20 @@
     "t": "not detected"
   },
   {
+    "s": "не пробовался",
+    "t": "not tried"
+  },
+  {
     "s": "не прошёл проверку целостности",
     "t": "failed the integrity check"
   },
   {
     "s": "не с чем сверять: {0}",
     "t": "nothing to compare against: {0}"
+  },
+  {
+    "s": "не сработал, подробности — в логе установки",
+    "t": "failed, see the installation log for details"
   },
   {
     "s": "не удалось",
@@ -8310,6 +8362,14 @@
   {
     "s": "программ в задании нет",
     "t": "the job has no apps"
+  },
+  {
+    "s": "пропущена, в каталоге нет SHA256",
+    "t": "skipped, no SHA256 in the catalog"
+  },
+  {
+    "s": "пропущена, ссылка не HTTPS",
+    "t": "skipped, the link is not HTTPS"
   },
   {
     "s": "прямая ссылка",
@@ -9206,6 +9266,10 @@
   {
     "s": "⚠️ Для версии {0} нет подтверждённого SHA256: {1} — архив будет проверен по встроенной подписи",
     "t": "⚠️ No verified SHA256 for version {0}: {1} — the archive will be checked by its embedded signature"
+  },
+  {
+    "s": "⚠️ Клиент не закрылся (возможно, свёрнут в трей) — закройте его вручную и повторите",
+    "t": "⚠️ The client did not close (it may be minimized to the tray) — close it manually and try again"
   },
   {
     "s": "⚠️ Клиент не закрылся за отведённое время — установка отменена",
@@ -11222,6 +11286,10 @@
   {
     "s": "\uD83D\uDD12 Отчёты клиента не предлагаются: включён параноидальный режим",
     "t": "\uD83D\uDD12 Client reports are not offered: paranoid mode is on"
+  },
+  {
+    "s": "\uD83D\uDD12 Файлы готовы — закрываю клиент перед восстановлением...",
+    "t": "\uD83D\uDD12 Files ready — closing the client before the repair..."
   },
   {
     "s": "\uD83D\uDD12 Целостность каждого скачанного файла подтверждена (SHA256)",

@@ -252,9 +252,9 @@ namespace Ven4Tools.Services
             var sourceOrder  = SourceOrderService.GetOrderForCategory(app.CategoryString);
             Log($"🔀 Порядок источников для «{app.DisplayName}»: {string.Join(" → ", sourceOrder)}");
 
-            // Последняя внятная причина неудачи из пройденных источников —
-            // попадёт в блок «Не установлено» вместо голого «Код выхода — ошибка».
-            string? lastFailureDetail = null;
+            // Причина неудачи по каждому пройденному источнику — попадёт в блок
+            // «Не установлено» и в журнал неудач вместо голого «Код выхода — ошибка».
+            var failures = new SourceFailureSummary();
 
             foreach (var srcId in sourceOrder)
             {
@@ -271,7 +271,7 @@ namespace Ven4Tools.Services
                         app, primaryId, appProgress, progress, installDrive, outcomeCheckId, baseline, token),
                     _ => default
                 };
-                if (attempt.FailureDetail != null) lastFailureDetail = attempt.FailureDetail;
+                failures.Record(srcId, attempt.FailureDetail);
                 if (attempt.Result != null) return attempt.Result.Value;
             }
 
@@ -279,9 +279,7 @@ namespace Ven4Tools.Services
             // фактическим состоянием системы на случай, если один из источников
             // (например choco) на самом деле справился, но был ошибочно распознан
             // как неудача (см. ReportInstallOutcomeAsync — честная коррекция).
-            string finalDetail = lastFailureDetail != null
-                ? $"все источники исчерпаны — последняя причина: {lastFailureDetail}"
-                : "все источники исчерпаны";
+            string finalDetail = failures.Build();
             return await ReportInstallOutcomeAsync(app, appProgress, progress, outcomeCheckId, baseline,
                 false, false, "all-sources", token, finalDetail);
         }

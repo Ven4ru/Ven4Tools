@@ -169,8 +169,9 @@ namespace Ven4Tools.ViewModels
         /// <summary>
         /// Текст карточки Windows Update. Чистая функция — покрыта тестами.
         /// <paramref name="neverOpened"/> — режим ещё не выбран (раздел «Windows Update» и
-        /// настройки ни разу не открывались): проверку никто не выключал, она просто ещё
-        /// не начата, и карточка говорит, как её включить.
+        /// настройки ни разу не открывались): первая фоновая проверка сама закрепит режим
+        /// «только уведомлять» (WindowsUpdateBackgroundService), до неё карточка говорит,
+        /// что проверка ещё впереди.
         /// </summary>
         internal static (string Status, string Hint, bool NeedsAttention) DescribeWindowsUpdate(
             int count, bool backgroundEnabled, bool neverOpened = false)
@@ -178,7 +179,7 @@ namespace Ven4Tools.ViewModels
             if (count > 0)
                 return ($"Найдено патчей: {count}", "Патчи никогда не ставятся без вашего решения.", true);
             if (neverOpened)
-                return ("Фоновая проверка ещё не включена", "Включится, когда вы впервые откроете «Windows Update».", false);
+                return ("Первая проверка ещё не прошла", "Фоновая проверка начнётся вскоре после запуска — только уведомит, ничего не скачивая. Режим меняется в настройках «Windows Update».", false);
             return backgroundEnabled
                 ? ("Новых патчей не найдено", "Фоновая проверка идёт раз в шесть часов.", false)
                 : ("Фоновая проверка выключена", "Проверить вручную можно на вкладке «Windows Update».", false);

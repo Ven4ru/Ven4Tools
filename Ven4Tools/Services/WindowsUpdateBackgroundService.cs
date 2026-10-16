@@ -10,7 +10,7 @@ namespace Ven4Tools.Services
     /// <summary>
     /// Фоновая проверка обновлений Windows — по аналогии с UpdateBackgroundService
     /// (приложения из winget). Режим поведения — из ProfileService.Current.WindowsUpdateMode:
-    ///   "NotSet"            — проверка не выполняется вообще (первый вход ещё не пройден).
+    ///   "NotSet"            — режим ещё не выбран: первая фоновая проверка закрепляет «NotifyOnly».
     ///   "NotifyOnly"        — только уведомление + бейдж-счётчик.
     ///   "NotifyAndDownload" — то же уведомление плюс тихое скачивание найденных патчей
     ///                         в фоне (WindowsUpdateService.DownloadOnlyAsync): файлы
@@ -74,8 +74,17 @@ namespace Ven4Tools.Services
         internal async Task CheckOnceAsync(CancellationToken ct)
         {
             var mode = ProfileService.Current.WindowsUpdateMode;
-            if (mode == "NotSet") return;
             if (ProfileService.Current.ParanoidMode) return;
+            if (mode == "NotSet")
+            {
+                // Раньше «режим ещё не выбран» означал, что фоновой проверки нет вовсе,
+                // пока пользователь не откроет раздел Windows Update. Теперь фоновая
+                // проверка сама закрепляет тот же консервативный режим, что и раздел при
+                // первом открытии: только уведомлять, ничего не скачивая.
+                mode = "NotifyOnly";
+                ProfileService.Current.WindowsUpdateMode = mode;
+                ProfileService.Save();
+            }
             if (OfflineService.IsOffline) return;
             // IsEffectivelyOnline, а не IsOnline — та же причина, что и в
             // UpdateBackgroundService: «Принудительный онлайн-режим» должен перекрывать

@@ -38,11 +38,11 @@ public sealed class OverviewViewModelTests
     [Fact]
     public void WindowsUpdate_РежимЕщёНеВыбран_НеНазываетПроверкуВыключенной()
     {
-        // Свежая установка: раздел «Windows Update» ни разу не открывали, проверку никто
-        // не выключал — карточка говорит, как она включится.
+        // Свежая установка: режим ещё не выбран, проверку никто не выключал — первая
+        // фоновая проверка сама закрепит «только уведомлять», карточка говорит, что она впереди.
         var result = OverviewViewModel.DescribeWindowsUpdate(-1, backgroundEnabled: false, neverOpened: true);
 
-        Assert.Equal("Фоновая проверка ещё не включена", result.Status);
+        Assert.Equal("Первая проверка ещё не прошла", result.Status);
         Assert.Contains("Windows Update", result.Hint);
         Assert.False(result.NeedsAttention);
     }
