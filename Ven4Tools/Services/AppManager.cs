@@ -79,7 +79,7 @@ namespace Ven4Tools.Services
             var hiddenSnapshot = hiddenAppsStore.Snapshot();
             return snapshot
                 .Where(a => !hiddenSnapshot.Contains(a.Id))
-                .OrderBy(a => a.Category)
+                .OrderBy(a => AppCategoryHelper.SortOrder(a.Category))
                 .ThenBy(a => a.DisplayName)
                 .ToList();
         }

@@ -15,7 +15,11 @@ namespace Ven4Tools.Models
         ИгровыеСервисы,
         Драйверпаки,
         Другое,
-        Пользовательские
+        Пользовательские,
+        // Новые категории — только в конец: пользовательские приложения хранят категорию
+        // числом (UserAppsStore), и вставка в середину сдвинула бы их категории. Место в
+        // списке каталога задаёт SortOrder, а не номер.
+        Компоненты
     }
 
     /// <summary>
@@ -24,6 +28,21 @@ namespace Ven4Tools.Models
     /// </summary>
     public static class AppCategoryHelper
     {
+        // Порядок категорий в каталоге: «Компоненты» — сразу после «Драйверпаков».
+        private static readonly AppCategory[] DisplayOrder =
+        {
+            AppCategory.Браузеры, AppCategory.Офис, AppCategory.Графика, AppCategory.Разработка,
+            AppCategory.ИИ, AppCategory.Мессенджеры, AppCategory.Мультимедиа, AppCategory.Системные,
+            AppCategory.ИгровыеСервисы, AppCategory.Драйверпаки, AppCategory.Компоненты,
+            AppCategory.Другое, AppCategory.Пользовательские
+        };
+
+        public static int SortOrder(AppCategory category)
+        {
+            int index = System.Array.IndexOf(DisplayOrder, category);
+            return index >= 0 ? index : DisplayOrder.Length;
+        }
+
         public static AppCategory Parse(string category) => category switch
         {
             "Браузеры"         => AppCategory.Браузеры,
@@ -36,6 +55,7 @@ namespace Ven4Tools.Models
             "Системные"        => AppCategory.Системные,
             "Игровые сервисы"  => AppCategory.ИгровыеСервисы,
             "Драйверпаки"      => AppCategory.Драйверпаки,
+            "Компоненты"       => AppCategory.Компоненты,
             "Пользовательские" => AppCategory.Пользовательские,
             _                  => AppCategory.Другое
         };
@@ -71,7 +91,8 @@ namespace Ven4Tools.Models
             AppCategory.Системные       => "Системные",
             AppCategory.ИгровыеСервисы  => "Игровые сервисы",
             AppCategory.Драйверпаки     => "Драйверпаки",
-            AppCategory.Другое          => "Другое",
+            AppCategory.Компоненты      => "Компоненты",
+            AppCategory.Другое         => "Другое",
             AppCategory.Пользовательские => "Пользовательские",
             _                           => ""
         };

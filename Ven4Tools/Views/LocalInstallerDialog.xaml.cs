@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Windows;
 using Ven4Tools.Models;
 using Ven4Tools.Services;
@@ -20,7 +21,7 @@ namespace Ven4Tools.Views
             txtFilePath.Text = filePath;
             txtName.Text     = Path.GetFileNameWithoutExtension(filePath);
 
-            foreach (AppCategory cat in System.Enum.GetValues(typeof(AppCategory)))
+            foreach (AppCategory cat in System.Enum.GetValues<AppCategory>().OrderBy(AppCategoryHelper.SortOrder))
                 cmbCategory.Items.Add(cat.ToString());
             cmbCategory.SelectedIndex = 0;
 

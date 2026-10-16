@@ -368,6 +368,7 @@ namespace Ven4Tools.ViewModels
             AppCategory.Системные        => "⚙️ Системные",
             AppCategory.ИгровыеСервисы   => "🎮 Игровые сервисы",
             AppCategory.Драйверпаки      => "🖨️ Драйверпаки",
+            AppCategory.Компоненты       => "🧩 Компоненты",
             AppCategory.Другое           => "📎 Другое",
             AppCategory.Пользовательские => "👤 Пользовательские",
             _                            => cat.ToString()
