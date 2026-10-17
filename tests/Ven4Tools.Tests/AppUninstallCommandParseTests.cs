@@ -69,4 +69,44 @@ public sealed class AppUninstallCommandParseTests : IDisposable
     {
         Assert.Equal(expected, AppUninstallService.IsInnoUninstaller(Path.Combine(@"C:\Program Files\X", name)));
     }
+
+    [Theory]
+    [InlineData("AIMP Setup", "Artem Izmaylov", true)]
+    [InlineData("aimp setup ", "Artem Izmaylov", true)]
+    [InlineData("AIMP Setup", "Other Corp", false)]
+    [InlineData("AIMP", "Artem Izmaylov", false)]
+    [InlineData(null, null, false)]
+    public void IsAimpUninstaller(string? description, string? company, bool expected)
+    {
+        Assert.Equal(expected, AppUninstallService.IsAimpUninstaller(description, company));
+    }
+
+    [Fact]
+    public void AnyDesk_ПолучаетRemoveВместоUninstall()
+    {
+        // --uninstall открывает окно подтверждения и ничего не удаляет (стенд 17.10.2026).
+        string exe = Touch("AnyDesk.exe");
+        var (file, args, error) = AppUninstallService.ParseUninstallCommand($"\"{exe}\" --uninstall");
+        Assert.Null(error);
+        Assert.Equal(exe, file);
+        Assert.Equal("--remove", args);
+    }
+
+    [Fact]
+    public void AnyDesk_ГотоваяТихаяКомандаНеТрогается()
+    {
+        string exe = Touch("AnyDesk.exe");
+        var (_, args, _) = AppUninstallService.ParseUninstallCommand($"\"{exe}\" --silent --uninstall", quiet: true);
+        Assert.Equal("--silent --uninstall", args);
+    }
+
+    [Fact]
+    public void ПустойФайл_НеСчитаетсяДеинсталляторомAimp()
+    {
+        // У файла без свойств версии — обычный /S, а не ключи AIMP.
+        string exe = Touch("Uninstall.exe");
+        var (_, args, error) = AppUninstallService.ParseUninstallCommand($"\"{exe}\"");
+        Assert.Null(error);
+        Assert.DoesNotContain("/AUTO", args);
+    }
 }

@@ -34,6 +34,11 @@ namespace Ven4Tools.Services
         // программы исчезнет из реестра.
         private static readonly TimeSpan TempUninstallerWait = TimeSpan.FromMinutes(2);
         private static readonly TimeSpan RegistryGoneWait = TimeSpan.FromSeconds(30);
+        // Сколько ещё ждём деинсталлятор после того, как запись программы пропала из
+        // реестра. AnyDesk (стенд 17.10.2026) всё удаляет за полминуты, а потом держит
+        // окно «AnyDesk был удалён… OK» — раньше его ждали до сторожа winget и до
+        // двухминутного предела, а итог показывали как «не удалено».
+        internal static readonly TimeSpan HungAfterRemovalGrace = TimeSpan.FromSeconds(30);
 
         public static async Task<bool> TryUninstallAsync(string? wingetId, string displayName)
             => (await UninstallAsync(wingetId, displayName)).Ok;
@@ -53,7 +58,7 @@ namespace Ven4Tools.Services
         {
             var startedUtc = DateTime.UtcNow;
             bool wasInRegistry = FindUninstallString(displayName) != null;
-            var result = await UninstallCoreAsync(wingetId, displayName);
+            var result = await UninstallCoreAsync(wingetId, displayName, wasInRegistry);
 
             await WaitForTempUninstallersAsync(startedUtc, TempUninstallerWait);
 
@@ -126,8 +131,58 @@ namespace Ven4Tools.Services
             return killed;
         }
 
-        private static async Task<UninstallResult> UninstallCoreAsync(string? wingetId, string displayName)
+        /// <summary>
+        /// Запускает удаление и, пока оно идёт, следит за записью программы в реестре: если
+        /// она пропала, а деинсталлятор через <see cref="HungAfterRemovalGrace"/> всё ещё не
+        /// завершился, — он ждёт нажатия в своём последнем окне, и удаление обрывается
+        /// через переданный токен.
+        /// </summary>
+        private static async Task<T> WithRemovalWatchAsync<T>(string displayName, bool watch, Func<CancellationToken, Task<T>> run)
         {
+            using var hung = new CancellationTokenSource();
+            using var stop = new CancellationTokenSource();
+            var watcher = watch ? CancelWhenGoneAsync(displayName, hung, stop.Token) : Task.CompletedTask;
+            try { return await run(hung.Token); }
+            finally
+            {
+                stop.Cancel();
+                await watcher;
+            }
+        }
+
+        private static async Task CancelWhenGoneAsync(string displayName, CancellationTokenSource hung, CancellationToken stop)
+        {
+            try
+            {
+                while (true)
+                {
+                    await Task.Delay(3000, stop);
+                    if (await Task.Run(() => FindUninstallString(displayName), stop) != null) continue;
+                    await Task.Delay(HungAfterRemovalGrace, stop);
+                    AppLogger.Write($"[AppUninstallService] «{displayName}» уже удалена, а деинсталлятор ещё ждёт в своём окне — закрываем его");
+                    hung.Cancel();
+                    return;
+                }
+            }
+            catch (OperationCanceledException) { }
+        }
+
+        private static async Task<UninstallResult> UninstallCoreAsync(string? wingetId, string displayName, bool wasInRegistry)
+        {
+            // Деинсталлятор из числа известных (AIMP, AnyDesk): winget вызывает его с ключами,
+            // на которые тот открывает окно, и минуты уходят на ожидание сторожа — сразу
+            // запускаем его из реестра с настоящими ключами тихого удаления.
+            var known = await Task.Run(() => FindUninstallString(displayName));
+            if (known is { FromMachineHive: true, Quiet: false } k &&
+                ParseUninstallCommand(k.Command) is { Error: null } parsed && KnownSilentArgs(parsed.File) != null)
+            {
+                var direct = await WithRemovalWatchAsync(displayName, true,
+                    hung => RunUninstallStringAsync(k.Command, false, hung));
+                return direct.Ok
+                    ? UninstallResult.Success
+                    : UninstallResult.Fail(direct.Reason ?? "Деинсталлятор завершился с ошибкой.");
+            }
+
             // Попытка 1: winget uninstall по ID (работает для пакетов с непустым Source).
             // Аргументы через ArgumentList (как везде в кодовой базе), не строковую
             // интерполяцию — .NET сам экранирует каждый токен, устраняя поверхность
@@ -161,7 +216,8 @@ namespace Ven4Tools.Services
                 var args = truncatedId
                     ? WingetArgs.Query("uninstall", "--id", wingetId, "--silent")
                     : WingetArgs.Query("uninstall", "--id", wingetId, "--exact", "--silent");
-                var (exitCode, _) = await WingetRunner.RunAsync(args, WingetUninstallTimeout, idleLimit: WingetUninstallIdle);
+                var (exitCode, _) = await WithRemovalWatchAsync(displayName, wasInRegistry,
+                    hung => WingetRunner.RunAsync(args, WingetUninstallTimeout, hung, WingetUninstallIdle));
                 if (exitCode == 0)
                     return UninstallResult.Success;
                 if (exitCode == WingetErrorMapper.AdminContextProhibited)
@@ -185,8 +241,10 @@ namespace Ven4Tools.Services
             // Попытка 2: найти строку UninstallString в реестре по DisplayName.
             var found = await Task.Run(() => FindUninstallString(displayName));
             // Ни winget, ни реестр о приложении не знают — удалять действительно нечего.
+            // Запись была до удаления и пропала — программа удалена, даже если winget
+            // пришлось оборвать: деинсталлятор ждал в последнем окне (AnyDesk).
             if (found == null)
-                return wingetFoundNothing
+                return wingetFoundNothing || wasInRegistry
                     ? UninstallResult.Success
                     : UninstallResult.Fail(wingetFailure ?? "Деинсталлятор не найден ни в winget, ни в реестре.");
 
@@ -207,7 +265,8 @@ namespace Ven4Tools.Services
                     : UninstallResult.Fail(userRun.Reason ?? wingetFailure ?? "Деинсталлятор из профиля пользователя не удалил программу.");
             }
 
-            var run = await RunUninstallStringAsync(found.Value.Command, found.Value.Quiet);
+            var run = await WithRemovalWatchAsync(displayName, true,
+                hung => RunUninstallStringAsync(found.Value.Command, found.Value.Quiet, hung));
             return run.Ok
                 ? UninstallResult.Success
                 : UninstallResult.Fail(run.Reason ?? wingetFailure ?? "Деинсталлятор завершился с ошибкой.");
@@ -337,6 +396,40 @@ namespace Ven4Tools.Services
         internal static bool IsInnoUninstaller(string exe)
             => Regex.IsMatch(Path.GetFileName(exe), @"^unins\d{3}\.exe$", RegexOptions.IgnoreCase);
 
+        /// <summary>
+        /// Деинсталляторы, которым ни /S, ни ключи winget не помогают (стенд 16–17.10.2026),
+        /// и их настоящие ключи тихого удаления; null — деинсталлятор не из их числа.
+        /// <list type="bullet">
+        /// <item>AIMP: на /S и /SILENT открывает окно «Select Language» и ждёт — тихо
+        /// удаляет только с /AUTO /SILENT;</item>
+        /// <item>AnyDesk: --uninstall (так и в реестре, и у winget) открывает окно
+        /// подтверждения и ничего не удаляет; --remove удаляет сам и оставляет только
+        /// окно «AnyDesk был удалён» — его закрывает <see cref="WithRemovalWatchAsync{T}"/>.</item>
+        /// </list>
+        /// </summary>
+        internal static string? KnownSilentArgs(string exe)
+        {
+            if (string.Equals(Path.GetFileName(exe), "AnyDesk.exe", StringComparison.OrdinalIgnoreCase)) return "--remove";
+            if (IsAimpUninstaller(exe)) return "/AUTO /SILENT";
+            return null;
+        }
+
+        /// <summary>Деинсталлятор AIMP: в свойствах файла — «AIMP Setup» от Artem Izmaylov.</summary>
+        internal static bool IsAimpUninstaller(string exe)
+        {
+            try
+            {
+                if (!File.Exists(exe)) return false;
+                var info = FileVersionInfo.GetVersionInfo(exe);
+                return IsAimpUninstaller(info.FileDescription, info.CompanyName);
+            }
+            catch { return false; }
+        }
+
+        internal static bool IsAimpUninstaller(string? fileDescription, string? companyName)
+            => string.Equals(fileDescription?.Trim(), "AIMP Setup", StringComparison.OrdinalIgnoreCase) &&
+               (companyName ?? "").Contains("Izmaylov", StringComparison.OrdinalIgnoreCase);
+
         private static string QuoteArg(string a)
             => a.Length > 0 && a.IndexOfAny(new[] { ' ', '\t', '"' }) < 0 ? a : "\"" + a.Replace("\"", "\\\"") + "\"";
 
@@ -410,6 +503,8 @@ namespace Ven4Tools.Services
                 // Готовую тихую команду программы (QuietUninstallString) не трогаем:
                 // лишний ключ ломает, например, Squirrel (Update.exe --uninstall -s).
                 if (quiet) { }
+                else if (KnownSilentArgs(exe) is { } known)
+                    args = known;
                 else if (IsInnoUninstaller(exe))
                 {
                     // Inno Setup не понимает /S и показывает окно подтверждения
@@ -425,7 +520,7 @@ namespace Ven4Tools.Services
             }
         }
 
-        private static async Task<(bool Ok, string? Reason)> RunUninstallStringAsync(string uninstallString, bool quiet)
+        private static async Task<(bool Ok, string? Reason)> RunUninstallStringAsync(string uninstallString, bool quiet, CancellationToken hung)
         {
             var (file, arguments, error) = ParseUninstallCommand(uninstallString, quiet);
             if (error != null) return (false, error);
@@ -436,7 +531,8 @@ namespace Ven4Tools.Services
             {
                 try
                 {
-                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(hung);
+                    cts.CancelAfter(TimeSpan.FromSeconds(120));
                     await p.WaitForExitAsync(cts.Token);
                 }
                 catch (OperationCanceledException)
@@ -444,6 +540,8 @@ namespace Ven4Tools.Services
                     // entireProcessTree: деинсталляторы (msiexec /x, NSIS/Inno /S) порождают
                     // дочерние процессы — как и везде в кодовой базе при таймауте/отмене.
                     try { p.Kill(entireProcessTree: true); } catch { }
+                    // Программа уже удалена, деинсталлятор только ждал нажатия «OK».
+                    if (hung.IsCancellationRequested) return (true, null);
                     return (false, "Деинсталлятор не завершился за 2 минуты — вероятно, ждёт ответа в своём окне.");
                 }
                 // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — удаление прошло успешно
