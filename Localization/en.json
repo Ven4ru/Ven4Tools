@@ -772,6 +772,10 @@
     "t": "[AppUninstallService] \"{0}\" was removed, a restart is needed to finish"
   },
   {
+    "s": "[AppUninstallService] «{0}» удалена, хотя деинсталлятор сообщил об ошибке: {1}",
+    "t": "[AppUninstallService] \"{0}\" was removed even though the uninstaller reported an error: {1}"
+  },
+  {
     "s": "[AppUninstallService] «{0}» уже удалена, а деинсталлятор ещё ждёт в своём окне — закрываем его",
     "t": "[AppUninstallService] “{0}” is already removed, but the uninstaller is still waiting in its window — closing it"
   },
