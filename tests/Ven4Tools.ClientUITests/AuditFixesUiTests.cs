@@ -638,12 +638,15 @@ namespace Ven4Tools.ClientUITests
             dItem!.Select();
             System.Threading.Thread.Sleep(500);
 
+            // Подсказка кнопки — «Установит закреплённое приложение «SumatraPDF».»: в ней
+            // название программы, а не id каталога. С cpu-z они совпадали («CPU-Z»), и поиск
+            // по id работал случайно; после замены на sumatra-pdf тест перестал находить кнопку.
             var pinInstallBtn = Retry.WhileNull(
                 () => s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
                                    .FirstOrDefault(b => (b.Properties.HelpText.IsSupported) &&
-                                                         (b.Properties.HelpText.Value ?? "").Contains("sumatra-pdf", StringComparison.OrdinalIgnoreCase)),
+                                                         (b.Properties.HelpText.Value ?? "").Contains("SumatraPDF", StringComparison.OrdinalIgnoreCase)),
                 timeout: TimeSpan.FromSeconds(15), interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Result;
-            Assert.IsNotNull(pinInstallBtn, "Не найдена кнопка установки пина sumatra-pdf (панель пинов пуста или не отрисовалась).");
+            Assert.IsNotNull(pinInstallBtn, "Не найдена кнопка установки пина SumatraPDF (панель пинов пуста или не отрисовалась).");
 
             pinInstallBtn!.AsButton().Invoke();
 
