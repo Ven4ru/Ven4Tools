@@ -467,6 +467,7 @@
                                    Visibility="{Binding HasSelection, Converter={StaticResource InverseBoolToVis}}"/>
 
                         <ScrollViewer MaxHeight="232" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto"
+                                      views:ScrollFade.IsEnabled="True"
                                       Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
                             <views:FlatItemsControl x:Name="lstYourSet" ItemsSource="{Binding SelectedApps}"
                                                     AutomationProperties.Name="Ваш набор">
@@ -560,6 +561,7 @@
                         <TextBlock x:Name="txtOverallStatus" Text="{Binding InstallStatusText}" Style="{StaticResource SideHint}"
                                    HorizontalAlignment="Center" Margin="0,6,0,0"/>
                         <ListBox x:Name="lstAppProgress" ItemsSource="{Binding InstallProgress}" MaxHeight="150" Margin="0,6,0,0"
+                                 views:ScrollFade.IsEnabled="True"
                                  Background="Transparent"
                                  Foreground="{DynamicResource TextPrimary}"
                                  BorderThickness="0"
