@@ -43,6 +43,7 @@
   <ItemGroup>
     <Resource Include="Resources\Mascots\*.png" />
     <Resource Include="Resources\Overlay\*.png" />
+    <Resource Include="Resources\Splash\*.png" />
   </ItemGroup>
 
   <ItemGroup>

@@ -229,6 +229,10 @@ public sealed class ThemePaletteTests
         // игры, цвета темы клиента тут ни при чём.
         ["Ven4Tools/Views/OverlayWindow.xaml"] = new[] { "Transparent", "#B0101418", "#FFE8F4F2", "#FF7FE0D0", "#FFA9B8B5", "#FFFFC857", "#24FFFFFF", "#FF7FB8FF", "#FFFF9F7F" },
 
+        // Маска свечения под Венчиком на заставке: от маски берётся только прозрачность,
+        // сам цвет свечения — AccentColor темы.
+        ["Ven4Tools/Views/SplashWindow.xaml"] = new[] { "Black" },
+
         // Общий с лаунчером словарь. Объявления кистей палитры отсекаются отдельно
         // (см. PaletteDefinitionFiles), сюда попадают только два эффекта, у которых
         // литерал стоит на второй строке объявления: свечение фирменного зелёного —

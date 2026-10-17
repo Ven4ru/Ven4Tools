@@ -1120,6 +1120,10 @@
     "t": "[ProfileService] Save skipped: the profile could not be read, writing would erase the settings"
   },
   {
+    "s": "[Splash] Не удалось загрузить кадры Венчика «{0}»: {1}",
+    "t": "[Splash] Could not load Venchik frames “{0}”: {1}"
+  },
+  {
     "s": "[SystemHealthService] net {0} {1} завершился с кодом {2}: {3}",
     "t": "[SystemHealthService] net {0} {1} exited with code {2}: {3}"
   },

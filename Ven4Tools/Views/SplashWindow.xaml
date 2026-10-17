@@ -15,12 +15,25 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Image x:Name="imgMascot"
-                   Grid.Row="0"
-                   Source="/Resources/Mascots/loading.png"
-                   Stretch="Uniform"
-                   Margin="20,20,20,8"
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
+            <!-- Венчик в исходном 2D-стиле: лента кадров, поза меняется по этапу
+                 предзагрузки (SplashWindow.xaml.cs). Под ним — мягкое свечение в цвет темы. -->
+            <Grid Grid.Row="0" Margin="20,20,20,8">
+                <Ellipse Width="320" Height="280" Opacity="0.28" Fill="{DynamicResource AccentColor}">
+                    <Ellipse.OpacityMask>
+                        <RadialGradientBrush>
+                            <GradientStop Color="Black" Offset="0"/>
+                            <GradientStop Color="Transparent" Offset="1"/>
+                        </RadialGradientBrush>
+                    </Ellipse.OpacityMask>
+                </Ellipse>
+                <Rectangle x:Name="rectVenchik" Width="236" Height="240"
+                           RenderOptions.BitmapScalingMode="HighQuality">
+                    <Rectangle.Fill>
+                        <ImageBrush x:Name="venchikBrush" Stretch="Fill"
+                                    ViewboxUnits="Absolute" Viewbox="0,0,236,240"/>
+                    </Rectangle.Fill>
+                </Rectangle>
+            </Grid>
 
             <StackPanel Grid.Row="1" Margin="30,0,30,20">
                 <TextBlock x:Name="txtStatus"
