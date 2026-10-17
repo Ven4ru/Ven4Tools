@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Tools;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -165,6 +166,44 @@ namespace Ven4Tools.ClientUITests
         /// <summary>Отметка на карточке, найденная заново: после перестроения списка старая ссылка не годится.</summary>
         private static bool? IsChecked(AppSession s, string automationId) =>
             Find(s, automationId)?.AsCheckBox().IsChecked;
+
+        /// <summary>Кнопки «в избранное» на карточках — у них нет своего AutomationId, ищутся по значку.</summary>
+        private static int FavoriteButtons(AppSession s) =>
+            s.MainWindow.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Button))
+                .Count(b => b.Name == "☆" || b.Name == "★");
+
+        private static void WaitFavorites(AppSession s) =>
+            Retry.WhileTrue(() => FavoriteButtons(s) == 0, timeout: ElementTimeout,
+                interval: TimeSpan.FromMilliseconds(250), throwOnTimeout: false);
+
+        // Главный список карточек — обычный ItemsControl с группами (см. FlatItemsControl.cs).
+        // У кнопок внутри обычного ItemsControl после ухода с вкладки и возврата пропадали узлы
+        // автоматизации; проверяется, что со списком карточек этого не происходит.
+        [TestMethod]
+        public void НовыйКаталог_КнопкиКарточек_ПослеВозвратаНаВкладку()
+        {
+            var s = Require();
+            if (Find(s, "btnUiModeSwitch")?.Name == "Новый интерфейс")
+                Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
+
+            UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
+            Assert.IsNotNull(Retry.WhileNull(() => Find(s, "chkApp_7zip"), timeout: TimeSpan.FromSeconds(40),
+                interval: TimeSpan.FromMilliseconds(400), throwOnTimeout: false).Result, "Каталог не загрузился.");
+            WaitFavorites(s);
+            var before = FavoriteButtons(s);
+            Assert.IsTrue(before > 0, "На карточках не нашлось кнопок «в избранное».");
+
+            for (var round = 1; round <= 2; round++)
+            {
+                UiNav.Find(s, "btnOverviewTab")!.AsButton().Invoke();
+                Assert.IsTrue(WaitGone(s, "chkApp_7zip"), "Уход с вкладки каталога не сработал.");
+                UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
+                Assert.IsNotNull(WaitFor(s, "chkApp_7zip"), $"Возврат {round}: отметки карточек пропали из дерева автоматизации.");
+                WaitFavorites(s);
+                var after = FavoriteButtons(s);
+                Assert.IsTrue(after > 0, $"Возврат {round}: кнопки карточек пропали из дерева автоматизации (было {before}).");
+            }
+        }
 
         [TestMethod]
         public void НовыйКаталог_Карточки_ВашНабор_Категории()
