@@ -764,6 +764,10 @@
     "t": "Winget installed"
   },
   {
+    "s": "[AppUninstallService] «{0}» уже удалена, а деинсталлятор ещё ждёт в своём окне — закрываем его",
+    "t": "[AppUninstallService] “{0}” is already removed, but the uninstaller is still waiting in its window — closing it"
+  },
+  {
     "s": "[AppUninstallService] «{0}» установлена в профиль пользователя — winget uninstall запущен без прав администратора",
     "t": "[AppUninstallService] “{0}” is installed in the user profile — winget uninstall started without administrator rights"
   },
