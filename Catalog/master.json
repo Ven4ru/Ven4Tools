@@ -1,7 +1,15 @@
 {
-  "version": 29,
-  "lastUpdated": "2026-10-16 22:00:00",
+  "version": 30,
+  "lastUpdated": "2026-10-17 23:00:00",
   "changelog": [
+    {
+      "version": 30,
+      "date": "2026-10-17",
+      "addedApps": [],
+      "removedApps": [],
+      "message": "У 18 программ с прямой ссылкой появились правильные ключи тихой установки (сверены с манифестами winget): Opera, Brave, Яндекс Браузер, ONLYOFFICE, SumatraPDF, GIMP, Visual Studio, Python, Git, Audacity, WinRAR, Greenshot, ShareX, Яндекс Диск, PowerToys, GOG Galaxy, AIDA64 и WizTree. Раньше прямая ссылка запускала их с общим ключом /S, который они не понимают, и установщик ждал нажатия в окне. Набор приложений не изменился.",
+      "messageEn": "18 apps with a direct link now have the correct silent install switches (checked against the winget manifests): Opera, Brave, Yandex Browser, ONLYOFFICE, SumatraPDF, GIMP, Visual Studio, Python, Git, Audacity, WinRAR, Greenshot, ShareX, Yandex Disk, PowerToys, GOG Galaxy, AIDA64, and WizTree. Previously the direct link started them with the generic /S switch, which they do not understand, and the installer waited for a click in its window. The set of apps did not change."
+    },
     {
       "version": 29,
       "date": "2026-10-16",
@@ -398,7 +406,8 @@
       "descriptionEn": "Browser with a built-in ad blocker and messengers in the sidebar.",
       "profile": "basic",
       "sha256": "eddd5dd8298c489fe7d0c27ce434620fab4af94626d880ba19c31dc102d24162",
-      "chocoId": "opera"
+      "chocoId": "opera",
+      "silentArgs": "/silent /allusers=1"
     },
     {
       "id": "brave",
@@ -413,7 +422,8 @@
       "descriptionEn": "Privacy-focused browser with a built-in ad blocker.",
       "profile": "extended",
       "sha256": "4726e28a23da1b0b253efb63736efc9b20a580f26017f93f72ebdacf471c657a",
-      "chocoId": "brave"
+      "chocoId": "brave",
+      "silentArgs": "/silent /install"
     },
     {
       "id": "yandex-browser",
@@ -428,7 +438,8 @@
       "descriptionEn": "Browser with Alice, a smart feed, and built-in Yandex services.",
       "profile": "basic",
       "sha256": "d718a564d52559232a8b5532fa13684338d7d5d4bd777969d6418726f4e4d858",
-      "chocoId": "yandex-browser"
+      "chocoId": "yandex-browser",
+      "silentArgs": "--silent --do-not-launch-browser"
     },
     {
       "id": "librewolf",
@@ -458,7 +469,8 @@
       "descriptionEn": "MS Office-compatible editor with cloud integration.",
       "profile": "basic",
       "sha256": "a3b4a7353946a2d836eadfb8f59799f98b906ab961421c05c0bee00be9307a9f",
-      "chocoId": "onlyoffice"
+      "chocoId": "onlyoffice",
+      "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-"
     },
     {
       "id": "adobe-acrobat-reader",
@@ -488,7 +500,8 @@
       "descriptionEn": "Minimalist and fast viewer for PDF, EPUB, and MOBI.",
       "profile": "basic",
       "sha256": "1eee71cccd2ea6e94d5bcea54ee2f759844da3e1a0ee2f6045035b1d17b94381",
-      "chocoId": "sumatrapdf"
+      "chocoId": "sumatrapdf",
+      "silentArgs": "-s -allusers -install -with-preview"
     },
     {
       "id": "drawio",
@@ -563,7 +576,8 @@
       "descriptionEn": "Powerful free image editor, an alternative to Photoshop.",
       "profile": "extended",
       "sha256": "ec31d757dd82831d201ffcf47ffeac4175df739e0c02d5122e89aeeadfb988cc",
-      "chocoId": "gimp"
+      "chocoId": "gimp",
+      "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-"
     },
     {
       "id": "krita",
@@ -684,7 +698,8 @@
       "descriptionEn": "Full-featured IDE for .NET, C++, Python, and other languages.",
       "profile": "full",
       "sha256": "8e02d19620a1d1affe5b226bcc7a764404df0cf089317d7d01459ad030eabc3c",
-      "chocoId": "visualstudio2022community"
+      "chocoId": "visualstudio2022community",
+      "silentArgs": "--quiet --wait --norestart"
     },
     {
       "id": "python",
@@ -699,7 +714,8 @@
       "descriptionEn": "Python interpreter with an installer and an option to add it to PATH.",
       "profile": "extended",
       "sha256": "c54d9b9bbb8a36e6489363ddd01139707fd781d72f1f9e90c7ec65d0061368e0",
-      "chocoId": "python3"
+      "chocoId": "python3",
+      "silentArgs": "/quiet /norestart InstallAllUsers=1 PrependPath=1"
     },
     {
       "id": "nodejs",
@@ -729,7 +745,8 @@
       "descriptionEn": "Version control system with a Bash emulator.",
       "profile": "extended",
       "sha256": "0c66e4a5875da5a74f9754386de7555ba301503b03bbdcdbafa69dc6464e548d",
-      "chocoId": "git"
+      "chocoId": "git",
+      "silentArgs": "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
     },
     {
       "id": "docker-desktop",
@@ -984,7 +1001,8 @@
       "descriptionEn": "Free audio editor for recording and processing sound.",
       "profile": "extended",
       "sha256": "4a6d77f023c0209a396fcf2f3c7c04e240b6ba9897b3231a6ed18e14c10caa16",
-      "chocoId": "audacity"
+      "chocoId": "audacity",
+      "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-"
     },
     {
       "id": "foobar2000",
@@ -1044,7 +1062,8 @@
       "descriptionEn": "Popular archiver with RAR and ZIP support.",
       "profile": "basic",
       "sha256": "b76813600ecf38a6b0d9af92d3daf3dd8a4a1830d45f5bdf863d1d533b7e8a33",
-      "chocoId": "winrar"
+      "chocoId": "winrar",
+      "silentArgs": "-s1"
     },
     {
       "id": "everything",
@@ -1104,7 +1123,8 @@
       "descriptionEn": "Powerful tool for taking screenshots.",
       "profile": "basic",
       "sha256": "9bb4971e729a2ad1612e8aa2fa490b69c33af7f42515f9b642c7d0f80f8c0fd3",
-      "chocoId": "greenshot"
+      "chocoId": "greenshot",
+      "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-"
     },
     {
       "id": "sharex",
@@ -1119,7 +1139,8 @@
       "descriptionEn": "Screenshots, screen recording, file uploads.",
       "profile": "extended",
       "sha256": "7c0dcaa05806de80cfb5829d243a62496d64bf2ed5cecc10185d9e769f365621",
-      "chocoId": "sharex"
+      "chocoId": "sharex",
+      "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-"
     },
     {
       "id": "yandex-disk",
@@ -1134,7 +1155,8 @@
       "descriptionEn": "Cloud storage with file sync.",
       "profile": "basic",
       "sha256": "1b0889a804870ec7f0fd9fd0290ed60942b42e7160d1dae3f456fa090bf20257",
-      "chocoId": "yandexdisk"
+      "chocoId": "yandexdisk",
+      "silentArgs": "-silent -norestart"
     },
     {
       "id": "powertoys",
@@ -1149,7 +1171,8 @@
       "descriptionEn": "Set of utilities for greater productivity in Windows.",
       "profile": "extended",
       "sha256": "945fdf327e4d38e4ced61b0727b7ab8a1222958782982052989ddf7cb7096f62",
-      "chocoId": "powertoys"
+      "chocoId": "powertoys",
+      "silentArgs": "/quiet /norestart"
     },
     {
       "id": "tailscale",
@@ -1284,7 +1307,8 @@
       "descriptionEn": "DRM-free launcher and aggregator of libraries from other platforms.",
       "profile": "extended",
       "sha256": "d04645ef5e4ada875f48d74828edd62222b2787eff09cb6e1c48e591949fd8f6",
-      "chocoId": "goggalaxy"
+      "chocoId": "goggalaxy",
+      "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-"
     },
     {
       "id": "epic-games",
@@ -1405,7 +1429,8 @@
       "descriptionEn": "Diagnostics and testing of computer components.",
       "profile": "extended",
       "sha256": "3d65d00033551745e567c3d8e0764b44b060e20bd07f76626b22e93573d860fd",
-      "chocoId": "aida64"
+      "chocoId": "aida64",
+      "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-"
     },
     {
       "id": "rclone",
@@ -1466,7 +1491,8 @@
       "descriptionEn": "The fastest disk space analyzer.",
       "profile": "extended",
       "sha256": "4a9da8c34a038cdd51f103be3edc09a9643ed42358ea4a01a2a30e0817714b4b",
-      "chocoId": "wiztree"
+      "chocoId": "wiztree",
+      "silentArgs": "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /SP-"
     },
     {
       "id": "fps-monitor",

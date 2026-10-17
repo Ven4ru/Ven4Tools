@@ -93,6 +93,17 @@ public sealed class AppUninstallCommandParseTests : IDisposable
     }
 
     [Fact]
+    public void DockerDesktop_ПолучаетUninstallQuietВместоS()
+    {
+        // С добавленным /S установщик Docker завершался с кодом -5 (стенд 17.10.2026).
+        string exe = Touch("Docker Desktop Installer.exe");
+        var (file, args, error) = AppUninstallService.ParseUninstallCommand($"\"{exe}\" uninstall");
+        Assert.Null(error);
+        Assert.Equal(exe, file);
+        Assert.Equal("uninstall --quiet", args);
+    }
+
+    [Fact]
     public void AnyDesk_ГотоваяТихаяКомандаНеТрогается()
     {
         string exe = Touch("AnyDesk.exe");

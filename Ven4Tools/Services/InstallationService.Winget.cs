@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ven4Tools.Models;
@@ -42,7 +43,21 @@ namespace Ven4Tools.Services
                 appProgress.Percentage = 0;
                 progress.Report(appProgress);
 
-                var wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive);
+                // Сначала установщик «для всех пользователей». Без --scope winget сам выбирал
+                // установщик для профиля пользователя, если в манифесте есть оба (FreeCAD,
+                // Cursor, VS Code, Git — около 40 программ каталога): клиент работает от имени
+                // администратора, и такая программа попадала в его профиль, а удалить её потом
+                // можно было только без прав администратора. У пакета только с пользовательским
+                // установщиком winget ответит «нет подходящего установщика» — тогда повтор без
+                // --scope. Магазин Microsoft области установки не знает.
+                string? scope = wsrc.Equals("msstore", StringComparison.OrdinalIgnoreCase) ? null : "machine";
+                var wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive, scope: scope);
+                if (!wingetRun.Ok && scope != null && wingetRun.ExitCode == WingetErrorMapper.NoApplicableInstaller)
+                {
+                    Log($"🔁 Winget ({wsrc}, {primaryId}): установщика для всех пользователей нет — повтор без выбора области");
+                    scope = null;
+                    wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive);
+                }
 
                 // Часть пакетов (Battle.net) winget отказывается ставить без явной папки:
                 // «Install location is required by the package». Повторяем один раз
@@ -54,7 +69,7 @@ namespace Ven4Tools.Services
                     if (CommandLineGuard.ValidateInstallFolder(folder))
                     {
                         Log($"🔁 Winget ({wsrc}, {primaryId}): пакет требует папку установки — повтор с {folder}");
-                        wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive, folder);
+                        wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive, folder, scope);
                     }
                 }
 
@@ -62,6 +77,31 @@ namespace Ven4Tools.Services
                     return SourceAttempt.Finished(await ReportInstallOutcomeAsync(
                         app, appProgress, progress, outcomeCheckId, baseline,
                         true, wingetRun.Reboot, "winget", token, sourceDetail: wsrc));
+
+                // Установщик отказывается работать от имени администратора — повторяем тот же
+                // winget без повышения прав. Код выхода такого запуска не виден, поэтому
+                // итог решает проверка по факту.
+                if (wingetRun.ExitCode == WingetErrorMapper.InstallerProhibitsElevation &&
+                    await RunWingetUnelevatedAsync(primaryId, wsrc, version, token))
+                    return SourceAttempt.Finished(await ReportInstallOutcomeAsync(
+                        app, appProgress, progress, outcomeCheckId, baseline,
+                        false, false, "winget", token,
+                        WingetErrorMapper.MapExitCode(wingetRun.ExitCode), sourceDetail: wsrc));
+
+                switch (WingetErrorMapper.ClassifyInstallFailure(wingetRun.ExitCode))
+                {
+                    case WingetFailureAction.AlreadyInstalled:
+                        Log($"ℹ️ Winget ({wsrc}, {primaryId}): {WingetErrorMapper.MapExitCode(wingetRun.ExitCode)}");
+                        return SourceAttempt.Finished(await ReportInstallOutcomeAsync(
+                            app, appProgress, progress, outcomeCheckId, baseline,
+                            true, false, "winget", token, sourceDetail: wsrc));
+                    case WingetFailureAction.Stop:
+                        string stopDetail = WingetErrorMapper.MapExitCode(wingetRun.ExitCode);
+                        Log($"❌ Winget ({wsrc}, {primaryId}): {stopDetail} — другие источники не пробуем, причина у них та же");
+                        return SourceAttempt.Finished(await ReportInstallOutcomeAsync(
+                            app, appProgress, progress, outcomeCheckId, baseline,
+                            false, false, "winget", token, stopDetail, wsrc));
+                }
 
                 // Код выхода больше не теряется на границе метода: расшифровываем его
                 // в читаемую причину — и в лог, и дальше в блок «Не установлено».
@@ -115,13 +155,51 @@ namespace Ven4Tools.Services
             return null;
         }
 
+        /// <summary>
+        /// Повтор установки через winget без прав администратора — для установщиков,
+        /// которые от имени администратора не работают (0x8A150056). Ждёт, пока запущенный
+        /// winget завершится, но не дольше общего предела установки.
+        /// </summary>
+        /// <returns>false — запустить winget без прав администратора не удалось.</returns>
+        private async Task<bool> RunWingetUnelevatedAsync(string appId, string source, string? version, CancellationToken token)
+        {
+            if (!string.IsNullOrEmpty(version) && !CommandLineGuard.ValidateId(version)) return false;
+            var wingetExe = TrustedExecutablePaths.ResolveWinget();
+            if (wingetExe == null) return false;
+            var args = new System.Collections.Generic.List<string> { "install", "--id", appId, "-e", "--source", source };
+            if (!string.IsNullOrEmpty(version)) { args.Add("--version"); args.Add(version); }
+            args.AddRange(WingetArgs.Modify());
+            if (ProfileService.Current.SilentInstall) args.Add("--silent");
+
+            var startedUtc = DateTime.UtcNow;
+            if (!UnelevatedLauncher.TryStart(wingetExe, string.Join(" ", args.Select(AppUninstallService.QuoteArg))))
+                return false;
+            Log($"🔁 Winget ({source}, {appId}): установщик не работает от имени администратора — повтор без повышения прав");
+
+            await Task.Delay(3000, CancellationToken.None); // оболочке нужно время, чтобы процесс появился
+            var deadline = DateTime.UtcNow + WingetHardLimit;
+            while (DateTime.UtcNow < deadline && AppUninstallService.CountStartedSince("winget", null, startedUtc, kill: false) > 0)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    AppUninstallService.CountStartedSince("winget", null, startedUtc, kill: true);
+                    token.ThrowIfCancellationRequested();
+                }
+                await Task.Delay(1000, CancellationToken.None);
+            }
+            int killed = AppUninstallService.CountStartedSince("winget", null, startedUtc, kill: true);
+            if (killed > 0)
+                Log($"⏱️ Winget [{appId}]: установка без прав администратора не завершилась за {WingetHardLimit.TotalMinutes:0} мин — процесс прерван");
+            return true;
+        }
+
         // Возвращает признак перезагрузки отдельно от общего Ok (0 и 3010 — оба
         // Ok=true) — раньше это различие терялось на возврате из метода, и путь
         // Winget никогда не мог показать «Требуется перезагрузка» в отличие от
         // остальных путей (RunElevatedInstallerAsync возвращает Reboot честно).
         // Код выхода отдаётся третьим полем — по нему WingetErrorMapper строит
         // человекочитаемую причину неудачи (-1 = winget вообще не запустился).
-        private async Task<(bool Ok, bool Reboot, int ExitCode)> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null, string? requiredLocation = null)
+        private async Task<(bool Ok, bool Reboot, int ExitCode)> RunWingetAsync(string appId, string source, CancellationToken token, string? version = null, string? installDrive = null, string? requiredLocation = null, string? scope = null)
         {
             var profile = ProfileService.Current;
 
@@ -188,6 +266,11 @@ namespace Ven4Tools.Services
             {
                 psi.ArgumentList.Add("--version");
                 psi.ArgumentList.Add(version);
+            }
+            if (scope != null)
+            {
+                psi.ArgumentList.Add("--scope");
+                psi.ArgumentList.Add(scope);
             }
             foreach (var flag in WingetArgs.Modify()) psi.ArgumentList.Add(flag);
             if (profile.SilentInstall) psi.ArgumentList.Add("--silent");

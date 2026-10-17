@@ -218,8 +218,15 @@ namespace Ven4Tools.Services
                     : WingetArgs.Query("uninstall", "--id", wingetId, "--exact", "--silent");
                 var (exitCode, _) = await WithRemovalWatchAsync(displayName, wasInRegistry,
                     hung => WingetRunner.RunAsync(args, WingetUninstallTimeout, hung, WingetUninstallIdle));
-                if (exitCode == 0)
+                // Коды «удалено, нужна перезагрузка» — тоже успех. Раньше успехом был только 0:
+                // удаление уходило в запасной путь через реестр, деинсталлятор запускался
+                // повторно, а итог показывался как неудача.
+                if (exitCode == 0 || WingetErrorMapper.IsSuccessWithReboot(exitCode))
+                {
+                    if (exitCode != 0)
+                        AppLogger.Write($"[AppUninstallService] «{displayName}» удалена, для завершения нужна перезагрузка");
                     return UninstallResult.Success;
+                }
                 if (exitCode == WingetErrorMapper.AdminContextProhibited)
                 {
                     // Программа поставлена в профиль пользователя: winget из-под
@@ -408,11 +415,14 @@ namespace Ven4Tools.Services
         /// <item>AnyDesk: --uninstall (так и в реестре, и у winget) открывает окно
         /// подтверждения и ничего не удаляет; --remove удаляет сам и оставляет только
         /// окно «AnyDesk был удалён» — его закрывает <see cref="WithRemovalWatchAsync{T}"/>.</item>
+        /// <item>Docker Desktop: удаляет тот же установщик командой uninstall, ключ тихого
+        /// режима — --quiet (манифест winget-pkgs); с добавленным /S завершался с кодом -5.</item>
         /// </list>
         /// </summary>
         internal static string? KnownSilentArgs(string exe)
         {
             if (string.Equals(Path.GetFileName(exe), "AnyDesk.exe", StringComparison.OrdinalIgnoreCase)) return "--remove";
+            if (string.Equals(Path.GetFileName(exe), "Docker Desktop Installer.exe", StringComparison.OrdinalIgnoreCase)) return "uninstall --quiet";
             if (IsAimpUninstaller(exe)) return "/AUTO /SILENT";
             return null;
         }
@@ -433,7 +443,7 @@ namespace Ven4Tools.Services
             => string.Equals(fileDescription?.Trim(), "AIMP Setup", StringComparison.OrdinalIgnoreCase) &&
                (companyName ?? "").Contains("Izmaylov", StringComparison.OrdinalIgnoreCase);
 
-        private static string QuoteArg(string a)
+        internal static string QuoteArg(string a)
             => a.Length > 0 && a.IndexOfAny(new[] { ' ', '\t', '"' }) < 0 ? a : "\"" + a.Replace("\"", "\\\"") + "\"";
 
         /// <summary>
@@ -473,7 +483,7 @@ namespace Ven4Tools.Services
         /// Процессы с этим именем (и, если задан, с этим файлом), запущенные после
         /// <paramref name="sinceUtc"/>; с <paramref name="kill"/> — завершает каждый вместе с потомками.
         /// </summary>
-        private static int CountStartedSince(string name, string? path, DateTime sinceUtc, bool kill)
+        internal static int CountStartedSince(string name, string? path, DateTime sinceUtc, bool kill)
         {
             int count = 0;
             foreach (var p in Process.GetProcessesByName(name))
@@ -584,8 +594,9 @@ namespace Ven4Tools.Services
                     if (hung.IsCancellationRequested) return (true, null);
                     return (false, "Деинсталлятор не завершился за 2 минуты — вероятно, ждёт ответа в своём окне.");
                 }
-                // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — удаление прошло успешно
-                return p.ExitCode == 0 || p.ExitCode == 3010
+                // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED, 1641 = ERROR_SUCCESS_REBOOT_INITIATED —
+                // удаление прошло успешно
+                return p.ExitCode == 0 || p.ExitCode == 3010 || p.ExitCode == 1641
                     ? (true, null)
                     : (false, MsiExitCodes.Known.TryGetValue(p.ExitCode, out var m) ? m : $"Деинсталлятор завершился с кодом {p.ExitCode}.");
             }
