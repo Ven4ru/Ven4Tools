@@ -560,13 +560,19 @@
                                      Value="{Binding OverallProgressPercentage, Mode=OneWay}"/>
                         <TextBlock x:Name="txtOverallStatus" Text="{Binding InstallStatusText}" Style="{StaticResource SideHint}"
                                    HorizontalAlignment="Center" Margin="0,6,0,0"/>
-                        <ListBox x:Name="lstAppProgress" ItemsSource="{Binding InstallProgress}" MaxHeight="150" Margin="0,6,0,0"
-                                 views:ScrollFade.IsEnabled="True"
+                        <!-- Ход установки растёт по числу строк и прокручивается вместе со всей
+                             панелью: своя прокрутка давала вторую полосу рядом с полосой панели.
+                             Без ScrollViewer в шаблоне колесо мыши доходит до панели. -->
+                        <ListBox x:Name="lstAppProgress" ItemsSource="{Binding InstallProgress}" Margin="0,6,0,0"
                                  Background="Transparent"
                                  Foreground="{DynamicResource TextPrimary}"
                                  BorderThickness="0"
-                                 ItemTemplate="{StaticResource InstallProgressRowTemplate}"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                 ItemTemplate="{StaticResource InstallProgressRowTemplate}">
+                            <ListBox.Template>
+                                <ControlTemplate TargetType="ListBox">
+                                    <ItemsPresenter/>
+                                </ControlTemplate>
+                            </ListBox.Template>
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>

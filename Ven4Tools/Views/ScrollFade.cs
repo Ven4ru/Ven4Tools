@@ -16,7 +16,7 @@ namespace Ven4Tools.Views
     public static class ScrollFade
     {
         // Высота затухания в пикселях; у очень низкого списка — не больше трети высоты.
-        private const double FadeSize = 20;
+        private const double FadeSize = 28;
 
         public static readonly DependencyProperty IsEnabledProperty = DependencyProperty.RegisterAttached(
             "IsEnabled", typeof(bool), typeof(ScrollFade), new PropertyMetadata(false, OnIsEnabledChanged));
