@@ -107,6 +107,37 @@ namespace Ven4Tools.ClientUITests
             GoTo("btnAboutTab", "btnGitHub", "О программе");
         }
 
+        // Список каталога — обычный ItemsControl с группами (см. FlatItemsControl.cs). У кнопок внутри
+        // обычного ItemsControl после ухода с вкладки и возврата пропадали узлы автоматизации;
+        // проверяется, что строки каталога и их кнопки «в избранное» после возврата на месте.
+        [TestMethod]
+        public void Каталог_КнопкиСтрок_ПослеВозвратаНаВкладку()
+        {
+            var s = Require();
+            int Favorites() => s.MainWindow.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Button))
+                .Count(b => b.Name == "☆" || b.Name == "★");
+            AutomationElement? Row() => s.MainWindow.FindFirstDescendant(cf => cf.ByAutomationId("chkApp_7zip"));
+
+            UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
+            Assert.IsNotNull(Retry.WhileNull(Row, timeout: TimeSpan.FromSeconds(40),
+                interval: TimeSpan.FromMilliseconds(400), throwOnTimeout: false).Result, "Каталог не загрузился.");
+            Retry.WhileTrue(() => Favorites() == 0, timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false);
+            var before = Favorites();
+            Assert.IsTrue(before > 0, "В строках каталога не нашлось кнопок «в избранное».");
+
+            for (var round = 1; round <= 2; round++)
+            {
+                UiNav.Find(s, "btnHistoryTab")!.AsButton().Invoke();
+                Assert.IsTrue(Retry.WhileTrue(() => Row() is { IsOffscreen: false }, timeout: T,
+                    interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false).Success, "Уход с вкладки каталога не сработал.");
+                UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
+                Assert.IsNotNull(Retry.WhileNull(Row, timeout: T, interval: TimeSpan.FromMilliseconds(300),
+                    throwOnTimeout: false).Result, $"Возврат {round}: строки каталога пропали из дерева автоматизации.");
+                Retry.WhileTrue(() => Favorites() == 0, timeout: T, interval: TimeSpan.FromMilliseconds(300), throwOnTimeout: false);
+                Assert.IsTrue(Favorites() > 0, $"Возврат {round}: кнопки строк пропали из дерева автоматизации (было {before}).");
+            }
+        }
+
         [TestMethod]
         public void ФункциональныеКнопки_ИмеютПояснения()
         {
