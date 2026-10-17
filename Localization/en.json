@@ -2612,6 +2612,10 @@
     "t": "Ready"
   },
   {
+    "s": "Готов к работе",
+    "t": "Ready"
+  },
+  {
     "s": "Готов к установке",
     "t": "Ready to install"
   },
@@ -3248,8 +3252,24 @@
     "t": "Another Windows update operation is in progress — background download postponed until the next check."
   },
   {
+    "s": "Идёт загрузка",
+    "t": "Downloading"
+  },
+  {
     "s": "Идёт измерение...",
     "t": "Measuring..."
+  },
+  {
+    "s": "Идёт проверка",
+    "t": "Verifying"
+  },
+  {
+    "s": "Идёт распаковка",
+    "t": "Extracting"
+  },
+  {
+    "s": "Идёт установка",
+    "t": "Installing"
   },
   {
     "s": "Идёт установка приложений.\n\nЗакрыть программу и прервать установку?",
@@ -4822,6 +4842,10 @@
   {
     "s": "Остановить службы обновления Windows и очистить кэш загрузки? Службы будут перезапущены автоматически.",
     "t": "Stop the Windows Update services and clear the download cache? The services will be restarted automatically."
+  },
+  {
+    "s": "Остановлено",
+    "t": "Stopped"
   },
   {
     "s": "Осторожно",
@@ -7528,6 +7552,10 @@
     "t": "Installing the client from a file (command line)"
   },
   {
+    "s": "Установка компонентов",
+    "t": "Installing components"
+  },
+  {
     "s": "Установка компонентов из setup",
     "t": "Installing components from setup"
   },
@@ -9298,6 +9326,10 @@
   {
     "s": "⚠️ Не подействовали повторно: {0}. Возможно, эта версия Windows больше не даёт их отключить.",
     "t": "⚠️ Reapplying had no effect: {0}. This Windows version may no longer allow turning them off."
+  },
+  {
+    "s": "⚠️ Не удалось загрузить кадры баннера «{0}»: {1}",
+    "t": "⚠️ Could not load banner frames “{0}”: {1}"
   },
   {
     "s": "⚠️ Не удалось определить установленный Office: {0}",
