@@ -358,7 +358,7 @@ namespace Ven4Tools.Services
             if (!UnelevatedLauncher.TryStart(winget, line))
                 return (false, "winget не удаляет программы из профиля пользователя от имени администратора, а запустить его без прав администратора не удалось.");
             AppLogger.Write($"[AppUninstallService] «{displayName}» установлена в профиль пользователя — winget uninstall запущен без прав администратора");
-            await WaitForProcessesAsync("winget", startedUtc, WingetUninstallTimeout);
+            await WaitUnelevatedAsync("winget", null, startedUtc, displayName, WingetUninstallTimeout);
             return await GoneFromRegistryAsync(displayName)
                 ? (true, null)
                 : (false, "winget без прав администратора не удалил программу из профиля пользователя.");
@@ -378,6 +378,9 @@ namespace Ven4Tools.Services
                 await Task.Delay(3000);
                 if (await Task.Run(() => FindUninstallString(displayName)) == null) return (true, null);
             }
+            // msiexec не трогаем: под тем же именем работает служба установщика Windows.
+            if (!string.Equals(file, TrustedExecutablePaths.MsiExec, StringComparison.OrdinalIgnoreCase))
+                KillLeftovers(Path.GetFileNameWithoutExtension(file), file, startedUtc, displayName);
             return (false, "Деинсталлятор из профиля пользователя не завершил удаление — вероятно, ждёт ответа в своём окне.");
         }
 
@@ -433,24 +436,61 @@ namespace Ven4Tools.Services
         private static string QuoteArg(string a)
             => a.Length > 0 && a.IndexOfAny(new[] { ' ', '\t', '"' }) < 0 ? a : "\"" + a.Replace("\"", "\\\"") + "\"";
 
-        /// <summary>Ждёт, пока завершатся процессы с этим именем, запущенные после <paramref name="sinceUtc"/>.</summary>
-        private static async Task WaitForProcessesAsync(string name, DateTime sinceUtc, TimeSpan limit)
+        /// <summary>
+        /// Ждёт процесс, запущенный без прав администратора: пока он не завершится, пока
+        /// запись программы не пропадёт из реестра (и ещё <see cref="HungAfterRemovalGrace"/>
+        /// на последнее окно) или до предела — и снимает то, что от него осталось.
+        /// </summary>
+        /// <remarks>
+        /// Раньше оставшийся процесс не снимался. Стенд 17.10.2026: деинсталлятор Cursor,
+        /// запущенный winget без прав, запросил повышение, на окно UAC никто не ответил —
+        /// и этот winget держал очередь winget: каждое следующее удаление ждало его все
+        /// 15 минут, хотя сама программа удалялась за секунды.
+        /// </remarks>
+        private static async Task WaitUnelevatedAsync(string name, string? path, DateTime sinceUtc, string displayName, TimeSpan limit)
         {
             await Task.Delay(3000); // оболочке нужно время, чтобы процесс появился
             var deadline = DateTime.UtcNow + limit;
-            while (DateTime.UtcNow < deadline)
+            DateTime? goneAt = null;
+            while (DateTime.UtcNow < deadline && CountStartedSince(name, path, sinceUtc, kill: false) > 0)
             {
-                bool alive = false;
-                foreach (var p in Process.GetProcessesByName(name))
-                {
-                    using (p)
-                    {
-                        try { if (p.StartTime.ToUniversalTime() >= sinceUtc.AddSeconds(-2)) alive = true; } catch { }
-                    }
-                }
-                if (!alive) return;
+                if (goneAt == null && await Task.Run(() => FindUninstallString(displayName)) == null)
+                    goneAt = DateTime.UtcNow;
+                if (goneAt is { } gone && DateTime.UtcNow - gone >= HungAfterRemovalGrace) break;
                 await Task.Delay(2000);
             }
+            KillLeftovers(name, path, sinceUtc, displayName);
+        }
+
+        private static void KillLeftovers(string name, string? path, DateTime sinceUtc, string displayName)
+        {
+            int killed = CountStartedSince(name, path, sinceUtc, kill: true);
+            if (killed > 0)
+                AppLogger.Write($"[AppUninstallService] Закрыто оставшихся после «{displayName}» процессов {name}: {killed}");
+        }
+
+        /// <summary>
+        /// Процессы с этим именем (и, если задан, с этим файлом), запущенные после
+        /// <paramref name="sinceUtc"/>; с <paramref name="kill"/> — завершает каждый вместе с потомками.
+        /// </summary>
+        private static int CountStartedSince(string name, string? path, DateTime sinceUtc, bool kill)
+        {
+            int count = 0;
+            foreach (var p in Process.GetProcessesByName(name))
+            {
+                using (p)
+                {
+                    try
+                    {
+                        if (p.StartTime.ToUniversalTime() < sinceUtc.AddSeconds(-2)) continue;
+                        if (path != null && !string.Equals(p.MainModule?.FileName, path, StringComparison.OrdinalIgnoreCase)) continue;
+                        if (kill) p.Kill(entireProcessTree: true);
+                        count++;
+                    }
+                    catch { }
+                }
+            }
+            return count;
         }
 
         /// <summary>

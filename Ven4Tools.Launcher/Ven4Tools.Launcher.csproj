@@ -28,8 +28,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\launcher.png" />
-    <Resource Include="Resources\launcher-en.png" />
+    <Resource Include="Resources\Banner\*.png" />
+    <Resource Include="Resources\Banner\banner-bg.jpg" />
   </ItemGroup>
 
   <ItemGroup>
