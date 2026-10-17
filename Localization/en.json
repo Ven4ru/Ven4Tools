@@ -256,6 +256,10 @@
     "t": " and others"
   },
   {
+    "s": " от «{0}»",
+    "t": " from \"{0}\""
+  },
+  {
     "s": " — рядом с заголовком каждой категории появится выбор приоритетного источника.",
     "t": " — a preferred source picker will appear next to each category heading."
   },
@@ -982,6 +986,14 @@
   {
     "s": "[InstalledTab] Предзагрузка списка установленных приложений не удалась",
     "t": "[InstalledTab] Preloading the installed apps list failed"
+  },
+  {
+    "s": "[InstallerLockGuard] Окно доверия драйверу: {0}",
+    "t": "[InstallerLockGuard] Driver trust prompt: {0}"
+  },
+  {
+    "s": "[InstallerLockGuard] Снятие остатков установки: {0}",
+    "t": "[InstallerLockGuard] Clearing installation leftovers: {0}"
   },
   {
     "s": "[NotificationService] {0}: недоступен ({1}).",
@@ -8812,6 +8824,10 @@
     "t": "⏱️ Chocolatey installation exceeded the {0} min timeout — aborted"
   },
   {
+    "s": "⏳ Windows Installer занят другой установкой — ждём до {0} мин",
+    "t": "⏳ Windows Installer is busy with another installation — waiting up to {0} min"
+  },
+  {
     "s": "⏳ «{0}»: сейчас выполняется «{1}» — операция отложена",
     "t": "⏳ “{0}”: “{1}” is in progress — operation postponed"
   },
@@ -9252,6 +9268,10 @@
     "t": "⚠️ Control Panel\\International\\Geo — key not found"
   },
   {
+    "s": "⚠️ Windows Installer всё ещё занят — продолжаем, установка может не пройти",
+    "t": "⚠️ Windows Installer is still busy — continuing, the installation may fail"
+  },
+  {
     "s": "⚠️ Winget не найден после установки. Возможно, требуется перезагрузка.",
     "t": "⚠️ Winget not found after installation. A restart may be required."
   },
@@ -9582,6 +9602,10 @@
   {
     "s": "✅ Office удалён",
     "t": "✅ Office uninstalled"
+  },
+  {
+    "s": "✅ Windows Installer освободился",
+    "t": "✅ Windows Installer is free"
   },
   {
     "s": "✅ Winget {0} уже установлен",
@@ -11128,6 +11152,10 @@
     "t": "\uD83D\uDD01 Restart and crash history (7 days)"
   },
   {
+    "s": "\uD83D\uDD01 Повтор в конце набора: {0} — не встали, пока Windows Installer был занят ({1})",
+    "t": "\uD83D\uDD01 Retrying at the end of the set: {0} — failed while Windows Installer was busy ({1})"
+  },
+  {
     "s": "\uD83D\uDD01 Повтор установки: {0}",
     "t": "\uD83D\uDD01 Retrying installation: {0}"
   },
@@ -11528,6 +11556,14 @@
     "t": "\uD83D\uDEE1️ Windows Update: updates installed — {0}"
   },
   {
+    "s": "\uD83D\uDEE1️ Windows спрашивает, устанавливать ли драйвер{0}. Ответьте в окне «Безопасность Windows» — установка ждёт ответа",
+    "t": "\uD83D\uDEE1️ Windows is asking whether to install a driver{0}. Answer in the \"Windows Security\" window — the installation is waiting for you"
+  },
+  {
+    "s": "\uD83D\uDEE1️ Windows спросила, устанавливать ли драйвер{0}. В тихом режиме ответить некому — окно закрыто («Не устанавливать»), установщик продолжит без драйвера",
+    "t": "\uD83D\uDEE1️ Windows asked whether to install a driver{0}. Nobody can answer in silent mode — the window was closed (\"Don't Install\"), the installer will continue without the driver"
+  },
+  {
     "s": "\uD83D\uDEE1️ Обновления Windows",
     "t": "\uD83D\uDEE1️ Windows Update"
   },
@@ -11590,6 +11626,10 @@
   {
     "s": "\uD83E\uDDF9 Кэш Windows Update очищен",
     "t": "\uD83E\uDDF9 Windows Update cache cleared"
+  },
+  {
+    "s": "\uD83E\uDDF9 Остатки прерванной установки сняты ({0}) — Windows Installer свободен для следующих программ",
+    "t": "\uD83E\uDDF9 Leftovers of the interrupted installation were stopped ({0}) — Windows Installer is free for the next programs"
   },
   {
     "s": "\uD83E\uDDF9 Остатки прерванной установки: восстановлено {0}, удалено {1}",
