@@ -348,6 +348,7 @@ namespace Ven4Tools.Launcher
             }
             if (stage >= 1 && stage <= stages.Length)
                 MotionService.Pulse(stages[Math.Clamp(stage - 1, 0, stages.Length - 1)], 1.12, 180);
+            OnBannerStage(stage);
         }
 
         private void BtnExit_Click(object sender, RoutedEventArgs e)
