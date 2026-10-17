@@ -105,7 +105,8 @@ namespace Ven4Tools.Views
                 SetPose(SplashPose.Cheer);
                 Dispatcher.Invoke(() => btnSkip.Visibility = Visibility.Collapsed);
                 SetStatus("Готово!");
-                await Task.Delay(700, ct);
+                // 1,2 с — чтобы радость Венчика успела проиграться (за 0,7 с она только мелькала).
+                await Task.Delay(1200, ct);
             }
             catch (OperationCanceledException) { /* пользователь нажал «Пропустить» */ }
             catch { /* предзагрузка — best-effort: любая ошибка не должна валить старт */ }
