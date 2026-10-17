@@ -44,6 +44,10 @@ namespace Ven4Tools.Services
             { InstallLocationRequired, "Пакет требует явно указать папку установки." },
             { AdminContextProhibited, "Программа установлена в профиль пользователя — winget не меняет её от имени администратора." },
             { StalledByClient, "winget завис (скачивание или установщик не подавали признаков работы) и прерван клиентом." },
+            // INSTALL_INSTALL_IN_PROGRESS: winget так передаёт 1618 от MSI-установщика.
+            // Текст тот же, что у 1618, — по нему набор находит программы для повтора
+            // (InstallerLockGuard.IsMsiBusyFailure).
+            { unchecked((int)0x8A150102), MsiExitCodes.Known[1618] },
             { unchecked((int)0x8A150109), "Установлено, для завершения требуется перезагрузка." },
             { unchecked((int)0x8A15010A), "Установка не удалась: перезагрузите компьютер и попробуйте снова." },
             { unchecked((int)0x8A15010B), "Установлено, компьютер будет перезагружен для завершения." },

@@ -114,6 +114,10 @@ namespace Ven4Tools.Services
         {
             var appProgress = new AppInstallProgress { AppId = app.Id, AppName = app.DisplayName };
             var shortcuts = ProfileService.Current.RemoveNewDesktopShortcuts ? DesktopShortcutCleaner.Take() : null;
+            // Окно Windows «Установить драйвер?» — в тихом режиме закрывается, в обычном
+            // поднимается на передний план (см. InstallerLockGuard).
+            var startedUtc = DateTime.UtcNow;
+            using var driverPrompts = InstallerLockGuard.WatchDriverPrompts(startedUtc, App.IsSilentRun, LogToBoth);
 
             try
             {
@@ -186,6 +190,8 @@ namespace Ven4Tools.Services
                 appProgress.IsIndeterminate = false;
                 progress.Report(appProgress);
                 Log($"⏹️ {app.DisplayName} отменено");
+                // Отменённая установка не должна оставить за собой занятый Windows Installer.
+                await InstallerLockGuard.ReleaseLeftoversAsync(startedUtc, TimeSpan.Zero, LogToBoth);
                 throw;
             }
             catch (Exception ex)
@@ -260,6 +266,11 @@ namespace Ven4Tools.Services
             {
                 token.ThrowIfCancellationRequested();
 
+                // Занятый Windows Installer (чужая установка или остатки прошлой) раньше
+                // сразу давал 1618 — теперь сначала ждём его освобождения.
+                await InstallerLockGuard.WaitForMsiFreeAsync(LogToBoth, token);
+                var sourceStartedUtc = DateTime.UtcNow;
+
                 var attempt = srcId switch
                 {
                     SourceOrderSettings.Winget => await InstallFromWingetAsync(
@@ -273,6 +284,10 @@ namespace Ven4Tools.Services
                 };
                 failures.Record(srcId, attempt.FailureDetail);
                 if (attempt.Result != null) return attempt.Result.Value;
+
+                // Источник не справился (в том числе прерван сторожем или по тайм-ауту):
+                // его зависший MSI не должен держать блокировку для следующих программ.
+                await InstallerLockGuard.ReleaseLeftoversAsync(sourceStartedUtc, InstallerLockGuard.LeftoverGrace, LogToBoth);
             }
 
             // Все источники исчерпаны — терминальная неудача цепочки. Сверяем с
@@ -411,6 +426,13 @@ namespace Ven4Tools.Services
                 }
             }
             catch { }
+        }
+
+        /// <summary>Строка и в журнал установки, и в общий журнал клиента (app.log).</summary>
+        private void LogToBoth(string message)
+        {
+            Log(message);
+            AppLogger.Write(message);
         }
 
         public void Dispose()

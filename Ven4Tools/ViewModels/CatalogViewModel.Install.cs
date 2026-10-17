@@ -146,6 +146,25 @@ namespace Ven4Tools.ViewModels
               {
                 await InstallBatchRowAsync(row, selected.Count, tally, progress, ConfirmPmInstall, batchMode, token);
               }
+
+              // Упавшие из-за занятого Windows Installer (1618) — один повтор в конце набора:
+              // к этому времени чужая или зависшая установка обычно уже закончилась.
+              if (batchMode)
+              {
+                List<AppRowViewModel> busy;
+                lock (tally.RowsLock)
+                {
+                    busy = tally.FailedRows.Where(f => InstallerLockGuard.IsMsiBusyFailure(f.Message)).Select(f => f.Row).ToList();
+                    tally.FailedRows.RemoveAll(f => busy.Contains(f.Row));
+                    tally.Failed -= busy.Count;
+                }
+                if (busy.Count > 0)
+                {
+                    Log($"🔁 Повтор в конце набора: {busy.Count} — не встали, пока Windows Installer был занят ({string.Join(", ", busy.Select(r => r.DisplayName))})");
+                    foreach (var row in busy)
+                        await InstallBatchRowAsync(row, selected.Count, tally, progress, ConfirmPmInstall, batchMode, token);
+                }
+              }
             }, token);
 
             try
