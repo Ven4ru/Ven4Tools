@@ -423,6 +423,7 @@
 
                 <GroupBox Header="📊 Прогресс установки" Margin="0,10,0,0" Height="160">
                     <ListBox x:Name="lstAppProgress" ItemsSource="{Binding InstallProgress}"
+                             views:ScrollFade.IsEnabled="True"
                              Background="{DynamicResource CardBackground}"
                              Foreground="{DynamicResource TextPrimary}"
                              BorderThickness="0"

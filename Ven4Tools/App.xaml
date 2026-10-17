@@ -505,6 +505,154 @@
             <Setter Property="Background" Value="Transparent"/>
         </Style>
 
+        <!-- Полоса прокрутки: тонкий бегунок без стрелок и без подложки. Видна, пока мышь
+             над прокручиваемой областью, и плавно гаснет после ухода; при наведении на
+             саму полосу бегунок становится шире и ярче. Раньше везде стояла светлая
+             полоса Windows со стрелками — на тёмных темах она резала глаз, а в правой
+             панели каталога таких полос рядом оказывалось несколько. -->
+        <Style x:Key="ScrollPageButton" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ThinScrollThumbVertical" TargetType="Thumb">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="Bar" Width="4" Margin="0,2" CornerRadius="3" Opacity="0.5"
+                                Background="{DynamicResource TextSecondary}"/>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollBar}}" Value="True">
+                                <Setter TargetName="Bar" Property="Width" Value="8"/>
+                                <Setter TargetName="Bar" Property="Opacity" Value="0.8"/>
+                            </DataTrigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="Bar" Property="Width" Value="8"/>
+                                <Setter TargetName="Bar" Property="Opacity" Value="1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ThinScrollThumbHorizontal" TargetType="Thumb" BasedOn="{StaticResource ThinScrollThumbVertical}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="Bar" Height="4" Margin="2,0" CornerRadius="3" Opacity="0.5"
+                                Background="{DynamicResource TextSecondary}"/>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollBar}}" Value="True">
+                                <Setter TargetName="Bar" Property="Height" Value="8"/>
+                                <Setter TargetName="Bar" Property="Opacity" Value="0.8"/>
+                            </DataTrigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="Bar" Property="Height" Value="8"/>
+                                <Setter TargetName="Bar" Property="Opacity" Value="1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Появление и угасание общие для обеих ориентаций. Пока мышь держит бегунок,
+             полоса не гаснет, даже если курсор ушёл за пределы списка. -->
+        <Storyboard x:Key="ScrollBarShow">
+            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15"/>
+        </Storyboard>
+        <Storyboard x:Key="ScrollBarHide">
+            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity" To="0"
+                             BeginTime="0:0:0.6" Duration="0:0:0.4"/>
+        </Storyboard>
+
+        <ControlTemplate x:Key="ThinVerticalScrollBar" TargetType="ScrollBar">
+            <Grid x:Name="Root" Background="Transparent" Opacity="0">
+                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource ScrollPageButton}"/>
+                    </Track.DecreaseRepeatButton>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource ScrollPageButton}"/>
+                    </Track.IncreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource ThinScrollThumbVertical}"/>
+                    </Track.Thumb>
+                </Track>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" Value="False"/>
+                        <Condition Binding="{Binding IsMouseCaptureWithin, RelativeSource={RelativeSource Self}}" Value="False"/>
+                    </MultiDataTrigger.Conditions>
+                    <MultiDataTrigger.EnterActions>
+                        <BeginStoryboard Storyboard="{StaticResource ScrollBarHide}"/>
+                    </MultiDataTrigger.EnterActions>
+                    <MultiDataTrigger.ExitActions>
+                        <BeginStoryboard Storyboard="{StaticResource ScrollBarShow}"/>
+                    </MultiDataTrigger.ExitActions>
+                </MultiDataTrigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="ThinHorizontalScrollBar" TargetType="ScrollBar">
+            <Grid x:Name="Root" Background="Transparent" Opacity="0">
+                <Track x:Name="PART_Track">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource ScrollPageButton}"/>
+                    </Track.DecreaseRepeatButton>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageRightCommand" Style="{StaticResource ScrollPageButton}"/>
+                    </Track.IncreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource ThinScrollThumbHorizontal}"/>
+                    </Track.Thumb>
+                </Track>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" Value="False"/>
+                        <Condition Binding="{Binding IsMouseCaptureWithin, RelativeSource={RelativeSource Self}}" Value="False"/>
+                    </MultiDataTrigger.Conditions>
+                    <MultiDataTrigger.EnterActions>
+                        <BeginStoryboard Storyboard="{StaticResource ScrollBarHide}"/>
+                    </MultiDataTrigger.EnterActions>
+                    <MultiDataTrigger.ExitActions>
+                        <BeginStoryboard Storyboard="{StaticResource ScrollBarShow}"/>
+                    </MultiDataTrigger.ExitActions>
+                </MultiDataTrigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="MinWidth" Value="10"/>
+            <Setter Property="Height" Value="Auto"/>
+            <Setter Property="Template" Value="{StaticResource ThinVerticalScrollBar}"/>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Width" Value="Auto"/>
+                    <Setter Property="MinWidth" Value="0"/>
+                    <Setter Property="Height" Value="10"/>
+                    <Setter Property="MinHeight" Value="10"/>
+                    <Setter Property="Template" Value="{StaticResource ThinHorizontalScrollBar}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style TargetType="TabControl">
             <Setter Property="Background" Value="{DynamicResource ContentBackground}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
