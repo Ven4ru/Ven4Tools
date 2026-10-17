@@ -768,6 +768,14 @@
     "t": "Winget installed"
   },
   {
+    "s": "[AppUninstallService] «{0}» удалена, для завершения нужна перезагрузка",
+    "t": "[AppUninstallService] \"{0}\" was removed, a restart is needed to finish"
+  },
+  {
+    "s": "[AppUninstallService] «{0}» удалена, хотя деинсталлятор сообщил об ошибке: {1}",
+    "t": "[AppUninstallService] \"{0}\" was removed even though the uninstaller reported an error: {1}"
+  },
+  {
     "s": "[AppUninstallService] «{0}» уже удалена, а деинсталлятор ещё ждёт в своём окне — закрываем его",
     "t": "[AppUninstallService] “{0}” is already removed, but the uninstaller is still waiting in its window — closing it"
   },
@@ -2980,6 +2988,10 @@
     "t": "This computer's drivers"
   },
   {
+    "s": "Другая версия программы уже установлена.",
+    "t": "Another version of the app is already installed."
+  },
+  {
     "s": "Другая установка уже выполняется в системе — повторите позже.",
     "t": "Another installation is already in progress — try again later."
   },
@@ -3872,6 +3884,10 @@
     "t": "Multimedia"
   },
   {
+    "s": "На диске не хватает места.",
+    "t": "There is not enough disk space."
+  },
+  {
     "s": "На томе {0} недостаточно свободного места: нужно {1} ГиБ, доступно {2} ГиБ. Освободите место или выберите тестовый файл меньшего размера.",
     "t": "Not enough free space on volume {0}: {1} GiB needed, {2} GiB available. Free up space or choose a smaller test file."
   },
@@ -4328,6 +4344,10 @@
     "t": "Could not install the driver: {0}"
   },
   {
+    "s": "Не удалось установить компоненты, нужные пакету.",
+    "t": "Could not install the components the package needs."
+  },
+  {
     "s": "Не удалось установить приложений: {0}",
     "t": "Apps failed to install: {0}"
   },
@@ -4350,6 +4370,14 @@
   {
     "s": "Не установлено: {0}",
     "t": "Not installed: {0}"
+  },
+  {
+    "s": "Не хватает компонента, без которого пакет не ставится.",
+    "t": "A component the package requires is missing."
+  },
+  {
+    "s": "Не хватает памяти — закройте другие программы и повторите.",
+    "t": "Not enough memory. Close other apps and try again."
   },
   {
     "s": "Небезопасный путь установки",
@@ -4510,6 +4538,10 @@
   {
     "s": "Ни на одном накопителе нет тома, пригодного для теста.",
     "t": "No drive has a volume suitable for testing."
+  },
+  {
+    "s": "Ни один установщик пакета не подходит для этой системы.",
+    "t": "None of the package installers fit this system."
   },
   {
     "s": "Ничего не выбрано.",
@@ -6268,6 +6300,14 @@
     "t": "Check for updates on startup"
   },
   {
+    "s": "Программа занята другим приложением — закройте его и повторите установку.",
+    "t": "The app is in use by another application. Close it and try the installation again."
+  },
+  {
+    "s": "Программа сейчас запущена — закройте её и повторите установку.",
+    "t": "The app is running. Close it and try the installation again."
+  },
+  {
     "s": "Программа установлена в профиль пользователя — winget не меняет её от имени администратора.",
     "t": "The app is installed in the user profile — winget does not change it as administrator."
   },
@@ -7400,6 +7440,10 @@
     "t": "Already running"
   },
   {
+    "s": "Уже установлена более новая версия программы.",
+    "t": "A newer version of the app is already installed."
+  },
+  {
     "s": "Уже установлена другая версия этого продукта.",
     "t": "Another version of this product is already installed."
   },
@@ -7600,6 +7644,10 @@
     "t": "Installation was canceled in the installer dialog."
   },
   {
+    "s": "Установка отменена.",
+    "t": "The installation was cancelled."
+  },
+  {
     "s": "Установка файлов...",
     "t": "Installing files..."
   },
@@ -7614,6 +7662,10 @@
   {
     "s": "Установка...",
     "t": "Installing..."
+  },
+  {
+    "s": "Установленная версия не старее предлагаемой.",
+    "t": "The installed version is not older than the offered one."
   },
   {
     "s": "Установленные",
@@ -7672,6 +7724,10 @@
     "t": "Installer started. Ending the current process."
   },
   {
+    "s": "Установщик нельзя запускать от имени администратора.",
+    "t": "The installer cannot be run as administrator."
+  },
+  {
     "s": "Установщик обновления запущен. Лаунчер перезапустится через несколько секунд.",
     "t": "Update installer started. The launcher will restart in a few seconds."
   },
@@ -7682,6 +7738,10 @@
   {
     "s": "Установщик по прямой ссылке завершился с кодом {0}.",
     "t": "The direct-link installer exited with code {0}."
+  },
+  {
+    "s": "Установщику нужен интернет.",
+    "t": "The installer needs an internet connection."
   },
   {
     "s": "Устаревшая версия Windows",
@@ -7746,6 +7806,10 @@
   {
     "s": "Файл подменён ссылкой, запись отменена: {0}",
     "t": "The file was replaced with a link, write canceled: {0}"
+  },
+  {
+    "s": "Файлы программы заняты — закройте её и повторите установку.",
+    "t": "The app's files are in use. Close it and try the installation again."
   },
   {
     "s": "Фоновая проверка выключена",
@@ -8810,6 +8874,10 @@
   {
     "s": "⏱️ Winget [{0}]: {1} — процесс прерван",
     "t": "⏱️ Winget [{0}]: {1} — process stopped"
+  },
+  {
+    "s": "⏱️ Winget [{0}]: установка без прав администратора не завершилась за {1} мин — процесс прерван",
+    "t": "⏱️ Winget [{0}]: the installation without administrator rights did not finish in {1} min, the process was stopped"
   },
   {
     "s": "⏱️ Запущен тест скорости диска: {0}, том {1}, профиль {2}",
@@ -9974,6 +10042,10 @@
   {
     "s": "❌ Ven4Tools.exe не найден в стандартных папках",
     "t": "❌ Ven4Tools.exe not found in the standard folders"
+  },
+  {
+    "s": "❌ Winget ({0}, {1}): {2} — другие источники не пробуем, причина у них та же",
+    "t": "❌ Winget ({0}, {1}): {2}. Other sources are not tried, they would hit the same cause"
   },
   {
     "s": "❌ winget не найден",
@@ -11146,6 +11218,14 @@
   {
     "s": "\uD83D\uDD01 Winget ({0}, {1}): пакет требует папку установки — повтор с {2}",
     "t": "\uD83D\uDD01 Winget ({0}, {1}): the package requires an install folder — retrying with {2}"
+  },
+  {
+    "s": "\uD83D\uDD01 Winget ({0}, {1}): установщик не работает от имени администратора — повтор без повышения прав",
+    "t": "\uD83D\uDD01 Winget ({0}, {1}): the installer does not run as administrator, retrying without elevation"
+  },
+  {
+    "s": "\uD83D\uDD01 Winget ({0}, {1}): установщика для всех пользователей нет — повтор без выбора области",
+    "t": "\uD83D\uDD01 Winget ({0}, {1}): there is no installer for all users, retrying without a scope"
   },
   {
     "s": "\uD83D\uDD01 История перезагрузок и сбоев (7 дней)",

@@ -93,6 +93,17 @@ public sealed class AppUninstallCommandParseTests : IDisposable
     }
 
     [Fact]
+    public void DockerDesktop_ПолучаетUninstallQuietВместоS()
+    {
+        // С добавленным /S установщик Docker завершался с кодом -5 (стенд 17.10.2026).
+        string exe = Touch("Docker Desktop Installer.exe");
+        var (file, args, error) = AppUninstallService.ParseUninstallCommand($"\"{exe}\" uninstall");
+        Assert.Null(error);
+        Assert.Equal(exe, file);
+        Assert.Equal("uninstall --quiet", args);
+    }
+
+    [Fact]
     public void AnyDesk_ГотоваяТихаяКомандаНеТрогается()
     {
         string exe = Touch("AnyDesk.exe");
@@ -109,4 +120,46 @@ public sealed class AppUninstallCommandParseTests : IDisposable
         Assert.Null(error);
         Assert.DoesNotContain("/AUTO", args);
     }
+
+    private string WriteNsisLike(string name)
+    {
+        string path = Path.Combine(_dir, name);
+        var head = new byte[4096];
+        System.Text.Encoding.ASCII.GetBytes("<assemblyIdentity name=\"Nullsoft.NSIS.exehead\"/>").CopyTo(head, 1024);
+        File.WriteAllBytes(path, head);
+        return path;
+    }
+
+    [Fact]
+    public void Nsis_ОпределяетсяПоМанифесту()
+    {
+        Assert.True(AppUninstallService.IsNsisUninstaller(WriteNsisLike("uninst.exe")));
+        Assert.False(AppUninstallService.IsNsisUninstaller(Touch("Uninstall.exe")));
+        Assert.False(AppUninstallService.IsNsisUninstaller(Path.Combine(_dir, "нет.exe")));
+    }
+
+    // FastStone, FileZilla (стенд 18.10.2026): winget запускал их без /S, и окно ждало ответа.
+    [Fact]
+    public void NsisИзHklmБезТихойКоманды_УдаляетсяМимоWinget()
+        => Assert.True(AppUninstallService.PreferDirectUninstall(fromMachineHive: true, quiet: false, WriteNsisLike("uninst.exe")));
+
+    [Fact]
+    public void Inno_УдаляетсяМимоWinget()
+        => Assert.True(AppUninstallService.PreferDirectUninstall(true, false, Touch("unins000.exe")));
+
+    [Fact]
+    public void НеизвестныйExe_ОстаётсяЗаWinget()
+        => Assert.False(AppUninstallService.PreferDirectUninstall(true, false, Touch("setup.exe")));
+
+    [Fact]
+    public void ГотоваяТихаяКомандаИлиHkcu_ОстаютсяЗаWinget()
+    {
+        string nsis = WriteNsisLike("uninstall.exe");
+        Assert.False(AppUninstallService.PreferDirectUninstall(true, quiet: true, nsis));
+        Assert.False(AppUninstallService.PreferDirectUninstall(fromMachineHive: false, false, nsis));
+    }
+
+    [Fact]
+    public void Msi_ОстаётсяЗаWinget()
+        => Assert.False(AppUninstallService.PreferDirectUninstall(true, false, TrustedExecutablePaths.MsiExec));
 }

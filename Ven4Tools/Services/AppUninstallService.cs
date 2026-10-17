@@ -65,6 +65,13 @@ namespace Ven4Tools.Services
             if (result.Ok && wasInRegistry && !await GoneFromRegistryAsync(displayName))
                 result = UninstallResult.Fail(
                     "Деинсталлятор сообщил об успехе, но программа осталась в системе — вероятно, он ждёт ответа в своём окне.");
+            // И наоборот: код ошибки, а программы уже нет. foobar2000 (стенд 18.10.2026)
+            // удаляется за секунды и всё равно возвращает 2 — решает факт, а не код.
+            else if (!result.Ok && wasInRegistry && await Task.Run(() => FindUninstallString(displayName)) == null)
+            {
+                AppLogger.Write($"[AppUninstallService] «{displayName}» удалена, хотя деинсталлятор сообщил об ошибке: {result.Reason}");
+                result = UninstallResult.Success;
+            }
 
             int killed = KillTempUninstallers(startedUtc);
             if (killed > 0)
@@ -169,12 +176,11 @@ namespace Ven4Tools.Services
 
         private static async Task<UninstallResult> UninstallCoreAsync(string? wingetId, string displayName, bool wasInRegistry)
         {
-            // Деинсталлятор из числа известных (AIMP, AnyDesk): winget вызывает его с ключами,
-            // на которые тот открывает окно, и минуты уходят на ожидание сторожа — сразу
-            // запускаем его из реестра с настоящими ключами тихого удаления.
+            // Программа «для всех» без готовой тихой команды: сразу запускаем её деинсталлятор
+            // из реестра с подобранными ключами тихого удаления (см. PreferDirectUninstall).
             var known = await Task.Run(() => FindUninstallString(displayName));
-            if (known is { FromMachineHive: true, Quiet: false } k &&
-                ParseUninstallCommand(k.Command) is { Error: null } parsed && KnownSilentArgs(parsed.File) != null)
+            if (known is { } k && ParseUninstallCommand(k.Command) is { Error: null } parsed &&
+                PreferDirectUninstall(k.FromMachineHive, k.Quiet, parsed.File))
             {
                 var direct = await WithRemovalWatchAsync(displayName, true,
                     hung => RunUninstallStringAsync(k.Command, false, hung));
@@ -218,8 +224,15 @@ namespace Ven4Tools.Services
                     : WingetArgs.Query("uninstall", "--id", wingetId, "--exact", "--silent");
                 var (exitCode, _) = await WithRemovalWatchAsync(displayName, wasInRegistry,
                     hung => WingetRunner.RunAsync(args, WingetUninstallTimeout, hung, WingetUninstallIdle));
-                if (exitCode == 0)
+                // Коды «удалено, нужна перезагрузка» — тоже успех. Раньше успехом был только 0:
+                // удаление уходило в запасной путь через реестр, деинсталлятор запускался
+                // повторно, а итог показывался как неудача.
+                if (exitCode == 0 || WingetErrorMapper.IsSuccessWithReboot(exitCode))
+                {
+                    if (exitCode != 0)
+                        AppLogger.Write($"[AppUninstallService] «{displayName}» удалена, для завершения нужна перезагрузка");
                     return UninstallResult.Success;
+                }
                 if (exitCode == WingetErrorMapper.AdminContextProhibited)
                 {
                     // Программа поставлена в профиль пользователя: winget из-под
@@ -395,6 +408,48 @@ namespace Ven4Tools.Services
             return quiet ? quietCommand : entry.GetValue("UninstallString")?.ToString();
         }
 
+        /// <summary>
+        /// Удалять ли мимо winget — сразу командой из реестра с ключами тихого режима.
+        /// </summary>
+        /// <remarks>
+        /// winget для программы без QuietUninstallString запускает обычную UninstallString
+        /// как есть, без ключа тихого режима. Стенд 18.10.2026: FastStone и FileZilla (NSIS)
+        /// так открывали окно «Удалить / Отмена», копия деинсталлятора ждала в нём, winget
+        /// сообщал об успехе, а программа оставалась. Раньше мимо winget шли только AIMP и
+        /// AnyDesk (<see cref="KnownSilentArgs"/>). Теперь — все деинсталляторы, чьи ключи
+        /// тихого режима клиент знает наверняка: известные, Inno Setup и NSIS. Прочим .exe
+        /// подставленный /S может навредить (у установщиков Visual Studio, Chrome свои ключи) —
+        /// их по-прежнему удаляет winget. MSI тоже: для него winget сам вызывает msiexec /x
+        /// тихо. Записи из HKCU — никогда: их нельзя запускать с правами администратора
+        /// (см. <see cref="RunUninstallStringAsync"/>).
+        /// </remarks>
+        internal static bool PreferDirectUninstall(bool fromMachineHive, bool quiet, string parsedFile)
+            => fromMachineHive && !quiet &&
+               (KnownSilentArgs(parsedFile) != null || IsInnoUninstaller(parsedFile) || IsNsisUninstaller(parsedFile));
+
+        /// <summary>
+        /// Деинсталлятор NSIS: в манифесте исполняемого файла — «Nullsoft.NSIS.exehead».
+        /// Манифест лежит в ресурсах в начале файла, дальше читать незачем.
+        /// </summary>
+        internal static bool IsNsisUninstaller(string exe)
+        {
+            try
+            {
+                if (!File.Exists(exe)) return false;
+                using var fs = new FileStream(exe, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                var buffer = new byte[Math.Min(fs.Length, NsisScanBytes)];
+                int read = 0, n;
+                while (read < buffer.Length && (n = fs.Read(buffer, read, buffer.Length - read)) > 0) read += n;
+                return ContainsNsisMarker(buffer.AsSpan(0, read));
+            }
+            catch { return false; }
+        }
+
+        private const int NsisScanBytes = 1024 * 1024;
+        private static readonly byte[] NsisMarker = System.Text.Encoding.ASCII.GetBytes("Nullsoft.NSIS.exehead");
+
+        internal static bool ContainsNsisMarker(ReadOnlySpan<byte> head) => head.IndexOf(NsisMarker) >= 0;
+
         /// <summary>Деинсталлятор Inno Setup: unins000.exe, unins001.exe…</summary>
         internal static bool IsInnoUninstaller(string exe)
             => Regex.IsMatch(Path.GetFileName(exe), @"^unins\d{3}\.exe$", RegexOptions.IgnoreCase);
@@ -408,11 +463,14 @@ namespace Ven4Tools.Services
         /// <item>AnyDesk: --uninstall (так и в реестре, и у winget) открывает окно
         /// подтверждения и ничего не удаляет; --remove удаляет сам и оставляет только
         /// окно «AnyDesk был удалён» — его закрывает <see cref="WithRemovalWatchAsync{T}"/>.</item>
+        /// <item>Docker Desktop: удаляет тот же установщик командой uninstall, ключ тихого
+        /// режима — --quiet (манифест winget-pkgs); с добавленным /S завершался с кодом -5.</item>
         /// </list>
         /// </summary>
         internal static string? KnownSilentArgs(string exe)
         {
             if (string.Equals(Path.GetFileName(exe), "AnyDesk.exe", StringComparison.OrdinalIgnoreCase)) return "--remove";
+            if (string.Equals(Path.GetFileName(exe), "Docker Desktop Installer.exe", StringComparison.OrdinalIgnoreCase)) return "uninstall --quiet";
             if (IsAimpUninstaller(exe)) return "/AUTO /SILENT";
             return null;
         }
@@ -433,7 +491,7 @@ namespace Ven4Tools.Services
             => string.Equals(fileDescription?.Trim(), "AIMP Setup", StringComparison.OrdinalIgnoreCase) &&
                (companyName ?? "").Contains("Izmaylov", StringComparison.OrdinalIgnoreCase);
 
-        private static string QuoteArg(string a)
+        internal static string QuoteArg(string a)
             => a.Length > 0 && a.IndexOfAny(new[] { ' ', '\t', '"' }) < 0 ? a : "\"" + a.Replace("\"", "\\\"") + "\"";
 
         /// <summary>
@@ -473,7 +531,7 @@ namespace Ven4Tools.Services
         /// Процессы с этим именем (и, если задан, с этим файлом), запущенные после
         /// <paramref name="sinceUtc"/>; с <paramref name="kill"/> — завершает каждый вместе с потомками.
         /// </summary>
-        private static int CountStartedSince(string name, string? path, DateTime sinceUtc, bool kill)
+        internal static int CountStartedSince(string name, string? path, DateTime sinceUtc, bool kill)
         {
             int count = 0;
             foreach (var p in Process.GetProcessesByName(name))
@@ -584,8 +642,9 @@ namespace Ven4Tools.Services
                     if (hung.IsCancellationRequested) return (true, null);
                     return (false, "Деинсталлятор не завершился за 2 минуты — вероятно, ждёт ответа в своём окне.");
                 }
-                // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED — удаление прошло успешно
-                return p.ExitCode == 0 || p.ExitCode == 3010
+                // 3010 = ERROR_SUCCESS_REBOOT_REQUIRED, 1641 = ERROR_SUCCESS_REBOOT_INITIATED —
+                // удаление прошло успешно
+                return p.ExitCode == 0 || p.ExitCode == 3010 || p.ExitCode == 1641
                     ? (true, null)
                     : (false, MsiExitCodes.Known.TryGetValue(p.ExitCode, out var m) ? m : $"Деинсталлятор завершился с кодом {p.ExitCode}.");
             }

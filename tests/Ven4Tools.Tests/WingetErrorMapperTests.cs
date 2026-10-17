@@ -70,4 +70,49 @@ public sealed class WingetErrorMapperTests
         Assert.Contains("12345678", message);
         Assert.Contains("305419896", message);
     }
+
+    [Theory]
+    [InlineData(unchecked((int)0x8A15010D))] // INSTALL_ALREADY_INSTALLED
+    [InlineData(unchecked((int)0x8A15010E))] // INSTALL_DOWNGRADE
+    [InlineData(unchecked((int)0x8A15004F))] // UPGRADE_VERSION_NOT_NEWER
+    public void ClassifyInstallFailure_УжеУстановлено(int code)
+    {
+        Assert.Equal(WingetFailureAction.AlreadyInstalled, WingetErrorMapper.ClassifyInstallFailure(code));
+    }
+
+    [Theory]
+    [InlineData(unchecked((int)0x8A150101))] // INSTALL_PACKAGE_IN_USE
+    [InlineData(unchecked((int)0x8A150103))] // INSTALL_FILE_IN_USE
+    [InlineData(unchecked((int)0x8A150111))] // INSTALL_PACKAGE_IN_USE_BY_APPLICATION
+    [InlineData(unchecked((int)0x8A150105))] // INSTALL_DISK_FULL
+    [InlineData(unchecked((int)0x8A15010C))] // INSTALL_CANCELLED_BY_USER
+    public void ClassifyInstallFailure_ДругиеИсточникиНеПомогут_Останавливает(int code)
+    {
+        Assert.Equal(WingetFailureAction.Stop, WingetErrorMapper.ClassifyInstallFailure(code));
+    }
+
+    [Theory]
+    [InlineData(1603)]
+    [InlineData(unchecked((int)0x8A150014))] // пакет не найден — choco может знать его
+    [InlineData(unchecked((int)0x8A150011))] // хеш не совпал — у прямой ссылки свой файл
+    [InlineData(unchecked((int)0x8A150102))] // другая установка — решает общий семафор
+    [InlineData(WingetErrorMapper.StalledByClient)]
+    public void ClassifyInstallFailure_ОстальноеИдётКСледующемуИсточнику(int code)
+    {
+        Assert.Equal(WingetFailureAction.NextSource, WingetErrorMapper.ClassifyInstallFailure(code));
+    }
+
+    [Fact]
+    public void MapExitCode_ПрограммаЗапущена_ПроситЗакрыть()
+    {
+        Assert.Contains("закройте", WingetErrorMapper.MapExitCode(unchecked((int)0x8A150101)));
+    }
+
+    [Fact]
+    public void КодыОбластиИПрав_СовпадаютСоСпискомWinget()
+    {
+        // doc/windows/package-manager/winget/returnCodes.md в winget-cli.
+        Assert.Equal(unchecked((int)0x8A150010), WingetErrorMapper.NoApplicableInstaller);
+        Assert.Equal(unchecked((int)0x8A150056), WingetErrorMapper.InstallerProhibitsElevation);
+    }
 }
