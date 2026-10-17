@@ -780,6 +780,10 @@
     "t": "[AppUninstallService] Stuck uninstaller instances closed after “{0}”: {1}"
   },
   {
+    "s": "[AppUninstallService] Закрыто оставшихся после «{0}» процессов {1}: {2}",
+    "t": "[AppUninstallService] Leftover {1} processes closed after “{0}”: {2}"
+  },
+  {
     "s": "[AppUninstallService] Команда удаления «{0}» из профиля пользователя запущена без прав администратора",
     "t": "[AppUninstallService] Uninstall command for “{0}” from the user profile started without administrator rights"
   },
@@ -1130,6 +1134,10 @@
   {
     "s": "[ProfileService] Сохранение пропущено: профиль не удалось прочитать, запись стёрла бы настройки",
     "t": "[ProfileService] Save skipped: the profile could not be read, writing would erase the settings"
+  },
+  {
+    "s": "[Splash] Не удалось загрузить кадры Венчика «{0}»: {1}",
+    "t": "[Splash] Could not load Venchik frames “{0}”: {1}"
   },
   {
     "s": "[SystemHealthService] net {0} {1} завершился с кодом {2}: {3}",
@@ -2624,6 +2632,10 @@
     "t": "Ready"
   },
   {
+    "s": "Готов к работе",
+    "t": "Ready"
+  },
+  {
     "s": "Готов к установке",
     "t": "Ready to install"
   },
@@ -3260,8 +3272,24 @@
     "t": "Another Windows update operation is in progress — background download postponed until the next check."
   },
   {
+    "s": "Идёт загрузка",
+    "t": "Downloading"
+  },
+  {
     "s": "Идёт измерение...",
     "t": "Measuring..."
+  },
+  {
+    "s": "Идёт проверка",
+    "t": "Verifying"
+  },
+  {
+    "s": "Идёт распаковка",
+    "t": "Extracting"
+  },
+  {
+    "s": "Идёт установка",
+    "t": "Installing"
   },
   {
     "s": "Идёт установка приложений.\n\nЗакрыть программу и прервать установку?",
@@ -4834,6 +4862,10 @@
   {
     "s": "Остановить службы обновления Windows и очистить кэш загрузки? Службы будут перезапущены автоматически.",
     "t": "Stop the Windows Update services and clear the download cache? The services will be restarted automatically."
+  },
+  {
+    "s": "Остановлено",
+    "t": "Stopped"
   },
   {
     "s": "Осторожно",
@@ -7540,6 +7572,10 @@
     "t": "Installing the client from a file (command line)"
   },
   {
+    "s": "Установка компонентов",
+    "t": "Installing components"
+  },
+  {
     "s": "Установка компонентов из setup",
     "t": "Installing components from setup"
   },
@@ -9318,6 +9354,10 @@
   {
     "s": "⚠️ Не подействовали повторно: {0}. Возможно, эта версия Windows больше не даёт их отключить.",
     "t": "⚠️ Reapplying had no effect: {0}. This Windows version may no longer allow turning them off."
+  },
+  {
+    "s": "⚠️ Не удалось загрузить кадры баннера «{0}»: {1}",
+    "t": "⚠️ Could not load banner frames “{0}”: {1}"
   },
   {
     "s": "⚠️ Не удалось определить установленный Office: {0}",

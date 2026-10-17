@@ -307,42 +307,61 @@
                         </StackPanel>
                         <Border Grid.Column="1" Height="130" Margin="18,0,0,0" CornerRadius="6"
                                 Background="#880A0A14" BorderBrush="#334ADE80" BorderThickness="1">
-                            <!-- Сетка в пикселях картинки (1408×768): блик ложится ровно на
-                                 нарисованную полоску загрузки при любом масштабе. -->
+                            <!-- Баннер: живой Венчик и полоса хода операции (MainWindow.Banner.cs).
+                                 Сетка 1408×768, Viewbox сохраняет её пропорции при любом размере. -->
                             <Viewbox Stretch="Uniform" Margin="8">
-                                <Grid Width="1408" Height="768">
-                                    <Image x:Name="imgBanner" Source="pack://application:,,,/Resources/launcher.png"
+                                <Grid Width="1408" Height="768" ClipToBounds="True">
+                                    <Image Source="pack://application:,,,/Resources/Banner/banner-bg.jpg"
                                            Width="1408" Height="768" Stretch="Fill"
                                            RenderOptions.BitmapScalingMode="HighQuality"/>
                                     <Canvas IsHitTestVisible="False">
-                                        <Border Canvas.Left="260" Canvas.Top="592" Width="718" Height="36" ClipToBounds="True">
-                                            <Rectangle Width="180" Height="36" HorizontalAlignment="Left">
-                                                <Rectangle.Fill>
-                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                        <GradientStop Color="#00FFFFFF" Offset="0"/>
-                                                        <GradientStop Color="#77FFFFFF" Offset="0.5"/>
-                                                        <GradientStop Color="#00FFFFFF" Offset="1"/>
-                                                    </LinearGradientBrush>
-                                                </Rectangle.Fill>
-                                                <Rectangle.RenderTransform>
-                                                    <TranslateTransform x:Name="bannerShine" X="-180"/>
-                                                </Rectangle.RenderTransform>
-                                                <Rectangle.Triggers>
-                                                    <EventTrigger RoutedEvent="Loaded">
-                                                        <BeginStoryboard>
-                                                            <Storyboard RepeatBehavior="Forever" Duration="0:0:3">
-                                                                <DoubleAnimation Storyboard.TargetName="bannerShine"
-                                                                                 Storyboard.TargetProperty="X"
-                                                                                 From="-180" To="718" Duration="0:0:1.8">
-                                                                    <DoubleAnimation.EasingFunction>
-                                                                        <SineEase EasingMode="EaseInOut"/>
-                                                                    </DoubleAnimation.EasingFunction>
-                                                                </DoubleAnimation>
-                                                            </Storyboard>
-                                                        </BeginStoryboard>
-                                                    </EventTrigger>
-                                                </Rectangle.Triggers>
-                                            </Rectangle>
+                                        <Rectangle x:Name="bannerVenchik" Canvas.Left="30" Canvas.Top="40" Width="660" Height="672"
+                                                   RenderOptions.BitmapScalingMode="HighQuality">
+                                            <Rectangle.Fill>
+                                                <ImageBrush x:Name="bannerVenchikBrush" Stretch="Fill" ViewboxUnits="Absolute"/>
+                                            </Rectangle.Fill>
+                                        </Rectangle>
+                                        <TextBlock Canvas.Left="720" Canvas.Top="104" FontSize="96" FontWeight="Black">
+                                            <Run Text="Ven4" Foreground="White"/><Run Text="Tools" Foreground="{StaticResource BrandGreen}"/>
+                                        </TextBlock>
+                                        <TextBlock Canvas.Left="726" Canvas.Top="226" Text="LAUNCHER" FontSize="54"
+                                                   FontWeight="SemiBold" Foreground="#86EFAC"/>
+                                        <TextBlock x:Name="bannerStatus" Canvas.Left="724" Canvas.Top="334" Width="660"
+                                                   TextTrimming="CharacterEllipsis" Text="Готов к работе" FontSize="62"
+                                                   Foreground="#CBD5E1"/>
+                                        <TextBlock x:Name="bannerPercent" Canvas.Left="720" Canvas.Top="404" FontSize="100"
+                                                   FontWeight="Bold" Foreground="{StaticResource BrandGreen}"/>
+                                        <!-- Полоса: светящаяся рамка, тёмная дорожка и заливка с бликом. -->
+                                        <Border Canvas.Left="716" Canvas.Top="572" Width="640" Height="72" CornerRadius="36"
+                                                BorderBrush="{StaticResource BrandGreen}" BorderThickness="5" Background="#10281C">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="#4ADE80" BlurRadius="28" ShadowDepth="0" Opacity="0.7"/>
+                                            </Border.Effect>
+                                            <Border x:Name="bannerTrack" Margin="6" CornerRadius="26" ClipToBounds="True">
+                                                <Border x:Name="bannerFill" HorizontalAlignment="Left" Width="0" CornerRadius="26"
+                                                        ClipToBounds="True">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                            <GradientStop Color="#B0FFCD" Offset="0"/>
+                                                            <GradientStop Color="#83F8A0" Offset="0.25"/>
+                                                            <GradientStop Color="#4FD074" Offset="0.6"/>
+                                                            <GradientStop Color="#8AF6AA" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                    <Rectangle Width="160" HorizontalAlignment="Left">
+                                                        <Rectangle.Fill>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                                <GradientStop Color="#00FFFFFF" Offset="0"/>
+                                                                <GradientStop Color="#88FFFFFF" Offset="0.5"/>
+                                                                <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                                            </LinearGradientBrush>
+                                                        </Rectangle.Fill>
+                                                        <Rectangle.RenderTransform>
+                                                            <TranslateTransform x:Name="bannerShine" X="-160"/>
+                                                        </Rectangle.RenderTransform>
+                                                    </Rectangle>
+                                                </Border>
+                                            </Border>
                                         </Border>
                                     </Canvas>
                                 </Grid>
