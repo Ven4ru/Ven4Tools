@@ -49,7 +49,7 @@ public sealed class ClientIntegrityRepairPipelineTests : IDisposable
         "Themes/тёмная.xaml",
         "Themes/светлая.xaml",
         "Scripts/debloat.ps1",
-        "Scripts/активация.cmd",
+        "Scripts/установка.cmd",
         "Runtimes/win-x64/native.dll",
         "Runtimes/win-x64/native2.dll",
         "Docs/лицензия.txt",

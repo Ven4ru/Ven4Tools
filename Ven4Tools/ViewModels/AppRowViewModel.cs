@@ -241,9 +241,8 @@ namespace Ven4Tools.ViewModels
             && !IsUserAdded;
 
         // Региональная блокировка показывается ОТДЕЛЬНЫМ значком 🌍 рядом с названием,
-        // а не перекраской названия (спека docs/dev/specs/
-        // 2026-09-10-catalog-region-availability-design.md: «Отдельный значок 🌍 — не тот
-        // же, что у обычной недоступности»). Тот же приём, что у 🔒 (ShowLaunchBlocked)
+        // а не перекраской названия: отдельный значок 🌍 — не тот же, что у обычной
+        // недоступности. Тот же приём, что у 🔒 (ShowLaunchBlocked)
         // в CatalogTab.xaml: видимость через BoolToVis, свой тултип.
         public bool ShowRegionBlockedGlyph => Availability == RowAvailability.RegionBlocked;
 
@@ -378,8 +377,7 @@ namespace Ven4Tools.ViewModels
                 {
                     RowAvailability.Available     => BrushResolver.Resolve("StatusSuccess", Brushes.LightGreen),
                     RowAvailability.Unavailable   => BrushResolver.Resolve("StatusDanger", Brushes.LightCoral),
-                    // RegionBlocked намеренно НЕ перекрашивает название: по спеке
-                    // (docs/dev/specs/2026-09-10-catalog-region-availability-design.md)
+                    // RegionBlocked намеренно НЕ перекрашивает название:
                     // это ОТДЕЛЬНЫЙ значок 🌍 рядом с именем, а не ещё один цвет строки —
                     // см. ShowRegionBlockedGlyph и CatalogTab.xaml. Уходит в ветку по
                     // умолчанию (обычный приглушённый цвет), как Unknown/Checking.

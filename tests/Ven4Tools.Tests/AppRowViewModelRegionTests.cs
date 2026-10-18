@@ -44,10 +44,10 @@ public sealed class AppRowViewModelRegionTests
     [Fact]
     public void RegionBlocked_СоСноской_ТултипПоказываетТекстСноски()
     {
-        var row = RowWithNote("разработчик ушёл из РФ, загрузка через VPN");
+        var row = RowWithNote("издатель ограничил загрузку для вашего региона");
         row.Availability = AppRowViewModel.RowAvailability.RegionBlocked;
 
-        Assert.Equal("🌍 разработчик ушёл из РФ, загрузка через VPN", row.StatusTooltip);
+        Assert.Equal("🌍 издатель ограничил загрузку для вашего региона", row.StatusTooltip);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public sealed class AppRowViewModelRegionTests
     [InlineData(AppRowViewModel.RowAvailability.Checking)]
     public void ЗначокГлобуса_ПоказываетсяТолькоПриRegionBlocked(AppRowViewModel.RowAvailability availability)
     {
-        var row = RowWithNote("разработчик ушёл из РФ");
+        var row = RowWithNote("издатель ограничил загрузку");
         row.Availability = availability;
 
         Assert.False(row.ShowRegionBlockedGlyph);
@@ -75,13 +75,13 @@ public sealed class AppRowViewModelRegionTests
     [Fact]
     public void ТултипЗначка_БезДублирующегоГлобуса_ЭмодзиУжеВСамомЗначке()
     {
-        var withNote = RowWithNote("разработчик ушёл из РФ, загрузка через VPN");
+        var withNote = RowWithNote("издатель ограничил загрузку для вашего региона");
         withNote.Availability = AppRowViewModel.RowAvailability.RegionBlocked;
 
         var withoutNote = RowWithNote(null);
         withoutNote.Availability = AppRowViewModel.RowAvailability.RegionBlocked;
 
-        Assert.Equal("разработчик ушёл из РФ, загрузка через VPN", withNote.RegionBlockedTooltip);
+        Assert.Equal("издатель ограничил загрузку для вашего региона", withNote.RegionBlockedTooltip);
         Assert.DoesNotContain("🌍", withNote.RegionBlockedTooltip);
         Assert.DoesNotContain("🌍", withoutNote.RegionBlockedTooltip);
         Assert.DoesNotContain("null", withoutNote.RegionBlockedTooltip);
@@ -91,7 +91,7 @@ public sealed class AppRowViewModelRegionTests
     [Fact]
     public void RegionBlocked_НеПерекрашиваетНазваниеПриложения()
     {
-        // Правка пользователя и буква спеки: маркер региона — отдельный значок 🌍
+        // Маркер региона — отдельный значок 🌍
         // рядом с названием, а НЕ ещё один цвет названия. Название остаётся того же
         // цвета, что у Unknown/Checking, и заведомо не совпадает с «недоступно».
         var regionBlocked = RowWithNote(null);
@@ -110,8 +110,8 @@ public sealed class AppRowViewModelRegionTests
     [Fact]
     public void Available_НеПоказываетСноскуДажеЕслиОнаЕсть()
     {
-        // Главный принцип спеки: вердикт даёт замер, успех гасит сноску.
-        var row = RowWithNote("разработчик ушёл из РФ, загрузка через VPN");
+        // Главный принцип: вердикт даёт замер, успех гасит сноску.
+        var row = RowWithNote("издатель ограничил загрузку для вашего региона");
         row.Availability = AppRowViewModel.RowAvailability.Available;
 
         Assert.DoesNotContain("🌍", row.StatusTooltip);

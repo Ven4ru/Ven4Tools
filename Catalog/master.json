@@ -159,7 +159,7 @@
       "date": "2026-09-07",
       "addedApps": [],
       "removedApps": [],
-      "message": "Устранён пробел из аудита round-review: заполнены version/size у fps-monitor (были пустые оба поля — версия взята из живого Chocolatey-реестра, 5520.00) и size у 6 записей версии 17 (anydesk 8.0 МБ, raidrive 38.5 МБ, furmark 32.4 МБ, claude-code 216.2 МБ, codex-cli 114.2 МБ, github-copilot-cli 81.2 МБ) — размеры сняты HEAD-запросом с реальных installer-URL из актуальных winget-манифестов, не оценка. foxit-pdf-reader/epic-games/rtss/msi-afterburner/snappy-driver/amd-adrenalin по-прежнему без size — их installer-URL либо заблокированы на уровне TLS с этой сети, либо (amd-adrenalin) отдают промежуточную страницу загрузки без прямого файла; оставлены пустыми по тому же правилу версии 11 (пустая строка честнее неверного числа)."
+      "message": "Заполнены версия и размер у FPS Monitor (5520.00) и размеры у шести записей версии 17 (AnyDesk 8.0 МБ, RaiDrive 38.5 МБ, FurMark 32.4 МБ, Claude Code 216.2 МБ, Codex CLI 114.2 МБ, GitHub Copilot CLI 81.2 МБ) — по реальным установщикам из актуальных манифестов winget. У Foxit PDF Reader, Epic Games, RTSS, MSI Afterburner, Snappy Driver Installer и AMD Adrenalin размер не указан: их ссылки не отдают прямой файл установщика, а пустое значение честнее неверного числа."
     },
     {
       "version": 18,
@@ -168,7 +168,7 @@
         "furmark"
       ],
       "removedApps": [],
-      "message": "Добавлен FurMark 2 (Geeks3D) — стресс-тест/бенчмарк видеокарты, по запросу пользователя. Через winget (Geeks3D.FurMark.2), проверено вживую на этой машине."
+      "message": "Добавлен FurMark 2 (Geeks3D) — стресс-тест и бенчмарк видеокарты. Ставится через winget (Geeks3D.FurMark.2)."
     },
     {
       "version": 17,
@@ -188,7 +188,7 @@
         "github-copilot-cli"
       ],
       "removedApps": [],
-      "message": "Добавлено 12 приложений по запросу пользователя: удалённый доступ (AnyDesk, RuDesktop — российский аналог), облачные диски (RaiDrive), игровые сервисы (Epic Games Launcher, ExitLag), драйверы (AMD Software: Adrenalin Edition — переиздан впервые с версии 5, тогда был удалён из-за отсутствия winget/URL, теперь есть рабочий chocoId), мониторинг GPU/FPS (FPS Monitor, RTSS, MSI Afterburner — все без winget, идут через chocoId), и новая категория «ИИ» (Claude Code, Codex CLI, GitHub Copilot CLI — все три через winget). AnyDesk/RuDesktop/RaiDrive/AMD/FPS Monitor/MSI Afterburner проверены живьём через winget/choco CLI на этой машине. RuDesktop и ExitLag — прямая ссылка на официальном CDN, SHA256 посчитан от реально скачанного файла. HoYoPlay и 4Game из исходного списка пользователя пока не добавлены — у обоих JS-рендеринг страницы загрузки без статической ссылки на установщик, нет winget/choco; отложено до появления рабочего источника."
+      "message": "Добавлено 12 приложений: удалённый доступ (AnyDesk, RuDesktop — российский аналог), облачные диски (RaiDrive), игровые сервисы (Epic Games Launcher, ExitLag), драйверы (AMD Software: Adrenalin Edition — возвращён, теперь есть рабочий chocoId), мониторинг GPU/FPS (FPS Monitor, RTSS, MSI Afterburner — через Chocolatey) и новая категория «ИИ» (Claude Code, Codex CLI, GitHub Copilot CLI — через winget). У RuDesktop и ExitLag — прямая ссылка на официальный сервер загрузок с проверкой SHA256. HoYoPlay и 4Game пока не добавлены: у них нет постоянной ссылки на установщик и пакетов winget/Chocolatey."
     },
     {
       "version": 16,

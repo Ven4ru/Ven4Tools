@@ -17,7 +17,7 @@ internal static class FileHelper
     /// возвращаем true (fail-closed, вызывающий не пишет).
     /// Копия Ven4Tools.Helpers.PathHelper.IsReparsePoint из клиента: заводить в
     /// лаунчере отдельный PathHelper ради одного метода незачем — вынос этой пары
-    /// в Shared/ (по образцу AuthenticodeVerifier, round 38) пока не сделан.
+    /// в Shared/ (по образцу AuthenticodeVerifier) пока не сделан.
     /// </summary>
     internal static bool IsReparsePoint(string path)
     {

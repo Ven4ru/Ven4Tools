@@ -42,9 +42,8 @@ namespace Ven4Tools.Models
 
         public string? Sha256 { get; set; }
 
-        // Необязательная сноска региональной доступности (см. docs/dev/specs/
-        // 2026-09-10-catalog-region-availability-design.md): объяснение, а не вердикт —
-        // "разработчик ушёл из РФ, загрузка через VPN", не "недоступно в РФ". Вердикт
+        // Необязательная сноска региональной доступности: объяснение, а не вердикт —
+        // "издатель ограничил загрузку для вашего региона", не "недоступно". Вердикт
         // всегда даёт замер AvailabilityChecker, сноска только участвует в
         // классификации HTTP 403 (см. AvailabilityChecker.GetUrlInfo).
         public string? RegionNote { get; set; }

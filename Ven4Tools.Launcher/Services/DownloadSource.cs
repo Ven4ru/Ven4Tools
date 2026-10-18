@@ -15,7 +15,7 @@ namespace Ven4Tools.Launcher.Services
         Github,
         /// <summary>CDN по доменному имени cdn.ven4tools.ru.</summary>
         CdnDomain,
-        /// <summary>CDN по прямому IP в обход DNS (SNI/сертификат — штатные).</summary>
+        /// <summary>CDN по прямому IP без DNS-запроса (SNI/сертификат — штатные).</summary>
         CdnDirectIp,
         /// <summary>Зеркало релизов на хостинге ven4tools.ru/releases/.</summary>
         HostingMirror

@@ -137,7 +137,7 @@ public sealed class WindowsAnswerFileBuilderTests : IDisposable
 
     [Theory]
     [InlineData("Иван")]
-    [InlineData("Vench")]
+    [InlineData("Admin")]
     [InlineData("Иван Петров")]
     [InlineData("user-1_test")]
     public void Обычное_имя_учётной_записи_принимается(string name)

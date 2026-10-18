@@ -9,7 +9,7 @@ namespace Ven4Tools.Shared
     /// Проверка Authenticode-подписи файла на издателя "Microsoft Corporation".
     /// Общая для клиента (устанавливаемые пакеты в OfficeTab, резолвинг winget.exe
     /// при подозрительном ACL — см. TrustedExecutablePaths) и лаунчера (скачанные
-    /// пакеты Microsoft перед elevated-установкой). До раунда 38 существовала как
+    /// пакеты Microsoft перед elevated-установкой). Раньше существовала как
     /// две независимые байт-идентичные копии.
     /// </summary>
     internal static class AuthenticodeVerifier

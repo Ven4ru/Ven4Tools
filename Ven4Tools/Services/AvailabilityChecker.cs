@@ -306,10 +306,9 @@ namespace Ven4Tools.Services
         // ли он в конкретной версии рантайма.
         private const System.Net.HttpStatusCode UnavailableForLegalReasonsStatusCode = (System.Net.HttpStatusCode)451;
 
-        // Классификация неуспешного ответа — таблица из docs/dev/specs/
-        // 2026-09-10-catalog-region-availability-design.md: 451 всегда геоблок; 403 —
-        // геоблок только при сноске regionNote в каталоге (иначе неотличимо от обычной
-        // защиты от ботов, см. спеку); остальное — просто недоступно. Ни одного
+        // Классификация неуспешного ответа: 451 всегда геоблок; 403 — геоблок только
+        // при сноске regionNote в каталоге (иначе неотличимо от обычной защиты от ботов);
+        // остальное — просто недоступно. Ни одного
         // лишнего сетевого запроса: код ответа уже получен вызывающим методом.
         private static (AvailabilityStatus Status, long SizeMB) ClassifyFailure(
             string url, System.Net.HttpStatusCode statusCode, bool hasRegionNote)

@@ -4,10 +4,10 @@ namespace Ven4Tools.Services
 {
     /// <summary>
     /// Флаги, обязательные для КАЖДОГО неинтерактивного вызова winget в проекте
-    /// (--disable-interactivity — железное правило, см. agent_context.md), раньше
+    /// (--disable-interactivity — железное правило проекта), раньше
     /// размазанные по 15 вызовам в 12 файлах копипастой. Доказанный Shotgun Surgery:
-    /// коммит ec2aaae (round 32, «WingetVersionsService не передавал
-    /// --accept-source-agreements») потребовал правки 7 файлов ради одного флага,
+    /// исправление «WingetVersionsService не передавал
+    /// --accept-source-agreements» потребовало правки 7 файлов ради одного флага,
     /// и даже после него набор совпадал только в 4 из 15 мест.
     /// </summary>
     internal static class WingetArgs

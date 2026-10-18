@@ -67,8 +67,8 @@ namespace Ven4Tools.Launcher.Services
         /// Запрашивает version.json с CDN. Возвращает null при любой ошибке
         /// (CDN недоступен, таймаут, битый JSON) — это сигнал для тихого fallback на GitHub.
         ///
-        /// Устойчивость к блокировке домена по DNS: если обычный (DNS) запрос падает
-        /// именно из-за резолвинга имени (RKN может резать домен отдельно от IP) —
+        /// Устойчивость к сбоям DNS: если обычный (DNS) запрос падает
+        /// именно из-за резолвинга имени (у части провайдеров имя не резолвится, хотя IP доступен) —
         /// повторяем попытку через IP-pinning (IpPinnedHttpClientFactory) на последний
         /// известный cdn_ip (иначе FallbackCdnIp), минуя DNS. TLS/SNI/проверка
         /// сертификата при этом остаются штатными — см. IpPinnedHttpClientFactory.
@@ -117,7 +117,7 @@ namespace Ven4Tools.Launcher.Services
             }
 
             // Сюда попадаем при отказе или таймауте на пути через DNS домена
-            // cdn.ven4tools.ru: повторяем через прямой IP в обход DNS.
+            // cdn.ven4tools.ru: повторяем через прямой IP без DNS-запроса.
             try
             {
                 string ip = _lastKnownCdnIp ?? IpPinnedHttpClientFactory.FallbackCdnIp;
