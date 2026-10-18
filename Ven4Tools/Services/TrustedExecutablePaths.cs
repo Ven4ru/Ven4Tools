@@ -90,7 +90,7 @@ namespace Ven4Tools.Services
         /// App Execution Alias — не обычный файл, а reparse point (IO_REPARSE_TAG_
         /// APPEXECLINK, 0 байт), и WinVerifyTrust/чтение сертификата с него всегда
         /// падает с CRYPT_E_FILE_ERROR независимо от того, легитимный он или нет —
-        /// проверено живьём на этой машине при разработке фикса.
+        /// проверено при разработке исправления.
         ///
         /// Правильное решение — резолвить РЕАЛЬНЫЙ файл пакета в Program Files\
         /// WindowsApps\Microsoft.DesktopAppInstaller_*_{arch}__8wekyb3d8bbwe\winget.exe.

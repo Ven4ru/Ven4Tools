@@ -9,8 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Ven4Tools.ClientUITests
 {
     /// <summary>
-    /// Фаза 1 плана живого клика кнопок 2026-07-11 (см. память
-    /// project_button_test_plan_2026_07_11): остаток CatalogTab + диалогов.
+    /// Фаза 1 плана живого клика кнопок 2026-07-11: остаток CatalogTab + диалогов.
     /// LocalInstallerDialog пропущен — достижим только drag-and-drop.
     /// AddAppDialog (был нигде не инстанцируемым мёртвым кодом) удалён из
     /// проекта целиком 2026-07-13.
