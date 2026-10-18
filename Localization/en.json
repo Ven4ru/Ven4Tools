@@ -3692,6 +3692,10 @@
     "t": "Installer checksum unavailable (CDN) — installation canceled."
   },
   {
+    "s": "Конфигурация системы не поддерживает установку этого пакета.",
+    "t": "The system configuration does not support installing this package."
+  },
+  {
     "s": "Копирование клиента…",
     "t": "Copying the client…"
   },

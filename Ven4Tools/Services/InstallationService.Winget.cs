@@ -48,11 +48,12 @@ namespace Ven4Tools.Services
                 // Cursor, VS Code, Git — около 40 программ каталога): клиент работает от имени
                 // администратора, и такая программа попадала в его профиль, а удалить её потом
                 // можно было только без прав администратора. У пакета только с пользовательским
-                // установщиком winget ответит «нет подходящего установщика» — тогда повтор без
-                // --scope. Магазин Microsoft области установки не знает.
+                // установщиком winget ответит «нет подходящего установщика», у MSIX — «система
+                // не поддерживает» — тогда повтор без --scope (WingetErrorMapper.ShouldRetryWithoutScope).
+                // Магазин Microsoft области установки не знает.
                 string? scope = wsrc.Equals("msstore", StringComparison.OrdinalIgnoreCase) ? null : "machine";
                 var wingetRun = await RunWingetAsync(primaryId, wsrc, token, version, installDrive, scope: scope);
-                if (!wingetRun.Ok && scope != null && wingetRun.ExitCode == WingetErrorMapper.NoApplicableInstaller)
+                if (!wingetRun.Ok && scope != null && WingetErrorMapper.ShouldRetryWithoutScope(wingetRun.ExitCode))
                 {
                     Log($"🔁 Winget ({wsrc}, {primaryId}): установщика для всех пользователей нет — повтор без выбора области");
                     scope = null;
