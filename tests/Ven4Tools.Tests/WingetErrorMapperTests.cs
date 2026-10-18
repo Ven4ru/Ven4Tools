@@ -115,4 +115,25 @@ public sealed class WingetErrorMapperTests
         Assert.Equal(unchecked((int)0x8A150010), WingetErrorMapper.NoApplicableInstaller);
         Assert.Equal(unchecked((int)0x8A150056), WingetErrorMapper.InstallerProhibitsElevation);
     }
+
+    // Стенд 18.10.2026: с --scope machine Notion, Slack, Claude отвечали 0x8A150113,
+    // GitHub Copilot CLI — 0x8A150110 (его зависимость PowerShell — MSIX); без --scope встают.
+    [Theory]
+    [InlineData(unchecked((int)0x8A150010))]
+    [InlineData(unchecked((int)0x8A150113))]
+    [InlineData(unchecked((int)0x8A150110))]
+    public void ОтказОбластиДляВсех_ПовторБезScope(int code)
+        => Assert.True(WingetErrorMapper.ShouldRetryWithoutScope(code));
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(unchecked((int)0x8A150014))]
+    [InlineData(unchecked((int)0x8A150101))]
+    [InlineData(unchecked((int)0x80072EE2))]
+    public void ПрочиеКоды_БезПовтораБезScope(int code)
+        => Assert.False(WingetErrorMapper.ShouldRetryWithoutScope(code));
+
+    [Fact]
+    public void СистемаНеПоддерживает_ПонятныйТекст()
+        => Assert.DoesNotContain("0x", WingetErrorMapper.MapExitCode(unchecked((int)0x8A150113)));
 }

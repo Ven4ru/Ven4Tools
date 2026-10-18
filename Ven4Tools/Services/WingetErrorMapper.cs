@@ -40,6 +40,24 @@ namespace Ven4Tools.Services
         /// </summary>
         public const int InstallerProhibitsElevation = unchecked((int)0x8A150056);
 
+        /// <summary>
+        /// «The current system configuration does not support the installation of this
+        /// package»: так winget 1.11 отвечает на --scope machine у пакетов MSIX (Notion, Slack,
+        /// Claude, PowerShell — стенд 18.10.2026), хотя без --scope они ставятся.
+        /// </summary>
+        public const int SystemNotSupported = unchecked((int)0x8A150113);
+
+        /// <summary>INSTALL_DEPENDENCIES: не встали зависимости пакета.</summary>
+        public const int DependenciesFailed = unchecked((int)0x8A150110);
+
+        /// <summary>
+        /// Неудача, после которой стоит повторить установку без --scope machine: подходящего
+        /// установщика для всех пользователей нет, система его не принимает, или с этой областью
+        /// не встала зависимость (GitHub Copilot CLI тянет PowerShell — MSIX).
+        /// </summary>
+        public static bool ShouldRetryWithoutScope(int exitCode) =>
+            exitCode == NoApplicableInstaller || exitCode == SystemNotSupported || exitCode == DependenciesFailed;
+
         private static readonly Dictionary<int, string> KnownExitCodes = new(MsiExitCodes.Known)
         {
             // Коды APPINSTALLER_CLI_ERROR_* сверены с официальным списком winget-cli
@@ -68,7 +86,8 @@ namespace Ven4Tools.Services
             { unchecked((int)0x8A15010C), "Установка отменена." },
             { unchecked((int)0x8A15010D), "Другая версия программы уже установлена." },
             { unchecked((int)0x8A15010E), "Уже установлена более новая версия программы." },
-            { unchecked((int)0x8A150110), "Не удалось установить компоненты, нужные пакету." },
+            { DependenciesFailed, "Не удалось установить компоненты, нужные пакету." },
+            { SystemNotSupported, "Конфигурация системы не поддерживает установку этого пакета." },
             { unchecked((int)0x8A150111), "Программа занята другим приложением — закройте его и повторите установку." },
             { StalledByClient, "winget завис (скачивание или установщик не подавали признаков работы) и прерван клиентом." },
             // INSTALL_INSTALL_IN_PROGRESS: winget так передаёт 1618 от MSI-установщика.
