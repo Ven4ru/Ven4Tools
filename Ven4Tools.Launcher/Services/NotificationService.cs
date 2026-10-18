@@ -9,10 +9,9 @@ namespace Ven4Tools.Launcher.Services
 {
     public static class NotificationService
     {
-        // Раньше был единственный источник — raw.githubusercontent.com, который для
-        // основной аудитории проекта (РФ) фактически недоступен (блокировка по SNI,
-        // см. reference_github_rkn_blocking) — канал уведомлений владельца молчал
-        // бесшумно. Порядок источников — тот же, что у остального лаунчера
+        // Раньше был единственный источник — raw.githubusercontent.com, который у
+        // значительной части пользователей открывается нестабильно — канал уведомлений
+        // молчал бесшумно. Порядок источников — тот же, что у остального лаунчера
         // (CdnService/GitHubService): CDN → зеркало на хостинге → GitHub напрямую.
         private static readonly string[] Sources =
         {

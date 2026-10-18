@@ -116,8 +116,7 @@ namespace Ven4Tools.Services
 
     /// <summary>
     /// Определение Office, установленного на машине — любого найденного, не только
-    /// поставленного через Ven4Tools (см. docs/dev/specs/2026-09-10-
-    /// office-uninstall-and-version-change-design.md). C2R приоритетнее MSI: если
+    /// поставленного через Ven4Tools. C2R приоритетнее MSI: если
     /// ClickToRun\Configuration есть — MSI-записи Uninstall (в т.ч. созданные самим
     /// C2R) игнорируются, чтобы не задваивать и не переключать Kind ошибочно.
     /// </summary>

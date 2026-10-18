@@ -77,9 +77,7 @@ namespace Ven4Tools.Services
     /// Подготовка Office Deployment Tool и запуск удаления/установки через его
     /// универсальный контракт "/configure config.xml". ODT получаем через
     /// <c>winget download --id Microsoft.OfficeDeploymentTool</c>, а не по
-    /// захардкоженной ссылке (см. "Отступление от буквы спеки" в шапке плана
-    /// docs/dev/plans/2026-09-14-office-uninstall-and-version-change-plan.md) —
-    /// актуальность ссылки становится проблемой манифеста winget, той же модели
+    /// захардкоженной ссылке — актуальность ссылки становится проблемой манифеста winget, той же модели
     /// доверия, что уже используется для всего каталога.
     /// </summary>
     public sealed class OfficeDeploymentToolRunner

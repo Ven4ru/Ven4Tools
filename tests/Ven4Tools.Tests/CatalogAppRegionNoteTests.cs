@@ -4,8 +4,7 @@ using Ven4Tools.Models;
 namespace Ven4Tools.Tests;
 
 /// <summary>
-/// regionNote — необязательное поле каталога (docs/dev/specs/
-/// 2026-09-10-catalog-region-availability-design.md): объяснение, а не вердикт,
+/// regionNote — необязательное поле каталога: объяснение, а не вердикт,
 /// поэтому отсутствие поля не должно быть ошибкой разбора.
 /// </summary>
 public sealed class CatalogAppRegionNoteTests
@@ -17,13 +16,13 @@ public sealed class CatalogAppRegionNoteTests
         {
             "id": "example-app",
             "name": "Example",
-            "regionNote": "разработчик ушёл из РФ, загрузка через VPN"
+            "regionNote": "издатель ограничил загрузку для вашего региона"
         }
         """;
 
         var app = JsonConvert.DeserializeObject<Ven4Tools.Models.App>(json)!;
 
-        Assert.Equal("разработчик ушёл из РФ, загрузка через VPN", app.RegionNote);
+        Assert.Equal("издатель ограничил загрузку для вашего региона", app.RegionNote);
     }
 
     [Fact]

@@ -20,7 +20,7 @@ namespace Ven4Tools.Views.Tabs
 
         // rbAll.IsChecked="True" в XAML вызывает Checked синхронно ВНУТРИ
         // InitializeComponent() (тот же класс WPF-гонки, что у Slider.ValueChanged,
-        // см. agent_context.md §7) — FilterChanged может сработать раньше, чем
+        // известная особенность WPF) — FilterChanged может сработать раньше, чем
         // InitializeComponent() вернёт управление. Проверка конкретного соседнего
         // поля на null (`rbApps == null`) на практике НЕ спасла — живой прогон на
         // ICL (round 40, 2026-08-21) поймал тот же NullReferenceException в

@@ -147,9 +147,9 @@ namespace Ven4Tools.Launcher.Services
         {
             // Обнаружение обновления лаунчера — через ту же CDN-first логику, что и
             // ручная проверка (LauncherUpdateService.CheckForUpdateAsync): CDN
-            // version.json основной, GitHub резерв. Иначе при блокировке GitHub по SNI
+            // version.json основной, GitHub резерв. Иначе при недоступности GitHub
             // фоновая проверка вообще не узнавала бы о новой версии (GitHub-only была
-            // структурно идентичной, но не исправленной дырой — Vibe-Coding).
+            // структурно идентичной, но не исправленной дырой).
             var updateSvc = new LauncherUpdateService(_log);
             var info = await updateSvc.CheckForUpdateAsync(_launcherVersion);
             if (info?.HasUpdate != true) return;
@@ -169,14 +169,14 @@ namespace Ven4Tools.Launcher.Services
             string installedVersion = versionInfo.FileVersion ?? "0.0.0";
 
             // Последняя версия клиента из двух источников: CDN version.json (работает
-            // при блокировке GitHub по SNI) и GitHub-релизы (резерв + release notes).
+            // при недоступности GitHub) и GitHub-релизы (резерв + release notes).
             // Здесь ВСЕГДА сравниваем оба источника и берём max — не то же самое, что
             // ResolveSetupUpdateAsync у лаунчера (тот при любом обновлении с CDN
             // возвращает его сразу, не сверяясь с GitHub, — см. комментарий там про
             // почему это допустимо). Для клиента так безопаснее: список версий и так
             // всегда идёт с GitHub (release notes), поэтому сравнение с CDN бесплатное.
             // Оба пути закрывают одну и ту же дыру (раньше — GitHub-only проверка,
-            // молчавшая при блокировке GitHub по SNI), просто разной механикой.
+            // молчавшая при недоступности GitHub), просто разной механикой.
             string? latestVersion = null;
             string? downloadUrl = null;
             string? releaseNotes = null;
