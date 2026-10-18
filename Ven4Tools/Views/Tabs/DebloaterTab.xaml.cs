@@ -22,8 +22,8 @@ namespace Ven4Tools.Views.Tabs
         // InitializeComponent() (тот же класс WPF-гонки, что у Slider.ValueChanged,
         // известная особенность WPF) — FilterChanged может сработать раньше, чем
         // InitializeComponent() вернёт управление. Проверка конкретного соседнего
-        // поля на null (`rbApps == null`) на практике НЕ спасла — живой прогон на
-        // ICL (round 40, 2026-08-21) поймал тот же NullReferenceException в
+        // поля на null (`rbApps == null`) на практике НЕ спасла — живой прогон
+        // 2026-08-21 поймал тот же NullReferenceException в
         // FilterChanged даже с этой проверкой (см. crash_last.json того прогона).
         // Причина ещё не до конца ясна (возможно, порядок связывания полей в
         // Connect() отличается от предположенного), поэтому вместо догадки о том,

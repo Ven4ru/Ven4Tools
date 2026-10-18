@@ -128,7 +128,7 @@ namespace Ven4Tools.ClientUITests
             // WPF ICommand.CanExecuteChanged (CommandManager.RequerySuggested) переоценивает
             // состояние по обычным input-событиям и не гарантированно успевает синхронно с
             // таким переключением. Тот же паттерн уже есть у btnInstall в CatalogInstallTests —
-            // ждём IsEnabled, а не слепой Thread.Sleep (round 40: без этого ловили
+            // ждём IsEnabled, а не слепой Thread.Sleep (без этого ловили
             // ElementNotEnabledException, т.к. кнопка ещё не успела активироваться).
             Retry.WhileFalse(
                 () => saveBtn!.AsButton().IsEnabled,

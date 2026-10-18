@@ -167,7 +167,7 @@ public sealed class FileHelperReparsePointTests
 
 /// <summary>
 /// Те же проверки для копии FileHelper в лаунчере. Копия существует потому, что
-/// вынос этой пары в Shared/ (по образцу AuthenticodeVerifier, round 38) пока не
+/// вынос этой пары в Shared/ (по образцу AuthenticodeVerifier) пока не
 /// сделан, и её докстринг обещает, что
 /// механизм записи «один и тот же» — но проверку на подмену пути reparse point'ом
 /// она изначально не получила: guard добавили только клиентской копии. Лаунчер тоже

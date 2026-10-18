@@ -117,7 +117,7 @@ namespace Ven4Tools.Launcher.Services
             }
 
             // Сюда попадаем при отказе или таймауте на пути через DNS домена
-            // cdn.ven4tools.ru: повторяем через прямой IP в обход DNS.
+            // cdn.ven4tools.ru: повторяем через прямой IP без DNS-запроса.
             try
             {
                 string ip = _lastKnownCdnIp ?? IpPinnedHttpClientFactory.FallbackCdnIp;

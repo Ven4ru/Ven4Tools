@@ -67,7 +67,7 @@ namespace Ven4Tools.Shared
         /// пользуется — была продублирована ТРИЖДЫ: SystemViewModel.AppUpdates
         /// (клиент, единственная с юнит-тестами), UpdateBackgroundService клиента и
         /// UpdateBackgroundService лаунчера. Три места, где при следующем ужесточении
-        /// критерия (как уже случилось однажды с ANSI-шаблоном в раунде 39) можно
+        /// критерия (как уже случилось однажды с ANSI-шаблоном) можно
         /// снова поправить не все копии разом.
         /// </summary>
         public static List<string> ParseUpgradeTableRows(string rawOutput)

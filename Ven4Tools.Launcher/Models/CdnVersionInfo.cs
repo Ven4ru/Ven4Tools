@@ -20,7 +20,7 @@ namespace Ven4Tools.Launcher.Models
         public CdnLauncherInfo? Launcher { get; set; }
 
         // Текущий IP-адрес cdn.ven4tools.ru — подписан вместе со всем манифестом
-        // (доверенное поле). Нужен для варианта «прямой IP в обход DNS»: сам
+        // (доверенное поле). Нужен для варианта «прямой IP без DNS-запроса»: сам
         // version.json лежит на этом же домене, поэтому если домен заблокируют по
         // DNS отдельно от IP — повторную попытку делаем по этому адресу
         // (см. CdnService/IpPinnedHttpClientFactory). Значение НЕ участвует в
