@@ -58,6 +58,8 @@ namespace Ven4Tools.Services
         {
             var startedUtc = DateTime.UtcNow;
             bool wasInRegistry = FindUninstallString(displayName) != null;
+            if (wasInRegistry)
+                await Task.Run(() => CloseRunningProgram(displayName));
             var result = await UninstallCoreAsync(wingetId, displayName, wasInRegistry);
 
             await WaitForTempUninstallersAsync(startedUtc, TempUninstallerWait);
@@ -77,6 +79,150 @@ namespace Ven4Tools.Services
             if (killed > 0)
                 AppLogger.Write($"[AppUninstallService] Закрыто зависших копий деинсталлятора после «{displayName}»: {killed}");
             return result;
+        }
+
+        // Сколько ждём, пока программа закроется сама, прежде чем завершить её процессы.
+        private static readonly TimeSpan CloseProgramWait = TimeSpan.FromSeconds(5);
+
+        /// <summary>
+        /// Закрывает запущенную программу перед удалением: процессы, чей файл лежит в её папке
+        /// установки, — сначала просьбой закрыть окно, через <see cref="CloseProgramWait"/>
+        /// принудительно. Так сделал бы и человек перед удалением.
+        /// </summary>
+        /// <remarks>
+        /// Стенд 18.10.2026, удаление всего каталога: программы, оставшиеся в трее после
+        /// установки (Greenshot, MSI Afterburner, RivaTuner, EA app, VK Play, Playnite), не
+        /// удалялись — деинсталлятор спрашивал «закрыть программу?» и ждал ответа или, с
+        /// /SUPPRESSMSGBOXES, отменял удаление.
+        /// </remarks>
+        private static void CloseRunningProgram(string displayName)
+        {
+            try
+            {
+                string? dir = FindInstallDir(displayName);
+                if (dir == null) return;
+                int self = Environment.ProcessId;
+                var running = new System.Collections.Generic.List<Process>();
+                foreach (var p in Process.GetProcesses())
+                {
+                    try
+                    {
+                        if (p.Id != self && IsUnderDir(p.MainModule?.FileName, dir))
+                        {
+                            running.Add(p);
+                            continue;
+                        }
+                    }
+                    catch { }
+                    p.Dispose();
+                }
+                if (running.Count == 0) return;
+                foreach (var p in running)
+                    try { p.CloseMainWindow(); } catch { }
+                var deadline = DateTime.UtcNow + CloseProgramWait;
+                while (DateTime.UtcNow < deadline && running.Any(p => { try { return !p.HasExited; } catch { return false; } }))
+                    Thread.Sleep(250);
+                int killed = 0;
+                foreach (var p in running)
+                {
+                    using (p)
+                    {
+                        try { if (!p.HasExited) { p.Kill(); killed++; } } catch { }
+                    }
+                }
+                AppLogger.Write($"[AppUninstallService] Перед удалением «{displayName}» закрыто процессов программы: {running.Count} (принудительно: {killed})");
+            }
+            catch (Exception ex) { AppLogger.Write($"[AppUninstallService] Не удалось закрыть «{displayName}» перед удалением: {ex.Message}"); }
+        }
+
+        internal static bool IsUnderDir(string? file, string dir)
+            => !string.IsNullOrEmpty(file) &&
+               file.StartsWith(dir.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Папка установки программы: InstallLocation записи удаления, иначе папка её
+        /// деинсталлятора. null — папки нет или она общая (корень диска, Windows, Program
+        /// Files, профиль пользователя и т. п.): закрывать по ней процессы нельзя.
+        /// </summary>
+        private static string? FindInstallDir(string displayName)
+        {
+            string[] keys = {
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+            };
+            foreach (var hive in new[] { Registry.LocalMachine, Registry.CurrentUser })
+            foreach (var keyPath in keys)
+            {
+                using var root = hive.OpenSubKey(keyPath);
+                if (root == null) continue;
+                foreach (var sub in root.GetSubKeyNames())
+                {
+                    using var entry = root.OpenSubKey(sub);
+                    if (entry?.GetValue("DisplayName")?.ToString() is not { } name ||
+                        !name.Equals(displayName, StringComparison.OrdinalIgnoreCase)) continue;
+                    string? dir = entry.GetValue("InstallLocation")?.ToString()?.Trim().Trim('"');
+                    if (string.IsNullOrEmpty(dir) &&
+                        entry.GetValue("UninstallString")?.ToString() is { } cmd &&
+                        ParseUninstallCommand(cmd) is { Error: null } parsed &&
+                        !string.Equals(parsed.File, TrustedExecutablePaths.MsiExec, StringComparison.OrdinalIgnoreCase))
+                        dir = Path.GetDirectoryName(parsed.File);
+                    if (!IsProgramOwnDir(dir)) return null;
+                    string full = Path.GetFullPath(dir!);
+                    // HKCU пишет любой процесс пользователя без прав администратора: по такой
+                    // записи закрываем только программы из его же профиля — иначе подложенная
+                    // папка заставила бы клиента с правами администратора завершить чужие
+                    // процессы и службы.
+                    if (hive == Registry.CurrentUser &&
+                        !IsUnderDir(full, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)))
+                        return null;
+                    return full;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>Своя папка программы, а не общая: глубже корня и не одна из системных папок.</summary>
+        internal static bool IsProgramOwnDir(string? dir)
+        {
+            // Относительный путь достроился бы от текущей папки клиента — не принимаем.
+            if (string.IsNullOrWhiteSpace(dir) || !Path.IsPathFullyQualified(dir)) return false;
+            string full;
+            try { full = Path.GetFullPath(dir).TrimEnd('\\'); } catch { return false; }
+            if (!Directory.Exists(full)) return false;
+            string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            string programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            string[] shared =
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                programFiles,
+                programFilesX86,
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86),
+                string.IsNullOrEmpty(programFiles) ? "" : Path.Combine(programFiles, "WindowsApps"),
+                string.IsNullOrEmpty(programFilesX86) ? "" : Path.Combine(programFilesX86, "Microsoft"),
+                string.IsNullOrEmpty(programFiles) ? "" : Path.Combine(programFiles, "Microsoft"),
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                profile,
+                Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                string.IsNullOrEmpty(profile) ? "" : Path.Combine(profile, "Downloads"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs"),
+                Path.GetTempPath(),
+            };
+            if (shared.Any(s => !string.IsNullOrEmpty(s) &&
+                                string.Equals(full, s.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)))
+                return false;
+            if (IsUnderDir(full, Environment.GetFolderPath(Environment.SpecialFolder.Windows)))
+                return false;
+            // Папка пользователей (C:\Users): только внутри своего профиля, не Public и не чужие.
+            string? usersRoot = string.IsNullOrEmpty(profile) ? null : Path.GetDirectoryName(profile.TrimEnd('\\'));
+            if (usersRoot != null && IsUnderDir(full, usersRoot) && !IsUnderDir(full, profile))
+                return false;
+            // Корень диска и папки первого уровня («D:\Games») — тоже общие.
+            return full.Count(c => c == '\\') >= 2;
         }
 
         private static async Task<bool> GoneFromRegistryAsync(string displayName)
@@ -180,7 +326,7 @@ namespace Ven4Tools.Services
             // из реестра с подобранными ключами тихого удаления (см. PreferDirectUninstall).
             var known = await Task.Run(() => FindUninstallString(displayName));
             if (known is { } k && ParseUninstallCommand(k.Command) is { Error: null } parsed &&
-                PreferDirectUninstall(k.FromMachineHive, k.Quiet, parsed.File))
+                PreferDirectUninstall(k.FromMachineHive, k.Quiet, parsed.File, parsed.Args))
             {
                 var direct = await WithRemovalWatchAsync(displayName, true,
                     hung => RunUninstallStringAsync(k.Command, false, hung));
@@ -423,9 +569,40 @@ namespace Ven4Tools.Services
         /// тихо. Записи из HKCU — никогда: их нельзя запускать с правами администратора
         /// (см. <see cref="RunUninstallStringAsync"/>).
         /// </remarks>
-        internal static bool PreferDirectUninstall(bool fromMachineHive, bool quiet, string parsedFile)
-            => fromMachineHive && !quiet &&
-               (KnownSilentArgs(parsedFile) != null || IsInnoUninstaller(parsedFile) || IsNsisUninstaller(parsedFile));
+        internal static bool PreferDirectUninstall(bool fromMachineHive, bool quiet, string parsedFile, string parsedArgs = "")
+            => fromMachineHive &&
+               // Inno — и с готовой тихой командой: winget запустил бы её с /SILENT как есть.
+               (IsInnoUninstaller(parsedFile) ||
+                (!quiet && (KnownSilentArgs(parsedFile) != null || IsNsisUninstaller(parsedFile) ||
+                            BrowserSilentUninstallArgs(parsedFile, parsedArgs) != null)));
+
+        /// <summary>
+        /// Ключи тихого удаления браузеров, чей деинсталлятор без них спрашивает «Удалить?» и
+        /// ждёт (стенд 18.10.2026); null — команда не из их числа.
+        /// <list type="bullet">
+        /// <item>Chrome, Brave, Яндекс Браузер, Edge — «…\Installer\setup.exe --uninstall …»:
+        /// молча удаляет только с --force-uninstall;</item>
+        /// <item>Opera и Opera GX — «…\Opera…\opera.exe /uninstall» (или launcher.exe): на /S
+        /// отвечает кодом 38, молча удаляет с --uninstall --runimmediately; профиль
+        /// пользователя не трогаем (--deleteuserprofile=0).</item>
+        /// </list>
+        /// </summary>
+        internal static string? BrowserSilentUninstallArgs(string exe, string args)
+        {
+            string name = Path.GetFileName(exe);
+            if ((string.Equals(name, "opera.exe", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(name, "launcher.exe", StringComparison.OrdinalIgnoreCase)) &&
+                exe.IndexOf("Opera", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                args.IndexOf("uninstall", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "--uninstall --runimmediately --deleteuserprofile=0";
+            if (args.IndexOf("--uninstall", StringComparison.OrdinalIgnoreCase) < 0) return null;
+            if (string.Equals(name, "setup.exe", StringComparison.OrdinalIgnoreCase))
+                return AppendMissing(args, "--force-uninstall");
+            return null;
+
+            static string AppendMissing(string a, string key)
+                => a.IndexOf(key.Split('=')[0], StringComparison.OrdinalIgnoreCase) >= 0 ? a : (a + " " + key).Trim();
+        }
 
         /// <summary>
         /// Деинсталлятор NSIS: в манифесте исполняемого файла — «Nullsoft.NSIS.exehead».
@@ -449,6 +626,18 @@ namespace Ven4Tools.Services
         private static readonly byte[] NsisMarker = System.Text.Encoding.ASCII.GetBytes("Nullsoft.NSIS.exehead");
 
         internal static bool ContainsNsisMarker(ReadOnlySpan<byte> head) => head.IndexOf(NsisMarker) >= 0;
+
+        /// <summary>
+        /// Ключи Inno Setup для удаления без единого окна: /SILENT заменяется на /VERYSILENT,
+        /// добавляются /SUPPRESSMSGBOXES и /NORESTART; прочие ключи команды остаются.
+        /// </summary>
+        internal static string InnoVerySilentArgs(string args)
+        {
+            var rest = Regex.Replace(args, @"(?<!\S)/(VERY)?SILENT(?!\S)|(?<!\S)/SUPPRESSMSGBOXES(?!\S)|(?<!\S)/NORESTART(?!\S)",
+                "", RegexOptions.IgnoreCase);
+            rest = Regex.Replace(rest, @"\s{2,}", " ").Trim();
+            return ("/VERYSILENT /SUPPRESSMSGBOXES /NORESTART " + rest).Trim();
+        }
 
         /// <summary>Деинсталлятор Inno Setup: unins000.exe, unins001.exe…</summary>
         internal static bool IsInnoUninstaller(string exe)
@@ -598,18 +787,19 @@ namespace Ven4Tools.Services
                         if (sp > 0) { exe = cmd.Substring(0, sp); args = cmd.Substring(sp + 1).Trim(); }
                     }
                 }
-                // Готовую тихую команду программы (QuietUninstallString) не трогаем:
+                // Inno Setup не понимает /S и показывает окно подтверждения (Cursor на стенде
+                // 16.10.2026) — ему нужен /VERYSILENT. И даже в готовой тихой команде программы:
+                // с её /SILENT вопросы из сценария удаления (Greenshot, MPC-BE — стенд
+                // 18.10.2026) всё равно открываются и ждут ответа.
+                if (IsInnoUninstaller(exe))
+                    args = InnoVerySilentArgs(args);
+                // Прочие готовые тихие команды программы (QuietUninstallString) не трогаем:
                 // лишний ключ ломает, например, Squirrel (Update.exe --uninstall -s).
-                if (quiet) { }
+                else if (quiet) { }
                 else if (KnownSilentArgs(exe) is { } known)
                     args = known;
-                else if (IsInnoUninstaller(exe))
-                {
-                    // Inno Setup не понимает /S и показывает окно подтверждения
-                    // (Cursor на стенде 16.10.2026) — ему нужен /VERYSILENT.
-                    if (args.IndexOf("/VERYSILENT", StringComparison.OrdinalIgnoreCase) < 0)
-                        args = ("/VERYSILENT /SUPPRESSMSGBOXES /NORESTART " + args).Trim();
-                }
+                else if (BrowserSilentUninstallArgs(exe, args) is { } browserArgs)
+                    args = browserArgs;
                 else if (!args.Contains("/S") && !args.Contains("/SILENT") && !args.Contains("/silent"))
                     args = "/S " + args;
 
