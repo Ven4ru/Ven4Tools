@@ -159,6 +159,71 @@ public sealed class AppUninstallCommandParseTests : IDisposable
         Assert.False(AppUninstallService.PreferDirectUninstall(fromMachineHive: false, false, nsis));
     }
 
+    // Greenshot, MPC-BE (стенд 18.10.2026): готовая тихая команда «unins000.exe /SILENT»
+    // всё равно открывала вопрос из сценария удаления.
+    [Fact]
+    public void InnoСГотовойТихойКомандой_ПолучаетVerysilentИУдаляетсяМимоWinget()
+    {
+        string exe = Touch("unins000.exe");
+        var (_, args, error) = AppUninstallService.ParseUninstallCommand($"\"{exe}\" /SILENT", quiet: true);
+        Assert.Null(error);
+        Assert.Equal("/VERYSILENT /SUPPRESSMSGBOXES /NORESTART", args);
+        Assert.True(AppUninstallService.PreferDirectUninstall(true, quiet: true, exe));
+    }
+
+    [Theory]
+    [InlineData("/SILENT", "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART")]
+    [InlineData("", "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART")]
+    [InlineData("/silent /LOG=\"C:\\x.log\"", "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG=\"C:\\x.log\"")]
+    [InlineData("/VERYSILENT /NORESTART", "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART")]
+    public void InnoVerySilentArgs_БезДублейИСохраняетПрочее(string input, string expected)
+        => Assert.Equal(expected, AppUninstallService.InnoVerySilentArgs(input));
+
+    // Chrome, Brave, Opera (стенд 18.10.2026): без этих ключей деинсталлятор спрашивает «Удалить?».
+    [Theory]
+    [InlineData(@"C:\Program Files\Google\Chrome\Application\150.0\Installer\setup.exe", "--uninstall --channel=stable --system-level --verbose-logging", "--uninstall --channel=stable --system-level --verbose-logging --force-uninstall")]
+    [InlineData(@"C:\Program Files\Opera\launcher.exe", "--uninstall", "--uninstall --runimmediately --deleteuserprofile=0")]
+    [InlineData(@"C:\Program Files\Opera\launcher.exe", "--uninstall --runimmediately", "--uninstall --runimmediately --deleteuserprofile=0")]
+    [InlineData(@"C:\Program Files\Opera GX\opera.exe", "/uninstall", "--uninstall --runimmediately --deleteuserprofile=0")]
+    public void Браузеры_ПолучаютКлючиТихогоУдаления(string exe, string args, string expected)
+        => Assert.Equal(expected, AppUninstallService.BrowserSilentUninstallArgs(exe, args));
+
+    [Theory]
+    [InlineData(@"C:\Program Files\App\setup.exe", "/remove")]
+    [InlineData(@"C:\Program Files\Game\launcher.exe", "--uninstall")]
+    public void НеБраузеры_БезКлючейБраузера(string exe, string args)
+        => Assert.Null(AppUninstallService.BrowserSilentUninstallArgs(exe, args));
+
+    [Fact]
+    public void Chromium_УдаляетсяМимоWinget()
+        => Assert.True(AppUninstallService.PreferDirectUninstall(true, false, Touch("setup.exe"), "--uninstall --system-level"));
+
+    [Theory]
+    [InlineData(@"C:\Program Files\Greenshot\Greenshot.exe", @"C:\Program Files\Greenshot", true)]
+    [InlineData(@"C:\Program Files\Greenshot\bin\x.exe", @"C:\Program Files\Greenshot\", true)]
+    [InlineData(@"C:\Program Files\GreenshotPlus\x.exe", @"C:\Program Files\Greenshot", false)]
+    [InlineData(null, @"C:\Program Files\Greenshot", false)]
+    public void ПроцессВПапкеПрограммы(string? file, string dir, bool expected)
+        => Assert.Equal(expected, AppUninstallService.IsUnderDir(file, dir));
+
+    // Перед удалением закрываются процессы из папки программы — общие папки для этого не годятся.
+    [Fact]
+    public void ОбщиеПапки_НеСчитаютсяПапкойПрограммы()
+    {
+        Assert.False(AppUninstallService.IsProgramOwnDir(null));
+        Assert.False(AppUninstallService.IsProgramOwnDir(Path.GetPathRoot(_dir)));
+        Assert.False(AppUninstallService.IsProgramOwnDir(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)));
+        Assert.False(AppUninstallService.IsProgramOwnDir(Environment.GetFolderPath(Environment.SpecialFolder.Windows)));
+        Assert.False(AppUninstallService.IsProgramOwnDir(Environment.GetFolderPath(Environment.SpecialFolder.System)));
+        Assert.False(AppUninstallService.IsProgramOwnDir(Path.GetTempPath()));
+        Assert.False(AppUninstallService.IsProgramOwnDir(Path.Combine(_dir, "нет-такой")));
+        Assert.False(AppUninstallService.IsProgramOwnDir(Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles)));
+        Assert.False(AppUninstallService.IsProgramOwnDir(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)));
+        Assert.False(AppUninstallService.IsProgramOwnDir("."));
+        Assert.False(AppUninstallService.IsProgramOwnDir("App"));
+        Assert.True(AppUninstallService.IsProgramOwnDir(_dir));
+    }
+
     [Fact]
     public void Msi_ОстаётсяЗаWinget()
         => Assert.False(AppUninstallService.PreferDirectUninstall(true, false, TrustedExecutablePaths.MsiExec));

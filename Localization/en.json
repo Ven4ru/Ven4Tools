@@ -796,6 +796,14 @@
     "t": "[AppUninstallService] Uninstall command for “{0}” from the user profile started without administrator rights"
   },
   {
+    "s": "[AppUninstallService] Не удалось закрыть «{0}» перед удалением: {1}",
+    "t": "[AppUninstallService] Could not close \"{0}\" before uninstalling: {1}"
+  },
+  {
+    "s": "[AppUninstallService] Перед удалением «{0}» закрыто процессов программы: {1} (принудительно: {2})",
+    "t": "[AppUninstallService] Closed program processes before uninstalling \"{0}\": {1} (forcibly: {2})"
+  },
+  {
     "s": "[AppUninstallService] ⚠ Команда деинсталляции для «{0}» найдена только в HKCU — запуск отменён: этот куст реестра доступен на запись непривилегированному процессу, а клиент запустил бы её с правами администратора",
     "t": "[AppUninstallService] ⚠ Uninstall command for “{0}” was found only in HKCU — launch canceled: this registry hive is writable by an unprivileged process, and the client would run the command with administrator rights"
   },
