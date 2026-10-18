@@ -91,7 +91,7 @@ public sealed class AppRowViewModelRegionTests
     [Fact]
     public void RegionBlocked_НеПерекрашиваетНазваниеПриложения()
     {
-        // Правка пользователя и буква спеки: маркер региона — отдельный значок 🌍
+        // Маркер региона — отдельный значок 🌍
         // рядом с названием, а НЕ ещё один цвет названия. Название остаётся того же
         // цвета, что у Unknown/Checking, и заведомо не совпадает с «недоступно».
         var regionBlocked = RowWithNote(null);
@@ -110,7 +110,7 @@ public sealed class AppRowViewModelRegionTests
     [Fact]
     public void Available_НеПоказываетСноскуДажеЕслиОнаЕсть()
     {
-        // Главный принцип спеки: вердикт даёт замер, успех гасит сноску.
+        // Главный принцип: вердикт даёт замер, успех гасит сноску.
         var row = RowWithNote("издатель ограничил загрузку для вашего региона");
         row.Availability = AppRowViewModel.RowAvailability.Available;
 
