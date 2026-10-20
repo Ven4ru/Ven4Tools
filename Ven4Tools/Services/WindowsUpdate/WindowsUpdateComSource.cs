@@ -30,10 +30,17 @@ namespace Ven4Tools.Services.WindowsUpdate
         // Критерий поиска: все не установленные и не скрытые пользователем обновления
         // всех типов (Software покрывает кумулятивные/security/driver/feature — драйверы
         // в API относятся к Type='Software' с категорией "Drivers", отдельного Type для
-        // них нет). IsHidden=0 — не показываем то, что пользователь явно скрыл в прошлом
-        // через штатный Windows Update (у нас нет своего UI для "скрыть", поэтому уважаем
-        // выбор, сделанный там).
+        // них нет). IsHidden=0 — не показываем то, что пользователь скрыл: кнопкой
+        // «Скрыть выбранные» на этой вкладке или в штатном Windows Update. Скрытые
+        // ищутся отдельно (HiddenSearchCriteria) для списка «Скрытые обновления».
         private const string SearchCriteria = "IsInstalled=0 and IsHidden=0";
+
+        // Скрытые и ещё не установленные — то, что можно вернуть кнопкой «Вернуть».
+        private const string HiddenSearchCriteria = "IsInstalled=0 and IsHidden=1";
+
+        // Для скрытия/возврата нужен патч в любом из двух состояний: скрывают видимые,
+        // возвращают скрытые, а выбор мог быть сделан до того, как состояние сменилось.
+        private const string AnyNotInstalledCriteria = "IsInstalled=0";
 
         public bool IsServiceRunning()
         {
@@ -134,7 +141,13 @@ namespace Ven4Tools.Services.WindowsUpdate
             }
         }
 
-        public Task<WindowsUpdateSearchResult> SearchAsync(CancellationToken ct)
+        public Task<WindowsUpdateSearchResult> SearchAsync(CancellationToken ct) =>
+            SearchByCriteriaAsync(SearchCriteria, ct);
+
+        public Task<WindowsUpdateSearchResult> SearchHiddenAsync(CancellationToken ct) =>
+            SearchByCriteriaAsync(HiddenSearchCriteria, ct);
+
+        private static Task<WindowsUpdateSearchResult> SearchByCriteriaAsync(string criteria, CancellationToken ct)
         {
             // COM-объекты Windows Update Agent требуют MTA-апартамент для надёжной
             // работы Search() в фоновом потоке — обычные потоки пула задач (Task.Run)
@@ -153,7 +166,7 @@ namespace Ven4Tools.Services.WindowsUpdate
                     searcherCom = searcher;
 
                     ct.ThrowIfCancellationRequested();
-                    dynamic result = searcher.Search(SearchCriteria);
+                    dynamic result = searcher.Search(criteria);
                     resultCom = result;
 
                     int resultCode = (int)result.ResultCode;
@@ -195,6 +208,108 @@ namespace Ven4Tools.Services.WindowsUpdate
                 {
                     // От дочерних к родительским: коллекция получена из результата,
                     // результат — из поисковика, поисковик — из сессии.
+                    ReleaseCom(updatesCom);
+                    ReleaseCom(resultCom);
+                    ReleaseCom(searcherCom);
+                    ReleaseCom(sessionCom);
+                }
+            }, ct);
+        }
+
+        public Task<WindowsUpdateHideOutcome> SetHiddenAsync(
+            IReadOnlyList<string> updateIds,
+            bool hidden,
+            CancellationToken ct)
+        {
+            return Task.Run(() =>
+            {
+                object? sessionCom = null;
+                object? searcherCom = null;
+                object? resultCom = null;
+                object? updatesCom = null;
+                try
+                {
+                    sessionCom = CreateComObject("Microsoft.Update.Session");
+                    dynamic session = sessionCom;
+                    dynamic searcher = session.CreateUpdateSearcher();
+                    searcherCom = searcher;
+
+                    ct.ThrowIfCancellationRequested();
+                    // Повторный поиск, а не доверие списку ID: тот же принцип, что у
+                    // установки (см. RunDownloadPhase).
+                    dynamic result = searcher.Search(AnyNotInstalledCriteria);
+                    resultCom = result;
+                    int resultCode = (int)result.ResultCode;
+                    if (resultCode is 4 or 5)
+                        return new WindowsUpdateHideOutcome
+                        {
+                            ErrorMessage = $"Поиск обновлений завершился неудачно (код {resultCode})."
+                        };
+
+                    dynamic updates = result.Updates;
+                    updatesCom = updates;
+                    int count = (int)updates.Count;
+                    var outcomes = new List<WindowsUpdateItemOutcome>();
+                    var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        dynamic u = updates.Item(i);
+                        try
+                        {
+                            string id = ReadUpdateId(u);
+                            if (!updateIds.Contains(id) || !seen.Add(id)) continue;
+                            string title = (string)u.Title;
+                            try
+                            {
+                                // Сеттер IsHidden пишет в базу агента обновлений на уровне
+                                // машины — нужны права администратора (клиент ими обладает).
+                                u.IsHidden = hidden;
+                                outcomes.Add(new WindowsUpdateItemOutcome { UpdateId = id, Title = title, Success = true });
+                            }
+                            catch (Exception ex)
+                            {
+                                AppLogger.Write($"[WindowsUpdateComSource] IsHidden={hidden} для «{title}»: {ex.Message}");
+                                outcomes.Add(new WindowsUpdateItemOutcome
+                                {
+                                    UpdateId = id,
+                                    Title = title,
+                                    Success = false,
+                                    ErrorMessage = ex is COMException
+                                        ? WindowsUpdateErrorMapper.MapHResult(ex.HResult)
+                                        : ex.Message
+                                });
+                            }
+                        }
+                        finally { ReleaseCom((object)u); }
+                    }
+
+                    // Выбранные, но уже не найденные патчи (установились, отозваны
+                    // сервером) — честно называем, а не молча пропускаем.
+                    foreach (var id in updateIds.Where(id => !seen.Contains(id)).Distinct())
+                        outcomes.Add(new WindowsUpdateItemOutcome
+                        {
+                            UpdateId = id,
+                            Title = id,
+                            Success = false,
+                            ErrorMessage = "Обновление больше не предлагается — обновите список."
+                        });
+
+                    return new WindowsUpdateHideOutcome { Items = outcomes };
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex) when (TryGetHResult(ex, out int hr))
+                {
+                    return new WindowsUpdateHideOutcome { ErrorMessage = WindowsUpdateErrorMapper.MapHResult(hr) };
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Write($"[WindowsUpdateComSource] SetHiddenAsync: {ex}");
+                    return new WindowsUpdateHideOutcome { ErrorMessage = $"Не удалось изменить видимость обновлений: {ex.Message}" };
+                }
+                finally
+                {
                     ReleaseCom(updatesCom);
                     ReleaseCom(resultCom);
                     ReleaseCom(searcherCom);

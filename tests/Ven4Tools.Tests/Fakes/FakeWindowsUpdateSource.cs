@@ -71,6 +71,41 @@ public sealed class FakeWindowsUpdateSource : IWindowsUpdateSource
         return Task.FromResult(WindowsUpdateSearchResult.Ok(Items));
     }
 
+    // ── Скрытые обновления ────────────────────────────────────────────────────
+    public List<WindowsUpdateItem> HiddenItems { get; } = new();
+    public List<(string Id, bool Hidden)> SetHiddenCalls { get; } = new();
+    public HashSet<string> ItemIdsThatFailHide { get; } = new();
+
+    public Task<WindowsUpdateSearchResult> SearchHiddenAsync(CancellationToken ct) =>
+        Task.FromResult(WindowsUpdateSearchResult.Ok(HiddenItems.ToList()));
+
+    public Task<WindowsUpdateHideOutcome> SetHiddenAsync(
+        IReadOnlyList<string> updateIds, bool hidden, CancellationToken ct)
+    {
+        var outcomes = new List<WindowsUpdateItemOutcome>();
+        foreach (var id in updateIds)
+        {
+            SetHiddenCalls.Add((id, hidden));
+            var from = hidden ? Items : HiddenItems;
+            var to = hidden ? HiddenItems : Items;
+            var item = from.FirstOrDefault(i => i.UpdateId == id);
+            bool ok = item != null && !ItemIdsThatFailHide.Contains(id);
+            if (ok)
+            {
+                from.Remove(item!);
+                to.Add(item!);
+            }
+            outcomes.Add(new WindowsUpdateItemOutcome
+            {
+                UpdateId = id,
+                Title = item?.Title ?? id,
+                Success = ok,
+                ErrorMessage = ok ? "" : "тестовая ошибка скрытия"
+            });
+        }
+        return Task.FromResult(new WindowsUpdateHideOutcome { Items = outcomes });
+    }
+
     public Task<WindowsUpdateInstallOutcome> InstallAsync(
         IReadOnlyList<string> updateIds,
         IProgress<WindowsUpdateProgress> progress,

@@ -18,9 +18,7 @@
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -38,67 +36,256 @@
                     Command="{Binding CheckCommand}"/>
         </Grid>
 
-        <TextBlock Grid.Row="1" x:Name="txtStatus" Text="{Binding StatusText}" TextWrapping="Wrap"
-                   Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
+        <TabControl x:Name="wuSections" Grid.Row="1" SelectedIndex="{Binding SelectedSectionIndex, Mode=TwoWay}">
+            <TabItem Header="Обновления">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" x:Name="txtStatus" Text="{Binding StatusText}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
 
-        <Grid Grid.Row="2">
-            <TreeView x:Name="treeUpdates"
-                      ItemsSource="{Binding Tree}"
-                      Background="{DynamicResource CardBackground}"
-                      BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                    <Grid Grid.Row="1">
+                        <TreeView x:Name="treeUpdates"
+                                  ItemsSource="{Binding Tree}"
+                                  Background="{DynamicResource CardBackground}"
+                                  BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
 
-            <!-- Пустое состояние: показывается, когда дерево обновлений пусто (служба
-                 недоступна / ещё не проверяли / ошибка / всё установлено). Иконка —
-                 тот же Segoe Fluent Icons, что уже используют кнопки/навигация в проекте.
-                 IsHitTestVisible перенесён с панели на сами надписи: панель обязана
-                 пропускать клики мимо себя к дереву, но кнопка перехода к диагностике
-                 внутри неё должна нажиматься. -->
-            <StackPanel x:Name="pnlUpdatesEmpty"
-                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="&#xE72E;" FontFamily="Segoe Fluent Icons" FontSize="40"
-                           IsHitTestVisible="False"
-                           Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center"/>
-                <TextBlock x:Name="txtUpdatesEmptyTitle" Text="{Binding EmptyStateTitle}"
-                           FontSize="16" FontWeight="SemiBold" IsHitTestVisible="False"
-                           Foreground="{DynamicResource TextPrimary}"
-                           HorizontalAlignment="Center" Margin="0,12,0,0"/>
-                <TextBlock x:Name="txtUpdatesEmptySubtitle"
-                           Text="{Binding EmptyStateSubtitle}"
-                           FontSize="12" Foreground="{DynamicResource TextSecondary}"
-                           IsHitTestVisible="False"
-                           HorizontalAlignment="Center" Margin="0,4,0,0"
-                           TextWrapping="Wrap" MaxWidth="320" TextAlignment="Center"/>
-                <!-- Появляется только на проблемных исходах проверки (служба недоступна,
-                     ошибка получения списка) — на исправной системе без обновлений
-                     вопрос «почему не ставятся» не имеет смысла. -->
-                <Button x:Name="btnOpenDiagnostics" Content="Почему обновления не ставятся? → Диагностика"
-                        ToolTip="Откроет вкладку «Диагностика» с журналом ошибок Windows Update за 7 дней и очисткой кэша обновлений."
-                        Height="34" Padding="16,0" Margin="0,16,0,0"
-                        HorizontalAlignment="Center"
-                        Visibility="{Binding ShowOpenDiagnosticsButton, Converter={StaticResource BoolToVis}}"
-                        Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
-                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                        Command="{Binding OpenDiagnosticsCommand}"/>
-            </StackPanel>
-        </Grid>
+                        <!-- Пустое состояние: показывается, когда дерево обновлений пусто (служба
+                             недоступна / ещё не проверяли / ошибка / всё установлено). Иконка —
+                             тот же Segoe Fluent Icons, что уже используют кнопки/навигация в проекте.
+                             IsHitTestVisible перенесён с панели на сами надписи: панель обязана
+                             пропускать клики мимо себя к дереву, но кнопка перехода к диагностике
+                             внутри неё должна нажиматься. -->
+                        <StackPanel x:Name="pnlUpdatesEmpty"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="&#xE72E;" FontFamily="Segoe Fluent Icons" FontSize="40"
+                                       IsHitTestVisible="False"
+                                       Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="txtUpdatesEmptyTitle" Text="{Binding EmptyStateTitle}"
+                                       FontSize="16" FontWeight="SemiBold" IsHitTestVisible="False"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                            <TextBlock x:Name="txtUpdatesEmptySubtitle"
+                                       Text="{Binding EmptyStateSubtitle}"
+                                       FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                                       IsHitTestVisible="False"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"
+                                       TextWrapping="Wrap" MaxWidth="320" TextAlignment="Center"/>
+                            <!-- Появляется только на проблемных исходах проверки (служба недоступна,
+                                 ошибка получения списка) — на исправной системе без обновлений
+                                 вопрос «почему не ставятся» не имеет смысла. -->
+                            <Button x:Name="btnOpenDiagnostics" Content="Почему обновления не ставятся? → Диагностика"
+                                    ToolTip="Откроет вкладку «Диагностика» с журналом ошибок Windows Update за 7 дней и очисткой кэша обновлений."
+                                    Height="34" Padding="16,0" Margin="0,16,0,0"
+                                    HorizontalAlignment="Center"
+                                    Visibility="{Binding ShowOpenDiagnosticsButton, Converter={StaticResource BoolToVis}}"
+                                    Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
+                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                    Command="{Binding OpenDiagnosticsCommand}"/>
+                        </StackPanel>
+                    </Grid>
 
-        <!-- Footer: выбор + установка -->
-        <Border Grid.Row="3" Margin="0,12,0,0" Padding="12,8" Background="{DynamicResource CardBackground}"
-                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock x:Name="txtSelectionSummary" Grid.Column="0" Text="{Binding SelectionSummaryText}"
-                       VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
-            <Button x:Name="btnInstall" Grid.Column="1" Content="Установить выбранные" Height="38"
-                    Padding="24,0" IsEnabled="{Binding IsInstallEnabled}"
-                    ToolTip="Скачает и установит отмеченные обновления Windows. После установки может потребоваться перезагрузка."
-                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold"
-                    BorderThickness="0" Command="{Binding InstallCommand}"/>
-        </Grid>
-        </Border>
+                    <!-- Footer: выбор + установка -->
+                    <Border Grid.Row="2" Margin="0,12,0,0" Padding="12,8" Background="{DynamicResource CardBackground}"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="txtSelectionSummary" Grid.Column="0" Text="{Binding SelectionSummaryText}"
+                                   VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
+                        <Button x:Name="btnHideSelected" Grid.Column="1" Content="Скрыть выбранные" Height="38"
+                                Padding="16,0" Margin="0,0,10,0" IsEnabled="{Binding IsHideEnabled}"
+                                ToolTip="После подтверждения Windows Update перестанет предлагать и сам ставить отмеченные обновления. Помогает, когда он возвращает старый драйвер поверх нового. Вернуть — в разделе «Скрытые»."
+                                Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                Command="{Binding HideSelectedCommand}"/>
+                        <Button x:Name="btnInstall" Grid.Column="2" Content="Установить выбранные" Height="38"
+                                Padding="24,0" IsEnabled="{Binding IsInstallEnabled}"
+                                ToolTip="Скачает и установит отмеченные обновления Windows. После установки может потребоваться перезагрузка."
+                                Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold"
+                                BorderThickness="0" Command="{Binding InstallCommand}"/>
+                    </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Скрытые обновления: IsHidden=1, возврат кнопкой «Вернуть выбранные» -->
+            <TabItem Header="Скрытые">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock x:Name="txtHiddenStatus" Text="{Binding HiddenStatusText}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
+                    <ListBox x:Name="lstHiddenUpdates" Grid.Row="1" ItemsSource="{Binding HiddenUpdates}"
+                             Background="{DynamicResource CardBackground}"
+                             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding DisplayText}" IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Border Grid.Row="2" Margin="0,12,0,0" Padding="12,8" Background="{DynamicResource CardBackground}"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Скрытые обновления Windows Update не предлагает и сам не ставит."
+                                       TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
+                            <Button x:Name="btnRefreshHidden" Grid.Column="1" Content="Обновить список" Height="38"
+                                    Padding="16,0" Margin="10,0,10,0"
+                                    ToolTip="Заново найдёт скрытые и ещё не установленные обновления. Ничего не меняет."
+                                    Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
+                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                    Command="{Binding RefreshHiddenCommand}"/>
+                            <Button x:Name="btnUnhide" Grid.Column="2" Content="Вернуть выбранные" Height="38"
+                                    Padding="24,0" IsEnabled="{Binding IsUnhideEnabled}"
+                                    ToolTip="После подтверждения Windows Update снова будет предлагать отмеченные обновления и сможет поставить их сам."
+                                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold"
+                                    BorderThickness="0" Command="{Binding UnhideSelectedCommand}"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Драйверы через Windows Update и компоненты Windows (.NET Framework 3.5) -->
+            <TabItem Header="Драйверы и компоненты">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,12,8,8">
+                        <GroupBox Header="🚫 Драйверы через Windows Update" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <CheckBox x:Name="chkBlockWuDrivers" Content="Не получать драйверы через Windows Update"
+                                          IsChecked="{Binding IsDriverBlockOn, Mode=OneWay}"
+                                          Command="{Binding ToggleDriverBlockCommand}"
+                                          ToolTip="После подтверждения включит политику ExcludeWUDriversInQualityUpdate. Выключение вернёт прежнее значение."/>
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,0"
+                                           Text="Помогает, когда Windows Update возвращает старый драйвер видеокарты поверх нового. Политика снижает вероятность этого, но работает не во всех случаях: драйверы для нового оборудования Windows может поставить и сама. Чтобы убрать один конкретный драйвер, надёжнее скрыть его в списке обновлений."/>
+                                <TextBlock x:Name="txtDriverBlockStatus" Text="{Binding DriverBlockStatusText}" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextPrimary}" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="🧩 Компоненты Windows: .NET Framework 3.5" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                                           Text="Нужен 1С, старым играм и программам. Включается штатно через DISM: файлы компонента Windows берёт из Центра обновления или с установочной флешки/ISO."/>
+                                <Grid Margin="0,10,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Состояние:" Foreground="{DynamicResource TextSecondary}" Margin="0,0,8,0"/>
+                                    <TextBlock x:Name="txtNetFxState" Grid.Column="1" Text="{Binding NetFxStateText}" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextPrimary}"/>
+                                </Grid>
+                                <WrapPanel Margin="0,10,0,0">
+                                    <Button x:Name="btnEnableNetFx" Content="Включить" Height="32" Padding="16,0" Margin="0,0,10,6"
+                                            IsEnabled="{Binding IsSystemTaskIdle}"
+                                            Visibility="{Binding CanEnableNetFx, Converter={StaticResource BoolToVis}}"
+                                            ToolTip="После подтверждения включит .NET Framework 3.5 через DISM, скачав файлы через Центр обновления. Может понадобиться перезагрузка."
+                                            Command="{Binding EnableNetFxCommand}"/>
+                                    <Button x:Name="btnDisableNetFx" Content="Выключить" Height="32" Padding="16,0" Margin="0,0,10,6"
+                                            IsEnabled="{Binding IsSystemTaskIdle}"
+                                            Visibility="{Binding CanDisableNetFx, Converter={StaticResource BoolToVis}}"
+                                            ToolTip="После подтверждения выключит .NET Framework 3.5 через DISM. Программы, которым он нужен, перестанут запускаться."
+                                            Command="{Binding DisableNetFxCommand}"/>
+                                    <Button x:Name="btnCheckNetFx" Content="Проверить состояние" Height="32" Padding="16,0" Margin="0,0,10,6"
+                                            IsEnabled="{Binding IsSystemTaskIdle}"
+                                            ToolTip="Спросит у DISM, включён ли компонент. Ничего не меняет."
+                                            Command="{Binding CheckNetFxCommand}"/>
+                                </WrapPanel>
+                                <TextBlock TextWrapping="Wrap" Margin="0,6,0,0" Foreground="{DynamicResource TextSecondary}"
+                                           Text="Нет интернета или Центр обновления выдаёт ошибку? Укажите установочный носитель той же версии Windows:"/>
+                                <Border Visibility="{Binding ShowNetFxSourceHint, Converter={StaticResource BoolToVis}}"
+                                        Background="{DynamicResource AccentSoftBackground}" BorderBrush="{DynamicResource AccentSoftBorder}"
+                                        BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,6,0,0">
+                                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}"
+                                               Text="Через Центр обновления не получилось — попробуйте установочную флешку или ISO."/>
+                                </Border>
+                                <WrapPanel Margin="0,8,0,0">
+                                    <Button x:Name="btnNetFxFromFolder" Content="Указать флешку или папку…" Height="32" Padding="16,0" Margin="0,0,10,6"
+                                            IsEnabled="{Binding IsSystemTaskIdle}"
+                                            ToolTip="Выберите установочную флешку Windows или папку с sources\sxs. После подтверждения .NET Framework 3.5 включится из неё без Центра обновления."
+                                            Command="{Binding EnableNetFxFromFolderCommand}"/>
+                                    <Button x:Name="btnNetFxFromIso" Content="Указать ISO-образ…" Height="32" Padding="16,0" Margin="0,0,10,6"
+                                            IsEnabled="{Binding IsSystemTaskIdle}"
+                                            ToolTip="Выберите ISO-образ установки Windows. Образ подключится штатно, .NET Framework 3.5 включится из него, затем образ отключится."
+                                            Command="{Binding EnableNetFxFromIsoCommand}"/>
+                                </WrapPanel>
+                                <StackPanel Visibility="{Binding IsNetFxRunning, Converter={StaticResource BoolToVis}}" Margin="0,8,0,0">
+                                    <ProgressBar x:Name="prgNetFx" Height="8" Minimum="0" Maximum="100" Value="{Binding NetFxProgress}"/>
+                                    <Button x:Name="btnCancelNetFx" Content="Прервать" Height="30" Padding="16,0" Margin="0,8,0,0"
+                                            HorizontalAlignment="Left"
+                                            ToolTip="После подтверждения остановит DISM. Прерванная на середине операция может оставить компонент в промежуточном состоянии до перезагрузки."
+                                            Command="{Binding CancelSystemTaskCommand}"/>
+                                </StackPanel>
+                                <TextBlock x:Name="txtNetFxStatus" Text="{Binding NetFxStatusText}" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextPrimary}" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Ремонт: DISM RestoreHealth + sfc /scannow, сброс Центра обновления -->
+            <TabItem Header="Ремонт">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,12,8,8">
+                        <GroupBox Header="🩹 Проверить системные файлы" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                                           Text="Сначала DISM восстанавливает хранилище компонентов (может скачать файлы через Центр обновления), затем sfc /scannow проверяет системные файлы и заменяет повреждённые. Обычно 10–30 минут, иногда дольше. Помогает не всегда."/>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button x:Name="btnSystemFileCheck" Content="Проверить системные файлы" Height="32" Padding="16,0" Margin="0,0,10,0"
+                                            IsEnabled="{Binding IsSystemTaskIdle}"
+                                            ToolTip="После подтверждения запустит DISM /RestoreHealth и sfc /scannow, покажет прогресс и итог по-русски."
+                                            Command="{Binding RunSystemFileCheckCommand}"/>
+                                    <Button x:Name="btnOpenRepairLogs" Content="Открыть папку журналов" Height="32" Padding="16,0"
+                                            ToolTip="Откроет C:\Windows\Logs\CBS — там журнал CBS.log с подробностями проверки."
+                                            Command="{Binding OpenRepairLogsCommand}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="🔄 Сбросить Центр обновления" Margin="0,0,0,15">
+                            <StackPanel Margin="10">
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                                           Text="Для случаев, когда обновления не скачиваются или не ставятся с одной и той же ошибкой. Останавливает службы обновления, переименовывает папки SoftwareDistribution и catroot2 в *.old-дата (не удаляет) и запускает службы снова. Журнал обновлений в параметрах Windows обнулится."/>
+                                <Button x:Name="btnResetWindowsUpdate" Content="Сбросить Центр обновления" Height="32" Padding="16,0"
+                                        Margin="0,10,0,0" HorizontalAlignment="Left"
+                                        IsEnabled="{Binding IsSystemTaskIdle}"
+                                        ToolTip="После подтверждения остановит службы wuauserv, bits, cryptsvc, msiserver, переименует SoftwareDistribution и catroot2 в *.old-дата и запустит службы. Если служба не остановится — ничего не переименует."
+                                        Command="{Binding ResetWindowsUpdateCommand}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <StackPanel Visibility="{Binding IsRepairRunning, Converter={StaticResource BoolToVis}}" Margin="0,0,0,8">
+                            <ProgressBar x:Name="prgRepair" Height="8" Minimum="0" Maximum="100" Value="{Binding RepairProgress}"
+                                         IsIndeterminate="{Binding IsRepairProgressIndeterminate}"/>
+                            <Button x:Name="btnCancelRepair" Content="Прервать" Height="30" Padding="16,0" Margin="0,8,0,0"
+                                    HorizontalAlignment="Left"
+                                    Visibility="{Binding IsSystemTaskCancellable, Converter={StaticResource BoolToVis}}"
+                                    ToolTip="После подтверждения остановит DISM или sfc. Уже исправленное останется исправленным."
+                                    Command="{Binding CancelSystemTaskCommand}"/>
+                        </StackPanel>
+                        <TextBlock x:Name="txtRepairStatus" Text="{Binding RepairStatusText}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextPrimary}"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
     </Grid>
 </UserControl>

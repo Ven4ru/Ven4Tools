@@ -17,7 +17,7 @@ namespace Ven4Tools.ViewModels
     /// Activation/Network/Office/Installed/Diagnostics/System) без изменения
     /// поведения.
     /// </summary>
-    public sealed class WindowsUpdateViewModel : ViewModelBase
+    public sealed partial class WindowsUpdateViewModel : ViewModelBase
     {
         /// <summary>Окно-владелец для EulaConfirmWindow/WindowsUpdateResultWindow.</summary>
         public Func<Window?>? OwnerWindowProvider { get; set; }
@@ -42,14 +42,49 @@ namespace Ven4Tools.ViewModels
         }
 
         // internal — seam для юнит-тестов: сервис поверх FakeWindowsUpdateSource
-        // вместо реального COM API Windows Update.
-        internal WindowsUpdateViewModel(WindowsUpdateService service)
+        // вместо реального COM API Windows Update. driverPolicy — тоже seam: в тестах
+        // политика драйверов работает с поддельным реестром.
+        internal WindowsUpdateViewModel(WindowsUpdateService service, WindowsUpdateDriverPolicy? driverPolicy = null)
         {
             _service = service;
-            CheckCommand = RelayCommand.FromAsync(_ => RunSearchAsync(), _ => !IsSearching && !IsInstalling);
+            _driverPolicy = driverPolicy ?? WindowsUpdateDriverPolicy.Default;
+            CheckCommand = RelayCommand.FromAsync(_ => RunSearchAsync(), _ => !IsSearching && !IsInstalling && !IsHiding);
             InstallCommand = RelayCommand.FromAsync(_ => RunInstallAsync());
             ToggleCategoryCommand = new RelayCommand(p => ToggleCategory(p as WindowsUpdateCategoryNode));
             OpenDiagnosticsCommand = new RelayCommand(_ => GoToDiagnostics?.Invoke());
+            InitHiddenCommands();
+            InitDriverCommands();
+            InitComponentCommands();
+            InitRepairCommands();
+        }
+
+        // ── Подразделы вкладки ───────────────────────────────────────────────────
+        // 0 — «Обновления», 1 — «Скрытые», 2 — «Драйверы и компоненты», 3 — «Ремонт».
+        // Разделы, которым нужен медленный запрос (поиск скрытых, DISM), загружаются
+        // при первом открытии, а не вместе с вкладкой.
+        public const int SectionUpdates = 0;
+        public const int SectionHidden = 1;
+        public const int SectionComponents = 2;
+        public const int SectionRepair = 3;
+
+        private int _selectedSectionIndex;
+        public int SelectedSectionIndex
+        {
+            get => _selectedSectionIndex;
+            set
+            {
+                if (!SetField(ref _selectedSectionIndex, value)) return;
+                OnSectionShown(value);
+            }
+        }
+
+        private void OnSectionShown(int section)
+        {
+            switch (section)
+            {
+                case SectionHidden: OnHiddenSectionShown(); break;
+                case SectionComponents: OnComponentsSectionShown(); break;
+            }
         }
 
         // ── Свойства ─────────────────────────────────────────────────────────────
@@ -105,6 +140,10 @@ namespace Ven4Tools.ViewModels
 
         public async Task InitializeAsync()
         {
+            // Политика драйверов — локальное чтение реестра, сеть не трогает: читается
+            // и в параноидальном режиме.
+            RefreshDriverPolicyState();
+
             if (ProfileService.Current.WindowsUpdateMode == "NotSet")
             {
                 // Модального вопроса при первом открытии вкладки нет намеренно: режим
@@ -151,6 +190,7 @@ namespace Ven4Tools.ViewModels
             IsSearching = true;
             StatusText = "⏳ Проверка обновлений...";
             Tree = Array.Empty<WindowsUpdateCategoryNode>();
+            IsHideEnabled = false;
             // Идёт проверка — это не «пусто», а «загрузка»; не показываем пустое
             // состояние поверх дерева, пока не появится финальный результат.
             ShowEmptyState = false;
@@ -214,6 +254,10 @@ namespace Ven4Tools.ViewModels
 
                 // Значок-счётчик в боковой панели — тем же числом, что видит пользователь.
                 WindowsUpdateBackgroundService.ReportSearchResult(result.Items.Count);
+                // Найденный список — основа для скрытия: скрытые патчи убираются из
+                // дерева на месте, без повторного (долгого) поиска.
+                _foundItems = result.Items.ToList();
+                _hasSearchResult = true;
 
                 if (result.Items.Count == 0)
                 {
@@ -292,7 +336,10 @@ namespace Ven4Tools.ViewModels
             var selectedIds = WindowsUpdateCategoryTreeBuilder.GetSelectedUpdateIds(Tree);
             long totalBytes = WindowsUpdateCategoryTreeBuilder.GetSelectedTotalSizeBytes(Tree);
             SelectionSummaryText = $"Выбрано: {selectedIds.Count} патчей, {SizeFormatter.BytesToMB(totalBytes)}";
-            IsInstallEnabled = selectedIds.Count > 0 && !WindowsUpdateService.IsBusy;
+            // Пока идёт DISM/SFC/сброс Центра обновления, патчи не ставятся: сброс
+            // останавливает службы обновления, а DISM работает с тем же хранилищем компонентов.
+            IsInstallEnabled = selectedIds.Count > 0 && !WindowsUpdateService.IsBusy && !IsSystemTaskRunning && !IsHiding;
+            IsHideEnabled = selectedIds.Count > 0 && !IsInstalling && !IsHiding && !IsSearching;
         }
 
         // ── Дерево категорий ─────────────────────────────────────────────────────
@@ -346,6 +393,7 @@ namespace Ven4Tools.ViewModels
 
             IsInstalling = true;
             IsInstallEnabled = false;
+            IsHideEnabled = false;
             var progress = new Progress<WindowsUpdateProgress>(p =>
             {
                 StatusText = $"{p.Phase}: {p.CurrentTitle} ({p.CompletedCount}/{p.TotalCount}, {p.PercentComplete}%)";
