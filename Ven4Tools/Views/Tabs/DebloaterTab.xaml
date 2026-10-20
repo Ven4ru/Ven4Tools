@@ -22,7 +22,7 @@
                            Foreground="{DynamicResource TextPrimary}"/>
                 <TextBlock TextWrapping="Wrap" Margin="0,4,0,0"
                            Foreground="{DynamicResource TextSecondary}" FontSize="12">
-                    Удаление предустановленного мусора и настройка конфиденциальности.
+                    Удаление предустановленного мусора, рекламы и навязанного ИИ, настройка конфиденциальности.
                     Изменённые настройки возвращаются кнопкой «Вернуть», удалённые приложения — из Microsoft Store.
                 </TextBlock>
             </StackPanel>
@@ -62,6 +62,11 @@
         <StackPanel Orientation="Horizontal">
             <RadioButton x:Name="rbAll"      Content="Все"               GroupName="DebloatFilter"
                          IsChecked="True"    Margin="0,0,14,0"
+                         Foreground="{DynamicResource TextPrimary}"
+                         Checked="FilterChanged"/>
+            <RadioButton x:Name="rbAds"      Content="📢 Реклама и ИИ"  GroupName="DebloatFilter"
+                         Margin="0,0,14,0"
+                         ToolTip="Реклама и предложения в «Пуске», поиске, Проводнике и на экране блокировки, виджеты, Copilot, Recall, OneDrive."
                          Foreground="{DynamicResource TextPrimary}"
                          Checked="FilterChanged"/>
             <RadioButton x:Name="rbApps"     Content="📦 Приложения"    GroupName="DebloatFilter"
@@ -110,7 +115,7 @@
                                     <Button Grid.Column="3" Content="↩ Вернуть" Width="96" Height="26" Margin="8,0,0,0"
                                             FontSize="11" VerticalAlignment="Center"
                                             AutomationProperties.AutomationId="{Binding Id, StringFormat='btnUndoTweak_{0}'}"
-                                            ToolTip="Вернёт значения реестра и режим запуска службы, которые были до применения этого твика."
+                                            ToolTip="Вернёт то, что было до применения этого твика: значения реестра и режим запуска службы. OneDrive — установит заново."
                                             Visibility="{Binding CanUndo, Converter={StaticResource BoolToVisUndo}}"
                                             IsEnabled="{Binding DataContext.ApplyEnabled, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             Command="{Binding DataContext.UndoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
