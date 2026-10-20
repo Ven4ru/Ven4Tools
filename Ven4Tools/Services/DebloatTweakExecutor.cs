@@ -334,8 +334,15 @@ namespace Ven4Tools.Services
                     if (ExplorerRunningInSession(session)) return true;
                 }
 
-                AppLogger.Write("[Деблоатер] Проводник не перезапустился сам за 10 с — запускаю вручную");
-                Process.Start(new ProcessStartInfo(TrustedExecutablePaths.ExplorerExe) { UseShellExecute = false })?.Dispose();
+                // Без прав администратора: runas с базовым уровнем доверия, иначе Проводник
+                // унаследовал бы повышенный токен клиента вместе со всем, что из него запустят.
+                AppLogger.Write("[Деблоатер] Проводник не перезапустился сам за 10 с — запускаю вручную без прав администратора");
+                var runas = System.IO.Path.Combine(Environment.SystemDirectory, "runas.exe");
+                Process.Start(new ProcessStartInfo(runas, $"/trustlevel:0x20000 \"{TrustedExecutablePaths.ExplorerExe}\"")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                })?.Dispose();
                 return true;
             }
             catch (Exception ex)
