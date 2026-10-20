@@ -49,6 +49,9 @@ namespace Ven4Tools.Services
         public required RebootCategory Category { get; init; }
         public required string Summary { get; init; }
         public required string RawDetails { get; init; }
+
+        /// <summary>Подробности синего экрана (только для <see cref="RebootCategory.Bsod"/>): код, параметры, дамп.</summary>
+        public Diagnostics.BugCheckDetails? BugCheck { get; init; }
     }
 
     internal enum DiskHealth { Healthy, Warning, Unhealthy, Unknown }
@@ -94,6 +97,9 @@ namespace Ven4Tools.Services
                 var power41  = QueryEvents("System", "Microsoft-Windows-Kernel-Power", 41, cutoff);
                 var boot29   = QueryEvents("System", "Microsoft-Windows-Kernel-Boot", 29, cutoff);
                 var clean6006 = QueryEvents("System", "EventLog", 6006, cutoff);
+                // Отчёты о синем экране (событие 1001): параметры 1–4 и путь к дампу.
+                var werReports = Diagnostics.BugCheckService.GetWerReports(cutoff);
+                var usedReports = new HashSet<Diagnostics.WerBugCheckReport>();
 
                 var results = new List<RebootDiagnosis>();
                 foreach (var p41 in power41)
@@ -104,6 +110,11 @@ namespace Ven4Tools.Services
                     uint bugcheckRaw = 0;
                     if (p41.Data.TryGetValue("BugcheckCode", out var codeStr))
                         uint.TryParse(codeStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out bugcheckRaw);
+                    // Отчёт 1001 рядом по времени. Бывает, что событие 41 записано без кода
+                    // (BugcheckCode=0), а отчёт о синем экране есть, — тогда код берём из
+                    // отчёта: иначе один сбой показался бы дважды, как «потеря питания» и как BSOD.
+                    var report = Diagnostics.BugCheckService.FindMatchingReport(p41.TimeCreated, bugcheckRaw, werReports);
+                    if (bugcheckRaw == 0 && report != null) bugcheckRaw = report.Code;
                     int bugcheckCode = unchecked((int)bugcheckRaw);
 
                     var evt = new RebootEvent
@@ -119,6 +130,21 @@ namespace Ven4Tools.Services
                     var category = RebootClassifier.Classify(evt);
                     if (category == null) continue;
 
+                    Diagnostics.BugCheckDetails? bugCheck = null;
+                    if (category == RebootCategory.Bsod)
+                    {
+                        if (report != null) usedReports.Add(report);
+                        var kpParams = Diagnostics.BugCheckService.ParseKernelPowerParameters(p41.Data);
+                        bugCheck = new Diagnostics.BugCheckDetails
+                        {
+                            Code = bugcheckRaw,
+                            // Отчёт 1001 пишет параметры в исходном виде — он точнее; без него
+                            // берём то, что сохранило событие 41.
+                            Parameters = report?.Parameters.Count == 4 ? report.Parameters : kpParams,
+                            DumpPath = report?.DumpPath
+                        };
+                    }
+
                     results.Add(new RebootDiagnosis
                     {
                         TimeCreated = evt.TimeCreated,
@@ -126,7 +152,31 @@ namespace Ven4Tools.Services
                         Summary = BuildSummary(category.Value),
                         RawDetails = $"BugcheckCode={bugcheckRaw}; " +
                                      $"СбойБыстрогоЗапускаРядом={evt.HasFastStartupFailureNearby}; " +
-                                     p41.Message
+                                     p41.Message,
+                        BugCheck = bugCheck
+                    });
+                }
+
+                // Синий экран, после которого Windows успела записать отчёт 1001, но событие 41
+                // не появилось (или пришло без кода), иначе пропал бы из истории совсем.
+                foreach (var report in werReports)
+                {
+                    if (usedReports.Contains(report)) continue;
+                    if (results.Any(r => r.Category == RebootCategory.Bsod
+                                         && (r.TimeCreated - report.TimeCreated).Duration() <= Diagnostics.BugCheckService.ReportCorrelationWindow))
+                        continue;
+                    results.Add(new RebootDiagnosis
+                    {
+                        TimeCreated = report.TimeCreated,
+                        Category = RebootCategory.Bsod,
+                        Summary = BuildSummary(RebootCategory.Bsod),
+                        RawDetails = $"BugcheckCode={report.Code}; источник — отчёт об ошибке (событие 1001)",
+                        BugCheck = new Diagnostics.BugCheckDetails
+                        {
+                            Code = report.Code,
+                            Parameters = report.Parameters,
+                            DumpPath = report.DumpPath
+                        }
                     });
                 }
                 return results.OrderByDescending(r => r.TimeCreated).ToList();
@@ -328,7 +378,8 @@ namespace Ven4Tools.Services
                 AppLogger.Write($"[SystemHealthService] net {action} {service} завершился с кодом {process.ExitCode}: {err}");
         }
 
-        private static List<EventRecordSnapshot> QueryEvents(
+        /// <summary>internal — им же читает события разбор синих экранов (Diagnostics.BugCheckService).</summary>
+        internal static List<EventRecordSnapshot> QueryEvents(
             string logName, string? providerName, int? eventId, DateTime cutoff)
         {
             var conditions = new List<string>();
@@ -379,6 +430,15 @@ namespace Ven4Tools.Services
                 {
                     var name = data.Attribute("Name")?.Value;
                     if (name != null) dict[name] = data.Value;
+                }
+                // Часть событий (например UserPnp 20001 — установка драйвера) кладёт поля не
+                // в EventData, а в UserData: там свои элементы без атрибута Name. Берём их
+                // «листья» по имени элемента, не перетирая одноимённые поля из EventData.
+                var userData = xml.Element(ns + "UserData");
+                if (userData != null)
+                {
+                    foreach (var leaf in userData.Descendants().Where(d => !d.HasElements))
+                        dict.TryAdd(leaf.Name.LocalName, leaf.Value);
                 }
             }
             catch { /* не удалось разобрать XML события — возвращаем то, что успели собрать */ }

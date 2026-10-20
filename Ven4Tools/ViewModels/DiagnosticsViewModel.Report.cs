@@ -105,6 +105,8 @@ namespace Ven4Tools.ViewModels
                 if (HardwareRawVisible)
                     // Тот же сырой дамп журнала Windows — та же очистка, что выше.
                     sb.AppendLine(CrashReportService.SanitizePath(HardwareRawText));
+                AppendWin11ReadinessReport(sb);
+                AppendBsodReport(sb);
                 sb.Append(HardwareHealthReportText());
 
                 Clipboard.SetText(Tr(sb.ToString()));

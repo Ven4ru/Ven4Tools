@@ -40,6 +40,12 @@
     <EmbeddedResource Include="Resources\embedded_catalog.json" />
   </ItemGroup>
 
+  <!-- Справочные данные «Диагностики»: словарь кодов синего экрана и правила списка
+       процессоров Windows 11 (источники — внутри файлов). -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Diagnostics\*.json" />
+  </ItemGroup>
+
   <ItemGroup>
     <Resource Include="Resources\Mascots\*.png" />
     <Resource Include="Resources\Overlay\*.png" />

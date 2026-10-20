@@ -285,14 +285,47 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Expander Header="{Binding Header}" Margin="0,0,0,6">
-                                        <TextBox Text="{Binding RawDetails, Mode=OneWay}"
-                                                 IsReadOnly="True"
-                                                 TextWrapping="Wrap"
-                                                 FontFamily="Consolas"
-                                                 FontSize="10"
-                                                 Background="{DynamicResource CardBackground}"
-                                                 Foreground="{DynamicResource TextPrimary}"
-                                                 Margin="10,4,10,8"/>
+                                        <StackPanel>
+                                            <!-- Синий экран понятным языком: только у карточек BSOD -->
+                                            <Border Background="{DynamicResource CardBackground}" CornerRadius="6" Padding="10,8" Margin="10,4,10,4"
+                                                    Visibility="{Binding HasBsodDetails, Converter={StaticResource BoolToVis}}">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding BsodTitle}" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource TextPrimary}"/>
+                                                    <StackPanel Visibility="{Binding HasBsodExplanation, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="Частые причины:" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                                                        <TextBlock Text="{Binding BsodCause}" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}"/>
+                                                        <TextBlock Text="Что проверить:" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                                                        <TextBlock Text="{Binding BsodCheck}" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Visibility="{Binding HasBsodParameters, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="Параметры 1–4:" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                                                        <TextBox Text="{Binding BsodParameters, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                                                 FontFamily="Consolas" FontSize="10" BorderThickness="0"
+                                                                 Background="Transparent" Foreground="{DynamicResource TextPrimary}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Visibility="{Binding HasBsodDumpPath, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="Файл дампа:" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                                                        <TextBox Text="{Binding BsodDumpPath, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                                                 FontFamily="Consolas" FontSize="10" BorderThickness="0"
+                                                                 Background="Transparent" Foreground="{DynamicResource TextPrimary}"/>
+                                                    </StackPanel>
+                                                    <Button Content="📖 Описание кода у Microsoft"
+                                                            ToolTip="Откроет в браузере поиск по документации Microsoft с этим кодом синего экрана."
+                                                            Height="28" Padding="12,0" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                                            Command="{Binding DataContext.OpenBugCheckInfoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding BsodInfoUrl}"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <TextBox Text="{Binding RawDetails, Mode=OneWay}"
+                                                     IsReadOnly="True"
+                                                     TextWrapping="Wrap"
+                                                     FontFamily="Consolas"
+                                                     FontSize="10"
+                                                     Background="{DynamicResource CardBackground}"
+                                                     Foreground="{DynamicResource TextPrimary}"
+                                                     Margin="10,4,10,8"/>
+                                        </StackPanel>
                                     </Expander>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -302,6 +335,87 @@
                                 Height="32" Width="240" HorizontalAlignment="Left" Margin="0,10,0,0"
                                 Visibility="{Binding ShowDisableFastStartupButton, Converter={StaticResource BoolToVis}}"
                                 Command="{Binding DisableFastStartupCommand}"/>
+                        <!-- Синие экраны: «возможная связь» с драйверами и минидампы (только чтение) -->
+                        <StackPanel Margin="0,10,0,0" Visibility="{Binding ShowBsodDriverHint, Converter={StaticResource BoolToVis}}">
+                            <TextBlock x:Name="txtBsodDriverHintHeader" Text="{Binding BsodDriverHintHeader}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtBsodDriverHint" Text="{Binding BsodDriverHintText}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextSecondary}" Margin="10,4,0,0"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,10,0,0" Visibility="{Binding ShowMinidumpBlock, Converter={StaticResource BoolToVis}}">
+                            <TextBlock x:Name="txtMinidump" Text="{Binding MinidumpText}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextSecondary}"/>
+                            <Button x:Name="btnOpenMinidumpFolder" Content="📁 Открыть папку минидампов"
+                                    ToolTip="Откроет в Проводнике папку C:\Windows\Minidump, куда Windows сохраняет краткие дампы синих экранов. Ven4Tools их не разбирает и не отправляет."
+                                    Height="30" Padding="12,0" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                    Visibility="{Binding ShowOpenMinidumpButton, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding OpenMinidumpFolderCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Готов ли ПК к Windows 11 (только чтение) -->
+                <GroupBox Header="🪟 Готов ли ПК к Windows 11" Margin="0,0,0,15">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Проверяет требования Microsoft к Windows 11 и подсказывает, что мешает и как это исправить. Ничего не меняет и требования не обходит."
+                                   TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button x:Name="btnCheckWin11" Content="🪟 Проверить"
+                                    ToolTip="Проверит TPM, Secure Boot, режим загрузки, разметку диска, процессор, память, диск и видеокарту. Займёт до минуты: сведения о видеокарте собирает средство диагностики DirectX."
+                                    Height="32" Padding="16,0" Margin="0,0,10,0"
+                                    Command="{Binding CheckWin11Command}"/>
+                            <Button x:Name="btnWin11CpuList" Content="📄 Списки процессоров Microsoft"
+                                    ToolTip="Откроет в браузере официальный список процессоров, поддерживаемых Windows 11 (там же ссылки на списки AMD и Qualcomm)."
+                                    Height="32" Padding="12,0"
+                                    Command="{Binding OpenWin11CpuListCommand}"/>
+                        </StackPanel>
+                        <TextBlock x:Name="txtWin11Verdict" Text="{Binding Win11VerdictText}" Foreground="{Binding Win11VerdictBrush}"
+                                   FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,10,0,0"/>
+                        <StackPanel Visibility="{Binding ShowWin11Results, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding Win11IntroText}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                            <ItemsControl x:Name="lstWin11Checks" ItemsSource="{Binding Win11Rows}" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="28"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Icon}" Foreground="{Binding IconForeground}" FontWeight="Bold" FontSize="14"/>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}"/>
+                                                <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}"/>
+                                                <TextBlock Text="{Binding Hint}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,2,0,0"
+                                                           Visibility="{Binding HasHint, Converter={StaticResource BoolToVis}}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Ваша Windows -->
+                            <Border Background="{DynamicResource CardBackground}" CornerRadius="6" Padding="12,10" Margin="0,10,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Ваша Windows" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,6"/>
+                                    <ItemsControl ItemsSource="{Binding Win11WindowsLines}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,2">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="260"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Label}" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock x:Name="txtWin11WindowsNotes" Text="{Binding Win11WindowsNotes}" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextPrimary}" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
                     </StackPanel>
                 </GroupBox>
 
