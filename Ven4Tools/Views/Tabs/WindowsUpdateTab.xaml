@@ -226,7 +226,7 @@
                                             Command="{Binding EnableNetFxFromIsoCommand}"/>
                                 </WrapPanel>
                                 <StackPanel Visibility="{Binding IsNetFxRunning, Converter={StaticResource BoolToVis}}" Margin="0,8,0,0">
-                                    <ProgressBar x:Name="prgNetFx" Height="8" Minimum="0" Maximum="100" Value="{Binding NetFxProgress}"/>
+                                    <ProgressBar x:Name="prgNetFx" Height="8" Minimum="0" Maximum="100" Value="{Binding NetFxProgress, Mode=OneWay}"/>
                                     <Button x:Name="btnCancelNetFx" Content="Прервать" Height="30" Padding="16,0" Margin="0,8,0,0"
                                             HorizontalAlignment="Left"
                                             ToolTip="После подтверждения остановит DISM. Прерванная на середине операция может оставить компонент в промежуточном состоянии до перезагрузки."
@@ -273,7 +273,7 @@
                         </GroupBox>
 
                         <StackPanel Visibility="{Binding IsRepairRunning, Converter={StaticResource BoolToVis}}" Margin="0,0,0,8">
-                            <ProgressBar x:Name="prgRepair" Height="8" Minimum="0" Maximum="100" Value="{Binding RepairProgress}"
+                            <ProgressBar x:Name="prgRepair" Height="8" Minimum="0" Maximum="100" Value="{Binding RepairProgress, Mode=OneWay}"
                                          IsIndeterminate="{Binding IsRepairProgressIndeterminate}"/>
                             <Button x:Name="btnCancelRepair" Content="Прервать" Height="30" Padding="16,0" Margin="0,8,0,0"
                                     HorizontalAlignment="Left"
