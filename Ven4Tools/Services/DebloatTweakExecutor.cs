@@ -17,7 +17,8 @@ namespace Ven4Tools.Services
     {
         /// <summary>
         /// Применяет один твик. <paramref name="category"/> — "app" (удаление Appx),
-        /// "privacy" (правка реестра/служб приватности) или "service" (отключение службы).
+        /// "privacy" (правка реестра/служб приватности), "service" (отключение службы) или
+        /// "ads" (реклама и навязанный ИИ: реестр, пакет Copilot, удаление OneDrive).
         /// <paramref name="displayName"/> используется только в сообщениях журнала.
         /// </summary>
         public static async Task<bool> ApplyItemAsync(string category, string id, string displayName,
