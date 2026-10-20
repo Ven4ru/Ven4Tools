@@ -185,7 +185,7 @@ namespace Ven4Tools.ViewModels
                     brush = "StatusSuccess";
                     break;
             }
-            if (v.WarningCount > 0) text += $" Замечаний: {v.WarningCount}.";
+            if (v.WarningCount > 0) text = Tr(text) + string.Format(Tr(" Замечаний: {0}."), v.WarningCount);
             return (text, brush);
         }
 

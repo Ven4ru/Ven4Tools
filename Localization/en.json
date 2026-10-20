@@ -1,7 +1,31 @@
 [
   {
+    "s": "\n\nOneDrive будет удалён: синхронизация остановится, файлы в облаке и папка OneDrive на диске останутся.",
+    "t": "\n\nOneDrive will be removed: syncing will stop; files in the cloud and the OneDrive folder on disk will stay."
+  },
+  {
+    "s": "\n\nЖурналы: {0}, {1}.",
+    "t": "\n\nLogs: {0}, {1}."
+  },
+  {
+    "s": "\n\nКогда обновления снова начнут ставиться, старые папки {0} можно удалить вручную, чтобы освободить место.",
+    "t": "\n\nOnce updates install again, the old {0} folders can be deleted manually to free up space."
+  },
+  {
+    "s": "\n\nНе запустились службы: {0}. Обычно их запускает перезагрузка компьютера.",
+    "t": "\n\nServices that did not start: {0}. A computer restart usually starts them."
+  },
+  {
+    "s": "\n\nОстальные выбранные действия будут применены.",
+    "t": "\n\nThe other selected actions will be applied."
+  },
+  {
     "s": "\n\nПосле переустановки Windows откройте {0} из папки набора.",
     "t": "\n\nAfter reinstalling Windows, open {0} from the kit folder."
+  },
+  {
+    "s": "\n\nСкрытие драйвера помогает, когда Windows Update ставит старый драйвер (например, видеокарты) поверх нового.",
+    "t": "\n\nHiding a driver helps when Windows Update installs an old driver (for example, a graphics driver) over a newer one."
   },
   {
     "s": "\n\nТребуется перезагрузка для завершения установки.",
@@ -10,6 +34,10 @@
   {
     "s": "\n\nФайл ответов: {0}. Установка Windows создаст учётную запись «{1}» без пароля и после первого входа запустит набор. Пароль задайте сами после входа.",
     "t": "\n\nWindows answer file: {0}. Windows Setup will create the account “{1}” without a password and run the kit after the first sign-in. Set a password yourself after signing in."
+  },
+  {
+    "s": "\n\n⚠️ Среди выбранных — обновления безопасности или накопительные:\n",
+    "t": "\n\n⚠️ The selection includes security or cumulative updates:\n"
   },
   {
     "s": "\n\n⚠️ Среди них есть умеренные/опасные операции.",
@@ -26,6 +54,10 @@
   {
     "s": "\n---\n*Отчёт создан автоматически через Ven4Tools Launcher*",
     "t": "\n---\n*Report generated automatically by Ven4Tools Launcher*"
+  },
+  {
+    "s": "\nБез них компьютер не получит исправлений уязвимостей. Скрывайте такое обновление, только если точно знаете, что оно ломает что-то у вас, и верните его, когда выйдет исправление.",
+    "t": "\nWithout them the computer will not get vulnerability fixes. Hide such an update only if you know for sure that it breaks something for you, and bring it back once a fix is released."
   },
   {
     "s": "\nДрайверы: {0} ({1} МБ)",
@@ -232,6 +264,22 @@
     "t": "  ·  Size: "
   },
   {
+    "s": "  Дамп: {0}",
+    "t": "  Dump: {0}"
+  },
+  {
+    "s": "  Параметры 1–4: {0}",
+    "t": "  Parameters 1–4: {0}"
+  },
+  {
+    "s": "  Частые причины: {0}",
+    "t": "  Common causes: {0}"
+  },
+  {
+    "s": "  Что проверить: {0}",
+    "t": "  What to check: {0}"
+  },
+  {
     "s": "  • драйверы: {0}\n",
     "t": "  • drivers: {0}\n"
   },
@@ -244,12 +292,28 @@
     "t": " (no volume to test)"
   },
   {
+    "s": " (нужна перезагрузка)",
+    "t": " (restart required)"
+  },
+  {
     "s": " | ✅ Скачан, готов к установке",
     "t": " | ✅ Downloaded, ready to install"
   },
   {
+    "s": " Вернуть на место не удалось: {0}. Переименуйте их обратно вручную после перезагрузки.",
+    "t": " Could not restore: {0}. Rename them back manually after a restart."
+  },
+  {
+    "s": " Замечаний: {0}.",
+    "t": " Warnings: {0}."
+  },
+  {
     "s": " Ссылка содержит зафиксированную версию ({0}) — возможно, Microsoft её больше не раздаёт и пин в лаунчере нужно обновить.",
     "t": " The link contains a pinned version ({0}) — Microsoft may no longer serve it, and the pin in the launcher needs updating."
+  },
+  {
+    "s": " Уже переименованные папки возвращены на место.",
+    "t": " Folders already renamed have been restored."
   },
   {
     "s": " и другие",
@@ -258,6 +322,14 @@
   {
     "s": " от «{0}»",
     "t": " from \"{0}\""
+  },
+  {
+    "s": " с носителя {0}",
+    "t": " from media {0}"
+  },
+  {
+    "s": " через Центр обновления",
+    "t": " via Windows Update"
   },
   {
     "s": " — рядом с заголовком каждой категории появится выбор приоритетного источника.",
@@ -304,12 +376,20 @@
     "t": ", not added: {0}"
   },
   {
+    "s": ", ошибка 0x{0}",
+    "t": ", error 0x{0}"
+  },
+  {
     "s": ", ошибка восстановления пресетов",
     "t": ", preset restore error"
   },
   {
     "s": ", ошибок: {0}",
     "t": ", errors: {0}"
+  },
+  {
+    "s": ", последний — {0}",
+    "t": ", latest — {0}"
   },
   {
     "s": ", пресетов {0}",
@@ -332,6 +412,14 @@
     "t": "--- Hardware and driver events ---"
   },
   {
+    "s": "--- Батарея ---",
+    "t": "--- Battery ---"
+  },
+  {
+    "s": "--- Готовность к Windows 11 ---",
+    "t": "--- Windows 11 readiness ---"
+  },
+  {
     "s": "--- Датчики ---",
     "t": "--- Sensors ---"
   },
@@ -340,12 +428,24 @@
     "t": "--- Drives ---"
   },
   {
+    "s": "--- Здоровье дисков ---",
+    "t": "--- Disk health ---"
+  },
+  {
     "s": "--- История перезагрузок и сбоев ---",
     "t": "--- Restart and crash history ---"
   },
   {
     "s": "--- Ошибки Windows Update ---",
     "t": "--- Windows Update errors ---"
+  },
+  {
+    "s": "--- Проверка оперативной памяти ---",
+    "t": "--- Memory test ---"
+  },
+  {
+    "s": "--- Синие экраны: расшифровка ---",
+    "t": "--- Blue screens: decoded ---"
   },
   {
     "s": "--update-apps и возврат драйверов задаются разными запусками.",
@@ -364,6 +464,14 @@
     "t": ". Already installed, skipped: {0}"
   },
   {
+    "s": ".NET Framework 3.5 из ISO",
+    "t": ".NET Framework 3.5 from ISO"
+  },
+  {
+    "s": ".NET Framework 3.5 с носителя",
+    "t": ".NET Framework 3.5 from media"
+  },
+  {
     "s": "0 МБ",
     "t": "0 MB"
   },
@@ -374,6 +482,10 @@
   {
     "s": "15 сек",
     "t": "15 sec"
+  },
+  {
+    "s": "< 1 МБ",
+    "t": "< 1 MB"
   },
   {
     "s": "<машина>",
@@ -392,6 +504,10 @@
     "t": "=== Ven4Tools diagnostics report ==="
   },
   {
+    "s": "? Явных препятствий нет, но по пунктам ({0}) нет данных — проверьте их вручную.",
+    "t": "? No obvious blockers, but there is no data for some items ({0}) — check them manually."
+  },
+  {
     "s": "Agentic-инструмент Anthropic для написания и правки кода прямо в терминале.",
     "t": "Anthropic's agentic tool for writing and editing code right in the terminal."
   },
@@ -406,6 +522,14 @@
   {
     "s": "BattlEye (PUBG, Rainbow Six Siege, DayZ, Escape from Tarkov и др.)",
     "t": "BattlEye (PUBG, Rainbow Six Siege, DayZ, Escape from Tarkov, etc.)"
+  },
+  {
+    "s": "Bing и веб-подсказки в поиске",
+    "t": "Bing and web suggestions in Search"
+  },
+  {
+    "s": "BugcheckCode={0}; источник — отчёт об ошибке (событие 1001)",
+    "t": "BugcheckCode={0}; source — error report (event 1001)"
   },
   {
     "s": "CDN (домен)",
@@ -460,8 +584,24 @@
     "t": "Chocolatey: installing..."
   },
   {
+    "s": "Copilot (политика и кнопка)",
+    "t": "Copilot (policy and button)"
+  },
+  {
     "s": "Cortana (реестр)",
     "t": "Cortana (registry)"
+  },
+  {
+    "s": "DISM завершился с ошибкой 0x{0}. Подробности — в журнале C:\\Windows\\Logs\\DISM\\dism.log.",
+    "t": "DISM failed with error 0x{0}. See C:\\Windows\\Logs\\DISM\\dism.log for details."
+  },
+  {
+    "s": "DISM не ответил — нет данных.",
+    "t": "DISM did not respond — no data."
+  },
+  {
+    "s": "DISM не сообщил состояние компонента.",
+    "t": "DISM did not report the feature state."
   },
   {
     "s": "Easy Anti-Cheat (Fortnite, Apex Legends, Elden Ring и др.)",
@@ -508,16 +648,64 @@
     "t": "JavaScript runtime for building server-side applications."
   },
   {
+    "s": "Microsoft / системное",
+    "t": "Microsoft / system"
+  },
+  {
     "s": "Microsoft To Do — приложение задач.",
     "t": "Microsoft To Do — a task app."
+  },
+  {
+    "s": "Microsoft не будет подбирать советы и рекламу по собранным диагностическим данным.",
+    "t": "Microsoft will not tailor tips and ads based on collected diagnostic data."
   },
   {
     "s": "Office уже установлен? Посмотрите состояние его лицензии.",
     "t": "Office already installed? Check its license status."
   },
   {
+    "s": "OneDrive не удалился: запись об установке осталась. Подробности — в журнале.",
+    "t": "OneDrive was not removed: the install record is still there. See the log for details."
+  },
+  {
+    "s": "OneDrive не удалён: в него перенесены папки «{0}». После удаления они остались бы пустыми, а файлы — только в облаке. Сначала отключите резервное копирование папок в параметрах OneDrive («Синхронизация и резервное копирование» → «Управление резервным копированием») и дождитесь, пока файлы вернутся на диск.",
+    "t": "OneDrive was not removed: the “{0}” folders have been moved into it. After removal they would be left empty, with the files only in the cloud. First turn off folder backup in OneDrive settings (“Sync and backup” → “Manage backup”) and wait until the files are back on disk."
+  },
+  {
+    "s": "OneDrive не удалён: в него перенесены папки профиля",
+    "t": "OneDrive was not removed: profile folders have been moved into it"
+  },
+  {
+    "s": "OneDrive не установился. Подробности — в журнале winget.",
+    "t": "OneDrive was not installed. See the winget log for details."
+  },
+  {
+    "s": "OneDrive не установлен — удалять нечего.",
+    "t": "OneDrive is not installed — nothing to remove."
+  },
+  {
+    "s": "OneDrive удалён.",
+    "t": "OneDrive removed."
+  },
+  {
+    "s": "OneDrive уже установлен.",
+    "t": "OneDrive is already installed."
+  },
+  {
+    "s": "OneDrive установлен заново.",
+    "t": "OneDrive reinstalled."
+  },
+  {
     "s": "P-ядра {0} · E-ядра {1}",
     "t": "P-cores {0} · E-cores {1}"
+  },
+  {
+    "s": "PID {0} · запущена из этой папки",
+    "t": "PID {0} · started from this folder"
+  },
+  {
+    "s": "POPCNT и SSE4.2",
+    "t": "POPCNT and SSE4.2"
   },
   {
     "s": "PawnIO — драйвер датчиков",
@@ -532,8 +720,16 @@
     "t": "Process.Start returned null"
   },
   {
+    "s": "QR-код сети Wi-Fi",
+    "t": "Wi-Fi network QR code"
+  },
+  {
     "s": "RPA-инструмент Microsoft.",
     "t": "Microsoft RPA tool."
+  },
+  {
+    "s": "Recall (снимки экрана ИИ)",
+    "t": "Recall (AI screenshots)"
   },
   {
     "s": "RunConfigureAsync: exePath пуст — процесс не запущен",
@@ -564,6 +760,10 @@
     "t": "SSH and Telnet client for connecting to servers."
   },
   {
+    "s": "Secure Boot работает только в режиме UEFI. Сначала переведите загрузку в UEFI (см. пункты «Режим загрузки» и «Разметка системного диска»), затем включите Secure Boot в BIOS/UEFI.",
+    "t": "Secure Boot works only in UEFI mode. First switch booting to UEFI (see “Boot mode” and “System disk partitioning”), then enable Secure Boot in BIOS/UEFI."
+  },
+  {
     "s": "Skype UWP. Не нужен при использовании десктопной версии.",
     "t": "Skype UWP. Not needed if you use the desktop version."
   },
@@ -578,6 +778,26 @@
   {
     "s": "SystemHealthService.ClearWindowsUpdateCacheAsync: не удалось удалить {0}",
     "t": "SystemHealthService.ClearWindowsUpdateCacheAsync: could not delete {0}"
+  },
+  {
+    "s": "TPM {0}.{1}, включён.",
+    "t": "TPM {0}.{1}, enabled."
+  },
+  {
+    "s": "TPM есть, но выключен или не активирован.",
+    "t": "TPM is present but disabled or not activated."
+  },
+  {
+    "s": "TPM найден, но версию узнать не удалось.",
+    "t": "TPM found, but its version could not be determined."
+  },
+  {
+    "s": "TPM не найден.",
+    "t": "TPM not found."
+  },
+  {
+    "s": "TPM чаще всего встроен в процессор, но выключен в настройках. Зайдите в BIOS/UEFI (при включении ПК — Del или F2) и включите Intel PTT (Platform Trust Technology) или AMD fTPM; пункт может называться «Security Device Support» или «TPM Device». Сохраните настройки и перезагрузитесь.",
+    "t": "TPM is usually built into the processor but disabled in the settings. Enter BIOS/UEFI (press Del or F2 when the PC starts) and enable Intel PTT (Platform Trust Technology) or AMD fTPM; the option may be called “Security Device Support” or “TPM Device”. Save the settings and restart."
   },
   {
     "s": "UI test: выбор папки",
@@ -660,6 +880,10 @@
     "t": "Ven4Tools — Installation errors"
   },
   {
+    "s": "Ven4Tools — автозагрузка",
+    "t": "Ven4Tools — Startup"
+  },
+  {
     "s": "Ven4Tools — набор «Перед переустановкой»",
     "t": "Ven4Tools — “Before reinstall” kit"
   },
@@ -712,6 +936,10 @@
     "t": "Ven4Tools — before installation"
   },
   {
+    "s": "Ven4Tools — перезапуск Проводника",
+    "t": "Ven4Tools — restart File Explorer"
+  },
+  {
     "s": "Ven4Tools — тест скорости диска",
     "t": "Ven4Tools — disk speed test"
   },
@@ -754,6 +982,54 @@
   {
     "s": "WebView2 Runtime не установлен.\n\nДля работы Ven4Tools он не нужен, но требуется части стороннего ПО,\nкоторое можно установить через каталог.\n\nУстановить сейчас?",
     "t": "WebView2 Runtime is not installed.\n\nVen4Tools does not need it, but some third-party software\nthat can be installed from the catalog requires it.\n\nInstall now?"
+  },
+  {
+    "s": "Win11ReadinessService.RunDxDiagAsync: временный файл",
+    "t": "Win11ReadinessService.RunDxDiagAsync: temporary file"
+  },
+  {
+    "s": "Windows 11 требует, чтобы ПК поддерживал Secure Boot, — это так. Включить её можно в BIOS/UEFI: раздел Boot или Security → Secure Boot → Enabled (иногда сначала нужно выбрать «Windows UEFI mode» и выключить CSM).",
+    "t": "Windows 11 requires the PC to support Secure Boot — and it does. You can enable it in BIOS/UEFI: Boot or Security section → Secure Boot → Enabled (sometimes you first need to select “Windows UEFI mode” and disable CSM)."
+  },
+  {
+    "s": "Windows Update перестанет их предлагать и не установит сам. Вернуть их можно в разделе «Скрытые».",
+    "t": "Windows Update will stop offering them and will not install them on its own. You can bring them back in the “Hidden” section."
+  },
+  {
+    "s": "Windows ждёт перезагрузки, чтобы завершить прошлое восстановление. Перезагрузите компьютер и запустите проверку ещё раз.",
+    "t": "Windows is waiting for a restart to finish a previous repair. Restart the computer and run the check again."
+  },
+  {
+    "s": "Windows не даёт изменить эту задачу (она защищена системой).",
+    "t": "Windows does not allow changing this task (it is protected by the system)."
+  },
+  {
+    "s": "Windows не нашёл файлы компонента: Центр обновления их не отдал, а установочного носителя не указано. Укажите установочную флешку или ISO той же версии Windows.",
+    "t": "Windows could not find the feature files: Windows Update did not provide them, and no installation media was specified. Specify a Windows installation USB drive or ISO of the same version."
+  },
+  {
+    "s": "Windows не отдала профиль этой сети — нет данных.",
+    "t": "Windows did not return this network's profile — no data."
+  },
+  {
+    "s": "Windows не смог получить файлы компонента — чаще всего из-за настроек сервера обновлений организации (WSUS) или установленного языкового пакета. Укажите установочную флешку/ISO той же версии Windows.",
+    "t": "Windows could not get the feature files — most often because of your organization's update server settings (WSUS) or an installed language pack. Specify a Windows installation USB drive/ISO of the same version."
+  },
+  {
+    "s": "Windows отмечает диск как неисправный",
+    "t": "Windows marks the disk as faulty"
+  },
+  {
+    "s": "Windows предупреждает о состоянии диска",
+    "t": "Windows warns about the disk's condition"
+  },
+  {
+    "s": "Windows хранит пароль этой сети зашифрованным и не отдаёт его.",
+    "t": "Windows stores this network's password encrypted and does not reveal it."
+  },
+  {
+    "s": "Windows: {0}, версия {1}, сборка {2}.{3}",
+    "t": "Windows: {0}, version {1}, build {2}.{3}"
   },
   {
     "s": "Winget (Windows Package Manager) не установлен!\n\nWinget необходим для установки большинства приложений.\n\nУстановить winget сейчас?",
@@ -904,6 +1180,10 @@
     "t": "[BUG] Problem in version {0}"
   },
   {
+    "s": "[BugCheck] Ресурс словаря не найден: {0}",
+    "t": "[BugCheck] Dictionary resource not found: {0}"
+  },
+  {
     "s": "[CatalogLoaderService] Встроенный каталог не найден среди ресурсов сборки",
     "t": "[CatalogLoaderService] Built-in catalog not found in assembly resources"
   },
@@ -1046,6 +1326,30 @@
   {
     "s": "[OfflineService] Очистка офлайн-кэша: {0}",
     "t": "[OfflineService] Clearing the offline cache: {0}"
+  },
+  {
+    "s": "[OneDrive] Запущена установка через winget",
+    "t": "[OneDrive] Installation via winget started"
+  },
+  {
+    "s": "[OneDrive] Запущено удаление ({0})",
+    "t": "[OneDrive] Removal started ({0})"
+  },
+  {
+    "s": "[OneDrive] Не прочитана запись удаления: {0}",
+    "t": "[OneDrive] Could not read the uninstall entry: {0}"
+  },
+  {
+    "s": "[OneDrive] Не прочитаны папки профиля: {0}",
+    "t": "[OneDrive] Could not read profile folders: {0}"
+  },
+  {
+    "s": "[OneDrive] Не прочитаны учётные записи OneDrive: {0}",
+    "t": "[OneDrive] Could not read OneDrive accounts: {0}"
+  },
+  {
+    "s": "[OneDrive] Ожидание {0} прервано",
+    "t": "[OneDrive] Waiting for {0} interrupted"
   },
   {
     "s": "[PackageManagerService] Поиск в Chocolatey: {0}",
@@ -1220,6 +1524,26 @@
     "t": "[VersionTrackingService] Reading version tracking data: {0}"
   },
   {
+    "s": "[Wi-Fi] WlanOpenHandle: код {0}",
+    "t": "[Wi-Fi] WlanOpenHandle: code {0}"
+  },
+  {
+    "s": "[Wi-Fi] Профиль не прочитан, код {0}",
+    "t": "[Wi-Fi] Profile not read, code {0}"
+  },
+  {
+    "s": "[Windows 11] dxdiag не ответил вовремя — пункт DirectX 12 без данных",
+    "t": "[Windows 11] dxdiag did not respond in time — no data for DirectX 12"
+  },
+  {
+    "s": "[Windows 11] Пропущено неверное правило процессора «{0}»: {1}",
+    "t": "[Windows 11] Skipped invalid CPU rule “{0}”: {1}"
+  },
+  {
+    "s": "[Windows 11] Ресурс списка процессоров не найден: {0}",
+    "t": "[Windows 11] CPU list resource not found: {0}"
+  },
+  {
     "s": "[WindowsUpdateBg] Все найденные патчи уже скачаны — фоновая загрузка не требуется.",
     "t": "[WindowsUpdateBg] All found updates are already downloaded — no background download needed."
   },
@@ -1234,6 +1558,10 @@
   {
     "s": "[WindowsUpdateBg] Фоновое скачивание: {0} патчей.",
     "t": "[WindowsUpdateBg] Background download, updates: {0}."
+  },
+  {
+    "s": "[WindowsUpdateComSource] IsHidden={0} для «{1}»: {2}",
+    "t": "[WindowsUpdateComSource] IsHidden={0} for “{1}”: {2}"
   },
   {
     "s": "[WindowsUpdateComSource] sc config wuauserv завершился с кодом {0}",
@@ -1268,6 +1596,34 @@
     "t": "[WindowsUpdate] Auto-check on tab open skipped: paranoid mode"
   },
   {
+    "s": "[WindowsUpdate] Запись о прежнем значении политики не удалена: {0}",
+    "t": "[WindowsUpdate] Record of the previous policy value was not deleted: {0}"
+  },
+  {
+    "s": "[WindowsUpdate] Политика драйверов не записана: {0}",
+    "t": "[WindowsUpdate] Driver policy not written: {0}"
+  },
+  {
+    "s": "[WindowsUpdate] Политика драйверов не прочитана: {0}",
+    "t": "[WindowsUpdate] Driver policy not read: {0}"
+  },
+  {
+    "s": "[WindowsUpdate] Политика драйверов не удалена: {0}",
+    "t": "[WindowsUpdate] Driver policy not deleted: {0}"
+  },
+  {
+    "s": "[WindowsUpdate] Прежнее значение политики драйверов не прочитано: {0}",
+    "t": "[WindowsUpdate] Previous driver policy value not read: {0}"
+  },
+  {
+    "s": "[WindowsUpdate] Прежнее значение политики драйверов не сохранено — запрет не включён",
+    "t": "[WindowsUpdate] Previous driver policy value not saved — block not enabled"
+  },
+  {
+    "s": "[WindowsUpdate] Прежнее значение политики драйверов не сохранено: {0}",
+    "t": "[WindowsUpdate] Previous driver policy value not saved: {0}"
+  },
+  {
     "s": "[WindowsUpdate] Служба wuauserv была остановлена — запущена для проверки обновлений",
     "t": "[WindowsUpdate] The wuauserv service was stopped — started to check for updates"
   },
@@ -1278,6 +1634,58 @@
   {
     "s": "[WingetVersionsService] Получение списка версий «{0}»: {1}",
     "t": "[WingetVersionsService] Getting version list for “{0}”: {1}"
+  },
+  {
+    "s": "[Автозагрузка] {0}: {1} ({2})",
+    "t": "[Startup] {0}: {1} ({2})"
+  },
+  {
+    "s": "[Автозагрузка] Задача {0} не изменена: {1}",
+    "t": "[Startup] Task {0} not changed: {1}"
+  },
+  {
+    "s": "[Автозагрузка] Задача {0}: {1}",
+    "t": "[Startup] Task {0}: {1}"
+  },
+  {
+    "s": "[Автозагрузка] Задача не прочитана: {0}",
+    "t": "[Startup] Task not read: {0}"
+  },
+  {
+    "s": "[Автозагрузка] Не изменено «{0}»: {1}",
+    "t": "[Startup] “{0}” not changed: {1}"
+  },
+  {
+    "s": "[Автозагрузка] Не проверен файл {0}: {1}",
+    "t": "[Startup] File {0} not checked: {1}"
+  },
+  {
+    "s": "[Автозагрузка] Не прочитан раздел {0}\\{1}: {2}",
+    "t": "[Startup] Key {0}\\{1} not read: {2}"
+  },
+  {
+    "s": "[Автозагрузка] Не прочитан ярлык {0}: {1}",
+    "t": "[Startup] Shortcut {0} not read: {1}"
+  },
+  {
+    "s": "[Автозагрузка] Не прочитана папка автозагрузки: {0}",
+    "t": "[Startup] Startup folder not read: {0}"
+  },
+  {
+    "s": "[Автозагрузка] Папка планировщика не прочитана: {0}",
+    "t": "[Startup] Scheduler folder not read: {0}"
+  },
+  {
+    "s": "[Автозагрузка] Планировщик заданий не прочитан: {0}",
+    "t": "[Startup] Task Scheduler not read: {0}"
+  },
+  {
+    "s": "[Автозагрузка] Список не получен: {0}",
+    "t": "[Startup] List not retrieved: {0}"
+  },
+  {
+    "s": "[Деблоатер] OneDrive: {0}",
+    "t": "[Debloater] OneDrive: {0}"
   },
   {
     "s": "[Деблоатер] RunPSAsync: тайм-аут или отмена — процесс PowerShell завершён принудительно",
@@ -1316,6 +1724,18 @@
     "t": "[Debloater] Error in ApplyItemAsync [{0}]: {1}"
   },
   {
+    "s": "[Деблоатер] Ошибка перезапуска Проводника: {0}",
+    "t": "[Debloater] File Explorer restart error: {0}"
+  },
+  {
+    "s": "[Деблоатер] Проводник не остановлен: {0}",
+    "t": "[Debloater] File Explorer not stopped: {0}"
+  },
+  {
+    "s": "[Деблоатер] Проводник не перезапустился сам за 10 с — запускаю вручную без прав администратора",
+    "t": "[Debloater] File Explorer did not restart on its own within 10 s — starting it manually without administrator rights"
+  },
+  {
     "s": "[Зеркало] {0}: HTTP {1}",
     "t": "[Mirror] {0}: HTTP {1}"
   },
@@ -1334,6 +1754,106 @@
   {
     "s": "[История] Запись истории установок отключена",
     "t": "[History] Install history recording is off"
+  },
+  {
+    "s": "[Компоненты]   {0}",
+    "t": "[Components]   {0}"
+  },
+  {
+    "s": "[Компоненты] .NET Framework 3.5 {0}",
+    "t": "[Components] .NET Framework 3.5 {0}"
+  },
+  {
+    "s": "[Компоненты] .NET Framework 3.5 не {0}: {1}",
+    "t": "[Components] .NET Framework 3.5 not {0}: {1}"
+  },
+  {
+    "s": "[Компоненты] {0}: код {1}",
+    "t": "[Components] {0}: code {1}"
+  },
+  {
+    "s": "[Компоненты] {0}: отменено пользователем",
+    "t": "[Components] {0}: cancelled by the user"
+  },
+  {
+    "s": "[Компоненты] Включение .NET Framework 3.5{0}",
+    "t": "[Components] Enabling .NET Framework 3.5{0}"
+  },
+  {
+    "s": "[Компоненты] Не удалось смонтировать ISO: код {0}, {1}",
+    "t": "[Components] Could not mount ISO: code {0}, {1}"
+  },
+  {
+    "s": "[Компоненты] Образ ISO не отключён (код {0}) — его можно извлечь в Проводнике.",
+    "t": "[Components] ISO image not dismounted (code {0}) — you can eject it in File Explorer."
+  },
+  {
+    "s": "[Компоненты] Образ {0} подключён как {1}",
+    "t": "[Components] Image {0} mounted as {1}"
+  },
+  {
+    "s": "[Кто держит файл] {0}: {1}",
+    "t": "[File locks] {0}: {1}"
+  },
+  {
+    "s": "[Кто держит файл] Завершён процесс {0} (PID {1})",
+    "t": "[File locks] Process {0} terminated (PID {1})"
+  },
+  {
+    "s": "[Кто держит файл] Не удалось завершить {0}: {1}",
+    "t": "[File locks] Could not terminate {0}: {1}"
+  },
+  {
+    "s": "[Место на диске] DISM AnalyzeComponentStore: код {0}",
+    "t": "[Disk space] DISM AnalyzeComponentStore: code {0}"
+  },
+  {
+    "s": "[Место на диске] DISM StartComponentCleanup: код {0}",
+    "t": "[Disk space] DISM StartComponentCleanup: code {0}"
+  },
+  {
+    "s": "[Место на диске] cleanmgr /sagerun:{0}, обработчиков: {1}",
+    "t": "[Disk space] cleanmgr /sagerun:{0}, handlers: {1}"
+  },
+  {
+    "s": "[Место на диске] cleanmgr не закончил за 2 часа",
+    "t": "[Disk space] cleanmgr did not finish within 2 hours"
+  },
+  {
+    "s": "[Место на диске] cleanmgr.exe не найден — категории «Очистки диска» пропущены",
+    "t": "[Disk space] cleanmgr.exe not found — “Disk Cleanup” categories skipped"
+  },
+  {
+    "s": "[Место на диске] {0}",
+    "t": "[Disk space] {0}"
+  },
+  {
+    "s": "[Место на диске] {0}: удалено файлов {1}, пропущено занятых {2}",
+    "t": "[Disk space] {0}: files deleted {1}, in-use skipped {2}"
+  },
+  {
+    "s": "[Место на диске] Корзина: SHEmptyRecycleBin вернул 0x{0}",
+    "t": "[Disk space] Recycle Bin: SHEmptyRecycleBin returned 0x{0}"
+  },
+  {
+    "s": "[Место на диске] Не удалось убрать {0}: {1}",
+    "t": "[Disk space] Could not remove {0}: {1}"
+  },
+  {
+    "s": "[Место на диске] Ни одного обработчика «Очистки диска» не найдено",
+    "t": "[Disk space] No “Disk Cleanup” handlers found"
+  },
+  {
+    "s": "[Место на диске] Очистка: {0}",
+    "t": "[Disk space] Cleanup: {0}"
+  },
+  {
+    "s": "[Место на диске] Служба {0} не запущена обратно: {1}",
+    "t": "[Disk space] Service {0} not restarted: {1}"
+  },
+  {
+    "s": "[Место на диске] Служба {0} не остановлена: {1}",
+    "t": "[Disk space] Service {0} not stopped: {1}"
   },
   {
     "s": "[Набор] winget export не выполнен: {0}",
@@ -1358,6 +1878,14 @@
   {
     "s": "[Обзор] История не прочитана: {0}",
     "t": "[Overview] Could not read history: {0}"
+  },
+  {
+    "s": "[Обслуживание] Не удалось запустить {0}: {1}",
+    "t": "[Servicing] Could not start {0}: {1}"
+  },
+  {
+    "s": "[Обслуживание] Остановка {0}: {1}",
+    "t": "[Servicing] Stopping {0}: {1}"
   },
   {
     "s": "[Офлайн-набор] Установщик {0} не проверен: {1}",
@@ -1414,6 +1942,90 @@
   {
     "s": "[Очистка] Список пакетов Appx не получен: тайм-аут или отмена",
     "t": "[Cleanup] Could not get the Appx package list: timeout or cancellation"
+  },
+  {
+    "s": "[Ремонт] CBS.log не прочитан: {0}",
+    "t": "[Repair] CBS.log not read: {0}"
+  },
+  {
+    "s": "[Ремонт] DISM /RestoreHealth: завершено успешно",
+    "t": "[Repair] DISM /RestoreHealth: completed successfully"
+  },
+  {
+    "s": "[Ремонт] DISM /RestoreHealth: отменено пользователем",
+    "t": "[Repair] DISM /RestoreHealth: cancelled by the user"
+  },
+  {
+    "s": "[Ремонт] DISM /RestoreHealth: ошибка 0x{0}",
+    "t": "[Repair] DISM /RestoreHealth: error 0x{0}"
+  },
+  {
+    "s": "[Ремонт] sfc /scannow: код {0}, итог — {1}",
+    "t": "[Repair] sfc /scannow: code {0}, result — {1}"
+  },
+  {
+    "s": "[Ремонт] sfc /scannow: отменено пользователем",
+    "t": "[Repair] sfc /scannow: cancelled by the user"
+  },
+  {
+    "s": "[Ремонт] {0} — возвращаем уже переименованное",
+    "t": "[Repair] {0} — restoring what was already renamed"
+  },
+  {
+    "s": "[Ремонт] {0} → {1}",
+    "t": "[Repair] {0} → {1}"
+  },
+  {
+    "s": "[Ремонт] Вспомогательная служба {0} не остановилась — продолжаем",
+    "t": "[Repair] Helper service {0} did not stop — continuing"
+  },
+  {
+    "s": "[Ремонт] Запуск {0}: {1}",
+    "t": "[Repair] Starting {0}: {1}"
+  },
+  {
+    "s": "[Ремонт] Запуск проверки системных файлов (DISM /RestoreHealth + sfc /scannow)",
+    "t": "[Repair] Starting system file check (DISM /RestoreHealth + sfc /scannow)"
+  },
+  {
+    "s": "[Ремонт] Запуск сброса Центра обновления",
+    "t": "[Repair] Starting Windows Update reset"
+  },
+  {
+    "s": "[Ремонт] Итог проверки: {0}",
+    "t": "[Repair] Check result: {0}"
+  },
+  {
+    "s": "[Ремонт] Не удалось открыть папку журналов: {0}",
+    "t": "[Repair] Could not open the logs folder: {0}"
+  },
+  {
+    "s": "[Ремонт] Остановка {0}: {1}",
+    "t": "[Repair] Stopping {0}: {1}"
+  },
+  {
+    "s": "[Ремонт] Остановка службы {0}",
+    "t": "[Repair] Stopping service {0}"
+  },
+  {
+    "s": "[Ремонт] Переименование {0} (попытка {1}): {2}",
+    "t": "[Repair] Renaming {0} (attempt {1}): {2}"
+  },
+  {
+    "s": "[Ремонт] Проверка системных файлов прервана пользователем",
+    "t": "[Repair] System file check cancelled by the user"
+  },
+  {
+    "s": "[Ремонт] Сброс Центра обновления: {0}",
+    "t": "[Repair] Windows Update reset: {0}"
+  },
+  {
+    "s": "[Ремонт] Служба {0} не запустилась",
+    "t": "[Repair] Service {0} did not start"
+  },
+  {
+    "s": "[Ремонт] Служба {0} не остановилась — сброс прерван, папки не тронуты",
+    "t": "[Repair] Service {0} did not stop — reset aborted, folders untouched"
   },
   {
     "s": "[Сеть] DNS проверка завершена",
@@ -1624,6 +2236,10 @@
     "t": "winget was not found or did not respond. Check your internet connection and try again."
   },
   {
+    "s": "winget не найден — установите OneDrive вручную из Microsoft Store или с сайта Microsoft.",
+    "t": "winget not found — install OneDrive manually from the Microsoft Store or the Microsoft website."
+  },
+  {
     "s": "winget не найден.",
     "t": "winget not found."
   },
@@ -1640,12 +2256,36 @@
     "t": "winget was just installed/updated and is not ready for use in this session yet — update check postponed."
   },
   {
+    "s": "{0:0.0} ГБ",
+    "t": "{0:0.0} GB"
+  },
+  {
+    "s": "{0:0} МБ",
+    "t": "{0:0} MB"
+  },
+  {
+    "s": "{0}\n\n{1}\n\nУдалить?",
+    "t": "{0}\n\n{1}\n\nDelete?"
+  },
+  {
     "s": "{0}\n\nНастройки применены. Избранное обновится после перезапуска приложения.",
     "t": "{0}\n\nSettings applied. Favorites will update after the app restarts."
   },
   {
+    "s": "{0}\n\nНиже на вкладке можно указать установочную флешку (или папку) либо ISO-образ Windows той же версии.",
+    "t": "{0}\n\nBelow on this tab you can specify a Windows installation USB drive (or folder) or ISO image of the same version."
+  },
+  {
     "s": "{0} ({1} свободно)",
     "t": "{0} ({1} free)"
+  },
+  {
+    "s": "{0} (код 0x{1})",
+    "t": "{0} (code 0x{1})"
+  },
+  {
+    "s": "{0} (по свойствам файла)",
+    "t": "{0} (from file properties)"
   },
   {
     "s": "{0} (поколение и число линий не определяются)",
@@ -1684,6 +2324,14 @@
     "t": "{0} {1} Installation canceled; to install this archive anyway, add the {2} switch."
   },
   {
+    "s": "{0} {1} — Синий экран: {2} ({3})",
+    "t": "{0} {1} — Blue screen: {2} ({3})"
+  },
+  {
+    "s": "{0} {1} — Синий экран: код {2}",
+    "t": "{0} {1} — Blue screen: code {2}"
+  },
+  {
     "s": "{0} · горячая точка {1}",
     "t": "{0} · hot spot {1}"
   },
@@ -1698,6 +2346,10 @@
   {
     "s": "{0} ГБ",
     "t": "{0} GB"
+  },
+  {
+    "s": "{0} ГБ.",
+    "t": "{0} GB."
   },
   {
     "s": "{0} ГиБ",
@@ -1808,6 +2460,14 @@
     "t": "{0} files · {1} MB  ({2})"
   },
   {
+    "s": "{0} ч",
+    "t": "{0} h"
+  },
+  {
+    "s": "{0} — {1} (код не из словаря)",
+    "t": "{0} — {1} (code not in the dictionary)"
+  },
+  {
     "s": "{0} — {1} · твиков: {2}, пресетов: {3}",
     "t": "{0} — {1} · tweaks: {2}, presets: {3}"
   },
@@ -1818,6 +2478,14 @@
   {
     "s": "{0} — аппаратная ошибка (WHEA): {1}",
     "t": "{0} — hardware error (WHEA): {1}"
+  },
+  {
+    "s": "{0} — есть в списке.",
+    "t": "{0} — on the list."
+  },
+  {
+    "s": "{0} — нет в списке.",
+    "t": "{0} — not on the list."
   },
   {
     "s": "{0} — сбой видеодрайвера (TDR): {1}",
@@ -1834,6 +2502,10 @@
   {
     "s": "{0}, {1} об/мин",
     "t": "{0}, {1} RPM"
+  },
+  {
+    "s": "{0}. Сброс не выполнен.",
+    "t": "{0}. Reset was not performed."
   },
   {
     "s": "{0}: скачивание...",
@@ -1876,16 +2548,48 @@
     "t": "© 2024-2026 Ven4ru. Free software."
   },
   {
+    "s": "«{0}» — компонент Windows.\n\nБез понятной причины такие записи лучше не выключать: может перестать работать часть возможностей Windows. Всё равно выключить?",
+    "t": "“{0}” is a Windows component.\n\nWithout a clear reason it is better not to disable such entries: some Windows features may stop working. Disable anyway?"
+  },
+  {
+    "s": "«{0}» — программа Microsoft (например, OneDrive, Edge, Office).\n\nЕё можно выключить, но тогда она не будет запускаться и обновляться в фоне вместе с Windows. Выключить?",
+    "t": "“{0}” is a Microsoft app (for example, OneDrive, Edge, Office).\n\nYou can disable it, but then it will not start and update in the background with Windows. Disable?"
+  },
+  {
+    "s": "«Нет данных» — диск или USB-переходник не передаёт SMART; это не значит, что диск исправен.",
+    "t": "“No data” means the disk or USB adapter does not pass SMART data; it does not mean the disk is healthy."
+  },
+  {
     "s": "«Только уведомлять» — клиент сообщает о найденных патчах, ничего не скачивая. «Уведомлять и скачивать в фоне» — патчи заранее загружаются в кэш Windows, и установка по кнопке на вкладке «Обновления Windows» стартует сразу, без ожидания загрузки. Устанавливаются патчи в обоих режимах только вручную.",
     "t": "“Notify only” — the client reports found updates without downloading anything. “Notify and download in background” — updates are downloaded to the Windows cache in advance, so installing them with the button on the “Windows Update” tab starts right away, with no wait for the download. In both modes, updates are installed only manually."
+  },
+  {
+    "s": "Ёмкость: {0}% от заводской ({1} из {2} мВт·ч), циклов: {3}",
+    "t": "Capacity: {0}% of design ({1} of {2} mWh), cycles: {3}"
+  },
+  {
+    "s": "Ёмкость: нет данных (батарея не сообщает достоверную ёмкость), циклов: {0}",
+    "t": "Capacity: no data (the battery does not report reliable capacity), cycles: {0}"
   },
   {
     "s": "Абсолютный путь на локальном диске, например D:\\Programs. Пустое поле — winget выбирает папку сам.",
     "t": "An absolute path on a local drive, for example D:\\Programs. If the field is empty, winget picks the folder itself."
   },
   {
+    "s": "Аварийные отключения",
+    "t": "Unsafe shutdowns"
+  },
+  {
     "s": "Авто (рекомендуется)",
     "t": "Auto (recommended)"
+  },
+  {
+    "s": "Автозагрузка",
+    "t": "Startup"
+  },
+  {
+    "s": "Автозагрузка списка отключена (параноидальный режим). Нажмите «Обновить список».",
+    "t": "Auto-loading of the list is off (paranoid mode). Click “Refresh list”."
   },
   {
     "s": "Автоматическая настройка цветовой температуры экрана.",
@@ -2016,6 +2720,18 @@
     "t": "Cache base folder was replaced with a link, write canceled: {0}"
   },
   {
+    "s": "Батареи нет (настольный компьютер или батарея не определяется).",
+    "t": "No battery (desktop computer or the battery is not detected)."
+  },
+  {
+    "s": "Без этих инструкций Windows 11 24H2 и новее не запускается вообще, даже в обход проверок. Это свойство самого процессора, настройками не исправить.",
+    "t": "Without these instructions Windows 11 24H2 and later does not start at all, even when bypassing the checks. This is a property of the processor itself and cannot be fixed in settings."
+  },
+  {
+    "s": "Безопасная загрузка (Secure Boot)",
+    "t": "Secure Boot"
+  },
+  {
     "s": "Безопасно",
     "t": "Safe"
   },
@@ -2132,6 +2848,10 @@
     "t": "Apps to uninstall: {0}.\n\nCreate a Windows restore point before uninstalling?"
   },
   {
+    "s": "Будет удалено:",
+    "t": "Will be deleted:"
+  },
+  {
     "s": "Будет удалено:\n• Папка клиента: {0}\n• Ярлыки на рабочем столе\n• Ярлыки в меню Пуск\n• Запись автозапуска в реестре\n\nНастройки и логи лаунчера сохраняются.\n\nПродолжить?",
     "t": "The following will be removed:\n• Client folder: {0}\n• Desktop shortcuts\n• Start menu shortcuts\n• Autostart entry in the registry\n\nLauncher settings and logs are kept.\n\nContinue?"
   },
@@ -2180,6 +2900,10 @@
     "t": "Fast, secure, and private open-source browser."
   },
   {
+    "s": "В «{0}» нет папки sources\\sxs.\n\nВыберите корень установочной флешки Windows (или подключённого образа) той же версии, что установлена на компьютере.",
+    "t": "“{0}” has no sources\\sxs folder.\n\nSelect the root of a Windows installation USB drive (or a mounted image) of the same version as the one installed on the computer."
+  },
+  {
     "s": "В архиве не найдено файлов настроек Ven4Tools.",
     "t": "No Ven4Tools settings files found in the archive."
   },
@@ -2222,6 +2946,10 @@
   {
     "s": "В папке клиента нет Ven4Tools.exe — копировать нечего.",
     "t": "Ven4Tools.exe is missing from the client folder — nothing to copy."
+  },
+  {
+    "s": "В папке минидампов ({0}) файлов нет.",
+    "t": "The minidump folder ({0}) is empty."
   },
   {
     "s": "В папку кэша будут добавлены копия клиента (около 250 МБ), файл ответа и файл запуска.\n\nПапка: {0}\nПрограмм в наборе: {1}\n\nПродолжить?",
@@ -2268,6 +2996,10 @@
     "t": "Your feedback helps improve the product"
   },
   {
+    "s": "Ваша Windows",
+    "t": "Your Windows"
+  },
+  {
     "s": "Ваша версия Windows (Build {0}) ниже минимально поддерживаемой (Windows 10 Build 17763).\n\nНекоторые функции могут работать некорректно.\nРекомендуется обновить Windows.",
     "t": "Your Windows version (Build {0}) is below the minimum supported (Windows 10 Build 17763).\n\nSome features may not work correctly.\nUpdating Windows is recommended."
   },
@@ -2278,6 +3010,10 @@
   {
     "s": "Введите название.",
     "t": "Enter a name."
+  },
+  {
+    "s": "Вежливо попросит программу закрыться, как при нажатии на крестик. Программа сможет спросить о сохранении.",
+    "t": "Politely asks the app to close, as if you clicked its close button. The app can ask about saving."
   },
   {
     "s": "Вентиляторы",
@@ -2296,6 +3032,18 @@
     "t": "Revert “{0}” to its state before it was applied?\n\nThe previous registry values and service startup type will be restored. Other changes are not affected."
   },
   {
+    "s": "Вернуть выбранные",
+    "t": "Restore selected"
+  },
+  {
+    "s": "Вернуть выбранные обновления ({0})?\n\nWindows Update снова будет их предлагать и сможет установить сам по своему расписанию.",
+    "t": "Restore the selected updates ({0})?\n\nWindows Update will offer them again and may install them on its own schedule."
+  },
+  {
+    "s": "Вернуть обновления",
+    "t": "Restore updates"
+  },
+  {
     "s": "Вернуть прежний вид окна: все разделы отдельными пунктами меню. Обратно — этой же кнопкой.",
     "t": "Switch back to the classic layout: every section is a separate menu item. Use this button to switch again."
   },
@@ -2306,6 +3054,10 @@
   {
     "s": "Вернёт значения реестра и режим запуска службы, которые были до применения этого твика.",
     "t": "Reverts the registry values and service startup type to what they were before this tweak was applied."
+  },
+  {
+    "s": "Вернёт то, что было до применения этого твика: значения реестра и режим запуска службы. OneDrive — установит заново.",
+    "t": "Restores what was in place before this tweak was applied: registry values and the service startup type. For OneDrive, reinstalls it."
   },
   {
     "s": "Версия",
@@ -2344,8 +3096,16 @@
     "t": "The whole catalog, including driver packs, AI tools and specialized apps"
   },
   {
+    "s": "Видео",
+    "t": "Videos"
+  },
+  {
     "s": "Видеокарта · {0}",
     "t": "Graphics card · {0}"
+  },
+  {
+    "s": "Видеокарта: DirectX 12 и драйвер WDDM 2.0",
+    "t": "Graphics card: DirectX 12 and WDDM 2.0 driver"
   },
   {
     "s": "Видеоконференции, вебинары и командная работа.",
@@ -2364,8 +3124,28 @@
     "t": "Microsoft video editor."
   },
   {
+    "s": "Виджеты (новости и погода)",
+    "t": "Widgets (news and weather)"
+  },
+  {
     "s": "Вкладки Office и Сеть скрываются автоматически при потере соединения. Этот флаг форсирует офлайн вручную.",
     "t": "The Office and Network tabs are hidden automatically when the connection is lost. This option forces offline mode manually."
+  },
+  {
+    "s": "Включена.",
+    "t": "Enabled."
+  },
+  {
+    "s": "Включение .NET Framework 3.5{0}",
+    "t": "Enabling .NET Framework 3.5{0}"
+  },
+  {
+    "s": "Включений",
+    "t": "Power cycles"
+  },
+  {
+    "s": "Включено",
+    "t": "Enabled"
   },
   {
     "s": "Включит или выключит показ только избранных приложений.",
@@ -2388,6 +3168,18 @@
     "t": "It turns on when you open “Windows Update” for the first time."
   },
   {
+    "s": "Включить",
+    "t": "Enable"
+  },
+  {
+    "s": "Включить .NET Framework 3.5, взяв файлы из «{0}»?\n\nНоситель должен быть той же версии Windows (и разрядности), что установлена на компьютере, — иначе DISM сообщит, что файлы не подходят. Центр обновления при этом не используется.\n\nМожет потребоваться перезагрузка.",
+    "t": "Enable .NET Framework 3.5 using files from “{0}”?\n\nThe media must match the Windows version (and bitness) installed on the computer — otherwise DISM will report that the files do not fit. Windows Update is not used.\n\nA restart may be required."
+  },
+  {
+    "s": "Включить .NET Framework 3.5?\n\nWindows скачает файлы компонента через Центр обновления — это может занять от нескольких минут до получаса. Если интернета нет или загрузка запрещена, можно будет указать установочную флешку или ISO.\n\nМожет потребоваться перезагрузка.",
+    "t": "Enable .NET Framework 3.5?\n\nWindows will download the feature files via Windows Update — this can take from a few minutes to half an hour. If there is no internet or downloads are blocked, you will be able to specify an installation USB drive or ISO.\n\nA restart may be required."
+  },
+  {
     "s": "Включить новый вид окна: обзор и шесть пунктов меню. Обратно — этой же кнопкой.",
     "t": "Switch to the new layout: an overview and six menu items. Use this button to switch back."
   },
@@ -2408,8 +3200,24 @@
     "t": "Restoring drivers and Wi-Fi skipped: it runs without asking only when started with --silent"
   },
   {
+    "s": "Возвращено обновлений: {0}. Они снова в разделе «Обновления».",
+    "t": "Updates restored: {0}. They are back in the “Updates” section."
+  },
+  {
+    "s": "Возвращено: {0}, не удалось: {1}. Подробности — в логе.",
+    "t": "Restored: {0}, failed: {1}. See the log for details."
+  },
+  {
     "s": "Возможна потеря питания или аппаратное зависание — точная причина по журналу событий не определяется.",
     "t": "Possible power loss or hardware hang — the exact cause cannot be determined from the event log."
+  },
+  {
+    "s": "Возможная связь (не доказательство): драйверы, поставленные за 3 дня до первого сбоя ({0}):",
+    "t": "Possible link (not proof): drivers installed within 3 days before the first crash ({0}):"
+  },
+  {
+    "s": "Возможная связь: за 3 дня до первого сбоя ({0}) установок драйверов не найдено.",
+    "t": "Possible link: no driver installations found within 3 days before the first crash ({0})."
   },
   {
     "s": "Восстановить состояние из снапшота «{0}»?\n\nБудет применено твиков: {1} (реестр/службы/удаление приложений, как на вкладке «Очистка»).\nЛокальные пресеты будут заменены содержимым снапшота ({2} шт.).\n\nСоздать точку восстановления Windows перед восстановлением снапшота?",
@@ -2430,6 +3238,10 @@
   {
     "s": "Восстановление...",
     "t": "Repairing..."
+  },
+  {
+    "s": "Временные файлы",
+    "t": "Temporary files"
   },
   {
     "s": "Временный каталог установщика подменён ссылкой: {0}",
@@ -2476,6 +3288,10 @@
     "t": "All sources"
   },
   {
+    "s": "Все найденные обновления установлены или скрыты",
+    "t": "All found updates are installed or hidden"
+  },
+  {
     "s": "Все программы актуальны",
     "t": "All apps are up to date"
   },
@@ -2504,6 +3320,10 @@
     "t": "Everything in basic plus apps for those who do more: development, graphics, video editing, PC diagnostics"
   },
   {
+    "s": "Всё, что запускается вместе с Windows: разделы реестра Run и RunOnce, папки «Автозагрузка» и задачи планировщика при входе или запуске. Выключение — как в Диспетчере задач: запись остаётся на месте, включить обратно можно здесь же. Ничего не удаляется, службы не затрагиваются.",
+    "t": "Everything that starts with Windows: the Run and RunOnce registry keys, the “Startup” folders, and scheduled tasks at sign-in or startup. Disabling works like in Task Manager: the entry stays in place and can be enabled again right here. Nothing is deleted; services are not affected."
+  },
+  {
     "s": "Всё-в-одном: заметки, задачи, базы данных и вики.",
     "t": "All-in-one: notes, tasks, databases, and wikis."
   },
@@ -2528,6 +3348,10 @@
     "t": "Lets you pick a winget or JSON file and installs the apps listed in it."
   },
   {
+    "s": "Выберите ISO-образ установки Windows. Образ подключится штатно, .NET Framework 3.5 включится из него, затем образ отключится.",
+    "t": "Select a Windows installation ISO image. The image is mounted the standard way, .NET Framework 3.5 is enabled from it, then the image is dismounted."
+  },
+  {
     "s": "Выберите альтернативный источник",
     "t": "Choose an alternative source"
   },
@@ -2538,6 +3362,10 @@
   {
     "s": "Выберите источник или укажите ссылку",
     "t": "Select a source or enter a link"
+  },
+  {
+    "s": "Выберите образ установки Windows (ISO)",
+    "t": "Select a Windows installation image (ISO)"
   },
   {
     "s": "Выберите папку для кэша установщиков",
@@ -2558,6 +3386,18 @@
   {
     "s": "Выберите режим отображения каталога приложений",
     "t": "Choose the catalog display mode"
+  },
+  {
+    "s": "Выберите установочную флешку Windows или папку sources\\sxs",
+    "t": "Select a Windows installation USB drive or the sources\\sxs folder"
+  },
+  {
+    "s": "Выберите установочную флешку Windows или папку с sources\\sxs. После подтверждения .NET Framework 3.5 включится из неё без Центра обновления.",
+    "t": "Select a Windows installation USB drive or a folder containing sources\\sxs. After confirmation, .NET Framework 3.5 is enabled from it without Windows Update."
+  },
+  {
+    "s": "Выберите файл или папку, которые не удаётся удалить или переименовать.",
+    "t": "Select a file or folder that cannot be deleted or renamed."
   },
   {
     "s": "Выберите хотя бы одну программу!",
@@ -2592,12 +3432,20 @@
     "t": "Selected: {0} updates, {1}"
   },
   {
+    "s": "Выбрать папку и проверить её файлы (до 5000 файлов) и программы, запущенные из неё.",
+    "t": "Choose a folder and check its files (up to 5000) and the apps running from it."
+  },
+  {
     "s": "Выбрать папку набора.",
     "t": "Choose the kit folder."
   },
   {
     "s": "Выбрать приоритетный источник по категориям",
     "t": "Choose a preferred source per category"
+  },
+  {
+    "s": "Выбрать файл, который не удаётся удалить, и сразу проверить его.",
+    "t": "Choose a file that cannot be deleted and check it right away."
   },
   {
     "s": "Выводы",
@@ -2612,12 +3460,48 @@
     "t": "Exporting Wi-Fi profiles…"
   },
   {
+    "s": "Выключен. Файлов компонента в системе нет — Windows скачает их через Центр обновления (или возьмёт с установочного носителя).",
+    "t": "Disabled. The feature files are not on the system — Windows will download them via Windows Update (or take them from installation media)."
+  },
+  {
+    "s": "Выключен. Файлы компонента уже есть в системе — включится быстро.",
+    "t": "Disabled. The feature files are already on the system — enabling will be quick."
+  },
+  {
+    "s": "Выключение .NET Framework 3.5",
+    "t": "Disabling .NET Framework 3.5"
+  },
+  {
+    "s": "Выключено",
+    "t": "Disabled"
+  },
+  {
     "s": "Выключено по умолчанию. Когда включено, клиент сам ставит обновления через winget, пока он запущен (в том числе свёрнутый в трей). Программы из списка исключений не трогает. Условия источников winget при этом принимаются автоматически. В параноидальном режиме автообновление не работает.",
     "t": "Off by default. When on, the client installs updates through winget by itself while it is running (including when minimized to the tray). Apps on the exclusion list are left alone. winget source agreements are accepted automatically. Auto-update does not work in paranoid mode."
   },
   {
+    "s": "Выключит или включит запуск вместе с Windows. Запись не удаляется.",
+    "t": "Disables or enables starting with Windows. The entry is not deleted."
+  },
+  {
+    "s": "Выключить",
+    "t": "Disable"
+  },
+  {
+    "s": "Выключить .NET Framework 3.5?\n\nПрограммы, которым он нужен (1С, старые игры и программы), перестанут запускаться. Включить обратно можно здесь же.\n\nМожет потребоваться перезагрузка.",
+    "t": "Disable .NET Framework 3.5?\n\nApps that need it (1C, older games and programs) will stop launching. You can enable it again right here.\n\nA restart may be required."
+  },
+  {
+    "s": "Выключить «{0}» из автозагрузки?\n\nПрограмма останется установленной и просто не будет запускаться вместе с Windows. Включить обратно можно здесь же.",
+    "t": "Remove “{0}” from startup?\n\nThe app will stay installed and simply will not start with Windows. You can enable it again right here."
+  },
+  {
     "s": "Выполняется установка",
     "t": "Installation in progress"
+  },
+  {
+    "s": "Выпуск:",
+    "t": "Edition:"
   },
   {
     "s": "Выход",
@@ -2668,6 +3552,10 @@
     "t": "Done!"
   },
   {
+    "s": "Готово. Нажмите «Посчитать», чтобы увидеть новые размеры.",
+    "t": "Done. Click “Calculate” to see the new sizes."
+  },
+  {
     "s": "Готовые наборы",
     "t": "Ready-made sets"
   },
@@ -2678,6 +3566,14 @@
   {
     "s": "ДИАГНОСТИКА КЛИЕНТА",
     "t": "CLIENT DIAGNOSTICS"
+  },
+  {
+    "s": "Дампы памяти и отчёты об ошибках",
+    "t": "Memory dumps and error reports"
+  },
+  {
+    "s": "Данные дисков читаются при открытии раздела",
+    "t": "Disk data is read when the section opens"
   },
   {
     "s": "Дата: {0}",
@@ -2736,6 +3632,10 @@
     "t": "Applies to the client as well. English is a separate language pack: it is downloaded when you select it and applied after a restart."
   },
   {
+    "s": "Держат программ: {0}. Сначала попробуйте «Закрыть окно» — программа сможет сохранить данные.",
+    "t": "Apps holding it: {0}. Try “Close window” first — the app will be able to save its data."
+  },
+  {
     "s": "Держать драйвер датчиков включённым всегда (нужно, если им пользуется FanControl)",
     "t": "Keep the sensor driver always on (needed if FanControl uses it)"
   },
@@ -2768,8 +3668,32 @@
     "t": "Disk"
   },
   {
+    "s": "Диск {0}",
+    "t": "Disk {0}"
+  },
+  {
     "s": "Диск {0}: {1}",
     "t": "Disk {0}: {1}"
+  },
+  {
+    "s": "Диск можно преобразовать в GPT без потери данных встроенной утилитой Windows mbr2gpt: в командной строке от имени администратора сначала «mbr2gpt /validate /allowFullOS», и если проверка прошла — «mbr2gpt /convert /allowFullOS». Сразу после этого в BIOS/UEFI включите режим UEFI. Перед преобразованием сделайте резервную копию важных файлов. Ven4Tools эту команду не запускает.",
+    "t": "The disk can be converted to GPT without data loss with the built-in Windows tool mbr2gpt: in an administrator command prompt, first run “mbr2gpt /validate /allowFullOS”, and if validation passes, “mbr2gpt /convert /allowFullOS”. Right after that, enable UEFI mode in BIOS/UEFI. Back up important files before converting. Ven4Tools does not run this command."
+  },
+  {
+    "s": "Диск не отдаёт данные SMART — оценить состояние нельзя",
+    "t": "The disk does not provide SMART data — its condition cannot be assessed"
+  },
+  {
+    "s": "Диск подключён по USB: переходник не передаёт данные SMART",
+    "t": "The disk is connected via USB: the adapter does not pass SMART data"
+  },
+  {
+    "s": "Диск сам сообщает о критической неисправности",
+    "t": "The disk itself reports a critical failure"
+  },
+  {
+    "s": "Диск сообщает о перегреве",
+    "t": "The disk reports overheating"
   },
   {
     "s": "Диск установки",
@@ -2782,6 +3706,10 @@
   {
     "s": "Диски",
     "t": "Drives"
+  },
+  {
+    "s": "Диски не найдены",
+    "t": "No disks found"
   },
   {
     "s": "Диски не найдены.",
@@ -2816,6 +3744,10 @@
     "t": "For development"
   },
   {
+    "s": "Для случаев, когда обновления не скачиваются или не ставятся с одной и той же ошибкой. Останавливает службы обновления, переименовывает папки SoftwareDistribution и catroot2 в *.old-дата (не удаляет) и запускает службы снова. Журнал обновлений в параметрах Windows обнулится.",
+    "t": "For cases when updates fail to download or install with the same error. Stops the update services, renames the SoftwareDistribution and catroot2 folders to *.old-date (does not delete them) and starts the services again. The update history in Windows Settings will be cleared."
+  },
+  {
     "s": "Для счётчика FPS нужен Intel PresentMon — бесплатная программа Intel с открытым исходным кодом.\n\n• Она читает события Windows о показе кадров и в игры не внедряется: античиты такой способ не трогают.\n• Ставится через winget из официального пакета, перед каждым запуском Ven4Tools проверяет подпись Intel.\n• Работает только пока включён оверлей.\n\nУстановить PresentMon?",
     "t": "The FPS counter needs Intel PresentMon — a free open-source program by Intel.\n\n• It reads Windows events about displayed frames and does not inject into games: anti-cheat systems leave this method alone.\n• It is installed through winget from the official package; before every start Ven4Tools checks the Intel signature.\n• It runs only while the overlay is on.\n\nInstall PresentMon?"
   },
@@ -2838,6 +3770,14 @@
   {
     "s": "Для энтузиастов",
     "t": "For enthusiasts"
+  },
+  {
+    "s": "Для этой записи не известно, где хранится отметка включения.",
+    "t": "It is unknown where the enable flag for this entry is stored."
+  },
+  {
+    "s": "Для этой сети QR-код не строится.",
+    "t": "A QR code cannot be built for this network."
   },
   {
     "s": "Добавит выбранный установочный файл в текущую очередь установки.",
@@ -2882,6 +3822,10 @@
   {
     "s": "Докачает повреждённые или отсутствующие файлы и удалит лишние — по списку, который показала проверка выше.",
     "t": "Downloads damaged or missing files and deletes extra ones — per the list shown by the check above."
+  },
+  {
+    "s": "Документы",
+    "t": "Documents"
   },
   {
     "s": "Доступна",
@@ -2980,6 +3924,10 @@
     "t": "Drivers restored: {0} packages in the kit. {1}"
   },
   {
+    "s": "Драйверы и компоненты",
+    "t": "Drivers and components"
+  },
+  {
     "s": "Драйверы не возвращены: pnputil не запустился или не уложился в отведённое время",
     "t": "Drivers not restored: pnputil did not start or timed out"
   },
@@ -2990,6 +3938,10 @@
   {
     "s": "Драйверы не выгружены: на диске свободно {0} МБ, а драйверы занимают до нескольких гигабайт.",
     "t": "Drivers not exported: {0} MB free on the drive, and drivers can take up several gigabytes."
+  },
+  {
+    "s": "Драйверы через Windows Update",
+    "t": "Drivers via Windows Update"
   },
   {
     "s": "Драйверы этого компьютера",
@@ -3010,6 +3962,10 @@
   {
     "s": "Единый для всего каталога",
     "t": "Same for the whole catalog"
+  },
+  {
+    "s": "Если в BIOS/UEFI есть Intel PTT или AMD fTPM — включите его вместо модуля 1.2. Для части плат производитель выпускал обновление прошивки TPM до 2.0.",
+    "t": "If BIOS/UEFI has Intel PTT or AMD fTPM, enable it instead of the 1.2 module. For some boards the manufacturer released a TPM firmware update to 2.0."
   },
   {
     "s": "Если какое-то устройство не заработало, перезагрузите компьютер.",
@@ -3054,6 +4010,18 @@
   {
     "s": "За последние 7 дней ошибок обновления Windows не найдено.",
     "t": "No Windows Update errors found in the last 7 days."
+  },
+  {
+    "s": "Завершить",
+    "t": "End task"
+  },
+  {
+    "s": "Завершить {0} (PID {1}) принудительно?\n\nВсё несохранённое в этой программе будет потеряно. Сначала лучше попробовать «Закрыть окно».",
+    "t": "Force-terminate {0} (PID {1})?\n\nAll unsaved data in this app will be lost. It is better to try “Close window” first."
+  },
+  {
+    "s": "Завершить программу",
+    "t": "End app"
   },
   {
     "s": "Загружено {0} приложений",
@@ -3152,6 +4120,10 @@
     "t": "Close launcher"
   },
   {
+    "s": "Закрыть окно",
+    "t": "Close window"
+  },
+  {
     "s": "Закрыть панель «Что нового»",
     "t": "Close the “What's new” panel"
   },
@@ -3162,6 +4134,18 @@
   {
     "s": "Замеры не выполнены.",
     "t": "No measurements were taken."
+  },
+  {
+    "s": "Заново найдёт скрытые и ещё не установленные обновления. Ничего не меняет.",
+    "t": "Finds hidden and not yet installed updates again. Changes nothing."
+  },
+  {
+    "s": "Заново прочитает SMART всех дисков: износ, ошибки, температуру и наработку. Только чтение.",
+    "t": "Rereads SMART for all disks: wear, errors, temperature and power-on time. Read only."
+  },
+  {
+    "s": "Записано",
+    "t": "Written"
   },
   {
     "s": "Запись",
@@ -3320,8 +4304,16 @@
     "t": "Installing, please wait..."
   },
   {
+    "s": "Издатель:",
+    "t": "Publisher:"
+  },
+  {
     "s": "Изменить папку установки",
     "t": "Change install folder"
+  },
+  {
+    "s": "Изменить это обновление можно только с правами администратора.",
+    "t": "Only an administrator can change this update."
   },
   {
     "s": "Измерение скорости накопителя, тип подключения и потолок интерфейса. Работает без интернета",
@@ -3330,6 +4322,30 @@
   {
     "s": "Измерит задержку и потери пакетов до указанных адресов. В параноидальном режиме запросы не отправляются.",
     "t": "Measures latency and packet loss to the listed addresses. In paranoid mode, no requests are sent."
+  },
+  {
+    "s": "Износ",
+    "t": "Wear"
+  },
+  {
+    "s": "Износ {0}%",
+    "t": "Wear {0}%"
+  },
+  {
+    "s": "Износ {0}% — ресурс записи заметно израсходован",
+    "t": "Wear {0}% — write endurance noticeably used up"
+  },
+  {
+    "s": "Износ {0}% — ресурс записи почти исчерпан",
+    "t": "Wear {0}% — write endurance nearly exhausted"
+  },
+  {
+    "s": "Износ, ошибки и наработка каждого диска по данным SMART. Только чтение: на диске ничего не меняется.",
+    "t": "Wear, errors and power-on time of each disk from SMART data. Read only: nothing on the disk is changed."
+  },
+  {
+    "s": "Изображения",
+    "t": "Pictures"
   },
   {
     "s": "Или введите Winget ID вручную:",
@@ -3384,6 +4400,10 @@
     "t": "Files imported: {0}, with errors: {1}"
   },
   {
+    "s": "Имя сети и пароль слишком длинные для QR-кода.",
+    "t": "The network name and password are too long for a QR code."
+  },
+  {
     "s": "Имя учётной записи не может заканчиваться точкой.",
     "t": "The account name cannot end with a period."
   },
@@ -3394,6 +4414,10 @@
   {
     "s": "Имя учётной записи:",
     "t": "Account name:"
+  },
+  {
+    "s": "Инструкции POPCNT и SSE4.2 (нужны с 24H2)",
+    "t": "POPCNT and SSE4.2 instructions (required since 24H2)"
   },
   {
     "s": "Инструмент для автоматической установки программ",
@@ -3456,6 +4480,10 @@
     "t": "Fix"
   },
   {
+    "s": "Истекло время ожидания ответа серверов Microsoft.",
+    "t": "Timed out waiting for Microsoft servers."
+  },
+  {
     "s": "История",
     "t": "History"
   },
@@ -3488,6 +4516,14 @@
     "t": "Sources"
   },
   {
+    "s": "Итог проверки памяти читается при открытии раздела",
+    "t": "The memory test result is read when the section opens"
+  },
+  {
+    "s": "Итог проверки системных файлов распознать не удалось. Подробности — в журнале {0}.",
+    "t": "Could not recognize the system file check result. See {0} for details."
+  },
+  {
     "s": "КЛИЕНТ VEN4TOOLS",
     "t": "VEN4TOOLS CLIENT"
   },
@@ -3506,6 +4542,14 @@
   {
     "s": "Как часто:",
     "t": "How often:"
+  },
+  {
+    "s": "Какая папка не удаляется?",
+    "t": "Which folder cannot be deleted?"
+  },
+  {
+    "s": "Какой файл не удаляется?",
+    "t": "Which file cannot be deleted?"
   },
   {
     "s": "Карточные игры с рекламой.",
@@ -3644,6 +4688,10 @@
     "t": "When unchecked — new installations are not recorded in the history. Entries already saved stay; you can delete them with the “Clear” button."
   },
   {
+    "s": "Код {0} — не из словаря Ven4Tools. Описание кода — на сайте Microsoft.",
+    "t": "Code {0} is not in the Ven4Tools dictionary. See the Microsoft website for its description."
+  },
+  {
     "s": "Код выхода — ошибка",
     "t": "Exit code — error"
   },
@@ -3672,8 +4720,16 @@
     "t": "Compact catalog rows"
   },
   {
+    "s": "Компонент с таким именем в этой версии Windows не найден.",
+    "t": "No feature with this name was found in this Windows version."
+  },
+  {
     "s": "Компоненты",
     "t": "Components"
+  },
+  {
+    "s": "Компьютер настроен получать обновления с сервера организации (WSUS), и там нет файлов компонента. Укажите установочную флешку/ISO.",
+    "t": "The computer is set to get updates from an organization server (WSUS), which has no feature files. Specify an installation USB drive/ISO."
   },
   {
     "s": "Конвертер видео с поддержкой большинства форматов.",
@@ -3716,6 +4772,18 @@
     "t": "Copy code"
   },
   {
+    "s": "Копия прежней системы, оставшаяся после крупного обновления или переустановки.",
+    "t": "A copy of the previous system left after a major update or reinstall."
+  },
+  {
+    "s": "Корзина",
+    "t": "Recycle Bin"
+  },
+  {
+    "s": "Корпоративная сеть (вход по учётной записи) — общего пароля нет.",
+    "t": "Enterprise network (sign-in with an account) — there is no shared password."
+  },
+  {
     "s": "Корпоративный мессенджер с интеграциями.",
     "t": "Business messenger with integrations."
   },
@@ -3728,8 +4796,20 @@
     "t": "The largest game store and gaming platform."
   },
   {
+    "s": "Кэш обновлений Windows",
+    "t": "Windows Update cache"
+  },
+  {
+    "s": "Кэш оптимизации доставки",
+    "t": "Delivery Optimization cache"
+  },
+  {
     "s": "Кэш пуст",
     "t": "Cache is empty"
+  },
+  {
+    "s": "Кэш эскизов",
+    "t": "Thumbnail cache"
   },
   {
     "s": "Лаунчер Blizzard: World of Warcraft, Diablo, Overwatch, Hearthstone.",
@@ -3844,12 +4924,32 @@
     "t": "Messengers"
   },
   {
+    "s": "Место и файлы",
+    "t": "Space and files"
+  },
+  {
+    "s": "Минидампов в {0}: {1}, последний — {2}. Их можно передать мастеру или разобрать программой WinDbg от Microsoft.",
+    "t": "Minidumps in {0}: {1}, latest — {2}. You can pass them to a technician or analyze them with Microsoft's WinDbg."
+  },
+  {
+    "s": "Минидампы: {0} в {1}",
+    "t": "Minidumps: {0} in {1}"
+  },
+  {
+    "s": "Минидампы: папка {0} не найдена",
+    "t": "Minidumps: folder {0} not found"
+  },
+  {
     "s": "Минималистичный и быстрый просмотрщик PDF, EPUB, MOBI.",
     "t": "Minimalist and fast viewer for PDF, EPUB, and MOBI."
   },
   {
     "s": "Модель:",
     "t": "Model:"
+  },
+  {
+    "s": "Модуль TPM 2.0",
+    "t": "TPM 2.0 module"
   },
   {
     "s": "Можно обновить: {0}",
@@ -3890,6 +4990,10 @@
   {
     "s": "Мощный текстовый редактор с подсветкой синтаксиса.",
     "t": "Powerful text editor with syntax highlighting."
+  },
+  {
+    "s": "Музыка",
+    "t": "Music"
   },
   {
     "s": "Мультимедиа",
@@ -3956,16 +5060,32 @@
     "t": "Set of utilities for greater productivity in Windows."
   },
   {
+    "s": "Наведите камеру телефона на код — телефон предложит подключиться к сети.",
+    "t": "Point your phone camera at the code — the phone will offer to join the network."
+  },
+  {
     "s": "Нажмите «Запустить диагностику»",
     "t": "Click “Run diagnostics”"
+  },
+  {
+    "s": "Нажмите «Запустить диагностику» или «Проверить» — проверка займёт до минуты.",
+    "t": "Click “Run diagnostics” or “Check” — the check takes up to a minute."
   },
   {
     "s": "Нажмите «Последний лог» для просмотра...",
     "t": "Click “Latest log” to view..."
   },
   {
+    "s": "Нажмите «Посчитать», чтобы узнать, сколько места занимает каждая категория. Ничего не удаляется, пока вы сами не отметите категории и не подтвердите.",
+    "t": "Click “Calculate” to find out how much space each category takes. Nothing is deleted until you select categories and confirm."
+  },
+  {
     "s": "Нажмите «Проверить обновления» для проверки...",
     "t": "Click “Check for updates” to check..."
+  },
+  {
+    "s": "Нажмите «Проверить обновления», чтобы найти обновления заново",
+    "t": "Click “Check for updates” to find updates again"
   },
   {
     "s": "Нажмите «Проверить обновления», чтобы начать проверку",
@@ -3978,6 +5098,10 @@
   {
     "s": "Название программы:",
     "t": "App name:"
+  },
+  {
+    "s": "Найден TPM версии {0}.{1}, нужна 2.0.",
+    "t": "Found TPM version {0}.{1}; 2.0 is required."
   },
   {
     "s": "Найден драйвер датчиков другой программы (PawnIO, например от FanControl): температуры и частоты процессора видны через него. Ven4Tools этот драйвер не ставит и не выключает.",
@@ -4028,6 +5152,10 @@
     "t": "Finds available Windows updates. Nothing is installed at this step."
   },
   {
+    "s": "Найдёт программы, которые держат указанный файл или файлы папки. Ничего не меняет.",
+    "t": "Finds apps holding the specified file or the files in the folder. Changes nothing."
+  },
+  {
     "s": "Найти клиент на диске",
     "t": "Find client on disk"
   },
@@ -4060,12 +5188,20 @@
     "t": "Drive:          {0}"
   },
   {
+    "s": "Накопительные обновления не ставились больше двух месяцев — проверьте Центр обновления Windows.",
+    "t": "Cumulative updates have not been installed for more than two months — check Windows Update."
+  },
+  {
     "s": "Например: Python.Python.3.14",
     "t": "For example: Python.Python.3.14"
   },
   {
     "s": "Например: V4T:google-chrome,telegram,vlc",
     "t": "Example: V4T:google-chrome,telegram,vlc"
+  },
+  {
+    "s": "Наработка",
+    "t": "Power-on time"
   },
   {
     "s": "Насколько охотно процессор поднимает частоту выше номинальной. Это настройка схемы электропитания Windows.",
@@ -4116,8 +5252,36 @@
     "t": "Do not leave the USB drive unattended, and delete the folder when you no longer need it."
   },
   {
+    "s": "Не поддерживается: {0}.",
+    "t": "Not supported: {0}."
+  },
+  {
+    "s": "Не получать драйверы через Windows Update",
+    "t": "Don't get drivers via Windows Update"
+  },
+  {
+    "s": "Не получать драйверы через Windows Update?\n\nБудет включена политика «Не включать драйверы в обновления качества Windows». Это снижает вероятность, что Windows Update вернёт старый драйвер видеокарты поверх нового, но не гарантирует: политика работает не во всех случаях, а драйверы для нового оборудования Windows может ставить и сама.\n\nСвежие драйверы придётся ставить вручную — с сайта производителя.\nВыключить можно здесь же, прежнее значение вернётся.",
+    "t": "Stop getting drivers via Windows Update?\n\nThe “Do not include drivers with Windows Updates” policy will be enabled. This makes it less likely that Windows Update puts an old graphics driver back over a newer one, but does not guarantee it: the policy does not work in all cases, and Windows may install drivers for new hardware on its own.\n\nYou will have to install fresh drivers manually — from the manufacturer's website.\nYou can turn this off right here, and the previous value will be restored."
+  },
+  {
+    "s": "Не получилось: {0}",
+    "t": "Failed: {0}"
+  },
+  {
+    "s": "Не проверялась: раздел «Диагностика» ещё не открывался.",
+    "t": "Not checked: the “Diagnostics” section has not been opened yet."
+  },
+  {
+    "s": "Не проверялось: откройте раздел «Диагностика» или нажмите «Проверить диски».",
+    "t": "Not checked: open the “Diagnostics” section or click “Check disks”."
+  },
+  {
     "s": "Не создавать ярлыки на рабочем столе",
     "t": "Don't create desktop shortcuts"
+  },
+  {
+    "s": "Не удалось вернуть:\n\n{0}",
+    "t": "Could not restore:\n\n{0}"
   },
   {
     "s": "Не удалось восстановиться из «Быстрого запуска» — Windows перешла на полную холодную загрузку. Само завершение работы прошло штатно.",
@@ -4140,8 +5304,16 @@
     "t": "Could not terminate winget: {0}"
   },
   {
+    "s": "Не удалось завершить {0}: Windows отказала в доступе.",
+    "t": "Could not terminate {0}: Windows denied access."
+  },
+  {
     "s": "Не удалось закрыть клиент автоматически (возможно, он свёрнут в трей).\n\nЗакройте его вручную и повторите установку.",
     "t": "Could not close the client automatically (it may be minimized to the tray).\n\nClose it manually and try the installation again."
+  },
+  {
+    "s": "Не удалось запустить DISM: {0}",
+    "t": "Could not start DISM: {0}"
   },
   {
     "s": "Не удалось запустить Ven4Tools.\n\n{0}",
@@ -4154,6 +5326,10 @@
   {
     "s": "Не удалось запустить powercfg",
     "t": "Could not start powercfg"
+  },
+  {
+    "s": "Не удалось запустить sfc: {0}",
+    "t": "Could not start sfc: {0}"
   },
   {
     "s": "Не удалось запустить деинсталлятор без прав администратора.",
@@ -4172,12 +5348,28 @@
     "t": "Could not start ODT self-extraction"
   },
   {
+    "s": "Не удалось запустить удаление OneDrive без прав администратора (Проводник не запущен?).",
+    "t": "Could not start OneDrive removal without administrator rights (is File Explorer not running?)."
+  },
+  {
+    "s": "Не удалось запустить установку OneDrive без прав администратора.",
+    "t": "Could not start OneDrive installation without administrator rights."
+  },
+  {
     "s": "Не удалось запустить установщик",
     "t": "Could not start the installer"
   },
   {
     "s": "Не удалось запустить установщик: {0}",
     "t": "Could not start the installer: {0}"
+  },
+  {
+    "s": "Не удалось изменить видимость обновлений: {0}",
+    "t": "Could not change update visibility: {0}"
+  },
+  {
+    "s": "Не удалось изменить политику в реестре. Подробности — в логе.",
+    "t": "Could not change the policy in the registry. See the log for details."
   },
   {
     "s": "Не удалось изменить режим Turbo Boost. Запустите приложение от имени администратора и попробуйте ещё раз.",
@@ -4232,12 +5424,24 @@
     "t": "Could not open the folder: {0}"
   },
   {
+    "s": "Не удалось открыть средство проверки памяти Windows (mdsched.exe) — подробности в логе.",
+    "t": "Could not open Windows Memory Diagnostic (mdsched.exe) — see the log for details."
+  },
+  {
     "s": "Не удалось открыть форму обратной связи.\nПожалуйста, напишите на GitHub вручную:\nhttps://github.com/Ven4ru/Ven4Tools/issues",
     "t": "Could not open the feedback form.\nPlease write on GitHub manually:\nhttps://github.com/Ven4ru/Ven4Tools/issues"
   },
   {
     "s": "Не удалось очистить кэш. Запустите приложение от имени администратора и попробуйте ещё раз.",
     "t": "Could not clear the cache. Run the app as administrator and try again."
+  },
+  {
+    "s": "Не удалось переименовать {0}: {1}",
+    "t": "Could not rename {0}: {1}"
+  },
+  {
+    "s": "Не удалось подключить образ ISO. Проверьте, что файл не повреждён и не открыт в другой программе.",
+    "t": "Could not mount the ISO image. Make sure the file is not damaged or open in another app."
   },
   {
     "s": "Не удалось подключиться к серверу обновлений (сетевая ошибка).",
@@ -4280,8 +5484,20 @@
     "t": "Could not check integrity — the server is unavailable, try again later"
   },
   {
+    "s": "Не удалось проверить: Windows отказала в доступе. Подробности — в журнале.",
+    "t": "Could not check: Windows denied access. See the log for details."
+  },
+  {
+    "s": "Не удалось прочитать данные дисков — подробности в логе",
+    "t": "Could not read disk data — see the log for details"
+  },
+  {
     "s": "Не удалось прочитать датчики — подробности в логе",
     "t": "Could not read sensors — see the log for details"
+  },
+  {
+    "s": "Не удалось прочитать журнал Windows — подробности в логе",
+    "t": "Could not read the Windows event log — see the log for details"
   },
   {
     "s": "Не удалось прочитать лог",
@@ -4316,6 +5532,10 @@
     "t": "Could not download the installer:\n{0}\n\nThe launcher will keep running in portable mode."
   },
   {
+    "s": "Не удалось скачать файлы компонента через Центр обновления: нет интернета или доступ к серверам Microsoft закрыт. Подключитесь к сети или укажите установочную флешку/ISO.",
+    "t": "Could not download the feature files via Windows Update: no internet, or access to Microsoft servers is blocked. Connect to the network or specify an installation USB drive/ISO."
+  },
+  {
     "s": "Не удалось скопировать журнал: {0}",
     "t": "Could not copy the log: {0}"
   },
@@ -4330,6 +5550,10 @@
   {
     "s": "Не удалось скопировать: {0}",
     "t": "Could not copy: {0}"
+  },
+  {
+    "s": "Не удалось скрыть:\n\n{0}",
+    "t": "Could not hide:\n\n{0}"
   },
   {
     "s": "Не удалось сохранить отчёт: {0}",
@@ -4408,6 +5632,10 @@
     "t": "Invalid region value (OfficeCC): {0}"
   },
   {
+    "s": "Неверный параметр команды DISM.",
+    "t": "Invalid DISM command parameter."
+  },
+  {
     "s": "Недопустимый ID «{0}»",
     "t": "Invalid ID “{0}”"
   },
@@ -4436,6 +5664,10 @@
     "t": "Not enough memory to complete the operation."
   },
   {
+    "s": "Недоступна: ПК загружается в режиме BIOS (Legacy).",
+    "t": "Unavailable: the PC boots in BIOS (Legacy) mode."
+  },
+  {
     "s": "Недоступно",
     "t": "Unavailable"
   },
@@ -4456,6 +5688,10 @@
     "t": "Unavailable: could not read the event log."
   },
   {
+    "s": "Недоступно: проверку выполнить не удалось.",
+    "t": "Unavailable: the check could not be performed."
+  },
+  {
     "s": "Неизвестен",
     "t": "Unknown"
   },
@@ -4472,8 +5708,16 @@
     "t": "Unknown"
   },
   {
+    "s": "Неисправимые ошибки: {0}",
+    "t": "Uncorrectable errors: {0}"
+  },
+  {
     "s": "Немедленно перезагрузит Windows, чтобы завершить установку обновлений.",
     "t": "Restarts Windows immediately to finish installing updates."
+  },
+  {
+    "s": "Нестабильные секторы (ожидают переназначения): {0}",
+    "t": "Unstable sectors (pending reallocation): {0}"
   },
   {
     "s": "Нет SHA256 для локального установщика",
@@ -4504,6 +5748,38 @@
     "t": "Nothing to export: no local settings files found."
   },
   {
+    "s": "Нет данных по адаптеру «{0}».",
+    "t": "No data for adapter “{0}”."
+  },
+  {
+    "s": "Нет данных.",
+    "t": "No data."
+  },
+  {
+    "s": "Нет данных: Windows не сообщает состояние Secure Boot.",
+    "t": "No data: Windows does not report the Secure Boot state."
+  },
+  {
+    "s": "Нет данных: модель «{0}» не удалось сопоставить со списком.",
+    "t": "No data: model “{0}” could not be matched with the list."
+  },
+  {
+    "s": "Нет данных: не удалось определить системный диск.",
+    "t": "No data: could not determine the system disk."
+  },
+  {
+    "s": "Нет данных: не удалось опросить TPM.",
+    "t": "No data: could not query the TPM."
+  },
+  {
+    "s": "Нет данных: проверка доступна только для процессоров x86/x64.",
+    "t": "No data: the check is available only for x86/x64 processors."
+  },
+  {
+    "s": "Нет данных: средство диагностики DirectX не ответило.",
+    "t": "No data: the DirectX Diagnostic Tool did not respond."
+  },
+  {
     "s": "Нет доверенных источников для файла {0}.",
     "t": "No trusted sources for file {0}."
   },
@@ -4520,6 +5796,10 @@
     "t": "No installer sources available — continuing in portable mode."
   },
   {
+    "s": "Нет интернета или Центр обновления выдаёт ошибку? Укажите установочный носитель той же версии Windows:",
+    "t": "No internet, or Windows Update returns an error? Specify installation media of the same Windows version:"
+  },
+  {
     "s": "Нет описания для этой версии.",
     "t": "No description for this version."
   },
@@ -4530,6 +5810,14 @@
   {
     "s": "Нет соединения с интернетом — проверка обновлений недоступна.",
     "t": "No internet connection — cannot check for updates."
+  },
+  {
+    "s": "Нет соединения с интернетом.",
+    "t": "No internet connection."
+  },
+  {
+    "s": "Нет соединения с серверами Microsoft.",
+    "t": "No connection to Microsoft servers."
   },
   {
     "s": "Нет сохранённых пресетов",
@@ -4556,6 +5844,10 @@
     "t": "None of the package installers fit this system."
   },
   {
+    "s": "Никто из запущенных программ этот файл не держит. Если он всё равно не удаляется — дело в правах доступа или файл занят на уровне драйвера.",
+    "t": "None of the running apps is holding this file. If it still cannot be deleted, the cause is access permissions or the file is locked at the driver level."
+  },
+  {
     "s": "Ничего не выбрано.",
     "t": "Nothing selected."
   },
@@ -4570,6 +5862,10 @@
   {
     "s": "Новая кроссплатформенная версия PowerShell для скриптов и автоматизации.",
     "t": "The new cross-platform version of PowerShell for scripting and automation."
+  },
+  {
+    "s": "Новости и интересы на панели задач",
+    "t": "News and interests on the taskbar"
   },
   {
     "s": "Новый интерфейс",
@@ -4588,12 +5884,32 @@
     "t": "No new updates found"
   },
   {
+    "s": "Нужен 1С, старым играм и программам. Включается штатно через DISM: файлы компонента Windows берёт из Центра обновления или с установочной флешки/ISO.",
+    "t": "Needed by 1C and older games and programs. Enabled the standard way via DISM: Windows takes the feature files from Windows Update or from an installation USB drive/ISO."
+  },
+  {
+    "s": "Нужен накопитель от 64 ГБ, а для спокойной работы с обновлениями — заметно больше. Поможет только замена диска.",
+    "t": "A drive of at least 64 GB is required, and noticeably more for comfortable updating. Only replacing the drive will help."
+  },
+  {
     "s": "Нужен хотя бы один ProductReleaseId.",
     "t": "At least one ProductReleaseId is required."
   },
   {
+    "s": "Нужен хотя бы один источник",
+    "t": "At least one source is required"
+  },
+  {
     "s": "Нужна перезагрузка.",
     "t": "Restart required."
+  },
+  {
+    "s": "Нужно минимум 4 ГБ — добавьте или замените модуль памяти.",
+    "t": "At least 4 GB is required — add or replace a memory module."
+  },
+  {
+    "s": "Нужны права администратора.",
+    "t": "Administrator rights are required."
   },
   {
     "s": "О программе",
@@ -4622,6 +5938,10 @@
   {
     "s": "ОС: {0}\nПроцессор: {1}\nОЗУ: {2}\nVen4Tools: {3}",
     "t": "OS: {0}\nProcessor: {1}\nRAM: {2}\nVen4Tools: {3}"
+  },
+  {
+    "s": "Обе поддерживаются.",
+    "t": "Both are supported."
   },
   {
     "s": "Обзор",
@@ -4680,8 +6000,16 @@
     "t": "Update launcher"
   },
   {
+    "s": "Обновить список",
+    "t": "Refresh list"
+  },
+  {
     "s": "Обновление winget",
     "t": "Winget update"
+  },
+  {
+    "s": "Обновление больше не предлагается — обновите список.",
+    "t": "The update is no longer offered — refresh the list."
   },
   {
     "s": "Обновление завершено",
@@ -4724,6 +6052,10 @@
     "t": "No updates"
   },
   {
+    "s": "Обновления",
+    "t": "Updates"
+  },
+  {
     "s": "Обновления Windows",
     "t": "Windows Update"
   },
@@ -4756,6 +6088,14 @@
     "t": "Update installed apps automatically"
   },
   {
+    "s": "Обработка компонента завершилась ошибкой: нет связи с серверами Microsoft или повреждено хранилище компонентов. Попробуйте «Проверить системные файлы» и повторите.",
+    "t": "Feature processing failed: no connection to Microsoft servers or the component store is damaged. Try “Check system files” and try again."
+  },
+  {
+    "s": "Образ диска (*.iso)|*.iso",
+    "t": "Disk image (*.iso)|*.iso"
+  },
+  {
     "s": "Обратная связь: {0}",
     "t": "Feedback: {0}"
   },
@@ -4770,6 +6110,10 @@
   {
     "s": "Объём:          {0}",
     "t": "Capacity:       {0}"
+  },
+  {
+    "s": "Обычная поддержка Windows 10 закончилась 14 октября 2025 года. Microsoft продлила для домашних ПК расширенные обновления безопасности (ESU) до 12 октября 2027 года.",
+    "t": "Regular support for Windows 10 ended on October 14, 2025. Microsoft extended security updates (ESU) for home PCs until October 12, 2027."
   },
   {
     "s": "Обычно синхронизация занимает несколько минут — повторите попытку позже.",
@@ -4816,6 +6160,18 @@
     "t": "The overlay is a small window in the corner of the screen on top of a game: FPS, CPU and graphics card temperature and load. Clicks pass through it, nothing is injected into the game. Visible in windowed and borderless fullscreen modes."
   },
   {
+    "s": "Однократно",
+    "t": "Once"
+  },
+  {
+    "s": "Однократный запуск (RunOnce) не выключается — он сработает один раз и исчезнет сам.",
+    "t": "A one-time launch (RunOnce) cannot be disabled — it runs once and disappears on its own."
+  },
+  {
+    "s": "Окно проверки памяти открыто. Если выбрали проверку при следующем включении — она пройдёт при ближайшей перезагрузке.",
+    "t": "The memory test window is open. If you chose to check at the next startup, the test will run on the next restart."
+  },
+  {
     "s": "Окно скрывается в трей вместо закрытия. Двойной клик по иконке для открытия.",
     "t": "The window hides to the tray instead of closing. Double-click the icon to open it."
   },
@@ -4828,6 +6184,10 @@
     "t": "RAM {0} of {1}"
   },
   {
+    "s": "Оперативная память от 4 ГБ",
+    "t": "RAM of 4 GB or more"
+  },
+  {
     "s": "Операция winget прервана сигналом завершения.",
     "t": "The winget operation was interrupted by a termination signal."
   },
@@ -4838,6 +6198,10 @@
   {
     "s": "Операция отменена.",
     "t": "Operation canceled."
+  },
+  {
+    "s": "Операция прервана.",
+    "t": "Operation aborted."
   },
   {
     "s": "Операция с Office не удалась. Попробуйте ещё раз.",
@@ -4866,6 +6230,14 @@
   {
     "s": "Опустит выбранный источник ниже в порядке попыток установки.",
     "t": "Moves the selected source down in the order of install attempts."
+  },
+  {
+    "s": "Освободить место",
+    "t": "Free up space"
+  },
+  {
+    "s": "Освобождено {0} (свободно было {1}, стало {2}).",
+    "t": "Freed {0} (free space was {1}, now {2})."
   },
   {
     "s": "Основной URL загрузки не входит в список доверенных.",
@@ -4904,6 +6276,10 @@
     "t": "Stops the installation after the current step finishes. Apps already installed stay."
   },
   {
+    "s": "Остановить",
+    "t": "Stop"
+  },
+  {
     "s": "Остановить службы обновления Windows и очистить кэш загрузки? Службы будут перезапущены автоматически.",
     "t": "Stop the Windows Update services and clear the download cache? The services will be restarted automatically."
   },
@@ -4940,6 +6316,10 @@
     "t": "Access denied — the operation requires administrator rights."
   },
   {
+    "s": "Откат к прежней версии Windows станет невозможен.",
+    "t": "Rolling back to the previous Windows version will no longer be possible."
+  },
+  {
     "s": "Отклонено",
     "t": "Rejected"
   },
@@ -4948,8 +6328,24 @@
     "t": "Decline"
   },
   {
+    "s": "Отключает «Иногда показывать предложения в меню «Пуск»» — рекламные плитки и значки приложений из Store.",
+    "t": "Turns off “Show suggestions occasionally in Start” — promotional tiles and app icons from the Store."
+  },
+  {
+    "s": "Отключает «главное в поиске» — картинки праздников и новостные подборки в поле поиска. Действует после перезапуска Проводника.",
+    "t": "Turns off “Search highlights” — holiday images and news picks in the search box. Takes effect after File Explorer restarts."
+  },
+  {
+    "s": "Отключает «забавные факты, советы и подсказки» поверх экрана блокировки. Сами картинки «Windows: интересное» остаются.",
+    "t": "Turns off “fun facts, tips, tricks” on the lock screen. The “Windows spotlight” pictures themselves remain."
+  },
+  {
     "s": "Отключает авто-установку рекомендуемых приложений.",
     "t": "Disables automatic installation of suggested apps."
+  },
+  {
+    "s": "Отключает всплывающие «советы, рекомендации и предложения при использовании Windows».",
+    "t": "Turns off pop-up “tips, tricks, and suggestions as you use Windows”."
   },
   {
     "s": "Отключает запись действий пользователя. HKLM EnableActivityFeed=0.",
@@ -4968,6 +6364,14 @@
     "t": "Disables ad personalization. HKCU AdvertisingInfo\\Enabled=0."
   },
   {
+    "s": "Отключает уведомления поставщиков синхронизации (предложения OneDrive и Microsoft 365) в Проводнике. Действует после перезапуска Проводника.",
+    "t": "Turns off sync provider notifications (OneDrive and Microsoft 365 offers) in File Explorer. Takes effect after File Explorer restarts."
+  },
+  {
+    "s": "Отключает экран «Что нового» после обновлений и предложения «завершить настройку устройства» (подписки, OneDrive, Microsoft 365).",
+    "t": "Turns off the “What's new” screen after updates and the “finish setting up your device” suggestions (subscriptions, OneDrive, Microsoft 365)."
+  },
+  {
     "s": "Отключено (параноидальный режим)",
     "t": "Disabled (paranoid mode)"
   },
@@ -4984,6 +6388,10 @@
     "t": "Unpin from the quick access bar."
   },
   {
+    "s": "Откроет C:\\Windows\\Logs\\CBS — там журнал CBS.log с подробностями проверки.",
+    "t": "Opens C:\\Windows\\Logs\\CBS, which contains CBS.log with the check details."
+  },
+  {
     "s": "Откроет GitHub с подготовленной формой сообщения о проблеме и данными о версии системы.",
     "t": "Opens GitHub with a prefilled issue form and system version details."
   },
@@ -4992,8 +6400,20 @@
     "t": "Opens “Installed” with the list of apps that have an update."
   },
   {
+    "s": "Откроет в Проводнике папку C:\\Windows\\Minidump, куда Windows сохраняет краткие дампы синих экранов. Ven4Tools их не разбирает и не отправляет.",
+    "t": "Opens C:\\Windows\\Minidump in File Explorer, where Windows saves small blue screen dumps. Ven4Tools does not analyze or send them."
+  },
+  {
     "s": "Откроет в Проводнике папку, где Ven4Tools хранит диагностические журналы.",
     "t": "Opens in File Explorer the folder where Ven4Tools keeps its diagnostic logs."
+  },
+  {
+    "s": "Откроет в браузере официальный список процессоров, поддерживаемых Windows 11 (там же ссылки на списки AMD и Qualcomm).",
+    "t": "Opens the official list of processors supported by Windows 11 in the browser (with links to the AMD and Qualcomm lists)."
+  },
+  {
+    "s": "Откроет в браузере поиск по документации Microsoft с этим кодом синего экрана.",
+    "t": "Searches the Microsoft documentation for this blue screen code in the browser."
   },
   {
     "s": "Откроет вкладку «Диагностика» с журналом ошибок Windows Update за 7 дней и очисткой кэша обновлений.",
@@ -5096,6 +6516,10 @@
     "t": "Open-source remote desktop app; can connect through your own server."
   },
   {
+    "s": "Открытая сеть — пароля нет.",
+    "t": "Open network — no password."
+  },
+  {
     "s": "Открытое приложение для заметок и списков дел в Markdown с синхронизацией и шифрованием.",
     "t": "Open-source Markdown notes and to-do app with sync and encryption."
   },
@@ -5136,12 +6560,20 @@
     "t": "Open log folder"
   },
   {
+    "s": "Открыть папку журналов",
+    "t": "Open logs folder"
+  },
+  {
     "s": "Отмена",
     "t": "Cancel"
   },
   {
     "s": "Отменено",
     "t": "Canceled"
+  },
+  {
+    "s": "Отменить удаление будет нельзя. Продолжить?",
+    "t": "Deletion cannot be undone. Continue?"
   },
   {
     "s": "Отметит в каталоге приложения из этого пресета. Установка не начнётся.",
@@ -5252,6 +6684,14 @@
     "t": "Rate this version:"
   },
   {
+    "s": "Оценка SMART: плохо",
+    "t": "SMART assessment: bad"
+  },
+  {
+    "s": "Оценка SMART: требует внимания",
+    "t": "SMART assessment: needs attention"
+  },
+  {
     "s": "Очистит строку поиска и снова покажет полный список текущей категории.",
     "t": "Clears the search box and shows the full list of the current category again."
   },
@@ -5280,12 +6720,32 @@
     "t": "Windows cleanup"
   },
   {
+    "s": "Очистка завершена. Сколько освобождено — нет данных: не удалось прочитать свободное место.",
+    "t": "Cleanup finished. Amount freed: no data — could not read free space."
+  },
+  {
+    "s": "Очистка корзины…",
+    "t": "Emptying the Recycle Bin…"
+  },
+  {
     "s": "Очистка кэша",
     "t": "Clear cache"
   },
   {
+    "s": "Очистка места на диске",
+    "t": "Disk space cleanup"
+  },
+  {
+    "s": "Очистка прервалась ошибкой — подробности в журнале.",
+    "t": "Cleanup stopped with an error — see the log for details."
+  },
+  {
     "s": "Очистка системы уже выполняется — дождитесь её завершения.",
     "t": "System cleanup is already running — wait for it to finish."
+  },
+  {
+    "s": "Очистка хранилища компонентов (DISM) — это может занять до получаса…",
+    "t": "Cleaning up the component store (DISM) — this can take up to half an hour…"
   },
   {
     "s": "Ошибка",
@@ -5444,6 +6904,18 @@
     "t": "Error: {0}"
   },
   {
+    "s": "Ошибки",
+    "t": "Errors"
+  },
+  {
+    "s": "Ошибки носителя: {0}",
+    "t": "Media errors: {0}"
+  },
+  {
+    "s": "Ошибок не найдено",
+    "t": "No errors found"
+  },
+  {
     "s": "ПАПКА УСТАНОВКИ",
     "t": "INSTALL FOLDER"
   },
@@ -5468,8 +6940,20 @@
     "t": "The package requires an explicit install folder."
   },
   {
+    "s": "Пакетов к очистке: {0}. Windows рекомендует очистку: {1}. Цифра — верхняя граница: обычно освобождается заметно меньше.",
+    "t": "Packages to clean up: {0}. Windows recommends cleanup: {1}. The figure is an upper bound: usually noticeably less is freed."
+  },
+  {
+    "s": "Память проверяется при перезагрузке компьютера: проверка идёт до загрузки Windows и занимает от 10 минут до часа и больше — зависит от объёма памяти.\n\nСохраните открытые документы и закройте программы.\n\nСейчас откроется окно Windows «Средство проверки памяти»: в нём можно выбрать «Выполнить перезагрузку и проверку» сейчас или проверку при следующем включении компьютера. После проверки откройте этот раздел — здесь появится её итог.\n\nОткрыть средство проверки памяти?",
+    "t": "Memory is checked when the computer restarts: the test runs before Windows loads and takes from 10 minutes to an hour or more, depending on the amount of memory.\n\nSave open documents and close apps.\n\nThe Windows “Memory Diagnostic” window will open now: there you can choose “Restart now and check for problems” or a check the next time the computer starts. After the check, open this section — its result will appear here.\n\nOpen Windows Memory Diagnostic?"
+  },
+  {
     "s": "Панель быстрого доступа заполнена (максимум {0}).",
     "t": "The quick access bar is full (maximum {0})."
+  },
+  {
+    "s": "Папка «Автозагрузка»",
+    "t": "“Startup” folder"
   },
   {
     "s": "Папка для кэширования установщиков:",
@@ -5478,6 +6962,14 @@
   {
     "s": "Папка клиента:\n{0}\n\nсовпадает с защищённой пользовательской папкой (Downloads/Документы/Рабочий стол и т.п.) целиком. Удаление отменено во избежание потери данных.",
     "t": "Client folder:\n{0}\n\nis itself a protected user folder (Downloads, Documents, Desktop, etc.). Removal canceled to prevent data loss."
+  },
+  {
+    "s": "Папка минидампов не найдена ({0}). Windows могла не сохранить дамп: это настраивается в «Параметры системы → Дополнительно → Загрузка и восстановление».",
+    "t": "Minidump folder not found ({0}). Windows may not have saved a dump: this is configured in “System Properties → Advanced → Startup and Recovery”."
+  },
+  {
+    "s": "Папка минидампов не найдена.",
+    "t": "Minidump folder not found."
   },
   {
     "s": "Папка набора «Перед переустановкой»",
@@ -5508,8 +7000,20 @@
     "t": "Default install folder (winget only):"
   },
   {
+    "s": "Папки временных файлов пользователя и Windows. Удаляются только файлы старше суток; занятые программами пропускаются.",
+    "t": "User and Windows temporary folders. Only files older than a day are deleted; files in use are skipped."
+  },
+  {
     "s": "Папки драйверов и Wi-Fi в файле ответа задаются относительно самого файла и не могут выходить за его папку.",
     "t": "Driver and Wi-Fi folders in the answer file are relative to the file itself and cannot be outside its folder."
+  },
+  {
+    "s": "Папок Центра обновления не нашлось — переименовывать было нечего, службы перезапущены.",
+    "t": "No Windows Update folders found — nothing to rename; services restarted."
+  },
+  {
+    "s": "Параметры 1–4:",
+    "t": "Parameters 1–4:"
   },
   {
     "s": "Параметры установки",
@@ -5520,12 +7024,24 @@
     "t": "Paranoid mode — turn off background and diagnostic network activity"
   },
   {
+    "s": "Пароли сетей, к которым этот компьютер уже подключался. Пароль показывается только по кнопке и никуда не сохраняется.",
+    "t": "Passwords of networks this computer has connected to. A password is shown only when you click the button and is not saved anywhere."
+  },
+  {
     "s": "Пароли сохраняются в наборе открытым текстом — иначе их не перенести. Не оставляйте флешку без присмотра.",
     "t": "Passwords are stored in the kit as plain text — there is no other way to transfer them. Do not leave the USB drive unattended."
   },
   {
     "s": "Пароль в файл ответов не записывается, чтобы он не лежал на флешке открытым текстом. Без этой отметки файл ответов не создаётся.",
     "t": "The password is not written to the Windows answer file, so it does not sit on the USB drive as plain text. Without this checkbox, the Windows answer file is not created."
+  },
+  {
+    "s": "Пароль сети",
+    "t": "Network password"
+  },
+  {
+    "s": "Пароль у профиля не сохранён.",
+    "t": "No password is saved in the profile."
   },
   {
     "s": "Патч больше не предлагается сервером обновлений (устарел).",
@@ -5568,8 +7084,36 @@
     "t": "Switches the window between the new and classic layout. Use the same button to switch back."
   },
   {
+    "s": "Переназначенные секторы: {0}",
+    "t": "Reallocated sectors: {0}"
+  },
+  {
     "s": "Переносной офлайн-набор",
     "t": "Portable offline kit"
+  },
+  {
+    "s": "Перечитает список сохранённых сетей Wi-Fi. Открытые пароли и QR-коды скроются.",
+    "t": "Rereads the list of saved Wi-Fi networks. Shown passwords and QR codes will be hidden."
+  },
+  {
+    "s": "Перечитать автозагрузку.",
+    "t": "Reread startup entries."
+  },
+  {
+    "s": "Персональные советы по данным диагностики",
+    "t": "Tailored tips based on diagnostic data"
+  },
+  {
+    "s": "Планировщик заданий",
+    "t": "Task Scheduler"
+  },
+  {
+    "s": "Планировщик заданий недоступен.",
+    "t": "Task Scheduler is unavailable."
+  },
+  {
+    "s": "Планировщик заданий: {0}",
+    "t": "Task Scheduler: {0}"
   },
   {
     "s": "Платформа для совместной работы и видеозвонков.",
@@ -5610,6 +7154,14 @@
   {
     "s": "По умолчанию оверлей сам скрывается, когда запущена игра с античитом (Vanguard, Easy Anti-Cheat, BattlEye, FACEIT и др.): античиты видят окна поверх игры.",
     "t": "By default the overlay hides itself when a game with anti-cheat starts (Vanguard, Easy Anti-Cheat, BattlEye, FACEIT, etc.): anti-cheat systems see windows on top of the game."
+  },
+  {
+    "s": "Повреждено хранилище компонентов Windows (не хватает сборки). Сначала выполните «Проверить системные файлы» в разделе «Ремонт».",
+    "t": "The Windows component store is damaged (an assembly is missing). First run “Check system files” in the “Repair” section."
+  },
+  {
+    "s": "Повреждено хранилище компонентов Windows (нет нужного манифеста). Сначала выполните «Проверить системные файлы» в разделе «Ремонт».",
+    "t": "The Windows component store is damaged (a required manifest is missing). First run “Check system files” in the “Repair” section."
   },
   {
     "s": "Повторит установку этого приложения тем же способом, что и обычная установка из каталога. Кнопка недоступна, пока идёт другая установка.",
@@ -5666,6 +7218,10 @@
   {
     "s": "Подготовка...",
     "t": "Preparing..."
+  },
+  {
+    "s": "Поддерживается, но выключена.",
+    "t": "Supported but disabled."
   },
   {
     "s": "Подключает облачные хранилища (Google Drive, Яндекс.Диск, OneDrive и др.) как обычный локальный диск.",
@@ -5732,8 +7288,24 @@
     "t": "Windows tips. Intrusive pop-up hints."
   },
   {
+    "s": "Подсчёт завершён. Отметьте, что удалить, и нажмите «Очистить выбранное».",
+    "t": "Calculation finished. Select what to delete and click “Clean selected”."
+  },
+  {
+    "s": "Подсчёт категории {0}",
+    "t": "Calculating category {0}"
+  },
+  {
+    "s": "Подсчёт остановлен.",
+    "t": "Calculation stopped."
+  },
+  {
     "s": "Подтвердит условия лицензии и продолжит установку выбранного приложения.",
     "t": "Accepts the license terms and continues installing the selected app."
+  },
+  {
+    "s": "Подтвердите удаление",
+    "t": "Confirm deletion"
   },
   {
     "s": "Подтверждение",
@@ -5768,6 +7340,10 @@
     "t": "Later"
   },
   {
+    "s": "Поиск Windows перестаёт искать в интернете через Bing и показывать веб-подсказки — только файлы и программы на ПК. Это политика: заодно пропадают подсказки недавних запросов в поиске Проводника.",
+    "t": "Windows Search stops searching the web via Bing and showing web suggestions — only files and apps on the PC. This is a policy: it also removes recent search suggestions in File Explorer search."
+  },
+  {
     "s": "Поиск в Chocolatey превысил {0}с",
     "t": "Chocolatey search exceeded {0}s"
   },
@@ -5800,8 +7376,16 @@
     "t": "Search: name, description or package ID"
   },
   {
+    "s": "Покажет QR-код: наведите на него камеру телефона, и он подключится к этой сети без ввода пароля.",
+    "t": "Shows a QR code: point your phone camera at it, and the phone will join this network without typing the password."
+  },
+  {
     "s": "Покажет или скроет описание изменений выбранной версии клиента.",
     "t": "Shows or hides the release notes for the selected client version."
+  },
+  {
+    "s": "Покажет пароль этой сети, сохранённый в Windows. Повторное нажатие скроет его.",
+    "t": "Shows this network's password saved in Windows. Click again to hide it."
   },
   {
     "s": "Покажет программы каталога, которые уже стоят на этом компьютере, с кодом набора и файлом ответа для другой машины.",
@@ -5816,8 +7400,20 @@
     "t": "Shown: {0}. To see them in the list — “Refresh catalog” on the “Catalog” tab, or restart the client."
   },
   {
+    "s": "Показаны и системные (Microsoft / Windows): {0}.",
+    "t": "System entries (Microsoft / Windows) are also shown: {0}."
+  },
+  {
+    "s": "Показать записи Microsoft и компонентов Windows. Выключать их без понятной причины не стоит.",
+    "t": "Show Microsoft and Windows component entries. Disabling them without a clear reason is not recommended."
+  },
+  {
     "s": "Показать окно",
     "t": "Show window"
+  },
+  {
+    "s": "Показать системные",
+    "t": "Show system"
   },
   {
     "s": "Показывает или скрывает оверлей. То же делает сочетание Ctrl+Shift+O — оно работает, пока Ven4Tools запущен, даже свёрнутый в трей.",
@@ -5842,6 +7438,22 @@
   {
     "s": "Показывать это обновление снова",
     "t": "Show this update again"
+  },
+  {
+    "s": "Политика «Отключить Windows Copilot» и скрытие кнопки Copilot на панели задач. На новых сборках Copilot — отдельное приложение: его убирает пункт ниже. Действует после перезапуска Проводника.",
+    "t": "The “Turn off Windows Copilot” policy and hiding the Copilot button on the taskbar. On newer builds Copilot is a separate app: it is removed by the item below. Takes effect after File Explorer restarts."
+  },
+  {
+    "s": "Политика запрещает Windows сохранять снимки экрана для Recall. Recall есть только на ПК Copilot+; на остальных пункт ничего не меняет. Переключатель в «Параметрах» станет заблокированным.",
+    "t": "The policy prevents Windows from saving screenshots for Recall. Recall exists only on Copilot+ PCs; on others this item changes nothing. The toggle in “Settings” will be locked."
+  },
+  {
+    "s": "Политика отключает виджеты Windows 11: кнопка на панели задач и лента новостей MSN пропадают, переключатель «Виджеты» в «Параметрах» становится заблокированным. Действует после перезапуска Проводника.",
+    "t": "The policy turns off Windows 11 widgets: the taskbar button and the MSN news feed disappear, and the “Widgets” toggle in “Settings” becomes locked. Takes effect after File Explorer restarts."
+  },
+  {
+    "s": "Политика отключает ленту «Новости и интересы» (погода и новости MSN) на панели задач Windows 10. Пункт в контекстном меню панели задач пропадёт. Действует после перезапуска Проводника.",
+    "t": "The policy turns off the “News and interests” feed (MSN weather and news) on the Windows 10 taskbar. The item in the taskbar context menu disappears. Takes effect after File Explorer restarts."
   },
   {
     "s": "Полная очистка",
@@ -5888,6 +7500,10 @@
     "t": "Custom"
   },
   {
+    "s": "Помогает, когда Windows Update возвращает старый драйвер видеокарты поверх нового. Политика снижает вероятность этого, но работает не во всех случаях: драйверы для нового оборудования Windows может поставить и сама. Чтобы убрать один конкретный драйвер, надёжнее скрыть его в списке обновлений.",
+    "t": "Helps when Windows Update puts an old graphics driver back over a newer one. The policy makes this less likely but does not work in all cases: Windows may install drivers for new hardware on its own. To remove one specific driver, it is more reliable to hide it in the update list."
+  },
+  {
     "s": "Помощник поддержки Microsoft.",
     "t": "Microsoft support assistant."
   },
@@ -5900,6 +7516,10 @@
     "t": "Try again or use a manually installed Office."
   },
   {
+    "s": "Попросил {0} закрыться. Если программа спросит о сохранении — ответьте ей.",
+    "t": "Asked {0} to close. If the app asks about saving, answer it."
+  },
+  {
     "s": "Популярный архиватор с поддержкой RAR и ZIP.",
     "t": "Popular archiver with RAR and ZIP support."
   },
@@ -5910,6 +7530,10 @@
   {
     "s": "Популярный российский аудиоплеер: плейлисты, эквалайзер, интернет-радио.",
     "t": "Popular Russian audio player: playlists, equalizer, internet radio."
+  },
+  {
+    "s": "Порядок важен: сначала преобразуйте системный диск в GPT (пункт ниже), и только потом в BIOS/UEFI выключите CSM/Legacy и включите UEFI. Если переключить режим раньше, Windows перестанет загружаться.",
+    "t": "Order matters: first convert the system disk to GPT (item below), and only then disable CSM/Legacy and enable UEFI in BIOS/UEFI. If you switch the mode earlier, Windows will stop booting."
   },
   {
     "s": "После --answer-file нужен путь к файлу ответа.",
@@ -5944,8 +7568,32 @@
     "t": "After an explanation and your confirmation, installs the PawnIO driver through winget and checks its signature. Without it CPU temperatures are not visible."
   },
   {
+    "s": "После подтверждения Windows Update перестанет предлагать и сам ставить отмеченные обновления. Помогает, когда он возвращает старый драйвер поверх нового. Вернуть — в разделе «Скрытые».",
+    "t": "After confirmation, Windows Update stops offering and installing the selected updates on its own. Helps when it puts an old driver back over a newer one. To bring them back — the “Hidden” section."
+  },
+  {
+    "s": "После подтверждения Windows Update снова будет предлагать отмеченные обновления и сможет поставить их сам.",
+    "t": "After confirmation, Windows Update will offer the selected updates again and may install them on its own."
+  },
+  {
+    "s": "После подтверждения включит .NET Framework 3.5 через DISM, скачав файлы через Центр обновления. Может понадобиться перезагрузка.",
+    "t": "After confirmation, enables .NET Framework 3.5 via DISM, downloading the files via Windows Update. A restart may be needed."
+  },
+  {
+    "s": "После подтверждения включит политику ExcludeWUDriversInQualityUpdate. Выключение вернёт прежнее значение.",
+    "t": "After confirmation, enables the ExcludeWUDriversInQualityUpdate policy. Turning it off restores the previous value."
+  },
+  {
     "s": "После подтверждения восстановит твики очистки и пресеты из этого снапшота.",
     "t": "After confirmation, restores the cleanup tweaks and presets from this snapshot."
+  },
+  {
+    "s": "После подтверждения выключит .NET Framework 3.5 через DISM. Программы, которым он нужен, перестанут запускаться.",
+    "t": "After confirmation, disables .NET Framework 3.5 via DISM. Apps that need it will stop launching."
+  },
+  {
+    "s": "После подтверждения запустит DISM /RestoreHealth и sfc /scannow, покажет прогресс и итог по-русски.",
+    "t": "After confirmation, runs DISM /RestoreHealth and sfc /scannow, shows the progress and a plain-language result."
   },
   {
     "s": "После подтверждения навсегда удалит этот сохранённый снапшот.",
@@ -5954,6 +7602,18 @@
   {
     "s": "После подтверждения обновит через winget все приложения, для которых доступна новая версия.",
     "t": "After confirmation, updates via winget all apps that have a new version available."
+  },
+  {
+    "s": "После подтверждения остановит DISM или sfc. Уже исправленное останется исправленным.",
+    "t": "After confirmation, stops DISM or sfc. What has already been repaired stays repaired."
+  },
+  {
+    "s": "После подтверждения остановит DISM. Прерванная на середине операция может оставить компонент в промежуточном состоянии до перезагрузки.",
+    "t": "After confirmation, stops DISM. An operation interrupted midway may leave the feature in an intermediate state until a restart."
+  },
+  {
+    "s": "После подтверждения остановит службы wuauserv, bits, cryptsvc, msiserver, переименует SoftwareDistribution и catroot2 в *.old-дата и запустит службы. Если служба не остановится — ничего не переименует.",
+    "t": "After confirmation, stops the wuauserv, bits, cryptsvc, msiserver services, renames SoftwareDistribution and catroot2 to *.old-date and starts the services. If a service does not stop, nothing is renamed."
   },
   {
     "s": "После подтверждения остановит службы обновления, очистит их кэш и снова запустит службы.",
@@ -5966,6 +7626,10 @@
   {
     "s": "После подтверждения полностью удалит драйвер PawnIO: службу, устройство и пакет в хранилище драйверов.",
     "t": "After confirmation, completely removes the PawnIO driver: the service, the device and the package in the driver store."
+  },
+  {
+    "s": "После подтверждения принудительно завершит программу. Несохранённые данные в ней будут потеряны.",
+    "t": "After confirmation, force-terminates the app. Unsaved data in it will be lost."
   },
   {
     "s": "После подтверждения сбросит Winsock и параметры IP. Сеть временно отключится, может потребоваться перезагрузка.",
@@ -5982,6 +7646,10 @@
   {
     "s": "После подтверждения удалит из каталога все приложения, добавленные пользователем.",
     "t": "After confirmation, removes all user-added apps from the catalog."
+  },
+  {
+    "s": "После подтверждения удалит отмеченные категории. Отката нет. Доступна после подсчёта.",
+    "t": "After confirmation, deletes the selected categories. There is no undo. Available after calculation."
   },
   {
     "s": "После подтверждения удалит папку клиента, его ярлыки и записи автозапуска. Настройки и логи лаунчера сохранятся.",
@@ -6012,6 +7680,10 @@
     "t": "After confirmation, deletes this preset. Installed apps stay."
   },
   {
+    "s": "После предупреждения откроет «Средство проверки памяти Windows». Перезагрузить сейчас или проверить при следующем включении — выбираете в его окне.",
+    "t": "After a warning, opens “Windows Memory Diagnostic”. Restart now or check at the next startup — you choose in its window."
+  },
+  {
     "s": "После сохранения откройте вкладку ",
     "t": "After saving, go to "
   },
@@ -6022,6 +7694,18 @@
   {
     "s": "После установки через Ven4Tools убирает с рабочего стола ярлыки, которые появились во время этой установки. Ярлыки, которые были раньше, не трогаются. Программа остаётся в меню «Пуск».",
     "t": "After an install through Ven4Tools, removes desktop shortcuts that appeared during that install. Existing shortcuts are left alone. The app stays in the Start menu."
+  },
+  {
+    "s": "Последнее накопительное обновление:",
+    "t": "Latest cumulative update:"
+  },
+  {
+    "s": "Последнее накопительное обновление: {0}",
+    "t": "Latest cumulative update: {0}"
+  },
+  {
+    "s": "Последнее накопительное обновление: нет данных",
+    "t": "Latest cumulative update: no data"
   },
   {
     "s": "Последние действия",
@@ -6038,6 +7722,22 @@
   {
     "s": "Последний запуск: {0}.",
     "t": "Last run: {0}."
+  },
+  {
+    "s": "Последний тест {0} был прерван — итога нет, проверку можно запустить снова",
+    "t": "Last test {0} was interrupted — no result; you can run the check again"
+  },
+  {
+    "s": "Последний тест {0} не удалось завершить — итога нет, проверку можно запустить снова",
+    "t": "Last test {0} could not finish — no result; you can run the check again"
+  },
+  {
+    "s": "Последний тест {0}: обнаружены ошибки памяти — стоит проверить модули памяти и отключить разгон (XMP/EXPO), если он включён",
+    "t": "Last test {0}: memory errors detected — check the memory modules and disable overclocking (XMP/EXPO) if it is on"
+  },
+  {
+    "s": "Последний тест {0}: ошибок не обнаружено",
+    "t": "Last test {0}: no errors detected"
   },
   {
     "s": "Последняя",
@@ -6058,6 +7758,10 @@
   {
     "s": "Поставить вручную.txt",
     "t": "Install manually.txt"
+  },
+  {
+    "s": "Посчитает, сколько места занимает каждая категория. Ничего не удаляет. Подсчёт хранилища компонентов через DISM занимает несколько минут.",
+    "t": "Calculates how much space each category takes. Deletes nothing. Calculating the component store via DISM takes a few minutes."
   },
   {
     "s": "Потолок интерфейса не определён, поэтому долю его использования показать нельзя — приблизительное значение здесь только вводило бы в заблуждение.",
@@ -6100,12 +7804,40 @@
     "t": "winget search timed out."
   },
   {
+    "s": "Предложения приложений в «Пуске»",
+    "t": "App suggestions in Start"
+  },
+  {
+    "s": "Предыдущая версия Windows (Windows.old)",
+    "t": "Previous Windows version (Windows.old)"
+  },
+  {
+    "s": "Прервать",
+    "t": "Abort"
+  },
+  {
+    "s": "Прервать операцию?\n\nDISM или проверка системных файлов будут остановлены. Прерванная на середине операция может оставить компонент в промежуточном состоянии — обычно Windows доводит или откатывает его при следующей перезагрузке.",
+    "t": "Abort the operation?\n\nDISM or the system file check will be stopped. An operation interrupted midway may leave the feature in an intermediate state — Windows usually completes or rolls it back at the next restart."
+  },
+  {
+    "s": "Прервёт подсчёт. Уже посчитанные категории останутся в списке.",
+    "t": "Stops the calculation. Categories already calculated stay in the list."
+  },
+  {
+    "s": "Прервёт проверку папки.",
+    "t": "Stops checking the folder."
+  },
+  {
     "s": "Пресеты",
     "t": "Presets"
   },
   {
     "s": "Приложение Claude от Anthropic: чат с ИИ, работа с файлами и подключение инструментов.",
     "t": "Anthropic's Claude app: AI chat, working with files, and connecting tools."
+  },
+  {
+    "s": "Приложение Copilot",
+    "t": "Copilot app"
   },
   {
     "s": "Приложение Ven4Tools уже запущено.",
@@ -6172,6 +7904,18 @@
     "t": "Tries the sources in order — CDN, CDN by direct address, the ven4tools.ru mirror, GitHub — and moves on to the next one on failure."
   },
   {
+    "s": "Проверено файлов: {0}.",
+    "t": "Files checked: {0}."
+  },
+  {
+    "s": "Проверено: {0}. Данные — из SMART самого диска; где диск их не отдаёт, — из счётчиков Windows.",
+    "t": "Checked: {0}. Data comes from the disk's own SMART; where the disk does not provide it, from Windows counters."
+  },
+  {
+    "s": "Проверит TPM, Secure Boot, режим загрузки, разметку диска, процессор, память, диск и видеокарту. Займёт до минуты: сведения о видеокарте собирает средство диагностики DirectX.",
+    "t": "Checks TPM, Secure Boot, boot mode, disk partitioning, processor, memory, disk and graphics card. Takes up to a minute: graphics card details are collected by the DirectX Diagnostic Tool."
+  },
+  {
     "s": "Проверит недостающие системные компоненты и предложит установить каждый из них с подтверждением.",
     "t": "Checks for missing system components and offers to install each one, with confirmation."
   },
@@ -6216,12 +7960,24 @@
     "t": "Verify and repair client"
   },
   {
+    "s": "Проверить и восстановить системные файлы Windows?\n\n1. DISM /RestoreHealth — восстановит хранилище компонентов, при необходимости скачав исправные файлы через Центр обновления.\n2. sfc /scannow — проверит системные файлы и заменит повреждённые.\n\nЭто долго — обычно 10–30 минут, иногда дольше. Компьютером можно пользоваться, но лучше не выключать его до конца проверки. Помогает не всегда: если повреждено что-то за пределами системных файлов, проверка этого не исправит.",
+    "t": "Check and repair Windows system files?\n\n1. DISM /RestoreHealth — repairs the component store, downloading healthy files via Windows Update if needed.\n2. sfc /scannow — checks system files and replaces damaged ones.\n\nThis takes a while — usually 10–30 minutes, sometimes longer. You can use the computer, but it is better not to turn it off until the check finishes. It does not always help: if something outside the system files is damaged, the check will not fix it."
+  },
+  {
     "s": "Проверить обновления",
     "t": "Check for updates"
   },
   {
     "s": "Проверить применённое",
     "t": "Check applied tweaks"
+  },
+  {
+    "s": "Проверить системные файлы",
+    "t": "Check system files"
+  },
+  {
+    "s": "Проверить состояние",
+    "t": "Check status"
   },
   {
     "s": "Проверка",
@@ -6236,6 +7992,10 @@
     "t": "Checking winget..."
   },
   {
+    "s": "Проверка выполняется...",
+    "t": "Checking..."
+  },
+  {
     "s": "Проверка доступна только для текущей версии клиента",
     "t": "The check is only available for the current client version"
   },
@@ -6246,6 +8006,10 @@
   {
     "s": "Проверка ещё не выполнялась",
     "t": "No check has been run yet"
+  },
+  {
+    "s": "Проверка ещё не запускалась.",
+    "t": "The check has not been run yet."
   },
   {
     "s": "Проверка идентификатора",
@@ -6268,12 +8032,44 @@
     "t": "Checking the update..."
   },
   {
+    "s": "Проверка оперативной памяти",
+    "t": "Memory test"
+  },
+  {
+    "s": "Проверка остановлена.",
+    "t": "Check stopped."
+  },
+  {
+    "s": "Проверка отменена.",
+    "t": "Check cancelled."
+  },
+  {
     "s": "Проверка подписи...",
     "t": "Verifying signature..."
   },
   {
     "s": "Проверка прав администратора...",
     "t": "Checking administrator rights..."
+  },
+  {
+    "s": "Проверка прервана.",
+    "t": "Check aborted."
+  },
+  {
+    "s": "Проверка системных файлов",
+    "t": "System file check"
+  },
+  {
+    "s": "Проверка системных файлов: найдены повреждённые файлы, они восстановлены. Перезагрузите компьютер.",
+    "t": "System file check: damaged files were found and repaired. Restart the computer."
+  },
+  {
+    "s": "Проверка системных файлов: найдены повреждённые файлы, часть восстановить не удалось. Подробности — в журнале {0}.",
+    "t": "System file check: damaged files were found, some could not be repaired. See {0} for details."
+  },
+  {
+    "s": "Проверка системных файлов: нарушений целостности не найдено.",
+    "t": "System file check: no integrity violations found."
   },
   {
     "s": "Проверка соединения, адаптеров, задержки и доступности сервисов",
@@ -6292,12 +8088,44 @@
     "t": "Checking..."
   },
   {
+    "s": "Проверку системных файлов выполнить не удалось. Попробуйте после перезагрузки; подробности — в журнале {0}.",
+    "t": "The system file check could not be performed. Try after a restart; see {0} for details."
+  },
+  {
+    "s": "Проверьте вручную: Win+R → dxdiag, вкладка «Экран».",
+    "t": "Check manually: Win+R → dxdiag, “Display” tab."
+  },
+  {
+    "s": "Проверьте вручную: Win+R → msinfo32, строка «Режим BIOS».",
+    "t": "Check manually: Win+R → msinfo32, “BIOS Mode” line."
+  },
+  {
+    "s": "Проверьте вручную: Win+R → msinfo32, строка «Состояние безопасной загрузки».",
+    "t": "Check manually: Win+R → msinfo32, “Secure Boot State” line."
+  },
+  {
+    "s": "Проверьте вручную: Win+R → tpm.msc, строка «Версия спецификации».",
+    "t": "Check manually: Win+R → tpm.msc, “Specification Version” line."
+  },
+  {
+    "s": "Проверьте вручную: Win+R → tpm.msc.",
+    "t": "Check manually: Win+R → tpm.msc."
+  },
+  {
+    "s": "Проверьте вручную: «Управление дисками» → свойства диска → вкладка «Тома» → «Стиль раздела».",
+    "t": "Check manually: “Disk Management” → disk properties → “Volumes” tab → “Partition style”."
+  },
+  {
     "s": "Проверьте подключение к интернету и повторите попытку позже.",
     "t": "Check your internet connection and try again later."
   },
   {
     "s": "Проверяем том...",
     "t": "Checking volume..."
+  },
+  {
+    "s": "Проверяет требования Microsoft к Windows 11 и подсказывает, что мешает и как это исправить. Ничего не меняет и требования не обходит.",
+    "t": "Checks Microsoft's Windows 11 requirements and suggests what is blocking and how to fix it. Changes nothing and does not bypass the requirements."
   },
   {
     "s": "Проверять нечего: твики ещё не применялись",
@@ -6310,6 +8138,22 @@
   {
     "s": "Проверять обновления при запуске",
     "t": "Check for updates on startup"
+  },
+  {
+    "s": "Проверяю файлы папки…",
+    "t": "Checking folder files…"
+  },
+  {
+    "s": "Проверяю…",
+    "t": "Checking…"
+  },
+  {
+    "s": "Проводник перезапустить не удалось. Изменения подействуют после выхода из учётной записи или перезагрузки.",
+    "t": "Could not restart File Explorer. The changes will take effect after you sign out or restart."
+  },
+  {
+    "s": "Программа {0} уже закрыта.",
+    "t": "{0} is already closed."
   },
   {
     "s": "Программа занята другим приложением — закройте его и повторите установку.",
@@ -6404,8 +8248,16 @@
     "t": "The process was killed externally — no stack trace available."
   },
   {
+    "s": "Процесс не запустился",
+    "t": "The process did not start"
+  },
+  {
     "s": "Процессор · {0}",
     "t": "Processor · {0}"
+  },
+  {
+    "s": "Процессор в списке Microsoft",
+    "t": "Processor on Microsoft's list"
   },
   {
     "s": "Процессор не поднимает частоту выше номинальной: меньше нагрев и шум, ниже скорость.",
@@ -6424,12 +8276,20 @@
     "t": "Processor: {0}"
   },
   {
+    "s": "Прошлые синие экраны больше нельзя будет разобрать — в том числе в «Диагностике».",
+    "t": "Past blue screens can no longer be analyzed — including in “Diagnostics”."
+  },
+  {
     "s": "Прямая ссылка",
     "t": "Direct link"
   },
   {
     "s": "Прямая ссылка недоступна: {0}",
     "t": "Direct link unavailable: {0}"
+  },
+  {
+    "s": "Путь задачи неизвестен.",
+    "t": "Task path unknown."
   },
   {
     "s": "Путь из манифеста выходит за пределы папки клиента: {0}",
@@ -6440,8 +8300,20 @@
     "t": "The kit path is given from the USB drive root, with no drive letter and no parent-folder steps."
   },
   {
+    "s": "Путь к файлу или папке",
+    "t": "Path to file or folder"
+  },
+  {
+    "s": "Путь к файлу или папке. Можно вставить из адресной строки Проводника.",
+    "t": "Path to a file or folder. You can paste it from the File Explorer address bar."
+  },
+  {
     "s": "Путь к файлу:",
     "t": "File path:"
+  },
+  {
+    "s": "Работает «Очистка диска» Windows…",
+    "t": "Windows “Disk Cleanup” is running…"
   },
   {
     "s": "Рабочее пространство",
@@ -6450,6 +8322,10 @@
   {
     "s": "Рабочие чаты и видеозвонки Яндекс 360 для команд и организаций.",
     "t": "Yandex 360 work chats and video calls for teams and organizations."
+  },
+  {
+    "s": "Рабочий стол",
+    "t": "Desktop"
   },
   {
     "s": "Раз в день",
@@ -6466,6 +8342,10 @@
   {
     "s": "Разгон, мониторинг и управление вентиляторами видеокарты — самый популярный инструмент для GPU.",
     "t": "Overclocking, monitoring, and fan control for graphics cards — the most popular GPU tool."
+  },
+  {
+    "s": "Разметка системного диска GPT",
+    "t": "GPT system disk partitioning"
   },
   {
     "s": "Разработка",
@@ -6524,6 +8404,14 @@
     "t": "Redirect to an insecure host: {0}"
   },
   {
+    "s": "Реестр",
+    "t": "Registry"
+  },
+  {
+    "s": "Реестр, однократно",
+    "t": "Registry, once"
+  },
+  {
     "s": "Режим Turbo Boost",
     "t": "Turbo Boost mode"
   },
@@ -6536,12 +8424,36 @@
     "t": "The mode exists in Windows but is not described in Microsoft documentation."
   },
   {
+    "s": "Режим загрузки UEFI",
+    "t": "UEFI boot mode"
+  },
+  {
+    "s": "Резервная область почти исчерпана: {0}%",
+    "t": "Spare area nearly exhausted: {0}%"
+  },
+  {
     "s": "Результат установки",
     "t": "Installation result"
   },
   {
     "s": "Результаты",
     "t": "Results"
+  },
+  {
+    "s": "Реклама Microsoft 365 и учётной записи",
+    "t": "Microsoft 365 and account ads"
+  },
+  {
+    "s": "Реклама OneDrive в Проводнике",
+    "t": "OneDrive ads in File Explorer"
+  },
+  {
+    "s": "Реклама и предложения в «Пуске», поиске, Проводнике и на экране блокировки, виджеты, Copilot, Recall, OneDrive.",
+    "t": "Ads and suggestions in Start, Search, File Explorer and on the lock screen, widgets, Copilot, Recall, OneDrive."
+  },
+  {
+    "s": "Реклама на экране блокировки",
+    "t": "Lock screen ads"
   },
   {
     "s": "Реклама подписки Office 365.",
@@ -6552,12 +8464,24 @@
     "t": "Advertising ID"
   },
   {
+    "s": "Рекомендации в «Параметрах»",
+    "t": "Recommendations in Settings"
+  },
+  {
+    "s": "Рекомендации в меню «Пуск»",
+    "t": "Recommendations in the Start menu"
+  },
+  {
     "s": "Релиз от {0}",
     "t": "Released {0}"
   },
   {
     "s": "Релиз от {0}  ·  {1} МБ",
     "t": "Released {0}  ·  {1} MB"
+  },
+  {
+    "s": "Ремонт",
+    "t": "Repair"
   },
   {
     "s": "Репозиторий не найден (404)",
@@ -6624,8 +8548,16 @@
     "t": "Collects feedback for Microsoft."
   },
   {
+    "s": "Сборка:",
+    "t": "Build:"
+  },
+  {
     "s": "Сброс",
     "t": "Reset"
+  },
+  {
+    "s": "Сброс Центра обновления",
+    "t": "Windows Update reset"
   },
   {
     "s": "Сброс не завершён",
@@ -6644,6 +8576,14 @@
     "t": "Network reset"
   },
   {
+    "s": "Сбросить Центр обновления",
+    "t": "Reset Windows Update"
+  },
+  {
+    "s": "Сбросить Центр обновления Windows?\n\n• Будут остановлены службы wuauserv, bits, cryptsvc, msiserver.\n• Папки C:\\Windows\\SoftwareDistribution и C:\\Windows\\System32\\catroot2 будут переименованы в *.old-<дата> (не удалены — их можно вернуть).\n• Службы будут запущены снова, Windows создаст папки заново.\n\nСписок «Журнал обновлений» в параметрах Windows обнулится (сами обновления останутся установленными), а недокачанные обновления скачаются заново.\n\nПомогает, когда обновления не скачиваются или не ставятся с одной и той же ошибкой, — но не всегда.",
+    "t": "Reset Windows Update?\n\n• The wuauserv, bits, cryptsvc, msiserver services will be stopped.\n• The C:\\Windows\\SoftwareDistribution and C:\\Windows\\System32\\catroot2 folders will be renamed to *.old-<date> (not deleted — they can be restored).\n• The services will be started again, and Windows will recreate the folders.\n\nThe “Update history” list in Windows Settings will be cleared (the updates themselves stay installed), and partially downloaded updates will be downloaded again.\n\nHelps when updates fail to download or install with the same error — but not always."
+  },
+  {
     "s": "Сверит применённые ранее твики с текущим состоянием Windows: крупные обновления часто возвращают отключённое.",
     "t": "Compares previously applied tweaks with the current state of Windows: major updates often re-enable what was disabled."
   },
@@ -6652,12 +8592,24 @@
     "t": "Compares the installed client's files with the signed list of the published version. Does not touch settings or check the environment (antivirus, missing components)."
   },
   {
+    "s": "Сверьтесь со списком Microsoft вручную (кнопка «Списки процессоров Microsoft»).",
+    "t": "Compare with Microsoft's list manually (the “Microsoft processor lists” button)."
+  },
+  {
     "s": "Сверяет файлы установленного клиента с подписанным списком опубликованной версии и восстанавливает повреждённые или отсутствующие.",
     "t": "Compares the installed client's files with the signed list of the published version and repairs damaged or missing ones."
   },
   {
     "s": "Светлая",
     "t": "Light"
+  },
+  {
+    "s": "Свободно на {0}: {1}",
+    "t": "Free on {0}: {1}"
+  },
+  {
+    "s": "Свободное место: нет данных",
+    "t": "Free space: no data"
   },
   {
     "s": "Сворачивать в трей при закрытии",
@@ -6672,12 +8624,24 @@
     "t": "System cleanup is running on the “Cleanup” tab. Restoring a snapshot applies the same tweaks, so the two cannot run at the same time.\n\nWait for the cleanup to finish and try again."
   },
   {
+    "s": "Сейчас идёт установка (обновлений Windows или приложений). Дождитесь её завершения и повторите.",
+    "t": "An installation is in progress (Windows updates or apps). Wait for it to finish and try again."
+  },
+  {
     "s": "Сейчас идёт фоновое скачивание обновлений Windows — дождитесь его завершения, затем повторите попытку.",
     "t": "Windows updates are downloading in the background — wait for it to finish, then try again."
   },
   {
     "s": "Сейчас не действуют применённые ранее твики: {0}. {1}. Обычно их возвращает крупное обновление Windows.",
     "t": "Previously applied tweaks are no longer in effect: {0}. {1}. A major Windows update usually undoes them."
+  },
+  {
+    "s": "Сейчас: включено — Windows Update не должен предлагать драйверы вместе с ежемесячными обновлениями.",
+    "t": "Now: on — Windows Update should not offer drivers with the monthly updates."
+  },
+  {
+    "s": "Сейчас: выключено — Windows Update может ставить драйверы сам.",
+    "t": "Now: off — Windows Update may install drivers on its own."
   },
   {
     "s": "Сервер вернул {0}: {1}",
@@ -6704,6 +8668,14 @@
     "t": "Network"
   },
   {
+    "s": "Синий экран",
+    "t": "Blue screen"
+  },
+  {
+    "s": "Синих экранов за последние 7 дней не найдено (или диагностика ещё не запускалась).",
+    "t": "No blue screens found in the last 7 days (or diagnostics has not been run yet)."
+  },
+  {
     "s": "Синхронизация с Android. Можно убрать если не используете.",
     "t": "Android sync. Can be removed if you do not use it."
   },
@@ -6722,6 +8694,18 @@
   {
     "s": "Системные",
     "t": "System"
+  },
+  {
+    "s": "Системный диск от 64 ГБ",
+    "t": "System disk of 64 GB or more"
+  },
+  {
+    "s": "Системный процесс или служба — завершать нельзя.",
+    "t": "System process or service — cannot be terminated."
+  },
+  {
+    "s": "Системных (Microsoft / Windows) скрыто: {0}.",
+    "t": "System entries (Microsoft / Windows) hidden: {0}."
   },
   {
     "s": "Сканирование документов в PDF и картинки с распознаванием текста.",
@@ -6760,6 +8744,10 @@
     "t": "Download the installer again."
   },
   {
+    "s": "Скачанные установочные файлы обновлений (SoftwareDistribution\\Download). Неустановленное обновление Windows скачает заново.",
+    "t": "Downloaded update installation files (SoftwareDistribution\\Download). Windows will download again any update that is not installed yet."
+  },
+  {
     "s": "Скачивание",
     "t": "Downloading"
   },
@@ -6786,6 +8774,10 @@
   {
     "s": "Скачивание: {0}%",
     "t": "Downloading: {0}%"
+  },
+  {
+    "s": "Скачивать компоненты из Центра обновления запрещает групповая политика («Параметры установки необязательных компонентов и восстановления компонентов»). Укажите установочную флешку/ISO или попросите администратора разрешить загрузку.",
+    "t": "Downloading features from Windows Update is blocked by Group Policy (“Specify settings for optional component installation and component repair”). Specify an installation USB drive/ISO or ask your administrator to allow downloads."
   },
   {
     "s": "Скачиваются обновления Windows",
@@ -6828,8 +8820,48 @@
     "t": "Hides the app from the catalog. To bring it back — “Settings” → “Show hidden”."
   },
   {
+    "s": "Скрыто обновлений: {0}. Вернуть их можно в разделе «Скрытые».",
+    "t": "Updates hidden: {0}. You can bring them back in the “Hidden” section."
+  },
+  {
+    "s": "Скрыто обновлений: {0}. Отметьте те, что нужно снова получать, и нажмите «Вернуть выбранные».",
+    "t": "Hidden updates: {0}. Select the ones you want to receive again and click “Restore selected”."
+  },
+  {
+    "s": "Скрыто: {0}, не удалось: {1}. Подробности — в логе.",
+    "t": "Hidden: {0}, failed: {1}. See the log for details."
+  },
+  {
+    "s": "Скрытые",
+    "t": "Hidden"
+  },
+  {
+    "s": "Скрытые обновления Windows Update не предлагает и сам не ставит.",
+    "t": "Windows Update does not offer hidden updates and does not install them on its own."
+  },
+  {
+    "s": "Скрытых обновлений нет.",
+    "t": "No hidden updates."
+  },
+  {
     "s": "Скрытых приложений нет.",
     "t": "No hidden apps."
+  },
+  {
+    "s": "Скрыть QR-код",
+    "t": "Hide QR code"
+  },
+  {
+    "s": "Скрыть выбранные",
+    "t": "Hide selected"
+  },
+  {
+    "s": "Скрыть выбранные обновления ({0})?\n\n",
+    "t": "Hide the selected updates ({0})?\n\n"
+  },
+  {
+    "s": "Скрыть обновления",
+    "t": "Hide updates"
   },
   {
     "s": "Слежение за вводом",
@@ -6856,6 +8888,10 @@
     "t": "The Windows Update service is disabled. Enable it and try again."
   },
   {
+    "s": "Служба «{0}» не останавливается, поэтому сброс не выполнен — папки не тронуты. Обычно помогает перезагрузка компьютера, после неё попробуйте ещё раз.",
+    "t": "The “{0}” service does not stop, so the reset was not performed — the folders are untouched. A computer restart usually helps; try again after it."
+  },
+  {
     "s": "Служба получения push-сообщений. Используется для MDM и отдельных телеметрий.",
     "t": "Push message receiving service. Used for MDM and some telemetry."
   },
@@ -6880,6 +8916,14 @@
     "t": "Snapshots — confirm restore"
   },
   {
+    "s": "Сначала DISM восстанавливает хранилище компонентов (может скачать файлы через Центр обновления), затем sfc /scannow проверяет системные файлы и заменяет повреждённые. Обычно 10–30 минут, иногда дольше. Помогает не всегда.",
+    "t": "First DISM repairs the component store (it may download files via Windows Update), then sfc /scannow checks system files and replaces damaged ones. Usually 10–30 minutes, sometimes longer. Does not always help."
+  },
+  {
+    "s": "Сначала обновите видеодрайвер с сайта производителя — старый драйвер часто сообщает более раннюю версию WDDM. Если не поможет, нужна видеокарта с поддержкой DirectX 12.",
+    "t": "First update the graphics driver from the manufacturer's website — an old driver often reports an earlier WDDM version. If that does not help, you need a graphics card with DirectX 12 support."
+  },
+  {
     "s": "Сначала скачайте нужные программы в кэш (папку кэша можно выбрать прямо на флешке), затем сделайте набор переносным.",
     "t": "First download the apps you need to the cache (the cache folder can be right on a USB drive), then make the kit portable."
   },
@@ -6894,6 +8938,14 @@
   {
     "s": "Снимет отметки со всех приложений для загрузки в кэш.",
     "t": "Clears the selection of all apps for caching."
+  },
+  {
+    "s": "Снимки памяти после синих экранов (Minidump, MEMORY.DMP) и отчёты службы ошибок Windows (WER).",
+    "t": "Memory snapshots after blue screens (Minidump, MEMORY.DMP) and Windows Error Reporting (WER) reports."
+  },
+  {
+    "s": "Снова получать драйверы через Windows Update?\n\nПолитика будет возвращена в состояние, которое было до включения в Ven4Tools.",
+    "t": "Get drivers via Windows Update again?\n\nThe policy will be returned to the state it was in before it was enabled in Ven4Tools."
   },
   {
     "s": "Соберите набор до переустановки Windows. На свежей системе откройте в нём restore.cmd: Ven4Tools вернёт драйверы и Wi-Fi, а затем поставит программы.",
@@ -6926,6 +8978,10 @@
   {
     "s": "Собрать набор программ",
     "t": "Build an app set"
+  },
+  {
+    "s": "Советы и подсказки Windows",
+    "t": "Windows tips and suggestions"
   },
   {
     "s": "Советы и предложения",
@@ -6992,12 +9048,32 @@
     "t": "PC status: restarts, disks, Windows updates, drivers"
   },
   {
+    "s": "Состояние ещё не проверялось.",
+    "t": "Status not checked yet."
+  },
+  {
     "s": "Состояние компьютера",
     "t": "Computer status"
   },
   {
     "s": "Состояние лицензий",
     "t": "License status"
+  },
+  {
+    "s": "Состояние неизвестно.",
+    "t": "Status unknown."
+  },
+  {
+    "s": "Состояние неизвестно: {0}",
+    "t": "Status unknown: {0}"
+  },
+  {
+    "s": "Состояние политики прочитать не удалось.",
+    "t": "Could not read the policy status."
+  },
+  {
+    "s": "Состояние:",
+    "t": "Status:"
   },
   {
     "s": "Сохранение и повторное применение набора настроек на этой машине: запоминает отмеченные твики раздела «Очистка» и локальные пресеты. Это не отмена изменений — твики, применённые после создания снапшота, назад не возвращаются. Не зависит от точки восстановления Windows.",
@@ -7072,6 +9148,18 @@
     "t": "Keep history"
   },
   {
+    "s": "Сохранённых сетей нет.",
+    "t": "No saved networks."
+  },
+  {
+    "s": "Сохранённых сетей: {0}. Пароли скрыты, пока вы не нажмёте «Показать пароль».",
+    "t": "Saved networks: {0}. Passwords stay hidden until you click “Show password”."
+  },
+  {
+    "s": "Список автозагрузки получить не удалось — подробности в журнале.",
+    "t": "Could not get the startup list — see the log for details."
+  },
+  {
     "s": "Список источников загрузки пуст.",
     "t": "The download source list is empty."
   },
@@ -7092,12 +9180,24 @@
     "t": "App list…"
   },
   {
+    "s": "Список скрытых обновлений ещё не загружался.",
+    "t": "The hidden updates list has not been loaded yet."
+  },
+  {
     "s": "Список — в «Установленных», с отметкой «Только с обновлениями».",
     "t": "The list is in “Installed”, with “With updates only” checked."
   },
   {
     "s": "Способ: {0}",
     "t": "Method: {0}"
+  },
+  {
+    "s": "Спросит у DISM, включён ли компонент. Ничего не меняет.",
+    "t": "Asks DISM whether the feature is enabled. Changes nothing."
+  },
+  {
+    "s": "Сравнение с заводской ёмкостью по данным самой батареи. Со временем ёмкость снижается у всех батарей.",
+    "t": "Comparison with the design capacity based on the battery's own data. Every battery loses capacity over time."
   },
   {
     "s": "Среда выполнения .NET 10 для программ Windows, которые без неё не запускаются.",
@@ -7124,6 +9224,10 @@
     "t": "Legacy DirectX 9–11 libraries (d3dx9, XAudio, and more) that older games need to start."
   },
   {
+    "s": "Старые версии системных компонентов, заменённые обновлениями. Подсчёт и очистка идут через DISM и занимают несколько минут.",
+    "t": "Old versions of system components replaced by updates. Calculation and cleanup go through DISM and take a few minutes."
+  },
+  {
     "s": "Старые сборки не получают исправлений.",
     "t": "Old builds do not receive fixes."
   },
@@ -7132,12 +9236,20 @@
     "t": "Classic interface"
   },
   {
+    "s": "Сторонних записей: {0}, из них включено: {1}. {2}",
+    "t": "Third-party entries: {0}, enabled: {1}. {2}"
+  },
+  {
     "s": "Стресс-тест и бенчмарк видеокарты (OpenGL/Vulkan) — проверка стабильности, температур и троттлинга под максимальной нагрузкой.",
     "t": "GPU stress test and benchmark (OpenGL/Vulkan) — checks stability, temperatures, and throttling under maximum load."
   },
   {
     "s": "Стриминговый музыкальный сервис с огромной библиотекой. Работает в России без ограничений.",
     "t": "Music streaming service with a huge library. Works in Russia without restrictions."
+  },
+  {
+    "s": "Считаю: {0}…",
+    "t": "Calculating: {0}…"
   },
   {
     "s": "Счётчик FPS",
@@ -7158,6 +9270,18 @@
   {
     "s": "Таймаут проверки доступности:",
     "t": "Availability check timeout:"
+  },
+  {
+    "s": "Такого файла или папки нет. Проверьте путь.",
+    "t": "No such file or folder. Check the path."
+  },
+  {
+    "s": "Твики",
+    "t": "Tweaks"
+  },
+  {
+    "s": "Текст слишком длинный для QR-кода.",
+    "t": "The text is too long for a QR code."
   },
   {
     "s": "Текстовый файл (*.txt)|*.txt",
@@ -7200,8 +9324,16 @@
     "t": "Theme"
   },
   {
+    "s": "Тематические подсказки в поиске",
+    "t": "Search highlights"
+  },
+  {
     "s": "Температура",
     "t": "Temperature"
+  },
+  {
+    "s": "Температура {0} °C — выше обычного",
+    "t": "Temperature {0} °C — higher than usual"
   },
   {
     "s": "Температуры и частоты процессора и датчики платы Windows без драйвера не отдаёт. Драйвер необязателен: без него работают оверлей, FPS, видеокарта и диски. Ставится только по кнопке и удаляется так же.",
@@ -7226,6 +9358,10 @@
   {
     "s": "Тест не запущен",
     "t": "Test not running"
+  },
+  {
+    "s": "Тест не проводился",
+    "t": "No test has been run"
   },
   {
     "s": "Тест остановлен",
@@ -7266,6 +9402,10 @@
   {
     "s": "Технические данные видео- и аудиофайлов: кодеки, битрейт, разрешение, дорожки.",
     "t": "Technical details of video and audio files: codecs, bitrate, resolution, tracks."
+  },
+  {
+    "s": "Тип защиты сети не распознан — нет данных.",
+    "t": "Network security type not recognized — no data."
   },
   {
     "s": "Тип носителя:",
@@ -7328,6 +9468,10 @@
     "t": "A restart from the previous update installation is pending — new updates can be installed after it."
   },
   {
+    "s": "Тревожных показателей нет",
+    "t": "No warning signs"
+  },
+  {
     "s": "Тёмная",
     "t": "Dark"
   },
@@ -7340,6 +9484,10 @@
     "t": "The kit folder has no drive root."
   },
   {
+    "s": "У программы {0} нет окна, которое можно закрыть. Закройте её сами (например, через значок в трее) или нажмите «Завершить».",
+    "t": "{0} has no window that can be closed. Close it yourself (for example, via its tray icon) or click “End task”."
+  },
+  {
     "s": "УСТАНОВЛЕНО",
     "t": "INSTALLED"
   },
@@ -7350,6 +9498,18 @@
   {
     "s": "Уберёт программу из набора. В каталоге она останется.",
     "t": "Removes the app from the set. It stays in the catalog."
+  },
+  {
+    "s": "Убирает «рекомендуемое содержимое» и предложения в приложении «Параметры».",
+    "t": "Removes “suggested content” and offers in the Settings app."
+  },
+  {
+    "s": "Убирает из «Пуска» рекомендации советов, ярлыков и новых приложений. Недавние файлы остаются. Действует после перезапуска Проводника.",
+    "t": "Removes tips, shortcuts and new app recommendations from Start. Recent files remain. Takes effect after File Explorer restarts."
+  },
+  {
+    "s": "Убирает уведомления учётной записи Microsoft в «Пуске» и на главной странице «Параметров» (предложения подписок, «завершите настройку»).",
+    "t": "Removes Microsoft account notifications in Start and on the Settings home page (subscription offers, “finish setup”)."
   },
   {
     "s": "Убрать из избранного",
@@ -7372,8 +9532,16 @@
     "t": "Uninstall Office"
   },
   {
+    "s": "Удаление временных файлов…",
+    "t": "Deleting temporary files…"
+  },
+  {
     "s": "Удаление драйвера датчиков…",
     "t": "Removing the sensor driver…"
+  },
+  {
+    "s": "Удаление идёт штатными средствами Windows («Очистка диска», DISM, корзина). Вернуть удалённое нельзя, поэтому по умолчанию ничего не отмечено.",
+    "t": "Deletion uses standard Windows tools (“Disk Cleanup”, DISM, Recycle Bin). Deleted data cannot be restored, so nothing is selected by default."
   },
   {
     "s": "Удаление клиента",
@@ -7384,8 +9552,16 @@
     "t": "Removing the Ven4Tools client"
   },
   {
+    "s": "Удаление кэша обновлений…",
+    "t": "Deleting the update cache…"
+  },
+  {
     "s": "Удаление предустановленного мусора и настройка конфиденциальности. Изменённые настройки возвращаются кнопкой «Вернуть», удалённые приложения — из Microsoft Store.",
     "t": "Removes preinstalled bloat and adjusts privacy settings. Changed settings are restored with the “Revert” button; removed apps can be reinstalled from Microsoft Store."
+  },
+  {
+    "s": "Удаление предустановленного мусора, рекламы и навязанного ИИ, настройка конфиденциальности, автозагрузка. Изменённые настройки возвращаются кнопкой «Вернуть», удалённые приложения — из Microsoft Store.",
+    "t": "Removes preinstalled bloat, ads and imposed AI, adjusts privacy settings and startup. Changed settings are restored with the “Revert” button; removed apps can be reinstalled from Microsoft Store."
   },
   {
     "s": "Удаление программ вместе с оставшимися файлами и записями реестра.",
@@ -7406,6 +9582,10 @@
   {
     "s": "Удалить",
     "t": "Remove"
+  },
+  {
+    "s": "Удалить OneDrive",
+    "t": "Remove OneDrive"
   },
   {
     "s": "Удалить {0} приложений?\n\n{1}",
@@ -7444,12 +9624,28 @@
     "t": "Delete snapshot “{0}”?"
   },
   {
+    "s": "Удаляет клиент OneDrive штатным установщиком. Файлы в облаке и папка OneDrive на диске остаются. Не выполняется, если в OneDrive перенесены «Рабочий стол», «Документы» или «Изображения». «Вернуть» ставит OneDrive заново через winget.",
+    "t": "Uninstalls the OneDrive client with its standard uninstaller. Files in the cloud and the OneDrive folder on disk remain. Not performed if “Desktop”, “Documents” or “Pictures” have been moved into OneDrive. “Revert” reinstalls OneDrive via winget."
+  },
+  {
+    "s": "Удаляет приложение Copilot. Вернуть можно из Microsoft Store.",
+    "t": "Removes the Copilot app. It can be reinstalled from Microsoft Store."
+  },
+  {
+    "s": "Удалённые старые версии обновлений нельзя будет удалить или откатить.",
+    "t": "After removing old versions, updates can no longer be uninstalled or rolled back."
+  },
+  {
     "s": "Уже запущен",
     "t": "Already running"
   },
   {
     "s": "Уже запущено",
     "t": "Already running"
+  },
+  {
+    "s": "Уже запущено обслуживание Windows ({0}). Дождитесь его завершения и повторите.",
+    "t": "Windows servicing is already running ({0}). Wait for it to finish and try again."
   },
   {
     "s": "Уже установлена более новая версия программы.",
@@ -7474,6 +9670,18 @@
   {
     "s": "Укажите папку набора.",
     "t": "Specify the kit folder."
+  },
+  {
+    "s": "Указать ISO-образ…",
+    "t": "Choose ISO image…"
+  },
+  {
+    "s": "Указать флешку или папку…",
+    "t": "Choose USB drive or folder…"
+  },
+  {
+    "s": "Уменьшенные копии картинок и видео для Проводника. Создаются заново при открытии папок.",
+    "t": "Reduced copies of pictures and videos for File Explorer. Recreated when folders are opened."
   },
   {
     "s": "Уменьшить анимации",
@@ -7532,6 +9740,10 @@
     "t": "Install version {0}, or a signed archive of the version you need via “Install from file”."
   },
   {
+    "s": "Установите или обновите драйвер видеокарты с сайта её производителя и повторите проверку: без драйвера Windows видит только «Базовый видеоадаптер».",
+    "t": "Install or update the graphics driver from its manufacturer's website and run the check again: without a driver, Windows sees only the “Basic Display Adapter”."
+  },
+  {
     "s": "Установить",
     "t": "Install"
   },
@@ -7542,6 +9754,10 @@
   {
     "s": "Установить Chocolatey (опционально)",
     "t": "Install Chocolatey (optional)"
+  },
+  {
+    "s": "Установить OneDrive заново?\n\nOneDrive будет установлен через winget для вашей учётной записи. После установки войдите в него, чтобы синхронизация продолжилась.",
+    "t": "Reinstall OneDrive?\n\nOneDrive will be installed via winget for your account. After installation, sign in to it so that syncing continues."
   },
   {
     "s": "Установить Ven4Tools",
@@ -7728,6 +9944,10 @@
     "t": "Installed: "
   },
   {
+    "s": "Установщик OneDrive не найден в ожидаемой папке — удаление не выполнялось.",
+    "t": "The OneDrive installer was not found in the expected folder — removal was not performed."
+  },
+  {
     "s": "Установщик в релизах не найден — продолжаем в переносном режиме.",
     "t": "Installer not found in releases — continuing in portable mode."
   },
@@ -7760,6 +9980,10 @@
     "t": "Outdated Windows version"
   },
   {
+    "s": "Устаревший режим BIOS (Legacy / CSM).",
+    "t": "Legacy BIOS mode (Legacy / CSM)."
+  },
+  {
     "s": "Устранение проблем с компонентами",
     "t": "Fixing component problems"
   },
@@ -7768,12 +9992,24 @@
     "t": "3D printing utility."
   },
   {
+    "s": "Файл дампа:",
+    "t": "Dump file:"
+  },
+  {
     "s": "Файл деинсталлятора из реестра не найден на диске.",
     "t": "The uninstaller file listed in the registry was not found on disk."
   },
   {
     "s": "Файл изменён с момента добавления",
     "t": "File changed since it was added"
+  },
+  {
+    "s": "Файл или папка не найдены.",
+    "t": "File or folder not found."
+  },
+  {
+    "s": "Файл или папка не удаляется, потому что «открыт в другой программе»? Выберите его — покажем, какая программа его держит.",
+    "t": "A file or folder cannot be deleted because it is “open in another program”? Select it and we will show which app is holding it."
   },
   {
     "s": "Файл ответа Ven4Tools (*.json)|*.json",
@@ -7820,8 +10056,24 @@
     "t": "The file was replaced with a link, write canceled: {0}"
   },
   {
+    "s": "Файлов в папке больше {0} — проверены только первые.",
+    "t": "The folder has more than {0} files — only the first ones were checked."
+  },
+  {
+    "s": "Файлы заняты другим процессом — возможно, сейчас идёт установка обновлений. Дождитесь её окончания и повторите.",
+    "t": "The files are in use by another process — updates may be installing right now. Wait for it to finish and try again."
+  },
+  {
+    "s": "Файлы из корзины будут удалены насовсем.",
+    "t": "Files in the Recycle Bin will be deleted permanently."
+  },
+  {
     "s": "Файлы программы заняты — закройте её и повторите установку.",
     "t": "The app's files are in use. Close it and try the installation again."
+  },
+  {
+    "s": "Файлы, удалённые в корзину на диске C.",
+    "t": "Files moved to the Recycle Bin on drive C."
   },
   {
     "s": "Фоновая проверка выключена",
@@ -7872,6 +10124,18 @@
     "t": "Hosting (ven4tools.ru mirror)"
   },
   {
+    "s": "Хранилище компонентов (DISM): {0}",
+    "t": "Component store (DISM): {0}"
+  },
+  {
+    "s": "Хранилище компонентов (DISM): в порядке или восстановлено.",
+    "t": "Component store (DISM): healthy or repaired."
+  },
+  {
+    "s": "Хранилище компонентов (WinSxS)",
+    "t": "Component store (WinSxS)"
+  },
+  {
     "s": "Целостность нарушена",
     "t": "Integrity compromised"
   },
@@ -7888,6 +10152,14 @@
     "t": "Activity center"
   },
   {
+    "s": "Центр обновления сброшен",
+    "t": "Windows Update has been reset"
+  },
+  {
+    "s": "Центр обновления сброшен. Старые папки сохранены рядом: {0}.",
+    "t": "Windows Update has been reset. The old folders are kept alongside: {0}."
+  },
+  {
     "s": "Центр управления",
     "t": "Control center"
   },
@@ -7896,12 +10168,36 @@
     "t": "Digital painting and illustration. Supports graphics tablets."
   },
   {
+    "s": "Части обновлений, которые Windows хранит, чтобы раздавать их другим компьютерам.",
+    "t": "Parts of updates that Windows keeps to share them with other computers."
+  },
+  {
     "s": "Частота",
     "t": "Clock"
   },
   {
+    "s": "Частые причины:",
+    "t": "Common causes:"
+  },
+  {
     "s": "Часть драйверов могла не выгрузиться (pnputil, код {0}).",
     "t": "Some drivers may not have been exported (pnputil, code {0})."
+  },
+  {
+    "s": "Часть изменений подействует после перезапуска Проводника.\n\nПерезапустить Проводник сейчас? Панель задач и открытые окна папок пропадут на несколько секунд; запущенные программы не закроются.",
+    "t": "Some changes will take effect after File Explorer restarts.\n\nRestart File Explorer now? The taskbar and open folder windows will disappear for a few seconds; running apps will not close."
+  },
+  {
+    "s": "Через Центр обновления не получилось — попробуйте установочную флешку или ISO.",
+    "t": "Windows Update did not work — try an installation USB drive or ISO."
+  },
+  {
+    "s": "Читаю автозагрузку: реестр, папки, планировщик заданий…",
+    "t": "Reading startup entries: registry, folders, Task Scheduler…"
+  },
+  {
+    "s": "Читаю данные SMART дисков…",
+    "t": "Reading disk SMART data…"
   },
   {
     "s": "Чтение",
@@ -7936,6 +10232,22 @@
     "t": "What did you like? What could be better? (optional)"
   },
   {
+    "s": "Что проверить:",
+    "t": "What to check:"
+  },
+  {
+    "s": "Чтобы их получать, ПК нужно записать в программу ESU, а для записи нужна учётная запись Microsoft: Параметры → Обновление и безопасность → Центр обновления Windows → «Записаться». Работает ли запись из России, мы не проверяли и обещать не можем.",
+    "t": "To get them, the PC must be enrolled in the ESU program, and enrollment requires a Microsoft account: Settings → Update & Security → Windows Update → “Enroll now”. We have not checked whether enrollment works from Russia and cannot promise that it does."
+  },
+  {
+    "s": "Штатная проверка Windows. Идёт при перезагрузке, до загрузки системы; итог появится здесь.",
+    "t": "Built-in Windows test. Runs on restart, before the system loads; the result will appear here."
+  },
+  {
+    "s": "Экран приветствия после обновлений",
+    "t": "Welcome screen after updates"
+  },
+  {
     "s": "Экспорт",
     "t": "Export"
   },
@@ -7958,6 +10270,10 @@
   {
     "s": "Экспортировано файлов: {0} → {1}",
     "t": "Files exported: {0} → {1}"
+  },
+  {
+    "s": "Эта версия Windows 10 уже не получает обновлений безопасности. Последняя версия Windows 10 — 22H2: обновитесь до неё через Центр обновления Windows.",
+    "t": "This Windows 10 version no longer receives security updates. The latest Windows 10 version is 22H2: update to it via Windows Update."
   },
   {
     "s": "Эта версия отозвана — скачайте актуальную через обычную загрузку.",
@@ -7998,6 +10314,14 @@
   {
     "s": "Это не похоже на код набора. Код начинается с «V4T:» — например V4T:google-chrome,telegram,vlc.",
     "t": "This does not look like a set code. A code starts with “V4T:” — for example V4T:google-chrome,telegram,vlc."
+  },
+  {
+    "s": "Это свойство самого процессора: настройками не исправить, только заменой процессора (часто вместе с платой). Windows 10 при этом продолжит работать — см. блок «Ваша Windows» ниже.",
+    "t": "This is a property of the processor itself: it cannot be fixed in settings, only by replacing the processor (often together with the motherboard). Windows 10 will keep working — see the “Your Windows” block below."
+  },
+  {
+    "s": "Этот ПК уже работает на Windows 11 — проверка для справки: она показывает, выполнены ли требования, в том числе инструкции процессора, без которых не запускаются версии 24H2 и новее.",
+    "t": "This PC already runs Windows 11 — the check is for reference: it shows whether the requirements are met, including the processor instructions without which versions 24H2 and later do not start."
   },
   {
     "s": "Эффективно агрессивный",
@@ -8048,6 +10372,10 @@
     "t": "no link in the catalog"
   },
   {
+    "s": "в норме",
+    "t": "healthy"
+  },
+  {
     "s": "в папке клиента версия {0}, а сохранённый состав описывает {1}",
     "t": "version in the client folder is {0}, but the saved file list describes {1}"
   },
@@ -8084,6 +10412,14 @@
     "t": "file-backed virtual disk"
   },
   {
+    "s": "включена",
+    "t": "enabled"
+  },
+  {
+    "s": "включён",
+    "t": "enabled"
+  },
+  {
     "s": "все источники исчерпаны",
     "t": "all sources exhausted"
   },
@@ -8094,6 +10430,14 @@
   {
     "s": "все источники исчерпаны — последняя причина: {0}",
     "t": "all sources exhausted — last reason: {0}"
+  },
+  {
+    "s": "выключен",
+    "t": "disabled"
+  },
+  {
+    "s": "выключена",
+    "t": "disabled"
   },
   {
     "s": "горячая точка",
@@ -8108,6 +10452,14 @@
     "t": "sensor does not respond"
   },
   {
+    "s": "делать резервную копию",
+    "t": "back up your data"
+  },
+  {
+    "s": "диск",
+    "t": "disk"
+  },
+  {
     "s": "диск {0} недоступен",
     "t": "drive {0} is unavailable"
   },
@@ -8116,8 +10468,16 @@
     "t": "Storage Spaces"
   },
   {
+    "s": "для всех пользователей",
+    "t": "for all users"
+  },
+  {
     "s": "для установленной версии {0} не опубликован файловый манифест",
     "t": "no file manifest is published for the installed version {0}"
+  },
+  {
+    "s": "до {0}",
+    "t": "up to {0}"
   },
   {
     "s": "добавлено вручную",
@@ -8162,6 +10522,10 @@
   {
     "s": "запрос к CDN отменён",
     "t": "CDN request canceled"
+  },
+  {
+    "s": "запуск через {0} — что именно запускается, видно в команде",
+    "t": "launched via {0} — see the command for what exactly runs"
   },
   {
     "s": "исполняемый файл клиента повреждён — версия не читается, переустановите клиент полностью",
@@ -8280,6 +10644,10 @@
     "t": "failed to start {0}"
   },
   {
+    "s": "не удалось проверить папки профиля",
+    "t": "could not check profile folders"
+  },
+  {
     "s": "не удалось прочитать сертификат: {0}",
     "t": "failed to read the certificate: {0}"
   },
@@ -8324,6 +10692,10 @@
     "t": "an unknown version"
   },
   {
+    "s": "неизвестный процессор",
+    "t": "unknown processor"
+  },
+  {
     "s": "неисправен",
     "t": "unhealthy"
   },
@@ -8342,6 +10714,18 @@
   {
     "s": "нет",
     "t": "no"
+  },
+  {
+    "s": "нет данных",
+    "t": "no data"
+  },
+  {
+    "s": "нет данных в журнале Windows Update",
+    "t": "no data in the Windows Update history"
+  },
+  {
+    "s": "нет данных: файл не найден",
+    "t": "no data: file not found"
   },
   {
     "s": "нет локального манифеста установленной версии",
@@ -8412,12 +10796,24 @@
     "t": "offline cache"
   },
   {
+    "s": "очищено — пересчитайте",
+    "t": "cleaned — recalculate"
+  },
+  {
     "s": "ошибка чтения",
     "t": "read error"
   },
   {
+    "s": "ошибок носителя: {0}",
+    "t": "media errors: {0}"
+  },
+  {
     "s": "память класса хранения",
     "t": "storage class memory"
+  },
+  {
+    "s": "переназначено: {0} · нестабильных: {1} · неисправимых: {2}",
+    "t": "reallocated: {0} · pending: {1} · uncorrectable: {2}"
   },
   {
     "s": "по прямому IP {0} подпись манифеста не подтверждена",
@@ -8500,8 +10896,24 @@
     "t": "skipped, the link is not HTTPS"
   },
   {
+    "s": "профиль пользователя",
+    "t": "user profile"
+  },
+  {
+    "s": "процесс не запустился",
+    "t": "process did not start"
+  },
+  {
     "s": "прямая ссылка",
     "t": "direct link"
+  },
+  {
+    "s": "пусто",
+    "t": "empty"
+  },
+  {
+    "s": "путь недоступен",
+    "t": "path unavailable"
   },
   {
     "s": "путь повторяется в манифесте новой версии: {0}",
@@ -8540,6 +10952,10 @@
     "t": "another operation is in progress: {0}"
   },
   {
+    "s": "следить",
+    "t": "keep an eye on it"
+  },
+  {
     "s": "снапшот",
     "t": "snapshot"
   },
@@ -8572,6 +10988,10 @@
     "t": "stopped (silent mode)"
   },
   {
+    "s": "считаю…",
+    "t": "calculating…"
+  },
+  {
     "s": "таймаут",
     "t": "timeout"
   },
@@ -8582,6 +11002,10 @@
   {
     "s": "текущий",
     "t": "current"
+  },
+  {
+    "s": "у HDD не считается",
+    "t": "not tracked for HDD"
   },
   {
     "s": "у архива нет встроенной подписи — без подтверждения CDN установить его нельзя",
@@ -8768,8 +11192,16 @@
     "t": "… (log truncated, only the last lines are shown) …\n{0}"
   },
   {
+    "s": "… и ещё {0}",
+    "t": "… and {0} more"
+  },
+  {
     "s": "…и ещё {0}",
     "t": "…and {0} more"
+  },
+  {
+    "s": "…и ещё {0}\n",
+    "t": "…and {0} more\n"
   },
   {
     "s": "ℹ️ Winget установлен из setup; для применения может потребоваться перезагрузка — выполните её вручную при необходимости.",
@@ -8912,8 +11344,32 @@
     "t": "⏳ “{0}”: “{1}” is in progress — operation postponed"
   },
   {
+    "s": "⏳ Включается — завершится после перезагрузки компьютера.",
+    "t": "⏳ Enabling — will finish after the computer restarts."
+  },
+  {
+    "s": "⏳ Включение .NET Framework 3.5 с носителя...",
+    "t": "⏳ Enabling .NET Framework 3.5 from media..."
+  },
+  {
+    "s": "⏳ Включение .NET Framework 3.5 через Центр обновления...",
+    "t": "⏳ Enabling .NET Framework 3.5 via Windows Update..."
+  },
+  {
+    "s": "⏳ Возврат обновлений...",
+    "t": "⏳ Restoring updates..."
+  },
+  {
     "s": "⏳ Восстанавливаю снапшот...",
     "t": "⏳ Restoring snapshot..."
+  },
+  {
+    "s": "⏳ Выключается — завершится после перезагрузки компьютера.",
+    "t": "⏳ Disabling — will finish after the computer restarts."
+  },
+  {
+    "s": "⏳ Выключение .NET Framework 3.5...",
+    "t": "⏳ Disabling .NET Framework 3.5..."
   },
   {
     "s": "⏳ Диагностика...",
@@ -8956,8 +11412,16 @@
     "t": "⏳ Preparing..."
   },
   {
+    "s": "⏳ Подключение образа...",
+    "t": "⏳ Mounting image..."
+  },
+  {
     "s": "⏳ Поиск по источникам...",
     "t": "⏳ Searching sources..."
+  },
+  {
+    "s": "⏳ Поиск скрытых обновлений...",
+    "t": "⏳ Searching for hidden updates..."
   },
   {
     "s": "⏳ Получение списка установленных приложений...",
@@ -8976,12 +11440,24 @@
     "t": "⏳ Checking for updates..."
   },
   {
+    "s": "⏳ Проверка состояния...",
+    "t": "⏳ Checking status..."
+  },
+  {
     "s": "⏳ Проверка установщиков…",
     "t": "⏳ Verifying installers…"
   },
   {
     "s": "⏳ Проверка...",
     "t": "⏳ Checking..."
+  },
+  {
+    "s": "⏳ Сброс Центра обновления: остановка служб и переименование папок...",
+    "t": "⏳ Resetting Windows Update: stopping services and renaming folders..."
+  },
+  {
+    "s": "⏳ Скрытие обновлений...",
+    "t": "⏳ Hiding updates..."
   },
   {
     "s": "⏳ Создаём issue на GitHub...",
@@ -9002,6 +11478,14 @@
   {
     "s": "⏳ Установка: {0}/{1} (✅ {2} | ❌ {3})",
     "t": "⏳ Installing: {0}/{1} (✅ {2} | ❌ {3})"
+  },
+  {
+    "s": "⏳ Шаг 1 из 2: DISM восстанавливает хранилище компонентов...",
+    "t": "⏳ Step 1 of 2: DISM is repairing the component store..."
+  },
+  {
+    "s": "⏳ Шаг 2 из 2: sfc проверяет системные файлы...",
+    "t": "⏳ Step 2 of 2: sfc is checking system files..."
   },
   {
     "s": "⏳ Это может занять несколько минут...",
@@ -9664,6 +12148,10 @@
     "t": "⛔ Removal canceled: the client folder points to a protected folder ({0})"
   },
   {
+    "s": "✅ .NET Framework 3.5 {0}. Перезагрузите компьютер, чтобы завершить.",
+    "t": "✅ .NET Framework 3.5 {0}. Restart the computer to finish."
+  },
+  {
     "s": "✅ Chocolatey {0} уже установлен",
     "t": "✅ Chocolatey {0} is already installed"
   },
@@ -9744,6 +12232,14 @@
     "t": "✅ Versions loaded for {0} apps"
   },
   {
+    "s": "✅ Включено: {0}. Запустится при следующем входе в Windows.",
+    "t": "✅ Enabled: {0}. It will start at the next Windows sign-in."
+  },
+  {
+    "s": "✅ Включён — программы, которым нужен .NET 3.5, запустятся.",
+    "t": "✅ Enabled — apps that need .NET 3.5 will run."
+  },
+  {
     "s": "✅ Восстановлено {0}: твиков {1}/{2}",
     "t": "✅ Restored {0}: tweaks {1}/{2}"
   },
@@ -9762,6 +12258,10 @@
   {
     "s": "✅ Все установленные приложения актуальны",
     "t": "✅ All installed apps are up to date"
+  },
+  {
+    "s": "✅ Выключено: {0}. Подействует при следующем входе в Windows.",
+    "t": "✅ Disabled: {0}. Takes effect at the next Windows sign-in."
   },
   {
     "s": "✅ Готово: {0}/{1}",
@@ -10016,6 +12516,14 @@
     "t": "✓ In set"
   },
   {
+    "s": "✓ Все требования Windows 11 выполнены.",
+    "t": "✓ All Windows 11 requirements are met."
+  },
+  {
+    "s": "✓ ПК подходит для Windows 11.",
+    "t": "✓ This PC is compatible with Windows 11."
+  },
+  {
     "s": "✓ Уже установлено",
     "t": "✓ Already installed"
   },
@@ -10034,6 +12542,14 @@
   {
     "s": "✖ {0} — лишний файл, будет удалён",
     "t": "✖ {0} — extra file, will be deleted"
+  },
+  {
+    "s": "✗ Не выполнено требований Windows 11: {0}. Подробности и что делать — ниже.",
+    "t": "✗ Windows 11 requirements not met: {0}. Details and what to do — below."
+  },
+  {
+    "s": "✗ Пока не готов к Windows 11: мешает пунктов — {0}. Что делать — в подсказках ниже.",
+    "t": "✗ Not ready for Windows 11 yet: blocking items — {0}. What to do — see the hints below."
   },
   {
     "s": "❌ /configure завершился с кодом {0}",
@@ -10106,6 +12622,10 @@
   {
     "s": "❌ В кэше нет ни одного установщика. Отметьте программы и нажмите «Скачать выбранные в кэш».",
     "t": "❌ There are no installers in the cache. Select apps and click “Download selected to cache”."
+  },
+  {
+    "s": "❌ В образе нет папки sources\\sxs — это не установочный образ Windows.",
+    "t": "❌ The image has no sources\\sxs folder — this is not a Windows installation image."
   },
   {
     "s": "❌ Каталог недоступен",
@@ -10424,6 +12944,10 @@
     "t": "❌ Installation failed (code {0})"
   },
   {
+    "s": "❌ Служба Windows Update не запущена — список скрытых недоступен.",
+    "t": "❌ The Windows Update service is not running — the hidden list is unavailable."
+  },
+  {
     "s": "❌ Установщик завершился с кодом {0}",
     "t": "❌ Installer exited with code {0}"
   },
@@ -10704,6 +13228,10 @@
     "t": "\uD83D\uDC41 Hidden apps shown ({0})"
   },
   {
+    "s": "\uD83D\uDC41 Показать пароль",
+    "t": "\uD83D\uDC41 Show password"
+  },
+  {
     "s": "\uD83D\uDC41 Показать скрытые",
     "t": "\uD83D\uDC41 Show hidden"
   },
@@ -10730,6 +13258,10 @@
   {
     "s": "\uD83D\uDCBB Разработка",
     "t": "\uD83D\uDCBB Development"
+  },
+  {
+    "s": "\uD83D\uDCBD Освободить место на диске C",
+    "t": "\uD83D\uDCBD Free up space on drive C"
   },
   {
     "s": "\uD83D\uDCBD Что тестируем",
@@ -10812,8 +13344,16 @@
     "t": "\uD83D\uDCC1 Log folder opened: {0}"
   },
   {
+    "s": "\uD83D\uDCC1 Открыта папка минидампов: {0}",
+    "t": "\uD83D\uDCC1 Minidump folder opened: {0}"
+  },
+  {
     "s": "\uD83D\uDCC1 Открыть папку",
     "t": "\uD83D\uDCC1 Open folder"
+  },
+  {
+    "s": "\uD83D\uDCC1 Открыть папку минидампов",
+    "t": "\uD83D\uDCC1 Open minidump folder"
   },
   {
     "s": "\uD83D\uDCC1 Офис",
@@ -10822,6 +13362,10 @@
   {
     "s": "\uD83D\uDCC1 Папка установки изменена: {0}",
     "t": "\uD83D\uDCC1 Install folder changed: {0}"
+  },
+  {
+    "s": "\uD83D\uDCC1 Папка…",
+    "t": "\uD83D\uDCC1 Folder…"
   },
   {
     "s": "\uD83D\uDCC2 {0}: локальный файл {1}",
@@ -10898,6 +13442,14 @@
   {
     "s": "\uD83D\uDCC4 Последний лог",
     "t": "\uD83D\uDCC4 Latest log"
+  },
+  {
+    "s": "\uD83D\uDCC4 Списки процессоров Microsoft",
+    "t": "\uD83D\uDCC4 Microsoft processor lists"
+  },
+  {
+    "s": "\uD83D\uDCC4 Файл…",
+    "t": "\uD83D\uDCC4 File…"
   },
   {
     "s": "\uD83D\uDCC5 История изменений каталога",
@@ -10996,6 +13548,14 @@
     "t": "\uD83D\uDCCE Other"
   },
   {
+    "s": "\uD83D\uDCCF Посчитать",
+    "t": "\uD83D\uDCCF Calculate"
+  },
+  {
+    "s": "\uD83D\uDCD6 Описание кода у Microsoft",
+    "t": "\uD83D\uDCD6 Code description at Microsoft"
+  },
+  {
     "s": "\uD83D\uDCDA Область каталога",
     "t": "\uD83D\uDCDA Catalog scope"
   },
@@ -11014,6 +13574,10 @@
   {
     "s": "\uD83D\uDCE2 Найдено обновление лаунчера: {0}",
     "t": "\uD83D\uDCE2 Launcher update found: {0}"
+  },
+  {
+    "s": "\uD83D\uDCE2 Реклама и ИИ",
+    "t": "\uD83D\uDCE2 Ads and AI"
   },
   {
     "s": "\uD83D\uDCE2 Уведомление: {0}",
@@ -11184,6 +13748,14 @@
     "t": "\uD83D\uDCE8 Send feedback"
   },
   {
+    "s": "\uD83D\uDCF1 QR-код для телефона",
+    "t": "\uD83D\uDCF1 QR code for phone"
+  },
+  {
+    "s": "\uD83D\uDCF6 Сохранённые сети Wi-Fi",
+    "t": "\uD83D\uDCF6 Saved Wi-Fi networks"
+  },
+  {
     "s": "\uD83D\uDCF8 Новый снапшот конфигурации",
     "t": "\uD83D\uDCF8 New configuration snapshot"
   },
@@ -11288,8 +13860,16 @@
     "t": "\uD83D\uDD04 Retry loading"
   },
   {
+    "s": "\uD83D\uDD04 Проверить диски",
+    "t": "\uD83D\uDD04 Check disks"
+  },
+  {
     "s": "\uD83D\uDD04 Проверить статус",
     "t": "\uD83D\uDD04 Check status"
+  },
+  {
+    "s": "\uD83D\uDD04 Сбросить Центр обновления",
+    "t": "\uD83D\uDD04 Reset Windows Update"
   },
   {
     "s": "\uD83D\uDD04 Сбросить сетевые настройки (winsock, IP)",
@@ -11298,6 +13878,22 @@
   {
     "s": "\uD83D\uDD04 Статус активации обновлён",
     "t": "\uD83D\uDD04 Activation status refreshed"
+  },
+  {
+    "s": "\uD83D\uDD0B powercfg /batteryreport не дал отчёт (код {0})",
+    "t": "\uD83D\uDD0B powercfg /batteryreport produced no report (code {0})"
+  },
+  {
+    "s": "\uD83D\uDD0B {0} недоступен: {1}",
+    "t": "\uD83D\uDD0B {0} unavailable: {1}"
+  },
+  {
+    "s": "\uD83D\uDD0B Батарея ноутбука",
+    "t": "\uD83D\uDD0B Laptop battery"
+  },
+  {
+    "s": "\uD83D\uDD0B Не удалось убрать временный отчёт батареи: {0}",
+    "t": "\uD83D\uDD0B Could not remove the temporary battery report: {0}"
   },
   {
     "s": "\uD83D\uDD0C Из кэша...",
@@ -11384,6 +13980,10 @@
     "t": "\uD83D\uDD0D Administrator rights: {0}"
   },
   {
+    "s": "\uD83D\uDD0D Проверить",
+    "t": "\uD83D\uDD0D Check"
+  },
+  {
     "s": "\uD83D\uDD0D Проверить DNS (google.com)",
     "t": "\uD83D\uDD0D Check DNS (google.com)"
   },
@@ -11402,6 +14002,10 @@
   {
     "s": "\uD83D\uDD0D Свободное место на диске...",
     "t": "\uD83D\uDD0D Free disk space..."
+  },
+  {
+    "s": "\uD83D\uDD0E Возможная связь: за 3 дня до первого синего экрана ({0}) ставились или обновлялись драйверы. Это не значит, что виноваты именно они, но проверку стоит начать с них — например, откатить драйвер в «Диспетчере устройств».",
+    "t": "\uD83D\uDD0E Possible link: drivers were installed or updated within 3 days before the first blue screen ({0}). This does not mean they are to blame, but they are a good place to start — for example, roll back the driver in “Device Manager”."
   },
   {
     "s": "\uD83D\uDD10 Подготовка средства удаления/установки Office...",
@@ -11442,6 +14046,10 @@
   {
     "s": "\uD83D\uDD12 Конфиденциальность",
     "t": "\uD83D\uDD12 Privacy"
+  },
+  {
+    "s": "\uD83D\uDD12 Кто держит файл",
+    "t": "\uD83D\uDD12 What is locking a file"
   },
   {
     "s": "\uD83D\uDD12 Отчёт о сбое клиента не предлагается: включён параноидальный режим",
@@ -11600,6 +14208,10 @@
     "t": "\uD83D\uDE48 Hidden apps"
   },
   {
+    "s": "\uD83D\uDE48 Скрыть",
+    "t": "\uD83D\uDE48 Hide"
+  },
+  {
     "s": "\uD83D\uDE80 Запуск Ven4Tools...",
     "t": "\uD83D\uDE80 Starting Ven4Tools..."
   },
@@ -11614,6 +14226,10 @@
   {
     "s": "\uD83D\uDE80 Установить",
     "t": "\uD83D\uDE80 Install"
+  },
+  {
+    "s": "\uD83D\uDEAB Драйверы через Windows Update",
+    "t": "\uD83D\uDEAB Drivers via Windows Update"
   },
   {
     "s": "\uD83D\uDEE0 Восстановление файлов клиента...",
@@ -11632,8 +14248,40 @@
     "t": "\uD83D\uDEE1 Overlay not turned on: a game with {0} anti-cheat is running"
   },
   {
+    "s": "\uD83D\uDEE1️ Windows Update: включён запрет драйверов (ExcludeWUDriversInQualityUpdate = 1)",
+    "t": "\uD83D\uDEE1️ Windows Update: driver block enabled (ExcludeWUDriversInQualityUpdate = 1)"
+  },
+  {
+    "s": "\uD83D\uDEE1️ Windows Update: запрет драйверов выключен, прежнее значение политики возвращено",
+    "t": "\uD83D\uDEE1️ Windows Update: driver block disabled, previous policy value restored"
+  },
+  {
     "s": "\uD83D\uDEE1️ Windows Update: найдено патчей — {0}, из них скачано — {1}",
     "t": "\uD83D\uDEE1️ Windows Update: updates found — {0}, downloaded — {1}"
+  },
+  {
+    "s": "\uD83D\uDEE1️ Windows Update: не удалось вернуть «{0}» — {1}",
+    "t": "\uD83D\uDEE1️ Windows Update: could not restore “{0}” — {1}"
+  },
+  {
+    "s": "\uD83D\uDEE1️ Windows Update: не удалось включить запрет драйверов",
+    "t": "\uD83D\uDEE1️ Windows Update: could not enable the driver block"
+  },
+  {
+    "s": "\uD83D\uDEE1️ Windows Update: не удалось выключить запрет драйверов",
+    "t": "\uD83D\uDEE1️ Windows Update: could not disable the driver block"
+  },
+  {
+    "s": "\uD83D\uDEE1️ Windows Update: не удалось скрыть «{0}» — {1}",
+    "t": "\uD83D\uDEE1️ Windows Update: could not hide “{0}” — {1}"
+  },
+  {
+    "s": "\uD83D\uDEE1️ Windows Update: обновление возвращено — {0}",
+    "t": "\uD83D\uDEE1️ Windows Update: update restored — {0}"
+  },
+  {
+    "s": "\uD83D\uDEE1️ Windows Update: обновление скрыто — {0}",
+    "t": "\uD83D\uDEE1️ Windows Update: update hidden — {0}"
   },
   {
     "s": "\uD83D\uDEE1️ Windows Update: обновлений не найдено",
@@ -11700,12 +14348,32 @@
     "t": "\uD83E\uDD16 Install job: apps in the job — {0}"
   },
   {
+    "s": "\uD83E\uDDE0 mdsched.exe не найден в System32",
+    "t": "\uD83E\uDDE0 mdsched.exe not found in System32"
+  },
+  {
+    "s": "\uD83E\uDDE0 Открыто средство проверки памяти Windows (mdsched.exe)",
+    "t": "\uD83E\uDDE0 Windows Memory Diagnostic opened (mdsched.exe)"
+  },
+  {
+    "s": "\uD83E\uDDE0 Проверить память (с перезагрузкой)",
+    "t": "\uD83E\uDDE0 Check memory (with restart)"
+  },
+  {
+    "s": "\uD83E\uDDE0 Проверка оперативной памяти",
+    "t": "\uD83E\uDDE0 Memory test"
+  },
+  {
     "s": "\uD83E\uDDE0 Что это значит",
     "t": "\uD83E\uDDE0 What this means"
   },
   {
     "s": "\uD83E\uDDE9 Компоненты",
     "t": "\uD83E\uDDE9 Components"
+  },
+  {
+    "s": "\uD83E\uDDE9 Компоненты Windows: .NET Framework 3.5",
+    "t": "\uD83E\uDDE9 Windows features: .NET Framework 3.5"
   },
   {
     "s": "\uD83E\uDDEA Экспериментальный модуль. Датчики и оверлей работают без драйвера ядра — так они не мешают играм с античитом. Поэтому пока нет температур и частот процессора и вентиляторов платы. Расскажите, чего вам не хватает и стоит ли развивать модуль дальше.",
@@ -11726,6 +14394,10 @@
   {
     "s": "\uD83E\uDDF9 Остатки прерванной установки: восстановлено {0}, удалено {1}",
     "t": "\uD83E\uDDF9 Leftovers of an interrupted install: restored {0}, deleted {1}"
+  },
+  {
+    "s": "\uD83E\uDDF9 Очистить выбранное",
+    "t": "\uD83E\uDDF9 Clean selected"
   },
   {
     "s": "\uD83E\uDDF9 Очистить кэш Windows Update",
@@ -11756,6 +14428,18 @@
     "t": "\uD83E\uDDFE File list of the installed version saved ({0} files) — the next update can be incremental"
   },
   {
+    "s": "\uD83E\uDE79 Проверить системные файлы",
+    "t": "\uD83E\uDE79 Check system files"
+  },
+  {
+    "s": "\uD83E\uDE7A Здоровье дисков",
+    "t": "\uD83E\uDE7A Disk health"
+  },
+  {
+    "s": "\uD83E\uDE7A Здоровье дисков: дисков {0}, со SMART {1}",
+    "t": "\uD83E\uDE7A Disk health: disks {0}, with SMART {1}"
+  },
+  {
     "s": "\uD83E\uDE7A К восстановлению {0} файлов ({1}), к удалению лишних {2}",
     "t": "\uD83E\uDE7A Files to repair: {0} ({1}), extra files to delete: {2}"
   },
@@ -11772,7 +14456,23 @@
     "t": "\uD83E\uDE7A Check: {0}"
   },
   {
+    "s": "\uD83E\uDE7A Счётчики надёжности диска {0} недоступны: {1}",
+    "t": "\uD83E\uDE7A Reliability counters for disk {0} unavailable: {1}"
+  },
+  {
+    "s": "\uD83E\uDE9F Готов ли ПК к Windows 11",
+    "t": "\uD83E\uDE9F Is this PC ready for Windows 11"
+  },
+  {
     "s": "\uD83E\uDE9F Закрыто окно, открытое после установки «{0}»: {1}",
     "t": "\uD83E\uDE9F Closed a window opened after installing “{0}”: {1}"
+  },
+  {
+    "s": "\uD83E\uDE9F Проверить",
+    "t": "\uD83E\uDE9F Check"
+  },
+  {
+    "s": "\uD83E\uDE9F Проверка готовности к Windows 11: {0}, не выполнено {1}, нет данных {2}",
+    "t": "\uD83E\uDE9F Windows 11 readiness check: {0}, failed {1}, no data {2}"
   }
 ]

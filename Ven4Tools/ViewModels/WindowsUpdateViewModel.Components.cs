@@ -260,7 +260,7 @@ namespace Ven4Tools.ViewModels
         private async Task ShowNetFxResultAsync(DismOperationResult result, bool enabling, bool fromWindowsUpdate)
         {
             const string caption = ".NET Framework 3.5";
-            string action = enabling ? "включён" : "выключен";
+            string action = enabling ? Tr("включён") : Tr("выключен");
             if (result.Cancelled)
             {
                 NetFxStatusText = "Операция прервана.";
