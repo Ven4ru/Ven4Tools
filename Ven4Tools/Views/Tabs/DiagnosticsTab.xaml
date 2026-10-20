@@ -175,14 +175,47 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Expander Header="{Binding Header}" Margin="0,0,0,6">
-                                        <TextBox Text="{Binding RawDetails, Mode=OneWay}"
-                                                 IsReadOnly="True"
-                                                 TextWrapping="Wrap"
-                                                 FontFamily="Consolas"
-                                                 FontSize="10"
-                                                 Background="{DynamicResource CardBackground}"
-                                                 Foreground="{DynamicResource TextPrimary}"
-                                                 Margin="10,4,10,8"/>
+                                        <StackPanel>
+                                            <!-- Синий экран понятным языком: только у карточек BSOD -->
+                                            <Border Background="{DynamicResource CardBackground}" CornerRadius="6" Padding="10,8" Margin="10,4,10,4"
+                                                    Visibility="{Binding HasBsodDetails, Converter={StaticResource BoolToVis}}">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding BsodTitle}" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource TextPrimary}"/>
+                                                    <StackPanel Visibility="{Binding HasBsodExplanation, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="Частые причины:" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                                                        <TextBlock Text="{Binding BsodCause}" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}"/>
+                                                        <TextBlock Text="Что проверить:" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                                                        <TextBlock Text="{Binding BsodCheck}" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Visibility="{Binding HasBsodParameters, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="Параметры 1–4:" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                                                        <TextBox Text="{Binding BsodParameters, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                                                 FontFamily="Consolas" FontSize="10" BorderThickness="0"
+                                                                 Background="Transparent" Foreground="{DynamicResource TextPrimary}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Visibility="{Binding HasBsodDumpPath, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="Файл дампа:" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                                                        <TextBox Text="{Binding BsodDumpPath, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                                                 FontFamily="Consolas" FontSize="10" BorderThickness="0"
+                                                                 Background="Transparent" Foreground="{DynamicResource TextPrimary}"/>
+                                                    </StackPanel>
+                                                    <Button Content="📖 Описание кода у Microsoft"
+                                                            ToolTip="Откроет в браузере поиск по документации Microsoft с этим кодом синего экрана."
+                                                            Height="28" Padding="12,0" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                                            Command="{Binding DataContext.OpenBugCheckInfoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding BsodInfoUrl}"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <TextBox Text="{Binding RawDetails, Mode=OneWay}"
+                                                     IsReadOnly="True"
+                                                     TextWrapping="Wrap"
+                                                     FontFamily="Consolas"
+                                                     FontSize="10"
+                                                     Background="{DynamicResource CardBackground}"
+                                                     Foreground="{DynamicResource TextPrimary}"
+                                                     Margin="10,4,10,8"/>
+                                        </StackPanel>
                                     </Expander>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -192,6 +225,22 @@
                                 Height="32" Width="240" HorizontalAlignment="Left" Margin="0,10,0,0"
                                 Visibility="{Binding ShowDisableFastStartupButton, Converter={StaticResource BoolToVis}}"
                                 Command="{Binding DisableFastStartupCommand}"/>
+                        <!-- Синие экраны: «возможная связь» с драйверами и минидампы (только чтение) -->
+                        <StackPanel Margin="0,10,0,0" Visibility="{Binding ShowBsodDriverHint, Converter={StaticResource BoolToVis}}">
+                            <TextBlock x:Name="txtBsodDriverHintHeader" Text="{Binding BsodDriverHintHeader}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtBsodDriverHint" Text="{Binding BsodDriverHintText}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextSecondary}" Margin="10,4,0,0"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,10,0,0" Visibility="{Binding ShowMinidumpBlock, Converter={StaticResource BoolToVis}}">
+                            <TextBlock x:Name="txtMinidump" Text="{Binding MinidumpText}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextSecondary}"/>
+                            <Button x:Name="btnOpenMinidumpFolder" Content="📁 Открыть папку минидампов"
+                                    ToolTip="Откроет в Проводнике папку C:\Windows\Minidump, куда Windows сохраняет краткие дампы синих экранов. Ven4Tools их не разбирает и не отправляет."
+                                    Height="30" Padding="12,0" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                    Visibility="{Binding ShowOpenMinidumpButton, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding OpenMinidumpFolderCommand}"/>
+                        </StackPanel>
                     </StackPanel>
                 </GroupBox>
 

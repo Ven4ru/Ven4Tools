@@ -38,6 +38,23 @@ namespace Ven4Tools.ViewModels
     {
         public required string Header { get; init; }
         public required string RawDetails { get; init; }
+
+        // ── Синий экран понятным языком (только у карточек BSOD) ─────────────────
+        // Заполняет BuildRebootCard (DiagnosticsViewModel.RebootHistory.cs) по словарю
+        // кодов; у остальных карточек поля пустые и блок расшифровки скрыт.
+
+        /// <summary>«IRQL_NOT_LESS_OR_EQUAL · 0x0000000A» или «код 0x… — не из словаря».</summary>
+        public string BsodTitle { get; init; } = "";
+        public string BsodCause { get; init; } = "";
+        public string BsodCheck { get; init; } = "";
+        public string BsodParameters { get; init; } = "";
+        public string BsodDumpPath { get; init; } = "";
+        public string BsodInfoUrl { get; init; } = "";
+
+        public bool HasBsodDetails => BsodTitle.Length > 0;
+        public bool HasBsodExplanation => BsodCause.Length > 0;
+        public bool HasBsodParameters => BsodParameters.Length > 0;
+        public bool HasBsodDumpPath => BsodDumpPath.Length > 0;
     }
 
     /// <summary>
