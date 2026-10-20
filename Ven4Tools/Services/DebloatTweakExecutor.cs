@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,7 +17,8 @@ namespace Ven4Tools.Services
     {
         /// <summary>
         /// Применяет один твик. <paramref name="category"/> — "app" (удаление Appx),
-        /// "privacy" (правка реестра/служб приватности) или "service" (отключение службы).
+        /// "privacy" (правка реестра/служб приватности), "service" (отключение службы) или
+        /// "ads" (реклама и навязанный ИИ: реестр, пакет Copilot, удаление OneDrive).
         /// <paramref name="displayName"/> используется только в сообщениях журнала.
         /// </summary>
         public static async Task<bool> ApplyItemAsync(string category, string id, string displayName,
@@ -33,6 +35,7 @@ namespace Ven4Tools.Services
                     "app"     => await RemoveAppxAsync(id, ct),
                     "privacy" => await ApplyPrivacyTweakAsync(id, ct),
                     "service" => await DisableServiceAsync(id, ct),
+                    "ads"     => await ApplyAdsTweakAsync(id, ct),
                     _         => false
                 };
 
@@ -106,11 +109,124 @@ namespace Ven4Tools.Services
             }
         };
 
+        // ── Реклама и навязанный ИИ ──────────────────────────────────────────────
+        // Значения сверены с документацией Microsoft (Policy CSP: WindowsAI,
+        // NewsAndInterests, Feeds, WindowsCopilot, Search) и с набором Win11Debloat.
+        // Политики (ветки …\Policies\…) блокируют соответствующие переключатели в
+        // «Параметрах» с пометкой «управляется организацией» — это ожидаемо, «Вернуть»
+        // удаляет значение и возвращает переключатель пользователю.
+        private const string Cdm = @"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager";
+        private const string ExplorerAdvanced = @"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced";
+        private const string CopilotPolicy = @"SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot";
+        private const string WindowsAiPolicy = @"SOFTWARE\Policies\Microsoft\Windows\WindowsAI";
+
+        /// <summary>Пакет приложения Copilot — удаляется тем же путём, что и встроенные приложения.</summary>
+        public const string CopilotAppId = "Microsoft.Copilot";
+
+        /// <summary>Удаление OneDrive — отдельный путь со своей проверкой папок и откатом через winget.</summary>
+        public const string OneDriveId = "ads_onedrive";
+
+        private static readonly Dictionary<string, DebloatRegistryChange[]> AdsRegistry = new()
+        {
+            ["ads_start_recommendations"] = new[]
+            {
+                new DebloatRegistryChange(ExplorerAdvanced, "Start_IrisRecommendations", 0)
+            },
+            ["ads_account_notifications"] = new[]
+            {
+                new DebloatRegistryChange(ExplorerAdvanced, "Start_AccountNotifications", 0),
+                new DebloatRegistryChange(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\SystemSettings\AccountNotifications", "EnableAccountNotifications", 0)
+            },
+            ["ads_start_suggestions"] = new[]
+            {
+                new DebloatRegistryChange(Cdm, "SubscribedContent-338388Enabled", 0)
+            },
+            ["ads_tips"] = new[]
+            {
+                new DebloatRegistryChange(Cdm, "SubscribedContent-338389Enabled", 0),
+                new DebloatRegistryChange(Cdm, "SoftLandingEnabled", 0)
+            },
+            ["ads_settings_suggestions"] = new[]
+            {
+                new DebloatRegistryChange(Cdm, "SubscribedContent-338393Enabled", 0),
+                new DebloatRegistryChange(Cdm, "SubscribedContent-353694Enabled", 0),
+                new DebloatRegistryChange(Cdm, "SubscribedContent-353696Enabled", 0)
+            },
+            ["ads_welcome"] = new[]
+            {
+                new DebloatRegistryChange(Cdm, "SubscribedContent-310093Enabled", 0),
+                new DebloatRegistryChange(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\UserProfileEngagement", "ScoobeSystemSettingEnabled", 0)
+            },
+            ["ads_lock_screen"] = new[]
+            {
+                new DebloatRegistryChange(Cdm, "RotatingLockScreenOverlayEnabled", 0),
+                new DebloatRegistryChange(Cdm, "SubscribedContent-338387Enabled", 0)
+            },
+            ["ads_tailored"] = new[]
+            {
+                new DebloatRegistryChange(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy", "TailoredExperiencesWithDiagnosticDataEnabled", 0)
+            },
+            ["ads_explorer_sync"] = new[]
+            {
+                new DebloatRegistryChange(ExplorerAdvanced, "ShowSyncProviderNotifications", 0)
+            },
+            ["ads_search_web"] = new[]
+            {
+                new DebloatRegistryChange(@"HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer", "DisableSearchBoxSuggestions", 1),
+                new DebloatRegistryChange(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search", "BingSearchEnabled", 0)
+            },
+            ["ads_search_highlights"] = new[]
+            {
+                new DebloatRegistryChange(@"HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings", "IsDynamicSearchBoxEnabled", 0)
+            },
+            ["ads_widgets"] = new[]
+            {
+                new DebloatRegistryChange(@"HKLM:\SOFTWARE\Policies\Microsoft\Dsh", "AllowNewsAndInterests", 0)
+            },
+            ["ads_news_feeds"] = new[]
+            {
+                new DebloatRegistryChange(@"HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds", "EnableFeeds", 0)
+            },
+            ["ads_copilot"] = new[]
+            {
+                new DebloatRegistryChange(@"HKCU:\" + CopilotPolicy, "TurnOffWindowsCopilot", 1),
+                new DebloatRegistryChange(@"HKLM:\" + CopilotPolicy, "TurnOffWindowsCopilot", 1),
+                new DebloatRegistryChange(ExplorerAdvanced, "ShowCopilotButton", 0)
+            },
+            ["ads_recall"] = new[]
+            {
+                new DebloatRegistryChange(@"HKLM:\" + WindowsAiPolicy, "DisableAIDataAnalysis", 1),
+                new DebloatRegistryChange(@"HKCU:\" + WindowsAiPolicy, "DisableAIDataAnalysis", 1)
+            }
+        };
+
+        // Твики, которые Проводник подхватывает только после перезапуска (панель задач,
+        // поиск, виджеты, меню «Пуск»).
+        private static readonly HashSet<string> ExplorerRestartTweaks = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "ads_start_recommendations", "ads_account_notifications", "ads_explorer_sync",
+            "ads_search_web", "ads_search_highlights", "ads_widgets", "ads_news_feeds", "ads_copilot"
+        };
+
+        /// <summary>Подействует ли твик только после перезапуска Проводника.</summary>
+        public static bool NeedsExplorerRestart(string tweakId) => ExplorerRestartTweaks.Contains(tweakId);
+
+        /// <summary>Твик удаляет пакет Appx (встроенное приложение или Copilot).</summary>
+        public static bool IsAppxTweak(string category, string tweakId) =>
+            category == "app" || (category == "ads" && string.Equals(tweakId, CopilotAppId, StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>Все идентификаторы твиков с правками реестра — для проверок целостности таблиц.</summary>
+        internal static IEnumerable<(string Category, string Id, DebloatRegistryChange[] Changes)> AllRegistryTweaks() =>
+            PrivacyRegistry.Select(p => ("privacy", p.Key, p.Value))
+                .Concat(AdsRegistry.Select(p => ("ads", p.Key, p.Value)));
+
         /// <summary>Значения реестра, которые меняет твик; пусто, если он реестр не трогает.</summary>
-        public static IReadOnlyList<DebloatRegistryChange> RegistryChangesOf(string category, string tweakId) =>
-            category == "privacy" && PrivacyRegistry.TryGetValue(tweakId, out var changes)
-                ? changes
-                : Array.Empty<DebloatRegistryChange>();
+        public static IReadOnlyList<DebloatRegistryChange> RegistryChangesOf(string category, string tweakId) => category switch
+        {
+            "privacy" when PrivacyRegistry.TryGetValue(tweakId, out var privacy) => privacy,
+            "ads" when AdsRegistry.TryGetValue(tweakId, out var ads) => ads,
+            _ => Array.Empty<DebloatRegistryChange>()
+        };
 
         /// <summary>Служба, которую твик останавливает и отключает; null, если служб он не трогает.</summary>
         public static string? ServiceOf(string category, string tweakId) => (category, tweakId) switch
@@ -134,7 +250,11 @@ namespace Ven4Tools.Services
                 if (ServiceOf(category, tweakId) is { } service && !services.Contains(service))
                     services.Add(service);
             }
-            return (RegistryChangesOf("privacy", tweakId), services);
+            // Идентификаторы твиков уникальны во всех таблицах (это проверяет юнит-тест),
+            // поэтому твик находится не более чем в одной из них.
+            var registry = RegistryChangesOf("privacy", tweakId);
+            if (registry.Count == 0) registry = RegistryChangesOf("ads", tweakId);
+            return (registry, services);
         }
 
         /// <summary>Можно ли вернуть твик точечно: он меняет реестр или службу, а не удаляет приложение.</summary>
@@ -157,6 +277,93 @@ namespace Ven4Tools.Services
                 return await RunPSAsync("Stop-Service DiagTrack -Force -ErrorAction SilentlyContinue; Set-Service DiagTrack -StartupType Disabled -ErrorAction SilentlyContinue", ct);
 
             return false;
+        }
+
+        /// <summary>
+        /// Твик группы «Реклама и ИИ»: правки реестра по таблице, удаление пакета Copilot
+        /// или удаление OneDrive (со своей проверкой папок — см. <see cref="OneDriveRemovalService"/>).
+        /// </summary>
+        public static async Task<bool> ApplyAdsTweakAsync(string tweakId, CancellationToken ct = default)
+        {
+            if (AdsRegistry.TryGetValue(tweakId, out var changes))
+            {
+                bool all = true;
+                foreach (var change in changes)
+                    all &= await SetReg(change.Path, change.Name, change.Value, ct);
+                return all;
+            }
+
+            if (string.Equals(tweakId, CopilotAppId, StringComparison.OrdinalIgnoreCase))
+                return await RemoveAppxAsync(CopilotAppId, ct);
+
+            if (tweakId == OneDriveId)
+            {
+                var result = await OneDriveRemovalService.UninstallAsync(ct);
+                if (result.Message is { Length: > 0 } message)
+                    AppLogger.Write($"[Деблоатер] OneDrive: {message}");
+                return result.Ok;
+            }
+
+            AppLogger.Write($"[Деблоатер] Неизвестный tweakId: {tweakId}");
+            return false;
+        }
+
+        /// <summary>
+        /// Перезапускает Проводник текущего сеанса, чтобы он перечитал настройки панели
+        /// задач, поиска и «Пуска». Новый Проводник поднимает сама Windows (Winlogon,
+        /// AutoRestartShell) — с правами пользователя, а не администратора. Только если
+        /// за 10 секунд он не появился, запускается вручную.
+        /// </summary>
+        public static async Task<bool> RestartExplorerAsync()
+        {
+            try
+            {
+                int session = Process.GetCurrentProcess().SessionId;
+                foreach (var p in Process.GetProcessesByName("explorer"))
+                {
+                    using (p)
+                    {
+                        try { if (p.SessionId == session) p.Kill(); }
+                        catch (Exception ex) { AppLogger.Write($"[Деблоатер] Проводник не остановлен: {ex.Message}"); }
+                    }
+                }
+
+                for (int i = 0; i < 20; i++)
+                {
+                    await Task.Delay(500);
+                    if (ExplorerRunningInSession(session)) return true;
+                }
+
+                // Без прав администратора: runas с базовым уровнем доверия, иначе Проводник
+                // унаследовал бы повышенный токен клиента вместе со всем, что из него запустят.
+                AppLogger.Write("[Деблоатер] Проводник не перезапустился сам за 10 с — запускаю вручную без прав администратора");
+                var runas = System.IO.Path.Combine(Environment.SystemDirectory, "runas.exe");
+                Process.Start(new ProcessStartInfo(runas, $"/trustlevel:0x20000 \"{TrustedExecutablePaths.ExplorerExe}\"")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                })?.Dispose();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[Деблоатер] Ошибка перезапуска Проводника: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static bool ExplorerRunningInSession(int session)
+        {
+            bool found = false;
+            foreach (var p in Process.GetProcessesByName("explorer"))
+            {
+                using (p)
+                {
+                    try { if (!p.HasExited && p.SessionId == session) found = true; }
+                    catch { }
+                }
+            }
+            return found;
         }
 
         public static async Task<bool> DisableServiceAsync(string tweakId, CancellationToken ct = default)

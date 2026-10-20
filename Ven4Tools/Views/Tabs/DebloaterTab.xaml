@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:views="clr-namespace:Ven4Tools.Views"
+             xmlns:tabs="clr-namespace:Ven4Tools.Views.Tabs"
              Background="{DynamicResource ContentBackground}">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisUndo"/>
@@ -9,23 +10,34 @@
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="🧹 Очистка Windows"
+                       FontSize="22" FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimary}"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,4,0,0"
+                       Foreground="{DynamicResource TextSecondary}" FontSize="12">
+                Удаление предустановленного мусора, рекламы и навязанного ИИ, настройка конфиденциальности, автозагрузка.
+                Изменённые настройки возвращаются кнопкой «Вернуть», удалённые приложения — из Microsoft Store.
+            </TextBlock>
+        </StackPanel>
+
+        <!-- Подразделы вкладки. Третий («Место и файлы») — блок соседней функции,
+             см. договор стыков: он подключается одной строкой. -->
+        <TabControl x:Name="debloatSections" Grid.Row="1">
+        <TabItem Header="Твики">
+        <Grid Margin="0,12,0,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Grid Grid.Row="0" Margin="0,0,0,16">
-            <StackPanel>
-                <TextBlock Text="🧹 Очистка Windows"
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource TextPrimary}"/>
-                <TextBlock TextWrapping="Wrap" Margin="0,4,0,0"
-                           Foreground="{DynamicResource TextSecondary}" FontSize="12">
-                    Удаление предустановленного мусора и настройка конфиденциальности.
-                    Изменённые настройки возвращаются кнопкой «Вернуть», удалённые приложения — из Microsoft Store.
-                </TextBlock>
-            </StackPanel>
+        <Grid Grid.Row="0" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                 <Button x:Name="btnCheckDrift" Content="Проверить применённое" Height="30" Padding="10,0"
                         ToolTip="Сверит применённые ранее твики с текущим состоянием Windows: крупные обновления часто возвращают отключённое."
@@ -62,6 +74,11 @@
         <StackPanel Orientation="Horizontal">
             <RadioButton x:Name="rbAll"      Content="Все"               GroupName="DebloatFilter"
                          IsChecked="True"    Margin="0,0,14,0"
+                         Foreground="{DynamicResource TextPrimary}"
+                         Checked="FilterChanged"/>
+            <RadioButton x:Name="rbAds"      Content="📢 Реклама и ИИ"  GroupName="DebloatFilter"
+                         Margin="0,0,14,0"
+                         ToolTip="Реклама и предложения в «Пуске», поиске, Проводнике и на экране блокировки, виджеты, Copilot, Recall, OneDrive."
                          Foreground="{DynamicResource TextPrimary}"
                          Checked="FilterChanged"/>
             <RadioButton x:Name="rbApps"     Content="📦 Приложения"    GroupName="DebloatFilter"
@@ -110,7 +127,7 @@
                                     <Button Grid.Column="3" Content="↩ Вернуть" Width="96" Height="26" Margin="8,0,0,0"
                                             FontSize="11" VerticalAlignment="Center"
                                             AutomationProperties.AutomationId="{Binding Id, StringFormat='btnUndoTweak_{0}'}"
-                                            ToolTip="Вернёт значения реестра и режим запуска службы, которые были до применения этого твика."
+                                            ToolTip="Вернёт то, что было до применения этого твика: значения реестра и режим запуска службы. OneDrive — установит заново."
                                             Visibility="{Binding CanUndo, Converter={StaticResource BoolToVisUndo}}"
                                             IsEnabled="{Binding DataContext.ApplyEnabled, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             Command="{Binding DataContext.UndoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -186,5 +203,14 @@
                     IsEnabled="{Binding ApplyEnabled}"
                     Command="{Binding ApplyCommand}" Margin="12,0,0,0"/>
         </Grid>
+        </Grid>
+        </TabItem>
+        <TabItem Header="Автозагрузка">
+            <tabs:StartupPanel x:Name="startupPanel"/>
+        </TabItem>
+        <TabItem x:Name="tabDiskSpace" Header="Место и файлы">
+            <tabs:DiskSpacePanel/>
+        </TabItem>
+        </TabControl>
     </Grid>
 </UserControl>

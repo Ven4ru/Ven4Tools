@@ -27,6 +27,10 @@ namespace Ven4Tools.Views.Tabs
                 if (_viewModel.RefreshAdaptersCommand.CanExecute(null))
                     _viewModel.RefreshAdaptersCommand.Execute(null);
             }, "NetworkTab.RefreshAdapters");
+
+            // Сохранённые сети Wi-Fi: только имена профилей (пароли — по кнопке).
+            // Тоже при каждом показе: заодно скрывает пароли, открытые в прошлый раз.
+            Loaded += (_, _) => TabInitGuard.Run(_viewModel.LoadWifiAsync, "NetworkTab.LoadWifi");
         }
     }
 }

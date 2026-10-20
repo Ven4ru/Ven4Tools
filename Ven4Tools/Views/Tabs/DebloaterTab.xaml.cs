@@ -35,6 +35,8 @@ namespace Ven4Tools.Views.Tabs
         {
             InitializeComponent();
             _uiReady = true;
+            // Подраздел «Место и файлы» наполняет соседний блок; пока его нет — не показываем пустую вкладку.
+            if (tabDiskSpace.Content == null) tabDiskSpace.Visibility = Visibility.Collapsed;
             DataContext = _viewModel;
             _viewModel.OwnerWindowProvider = () => Window.GetWindow(this);
             // Проверка «что вернуло обновление Windows» — при первом показе вкладки,
@@ -53,6 +55,7 @@ namespace Ven4Tools.Views.Tabs
             if (rbApps.IsChecked == true) _viewModel.CategoryFilter = "app";
             else if (rbPrivacy.IsChecked == true) _viewModel.CategoryFilter = "privacy";
             else if (rbServices.IsChecked == true) _viewModel.CategoryFilter = "service";
+            else if (rbAds.IsChecked == true) _viewModel.CategoryFilter = "ads";
             else _viewModel.CategoryFilter = "all";
         }
 

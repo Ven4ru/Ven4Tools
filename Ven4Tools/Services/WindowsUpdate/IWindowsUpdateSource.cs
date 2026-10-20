@@ -29,6 +29,22 @@ namespace Ven4Tools.Services.WindowsUpdate
         Task<WindowsUpdateSearchResult> SearchAsync(CancellationToken ct);
 
         /// <summary>
+        /// Обновления, которые пользователь скрыл (здесь или в штатном Windows Update) и
+        /// которые ещё не установлены. Ничего не меняет — только поиск.
+        /// </summary>
+        Task<WindowsUpdateSearchResult> SearchHiddenAsync(CancellationToken ct);
+
+        /// <summary>
+        /// Скрывает (hidden = true) или возвращает (false) обновления по UpdateId —
+        /// IUpdate.IsHidden. Как и установка, реализация заново находит патчи поиском,
+        /// а не доверяет списку ID. Нужны права администратора.
+        /// </summary>
+        Task<WindowsUpdateHideOutcome> SetHiddenAsync(
+            IReadOnlyList<string> updateIds,
+            bool hidden,
+            CancellationToken ct);
+
+        /// <summary>
         /// Скачивает и устанавливает патчи по UpdateId. Реализация обязана заново
         /// найти патчи по актуальному поиску внутри себя, а не доверять только списку ID —
         /// список могут выбрать в одном состоянии системы, а установка стартовать позже.

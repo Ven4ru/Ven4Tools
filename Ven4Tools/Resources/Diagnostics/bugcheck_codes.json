@@ -1,0 +1,346 @@
+{
+  "_source": "Названия кодов — Microsoft, Bug Check Code Reference: https://learn.microsoft.com/windows-hardware/drivers/debugger/bug-check-code-reference2 . Описания причин и советы — краткий пересказ тех же страниц простым языком; это частые причины, а не диагноз.",
+  "_format": "code — шестнадцатеричный код (как в журнале событий), name — символьное имя Microsoft, ru/en — частые причины (cause) и что проверить (check).",
+  "codes": [
+    {
+      "code": "0x00000001", "name": "APC_INDEX_MISMATCH",
+      "ru": { "cause": "Внутренняя ошибка ядра, почти всегда — из-за драйвера (часто видео- или звукового).", "check": "Обновите или откатите недавно поставленные драйверы видеокарты и звука." },
+      "en": { "cause": "Internal kernel error, almost always caused by a driver (often graphics or audio).", "check": "Update or roll back recently installed graphics and audio drivers." }
+    },
+    {
+      "code": "0x0000000A", "name": "IRQL_NOT_LESS_OR_EQUAL",
+      "ru": { "cause": "Драйвер или служба обратились к памяти, к которой в этот момент обращаться нельзя. Чаще всего — неисправный или несовместимый драйвер, реже — сбойная оперативная память.", "check": "Вспомните, какие драйверы и программы ставились перед сбоями, обновите или откатите их. Проверьте память (средство проверки памяти Windows)." },
+      "en": { "cause": "A driver or service accessed memory it was not allowed to touch at that moment. Usually a faulty or incompatible driver, less often bad RAM.", "check": "Recall which drivers and programs were installed before the crashes and update or roll them back. Test the memory (Windows Memory Diagnostic)." }
+    },
+    {
+      "code": "0x00000019", "name": "BAD_POOL_HEADER",
+      "ru": { "cause": "Повреждена служебная область памяти ядра — обычно драйвер записал данные не туда. Иногда виноваты антивирусы и программы шифрования дисков.", "check": "Обновите драйверы, временно отключите сторонний антивирус, проверьте оперативную память." },
+      "en": { "cause": "A kernel memory pool header is corrupted — usually a driver wrote data in the wrong place. Antivirus and disk encryption software are sometimes involved.", "check": "Update drivers, temporarily disable third-party antivirus, test the RAM." }
+    },
+    {
+      "code": "0x0000001A", "name": "MEMORY_MANAGEMENT",
+      "ru": { "cause": "Серьёзная ошибка управления памятью. Частые причины — сбойная оперативная память, разгон памяти (XMP/EXPO), реже драйвер.", "check": "Проверьте оперативную память, отключите разгон и XMP/EXPO в BIOS на время проверки, проверьте системные файлы (SFC/DISM)." },
+      "en": { "cause": "A severe memory management error. Common causes are faulty RAM, memory overclocking (XMP/EXPO), less often a driver.", "check": "Test the RAM, disable overclocking and XMP/EXPO in BIOS while testing, check system files (SFC/DISM)." }
+    },
+    {
+      "code": "0x0000001E", "name": "KMODE_EXCEPTION_NOT_HANDLED",
+      "ru": { "cause": "Программа уровня ядра (обычно драйвер) вызвала ошибку, которую никто не обработал.", "check": "Обновите или откатите недавно установленные драйверы; если сбой повторяется, проверьте оперативную память." },
+      "en": { "cause": "Kernel-mode code (usually a driver) raised an exception that nothing handled.", "check": "Update or roll back recently installed drivers; if it keeps happening, test the RAM." }
+    },
+    {
+      "code": "0x00000024", "name": "NTFS_FILE_SYSTEM",
+      "ru": { "cause": "Ошибка в работе файловой системы NTFS — повреждение данных на диске или сбой самого накопителя, иногда антивирус.", "check": "Проверьте диск (chkdsk) и состояние накопителя (SMART), сделайте резервную копию важных файлов." },
+      "en": { "cause": "An NTFS file system failure — on-disk corruption or a failing drive, sometimes antivirus software.", "check": "Check the disk (chkdsk) and drive health (SMART), back up important files." }
+    },
+    {
+      "code": "0x0000002E", "name": "DATA_BUS_ERROR",
+      "ru": { "cause": "Ошибка чётности памяти — чаще всего неисправная оперативная память или нестабильная работа платы.", "check": "Проверьте оперативную память, отключите разгон, переставьте модули памяти." },
+      "en": { "cause": "A memory parity error — most often faulty RAM or an unstable motherboard.", "check": "Test the RAM, disable overclocking, reseat the memory modules." }
+    },
+    {
+      "code": "0x0000003B", "name": "SYSTEM_SERVICE_EXCEPTION",
+      "ru": { "cause": "Ошибка при переходе из обычной программы в ядро — часто видеодрайвер, античит, антивирус или другая программа со своим драйвером.", "check": "Обновите видеодрайвер, вспомните недавно поставленные игры с античитом и защитные программы, проверьте системные файлы (SFC/DISM)." },
+      "en": { "cause": "A fault while switching from a program into the kernel — often a graphics driver, anti-cheat, antivirus or another program with its own driver.", "check": "Update the graphics driver, recall recently installed games with anti-cheat and security software, check system files (SFC/DISM)." }
+    },
+    {
+      "code": "0x0000003D", "name": "INTERRUPT_EXCEPTION_NOT_HANDLED",
+      "ru": { "cause": "Ошибка при обработке прерывания — обычно драйвер устройства.", "check": "Обновите драйверы устройств, особенно недавно подключённых." },
+      "en": { "cause": "An exception while handling an interrupt — usually a device driver.", "check": "Update device drivers, especially for recently connected devices." }
+    },
+    {
+      "code": "0x0000004A", "name": "IRQL_GT_ZERO_AT_SYSTEM_SERVICE",
+      "ru": { "cause": "Драйвер вернул управление программе в неправильном состоянии.", "check": "Обновите или откатите недавно поставленные драйверы." },
+      "en": { "cause": "A driver returned to a program in an invalid state.", "check": "Update or roll back recently installed drivers." }
+    },
+    {
+      "code": "0x0000004E", "name": "PFN_LIST_CORRUPT",
+      "ru": { "cause": "Повреждён список страниц памяти — обычно драйвер, реже сбойная оперативная память.", "check": "Проверьте оперативную память и обновите драйверы." },
+      "en": { "cause": "The memory page list is corrupted — usually a driver, less often faulty RAM.", "check": "Test the RAM and update drivers." }
+    },
+    {
+      "code": "0x00000050", "name": "PAGE_FAULT_IN_NONPAGED_AREA",
+      "ru": { "cause": "Обращение к несуществующему адресу памяти. Частые причины — драйвер, антивирус, сбойная оперативная память или повреждённые системные файлы.", "check": "Проверьте оперативную память, обновите драйверы, проверьте системные файлы (SFC/DISM) и диск." },
+      "en": { "cause": "Access to a memory address that does not exist. Common causes are a driver, antivirus, faulty RAM or corrupted system files.", "check": "Test the RAM, update drivers, check system files (SFC/DISM) and the disk." }
+    },
+    {
+      "code": "0x00000051", "name": "REGISTRY_ERROR",
+      "ru": { "cause": "Ошибка чтения или записи реестра — повреждённые файлы реестра или ошибки диска.", "check": "Проверьте диск (chkdsk) и системные файлы (SFC/DISM)." },
+      "en": { "cause": "A registry read or write error — corrupted registry hives or disk errors.", "check": "Check the disk (chkdsk) and system files (SFC/DISM)." }
+    },
+    {
+      "code": "0x0000005C", "name": "HAL_INITIALIZATION_FAILED",
+      "ru": { "cause": "Не удалось запустить слой работы с оборудованием — проблема с прошивкой или оборудованием.", "check": "Обновите BIOS/UEFI, сбросьте настройки BIOS по умолчанию." },
+      "en": { "cause": "The hardware abstraction layer failed to start — a firmware or hardware problem.", "check": "Update BIOS/UEFI, reset BIOS settings to defaults." }
+    },
+    {
+      "code": "0x00000074", "name": "BAD_SYSTEM_CONFIG_INFO",
+      "ru": { "cause": "Ошибка в системной части реестра — часто после неудачного обновления, твикеров реестра или сбоя диска.", "check": "Попробуйте точку восстановления системы, проверьте диск и системные файлы." },
+      "en": { "cause": "An error in the SYSTEM registry hive — often after a failed update, registry tweaks or a disk failure.", "check": "Try a system restore point, check the disk and system files." }
+    },
+    {
+      "code": "0x00000077", "name": "KERNEL_STACK_INPAGE_ERROR",
+      "ru": { "cause": "Не удалось прочитать данные ядра из файла подкачки — сбой диска, кабеля SATA или контроллера, реже память.", "check": "Проверьте состояние диска (SMART), кабели и разъём накопителя, проверьте диск (chkdsk)." },
+      "en": { "cause": "Kernel data could not be read from the page file — a failing disk, SATA cable or controller, less often RAM.", "check": "Check drive health (SMART), cables and the drive connector, run chkdsk." }
+    },
+    {
+      "code": "0x0000007A", "name": "KERNEL_DATA_INPAGE_ERROR",
+      "ru": { "cause": "Не удалось прочитать нужные данные с диска в память — частый признак проблем с накопителем, кабелем или контроллером.", "check": "Проверьте состояние диска (SMART), кабели и разъёмы; сделайте резервную копию важных файлов." },
+      "en": { "cause": "Required data could not be read from disk into memory — a common sign of drive, cable or controller trouble.", "check": "Check drive health (SMART), cables and connectors; back up important files." }
+    },
+    {
+      "code": "0x0000007B", "name": "INACCESSIBLE_BOOT_DEVICE",
+      "ru": { "cause": "Windows потеряла доступ к системному диску при загрузке — сменили режим контроллера (AHCI/RAID/IDE) в BIOS, драйвер накопителя или повреждена загрузка.", "check": "Верните прежний режим контроллера дисков в BIOS, проверьте подключение диска; если менялся драйвер накопителя — откатите его." },
+      "en": { "cause": "Windows lost access to the system disk during boot — the controller mode (AHCI/RAID/IDE) changed in BIOS, a storage driver changed, or boot files are damaged.", "check": "Restore the previous disk controller mode in BIOS, check the drive connection; roll back a changed storage driver." }
+    },
+    {
+      "code": "0x0000007E", "name": "SYSTEM_THREAD_EXCEPTION_NOT_HANDLED",
+      "ru": { "cause": "Системный поток (обычно внутри драйвера) вызвал необработанную ошибку.", "check": "Обновите или откатите недавно поставленные драйверы, особенно видеодрайвер." },
+      "en": { "cause": "A system thread (usually inside a driver) raised an unhandled exception.", "check": "Update or roll back recently installed drivers, especially the graphics driver." }
+    },
+    {
+      "code": "0x0000007F", "name": "UNEXPECTED_KERNEL_MODE_TRAP",
+      "ru": { "cause": "Процессор поймал ошибку, которую ядро не смогло обработать. Частые причины — оборудование (память, перегрев, разгон) или драйвер.", "check": "Отключите разгон, проверьте температуру и оперативную память, обновите драйверы." },
+      "en": { "cause": "The CPU raised a trap the kernel could not handle. Common causes are hardware (RAM, overheating, overclocking) or a driver.", "check": "Disable overclocking, check temperatures and RAM, update drivers." }
+    },
+    {
+      "code": "0x00000080", "name": "NMI_HARDWARE_FAILURE",
+      "ru": { "cause": "Аппаратная ошибка, о которой сообщило само оборудование.", "check": "Проверьте оперативную память, отключите разгон, обратите внимание на аппаратные ошибки WHEA ниже." },
+      "en": { "cause": "A hardware failure reported by the hardware itself.", "check": "Test the RAM, disable overclocking, look at WHEA hardware errors below." }
+    },
+    {
+      "code": "0x0000008E", "name": "KERNEL_MODE_EXCEPTION_NOT_HANDLED",
+      "ru": { "cause": "Программа уровня ядра вызвала необработанную ошибку — драйвер или сбойная память.", "check": "Обновите драйверы и проверьте оперативную память." },
+      "en": { "cause": "Kernel-mode code raised an unhandled exception — a driver or faulty memory.", "check": "Update drivers and test the RAM." }
+    },
+    {
+      "code": "0x0000009C", "name": "MACHINE_CHECK_EXCEPTION",
+      "ru": { "cause": "Процессор сообщил о неисправимой аппаратной ошибке — перегрев, разгон, питание, сам процессор или плата.", "check": "Отключите разгон, проверьте температуры и блок питания, обновите BIOS." },
+      "en": { "cause": "The CPU reported an uncorrectable hardware error — overheating, overclocking, power, the CPU or motherboard.", "check": "Disable overclocking, check temperatures and the power supply, update BIOS." }
+    },
+    {
+      "code": "0x0000009F", "name": "DRIVER_POWER_STATE_FAILURE",
+      "ru": { "cause": "Драйвер не справился со сменой режима питания — чаще всего при уходе в сон, гибернацию или выходе из них.", "check": "Обновите драйверы (особенно Wi-Fi, видео, USB, чипсет); если сбой при выходе из сна — проверьте драйверы этих устройств в первую очередь." },
+      "en": { "cause": "A driver failed a power state transition — most often when entering or leaving sleep or hibernation.", "check": "Update drivers (especially Wi-Fi, graphics, USB, chipset); if it happens on wake, check those first." }
+    },
+    {
+      "code": "0x000000A0", "name": "INTERNAL_POWER_ERROR",
+      "ru": { "cause": "Ошибка в системе управления питанием — часто связана с гибернацией и драйверами.", "check": "Обновите BIOS и драйвер чипсета; на время проверки отключите гибернацию и быстрый запуск." },
+      "en": { "cause": "A power management error — often related to hibernation and drivers.", "check": "Update BIOS and the chipset driver; disable hibernation and fast startup while testing." }
+    },
+    {
+      "code": "0x000000BE", "name": "ATTEMPTED_WRITE_TO_READONLY_MEMORY",
+      "ru": { "cause": "Драйвер попытался записать данные в память только для чтения.", "check": "Обновите или откатите недавно поставленные драйверы." },
+      "en": { "cause": "A driver tried to write to read-only memory.", "check": "Update or roll back recently installed drivers." }
+    },
+    {
+      "code": "0x000000C1", "name": "SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION",
+      "ru": { "cause": "Проверка памяти ядра поймала драйвер, портящий память.", "check": "Обновите или удалите проблемный драйвер; если включали Driver Verifier — отключите его после проверки." },
+      "en": { "cause": "Kernel special pool checking caught a driver corrupting memory.", "check": "Update or remove the offending driver; turn Driver Verifier off after testing if you enabled it." }
+    },
+    {
+      "code": "0x000000C2", "name": "BAD_POOL_CALLER",
+      "ru": { "cause": "Драйвер неправильно работает с памятью ядра.", "check": "Обновите драйверы, временно отключите сторонний антивирус." },
+      "en": { "cause": "A driver made an invalid kernel memory pool request.", "check": "Update drivers, temporarily disable third-party antivirus." }
+    },
+    {
+      "code": "0x000000C4", "name": "DRIVER_VERIFIER_DETECTED_VIOLATION",
+      "ru": { "cause": "Включена проверка драйверов (Driver Verifier), и она поймала нарушение.", "check": "Если вы не включали Driver Verifier сами — выполните «verifier /reset» и перезагрузитесь; драйвер-нарушитель стоит обновить." },
+      "en": { "cause": "Driver Verifier is enabled and caught a violation.", "check": "If you did not enable Driver Verifier yourself, run \"verifier /reset\" and reboot; update the offending driver." }
+    },
+    {
+      "code": "0x000000C5", "name": "DRIVER_CORRUPTED_EXPOOL",
+      "ru": { "cause": "Драйвер испортил память ядра.", "check": "Обновите или откатите недавно поставленные драйверы." },
+      "en": { "cause": "A driver corrupted the kernel memory pool.", "check": "Update or roll back recently installed drivers." }
+    },
+    {
+      "code": "0x000000CE", "name": "DRIVER_UNLOADED_WITHOUT_CANCELLING_PENDING_OPERATIONS",
+      "ru": { "cause": "Драйвер выгрузился, не завершив свои операции.", "check": "Обновите или удалите недавно поставленные драйверы и программы со своими драйверами." },
+      "en": { "cause": "A driver unloaded without cancelling its pending operations.", "check": "Update or remove recently installed drivers and programs that bring drivers." }
+    },
+    {
+      "code": "0x000000D1", "name": "DRIVER_IRQL_NOT_LESS_OR_EQUAL",
+      "ru": { "cause": "Драйвер обратился к памяти, к которой в этот момент обращаться нельзя. Очень частая причина — сетевые, Wi-Fi- и видеодрайверы.", "check": "Обновите или откатите сетевой, Wi-Fi- и видеодрайвер, а также драйверы, поставленные перед сбоями." },
+      "en": { "cause": "A driver accessed memory it was not allowed to touch at that moment. Network, Wi-Fi and graphics drivers are very common causes.", "check": "Update or roll back network, Wi-Fi and graphics drivers and drivers installed before the crashes." }
+    },
+    {
+      "code": "0x000000D5", "name": "DRIVER_PAGE_FAULT_IN_FREED_SPECIAL_POOL",
+      "ru": { "cause": "Драйвер обратился к уже освобождённой памяти.", "check": "Обновите или откатите недавно поставленные драйверы." },
+      "en": { "cause": "A driver accessed memory that had already been freed.", "check": "Update or roll back recently installed drivers." }
+    },
+    {
+      "code": "0x000000E2", "name": "MANUALLY_INITIATED_CRASH",
+      "ru": { "cause": "Сбой вызван намеренно — с клавиатуры или отладчиком.", "check": "Если вы этого не делали, проверьте, не включена ли в реестре функция аварийного завершения с клавиатуры (CrashOnCtrlScroll)." },
+      "en": { "cause": "The crash was triggered on purpose — from the keyboard or a debugger.", "check": "If you did not do this, check whether keyboard-initiated crash (CrashOnCtrlScroll) is enabled in the registry." }
+    },
+    {
+      "code": "0x000000EA", "name": "THREAD_STUCK_IN_DEVICE_DRIVER",
+      "ru": { "cause": "Драйвер устройства (почти всегда видеокарты) завис в бесконечном ожидании.", "check": "Обновите видеодрайвер, проверьте температуру и питание видеокарты, отключите её разгон." },
+      "en": { "cause": "A device driver (almost always the graphics card's) got stuck waiting forever.", "check": "Update the graphics driver, check GPU temperature and power, disable GPU overclocking." }
+    },
+    {
+      "code": "0x000000ED", "name": "UNMOUNTABLE_BOOT_VOLUME",
+      "ru": { "cause": "Не удалось подключить системный раздел — ошибки файловой системы или неисправный диск.", "check": "Проверьте диск (chkdsk) из среды восстановления и состояние накопителя (SMART)." },
+      "en": { "cause": "The boot volume could not be mounted — file system errors or a failing disk.", "check": "Run chkdsk from the recovery environment and check drive health (SMART)." }
+    },
+    {
+      "code": "0x000000EF", "name": "CRITICAL_PROCESS_DIED",
+      "ru": { "cause": "Неожиданно завершился важный системный процесс — повреждённые системные файлы, сбой диска, антивирус или драйвер.", "check": "Проверьте системные файлы (SFC/DISM) и диск; вспомните недавно поставленные программы и драйверы." },
+      "en": { "cause": "A critical system process terminated unexpectedly — corrupted system files, a disk failure, antivirus or a driver.", "check": "Check system files (SFC/DISM) and the disk; recall recently installed programs and drivers." }
+    },
+    {
+      "code": "0x000000F4", "name": "CRITICAL_OBJECT_TERMINATION",
+      "ru": { "cause": "Завершился критически важный процесс или поток — часто из-за сбоя диска или его подключения.", "check": "Проверьте состояние диска (SMART), кабели и системные файлы (SFC/DISM)." },
+      "en": { "cause": "A critical process or thread terminated — often because of a disk or connection failure.", "check": "Check drive health (SMART), cables and system files (SFC/DISM)." }
+    },
+    {
+      "code": "0x000000F7", "name": "DRIVER_OVERRAN_STACK_BUFFER",
+      "ru": { "cause": "Драйвер вышел за границы своего буфера.", "check": "Обновите или откатите недавно поставленные драйверы." },
+      "en": { "cause": "A driver overran a stack buffer.", "check": "Update or roll back recently installed drivers." }
+    },
+    {
+      "code": "0x000000FC", "name": "ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY",
+      "ru": { "cause": "Попытка выполнить код в памяти, где выполнение запрещено, — драйвер или сбойная память.", "check": "Обновите драйверы и проверьте оперативную память." },
+      "en": { "cause": "An attempt to run code from non-executable memory — a driver or faulty memory.", "check": "Update drivers and test the RAM." }
+    },
+    {
+      "code": "0x000000FE", "name": "BUGCODE_USB_DRIVER",
+      "ru": { "cause": "Ошибка в драйвере USB — часто из-за USB-устройства или концентратора.", "check": "Отключите лишние USB-устройства и концентраторы, обновите драйвер чипсета и USB-контроллера." },
+      "en": { "cause": "A USB driver error — often caused by a USB device or hub.", "check": "Unplug extra USB devices and hubs, update chipset and USB controller drivers." }
+    },
+    {
+      "code": "0x00000101", "name": "CLOCK_WATCHDOG_TIMEOUT",
+      "ru": { "cause": "Одно из ядер процессора перестало отвечать — нестабильный разгон, недостаток питания, перегрев, BIOS или драйвер.", "check": "Отключите разгон и андервольт, обновите BIOS, проверьте температуры и блок питания." },
+      "en": { "cause": "A CPU core stopped responding — unstable overclock, power shortage, overheating, BIOS or a driver.", "check": "Disable overclocking and undervolting, update BIOS, check temperatures and the power supply." }
+    },
+    {
+      "code": "0x00000109", "name": "CRITICAL_STRUCTURE_CORRUPTION",
+      "ru": { "cause": "Защита ядра обнаружила изменение важных структур — драйвер, сбойная память, иногда вредоносная программа.", "check": "Проверьте оперативную память, обновите драйверы, проверьте систему антивирусом." },
+      "en": { "cause": "Kernel patch protection detected modified critical structures — a driver, faulty memory, sometimes malware.", "check": "Test the RAM, update drivers, scan the system for malware." }
+    },
+    {
+      "code": "0x0000010D", "name": "WDF_VIOLATION",
+      "ru": { "cause": "Драйвер, написанный на платформе Windows Driver Framework, нарушил её правила.", "check": "Обновите или откатите недавно поставленные драйверы, особенно USB-устройств и камер." },
+      "en": { "cause": "A Windows Driver Framework driver broke the framework rules.", "check": "Update or roll back recently installed drivers, especially for USB devices and cameras." }
+    },
+    {
+      "code": "0x0000010E", "name": "VIDEO_MEMORY_MANAGEMENT_INTERNAL",
+      "ru": { "cause": "Ошибка управления видеопамятью — видеодрайвер или видеокарта.", "check": "Обновите или переустановите видеодрайвер, отключите разгон видеокарты." },
+      "en": { "cause": "A video memory management error — the graphics driver or card.", "check": "Update or reinstall the graphics driver, disable GPU overclocking." }
+    },
+    {
+      "code": "0x00000113", "name": "VIDEO_DXGKRNL_FATAL_ERROR",
+      "ru": { "cause": "Неисправимая ошибка в графической подсистеме Windows — обычно видеодрайвер.", "check": "Обновите или чисто переустановите видеодрайвер." },
+      "en": { "cause": "A fatal error in the Windows graphics kernel — usually the graphics driver.", "check": "Update or cleanly reinstall the graphics driver." }
+    },
+    {
+      "code": "0x00000116", "name": "VIDEO_TDR_FAILURE",
+      "ru": { "cause": "Видеокарта перестала отвечать, и Windows не удалось перезапустить видеодрайвер. Частые причины — видеодрайвер, разгон, перегрев или питание видеокарты.", "check": "Обновите или чисто переустановите видеодрайвер, отключите разгон, проверьте температуру и питание видеокарты." },
+      "en": { "cause": "The graphics card stopped responding and Windows could not restart the driver. Common causes are the graphics driver, overclocking, overheating or GPU power.", "check": "Update or cleanly reinstall the graphics driver, disable overclocking, check GPU temperature and power." }
+    },
+    {
+      "code": "0x00000117", "name": "VIDEO_TDR_TIMEOUT_DETECTED",
+      "ru": { "cause": "Видеодрайвер не ответил вовремя.", "check": "Обновите видеодрайвер, проверьте температуру и питание видеокарты." },
+      "en": { "cause": "The graphics driver did not respond in time.", "check": "Update the graphics driver, check GPU temperature and power." }
+    },
+    {
+      "code": "0x00000119", "name": "VIDEO_SCHEDULER_INTERNAL_ERROR",
+      "ru": { "cause": "Ошибка планировщика видеокарты — обычно видеодрайвер.", "check": "Обновите или чисто переустановите видеодрайвер." },
+      "en": { "cause": "A GPU scheduler error — usually the graphics driver.", "check": "Update or cleanly reinstall the graphics driver." }
+    },
+    {
+      "code": "0x00000122", "name": "WHEA_INTERNAL_ERROR",
+      "ru": { "cause": "Ошибка в механизме учёта аппаратных ошибок — прошивка или оборудование.", "check": "Обновите BIOS и драйвер чипсета, отключите разгон." },
+      "en": { "cause": "An error in the hardware error reporting mechanism — firmware or hardware.", "check": "Update BIOS and the chipset driver, disable overclocking." }
+    },
+    {
+      "code": "0x00000124", "name": "WHEA_UNCORRECTABLE_ERROR",
+      "ru": { "cause": "Неисправимая аппаратная ошибка — процессор, память, питание, перегрев или нестабильный разгон.", "check": "Отключите разгон и андервольт, проверьте температуры, оперативную память и блок питания, обновите BIOS." },
+      "en": { "cause": "An uncorrectable hardware error — CPU, memory, power, overheating or unstable overclocking.", "check": "Disable overclocking and undervolting, check temperatures, RAM and the power supply, update BIOS." }
+    },
+    {
+      "code": "0x00000127", "name": "PAGE_NOT_ZERO",
+      "ru": { "cause": "Страница памяти, которая должна быть пустой, оказалась испорчена — часто сбойная оперативная память.", "check": "Проверьте оперативную память и отключите её разгон." },
+      "en": { "cause": "A memory page that should be zeroed was corrupted — often faulty RAM.", "check": "Test the RAM and disable memory overclocking." }
+    },
+    {
+      "code": "0x0000012B", "name": "FAULTY_HARDWARE_CORRUPTED_PAGE",
+      "ru": { "cause": "Обнаружено повреждение памяти, вызванное оборудованием.", "check": "Проверьте оперативную память и отключите её разгон." },
+      "en": { "cause": "Memory corruption caused by hardware was detected.", "check": "Test the RAM and disable memory overclocking." }
+    },
+    {
+      "code": "0x00000133", "name": "DPC_WATCHDOG_VIOLATION",
+      "ru": { "cause": "Драйвер слишком долго занимал процессор. Частые причины — драйвер накопителя (SATA/NVMe), прошивка SSD, видео- или сетевой драйвер.", "check": "Обновите драйвер чипсета и накопителя, прошивку SSD, видео- и сетевой драйвер." },
+      "en": { "cause": "A driver held the CPU for too long. Common causes are storage (SATA/NVMe) drivers, SSD firmware, graphics or network drivers.", "check": "Update chipset and storage drivers, SSD firmware, graphics and network drivers." }
+    },
+    {
+      "code": "0x00000139", "name": "KERNEL_SECURITY_CHECK_FAILURE",
+      "ru": { "cause": "Ядро обнаружило повреждение важных данных — обычно несовместимый драйвер, реже сбойная память.", "check": "Обновите драйверы, проверьте оперативную память и системные файлы (SFC/DISM)." },
+      "en": { "cause": "The kernel detected corruption of critical data — usually an incompatible driver, less often faulty memory.", "check": "Update drivers, test the RAM and check system files (SFC/DISM)." }
+    },
+    {
+      "code": "0x0000013A", "name": "KERNEL_MODE_HEAP_CORRUPTION",
+      "ru": { "cause": "Повреждена память ядра — обычно драйвер.", "check": "Обновите или откатите недавно поставленные драйверы, особенно видеодрайвер." },
+      "en": { "cause": "The kernel heap is corrupted — usually by a driver.", "check": "Update or roll back recently installed drivers, especially the graphics driver." }
+    },
+    {
+      "code": "0x00000144", "name": "BUGCODE_USB3_DRIVER",
+      "ru": { "cause": "Ошибка в драйвере USB 3 — часто из-за USB-устройства, концентратора или драйвера контроллера.", "check": "Отключите лишние USB-устройства, обновите драйвер чипсета и USB-контроллера." },
+      "en": { "cause": "A USB 3 driver error — often a USB device, hub or controller driver.", "check": "Unplug extra USB devices, update chipset and USB controller drivers." }
+    },
+    {
+      "code": "0x0000014F", "name": "PDC_WATCHDOG_TIMEOUT",
+      "ru": { "cause": "Системный компонент не ответил вовремя при переходе в сон или выходе из него.", "check": "Обновите BIOS и драйверы (чипсет, Wi-Fi, видео)." },
+      "en": { "cause": "A system component did not respond in time while entering or leaving sleep.", "check": "Update BIOS and drivers (chipset, Wi-Fi, graphics)." }
+    },
+    {
+      "code": "0x00000154", "name": "UNEXPECTED_STORE_EXCEPTION",
+      "ru": { "cause": "Ошибка в механизме хранения сжатой памяти — часто проблемы с диском или его драйвером, иногда антивирус.", "check": "Проверьте состояние диска (SMART), обновите драйвер накопителя и прошивку SSD, проверьте системные файлы." },
+      "en": { "cause": "An error in the compressed memory store — often a disk or storage driver problem, sometimes antivirus.", "check": "Check drive health (SMART), update the storage driver and SSD firmware, check system files." }
+    },
+    {
+      "code": "0x00000157", "name": "KERNEL_THREAD_PRIORITY_FLOOR_VIOLATION",
+      "ru": { "cause": "Драйвер неправильно управляет приоритетом потока.", "check": "Обновите или откатите недавно поставленные драйверы." },
+      "en": { "cause": "A driver mismanaged a thread priority.", "check": "Update or roll back recently installed drivers." }
+    },
+    {
+      "code": "0x00000160", "name": "WIN32K_ATOMIC_CHECK_FAILURE",
+      "ru": { "cause": "Ошибка в графической части ядра Windows — часто программы, встраивающиеся в окна (оверлеи, темы), или видеодрайвер.", "check": "Обновите видеодрайвер, отключите сторонние оверлеи и программы оформления." },
+      "en": { "cause": "An error in the Windows graphical kernel part — often window-hooking programs (overlays, themes) or the graphics driver.", "check": "Update the graphics driver, disable third-party overlays and theming tools." }
+    },
+    {
+      "code": "0x00000162", "name": "KERNEL_AUTO_BOOST_INVALID_LOCK_RELEASE",
+      "ru": { "cause": "Драйвер неправильно освободил блокировку.", "check": "Обновите или откатите недавно поставленные драйверы." },
+      "en": { "cause": "A driver released a lock incorrectly.", "check": "Update or roll back recently installed drivers." }
+    },
+    {
+      "code": "0x00000187", "name": "VIDEO_DWMINIT_TIMEOUT_FALLBACK_BDD",
+      "ru": { "cause": "Не удалось вовремя запустить вывод изображения, Windows переключилась на базовый видеодрайвер.", "check": "Переустановите видеодрайвер." },
+      "en": { "cause": "Display output did not start in time and Windows fell back to the basic display driver.", "check": "Reinstall the graphics driver." }
+    },
+    {
+      "code": "0x0000018B", "name": "SECURE_KERNEL_ERROR",
+      "ru": { "cause": "Ошибка в защищённом ядре (изоляция ядра / виртуализация).", "check": "Обновите BIOS и драйверы; проверьте, совместимы ли драйверы с изоляцией ядра." },
+      "en": { "cause": "An error in the secure kernel (core isolation / virtualization-based security).", "check": "Update BIOS and drivers; check that drivers are compatible with core isolation." }
+    },
+    {
+      "code": "0x000001C8", "name": "MANUALLY_INITIATED_POWER_BUTTON_HOLD",
+      "ru": { "cause": "Кнопку питания удерживали, и система записала сбой намеренно — обычно потому, что компьютер завис.", "check": "Ищите причину зависания: видеодрайвер, перегрев, диск." },
+      "en": { "cause": "The power button was held and the system crashed on purpose — usually because the PC was frozen.", "check": "Look for the cause of the freeze: graphics driver, overheating, disk." }
+    },
+    {
+      "code": "0x000001CA", "name": "SYNTHETIC_WATCHDOG_TIMEOUT",
+      "ru": { "cause": "Система перестала отвечать слишком надолго.", "check": "Обновите BIOS и драйверы, проверьте температуры." },
+      "en": { "cause": "The system stopped responding for too long.", "check": "Update BIOS and drivers, check temperatures." }
+    },
+    {
+      "code": "0xC000021A", "name": "STATUS_SYSTEM_PROCESS_TERMINATED",
+      "ru": { "cause": "Завершился важный процесс Windows (Winlogon или CSRSS) — повреждённые системные файлы, неудачное обновление или несовместимая программа.", "check": "Загрузитесь в среду восстановления: точка восстановления, удаление последнего обновления, проверка системных файлов (SFC/DISM)." },
+      "en": { "cause": "A critical Windows process (Winlogon or CSRSS) terminated — corrupted system files, a failed update or an incompatible program.", "check": "Use the recovery environment: restore point, uninstall the latest update, check system files (SFC/DISM)." }
+    },
+    {
+      "code": "0xC0000221", "name": "STATUS_IMAGE_CHECKSUM_MISMATCH",
+      "ru": { "cause": "Повреждён системный файл или драйвер — ошибки диска или памяти.", "check": "Проверьте системные файлы (SFC/DISM), диск и оперативную память." },
+      "en": { "cause": "A system file or driver is corrupted — disk or memory errors.", "check": "Check system files (SFC/DISM), the disk and RAM." }
+    }
+  ]
+}

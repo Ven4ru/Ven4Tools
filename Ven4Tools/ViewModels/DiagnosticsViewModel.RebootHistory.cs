@@ -20,6 +20,7 @@ namespace Ven4Tools.ViewModels
             ShowRebootStatusRow = false;
             RebootCards = Array.Empty<RebootCardInfo>();
             ShowDisableFastStartupButton = false;
+            ResetBsodExtras();
 
             List<RebootDiagnosis> diagnoses;
             try
@@ -60,6 +61,9 @@ namespace Ven4Tools.ViewModels
             // мог сам исправить это между запусками диагностики).
             ShowDisableFastStartupButton = anyFastStartupFailure && SystemHealthService.IsFastStartupEnabled() != false;
 
+            // Синие экраны: «возможная связь» с драйверами и папка минидампов.
+            await RunBsodExtrasAsync(diagnoses);
+
             return diagnoses;
         }
 
@@ -72,6 +76,9 @@ namespace Ven4Tools.ViewModels
                 RebootCategory.PossiblePowerLoss => "🟡",
                 _ => "⚪"
             };
+
+            if (d.Category == RebootCategory.Bsod && d.BugCheck != null)
+                return BuildBsodCard(d, d.BugCheck, icon);
 
             return new RebootCardInfo
             {
