@@ -81,6 +81,64 @@ namespace Ven4Tools.Services
             finally { _lock.Release(); }
         }
 
+        /// <summary>
+        /// Данные SMART накопителей для блока «Здоровье дисков». Библиотека читает их
+        /// через IOCTL накопителя (NVMe Health Info Log и ATA SMART) — драйвер датчиков
+        /// для этого не нужен, нужны только права администратора, которые у клиента есть.
+        /// </summary>
+        internal async Task<IReadOnlyList<DiskSmartData>> ReadStorageSmartAsync(CancellationToken ct = default)
+        {
+            await _lock.WaitAsync(ct);
+            try
+            {
+                return await Task.Run(() =>
+                {
+                    _computer ??= Open();
+                    var result = new List<DiskSmartData>();
+                    foreach (var device in _computer.Hardware.OfType<LibreHardwareMonitor.Hardware.Storage.StorageDevice>())
+                    {
+                        try
+                        {
+                            device.Update();
+                            result.Add(ToSmartData(device.Storage));
+                        }
+                        catch (Exception ex) { AppLogger.Write(ex, $"HardwareSensorService.ReadStorageSmart: {device.Name}"); }
+                    }
+                    return (IReadOnlyList<DiskSmartData>)result;
+                }, ct);
+            }
+            finally { _lock.Release(); }
+        }
+
+        private static DiskSmartData ToSmartData(DiskInfoToolkit.Storage storage)
+        {
+            var smart = storage.Smart;
+            var attributes = smart?.SmartAttributes?
+                .Select(a => new SmartAttr(a.Info.ID, a.Attribute.RawValueULong))
+                .ToList() ?? new List<SmartAttr>();
+            return new DiskSmartData
+            {
+                DriveNumber = storage.DriveNumber,
+                Model = storage.Model ?? "",
+                IsNvme = storage.IsNVMe,
+                IsSsd = storage.IsSSD,
+                IsUsb = storage.BusType == DiskInfoToolkit.Enums.Interop.StorageBusType.BusTypeUsb,
+                Status = smart?.DiskStatus switch
+                {
+                    DiskInfoToolkit.Enums.Interop.DiskStatus.Good => SmartDiskStatus.Good,
+                    DiskInfoToolkit.Enums.Interop.DiskStatus.Caution => SmartDiskStatus.Caution,
+                    DiskInfoToolkit.Enums.Interop.DiskStatus.Bad => SmartDiskStatus.Bad,
+                    _ => SmartDiskStatus.Unknown
+                },
+                Temperature = smart?.Temperature,
+                Life = smart?.Life,
+                HostWritesGib = smart?.HostWrites,
+                PowerOnCount = smart?.PowerOnCount ?? 0,
+                PowerOnHours = smart?.MeasuredPowerOnHours ?? 0,
+                Attributes = attributes
+            };
+        }
+
         // ── Кто сейчас пользуется датчиками ──────────────────────────────────────
         // «Диагностика» на экране и оверлей. Пока хоть кто-то есть, драйвер датчиков
         // процессора включён; когда никого не осталось — библиотека закрывается, а
