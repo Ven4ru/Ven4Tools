@@ -35,6 +35,8 @@ namespace Ven4Tools.Views.Tabs
         {
             InitializeComponent();
             _uiReady = true;
+            // Подраздел «Место и файлы» наполняет соседний блок; пока его нет — не показываем пустую вкладку.
+            if (tabDiskSpace.Content == null) tabDiskSpace.Visibility = Visibility.Collapsed;
             DataContext = _viewModel;
             _viewModel.OwnerWindowProvider = () => Window.GetWindow(this);
             // Проверка «что вернуло обновление Windows» — при первом показе вкладки,
