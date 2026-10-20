@@ -57,6 +57,24 @@ namespace Ven4Tools.Services.WindowsUpdate
         public Task<WindowsUpdateSearchResult> SearchAsync(CancellationToken ct) =>
             _source.SearchAsync(ct);
 
+        public Task<WindowsUpdateSearchResult> SearchHiddenAsync(CancellationToken ct) =>
+            _source.SearchHiddenAsync(ct);
+
+        /// <summary>
+        /// Скрывает или возвращает обновления. Семафор WU-операций здесь не берётся
+        /// намеренно: смена IsHidden — мгновенная запись в базу агента обновлений, её
+        /// сериализует сам агент. Скрытие патча, который в этот момент качается в фоне,
+        /// безопасно — установка всё равно идёт только по повторному поиску видимых
+        /// патчей (IsHidden=0), и скрытый туда уже не попадёт.
+        /// </summary>
+        public Task<WindowsUpdateHideOutcome> SetHiddenAsync(
+            IReadOnlyList<string> updateIds, bool hidden, CancellationToken ct)
+        {
+            if (updateIds.Count == 0)
+                return Task.FromResult(new WindowsUpdateHideOutcome { ErrorMessage = "Ничего не выбрано." });
+            return _source.SetHiddenAsync(updateIds, hidden, ct);
+        }
+
         public async Task<WindowsUpdateInstallOutcome> InstallSelectedAsync(
             IReadOnlyList<string> updateIds,
             IProgress<WindowsUpdateProgress> progress,
