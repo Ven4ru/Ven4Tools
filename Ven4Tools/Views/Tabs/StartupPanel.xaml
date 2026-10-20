@@ -1,0 +1,118 @@
+<UserControl x:Class="Ven4Tools.Views.Tabs.StartupPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Ven4Tools.Views">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisStartup"/>
+    </UserControl.Resources>
+    <Grid Margin="0,12,0,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Пояснение и управление -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                           Text="Всё, что запускается вместе с Windows: разделы реестра Run и RunOnce, папки «Автозагрузка» и задачи планировщика при входе или запуске. Выключение — как в Диспетчере задач: запись остаётся на месте, включить обратно можно здесь же. Ничего не удаляется, службы не затрагиваются."/>
+                <TextBlock x:Name="txtStartupSummary" Text="{Binding Summary}" TextWrapping="Wrap" FontSize="12"
+                           Margin="0,6,0,0" Foreground="{DynamicResource TextPrimary}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="12,0,0,0">
+                <CheckBox x:Name="chkStartupShowSystem" Content="Показать системные"
+                          ToolTip="Показать записи Microsoft и компонентов Windows. Выключать их без понятной причины не стоит."
+                          VerticalAlignment="Center" Margin="0,0,10,0"
+                          Foreground="{DynamicResource TextPrimary}"
+                          IsChecked="{Binding ShowSystem, Mode=TwoWay}"/>
+                <Button x:Name="btnStartupRefresh" Content="Обновить" Height="30" Padding="12,0"
+                        ToolTip="Перечитать автозагрузку."
+                        Command="{Binding RefreshCommand}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Список -->
+        <Border Grid.Row="1" Background="{DynamicResource CardBackground}" CornerRadius="10" Padding="4">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <views:FlatItemsControl x:Name="lstStartup" ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="10,7" Margin="2,1" CornerRadius="7">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimary}"/>
+                                            <Border CornerRadius="5" Padding="6,1" Margin="8,0,0,0" Background="#455A64"
+                                                    VerticalAlignment="Center"
+                                                    Visibility="{Binding IsSystem, Converter={StaticResource BoolToVisStartup}}">
+                                                <TextBlock Text="Microsoft / системное" FontSize="10" Foreground="White"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Command}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding Command}"
+                                                   Foreground="{DynamicResource TextSecondary}"/>
+                                        <TextBlock FontSize="11" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   ToolTip="{Binding Location}">
+                                            <Run Text="Издатель:"/>
+                                            <Run Text="{Binding Publisher, Mode=OneWay}"/>
+                                            <Run Text=" · "/>
+                                            <Run Text="{Binding SourceLabel, Mode=OneWay}"/>
+                                            <Run Text=" · "/>
+                                            <Run Text="{Binding Location, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" CornerRadius="5" Padding="7,3"
+                                            VerticalAlignment="Center" Margin="8,0,0,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#616161"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Enabled}" Value="True">
+                                                        <Setter Property="Background" Value="#1B5E20"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding StateLabel}" FontSize="10" Foreground="White"/>
+                                    </Border>
+                                    <Button Grid.Column="2" Content="{Binding ToggleText}" Width="96" Height="26" Margin="8,0,0,0"
+                                            FontSize="11" VerticalAlignment="Center"
+                                            AutomationProperties.AutomationId="{Binding Name, StringFormat='btnStartupToggle_{0}'}"
+                                            ToolTip="Выключит или включит запуск вместе с Windows. Запись не удаляется."
+                                            IsEnabled="{Binding CanClick}"
+                                            Command="{Binding DataContext.ToggleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </views:FlatItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <TextBlock x:Name="txtStartupStatus" Grid.Row="2" Margin="0,10,0,0" FontSize="11" TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextSecondary}" Text="{Binding StatusText}"/>
+    </Grid>
+</UserControl>

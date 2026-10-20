@@ -18,7 +18,9 @@ namespace Ven4Tools.ViewModels
     /// </summary>
     public sealed class DebloaterViewModel : ViewModelBase
     {
-        private readonly List<DebloatItem> _allItems = DebloatCatalog.BuildItems();
+        // Твики не для этой Windows (виджеты и Recall — только 11, «Новости и интересы» —
+        // только 10) не показываются вовсе; из снапшота они пропускаются как неизвестные.
+        private readonly List<DebloatItem> _allItems = DebloatCatalog.BuildItemsFor(DebloatCatalog.IsWindows11);
         private CancellationTokenSource? _cts;
 
         public Func<Window?>? OwnerWindowProvider { get; set; }
@@ -185,19 +187,45 @@ namespace Ven4Tools.ViewModels
             ApplyEnabled = false;
             ProgressVisible = Visibility.Visible;
             ProgressValue = 0;
+            var appliedOk = new List<DebloatItem>();
 
             // try/finally: любое исключение в процессе (зависший PowerShell, сбой
             // сервиса и т.п.) не должно оставить кнопку и прогресс-бар навсегда
             // заблокированными — состояние восстанавливается в любом случае.
             try
             {
+                // OneDrive с перенесёнными в него папками не удаляется — говорим об этом
+                // до общего подтверждения, а не после, и снимаем с него отметку.
+                var oneDrive = selected.FirstOrDefault(i => i.Id == DebloatTweakExecutor.OneDriveId);
+                if (oneDrive != null)
+                {
+                    var redirected = await Task.Run(OneDriveRemovalService.FindRedirectedFolders);
+                    if (redirected.Count > 0)
+                    {
+                        oneDrive.IsSelected = false;
+                        selected.Remove(oneDrive);
+                        MessageBox.Show(OneDriveRemovalService.RedirectedMessage(redirected) +
+                                        (selected.Count > 0 ? "\n\nОстальные выбранные действия будут применены." : ""),
+                            "Ven4Tools — OneDrive", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        if (selected.Count == 0)
+                        {
+                            StatusText = "OneDrive не удалён: в него перенесены папки профиля";
+                            ProgressVisible = Visibility.Collapsed;
+                            return;
+                        }
+                    }
+                }
+
                 // Единый диалог: подтверждение действия (Отмена = прервать) + предложение
                 // точки восстановления. Раньше здесь было два подряд диалога с одинаковым
                 // текстом «Будет применено N действий» — предупреждение о рисках свёрнуто
                 // в этот же вопрос.
                 var hasRisky = selected.Any(i => i.Risk is "caution" or "moderate");
+                bool removesOneDrive = selected.Any(i => i.Id == DebloatTweakExecutor.OneDriveId);
                 var rpOutcome = await Views.UiGuards.ConfirmAndCreateRestorePointAsync(
-                    $"Будет применено {selected.Count} действий.{(hasRisky ? "\n\n⚠️ Среди них есть умеренные/опасные операции." : "")}\n\nСоздать точку восстановления Windows перед очисткой?",
+                    $"Будет применено {selected.Count} действий.{(hasRisky ? "\n\n⚠️ Среди них есть умеренные/опасные операции." : "")}" +
+                    (removesOneDrive ? "\n\nOneDrive будет удалён: синхронизация остановится, файлы в облаке и папка OneDrive на диске останутся." : "") +
+                    "\n\nСоздать точку восстановления Windows перед очисткой?",
                     "Ven4Tools — перед очисткой системы");
                 if (rpOutcome == Views.RestorePointOutcome.Cancelled)
                 {
@@ -222,7 +250,7 @@ namespace Ven4Tools.ViewModels
 
                     bool ok = await DebloatTweakExecutor.ApplyItemAsync(item.Category, item.Id, item.Name, _cts.Token);
                     AppLogger.Write($"{(ok ? "✅" : "❌")} {item.Name}");
-                    if (ok) succeeded++;
+                    if (ok) { succeeded++; appliedOk.Add(item); }
                     done++;
                 }
 
@@ -235,6 +263,9 @@ namespace Ven4Tools.ViewModels
                     ProgressValue = 100;
                     StatusText = $"✅ Готово: применено {succeeded} из {selected.Count}";
                 }
+
+                if (appliedOk.Any(i => DebloatTweakExecutor.NeedsExplorerRestart(i.Id)))
+                    await OfferExplorerRestartAsync();
             }
             finally
             {
@@ -250,7 +281,29 @@ namespace Ven4Tools.ViewModels
         private void RefreshUndoFlags()
         {
             var recorded = new HashSet<string>(DebloatUndoService.Default.RecordedTweaks(), StringComparer.OrdinalIgnoreCase);
-            foreach (var item in _allItems) item.CanUndo = recorded.Contains(item.Id);
+            // OneDrive возвращается не записью отката, а установкой заново — по журналу применённого.
+            bool oneDriveRemoved = DebloatAppliedJournal.Default.AppliedTweaks()
+                .Contains(DebloatTweakExecutor.OneDriveId, StringComparer.OrdinalIgnoreCase);
+            foreach (var item in _allItems)
+                item.CanUndo = recorded.Contains(item.Id)
+                    || (item.Id == DebloatTweakExecutor.OneDriveId && oneDriveRemoved);
+        }
+
+        /// <summary>
+        /// Предлагает перезапустить Проводник: настройки панели задач, поиска и «Пуска»
+        /// он перечитывает только при запуске.
+        /// </summary>
+        private static async Task OfferExplorerRestartAsync()
+        {
+            if (MessageBox.Show(
+                    "Часть изменений подействует после перезапуска Проводника.\n\n" +
+                    "Перезапустить Проводник сейчас? Панель задач и открытые окна папок пропадут на несколько секунд; запущенные программы не закроются.",
+                    "Ven4Tools — перезапуск Проводника", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                return;
+
+            if (!await DebloatTweakExecutor.RestartExplorerAsync())
+                MessageBox.Show("Проводник перезапустить не удалось. Изменения подействуют после выхода из учётной записи или перезагрузки.",
+                    "Ven4Tools — перезапуск Проводника", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         /// <summary>
@@ -262,17 +315,30 @@ namespace Ven4Tools.ViewModels
             // Тот же гейт, что у «Применить»: откат и применение не должны идти внахлёст.
             if (!ApplyEnabled) return;
 
-            if (MessageBox.Show(
-                    $"Вернуть «{item.Name}» к состоянию до применения?\n\n" +
-                    "Будут восстановлены прежние значения реестра и режим запуска службы. Остальные изменения не затрагиваются.",
-                    "Ven4Tools — откат твика", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            bool isOneDrive = item.Id == DebloatTweakExecutor.OneDriveId;
+            string question = isOneDrive
+                ? "Установить OneDrive заново?\n\nOneDrive будет установлен через winget для вашей учётной записи. После установки войдите в него, чтобы синхронизация продолжилась."
+                : $"Вернуть «{item.Name}» к состоянию до применения?\n\n" +
+                  "Будут восстановлены прежние значения реестра и режим запуска службы. Остальные изменения не затрагиваются.";
+            if (MessageBox.Show(question, "Ven4Tools — откат твика",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 return;
 
             ApplyEnabled = false;
             try
             {
                 StatusText = $"↩ {item.Name}...";
-                bool ok = await DebloatUndoService.Default.UndoAsync(item.Id);
+                bool ok;
+                if (isOneDrive)
+                {
+                    var result = await OneDriveRemovalService.ReinstallAsync();
+                    if (result.Message is { Length: > 0 } message) AppLogger.Write($"[OneDrive] {message}");
+                    ok = result.Ok;
+                }
+                else
+                {
+                    ok = await DebloatUndoService.Default.UndoAsync(item.Id);
+                }
                 AppLogger.Write($"{(ok ? "↩" : "❌")} Откат твика: {item.Name}");
                 StatusText = ok
                     ? $"↩ Возвращено: {item.Name}"
@@ -282,6 +348,7 @@ namespace Ven4Tools.ViewModels
                     // Возвращённый твик больше не считается применённым: следить за ним незачем.
                     DebloatAppliedJournal.Default.Forget(item.Id);
                     if (HasDrift) await CheckDriftAsync(announce: false);
+                    if (DebloatTweakExecutor.NeedsExplorerRestart(item.Id)) await OfferExplorerRestartAsync();
                 }
             }
             finally
@@ -345,7 +412,7 @@ namespace Ven4Tools.ViewModels
                 var tracked = _allItems.Where(i => applied.Contains(i.Id)).ToList();
 
                 // Список пакетов нужен только удалённым приложениям — без них PowerShell не запускаем.
-                IReadOnlyCollection<string>? appx = tracked.Any(i => i.Category == "app")
+                IReadOnlyCollection<string>? appx = tracked.Any(i => DebloatTweakExecutor.IsAppxTweak(i.Category, i.Id))
                     ? await InstalledAppxSource(CancellationToken.None)
                     : null;
 
