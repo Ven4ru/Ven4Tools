@@ -244,6 +244,71 @@
                     </StackPanel>
                 </GroupBox>
 
+                <!-- Готов ли ПК к Windows 11 (только чтение) -->
+                <GroupBox Header="🪟 Готов ли ПК к Windows 11" Margin="0,0,0,15">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Проверяет требования Microsoft к Windows 11 и подсказывает, что мешает и как это исправить. Ничего не меняет и требования не обходит."
+                                   TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button x:Name="btnCheckWin11" Content="🪟 Проверить"
+                                    ToolTip="Проверит TPM, Secure Boot, режим загрузки, разметку диска, процессор, память, диск и видеокарту. Займёт до минуты: сведения о видеокарте собирает средство диагностики DirectX."
+                                    Height="32" Padding="16,0" Margin="0,0,10,0"
+                                    Command="{Binding CheckWin11Command}"/>
+                            <Button x:Name="btnWin11CpuList" Content="📄 Списки процессоров Microsoft"
+                                    ToolTip="Откроет в браузере официальный список процессоров, поддерживаемых Windows 11 (там же ссылки на списки AMD и Qualcomm)."
+                                    Height="32" Padding="12,0"
+                                    Command="{Binding OpenWin11CpuListCommand}"/>
+                        </StackPanel>
+                        <TextBlock x:Name="txtWin11Verdict" Text="{Binding Win11VerdictText}" Foreground="{Binding Win11VerdictBrush}"
+                                   FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,10,0,0"/>
+                        <StackPanel Visibility="{Binding ShowWin11Results, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding Win11IntroText}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                            <ItemsControl x:Name="lstWin11Checks" ItemsSource="{Binding Win11Rows}" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="28"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Icon}" Foreground="{Binding IconForeground}" FontWeight="Bold" FontSize="14"/>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}"/>
+                                                <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}"/>
+                                                <TextBlock Text="{Binding Hint}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,2,0,0"
+                                                           Visibility="{Binding HasHint, Converter={StaticResource BoolToVis}}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Ваша Windows -->
+                            <Border Background="{DynamicResource CardBackground}" CornerRadius="6" Padding="12,10" Margin="0,10,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Ваша Windows" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,6"/>
+                                    <ItemsControl ItemsSource="{Binding Win11WindowsLines}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,2">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="260"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Label}" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock x:Name="txtWin11WindowsNotes" Text="{Binding Win11WindowsNotes}" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextPrimary}" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
                 <!-- Диски -->
                 <GroupBox Header="💾 Диски" Margin="0,0,0,15">
                     <StackPanel x:Name="pnlDisks" Margin="10">

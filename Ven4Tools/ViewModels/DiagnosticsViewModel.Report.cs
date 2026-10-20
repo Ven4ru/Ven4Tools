@@ -29,6 +29,7 @@ namespace Ven4Tools.ViewModels
                 await RunDiskCheckAsync();
                 await RunWindowsUpdateCheckAsync();
                 await RunHardwareEventsCheckAsync();
+                await RunWin11ReadinessCheckAsync();
 
                 if (_lastRunHadCritical)
                 {
@@ -104,6 +105,7 @@ namespace Ven4Tools.ViewModels
                 if (HardwareRawVisible)
                     // Тот же сырой дамп журнала Windows — та же очистка, что выше.
                     sb.AppendLine(CrashReportService.SanitizePath(HardwareRawText));
+                AppendWin11ReadinessReport(sb);
                 AppendBsodReport(sb);
 
                 Clipboard.SetText(Tr(sb.ToString()));

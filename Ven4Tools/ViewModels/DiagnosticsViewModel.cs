@@ -255,6 +255,7 @@ namespace Ven4Tools.ViewModels
             foreach (DiagnosticsTextRow row in DiskRows) row.RefreshThemeBrushes();
             foreach (DiagnosticsTextRow row in WuRows) row.RefreshThemeBrushes();
             RebootStatusRow?.RefreshThemeBrushes();
+            RefreshWin11Brushes();
         }
 
         public async Task InitializeAsync()
