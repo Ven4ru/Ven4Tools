@@ -209,7 +209,7 @@
             <tabs:StartupPanel x:Name="startupPanel"/>
         </TabItem>
         <TabItem x:Name="tabDiskSpace" Header="Место и файлы">
-            <!-- E: <tabs:DiskSpacePanel/> -->
+            <tabs:DiskSpacePanel/>
         </TabItem>
         </TabControl>
     </Grid>
