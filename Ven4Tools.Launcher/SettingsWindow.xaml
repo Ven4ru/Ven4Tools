@@ -140,14 +140,14 @@
                        TextWrapping="Wrap" FontSize="11"
                        Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
             <Button x:Name="btnAuthenticity" Content="Проверить подлинность" Height="34" Margin="0,4"
-                    Click="BtnAuthenticity_Click"/>
+                    Click="BtnAuthenticity_Click" ToolTip="Сверит SHA256 лаунчера и файлов клиента с опубликованными на CDN и на GitHub и покажет статус подписи. Ничего не меняет."/>
 
             <TextBlock Text="ДИАГНОСТИКА СОЕДИНЕНИЯ" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
             <TextBlock Text="Проверяет CDN, зеркало ven4tools.ru и GitHub: DNS, соединение, скорость, прокси и часы компьютера — и объясняет, что мешает загрузке."
                        TextWrapping="Wrap" FontSize="11"
                        Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
             <Button x:Name="btnConnectionDiagnostics" Content="Диагностика соединения" Height="34" Margin="0,4"
-                    Click="BtnConnectionDiagnostics_Click"/>
+                    Click="BtnConnectionDiagnostics_Click" ToolTip="Проверит каждый источник загрузки: DNS, соединение, TLS, скорость, прокси и часы ПК — и объяснит, что мешает. Ничего не меняет."/>
 
             <TextBlock Text="ЖУРНАЛ ЛАУНЧЕРА" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
             <TextBlock Text="Ход работы лаунчера пишется в файл — его удобно приложить к обращению. Имя пользователя, имя компьютера и пути профиля из журнала вычищаются при записи."

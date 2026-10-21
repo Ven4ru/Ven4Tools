@@ -50,7 +50,7 @@
                        Text="Пароль хранится зашифрованным средствами Windows и расшифровывается только под вашей учётной записью на этом компьютере. Если прокси не отвечает, лаунчер пробует соединиться напрямую."/>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                <Button x:Name="btnSave" Content="Сохранить" Width="110" Height="34" Click="BtnSave_Click"/>
+                <Button x:Name="btnSave" Content="Сохранить" Width="110" Height="34" Click="BtnSave_Click" ToolTip="Сохранит настройку. Ручной прокси сохраняется только после успешной проверки."/>
                 <Button Content="Отмена" Width="100" Height="34" IsCancel="True" Click="BtnCancel_Click"/>
             </StackPanel>
         </StackPanel>

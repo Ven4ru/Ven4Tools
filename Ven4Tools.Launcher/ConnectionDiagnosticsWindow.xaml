@@ -40,7 +40,7 @@
         <WrapPanel Grid.Row="3" Margin="0,12,0,0" HorizontalAlignment="Right">
             <Button x:Name="btnCopy" Content="Скопировать отчёт" Padding="12,0" IsEnabled="False" Click="BtnCopy_Click"
                     ToolTip="Скопирует отчёт в буфер обмена. Имя компьютера, имя пользователя, пути и адрес прокси в отчёт не попадают."/>
-            <Button x:Name="btnRun" Content="Проверить снова" Padding="12,0" IsEnabled="False" Click="BtnRun_Click"/>
+            <Button x:Name="btnRun" Content="Проверить снова" Padding="12,0" IsEnabled="False" Click="BtnRun_Click" ToolTip="Заново проверит DNS, соединение, TLS и скорость каждого источника загрузки."/>
             <Button Content="Закрыть" Width="100" IsCancel="True" Click="BtnClose_Click"/>
         </WrapPanel>
     </Grid>

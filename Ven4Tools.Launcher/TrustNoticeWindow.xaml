@@ -33,7 +33,7 @@
                         <TextBox x:Name="txtHash" Grid.Column="0" IsReadOnly="True" FontFamily="Consolas"
                                  FontSize="11" TextWrapping="Wrap" AutomationProperties.Name="SHA256 файла"/>
                         <Button Grid.Column="1" Content="Копировать" Padding="12,0" Margin="8,0,0,0"
-                                Click="BtnCopyHash_Click"/>
+                                Click="BtnCopyHash_Click" ToolTip="Скопирует SHA256 файла — его спрашивают при отправке ложного срабатывания."/>
                     </Grid>
                 </StackPanel>
 

@@ -4540,6 +4540,14 @@
     "t": "Finds hidden and not yet installed updates again. Changes nothing."
   },
   {
+    "s": "Заново посчитает хеши и сверит их с опубликованными на CDN и на GitHub.",
+    "t": "Recalculates the hashes and checks them against the ones published on the CDN and on GitHub."
+  },
+  {
+    "s": "Заново проверит DNS, соединение, TLS и скорость каждого источника загрузки.",
+    "t": "Checks DNS, connection, TLS and speed of every download source again."
+  },
+  {
     "s": "Заново прочитает SMART всех дисков: износ, ошибки, температуру и наработку. Только чтение.",
     "t": "Rereads SMART for all disks: wear, errors, temperature and power-on time. Read only."
   },
@@ -8612,6 +8620,10 @@
     "t": "Checks TPM, Secure Boot, boot mode, disk partitioning, processor, memory, disk and graphics card. Takes up to a minute: graphics card details are collected by the DirectX Diagnostic Tool."
   },
   {
+    "s": "Проверит каждый источник загрузки: DNS, соединение, TLS, скорость, прокси и часы ПК — и объяснит, что мешает. Ничего не меняет.",
+    "t": "Checks every download source: DNS, connection, TLS, speed, proxy and the PC clock — and explains what is in the way. Changes nothing."
+  },
+  {
     "s": "Проверит недостающие системные компоненты и предложит установить каждый из них с подтверждением.",
     "t": "Checks for missing system components and offers to install each one, with confirmation."
   },
@@ -9352,6 +9364,10 @@
     "t": "Reset Windows Update?\n\n• The wuauserv, bits, cryptsvc, msiserver services will be stopped.\n• The C:\\Windows\\SoftwareDistribution and C:\\Windows\\System32\\catroot2 folders will be renamed to *.old-<date> (not deleted — they can be restored).\n• The services will be started again, and Windows will recreate the folders.\n\nThe “Update history” list in Windows Settings will be cleared (the updates themselves stay installed), and partially downloaded updates will be downloaded again.\n\nHelps when updates fail to download or install with the same error — but not always."
   },
   {
+    "s": "Сверит SHA256 лаунчера и файлов клиента с опубликованными на CDN и на GitHub и покажет статус подписи. Ничего не меняет.",
+    "t": "Checks the SHA256 of the launcher and client files against the ones published on the CDN and on GitHub and shows the signature status. Changes nothing."
+  },
+  {
     "s": "Сверит применённые ранее твики с текущим состоянием Windows: крупные обновления часто возвращают отключённое.",
     "t": "Compares previously applied tweaks with the current state of Windows: major updates often re-enable what was disabled."
   },
@@ -9588,6 +9604,10 @@
     "t": "Copy report"
   },
   {
+    "s": "Скопирует SHA256 файла — его спрашивают при отправке ложного срабатывания.",
+    "t": "Copies the file's SHA256 — it is requested when you report a false positive."
+  },
+  {
     "s": "Скопирует код набора в буфер обмена.",
     "t": "Copies the set code to the clipboard."
   },
@@ -9602,6 +9622,10 @@
   {
     "s": "Скопирует показанные сведения о Windows, процессоре, памяти и версии Ven4Tools.",
     "t": "Copies the displayed details about Windows, the processor, memory and the Ven4Tools version."
+  },
+  {
+    "s": "Скопирует результаты проверки в буфер обмена — без имени компьютера и пользователя.",
+    "t": "Copies the check results to the clipboard — without the computer and user name."
   },
   {
     "s": "Скопирует результаты теста и сведения о накопителе в буфер обмена.",
@@ -9926,6 +9950,10 @@
   {
     "s": "Сохранит настройки Ven4Tools в выбранный архив (.zip).",
     "t": "Saves Ven4Tools settings to the selected archive (.zip)."
+  },
+  {
+    "s": "Сохранит настройку. Ручной прокси сохраняется только после успешной проверки.",
+    "t": "Saves the setting. A manual proxy is saved only after a successful check."
   },
   {
     "s": "Сохранит отмеченные приложения как именованный пресет для повторного выбора.",

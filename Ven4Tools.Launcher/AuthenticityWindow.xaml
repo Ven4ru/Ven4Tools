@@ -32,8 +32,8 @@
             <Button x:Name="btnVirusTotal" Content="VirusTotal по хешу лаунчера" Padding="12,0" IsEnabled="False"
                     Click="BtnVirusTotal_Click"
                     ToolTip="Откроет результаты проверки этого файла на VirusTotal по SHA256. Сам файл никуда не загружается."/>
-            <Button x:Name="btnCopy" Content="Скопировать отчёт" Padding="12,0" IsEnabled="False" Click="BtnCopy_Click"/>
-            <Button x:Name="btnRerun" Content="Проверить снова" Padding="12,0" IsEnabled="False" Click="BtnRerun_Click"/>
+            <Button x:Name="btnCopy" Content="Скопировать отчёт" Padding="12,0" IsEnabled="False" Click="BtnCopy_Click" ToolTip="Скопирует результаты проверки в буфер обмена — без имени компьютера и пользователя."/>
+            <Button x:Name="btnRerun" Content="Проверить снова" Padding="12,0" IsEnabled="False" Click="BtnRerun_Click" ToolTip="Заново посчитает хеши и сверит их с опубликованными на CDN и на GitHub."/>
             <Button Content="Закрыть" Width="100" IsCancel="True" Click="BtnClose_Click"/>
         </WrapPanel>
     </Grid>
