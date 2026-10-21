@@ -104,6 +104,29 @@
                     Margin="0,8,0,0" Visibility="Collapsed" Click="BtnRepairIntegrity_Click"
                     ToolTip="Докачает повреждённые или отсутствующие файлы и удалит лишние — по списку, который показала проверка выше."/>
 
+            <!-- Блоки G (лаунчер 3.12): прокси, подлинность, диагностика соединения.
+                 Код — SettingsWindow.TrustNetwork.cs. -->
+            <TextBlock Text="ПРОКСИ" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
+            <TextBlock x:Name="txtProxyStatus" TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+            <Button x:Name="btnProxySettings" Content="Настроить прокси" Height="34" Margin="0,4"
+                    Click="BtnProxySettings_Click"
+                    ToolTip="Системный прокси Windows (с вашей учётной записью) или адрес, логин и пароль вручную — с проверкой перед сохранением."/>
+
+            <TextBlock Text="ПОДЛИННОСТЬ" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
+            <TextBlock Text="Сверяет SHA256 лаунчера и клиента с хешами, опубликованными на CDN (в подписанном манифесте) и на GitHub, и показывает отпечаток ключа подписи."
+                       TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+            <Button x:Name="btnAuthenticity" Content="Проверить подлинность" Height="34" Margin="0,4"
+                    Click="BtnAuthenticity_Click"/>
+
+            <TextBlock Text="ДИАГНОСТИКА СОЕДИНЕНИЯ" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
+            <TextBlock Text="Проверяет CDN, зеркало ven4tools.ru и GitHub: DNS, соединение, скорость, прокси и часы компьютера — и объясняет, что мешает загрузке."
+                       TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+            <Button x:Name="btnConnectionDiagnostics" Content="Диагностика соединения" Height="34" Margin="0,4"
+                    Click="BtnConnectionDiagnostics_Click"/>
+
             <TextBlock Text="ЖУРНАЛ ЛАУНЧЕРА" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
             <TextBlock Text="Ход работы лаунчера пишется в файл — его удобно приложить к обращению. Имя пользователя, имя компьютера и пути профиля из журнала вычищаются при записи."
                        TextWrapping="Wrap" FontSize="11"

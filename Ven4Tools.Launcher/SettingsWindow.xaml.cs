@@ -44,6 +44,7 @@ namespace Ven4Tools.Launcher
             InitializeComponent();
             _owner = owner;
             Sync(backgroundUpdates, startMinimized, autostart, autoUpdateClient, downloadSource);
+            InitTrustNetworkBlocks();
 
             _suppressLanguageChange = true;
             cmbLanguage.SelectedValue = LauncherLanguage.Setting;

@@ -30,6 +30,9 @@ namespace Ven4Tools.Launcher
         // Предупреждение о Smart App Control — один раз за сеанс.
         private bool _smartAppControlWarned;
 
+        /// <summary>Папка клиента для «Проверить подлинность» (окно настроек).</summary>
+        internal string ClientPathForTrustChecks => _clientPath;
+
         /// <summary>
         /// Крючок после успешной установки/обновления/восстановления клиента: сразу
         /// снимает SHA256 ключевых файлов, затем дважды проверяет, что они на месте.
