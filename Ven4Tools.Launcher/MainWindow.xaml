@@ -392,10 +392,18 @@
                             <StackPanel Grid.Column="3" HorizontalAlignment="Center"><Border x:Name="stageInstall" Style="{StaticResource StageDot}"><TextBlock Text="4" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Установка" FontSize="10" Margin="0,5,0,0"/></StackPanel>
                             <StackPanel Grid.Column="4" HorizontalAlignment="Center"><Border x:Name="stageDone" Style="{StaticResource StageDot}"><TextBlock Text="5" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Готово" FontSize="10" Margin="0,5,0,0"/></StackPanel>
                         </Grid>
+                        <!-- «Отмена» — в своей колонке справа от полосы: в одной ячейке с ней
+                             полоса проходила прямо через кнопку. Пока кнопка скрыта, полоса
+                             занимает всю ширину. -->
                         <Grid>
-                            <ProgressBar x:Name="progressDownload" Height="7" Minimum="0" Maximum="100" Value="0"/>
-                            <Button x:Name="btnCancelDownload" Content="Отмена" HorizontalAlignment="Right"
-                                    Height="28" Padding="10,0" Margin="0,14,0,0" Visibility="Collapsed"
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ProgressBar x:Name="progressDownload" Grid.Column="0" Height="7" VerticalAlignment="Center"
+                                         Minimum="0" Maximum="100" Value="0"/>
+                            <Button x:Name="btnCancelDownload" Grid.Column="1" Content="Отмена"
+                                    Height="28" Padding="10,0" Margin="12,0,0,0" Visibility="Collapsed"
                                     ToolTip="Остановит текущую загрузку клиента. Установка не будет продолжена."
                                     Foreground="{StaticResource StatusDanger}" Click="BtnCancelDownload_Click"/>
                         </Grid>

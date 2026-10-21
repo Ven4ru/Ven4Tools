@@ -226,6 +226,7 @@ namespace Ven4Tools.Launcher
                 bool installed = await ExtractAndInstallClientAsync(archivePath, result.Version ?? "?", token, silent);
                 // Архив больше не нужен — не держим его занятым, пока висит сообщение ниже.
                 archiveGuard.Dispose();
+                if (installed) HideCancelButton();
                 if (installed && !silent)
                     Dispatcher.Invoke(() => MessageBox.Show(
                         $"Клиент {result.Version} успешно установлен в:\n{_clientPath}",

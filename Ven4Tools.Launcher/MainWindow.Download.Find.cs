@@ -113,6 +113,22 @@ namespace Ven4Tools.Launcher
                     return;
                 }
 
+                // Папка, где рядом с клиентом лежит что-то ещё (D:\Tools с другими
+                // программами), не годится: обновление клиента заменяет папку целиком.
+                var foreign = ClientFolderInspector.FindForeignEntries(candidatePath);
+                if (foreign.Count > 0)
+                {
+                    AddLog($"⛔ В папке найденного клиента есть посторонние файлы — путь не принят: {candidatePath}");
+                    MessageBox.Show(
+                        $"Ven4Tools.exe найден в папке:\n{candidatePath}\n\n" +
+                        $"Кроме клиента в ней лежит и другое:\n{ClientFolderInspector.Describe(foreign)}\n\n" +
+                        "Обновление клиента заменяет его папку целиком, и эти файлы были бы удалены. " +
+                        "Переместите клиент в отдельную папку или установите его заново кнопкой " +
+                        "«Изменить…» в карточке «Папка установки».",
+                        "Папка занята другими файлами", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 _clientPath  = candidatePath;
                 _installPath = Path.GetDirectoryName(_clientPath) ?? _clientPath;
                 txtInstallPath.Text = _clientPath;

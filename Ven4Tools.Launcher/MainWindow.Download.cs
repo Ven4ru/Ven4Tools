@@ -158,6 +158,13 @@ namespace Ven4Tools.Launcher
                         continue;
                     }
 
+                    // Резервная копия с посторонними файлами — это прежняя папка, в
+                    // которой рядом с клиентом лежало что-то ещё (см. ClientFolderInspector).
+                    // Её не удаляем: установка должна была перенести её в сохранённую
+                    // папку, и если не смогла — чужие файлы остаются здесь.
+                    if (isBackup && ClientFolderInspector.FindForeignEntries(dir).Count > 0)
+                        continue;
+
                     // target на месте (установка завершилась) либо это staging —
                     // такой каталог действительно осиротевший, его можно удалить.
                     try { Directory.Delete(dir, recursive: true); removed++; }
@@ -301,6 +308,7 @@ namespace Ven4Tools.Launcher
                 var deltaOutcome = await TryDeltaUpdateAsync(version, token, silent);
                 if (deltaOutcome == DeltaUpdateOutcome.Installed)
                 {
+                    HideCancelButton();
                     if (!silent)
                         MessageBox.Show(
                             $"Клиент {version.Version} успешно обновлён в:\n{_clientPath}",
@@ -409,6 +417,7 @@ namespace Ven4Tools.Launcher
                 bool installed = await ExtractAndInstallClientAsync(tempZip, version.Version, token, silent);
                 if (!installed) return;
 
+                HideCancelButton();
                 if (!silent)
                     MessageBox.Show(
                         $"Клиент {version.Version} успешно установлен в:\n{_clientPath}",
@@ -458,6 +467,11 @@ namespace Ven4Tools.Launcher
                 // ещё работающей операции.
             }
         }
+
+        // Операция уже завершилась, а окно «Установка завершена» показывается до блока
+        // finally, который прячет «Отмену», — кнопка висела под окном успеха и нажималась.
+        private void HideCancelButton() =>
+            Dispatcher.Invoke(() => btnCancelDownload.Visibility = Visibility.Collapsed);
 
         // Общие предустановочные проверки, обязательные для ЛЮБОГО способа положить
         // файлы в папку клиента: клиент не должен быть запущен (иначе его файлы
@@ -604,7 +618,31 @@ namespace Ven4Tools.Launcher
                 // ClientDeltaInstaller.Apply: убитый посреди установки процесс не должен
                 // оставить описание прошлой версии для следующей дельты.
                 new InstalledManifestStore().Invalidate();
-                installer.Install(extractPath, _clientPath, token);
+
+                // Установка заменяет папку клиента целиком. Если рядом с клиентом
+                // лежит что-то ещё (папку привязали «Найти клиент на диске» до 3.12.1),
+                // прежнее содержимое не удаляется, а сохраняется рядом.
+                string? keepReplacedAs = null;
+                var foreign = ClientFolderInspector.FindForeignEntries(_clientPath);
+                if (foreign.Count > 0)
+                {
+                    keepReplacedAs = $"{Path.GetFullPath(_clientPath).TrimEnd(Path.DirectorySeparatorChar)} " +
+                                     $"(до обновления {DateTime.Now:yyyy-MM-dd HH-mm})";
+                    AddLog($"⚠️ В папке клиента есть посторонние файлы ({string.Join(", ", foreign)}) — " +
+                           $"прежнее содержимое папки будет сохранено в: {keepReplacedAs}");
+                }
+                installer.Install(extractPath, _clientPath, token, keepReplacedAs);
+                if (keepReplacedAs != null && Directory.Exists(keepReplacedAs))
+                {
+                    AddLog($"📁 Прежнее содержимое папки клиента сохранено: {keepReplacedAs}");
+                    if (!silent)
+                        Dispatcher.Invoke(() => MessageBox.Show(
+                            $"В папке клиента кроме него лежали другие файлы. Чтобы они не пропали, " +
+                            $"прежнее содержимое папки сохранено сюда:\n{keepReplacedAs}\n\n" +
+                            "Перенесите нужные файлы обратно или в другое место. Клиент лучше держать " +
+                            "в отдельной папке — например, «Перенести клиент» в настройках.",
+                            "Файлы сохранены", MessageBoxButton.OK, MessageBoxImage.Information));
+                }
 
                 Dispatcher.Invoke(() =>
                 {
