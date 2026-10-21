@@ -46,9 +46,7 @@ namespace Ven4Tools.Launcher.Services
 
         private static HttpClient CreateClient()
         {
-            var client = new HttpClient { Timeout = TimeSpan.FromSeconds(TimeoutSeconds) };
-            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
-            return client;
+            return LauncherHttp.CreateClient(TimeSpan.FromSeconds(TimeoutSeconds));
         }
 
         // Куда сообщать причину отказа. Раньше её не было вовсе: и сетевая ошибка, и
@@ -88,6 +86,7 @@ namespace Ven4Tools.Launcher.Services
             {
                 var info = await FetchAndVerifyAsync(_httpClient, token);
                 CacheCdnIp(info?.CdnIp);
+                ApplyFlags(info);
                 if (info == null)
                     _log?.Invoke("подпись манифеста CDN не подтверждена (version.json.sig)");
                 return info;
@@ -124,6 +123,7 @@ namespace Ven4Tools.Launcher.Services
                 var pinned = IpPinnedHttpClientFactory.GetOrCreate(ip, TimeSpan.FromSeconds(TimeoutSeconds));
                 var info = await FetchAndVerifyAsync(pinned, token);
                 CacheCdnIp(info?.CdnIp);
+                ApplyFlags(info);
                 if (info == null)
                     _log?.Invoke($"по прямому IP {ip} подпись манифеста не подтверждена");
                 return info;
@@ -144,7 +144,9 @@ namespace Ven4Tools.Launcher.Services
         {
             string json = await BoundedHttpText.GetStringAsync(client, VersionUrl, token);
             string signature = await BoundedHttpText.GetStringAsync(client, VersionSignatureUrl, token);
-            return ParseVerified(json, signature);
+            var info = ParseVerified(json, signature);
+            if (info != null) LauncherProxy.ApplyManifestFlags(info.LauncherFlags);
+            return info;
         }
 
         /// <summary>
@@ -187,6 +189,14 @@ namespace Ven4Tools.Launcher.Services
         private static void CacheCdnIp(string? ip)
         {
             if (IsValidIp(ip)) _lastKnownCdnIp = ip;
+        }
+
+        // Флаги поведения — только из манифеста с подтверждённой подписью: null здесь
+        // означает «манифест не получен или подпись не сошлась», и тогда действующие
+        // значения не трогаем (а не сбрасываем на умолчания).
+        private static void ApplyFlags(CdnVersionInfo? info)
+        {
+            if (info != null) LauncherFeatureFlags.Apply(info.LauncherFlags);
         }
 
         private static bool IsValidIp(string? ip) =>

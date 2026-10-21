@@ -58,6 +58,7 @@ namespace Ven4Tools.Launcher
                     MessageBox.Show(
                         "Ven4Tools.exe не найден в:\n" +
                         "• Program Files / Program Files (x86)\n" +
+                        "• %LOCALAPPDATA%\\Programs\n" +
                         "• Документы / Documents\n" +
                         "• Загрузки / Downloads\n" +
                         "• Рабочий стол\n\n" +
@@ -270,6 +271,8 @@ namespace Ven4Tools.Launcher
         {
             yield return Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
             yield return Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            // Умолчание для новых установок с 3.12 — %LocalAppData%\Programs\Ven4Tools.
+            yield return Path.GetDirectoryName(LauncherPaths.DefaultInstallRoot) ?? "";
             yield return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             yield return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 

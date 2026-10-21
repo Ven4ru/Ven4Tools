@@ -28,6 +28,10 @@
     "t": "\n\nHiding a driver helps when Windows Update installs an old driver (for example, a graphics driver) over a newer one."
   },
   {
+    "s": "\n\nСтарую папку удалить не удалось — лаунчер попробует ещё раз при следующем запуске:\n{0}",
+    "t": "\n\nThe old folder could not be deleted — the launcher will try again on the next start:\n{0}"
+  },
+  {
     "s": "\n\nТребуется перезагрузка для завершения установки.",
     "t": "\n\nA restart is required to finish the installation."
   },
@@ -268,8 +272,24 @@
     "t": "  Dump: {0}"
   },
   {
+    "s": "  Запрос: {0}",
+    "t": "  Request: {0}"
+  },
+  {
+    "s": "  Итог: {0}",
+    "t": "  Result: {0}"
+  },
+  {
     "s": "  Параметры 1–4: {0}",
     "t": "  Parameters 1–4: {0}"
+  },
+  {
+    "s": "  Получено: {0} КБ за {1} с; скорость: {2}",
+    "t": "  Received: {0} KB in {1} s; speed: {2}"
+  },
+  {
+    "s": "  Получено: {0} КБ за {1} с; скорость: {2}; ПОТОК ЗАМЕР",
+    "t": "  Received: {0} KB in {1} s; speed: {2}; STREAM STALLED"
   },
   {
     "s": "  Частые причины: {0}",
@@ -288,6 +308,10 @@
     "t": "  • Wi-Fi profiles: {0}\n"
   },
   {
+    "s": " (защита, похоже, выключена)",
+    "t": " (protection seems to be off)"
+  },
+  {
     "s": " (нет тома для теста)",
     "t": " (no volume to test)"
   },
@@ -296,8 +320,16 @@
     "t": " (restart required)"
   },
   {
+    "s": " (через прокси)",
+    "t": " (via proxy)"
+  },
+  {
     "s": " | ✅ Скачан, готов к установке",
     "t": " | ✅ Downloaded, ready to install"
+  },
+  {
+    "s": " Быстрее всего — {0} ({1}).",
+    "t": " Fastest — {0} ({1})."
   },
   {
     "s": " Вернуть на место не удалось: {0}. Переименуйте их обратно вручную после перезагрузки.",
@@ -306,6 +338,10 @@
   {
     "s": " Замечаний: {0}.",
     "t": " Warnings: {0}."
+  },
+  {
+    "s": " Ручной прокси временно отключён разработчиком.",
+    "t": " Manual proxy is temporarily disabled by the developer."
   },
   {
     "s": " Ссылка содержит зафиксированную версию ({0}) — возможно, Microsoft её больше не раздаёт и пин в лаунчере нужно обновить.",
@@ -372,6 +408,10 @@
     "t": "**OS:** {0}  "
   },
   {
+    "s": ", без логина)",
+    "t": ", no login)"
+  },
+  {
     "s": ", не добавлено: {0}",
     "t": ", not added: {0}"
   },
@@ -402,6 +442,10 @@
   {
     "s": ", пропущено по исключениям {0}",
     "t": ", skipped by exclusions {0}"
+  },
+  {
+    "s": ", с логином)",
+    "t": ", with login)"
   },
   {
     "s": ", тихий режим",
@@ -484,6 +528,10 @@
     "t": "15 sec"
   },
   {
+    "s": "; ПОТОК ЗАМЕР",
+    "t": "; STREAM STALLED"
+  },
+  {
     "s": "< 1 МБ",
     "t": "< 1 MB"
   },
@@ -536,6 +584,14 @@
     "t": "CDN (domain)"
   },
   {
+    "s": "CDN (подписанный client-manifest.json)",
+    "t": "CDN (signed client-manifest.json)"
+  },
+  {
+    "s": "CDN (подписанный version.json)",
+    "t": "CDN (signed version.json)"
+  },
+  {
     "s": "CDN (прямой IP)",
     "t": "CDN (direct IP)"
   },
@@ -544,8 +600,16 @@
     "t": "CDN is available, but its signed manifest does not know version {0} yet (it has {1}) — the CDN has not synced since the release"
   },
   {
+    "s": "CDN и зеркало ven4tools.ru недоступны, работает только GitHub — загрузка пойдёт с него (может быть медленнее).",
+    "t": "The CDN and the ven4tools.ru mirror are unavailable, only GitHub works — downloads will use it (may be slower)."
+  },
+  {
     "s": "CDN недоступен — подписанный манифест с хешем архива не получен",
     "t": "CDN unavailable — the signed manifest with the archive hash was not received"
+  },
+  {
+    "s": "CDN по прямому IP ({0})",
+    "t": "CDN by direct IP ({0})"
   },
   {
     "s": "COM-класс {0} не зарегистрирован в системе.",
@@ -604,6 +668,14 @@
     "t": "DISM did not report the feature state."
   },
   {
+    "s": "DNS не находит cdn.ven4tools.ru (похоже на блокировку по DNS) — лаунчер обходит её прямым IP, загрузка работает.",
+    "t": "DNS cannot find cdn.ven4tools.ru (looks like DNS blocking) — the launcher bypasses it via a direct IP, downloads work."
+  },
+  {
+    "s": "Dr.Web: сообщить о ложном срабатывании",
+    "t": "Dr.Web: report a false positive"
+  },
+  {
     "s": "Easy Anti-Cheat (Fortnite, Apex Legends, Elden Ring и др.)",
     "t": "Easy Anti-Cheat (Fortnite, Apex Legends, Elden Ring, etc.)"
   },
@@ -620,6 +692,10 @@
     "t": "Firefox fork with maximum privacy and no telemetry."
   },
   {
+    "s": "GitHub (SHA256SUMS.txt релиза)",
+    "t": "GitHub (release SHA256SUMS.txt)"
+  },
+  {
     "s": "GitHub rate limit (403) — подождите ~1 час",
     "t": "GitHub rate limit (403) — wait ~1 hour"
   },
@@ -632,8 +708,16 @@
     "t": "GitHub unavailable"
   },
   {
+    "s": "GitHub недоступен или замедлен — это не мешает: лаунчер качает с CDN и зеркала.",
+    "t": "GitHub is unavailable or slow — this is not a problem: the launcher downloads from the CDN and the mirror."
+  },
+  {
     "s": "GitHub недоступен; по данным CDN актуальная версия лаунчера — {0}, обновления нет.",
     "t": "GitHub is unavailable; according to the CDN the current launcher version is {0}, no update."
+  },
+  {
+    "s": "GitHub ответил {0}",
+    "t": "GitHub responded {0}"
   },
   {
     "s": "Intel PresentMon — счётчик FPS",
@@ -648,6 +732,10 @@
     "t": "JavaScript runtime for building server-side applications."
   },
   {
+    "s": "Kaspersky OpenTIP: проверить файл и запросить повторный анализ",
+    "t": "Kaspersky OpenTIP: check the file and request a re-analysis"
+  },
+  {
     "s": "Microsoft / системное",
     "t": "Microsoft / system"
   },
@@ -658,6 +746,10 @@
   {
     "s": "Microsoft не будет подбирать советы и рекламу по собранным диагностическим данным.",
     "t": "Microsoft will not tailor tips and ads based on collected diagnostic data."
+  },
+  {
+    "s": "Microsoft: отправить файл на анализ (ложное срабатывание Defender)",
+    "t": "Microsoft: submit the file for analysis (Defender false positive)"
   },
   {
     "s": "Office уже установлен? Посмотрите состояние его лицензии.",
@@ -748,12 +840,28 @@
     "t": "SHA256 mismatch ({0} mirrors)"
   },
   {
+    "s": "SHA256 архива клиента",
+    "t": "Client archive SHA256"
+  },
+  {
     "s": "SHA256 не совпадает — файл изменён с момента добавления",
     "t": "SHA256 mismatch — file changed since it was added"
   },
   {
     "s": "SHA256 скачанного установщика не совпал с каталогом.",
     "t": "SHA256 of the downloaded installer does not match the catalog."
+  },
+  {
+    "s": "SHA256 файла",
+    "t": "File SHA256"
+  },
+  {
+    "s": "SHA256 файла (снят сразу после установки)",
+    "t": "File SHA256 (taken right after installation)"
+  },
+  {
+    "s": "SHA256 файла по записи установки",
+    "t": "File SHA256 from the install record"
   },
   {
     "s": "SSH и Telnet клиент для подключения к серверам.",
@@ -766,6 +874,10 @@
   {
     "s": "Skype UWP. Не нужен при использовании десктопной версии.",
     "t": "Skype UWP. Not needed if you use the desktop version."
+  },
+  {
+    "s": "Smart App Control в этой системе {0}. Он блокирует программы без цифровой подписи и репутации у Microsoft — клиент Ven4Tools пока такой репутации не имеет. Разрешить в нём одну программу Windows не позволяет.",
+    "t": "Smart App Control on this system is {0}. It blocks programs without a digital signature and reputation with Microsoft — the Ven4Tools client does not have such reputation yet. Windows does not allow exempting a single program from it."
   },
   {
     "s": "Staging должен находиться рядом с целевым каталогом для атомарной замены.",
@@ -808,6 +920,10 @@
     "t": "UI test: downloading or starting the client"
   },
   {
+    "s": "UI test: перенос клиента",
+    "t": "UI test: moving the client"
+  },
+  {
     "s": "UI test: поиск клиента",
     "t": "UI test: finding the client"
   },
@@ -840,6 +956,14 @@
     "t": "Ven4Tools Launcher is already running."
   },
   {
+    "s": "Ven4Tools Launcher — диагностика соединения",
+    "t": "Ven4Tools Launcher — connection diagnostics"
+  },
+  {
+    "s": "Ven4Tools {0} скачается автоматически, когда компьютер подключится к сети без лимита трафика. Обновить сейчас можно вручную в окне лаунчера.",
+    "t": "Ven4Tools {0} will download automatically when the computer connects to an unmetered network. You can update manually now in the launcher window."
+  },
+  {
     "s": "Ven4Tools · winget: {0} обновл.",
     "t": "Ven4Tools · winget: {0} updates"
   },
@@ -850,6 +974,10 @@
   {
     "s": "Ven4Tools найден",
     "t": "Ven4Tools found"
+  },
+  {
+    "s": "Ven4Tools не содержит вредоносного кода, но новые версии без «репутации» иногда принимают за угрозу. Проверьте файл по хешу SHA256 ниже и, если считаете срабатывание ложным, сообщите о нём лаборатории своего антивируса. Лаунчер сам ничего не добавляет в исключения антивируса и не советует его отключать. После ответа лаборатории (обычно от нескольких часов до пары дней) нажмите «Проверить и восстановить клиент».",
+    "t": "Ven4Tools contains no malicious code, but new versions without “reputation” are sometimes mistaken for a threat. Check the file by the SHA256 hash below and, if you believe the detection is false, report it to your antivirus lab. The launcher never adds anything to antivirus exclusions and does not advise turning the antivirus off. After the lab responds (usually from a few hours to a couple of days), click “Verify and repair client”."
   },
   {
     "s": "Ven4Tools сейчас запущен.\n\nДля восстановления клиент придётся закрыть — это произойдёт, когда файлы будут скачаны и проверены. Продолжить?",
@@ -866,6 +994,10 @@
   {
     "s": "Ven4Tools сейчас запущен.\n\nЗакрыть клиент, чтобы восстановить его файлы?",
     "t": "Ven4Tools is running.\n\nClose the client to repair its files?"
+  },
+  {
+    "s": "Ven4Tools сейчас запущен.\n\nЗакрыть клиент, чтобы перенести его?",
+    "t": "Ven4Tools is running now.\n\nClose the client to move it?"
   },
   {
     "s": "Ven4Tools — Оставить отзыв",
@@ -960,12 +1092,24 @@
     "t": "Ven4Tools.exe was found directly in:\n{0}\n\nThis whole folder cannot be used as the client install folder — updating or removing the client would destroy its contents.\n\nMove the client to a separate subfolder or specify one manually — the “Change…” button on the “Install folder” card."
   },
   {
+    "s": "Ven4Tools.exe не найден в:\n• Program Files / Program Files (x86)\n• %LOCALAPPDATA%\\Programs\n• Документы / Documents\n• Загрузки / Downloads\n• Рабочий стол\n\nУкажите папку вручную — кнопка «Изменить…» в карточке «Папка установки».",
+    "t": "Ven4Tools.exe was not found in:\n• Program Files / Program Files (x86)\n• %LOCALAPPDATA%\\Programs\n• Documents\n• Downloads\n• Desktop\n\nSpecify the folder manually — the “Change…” button on the “Install folder” card."
+  },
+  {
     "s": "Ven4Tools.exe не найден в:\n• Program Files / Program Files (x86)\n• Документы / Documents\n• Загрузки / Downloads\n• Рабочий стол\n\nУкажите папку вручную — кнопка «Изменить…» в карточке «Папка установки».",
     "t": "Ven4Tools.exe was not found in:\n• Program Files / Program Files (x86)\n• Documents\n• Downloads\n• Desktop\n\nSpecify the folder manually — the “Change…” button on the “Install folder” card."
   },
   {
     "s": "Ven4Tools_тест_диска_{0}.txt",
     "t": "Ven4Tools_disk_test_{0}.txt"
+  },
+  {
+    "s": "VirusTotal по хешу лаунчера",
+    "t": "VirusTotal by the launcher hash"
+  },
+  {
+    "s": "VirusTotal: результаты проверки по хешу (файл не загружается)",
+    "t": "VirusTotal: scan results by hash (the file is not uploaded)"
   },
   {
     "s": "Visual C++ Redistributable 2015-2022 x64 не установлен!\n\nУстановить сейчас?",
@@ -1000,6 +1144,18 @@
     "t": "Windows is waiting for a restart to finish a previous repair. Restart the computer and run the check again."
   },
   {
+    "s": "Windows заблокировала запуск клиента",
+    "t": "Windows blocked the client from starting"
+  },
+  {
+    "s": "Windows запретила запуск клиента политикой (код 1260): это AppLocker, политика ограниченного использования программ или настройка администратора компьютера.",
+    "t": "Windows blocked the client from starting by policy (code 1260): this is AppLocker, a software restriction policy or a setting made by the computer administrator."
+  },
+  {
+    "s": "Windows запретила запуск клиента политикой целостности кода (код 4551).",
+    "t": "Windows blocked the client from starting by a code integrity policy (code 4551)."
+  },
+  {
     "s": "Windows не даёт изменить эту задачу (она защищена системой).",
     "t": "Windows does not allow changing this task (it is protected by the system)."
   },
@@ -1010,6 +1166,10 @@
   {
     "s": "Windows не отдала профиль этой сети — нет данных.",
     "t": "Windows did not return this network's profile — no data."
+  },
+  {
+    "s": "Windows не разрешает записывать в папку клиента. Это права доступа к папке, а не антивирус.",
+    "t": "Windows does not allow writing to the client folder. This is a matter of folder permissions, not an antivirus."
   },
   {
     "s": "Windows не смог получить файлы компонента — чаще всего из-за настроек сервера обновлений организации (WSUS) или установленного языкового пакета. Укажите установочную флешку/ISO той же версии Windows.",
@@ -1456,6 +1616,22 @@
     "t": "[ProfileService] Save skipped: the profile could not be read, writing would erase the settings"
   },
   {
+    "s": "[Smart App Control] Журнал CodeIntegrity не прочитан: {0}: {1}",
+    "t": "[Smart App Control] CodeIntegrity log not read: {0}: {1}"
+  },
+  {
+    "s": "[Smart App Control] Перед установкой: {0}",
+    "t": "[Smart App Control] Before installation: {0}"
+  },
+  {
+    "s": "[Smart App Control] Состояние не прочитано: {0}: {1}",
+    "t": "[Smart App Control] State not read: {0}: {1}"
+  },
+  {
+    "s": "[Smart App Control] Состояние: {0}; событие 3077: {1}",
+    "t": "[Smart App Control] State: {0}; event 3077: {1}"
+  },
+  {
     "s": "[Splash] Не удалось загрузить кадры Венчика «{0}»: {1}",
     "t": "[Splash] Could not load Venchik frames “{0}”: {1}"
   },
@@ -1684,6 +1860,38 @@
     "t": "[Startup] List not retrieved: {0}"
   },
   {
+    "s": "[Антивирус] {0} не читается сразу после записи: {1}",
+    "t": "[Antivirus] {0} cannot be read right after writing: {1}"
+  },
+  {
+    "s": "[Антивирус] Вердикт: {0}; антивирусы: {1}; детектов Defender в папке клиента: {2}",
+    "t": "[Antivirus] Verdict: {0}; antiviruses: {1}; Defender detections in the client folder: {2}"
+  },
+  {
+    "s": "[Антивирус] Журнал обнаружений Defender не прочитан: {0}: {1}",
+    "t": "[Antivirus] Defender detection log not read: {0}: {1}"
+  },
+  {
+    "s": "[Антивирус] Пробная запись в папку не выполнена: {0}: {1}",
+    "t": "[Antivirus] Test write to the folder failed: {0}: {1}"
+  },
+  {
+    "s": "[Антивирус] Проверка файлов после записи не выполнена: {0}",
+    "t": "[Antivirus] File check after writing failed: {0}"
+  },
+  {
+    "s": "[Антивирус] Разбор не выполнен: {0}: {1}",
+    "t": "[Antivirus] Analysis failed: {0}: {1}"
+  },
+  {
+    "s": "[Антивирус] Список антивирусов не получен: {0}: {1}",
+    "t": "[Antivirus] Antivirus list not received: {0}: {1}"
+  },
+  {
+    "s": "[Буфер обмена] Не удалось скопировать: {0}",
+    "t": "[Clipboard] Could not copy: {0}"
+  },
+  {
     "s": "[Деблоатер] OneDrive: {0}",
     "t": "[Debloater] OneDrive: {0}"
   },
@@ -1734,6 +1942,22 @@
   {
     "s": "[Деблоатер] Проводник не перезапустился сам за 10 с — запускаю вручную без прав администратора",
     "t": "[Debloater] File Explorer did not restart on its own within 10 s — starting it manually without administrator rights"
+  },
+  {
+    "s": "[Диагностика соединения] {0}",
+    "t": "[Connection diagnostics] {0}"
+  },
+  {
+    "s": "[Диагностика соединения] Не выполнена: {0}",
+    "t": "[Connection diagnostics] Failed: {0}"
+  },
+  {
+    "s": "[Диагностика] CDN: {0}",
+    "t": "[Diagnostics] CDN: {0}"
+  },
+  {
+    "s": "[Диагностика] Манифест не получен: {0}",
+    "t": "[Diagnostics] Manifest not received: {0}"
   },
   {
     "s": "[Зеркало] {0}: HTTP {1}",
@@ -1944,6 +2168,50 @@
     "t": "[Cleanup] Could not get the Appx package list: timeout or cancellation"
   },
   {
+    "s": "[Подлинность] {0}",
+    "t": "[Authenticity] {0}"
+  },
+  {
+    "s": "[Подлинность] Проверка не выполнена: {0}",
+    "t": "[Authenticity] Check failed: {0}"
+  },
+  {
+    "s": "[Прокси] Выключатели из подписанного манифеста: ручной режим {0}, учётные данные Windows {1}, повтор напрямую {2}",
+    "t": "[Proxy] Switches from the signed manifest: manual mode {0}, Windows credentials {1}, direct retry {2}"
+  },
+  {
+    "s": "[Прокси] Не удалось прочитать настройки прокси, применён системный: {0}",
+    "t": "[Proxy] Could not read proxy settings, using the system proxy: {0}"
+  },
+  {
+    "s": "[Прокси] Не удалось сохранить настройки прокси: {0}",
+    "t": "[Proxy] Could not save proxy settings: {0}"
+  },
+  {
+    "s": "[Прокси] Ошибка прокси ({0}: {1}) — повтор напрямую",
+    "t": "[Proxy] Proxy error ({0}: {1}) — retrying directly"
+  },
+  {
+    "s": "[Прокси] Проверка ручного прокси: {0}",
+    "t": "[Proxy] Manual proxy check: {0}"
+  },
+  {
+    "s": "[Прокси] Прокси требует авторизацию (407) — повтор напрямую. Логин и пароль прокси задаются в «Настройки → Прокси».",
+    "t": "[Proxy] The proxy requires authentication (407) — retrying directly. The proxy login and password are set in “Settings → Proxy”."
+  },
+  {
+    "s": "[Прокси] Режим: вручную (настройка проверена и сохранена)",
+    "t": "[Proxy] Mode: manual (setting verified and saved)"
+  },
+  {
+    "s": "[Прокси] Режим: системный",
+    "t": "[Proxy] Mode: system"
+  },
+  {
+    "s": "[Прокси] Сохранённый пароль прокси не расшифровывается (другая учётная запись?): {0}",
+    "t": "[Proxy] The saved proxy password cannot be decrypted (different account?): {0}"
+  },
+  {
     "s": "[Ремонт] CBS.log не прочитан: {0}",
     "t": "[Repair] CBS.log not read: {0}"
   },
@@ -2132,6 +2400,14 @@
     "t": "[Snapshots] Corrupted file {0}: {1}"
   },
   {
+    "s": "[Ссылки] Не удалось открыть браузер: {0}",
+    "t": "[Links] Could not open the browser: {0}"
+  },
+  {
+    "s": "[Ссылки] Отклонена недопустимая ссылка: {0}",
+    "t": "[Links] Invalid link rejected: {0}"
+  },
+  {
     "s": "[Язык] {0}: {1}",
     "t": "[Language] {0}: {1}"
   },
@@ -2204,6 +2480,10 @@
     "t": "ven4tools-set.json"
   },
   {
+    "s": "version.json не получен ({0}) — нет данных",
+    "t": "version.json not received ({0}) — no data"
+  },
+  {
     "s": "winget download завершился с кодом {0}: {1}",
     "t": "winget download exited with code {0}: {1}"
   },
@@ -2264,6 +2544,10 @@
     "t": "{0:0} MB"
   },
   {
+    "s": "{0}\n\n{1}\n\n{2}\n\nЛаунчер ничего не выключает за вас. Варианты: дождаться версии клиента с подписью и репутацией, или самостоятельно выключить Smart App Control (Безопасность Windows → Управление приложениями и браузером), понимая, что обратно его, возможно, получится включить только переустановкой Windows.",
+    "t": "{0}\n\n{1}\n\n{2}\n\nThe launcher does not turn anything off for you. Options: wait for a client version with a signature and reputation, or turn off Smart App Control yourself (Windows Security → App & browser control), keeping in mind that turning it back on may only be possible by reinstalling Windows."
+  },
+  {
     "s": "{0}\n\n{1}\n\nУдалить?",
     "t": "{0}\n\n{1}\n\nDelete?"
   },
@@ -2278,6 +2562,10 @@
   {
     "s": "{0} ({1} свободно)",
     "t": "{0} ({1} free)"
+  },
+  {
+    "s": "{0} (защита, похоже, выключена)",
+    "t": "{0} (protection appears to be off)"
   },
   {
     "s": "{0} (код 0x{1})",
@@ -2360,6 +2648,10 @@
     "t": "{0} KB"
   },
   {
+    "s": "{0} КБ/с",
+    "t": "{0} KB/s"
+  },
+  {
     "s": "{0} МБ",
     "t": "{0} MB"
   },
@@ -2404,6 +2696,10 @@
     "t": "{0} will be uninstalled and replaced with {1}.\n\nThe installed Office apps and the current version's activation will be lost. Documents saved on disk are not affected.\n\nContinue?"
   },
   {
+    "s": "{0} дн.",
+    "t": "{0} d."
+  },
+  {
     "s": "{0} и {1} без размера",
     "t": "{0} and {1} with no size"
   },
@@ -2418,6 +2714,10 @@
   {
     "s": "{0} мин без признаков работы",
     "t": "{0} min without signs of activity"
+  },
+  {
+    "s": "{0} мин.",
+    "t": "{0} min."
   },
   {
     "s": "{0} мкс",
@@ -2464,6 +2764,10 @@
     "t": "{0} h"
   },
   {
+    "s": "{0} ч.",
+    "t": "{0} h."
+  },
+  {
     "s": "{0} — {1} (код не из словаря)",
     "t": "{0} — {1} (code not in the dictionary)"
   },
@@ -2508,8 +2812,20 @@
     "t": "{0}. Reset was not performed."
   },
   {
+    "s": "{0}: защищённое соединение не проходит проверку сертификата — так бывает, когда трафик подменяет антивирус с проверкой HTTPS или фильтр провайдера/организации.",
+    "t": "{0}: the secure connection fails certificate validation — this happens when traffic is intercepted by an antivirus with HTTPS scanning or by an ISP/organization filter."
+  },
+  {
+    "s": "{0}: сверить CDN и GitHub не удалось — нет данных (CDN: {1}, GitHub: {2}).",
+    "t": "{0}: could not compare the CDN and GitHub — no data (CDN: {1}, GitHub: {2})."
+  },
+  {
     "s": "{0}: скачивание...",
     "t": "{0}: downloading..."
+  },
+  {
+    "s": "{0}: соединение обрывается после первых ~{1} КБ — так выглядит ограничение провайдера (характерно для ресурсов за Cloudflare и зарубежных хостингов).",
+    "t": "{0}: the connection drops after the first ~{1} KB — this looks like ISP throttling (typical for resources behind Cloudflare and foreign hosting)."
   },
   {
     "s": "{0}: установка завершена",
@@ -2518,6 +2834,14 @@
   {
     "s": "{0}: установка...",
     "t": "{0}: installing..."
+  },
+  {
+    "s": "{0}: хеши на CDN и GitHub РАЗНЫЕ — сообщите разработчику.",
+    "t": "{0}: hashes on the CDN and GitHub DIFFER — report this to the developer."
+  },
+  {
+    "s": "{0}: хеши на CDN и GitHub совпадают ({1}…).",
+    "t": "{0}: hashes on the CDN and GitHub match ({1}…)."
   },
   {
     "s": "{0}Не найдено в текущем каталоге: {1}Возможно, набор собран при более широкой области каталога — проверьте её в настройках.",
@@ -2604,6 +2928,10 @@
     "t": "Automatic client update"
   },
   {
+    "s": "Автоматическое обновление клиента ждёт сети без лимита трафика, если Windows отмечает подключение как лимитное (модем, точка доступа на телефоне, роуминг). Ручное обновление работает всегда.",
+    "t": "Automatic client updates wait for an unmetered network if Windows marks the connection as metered (modem, phone hotspot, roaming). Manual updates always work."
+  },
+  {
     "s": "Автообновление программ",
     "t": "App auto-update"
   },
@@ -2618,6 +2946,18 @@
   {
     "s": "Агрессивный при гарантированном",
     "t": "Aggressive At Guaranteed"
+  },
+  {
+    "s": "Адрес и порт (например, proxy.company.ru:3128)",
+    "t": "Address and port (e.g. proxy.company.ru:3128)"
+  },
+  {
+    "s": "Адрес прокси",
+    "t": "Proxy address"
+  },
+  {
+    "s": "Адрес прокси не распознан. Укажите имя или IP и порт, например proxy.company.ru:3128.",
+    "t": "Proxy address not recognized. Enter a name or IP and a port, e.g. proxy.company.ru:3128."
   },
   {
     "s": "Адрес: {0}",
@@ -2640,12 +2980,20 @@
     "t": "Antivirus for protection against malware."
   },
   {
+    "s": "Антивирус заблокировал или удалил файл клиента",
+    "t": "Antivirus blocked or deleted a client file"
+  },
+  {
     "s": "Античитов игр на этом компьютере не найдено.",
     "t": "No game anti-cheat systems were found on this computer."
   },
   {
     "s": "Аппаратных ошибок (WHEA): {0}. Сбоев видеодрайвера: {1}.",
     "t": "Hardware errors (WHEA): {0}. Display driver crashes: {1}."
+  },
+  {
+    "s": "Архив {0}",
+    "t": "Archive {0}"
   },
   {
     "s": "Архив без офлайн-подписи и не значится в списке ранее опубликованных версий — установка отменена.",
@@ -2900,12 +3248,20 @@
     "t": "Fast, secure, and private open-source browser."
   },
   {
+    "s": "В Windows обнаружен Smart App Control ({0}).\n\nОн запрещает запуск программ без цифровой подписи и «репутации» у Microsoft, и кнопки «всё равно запустить» у него нет. Клиент Ven4Tools пока такой репутации не имеет, поэтому после установки Windows может не дать его запустить.\n\nЛаунчер ничего не меняет в настройках Windows. Если запуск будет заблокирован, лаунчер покажет причину. Выключить Smart App Control можно только вручную: Безопасность Windows → Управление приложениями и браузером → Smart App Control (обратно включить его, возможно, можно будет только переустановкой Windows).\n\nПродолжить установку?",
+    "t": "Smart App Control was detected in Windows ({0}).\n\nIt prevents programs without a digital signature and Microsoft “reputation” from running, and it has no “run anyway” button. The Ven4Tools client does not have such reputation yet, so Windows may not let it start after installation.\n\nThe launcher does not change any Windows settings. If the start is blocked, the launcher will show the reason. Smart App Control can only be turned off manually: Windows Security → App & browser control → Smart App Control (turning it back on may only be possible by reinstalling Windows).\n\nContinue installation?"
+  },
+  {
     "s": "В «{0}» нет папки sources\\sxs.\n\nВыберите корень установочной флешки Windows (или подключённого образа) той же версии, что установлена на компьютере.",
     "t": "“{0}” has no sources\\sxs folder.\n\nSelect the root of a Windows installation USB drive (or a mounted image) of the same version as the one installed on the computer."
   },
   {
     "s": "В архиве не найдено файлов настроек Ven4Tools.",
     "t": "No Ven4Tools settings files found in the archive."
+  },
+  {
+    "s": "В журнале CodeIntegrity свежей записи о блокировке не найдено.",
+    "t": "No recent block record was found in the CodeIntegrity log."
   },
   {
     "s": "В задании нет ни одного приложения.",
@@ -2942,6 +3298,14 @@
   {
     "s": "В офлайн-кэше нет ни одного установщика — набор собирать не из чего.",
     "t": "The offline cache has no installers — nothing to build the kit from."
+  },
+  {
+    "s": "В папке клиента есть ссылка на другую папку: {0}",
+    "t": "The client folder contains a link to another folder: {0}"
+  },
+  {
+    "s": "В папке клиента есть файл-ссылка: {0}",
+    "t": "The client folder contains a file link: {0}"
   },
   {
     "s": "В папке клиента нет Ven4Tools.exe — копировать нечего.",
@@ -3260,6 +3624,10 @@
     "t": "Installer temp folder already exists: {0}"
   },
   {
+    "s": "Время (UTC): {0}",
+    "t": "Time (UTC): {0}"
+  },
+  {
     "s": "Время кадра, мс",
     "t": "Frame time, ms"
   },
@@ -3286,6 +3654,10 @@
   {
     "s": "Все источники",
     "t": "All sources"
+  },
+  {
+    "s": "Все источники загрузки работают.{0}",
+    "t": "All download sources work.{0}"
   },
   {
     "s": "Все найденные обновления установлены или скрыты",
@@ -3380,6 +3752,10 @@
     "t": "Select the default app install folder"
   },
   {
+    "s": "Выберите папку, куда перенести Ven4Tools",
+    "t": "Choose a folder to move Ven4Tools to"
+  },
+  {
     "s": "Выберите приложения для кэширования:",
     "t": "Select apps to cache:"
   },
@@ -3414,6 +3790,10 @@
   {
     "s": "Выбран системный том — фоновая работа Windows идёт параллельно с замером и снижает результат. Для точного измерения лучше выбрать другой том.",
     "t": "The system volume is selected — Windows background activity runs during the test and lowers the result. For an accurate measurement, choose another volume."
+  },
+  {
+    "s": "Выбранная папка:\n{0}\n\n{1}\n\n«Да» — выбрать безопасную папку:\n{2}\n«Нет» — всё равно использовать выбранную.\n«Отмена» — ничего не менять.",
+    "t": "Selected folder:\n{0}\n\n{1}\n\n“Yes” — choose a safe folder:\n{2}\n“No” — use the selected one anyway.\n“Cancel” — change nothing."
   },
   {
     "s": "Выбранные патчи больше не предлагаются сервером обновлений — попробуйте обновить список.",
@@ -3568,6 +3948,10 @@
     "t": "CLIENT DIAGNOSTICS"
   },
   {
+    "s": "ДИАГНОСТИКА СОЕДИНЕНИЯ",
+    "t": "CONNECTION DIAGNOSTICS"
+  },
+  {
     "s": "Дампы памяти и отчёты об ошибках",
     "t": "Memory dumps and error reports"
   },
@@ -3662,6 +4046,18 @@
   {
     "s": "Диагностика и тестирование компонентов компьютера.",
     "t": "Diagnostics and testing of computer components."
+  },
+  {
+    "s": "Диагностика не выполнена: {0}",
+    "t": "Diagnostics failed: {0}"
+  },
+  {
+    "s": "Диагностика соединения",
+    "t": "Connection diagnostics"
+  },
+  {
+    "s": "Диагностика соединения — Ven4Tools Launcher",
+    "t": "Connection diagnostics — Ven4Tools Launcher"
   },
   {
     "s": "Диск",
@@ -3996,6 +4392,10 @@
     "t": "LAUNCHER LOG"
   },
   {
+    "s": "Журнал CodeIntegrity прочитать не удалось — нет данных.",
+    "t": "Could not read the CodeIntegrity log — no data."
+  },
+  {
     "s": "Журнал и технические подробности",
     "t": "Log and technical details"
   },
@@ -4140,6 +4540,14 @@
     "t": "Finds hidden and not yet installed updates again. Changes nothing."
   },
   {
+    "s": "Заново посчитает хеши и сверит их с опубликованными на CDN и на GitHub.",
+    "t": "Recalculates the hashes and checks them against the ones published on the CDN and on GitHub."
+  },
+  {
+    "s": "Заново проверит DNS, соединение, TLS и скорость каждого источника загрузки.",
+    "t": "Checks DNS, connection, TLS and speed of every download source again."
+  },
+  {
     "s": "Заново прочитает SMART всех дисков: износ, ошибки, температуру и наработку. Только чтение.",
     "t": "Rereads SMART for all disks: wear, errors, temperature and power-on time. Read only."
   },
@@ -4162,6 +4570,14 @@
   {
     "s": "Запись звука.",
     "t": "Sound recorder."
+  },
+  {
+    "s": "Запись о блокировке есть в журнале Windows (CodeIntegrity, событие 3077).",
+    "t": "A block record is present in the Windows log (CodeIntegrity, event 3077)."
+  },
+  {
+    "s": "Запись установки лаунчера (проверена при установке)",
+    "t": "Launcher install record (verified during installation)"
   },
   {
     "s": "Запись файла ответа…",
@@ -4244,12 +4660,20 @@
     "t": "A game with {0} anti-cheat is running. You can allow the overlay in such games with a checkbox in Diagnostics — at your own risk."
   },
   {
+    "s": "Защитник Windows сообщает об обнаружении в папке клиента:",
+    "t": "Microsoft Defender reports detections in the client folder:"
+  },
+  {
     "s": "Защищённая частная сеть между своими устройствами: доступ к домашнему или рабочему компьютеру без проброса портов.",
     "t": "Secure private network between your devices: access your home or work computer without port forwarding."
   },
   {
     "s": "Здесь появятся установленные через Ven4Tools программы.",
     "t": "Apps installed through Ven4Tools will appear here."
+  },
+  {
+    "s": "Зеркало ven4tools.ru",
+    "t": "ven4tools.ru mirror"
   },
   {
     "s": "ИИ",
@@ -4508,6 +4932,10 @@
     "t": "The source did not respond in time"
   },
   {
+    "s": "Источник не передавал данные {0} с (получено {1} байт).",
+    "t": "The source sent no data for {0} s (received {1} bytes)."
+  },
+  {
     "s": "Источник с галочкой «Приоритет» будет использоваться первым",
     "t": "The source with “Priority” checked is used first"
   },
@@ -4522,6 +4950,10 @@
   {
     "s": "Итог проверки системных файлов распознать не удалось. Подробности — в журнале {0}.",
     "t": "Could not recognize the system file check result. See {0} for details."
+  },
+  {
+    "s": "Итог:",
+    "t": "Summary:"
   },
   {
     "s": "КЛИЕНТ VEN4TOOLS",
@@ -4636,6 +5068,10 @@
     "t": "Xbox client. Not needed without an Xbox account."
   },
   {
+    "s": "Клиент {0} ({1})",
+    "t": "Client {0} ({1})"
+  },
+  {
     "s": "Клиент {0} успешно обновлён в:\n{1}",
     "t": "Client {0} was successfully updated in:\n{1}"
   },
@@ -4668,8 +5104,20 @@
     "t": "Client not installed"
   },
   {
+    "s": "Клиент не установлен — переносить нечего.\n\nПапку для новой установки можно выбрать кнопкой «Изменить…» в карточке «Папка установки».",
+    "t": "The client is not installed — nothing to move.\n\nYou can choose a folder for a new installation with the “Change…” button on the “Install folder” card."
+  },
+  {
     "s": "Клиент не установлен — проверять нечего",
     "t": "Client not installed — nothing to check"
+  },
+  {
+    "s": "Клиент не установлен — проверять нечего.",
+    "t": "The client is not installed — nothing to check."
+  },
+  {
+    "s": "Клиент перенесён в:\n{0}",
+    "t": "The client was moved to:\n{0}"
   },
   {
     "s": "Клиент повреждён — переустановите его полностью через обычное обновление",
@@ -4824,6 +5272,10 @@
     "t": "Ubisoft launcher for Assassin's Creed, Far Cry, and other games."
   },
   {
+    "s": "Лаунчер {0} ({1})",
+    "t": "Launcher {0} ({1})"
+  },
+  {
     "s": "Лаунчер «Мира танков» и «Мира кораблей» от Lesta Games.",
     "t": "Launcher for Mir Tankov and Mir Korabley by Lesta Games."
   },
@@ -4840,8 +5292,20 @@
     "t": "Launcher is busy"
   },
   {
+    "s": "Лаунчер записал {0}, но сейчас его нет на месте или доступ к нему запрещён, хотя писать в папку можно. Чаще всего так выглядит срабатывание антивируса. Точно подтвердить это лаунчер не может.",
+    "t": "The launcher wrote {0}, but it is now missing or access to it is denied, even though the folder is writable. This is most often how an antivirus detection looks. The launcher cannot confirm it for sure."
+  },
+  {
     "s": "Лаунчер запущен из временного расположения.\n\nРекомендуется установить Ven4Tools Launcher: он появится в меню «Пуск» и в «Программы и компоненты», будет автоматически обновляться и его легко удалить.\n\nСкачать и запустить установщик сейчас?",
     "t": "The launcher is running from a temporary location.\n\nWe recommend installing Ven4Tools Launcher: it will appear in the “Start” menu and in “Programs and Features”, update automatically and be easy to uninstall.\n\nDownload and run the installer now?"
+  },
+  {
+    "s": "Лаунчер: {0}",
+    "t": "Launcher: {0}"
+  },
+  {
+    "s": "Лаунчер: {0}; Windows: {1}",
+    "t": "Launcher: {0}; Windows: {1}"
   },
   {
     "s": "Легкий, но мощный редактор кода от Microsoft.",
@@ -4862,6 +5326,14 @@
   {
     "s": "Лог не найден",
     "t": "Log not found"
+  },
+  {
+    "s": "Логин (если прокси требует)",
+    "t": "Login (if the proxy requires it)"
+  },
+  {
+    "s": "Логин прокси",
+    "t": "Proxy login"
   },
   {
     "s": "Локальная учётная запись администратора, которую создаст установка Windows. Пароль задайте после первого входа.",
@@ -4894,6 +5366,10 @@
   {
     "s": "Максимум за сеанс",
     "t": "Session maximum"
+  },
+  {
+    "s": "Манифест обновлений: {0}",
+    "t": "Update manifest: {0}"
   },
   {
     "s": "Материнская плата · {0}",
@@ -5000,8 +5476,20 @@
     "t": "Multimedia"
   },
   {
+    "s": "НЕ СОВПАДАЕТ (опубликовано {0})",
+    "t": "MISMATCH (published {0})"
+  },
+  {
+    "s": "НЕ СОВПАДАЕТ с опубликованным хешем. Файл изменён или это не официальная сборка. Не запускайте его повторно, скачайте установщик с ven4tools.ru или со страницы релиза GitHub.",
+    "t": "DOES NOT MATCH the published hash. The file has been modified or is not an official build. Do not run it again; download the installer from ven4tools.ru or from the GitHub release page."
+  },
+  {
     "s": "На диске не хватает места.",
     "t": "There is not enough disk space."
+  },
+  {
+    "s": "На мобильном интернете при ограничениях работают только сайты из «белого списка» — подключитесь по Wi-Fi.",
+    "t": "On mobile internet with restrictions, only “whitelisted” sites work — connect via Wi-Fi."
   },
   {
     "s": "На томе {0} недостаточно свободного места: нужно {1} ГиБ, доступно {2} ГиБ. Освободите место или выберите тестовый файл меньшего размера.",
@@ -5128,6 +5616,10 @@
     "t": "Multiple copies found"
   },
   {
+    "s": "Найдено несовпадение хеша — подробности ниже.",
+    "t": "Hash mismatch found — see details below."
+  },
+  {
     "s": "Найдено патчей: {0}",
     "t": "Updates found: {0}"
   },
@@ -5212,6 +5704,10 @@
     "t": "A real system crash (BSOD) — Windows recorded a critical kernel error."
   },
   {
+    "s": "Настроить прокси",
+    "t": "Configure proxy"
+  },
+  {
     "s": "Настройки",
     "t": "Settings"
   },
@@ -5276,6 +5772,10 @@
     "t": "Not checked: open the “Diagnostics” section or click “Check disks”."
   },
   {
+    "s": "Не скачивать обновления в фоне по лимитному подключению",
+    "t": "Do not download updates in the background on a metered connection"
+  },
+  {
     "s": "Не создавать ярлыки на рабочем столе",
     "t": "Don't create desktop shortcuts"
   },
@@ -5310,6 +5810,14 @@
   {
     "s": "Не удалось закрыть клиент автоматически (возможно, он свёрнут в трей).\n\nЗакройте его вручную и повторите установку.",
     "t": "Could not close the client automatically (it may be minimized to the tray).\n\nClose it manually and try the installation again."
+  },
+  {
+    "s": "Не удалось закрыть клиент. Закройте его вручную и повторите перенос.",
+    "t": "Could not close the client. Close it manually and try the move again."
+  },
+  {
+    "s": "Не удалось записать файлы клиента",
+    "t": "Could not write client files"
   },
   {
     "s": "Не удалось запустить DISM: {0}",
@@ -5408,6 +5916,10 @@
     "t": "Could not determine the path to the executable"
   },
   {
+    "s": "Не удалось определить родительскую папку.",
+    "t": "Could not determine the parent folder."
+  },
+  {
     "s": "Не удалось отключить быстрый запуск. Запустите приложение от имени администратора и попробуйте ещё раз.",
     "t": "Could not turn off fast startup. Run the app as administrator and try again."
   },
@@ -5440,8 +5952,16 @@
     "t": "Could not rename {0}: {1}"
   },
   {
+    "s": "Не удалось перенести клиент: {0}\n\nКлиент остаётся на прежнем месте:\n{1}",
+    "t": "Could not move the client: {0}\n\nThe client stays in its previous location:\n{1}"
+  },
+  {
     "s": "Не удалось подключить образ ISO. Проверьте, что файл не повреждён и не открыт в другой программе.",
     "t": "Could not mount the ISO image. Make sure the file is not damaged or open in another app."
+  },
+  {
+    "s": "Не удалось подключиться к прокси {0}: {1}",
+    "t": "Could not connect to proxy {0}: {1}"
   },
   {
     "s": "Не удалось подключиться к серверу обновлений (сетевая ошибка).",
@@ -5772,16 +6292,32 @@
     "t": "No data: could not query the TPM."
   },
   {
+    "s": "Нет данных: опубликованный хеш получить не удалось. Это не значит, что файл подделан.",
+    "t": "No data: the published hash could not be obtained. This does not mean the file has been tampered with."
+  },
+  {
     "s": "Нет данных: проверка доступна только для процессоров x86/x64.",
     "t": "No data: the check is available only for x86/x64 processors."
+  },
+  {
+    "s": "Нет данных: проверки не выполнялись.",
+    "t": "No data: no checks were run."
   },
   {
     "s": "Нет данных: средство диагностики DirectX не ответило.",
     "t": "No data: the DirectX Diagnostic Tool did not respond."
   },
   {
+    "s": "Нет данных: файл не прочитан.",
+    "t": "No data: the file was not read."
+  },
+  {
     "s": "Нет доверенных источников для файла {0}.",
     "t": "No trusted sources for file {0}."
+  },
+  {
+    "s": "Нет доступа к папке клиента",
+    "t": "No access to the client folder"
   },
   {
     "s": "Нет доступной версии",
@@ -5838,6 +6374,14 @@
   {
     "s": "Ни на одном накопителе нет тома, пригодного для теста.",
     "t": "No drive has a volume suitable for testing."
+  },
+  {
+    "s": "Ни один адрес не находится по имени и никуда нет соединения — похоже, интернета нет или не работает DNS. Проверьте подключение.",
+    "t": "No address resolves by name and no connection succeeds — it looks like there is no internet or DNS is not working. Check your connection."
+  },
+  {
+    "s": "Ни один источник загрузки не отвечает. Проверьте подключение к интернету.",
+    "t": "No download source responds. Check your internet connection."
   },
   {
     "s": "Ни один установщик пакета не подходит для этой системы.",
@@ -5900,6 +6444,10 @@
     "t": "At least one source is required"
   },
   {
+    "s": "Нужна авторизация прокси (ответ 407): укажите логин и пароль в «Настройки → Прокси» (режим «Вручную»).",
+    "t": "Proxy authentication required (response 407): enter the login and password in “Settings → Proxy” (“Manual” mode)."
+  },
+  {
     "s": "Нужна перезагрузка.",
     "t": "Restart required."
   },
@@ -5938,6 +6486,10 @@
   {
     "s": "ОС: {0}\nПроцессор: {1}\nОЗУ: {2}\nVen4Tools: {3}",
     "t": "OS: {0}\nProcessor: {1}\nRAM: {2}\nVen4Tools: {3}"
+  },
+  {
+    "s": "ОТКАЗ{0}",
+    "t": "FAIL{0}"
   },
   {
     "s": "Обе поддерживаются.",
@@ -6010,6 +6562,10 @@
   {
     "s": "Обновление больше не предлагается — обновите список.",
     "t": "The update is no longer offered — refresh the list."
+  },
+  {
+    "s": "Обновление ждёт безлимитного подключения",
+    "t": "Update is waiting for an unmetered connection"
   },
   {
     "s": "Обновление завершено",
@@ -6396,6 +6952,10 @@
     "t": "Opens GitHub with a prefilled issue form and system version details."
   },
   {
+    "s": "Откроет version.json на CDN (или страницу релизов на GitHub) строго через указанный прокси.",
+    "t": "Opens version.json on the CDN (or the releases page on GitHub) strictly through the specified proxy."
+  },
+  {
     "s": "Откроет «Установленные» со списком программ, для которых есть обновление.",
     "t": "Opens “Installed” with the list of apps that have an update."
   },
@@ -6496,6 +7056,10 @@
     "t": "Opens the cleanup section: built-in apps, tweaks and a restore point."
   },
   {
+    "s": "Откроет результаты проверки этого файла на VirusTotal по SHA256. Сам файл никуда не загружается.",
+    "t": "Opens the scan results for this file on VirusTotal by SHA256. The file itself is not uploaded anywhere."
+  },
+  {
     "s": "Откроет сведения о версии, список изменений и обратную связь.",
     "t": "Opens version info, the changelog and feedback."
   },
@@ -6506,6 +7070,10 @@
   {
     "s": "Откроет страницу исходного кода и релизов Ven4Tools на GitHub.",
     "t": "Opens the Ven4Tools source code and releases page on GitHub."
+  },
+  {
+    "s": "Откроет страницу этой версии лаунчера на GitHub: там установщик и SHA256SUMS.txt.",
+    "t": "Opens the page of this launcher version on GitHub: it has the installer and SHA256SUMS.txt."
   },
   {
     "s": "Откроет текущую папку офлайн-кэша в Проводнике.",
@@ -6614,6 +7182,14 @@
   {
     "s": "Отмечено: {0}\nНе найдено в текущем каталоге: {1}",
     "t": "Selected: {0}\nNot found in the current catalog: {1}"
+  },
+  {
+    "s": "Отпечаток ключа подписи client-manifest.json: {0}",
+    "t": "client-manifest.json signing key fingerprint: {0}"
+  },
+  {
+    "s": "Отпечаток ключа подписи version.json (SHA256 SPKI): {0}",
+    "t": "version.json signing key fingerprint (SHA256 SPKI): {0}"
   },
   {
     "s": "Отправит выбранную оценку и введённый комментарий разработчику.",
@@ -6916,6 +7492,10 @@
     "t": "No errors found"
   },
   {
+    "s": "ПАПКА КЛИЕНТА",
+    "t": "CLIENT FOLDER"
+  },
+  {
     "s": "ПАПКА УСТАНОВКИ",
     "t": "INSTALL FOLDER"
   },
@@ -6924,8 +7504,24 @@
     "t": "LAUNCHER BEHAVIOR"
   },
   {
+    "s": "ПОДЛИННОСТЬ",
+    "t": "AUTHENTICITY"
+  },
+  {
+    "s": "ПОДПИСЬ version.json НЕ ПОДТВЕРЖДЕНА — данным CDN лаунчер не доверяет",
+    "t": "version.json SIGNATURE NOT VERIFIED — the launcher does not trust the CDN data"
+  },
+  {
     "s": "ПРИЛОЖЕНИЯ",
     "t": "APPS"
+  },
+  {
+    "s": "ПРОВЕРИТЬ И СООБЩИТЬ",
+    "t": "CHECK AND REPORT"
+  },
+  {
+    "s": "ПРОКСИ",
+    "t": "PROXY"
   },
   {
     "s": "ПРОЧТИ.txt",
@@ -6992,6 +7588,10 @@
     "t": "Offline kit folder not found: {0}"
   },
   {
+    "s": "Папка установки",
+    "t": "Install folder"
+  },
+  {
     "s": "Папка установки клиента:\n{0}\n\nсовпадает или вложена в папку данных Ven4Tools. Установка отменена во избежание потери настроек.\n\nВыберите другую папку установки.",
     "t": "Client install folder:\n{0}\n\nis the same as or inside the Ven4Tools data folder. Installation canceled to prevent loss of settings.\n\nChoose a different install folder."
   },
@@ -7032,16 +7632,32 @@
     "t": "Passwords are stored in the kit as plain text — there is no other way to transfer them. Do not leave the USB drive unattended."
   },
   {
+    "s": "Пароль",
+    "t": "Password"
+  },
+  {
     "s": "Пароль в файл ответов не записывается, чтобы он не лежал на флешке открытым текстом. Без этой отметки файл ответов не создаётся.",
     "t": "The password is not written to the Windows answer file, so it does not sit on the USB drive as plain text. Without this checkbox, the Windows answer file is not created."
+  },
+  {
+    "s": "Пароль прокси",
+    "t": "Proxy password"
   },
   {
     "s": "Пароль сети",
     "t": "Network password"
   },
   {
+    "s": "Пароль сохранён. Оставьте поле пустым, чтобы не менять его.",
+    "t": "Password saved. Leave the field empty to keep it."
+  },
+  {
     "s": "Пароль у профиля не сохранён.",
     "t": "No password is saved in the profile."
+  },
+  {
+    "s": "Пароль хранится зашифрованным средствами Windows и расшифровывается только под вашей учётной записью на этом компьютере. Если прокси не отвечает, лаунчер пробует соединиться напрямую.",
+    "t": "The password is stored encrypted by Windows and can only be decrypted under your account on this computer. If the proxy does not respond, the launcher tries to connect directly."
   },
   {
     "s": "Патч больше не предлагается сервером обновлений (устарел).",
@@ -7086,6 +7702,50 @@
   {
     "s": "Переназначенные секторы: {0}",
     "t": "Reallocated sectors: {0}"
+  },
+  {
+    "s": "Перенести клиент в\n{0}\nнельзя: {1}.",
+    "t": "The client cannot be moved to\n{0}\nReason: {1}."
+  },
+  {
+    "s": "Перенести клиент в рекомендуемую папку?\n{0}\n\n«Да» — в рекомендуемую папку.\n«Нет» — выбрать другую папку.\n«Отмена» — не переносить.\n\nНастройки и данные клиента не затрагиваются: они хранятся отдельно.",
+    "t": "Move the client to the recommended folder?\n{0}\n\n“Yes” — to the recommended folder.\n“No” — choose another folder.\n“Cancel” — do not move.\n\nClient settings and data are not affected: they are stored separately."
+  },
+  {
+    "s": "Перенести клиент…",
+    "t": "Move client…"
+  },
+  {
+    "s": "Перенесёт установленный клиент в другую папку и обновит его ярлыки. При сбое клиент остаётся в прежней папке.",
+    "t": "Moves the installed client to another folder and updates its shortcuts. If something fails, the client stays in its previous folder."
+  },
+  {
+    "s": "Перенос клиента",
+    "t": "Move client"
+  },
+  {
+    "s": "Перенос клиента не выполнен: {0}",
+    "t": "Client move failed: {0}"
+  },
+  {
+    "s": "Перенос: копирование...",
+    "t": "Moving: copying..."
+  },
+  {
+    "s": "Перенос: проверка копии...",
+    "t": "Moving: verifying the copy..."
+  },
+  {
+    "s": "Перенос: проверка файлов...",
+    "t": "Moving: checking files..."
+  },
+  {
+    "s": "Перенос: удаление старой папки...",
+    "t": "Moving: deleting the old folder..."
+  },
+  {
+    "s": "Перенос: ярлыки...",
+    "t": "Moving: shortcuts..."
   },
   {
     "s": "Переносной офлайн-набор",
@@ -7244,8 +7904,16 @@
     "t": "Authenticity not verified"
   },
   {
+    "s": "Подлинность подтверждена двумя независимыми источниками.",
+    "t": "Authenticity confirmed by two independent sources."
+  },
+  {
     "s": "Поднимет выбранный источник выше в порядке попыток установки.",
     "t": "Moves the selected source up in the order of install attempts."
+  },
+  {
+    "s": "Подпись Authenticode лаунчера: {0}",
+    "t": "Launcher Authenticode signature: {0}"
   },
   {
     "s": "Подпись ODT не подтверждена: {0}",
@@ -7266,6 +7934,10 @@
   {
     "s": "Подробности",
     "t": "Details"
+  },
+  {
+    "s": "Подробности диагностики соединения",
+    "t": "Connection diagnostics details"
   },
   {
     "s": "Подробности — в окне лаунчера.",
@@ -7492,8 +8164,16 @@
     "t": "Puts a copy of the client, an answer file and a launch file into the cache folder: apps from the cache can then be installed on another computer without internet."
   },
   {
+    "s": "Получаю список источников…",
+    "t": "Getting the list of sources…"
+  },
+  {
     "s": "Получение списка версий...",
     "t": "Getting the version list..."
+  },
+  {
+    "s": "Получено больше ожидаемого: {0} из {1} байт.",
+    "t": "Received more than expected: {0} of {1} bytes."
   },
   {
     "s": "Пользовательские",
@@ -7784,8 +8464,20 @@
     "t": "Requires administrator rights and a restart"
   },
   {
+    "s": "Похоже на политику Windows Defender Application Control (её задаёт администратор) или на Smart App Control.",
+    "t": "Looks like a Windows Defender Application Control policy (set by an administrator) or Smart App Control."
+  },
+  {
+    "s": "Похоже, {0} удалил или заблокировал антивирус.",
+    "t": "It looks like an antivirus deleted or blocked {0}."
+  },
+  {
     "s": "Похоже, издатель не отдаёт эту программу в вашем регионе",
     "t": "It looks like the publisher does not offer this app in your region"
+  },
+  {
+    "s": "Похоже, файл удалил антивирус",
+    "t": "Looks like an antivirus deleted the file"
   },
   {
     "s": "Почему обновления не ставятся? → Диагностика",
@@ -7900,8 +8592,20 @@
     "t": "Reason unknown"
   },
   {
+    "s": "Причину определить не удалось: это может быть и антивирус, и права доступа к папке.",
+    "t": "Could not determine the cause: it may be an antivirus or folder permissions."
+  },
+  {
+    "s": "Проблем не обнаружено",
+    "t": "No problems found"
+  },
+  {
     "s": "Пробует источники по порядку — CDN, CDN по прямому адресу, зеркало ven4tools.ru, GitHub — и при сбое переходит к следующему.",
     "t": "Tries the sources in order — CDN, CDN by direct address, the ven4tools.ru mirror, GitHub — and moves on to the next one on failure."
+  },
+  {
+    "s": "Провайдер режет CDN, работает зеркало ven4tools.ru — лаунчер переключится на него сам.",
+    "t": "The ISP is blocking the CDN, the ven4tools.ru mirror works — the launcher will switch to it automatically."
   },
   {
     "s": "Проверено файлов: {0}.",
@@ -7914,6 +8618,10 @@
   {
     "s": "Проверит TPM, Secure Boot, режим загрузки, разметку диска, процессор, память, диск и видеокарту. Займёт до минуты: сведения о видеокарте собирает средство диагностики DirectX.",
     "t": "Checks TPM, Secure Boot, boot mode, disk partitioning, processor, memory, disk and graphics card. Takes up to a minute: graphics card details are collected by the DirectX Diagnostic Tool."
+  },
+  {
+    "s": "Проверит каждый источник загрузки: DNS, соединение, TLS, скорость, прокси и часы ПК — и объяснит, что мешает. Ничего не меняет.",
+    "t": "Checks every download source: DNS, connection, TLS, speed, proxy and the PC clock — and explains what is in the way. Changes nothing."
   },
   {
     "s": "Проверит недостающие системные компоненты и предложит установить каждый из них с подтверждением.",
@@ -7944,6 +8652,10 @@
     "t": "Checks whether major internet services open over HTTPS. In paranoid mode, no requests are sent."
   },
   {
+    "s": "Проверить",
+    "t": "Check"
+  },
+  {
     "s": "Проверить вручную можно в «Установленных».",
     "t": "You can check manually in “Installed”."
   },
@@ -7968,12 +8680,24 @@
     "t": "Check for updates"
   },
   {
+    "s": "Проверить подлинность",
+    "t": "Verify authenticity"
+  },
+  {
+    "s": "Проверить подлинность — Ven4Tools Launcher",
+    "t": "Verify authenticity — Ven4Tools Launcher"
+  },
+  {
     "s": "Проверить применённое",
     "t": "Check applied tweaks"
   },
   {
     "s": "Проверить системные файлы",
     "t": "Check system files"
+  },
+  {
+    "s": "Проверить снова",
+    "t": "Check again"
   },
   {
     "s": "Проверить состояние",
@@ -8088,6 +8812,10 @@
     "t": "Checking..."
   },
   {
+    "s": "Проверка…",
+    "t": "Checking…"
+  },
+  {
     "s": "Проверку системных файлов выполнить не удалось. Попробуйте после перезагрузки; подробности — в журнале {0}.",
     "t": "The system file check could not be performed. Try after a restart; see {0} for details."
   },
@@ -8124,6 +8852,14 @@
     "t": "Checking volume..."
   },
   {
+    "s": "Проверяет CDN, зеркало ven4tools.ru и GitHub: DNS, соединение, скорость, прокси и часы компьютера — и объясняет, что мешает загрузке.",
+    "t": "Checks the CDN, the ven4tools.ru mirror and GitHub: DNS, connection, speed, proxy and the computer clock — and explains what is blocking downloads."
+  },
+  {
+    "s": "Проверяет каждый источник загрузки — CDN по имени и по прямому адресу, зеркало ven4tools.ru и GitHub: DNS, соединение, защищённое соединение, скорость (около 1 МБ с каждого), прокси и часы компьютера. Ничего не меняет.",
+    "t": "Checks each download source — the CDN by name and by direct address, the ven4tools.ru mirror and GitHub: DNS, connection, secure connection, speed (about 1 MB from each), proxy and the computer clock. Changes nothing."
+  },
+  {
     "s": "Проверяет требования Microsoft к Windows 11 и подсказывает, что мешает и как это исправить. Ничего не меняет и требования не обходит.",
     "t": "Checks Microsoft's Windows 11 requirements and suggests what is blocking and how to fix it. Changes nothing and does not bypass the requirements."
   },
@@ -8140,8 +8876,16 @@
     "t": "Check for updates on startup"
   },
   {
+    "s": "Проверяю соединение через прокси…",
+    "t": "Checking the connection through the proxy…"
+  },
+  {
     "s": "Проверяю файлы папки…",
     "t": "Checking folder files…"
+  },
+  {
+    "s": "Проверяю: {0}…",
+    "t": "Checking: {0}…"
   },
   {
     "s": "Проверяю…",
@@ -8186,6 +8930,22 @@
   {
     "s": "Произошла непредвиденная ошибка, приложение будет закрыто.\n\n{0}",
     "t": "An unexpected error occurred, the app will close.\n\n{0}"
+  },
+  {
+    "s": "Прокси не принял логин или пароль (ответ 407).",
+    "t": "The proxy did not accept the login or password (response 407)."
+  },
+  {
+    "s": "Прокси требует логин и пароль (ответ 407).",
+    "t": "The proxy requires a login and password (response 407)."
+  },
+  {
+    "s": "Прокси — Ven4Tools Launcher",
+    "t": "Proxy — Ven4Tools Launcher"
+  },
+  {
+    "s": "Прокси: {0}",
+    "t": "Proxy: {0}"
   },
   {
     "s": "Пропустить",
@@ -8288,6 +9048,10 @@
     "t": "Direct link unavailable: {0}"
   },
   {
+    "s": "Публикация:",
+    "t": "Publication:"
+  },
+  {
     "s": "Путь задачи неизвестен.",
     "t": "Task path unknown."
   },
@@ -8350,6 +9114,10 @@
   {
     "s": "Разработка",
     "t": "Development"
+  },
+  {
+    "s": "Разрешить запуск может только администратор этого компьютера.",
+    "t": "Only the administrator of this computer can allow it to start."
   },
   {
     "s": "Раскрывает разделы Windows: обновления, Office, лицензия и очистка.",
@@ -8432,6 +9200,10 @@
     "t": "Spare area nearly exhausted: {0}%"
   },
   {
+    "s": "Результат проверки подлинности",
+    "t": "Authenticity check result"
+  },
+  {
     "s": "Результат установки",
     "t": "Installation result"
   },
@@ -8470,6 +9242,10 @@
   {
     "s": "Рекомендации в меню «Пуск»",
     "t": "Recommendations in the Start menu"
+  },
+  {
+    "s": "Рекомендуемое место — %LOCALAPPDATA%\\Programs\\Ven4Tools: вне OneDrive и вне папок, защищённых Защитником Windows. Перенос копирует клиент, сверяет копию с оригиналом и только после этого удаляет старую папку. Настройки и данные не затрагиваются.",
+    "t": "Recommended location — %LOCALAPPDATA%\\Programs\\Ven4Tools: outside OneDrive and outside folders protected by Microsoft Defender. Moving copies the client, verifies the copy against the original and only then deletes the old folder. Settings and data are not affected."
   },
   {
     "s": "Релиз от {0}",
@@ -8514,6 +9290,10 @@
   {
     "s": "Ручной ввод",
     "t": "Manual entry"
+  },
+  {
+    "s": "Ручной прокси временно отключён разработчиком (подписанный манифест обновлений) — сейчас действует системный.",
+    "t": "Manual proxy is temporarily disabled by the developer (signed update manifest) — the system proxy is in use now."
   },
   {
     "s": "Рядом с цифрами сидит Венчик: вытирает пот, когда процессор или видеокарта сильно греются, показывает лайк при нормальной температуре и мёрзнет в шарфе, когда компьютер почти без нагрузки.",
@@ -8584,6 +9364,10 @@
     "t": "Reset Windows Update?\n\n• The wuauserv, bits, cryptsvc, msiserver services will be stopped.\n• The C:\\Windows\\SoftwareDistribution and C:\\Windows\\System32\\catroot2 folders will be renamed to *.old-<date> (not deleted — they can be restored).\n• The services will be started again, and Windows will recreate the folders.\n\nThe “Update history” list in Windows Settings will be cleared (the updates themselves stay installed), and partially downloaded updates will be downloaded again.\n\nHelps when updates fail to download or install with the same error — but not always."
   },
   {
+    "s": "Сверит SHA256 лаунчера и файлов клиента с опубликованными на CDN и на GitHub и покажет статус подписи. Ничего не меняет.",
+    "t": "Checks the SHA256 of the launcher and client files against the ones published on the CDN and on GitHub and shows the signature status. Changes nothing."
+  },
+  {
     "s": "Сверит применённые ранее твики с текущим состоянием Windows: крупные обновления часто возвращают отключённое.",
     "t": "Compares previously applied tweaks with the current state of Windows: major updates often re-enable what was disabled."
   },
@@ -8594,6 +9378,14 @@
   {
     "s": "Сверьтесь со списком Microsoft вручную (кнопка «Списки процессоров Microsoft»).",
     "t": "Compare with Microsoft's list manually (the “Microsoft processor lists” button)."
+  },
+  {
+    "s": "Сверяет SHA256 лаунчера и клиента с хешами, опубликованными на CDN (в подписанном манифесте) и на GitHub, и показывает отпечаток ключа подписи.",
+    "t": "Compares the SHA256 of the launcher and the client with hashes published on the CDN (in the signed manifest) and on GitHub, and shows the signing key fingerprint."
+  },
+  {
+    "s": "Сверяет SHA256 лаунчера и установленного клиента с хешами, опубликованными в двух независимых местах: в подписанном манифесте на CDN и в релизе на GitHub. Ничего не скачивает, кроме коротких списков хешей, и ничего не меняет.",
+    "t": "Compares the SHA256 of the launcher and the installed client with hashes published in two independent places: the signed manifest on the CDN and the GitHub release. Downloads nothing except short hash lists and changes nothing."
   },
   {
     "s": "Сверяет файлы установленного клиента с подписанным списком опубликованной версии и восстанавливает повреждённые или отсутствующие.",
@@ -8640,8 +9432,20 @@
     "t": "Now: on — Windows Update should not offer drivers with the monthly updates."
   },
   {
+    "s": "Сейчас: вручную (адрес задан в лаунчере).",
+    "t": "Current: manual (address set in the launcher)."
+  },
+  {
     "s": "Сейчас: выключено — Windows Update может ставить драйверы сам.",
     "t": "Now: off — Windows Update may install drivers on its own."
+  },
+  {
+    "s": "Сейчас: системный — как настроено в Windows.",
+    "t": "Current: system — as configured in Windows."
+  },
+  {
+    "s": "Сейчас: системный — как настроено в Windows. Ручной прокси временно отключён разработчиком.",
+    "t": "Current: system — as configured in Windows. Manual proxy is temporarily disabled by the developer."
   },
   {
     "s": "Сервер вернул {0}: {1}",
@@ -8700,8 +9504,16 @@
     "t": "System disk of 64 GB or more"
   },
   {
+    "s": "Системный прокси Windows (с вашей учётной записью) или адрес, логин и пароль вручную — с проверкой перед сохранением.",
+    "t": "Windows system proxy (with your account) or a manual address, login and password — verified before saving."
+  },
+  {
     "s": "Системный процесс или служба — завершать нельзя.",
     "t": "System process or service — cannot be terminated."
+  },
+  {
+    "s": "Системный — как настроено в Windows (с учётной записью Windows)",
+    "t": "System — as configured in Windows (with your Windows account)"
   },
   {
     "s": "Системных (Microsoft / Windows) скрыто: {0}.",
@@ -8788,6 +9600,14 @@
     "t": "How many apps to show in the catalog:"
   },
   {
+    "s": "Скопировать отчёт",
+    "t": "Copy report"
+  },
+  {
+    "s": "Скопирует SHA256 файла — его спрашивают при отправке ложного срабатывания.",
+    "t": "Copies the file's SHA256 — it is requested when you report a false positive."
+  },
+  {
     "s": "Скопирует код набора в буфер обмена.",
     "t": "Copies the set code to the clipboard."
   },
@@ -8796,8 +9616,16 @@
     "t": "Copies the set code. On another computer, the “Website set” button accepts it."
   },
   {
+    "s": "Скопирует отчёт в буфер обмена. Имя компьютера, имя пользователя, пути и адрес прокси в отчёт не попадают.",
+    "t": "Copies the report to the clipboard. The computer name, user name, paths and proxy address are not included."
+  },
+  {
     "s": "Скопирует показанные сведения о Windows, процессоре, памяти и версии Ven4Tools.",
     "t": "Copies the displayed details about Windows, the processor, memory and the Ven4Tools version."
+  },
+  {
+    "s": "Скопирует результаты проверки в буфер обмена — без имени компьютера и пользователя.",
+    "t": "Copies the check results to the clipboard — without the computer and user name."
   },
   {
     "s": "Скопирует результаты теста и сведения о накопителе в буфер обмена.",
@@ -8900,6 +9728,10 @@
     "t": "Connected User Experiences telemetry service. Disabling it frees up resources."
   },
   {
+    "s": "Смена источника: {0}...",
+    "t": "Switching source: {0}..."
+  },
+  {
     "s": "Смена папки установки",
     "t": "Changing the install folder"
   },
@@ -8918,6 +9750,10 @@
   {
     "s": "Сначала DISM восстанавливает хранилище компонентов (может скачать файлы через Центр обновления), затем sfc /scannow проверяет системные файлы и заменяет повреждённые. Обычно 10–30 минут, иногда дольше. Помогает не всегда.",
     "t": "First DISM repairs the component store (it may download files via Windows Update), then sfc /scannow checks system files and replaces damaged ones. Usually 10–30 minutes, sometimes longer. Does not always help."
+  },
+  {
+    "s": "Сначала нажмите «Проверить» — сохранить можно только рабочий прокси.",
+    "t": "Click “Check” first — only a working proxy can be saved."
   },
   {
     "s": "Сначала обновите видеодрайвер с сайта производителя — старый драйвер часто сообщает более раннюю версию WDDM. Если не поможет, нужна видеокарта с поддержкой DirectX 12.",
@@ -8992,6 +9828,10 @@
     "t": "MS Office-compatible editor with cloud integration."
   },
   {
+    "s": "Совпадает с одним источником; второй источник — нет данных.",
+    "t": "Matches one source; the second source — no data."
+  },
+  {
     "s": "Современный браузер от Microsoft на базе Chromium.",
     "t": "Modern Chromium-based browser from Microsoft."
   },
@@ -9018,6 +9858,10 @@
   {
     "s": "Создаст issue в публичном репозитории на GitHub: версия, ОС, тип и текст ошибки, стек вызовов и ваш необязательный комментарий. Имя компьютера не отправляется, идентификатор сеанса заменяется хешем, пути профиля из текста вырезаются.",
     "t": "Creates an issue in the public GitHub repository: version, OS, error type and text, stack trace, and your optional comment. The computer name is not sent, the session ID is replaced with a hash, and profile paths are stripped from the text."
+  },
+  {
+    "s": "Создаст issue в публичном репозитории на GitHub: версия, ОС, тип и текст ошибки, стек вызовов. Ваш необязательный комментарий на GitHub не публикуется — его получает только разработчик. Имя компьютера не отправляется, идентификатор сеанса заменяется хешем, пути профиля из текста вырезаются.",
+    "t": "Creates an issue in the public GitHub repository: version, OS, error type and text, stack trace. Your optional comment is not published on GitHub — only the developer receives it. The computer name is not sent, the session ID is replaced with a hash, and profile paths are stripped from the text."
   },
   {
     "s": "Создаст временный файл на выбранном томе и измерит чтение и запись. Тест может занять несколько минут.",
@@ -9106,6 +9950,10 @@
   {
     "s": "Сохранит настройки Ven4Tools в выбранный архив (.zip).",
     "t": "Saves Ven4Tools settings to the selected archive (.zip)."
+  },
+  {
+    "s": "Сохранит настройку. Ручной прокси сохраняется только после успешной проверки.",
+    "t": "Saves the setting. A manual proxy is saved only after a successful check."
   },
   {
     "s": "Сохранит отмеченные приложения как именованный пресет для повторного выбора.",
@@ -9238,6 +10086,10 @@
   {
     "s": "Сторонних записей: {0}, из них включено: {1}. {2}",
     "t": "Third-party entries: {0}, enabled: {1}. {2}"
+  },
+  {
+    "s": "Страница релиза",
+    "t": "Release page"
   },
   {
     "s": "Стресс-тест и бенчмарк видеокарты (OpenGL/Vulkan) — проверка стабильности, температур и троттлинга под максимальной нагрузкой.",
@@ -9904,6 +10756,18 @@
     "t": "Installed apps"
   },
   {
+    "s": "Установленный антивирус: {0}.",
+    "t": "Installed antivirus: {0}."
+  },
+  {
+    "s": "Установленный антивирус: Центр безопасности Windows не сообщил ни одного.",
+    "t": "Installed antivirus: Windows Security Center reported none."
+  },
+  {
+    "s": "Установленный антивирус: нет данных (Центр безопасности Windows не ответил).",
+    "t": "Installed antivirus: no data (Windows Security Center did not respond)."
+  },
+  {
     "s": "Установлено",
     "t": "Installed"
   },
@@ -9946,6 +10810,10 @@
   {
     "s": "Установщик OneDrive не найден в ожидаемой папке — удаление не выполнялось.",
     "t": "The OneDrive installer was not found in the expected folder — removal was not performed."
+  },
+  {
+    "s": "Установщик {0}",
+    "t": "Installer {0}"
   },
   {
     "s": "Установщик в релизах не найден — продолжаем в переносном режиме.",
@@ -10056,6 +10924,10 @@
     "t": "The file was replaced with a link, write canceled: {0}"
   },
   {
+    "s": "Файл частичной загрузки изменился — докачка невозможна.",
+    "t": "The partial download file has changed — resuming is not possible."
+  },
+  {
     "s": "Файлов в папке больше {0} — проверены только первые.",
     "t": "The folder has more than {0} files — only the first ones were checked."
   },
@@ -10066,6 +10938,10 @@
   {
     "s": "Файлы из корзины будут удалены насовсем.",
     "t": "Files in the Recycle Bin will be deleted permanently."
+  },
+  {
+    "s": "Файлы клиента на месте.",
+    "t": "Client files are in place."
   },
   {
     "s": "Файлы программы заняты — закройте её и повторите установку.",
@@ -10188,8 +11064,24 @@
     "t": "Some changes will take effect after File Explorer restarts.\n\nRestart File Explorer now? The taskbar and open folder windows will disappear for a few seconds; running apps will not close."
   },
   {
+    "s": "Часы ПК: {0}",
+    "t": "PC clock: {0}"
+  },
+  {
+    "s": "Часы компьютера {0} на {1} Из-за неверного времени не проходят защищённые соединения (сертификаты кажутся просроченными или ещё не действующими). Включите «Установить время автоматически» в параметрах Windows.",
+    "t": "The computer clock is {0} by {1} Because of the wrong time, secure connections fail (certificates look expired or not yet valid). Turn on “Set time automatically” in Windows settings."
+  },
+  {
     "s": "Через Центр обновления не получилось — попробуйте установочную флешку или ISO.",
     "t": "Windows Update did not work — try an installation USB drive or ISO."
+  },
+  {
+    "s": "Через прокси не открылся ни CDN, ни GitHub ({0}).",
+    "t": "Neither the CDN nor GitHub opened through the proxy ({0})."
+  },
+  {
+    "s": "Через прокси ни один источник не открылся, а напрямую — открылся: прокси, похоже, неисправен. Проверьте «Настройки → Прокси».",
+    "t": "No source opened through the proxy, but they open directly: the proxy seems to be broken. Check “Settings → Proxy”."
   },
   {
     "s": "Читаю автозагрузку: реестр, папки, планировщик заданий…",
@@ -10222,6 +11114,10 @@
   {
     "s": "Что могло повлиять на результат",
     "t": "What may have affected the result"
+  },
+  {
+    "s": "Что можно сделать: выбрать другую папку установки в своём профиле или вернуть себе права на эту папку (свойства папки → Безопасность). Если папка находится в «Документах» и включён «Контролируемый доступ к папкам» Защитника Windows — он тоже выглядит как «нет доступа».",
+    "t": "What you can do: choose another install folder in your profile or get your permissions on this folder back (folder properties → Security). If the folder is in “Documents” and Microsoft Defender “Controlled folder access” is on, it also looks like “no access”."
   },
   {
     "s": "Что нового",
@@ -10372,6 +11268,10 @@
     "t": "no link in the catalog"
   },
   {
+    "s": "в новой папке уже есть файлы",
+    "t": "the new folder already contains files"
+  },
+  {
     "s": "в норме",
     "t": "healthy"
   },
@@ -10382,6 +11282,10 @@
   {
     "s": "в подписанном манифесте CDN для версии {0} нет корректного SHA256",
     "t": "the signed CDN manifest has no valid SHA256 for version {0}"
+  },
+  {
+    "s": "в режиме оценки",
+    "t": "in evaluation mode"
   },
   {
     "s": "в релизах GitHub нет архива клиента",
@@ -10416,8 +11320,24 @@
     "t": "enabled"
   },
   {
+    "s": "включено",
+    "t": "on"
+  },
+  {
     "s": "включён",
     "t": "enabled"
+  },
+  {
+    "s": "включён или работает в режиме оценки",
+    "t": "enabled or in evaluation mode"
+  },
+  {
+    "s": "восстановление файлов клиента",
+    "t": "repairing client files"
+  },
+  {
+    "s": "вручную (адрес задан в лаунчере{0}",
+    "t": "manual (address set in the launcher{0}"
   },
   {
     "s": "все источники исчерпаны",
@@ -10438,6 +11358,10 @@
   {
     "s": "выключена",
     "t": "disabled"
+  },
+  {
+    "s": "выключено",
+    "t": "off"
   },
   {
     "s": "горячая точка",
@@ -10500,6 +11424,14 @@
     "t": "yes"
   },
   {
+    "s": "есть несовпадение",
+    "t": "mismatch found"
+  },
+  {
+    "s": "есть, издатель: {0} (проверка цепочки — «Свойства файла → Цифровые подписи»)",
+    "t": "yes, publisher: {0} (to check the chain — “File properties → Digital Signatures”)"
+  },
+  {
     "s": "ещё не загружен",
     "t": "not loaded yet"
   },
@@ -10508,8 +11440,16 @@
     "t": "hard drive"
   },
   {
+    "s": "загрузка и установка клиента",
+    "t": "downloading and installing the client"
+  },
+  {
     "s": "загрузка или установка",
     "t": "download or installation"
+  },
+  {
+    "s": "записи установки нет",
+    "t": "no install record"
   },
   {
     "s": "запись",
@@ -10526,6 +11466,10 @@
   {
     "s": "запуск через {0} — что именно запускается, видно в команде",
     "t": "launched via {0} — see the command for what exactly runs"
+  },
+  {
+    "s": "имя не разрешилось ни в один адрес",
+    "t": "the name did not resolve to any address"
   },
   {
     "s": "исполняемый файл клиента повреждён — версия не читается, переустановите клиент полностью",
@@ -10572,24 +11516,48 @@
     "t": "the client is not installed — nothing to check"
   },
   {
+    "s": "клиент уже находится в этой папке",
+    "t": "the client is already in this folder"
+  },
+  {
     "s": "код выхода {0}",
     "t": "exit code {0}"
+  },
+  {
+    "s": "копия клиента не совпала с оригиналом ({0})",
+    "t": "the client copy did not match the original ({0})"
   },
   {
     "s": "лаунчер занят другой операцией",
     "t": "the launcher is busy with another operation"
   },
   {
+    "s": "лишний файл: {0}",
+    "t": "extra file: {0}"
+  },
+  {
     "s": "локальный файл",
     "t": "local file"
+  },
+  {
+    "s": "манифест CDN недоступен",
+    "t": "CDN manifest unavailable"
   },
   {
     "s": "манифест не получен ({0})",
     "t": "manifest not received ({0})"
   },
   {
+    "s": "манифест не получен или его подпись не подтверждена",
+    "t": "manifest not received or its signature not verified"
+  },
+  {
     "s": "манифест не скачался или его подпись не подтверждена",
     "t": "the manifest failed to download or its signature was not verified"
+  },
+  {
+    "s": "манифест недоступен",
+    "t": "manifest unavailable"
   },
   {
     "s": "манифест новой версии пуст или не разобран",
@@ -10598,6 +11566,14 @@
   {
     "s": "мс",
     "t": "ms"
+  },
+  {
+    "s": "на CDN описана версия {0}",
+    "t": "the CDN describes version {0}"
+  },
+  {
+    "s": "на диске {0} недостаточно места (нужно около {1} МБ)",
+    "t": "not enough space on drive {0} (about {1} MB needed)"
   },
   {
     "s": "на сервере манифест версии {0}, а установлена {1}",
@@ -10616,12 +11592,24 @@
     "t": "not set"
   },
   {
+    "s": "не замерялась (нет адреса файла)",
+    "t": "not measured (no file address)"
+  },
+  {
     "s": "не определён",
     "t": "not detected"
   },
   {
     "s": "не пробовался",
     "t": "not tried"
+  },
+  {
+    "s": "не проверялось",
+    "t": "not checked"
+  },
+  {
+    "s": "не прочитан{0}",
+    "t": "not read{0}"
   },
   {
     "s": "не прошёл проверку целостности",
@@ -10660,6 +11648,10 @@
     "t": "failed to download dependency “{0}”: {1}.{2}"
   },
   {
+    "s": "не удалось сохранить новую папку в настройках лаунчера",
+    "t": "could not save the new folder in the launcher settings"
+  },
+  {
     "s": "не читается",
     "t": "unreadable"
   },
@@ -10678,6 +11670,10 @@
   {
     "s": "неизвестен адрес отдельных файлов этой версии — починка невозможна",
     "t": "the address of this version's individual files is unknown — repair is not possible"
+  },
+  {
+    "s": "неизвестная",
+    "t": "unknown"
   },
   {
     "s": "неизвестно",
@@ -10716,8 +11712,20 @@
     "t": "no"
   },
   {
+    "s": "нет (сборка не подписана сертификатом Authenticode — подлинность подтверждается хешем ниже)",
+    "t": "no (the build is not signed with an Authenticode certificate — authenticity is confirmed by the hash below)"
+  },
+  {
+    "s": "нет в этой версии Windows",
+    "t": "not available in this version of Windows"
+  },
+  {
     "s": "нет данных",
     "t": "no data"
+  },
+  {
+    "s": "нет данных ({0})",
+    "t": "no data ({0})"
   },
   {
     "s": "нет данных в журнале Windows Update",
@@ -10728,16 +11736,48 @@
     "t": "no data: file not found"
   },
   {
+    "s": "нет данных{0}",
+    "t": "no data{0}"
+  },
+  {
     "s": "нет локального манифеста установленной версии",
     "t": "no local manifest for the installed version"
+  },
+  {
+    "s": "нет ответа за 15 с",
+    "t": "no response within 15 s"
+  },
+  {
+    "s": "нет ответа за 20 секунд",
+    "t": "no response within 20 seconds"
+  },
+  {
+    "s": "нет ответа за 7 с",
+    "t": "no response within 7 s"
   },
   {
     "s": "нет файла драйвера",
     "t": "no driver file"
   },
   {
+    "s": "нет файла: {0}",
+    "t": "missing file: {0}"
+  },
+  {
     "s": "ни одно приложение из задания не найдено в каталоге или недоступно для установки",
     "t": "no app from the job was found in the catalog or is available to install"
+  },
+  {
+    "s": "новая папка находится внутри текущей папки клиента",
+    "t": "the new folder is inside the current client folder"
+  },
+  {
+    "s": "новая папка недоступна ({0})",
+    "t": "the new folder is unavailable ({0})"
+  },
+  {
+    "s": "новая папка совпадает с системной или пересекается с папкой данных Ven4Tools",
+    "t": "the new folder is a system folder or overlaps the Ven4Tools data folder"
   },
   {
     "s": "нужен драйвер датчиков",
@@ -10750,6 +11790,10 @@
   {
     "s": "обновление",
     "t": "update"
+  },
+  {
+    "s": "обновление лаунчера",
+    "t": "launcher update"
   },
   {
     "s": "обновлений",
@@ -10780,6 +11824,10 @@
     "t": "detecting..."
   },
   {
+    "s": "опубликован манифест только версии {0}, установлена {1}",
+    "t": "only the manifest for version {0} is published, {1} is installed"
+  },
+  {
     "s": "от батареи",
     "t": "on battery"
   },
@@ -10790,6 +11838,10 @@
   {
     "s": "отключено (параноидальный режим)",
     "t": "disabled (paranoid mode)"
+  },
+  {
+    "s": "отстают",
+    "t": "behind"
   },
   {
     "s": "офлайн-кэш",
@@ -10804,6 +11856,10 @@
     "t": "read error"
   },
   {
+    "s": "ошибка: {0}",
+    "t": "error: {0}"
+  },
+  {
     "s": "ошибок носителя: {0}",
     "t": "media errors: {0}"
   },
@@ -10812,8 +11868,24 @@
     "t": "storage class memory"
   },
   {
+    "s": "папка не найдена",
+    "t": "folder not found"
+  },
+  {
+    "s": "переадресация на недоверенный адрес — замер прерван",
+    "t": "redirect to an untrusted address — measurement aborted"
+  },
+  {
     "s": "переназначено: {0} · нестабильных: {1} · неисправимых: {2}",
     "t": "reallocated: {0} · pending: {1} · uncorrectable: {2}"
+  },
+  {
+    "s": "перенос клиента",
+    "t": "moving the client"
+  },
+  {
+    "s": "перестал передавать данные",
+    "t": "stopped sending data"
   },
   {
     "s": "по прямому IP {0} подпись манифеста не подтверждена",
@@ -10830,6 +11902,10 @@
   {
     "s": "подписанный манифест CDN получен, но сведений о клиенте в нём нет",
     "t": "the signed CDN manifest was received, but it has no client info"
+  },
+  {
+    "s": "подпись version.json подтверждена (ECDSA P-256)",
+    "t": "version.json signature verified (ECDSA P-256)"
   },
   {
     "s": "подпись архива относится к версии {0}, а ставится {1} — архив подменён",
@@ -10888,6 +11964,10 @@
     "t": "the job has no apps"
   },
   {
+    "s": "прокси отказал в соединении: {0}",
+    "t": "the proxy refused the connection: {0}"
+  },
+  {
     "s": "пропущена, в каталоге нет SHA256",
     "t": "skipped, no SHA256 in the catalog"
   },
@@ -10924,6 +12004,10 @@
     "t": "size unknown"
   },
   {
+    "s": "расхождение {0}",
+    "t": "skew {0}"
+  },
+  {
     "s": "расхождений не найдено — чинить нечего",
     "t": "no differences found — nothing to repair"
   },
@@ -10934,6 +12018,10 @@
   {
     "s": "расхождений слишком много для пофайловой починки — переустановите клиент обычным обновлением",
     "t": "too many differences for a file-by-file repair — reinstall the client with a regular update"
+  },
+  {
+    "s": "релиз недоступен ({0})",
+    "t": "release unavailable ({0})"
   },
   {
     "s": "сайт",
@@ -10952,12 +12040,36 @@
     "t": "another operation is in progress: {0}"
   },
   {
+    "s": "сервер ответил {0}",
+    "t": "the server responded {0}"
+  },
+  {
+    "s": "сертификат не принят ({0}){1}",
+    "t": "certificate not accepted ({0}){1}"
+  },
+  {
+    "s": "сертификат от {0}",
+    "t": "certificate from {0}"
+  },
+  {
+    "s": "системный (в Windows задан прокси)",
+    "t": "system (a proxy is set in Windows)"
+  },
+  {
+    "s": "системный (прокси не задан — напрямую)",
+    "t": "system (no proxy set — direct)"
+  },
+  {
     "s": "следить",
     "t": "keep an eye on it"
   },
   {
     "s": "снапшот",
     "t": "snapshot"
+  },
+  {
+    "s": "совпадает",
+    "t": "match"
   },
   {
     "s": "совпало лишь {0} из {1} файлов ({2}%) — дельта невыгодна",
@@ -10984,6 +12096,10 @@
     "t": "comparable to a hard drive"
   },
   {
+    "s": "спешат",
+    "t": "ahead"
+  },
+  {
     "s": "стоят (тихий режим)",
     "t": "stopped (silent mode)"
   },
@@ -11000,6 +12116,10 @@
     "t": "tweaks: {0}, presets: {1}"
   },
   {
+    "s": "текущая папка клиента находится внутри новой",
+    "t": "the current client folder is inside the new one"
+  },
+  {
     "s": "текущий",
     "t": "current"
   },
@@ -11012,8 +12132,16 @@
     "t": "the archive has no embedded signature — it cannot be installed without CDN confirmation"
   },
   {
+    "s": "успешно",
+    "t": "success"
+  },
+  {
     "s": "установка идёт дольше {0} мин",
     "t": "installation has been running for over {0} min"
+  },
+  {
+    "s": "установка клиента из файла",
+    "t": "installing the client from a file"
   },
   {
     "s": "установка не началась",
@@ -11048,16 +12176,60 @@
     "t": "installed {0}, already present {1}, failed {2}, not in the catalog {3}, unavailable {4}"
   },
   {
+    "s": "файл {0}",
+    "t": "file {0}"
+  },
+  {
     "s": "файл {0} не совпадает с сохранённым составом установки",
     "t": "file {0} does not match the saved file list"
+  },
+  {
+    "s": "файл клиента",
+    "t": "the client file"
   },
   {
     "s": "файл не найден",
     "t": "file not found"
   },
   {
+    "s": "файл отличается: {0}",
+    "t": "file differs: {0}"
+  },
+  {
+    "s": "файловый манифест не опубликован",
+    "t": "file manifest not published"
+  },
+  {
+    "s": "хеш установленного exe не публикуется",
+    "t": "the hash of the installed exe is not published"
+  },
+  {
     "s": "целостность подтверждена, проверено файлов: {0}",
     "t": "integrity confirmed, files checked: {0}"
+  },
+  {
+    "s": "часы ПК отстают на ",
+    "t": "PC clock is behind by "
+  },
+  {
+    "s": "часы ПК отстают на {0} дн.",
+    "t": "PC clock is behind by {0} d."
+  },
+  {
+    "s": "часы ПК отстают на {0} мин.",
+    "t": "PC clock is behind by {0} min."
+  },
+  {
+    "s": "часы ПК спешат на ",
+    "t": "PC clock is ahead by "
+  },
+  {
+    "s": "часы ПК спешат на {0} дн.",
+    "t": "PC clock is ahead by {0} d."
+  },
+  {
+    "s": "часы ПК спешат на {0} мин.",
+    "t": "PC clock is ahead by {0} min."
   },
   {
     "s": "чтение",
@@ -11142,6 +12314,14 @@
   {
     "s": "• Офис",
     "t": "• Office"
+  },
+  {
+    "s": "• Папка защищена «Контролируемым доступом к папкам» Защитника Windows: он запрещает запись неизвестным программам, и установка или обновление клиента могут молча не сработать.",
+    "t": "• The folder is protected by Microsoft Defender “Controlled folder access”: it blocks unknown programs from writing, so client installation or updates may silently fail."
+  },
+  {
+    "s": "• Папка находится в OneDrive: сотни мегабайт программы будут синхронизироваться в облако, а файлы могут превратиться в «заглушки», которые скачиваются только при запуске.",
+    "t": "• The folder is in OneDrive: hundreds of megabytes of the program will sync to the cloud, and files may turn into “placeholders” that are downloaded only when opened."
   },
   {
     "s": "• Паттерны с очередью 1 измеряются синхронным вводом-выводом: на такой глубине накладные расходы асинхронного пути попали бы в результат целиком и занизили бы его почти вдвое.",
@@ -11260,6 +12440,14 @@
     "t": "ℹ️ On processors that manage their own frequency (Intel Speed Shift, 6th-generation Core and newer), the “Enabled” and “Aggressive” modes work the same according to Microsoft documentation: the noticeable difference is only between “Disabled” and the rest."
   },
   {
+    "s": "ℹ️ Проверка папки клиента не выполнена: {0}",
+    "t": "ℹ️ Client folder check failed: {0}"
+  },
+  {
+    "s": "ℹ️ Состояние «Контролируемого доступа к папкам» не получено: {0}",
+    "t": "ℹ️ “Controlled folder access” state not received: {0}"
+  },
+  {
     "s": "ℹ️ Старый Office не удалён — установка новой версии не запускается. Скачанный установщик сохранён, можно повторить через «Установить».",
     "t": "ℹ️ The old Office was not uninstalled — the new version will not be installed. The downloaded installer is kept; retry with “Install”."
   },
@@ -11290,6 +12478,10 @@
   {
     "s": "↩ Возвращено: {0}",
     "t": "↩ Reverted: {0}"
+  },
+  {
+    "s": "↩️ Перенос клиента был прерван — клиент остаётся в прежней папке, недоделанная копия убрана",
+    "t": "↩️ The client move was interrupted — the client stays in its previous folder, the incomplete copy was removed"
   },
   {
     "s": "↺ Восстановить",
@@ -11492,6 +12684,10 @@
     "t": "⏳ This may take a few minutes..."
   },
   {
+    "s": "⏸ Автообновление клиента до {0} ждёт безлимитного подключения (подключение отмечено в Windows как лимитное). Обновить сейчас можно вручную.",
+    "t": "⏸ Automatic client update to {0} is waiting for an unmetered connection (Windows marks the connection as metered). You can update manually now."
+  },
+  {
     "s": "⏸ Удаление отменено: клиент запущен",
     "t": "⏸ Removal canceled: the client is running"
   },
@@ -11526,6 +12722,10 @@
   {
     "s": "⏹ Отмена",
     "t": "⏹ Cancel"
+  },
+  {
+    "s": "⏹ Перенос клиента отменён",
+    "t": "⏹ Client move canceled"
   },
   {
     "s": "⏹ Поиск клиента отменён",
@@ -11634,6 +12834,14 @@
   {
     "s": "● Активен",
     "t": "● Active"
+  },
+  {
+    "s": "☕ Запрет сна снят",
+    "t": "☕ Sleep is allowed again"
+  },
+  {
+    "s": "☕ Сон компьютера запрещён на время операции: {0}",
+    "t": "☕ Computer sleep is blocked during the operation: {0}"
   },
   {
     "s": "⚙ Метод",
@@ -11832,6 +13040,10 @@
     "t": "⚠️ Control Panel\\International\\Geo — key not found"
   },
   {
+    "s": "⚠️ Smart App Control: {0} — запуск неподписанного клиента может быть заблокирован",
+    "t": "⚠️ Smart App Control: {0} — the unsigned client may be blocked from starting"
+  },
+  {
     "s": "⚠️ Windows Installer всё ещё занят — продолжаем, установка может не пройти",
     "t": "⚠️ Windows Installer is still busy — continuing, the installation may fail"
   },
@@ -11888,6 +13100,10 @@
     "t": "⚠️ Restoring the region from the marker: {0}"
   },
   {
+    "s": "⚠️ Выбранная папка установки может мешать работе клиента: {0}\n{1}",
+    "t": "⚠️ The selected install folder may interfere with the client: {0}\n{1}"
+  },
+  {
     "s": "⚠️ Для версии {0} нет подтверждённого SHA256: {1} — архив будет проверен по встроенной подписи",
     "t": "⚠️ No verified SHA256 for version {0}: {1} — the archive will be checked by its embedded signature"
   },
@@ -11898,6 +13114,10 @@
   {
     "s": "⚠️ Клиент не закрылся за отведённое время — установка отменена",
     "t": "⚠️ The client did not close in time — installation canceled"
+  },
+  {
+    "s": "⚠️ Клиент не закрылся — перенос отменён",
+    "t": "⚠️ The client did not close — move canceled"
   },
   {
     "s": "⚠️ Клиент не принял запрос на штатное закрытие",
@@ -11922,6 +13142,14 @@
   {
     "s": "⚠️ Не удалось загрузить кадры баннера «{0}»: {1}",
     "t": "⚠️ Could not load banner frames “{0}”: {1}"
+  },
+  {
+    "s": "⚠️ Не удалось запретить сон компьютера на время операции: {0}",
+    "t": "⚠️ Could not block computer sleep during the operation: {0}"
+  },
+  {
+    "s": "⚠️ Не удалось запретить сон компьютера: {0}",
+    "t": "⚠️ Could not block computer sleep: {0}"
   },
   {
     "s": "⚠️ Не удалось определить установленный Office: {0}",
@@ -11976,6 +13204,10 @@
     "t": "⚠️ Update unavailable (no version list) — starting the installed client"
   },
   {
+    "s": "⚠️ Обновление ярлыков прервано: {0}",
+    "t": "⚠️ Shortcut update interrupted: {0}"
+  },
+  {
     "s": "⚠️ Ошибка",
     "t": "⚠️ Error"
   },
@@ -11994,6 +13226,10 @@
   {
     "s": "⚠️ Ошибка создания иконки в трее: {0}",
     "t": "⚠️ Failed to create the tray icon: {0}"
+  },
+  {
+    "s": "⚠️ Папка клиента может мешать установке обновлений:\n{0}\n   Перенести клиент в безопасную папку: Настройки → «Перенести клиент».",
+    "t": "⚠️ The client folder may interfere with installing updates:\n{0}\n   Move the client to a safe folder: Settings → “Move client”."
   },
   {
     "s": "⚠️ Подсчёт состава установленной версии прерван — следующее обновление будет полным",
@@ -12044,6 +13280,10 @@
     "t": "⚠️ The list of revoked versions on the CDN is unavailable ({0}) — revocation of this archive was not checked"
   },
   {
+    "s": "⚠️ Старая папка клиента не удалена (файлы заняты?) — лаунчер попробует при следующем запуске: {0}",
+    "t": "⚠️ The old client folder was not deleted (files in use?) — the launcher will try on the next start: {0}"
+  },
+  {
     "s": "⚠️ Статус неизвестен",
     "t": "⚠️ Status unknown"
   },
@@ -12076,6 +13316,10 @@
     "t": "⚠️ Installation of an older version confirmed by the user"
   },
   {
+    "s": "⚠️ Файл клиента {0} пропал или заблокирован вскоре после записи — проверяю, не антивирус ли это",
+    "t": "⚠️ Client file {0} disappeared or was blocked shortly after writing — checking whether it is an antivirus"
+  },
+  {
     "s": "⚠️ Файл ответов для установки Windows не записан: {0}",
     "t": "⚠️ Windows answer file for setup not written: {0}"
   },
@@ -12086,6 +13330,14 @@
   {
     "s": "⚠️ Что может повлиять на результат",
     "t": "⚠️ What can affect the result"
+  },
+  {
+    "s": "⚠️ Ярлык не обновлён (нужны права администратора или он занят): {0}",
+    "t": "⚠️ Shortcut not updated (administrator rights required or it is in use): {0}"
+  },
+  {
+    "s": "⚠️ Ярлыки не обновлены: оболочка Windows недоступна",
+    "t": "⚠️ Shortcuts not updated: Windows shell unavailable"
   },
   {
     "s": "⚡ Блочное обновление: {0}",
@@ -12112,6 +13364,14 @@
     "t": "⛔ Version {0} was not installed: it is older than the installed {1} — downgrades are not performed"
   },
   {
+    "s": "⛔ Запуск клиента заблокирован политикой целостности кода Windows (Smart App Control или WDAC)",
+    "t": "⛔ Client start blocked by a Windows code integrity policy (Smart App Control or WDAC)"
+  },
+  {
+    "s": "⛔ Запуск клиента запрещён политикой Windows (AppLocker/SRP)",
+    "t": "⛔ Client start blocked by a Windows policy (AppLocker/SRP)"
+  },
+  {
     "s": "⛔ Найденный Ven4Tools.exe лежит прямо в защищённой папке ({0}) — путь не принят",
     "t": "⛔ The found Ven4Tools.exe is located directly in a protected folder ({0}) — path not accepted"
   },
@@ -12126,6 +13386,10 @@
   {
     "s": "⛔ Папка установки клиента пересекается с папкой данных — установка отменена: {0}",
     "t": "⛔ The client install folder overlaps the data folder — installation canceled: {0}"
+  },
+  {
+    "s": "⛔ Перенос клиента отменён: {0} ({1})",
+    "t": "⛔ Client move canceled: {0} ({1})"
   },
   {
     "s": "⛔ Подлинность Windows App Runtime не подтверждена ({0}) — пропускаю установку рантайма",
@@ -12324,6 +13588,10 @@
     "t": "✅ Client updated to {0} with an incremental update ({1} files, {2})"
   },
   {
+    "s": "✅ Копия клиента совпала с манифестом",
+    "t": "✅ Client copy matches the manifest"
+  },
+  {
     "s": "✅ Кэш Windows Update очищен, службы перезапущены.",
     "t": "✅ Windows Update cache cleared, services restarted."
   },
@@ -12414,6 +13682,10 @@
   {
     "s": "✅ Проверка завершена: {0} доступно, {1} недоступно, {2} заблокировано в регионе",
     "t": "✅ Check complete: {0} available, {1} unavailable, {2} blocked in your region"
+  },
+  {
+    "s": "✅ Прокси работает. Нажмите «Сохранить», чтобы лаунчер ходил через него.",
+    "t": "✅ The proxy works. Click “Save” to make the launcher use it."
   },
   {
     "s": "✅ Режим Turbo Boost: {0}.\nИзменение применено немедленно — перезагрузка не требуется.",
@@ -12586,6 +13858,10 @@
   {
     "s": "❌ winget не найден — источник Winget пропущен ({0})",
     "t": "❌ winget not found — Winget source skipped ({0})"
+  },
+  {
+    "s": "❌ {0} Настройка не сохранена.",
+    "t": "❌ {0} Setting not saved."
   },
   {
     "s": "❌ {0} — {1}: код выхода — ошибка (проверка по факту недоступна){2}",
@@ -12904,6 +14180,10 @@
     "t": "❌ Error: could not load the catalog"
   },
   {
+    "s": "❌ Перенос клиента не выполнен: {0}",
+    "t": "❌ Client move failed: {0}"
+  },
+  {
     "s": "❌ Переносной офлайн-набор не собран: {0}",
     "t": "❌ Portable offline kit not built: {0}"
   },
@@ -12930,6 +14210,10 @@
   {
     "s": "❌ Приложение {0} не найдено в каталоге",
     "t": "❌ App {0} not found in the catalog"
+  },
+  {
+    "s": "❌ Проверка не выполнена: {0}",
+    "t": "❌ Check failed: {0}"
   },
   {
     "s": "❌ Прямая ссылка {0}: {1}",
@@ -13082,6 +14366,10 @@
   {
     "s": "\uD83C\uDF10 Открыт GitHub репозиторий",
     "t": "\uD83C\uDF10 GitHub repository opened"
+  },
+  {
+    "s": "\uD83C\uDF10 Подключение больше не лимитное — продолжаю отложенное автообновление",
+    "t": "\uD83C\uDF10 The connection is no longer metered — resuming the postponed automatic update"
   },
   {
     "s": "\uD83C\uDF10 Список версий взят с CDN ({0}): клиент {1} из подписанного version.json",
@@ -13338,6 +14626,10 @@
   {
     "s": "\uD83D\uDCC1 Изменить…",
     "t": "\uD83D\uDCC1 Change…"
+  },
+  {
+    "s": "\uD83D\uDCC1 Клиент теперь запускается из: {0}",
+    "t": "\uD83D\uDCC1 The client now runs from: {0}"
   },
   {
     "s": "\uD83D\uDCC1 Открыта папка логов: {0}",
@@ -13696,6 +14988,10 @@
     "t": "\uD83D\uDCE6 Releases found: {0}"
   },
   {
+    "s": "\uD83D\uDCE6 Перенос клиента: {0} → {1}",
+    "t": "\uD83D\uDCE6 Moving the client: {0} → {1}"
+  },
+  {
     "s": "\uD83D\uDCE6 Получение информации о winget с GitHub...",
     "t": "\uD83D\uDCE6 Getting winget information from GitHub..."
   },
@@ -14052,6 +15348,10 @@
     "t": "\uD83D\uDD12 What is locking a file"
   },
   {
+    "s": "\uD83D\uDD12 Манифест переноса: файлов {0}, {1} МБ",
+    "t": "\uD83D\uDD12 Move manifest: {0} files, {1} MB"
+  },
+  {
     "s": "\uD83D\uDD12 Отчёт о сбое клиента не предлагается: включён параноидальный режим",
     "t": "\uD83D\uDD12 Client crash report is not offered: paranoid mode is on"
   },
@@ -14106,6 +15406,10 @@
   {
     "s": "\uD83D\uDD17 Сайт-источник",
     "t": "\uD83D\uDD17 Source website"
+  },
+  {
+    "s": "\uD83D\uDD17 Ярлыков клиента обновлено: {0}",
+    "t": "\uD83D\uDD17 Client shortcuts updated: {0}"
   },
   {
     "s": "\uD83D\uDD27 Быстрый запуск отключён",
@@ -14226,6 +15530,14 @@
   {
     "s": "\uD83D\uDE80 Установить",
     "t": "\uD83D\uDE80 Install"
+  },
+  {
+    "s": "\uD83D\uDEA9 Флаг манифеста: детектор зависшей загрузки включён",
+    "t": "\uD83D\uDEA9 Manifest flag: stalled download detector enabled"
+  },
+  {
+    "s": "\uD83D\uDEA9 Флаг манифеста: детектор зависшей загрузки выключен",
+    "t": "\uD83D\uDEA9 Manifest flag: stalled download detector disabled"
   },
   {
     "s": "\uD83D\uDEAB Драйверы через Windows Update",
@@ -14408,8 +15720,16 @@
     "t": "\uD83E\uDDF9 Windows cleanup"
   },
   {
+    "s": "\uD83E\uDDF9 Перенос клиента доделан: старая копия удалена",
+    "t": "\uD83E\uDDF9 Client move completed: the old copy was deleted"
+  },
+  {
     "s": "\uD83E\uDDF9 Применить выбранное",
     "t": "\uD83E\uDDF9 Apply selected"
+  },
+  {
+    "s": "\uD83E\uDDF9 Старая папка клиента удалена: {0}",
+    "t": "\uD83E\uDDF9 Old client folder deleted: {0}"
   },
   {
     "s": "\uD83E\uDDF9 Убран ярлык с рабочего стола: {0}",

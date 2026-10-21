@@ -78,6 +78,9 @@ namespace Ven4Tools.Launcher
             try
             {
                 AddLog("📥 Начинаем скачивание обновления лаунчера...");
+                // Запрет сна снимается и при успехе: установщик обновления ждёт выхода
+                // лаунчера, и держать компьютер бодрствующим дальше незачем.
+                using var keepAwake = SleepBlocker.Acquire("обновление лаунчера");
                 btnInstallUpdate.Visibility = Visibility.Collapsed;
 
                 var updateSvc = new LauncherUpdateService(AddLog, _downloadSource);

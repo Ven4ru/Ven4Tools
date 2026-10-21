@@ -18,6 +18,28 @@ namespace Ven4Tools.Launcher.Services
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Ven4Tools", "crash_last.json");
 
+        // Имя папки клиента внутри папки установки.
+        public const string ClientFolderName = "Ven4Tools_Client";
+
+        /// <summary>
+        /// Папка установки клиента по умолчанию для НОВЫХ установок:
+        /// %LocalAppData%\Programs\Ven4Tools — то же место, куда ставят себя без UAC
+        /// браузеры, редакторы и обновляльщики. Раньше по умолчанию были «Документы»,
+        /// а они на свежей Windows 11 всё чаще лежат в OneDrive (синхронизация сотен
+        /// мегабайт программы в облако, файлы-заглушки) и защищены «Контролируемым
+        /// доступом к папкам» Defender, который молча запрещает запись неизвестным
+        /// программам. Существующие установки это умолчание не трогает.
+        /// </summary>
+        public static string DefaultInstallRoot => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Programs", "Ven4Tools");
+
+        // Журнал незавершённого переноса клиента (см. ClientMoveJournal) — в данных
+        // лаунчера, а не рядом с папками, которые перенос создаёт и удаляет.
+        public static string ClientMoveJournalPath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Ven4Tools", "Launcher", "client-move.json");
+
         // Резолвинга пути к папке клиента здесь намеренно нет. Он был добавлен как
         // «общий метод для MainWindow и CliInstallRunner», но по факту не вызывался
         // ниоткуда: CliInstallRunner переиспользует сам MainWindow целиком, а тот
