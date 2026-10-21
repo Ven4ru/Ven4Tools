@@ -29,6 +29,9 @@ internal static class ClientManifestVerifier
         -----END PUBLIC KEY-----
         """;
 
+    /// <summary>Публичный ключ (PEM) — для показа отпечатка в «Проверить подлинность».</summary>
+    internal static string PublicKeyPem => PublicKey;
+
     public static bool Verify(string json, string? signature) =>
         EcdsaManifestVerifier.Verify(PublicKey, DomainSeparator, json, signature);
 }

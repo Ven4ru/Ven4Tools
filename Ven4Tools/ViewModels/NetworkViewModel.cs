@@ -164,6 +164,7 @@ namespace Ven4Tools.ViewModels
             GetIpCommand            = RelayCommand.FromAsync(_ => RunGetIpAsync(),    _ => !IsBusy && !IsGettingIp);
             CheckDnsCommand         = RelayCommand.FromAsync(_ => RunDnsAsync(),      _ => !IsBusy && !IsCheckingDns);
             ResetNetworkCommand     = RelayCommand.FromAsync(_ => RunResetNetworkAsync(), _ => !IsBusy && !IsResettingNetwork);
+            InitWifi();
 
             // Значки строк держат ключ темы, а не кисть, но перечитать его должен
             // кто-то извне: сама строка о смене темы не узнаёт. Отписки нет —

@@ -73,11 +73,41 @@ namespace Ven4Tools.Launcher
             await InstallUpdateCoreAsync();
         }
 
+        /// <summary>
+        /// Итог самообновления с прошлого запуска (его пишет установщик). Об успехе —
+        /// строка в журнале; о неудаче — ещё и окно, если лаунчер открыт не в трее:
+        /// без него человек нажимал «Обновить» снова и снова, не зная, что мешает.
+        /// </summary>
+        private void ReportLauncherUpdateResult()
+        {
+            var result = LauncherUpdateResult.ReadAndClear();
+            if (result is not { } r) return;
+
+            if (r.Succeeded)
+            {
+                AddLog($"✅ Лаунчер обновлён до версии {r.Version}");
+                return;
+            }
+
+            string reason = r.DescribeFailure();
+            AddLog($"⚠️ Обновление лаунчера до {r.Version} не установлено: {reason}. Оставлена прежняя версия.");
+            if (_startMinimized) return;
+
+            MessageBox.Show(
+                $"Обновление лаунчера до версии {r.Version} не установилось: {reason}.\n\n" +
+                "Оставлена прежняя версия, она работает как обычно. Попробуйте обновиться ещё раз " +
+                "кнопкой «Обновить лаунчер» или скачайте установщик с ven4tools.ru.",
+                "Обновление лаунчера", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
         private async Task InstallUpdateCoreAsync()
         {
             try
             {
                 AddLog("📥 Начинаем скачивание обновления лаунчера...");
+                // Запрет сна снимается и при успехе: установщик обновления ждёт выхода
+                // лаунчера, и держать компьютер бодрствующим дальше незачем.
+                using var keepAwake = SleepBlocker.Acquire("обновление лаунчера");
                 btnInstallUpdate.Visibility = Visibility.Collapsed;
 
                 var updateSvc = new LauncherUpdateService(AddLog, _downloadSource);

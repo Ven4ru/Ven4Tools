@@ -77,6 +77,7 @@ public partial class App : Application
 
         if (installFromPath != null)
         {
+            CliInstallRunner.AttachParentConsoleIfNeeded();
             _mutex = new Mutex(true, "Ven4Tools.Launcher.SingleInstance", out bool createdNewCli);
             if (!createdNewCli)
             {

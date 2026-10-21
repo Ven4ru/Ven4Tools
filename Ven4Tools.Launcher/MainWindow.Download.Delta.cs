@@ -182,6 +182,7 @@ namespace Ven4Tools.Launcher
                 });
                 AddLog($"✅ Клиент обновлён до {version.Version} блочным обновлением " +
                        $"({plan.ToDownload.Count} файлов, {FormatBytes(plan.DownloadBytes)})");
+                _ = WatchClientFilesAfterWriteAsync(_clientPath);
                 _clientUpdateAvailable = false;
                 return DeltaUpdateOutcome.Installed;
             }

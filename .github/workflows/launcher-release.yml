@@ -136,9 +136,15 @@ jobs:
       - name: Контрольные суммы
         shell: pwsh
         run: |
-          Get-FileHash "_release/Ven4Tools.Setup-${env:RELEASE_VERSION}.exe" -Algorithm SHA256 |
-            ForEach-Object { "$($_.Hash.ToLower())  Ven4Tools.Setup-${env:RELEASE_VERSION}.exe" } |
-            Set-Content "_release/SHA256SUMS.txt" -Encoding ascii
+          # Вторая строка — хеш УСТАНОВЛЕННОГО Ven4Tools.Launcher.exe (того, что Setup
+          # кладёт в %LOCALAPPDATA%). Отдельным ассетом exe не публикуется; строка нужна
+          # «Проверить подлинность» в лаунчере (AuthenticityChecker). Для ручной сверки
+          # скачанного установщика: sha256sum -c --ignore-missing SHA256SUMS.txt.
+          $setupLine = Get-FileHash "_release/Ven4Tools.Setup-${env:RELEASE_VERSION}.exe" -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  Ven4Tools.Setup-${env:RELEASE_VERSION}.exe" }
+          $exeLine = Get-FileHash "_release/launcher_publish/Ven4Tools.Launcher.exe" -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  Ven4Tools.Launcher.exe" }
+          @($setupLine, $exeLine) | Set-Content "_release/SHA256SUMS.txt" -Encoding ascii
 
       - name: Создание черновика отдельного launcher-релиза
         shell: pwsh

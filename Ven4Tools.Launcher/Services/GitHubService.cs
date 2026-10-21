@@ -29,8 +29,7 @@ namespace Ven4Tools.Launcher.Services
 
         private static HttpClient CreateSharedClient()
         {
-            var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
+            var client = LauncherHttp.CreateClient(TimeSpan.FromSeconds(15));
             client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
             return client;
         }
@@ -43,8 +42,7 @@ namespace Ven4Tools.Launcher.Services
 
         private static HttpClient CreateProxyClient()
         {
-            var client = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
-            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
+            var client = LauncherHttp.CreateClient(TimeSpan.FromSeconds(20));
             return client;
         }
 

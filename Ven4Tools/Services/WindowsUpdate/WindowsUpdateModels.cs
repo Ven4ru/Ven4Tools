@@ -87,4 +87,15 @@ namespace Ven4Tools.Services.WindowsUpdate
         public string ErrorMessage { get; init; } = "";
         public IReadOnlyList<WindowsUpdateItemOutcome> Items { get; init; } = Array.Empty<WindowsUpdateItemOutcome>();
     }
+
+    /// <summary>
+    /// Итог скрытия или возврата обновлений. Как и у скачивания, общего флага успеха
+    /// нет: скрыть могло получиться часть патчей, и это ценный итог сам по себе.
+    /// ErrorMessage заполняется, только когда операция не стартовала вообще (Items пуст).
+    /// </summary>
+    public sealed class WindowsUpdateHideOutcome
+    {
+        public string ErrorMessage { get; init; } = "";
+        public IReadOnlyList<WindowsUpdateItemOutcome> Items { get; init; } = Array.Empty<WindowsUpdateItemOutcome>();
+    }
 }

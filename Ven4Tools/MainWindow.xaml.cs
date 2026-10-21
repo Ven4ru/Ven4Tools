@@ -41,6 +41,8 @@ namespace Ven4Tools
         private NetworkTab?    _networkTab;
         private HistoryTab?    _historyTab;
         private DebloaterTab?  _debloaterTab;
+        private StartupTab?    _startupTab;
+        private DiskSpaceTab?  _diskSpaceTab;
 
         private readonly GlobalLogController _globalLog;
         private readonly MascotController _mascot;
@@ -62,7 +64,8 @@ namespace Ven4Tools
         public MainWindow()
         {
             InitializeComponent();
-            txtSidebarVersion.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "—";
+            // Три числа, как пишутся версии релизов: «6.5.1», а не «6.5.1.0».
+            txtSidebarVersion.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "—";
             MotionService.Enabled = Environment.GetEnvironmentVariable("VEN4TOOLS_REDUCE_MOTION") != "1";
             Loaded += (_, _) => MotionService.FadeIn(this);
 
@@ -444,6 +447,25 @@ namespace Ven4Tools
             UpdateMascot("debloater");
         }
 
+        // «Автозагрузка» и «Место и файлы» раньше были вкладками «Очистки».
+        private void NavigateToStartup(object? sender, RoutedEventArgs? e)
+        {
+            SetActiveButton(btnStartupTab);
+            AppLogger.Write("📂 Открыта вкладка: Автозагрузка");
+            _startupTab ??= new StartupTab();
+            MainFrame.Content = _startupTab;
+            UpdateMascot("debloater");
+        }
+
+        private void NavigateToDiskSpace(object? sender, RoutedEventArgs? e)
+        {
+            SetActiveButton(btnDiskSpaceTab);
+            AppLogger.Write("📂 Открыта вкладка: Место и файлы");
+            _diskSpaceTab ??= new DiskSpaceTab();
+            MainFrame.Content = _diskSpaceTab;
+            UpdateMascot("debloater");
+        }
+
         /// <summary>
         /// Гарантирует создание вкладки Debloater (без перехода на неё) и возвращает её —
         /// нужно снапшотам конфигурации, чтобы прочитать/применить твики даже если
@@ -576,7 +598,7 @@ namespace Ven4Tools
 
         private void SetActiveButton(Button activeButton)
         {
-            var buttons = new[] { btnOverviewTab, btnCatalogTab, btnInstalledTab, btnSystemTab, btnDiagnosticsTab, btnBenchmarkTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnWindowsUpdateTab };
+            var buttons = new[] { btnOverviewTab, btnCatalogTab, btnInstalledTab, btnSystemTab, btnDiagnosticsTab, btnBenchmarkTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnStartupTab, btnDiskSpaceTab, btnWindowsUpdateTab };
             foreach (var btn in buttons)
             {
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");

@@ -1,4 +1,4 @@
-; ============================================================================
+﻿; ============================================================================
 ; Ven4Tools.Setup.nsi — установщик Ven4Tools Launcher
 ; ============================================================================
 ; Компиляция (из корня репозитория):
@@ -26,6 +26,8 @@
 ;   деинсталлятор и версия в «Программы и компоненты».
 ;   Коды возврата: 0 — успех; 3 — установка не удалась, выполнен откат;
 ;   4 — версия нового exe не совпала с ожидаемой; 5 — файл лаунчера занят.
+;   Тот же код с версией пишется в HKCU\Software\Ven4Tools, LauncherUpdateResult:
+;   лаунчер сообщает итог при следующем запуске.
 ; ============================================================================
 
 Unicode true
@@ -57,6 +59,9 @@ Unicode true
 ; Выбор языка — общий для установщика, лаунчера и клиента ("ru" или "en").
 !define LANG_KEY    "Software\Ven4Tools"
 !define LANG_VALUE  "Language"
+; Итог тихого самообновления «код;версия» — его читает и стирает лаунчер при
+; следующем запуске (LauncherUpdateResult.cs): иначе неудача проходила молча.
+!define UPDATE_RESULT_VALUE "LauncherUpdateResult"
 !ifndef LANG_PACK_EN
   !define LANG_PACK_EN "..\Localization\packs\launcher-en.json"
 !endif
@@ -157,8 +162,11 @@ LangString NAME_SecChoco     ${LANG_ENGLISH} "Install Chocolatey (optional)"
 LangString NAME_UninstallLink ${LANG_RUSSIAN} "Удалить ${APP_NAME}"
 LangString NAME_UninstallLink ${LANG_ENGLISH} "Uninstall ${APP_NAME}"
 
-LangString TEXT_RemoveData ${LANG_RUSSIAN} "Удалить пользовательские данные?$\r$\n$\r$\nБудут удалены: логи, настройки и сохранённая сессия.$\r$\nПапка: ${DATA_DIR}$\r$\n$\r$\nПапка клиента Ven4Tools, если она находится вне этой папки (по умолчанию — в «Документах»), не удаляется — её можно удалить кнопкой «Удалить клиент» в лаунчере до деинсталляции."
-LangString TEXT_RemoveData ${LANG_ENGLISH} "Delete user data?$\r$\n$\r$\nThis removes logs, settings and the saved session.$\r$\nFolder: ${DATA_DIR}$\r$\n$\r$\nThe Ven4Tools client folder, if it is outside this folder (by default it is in Documents), is not removed — you can remove it with the “Uninstall client” button in the launcher before uninstalling."
+LangString TEXT_RemoveData ${LANG_RUSSIAN} "Удалить пользовательские данные?$\r$\n$\r$\nБудут удалены: логи, настройки и сохранённая сессия.$\r$\nПапка: ${DATA_DIR}$\r$\n$\r$\nПапка клиента Ven4Tools, если она находится вне этой папки (по умолчанию — в %LOCALAPPDATA%\Programs\Ven4Tools, у установок до версии 3.12 — в «Документах»), не удаляется — её можно удалить кнопкой «Удалить клиент» в лаунчере до деинсталляции."
+LangString TEXT_RemoveData ${LANG_ENGLISH} "Delete user data?$\r$\n$\r$\nThis removes logs, settings and the saved session.$\r$\nFolder: ${DATA_DIR}$\r$\n$\r$\nThe Ven4Tools client folder, if it is outside this folder (by default it is in %LOCALAPPDATA%\Programs\Ven4Tools, or in Documents for installs made before version 3.12), is not removed — you can remove it with the “Uninstall client” button in the launcher before uninstalling."
+
+LangString TEXT_ExeBusy ${LANG_RUSSIAN} "Не удалось заменить файл лаунчера:$\r$\n$INSTDIR\${EXE_NAME}$\r$\n$\r$\nВозможно, лаунчер ещё работает (в том числе от имени администратора) или файл проверяет антивирус. Закройте Ven4Tools Launcher и запустите установку ещё раз."
+LangString TEXT_ExeBusy ${LANG_ENGLISH} "Could not replace the launcher file:$\r$\n$INSTDIR\${EXE_NAME}$\r$\n$\r$\nThe launcher may still be running (possibly as administrator), or an antivirus is scanning the file. Close Ven4Tools Launcher and run the setup again."
 
 ; ============================================================================
 ; Параметры командной строки (режим самообновления)
@@ -341,21 +349,119 @@ FunctionEnd
 Function RelaunchInstalled
   StrCmp $Relaunch "1" 0 relaunch_skip
   IfFileExists "$INSTDIR\${EXE_NAME}" 0 relaunch_skip
+  ; Лаунчер, запущенный «от имени администратора», запускал обновление с теми же
+  ; правами, и после обновления оставался повышенным навсегда. Повышенный установщик
+  ; запускает его через Проводник — с обычными правами пользователя.
+  UserInfo::GetAccountType
+  Pop $R8
+  StrCmp $R8 "Admin" 0 relaunch_plain
+    Exec '"$WINDIR\explorer.exe" "$INSTDIR\${EXE_NAME}"'
+    Goto relaunch_skip
+  relaunch_plain:
   Exec '"$INSTDIR\${EXE_NAME}"'
   relaunch_skip:
+FunctionEnd
+
+; Итог самообновления для лаунчера: $R9 — код возврата (0, 3, 4, 5).
+Function WriteUpdateResult
+  WriteRegStr HKCU "${LANG_KEY}" "${UPDATE_RESULT_VALUE}" "$R9;${VERSION}"
+FunctionEnd
+
+; Ожидание, пока закроются все процессы лаунчера (до 10 секунд) — после taskkill
+; при обычной установке. Раньше вместо этого была пауза 0,5 с, и exe мог оказаться
+; ещё занят. Процесс, который не закрылся, не мешает: exe заменяется переименованием.
+Function WaitForLauncherProcessesGone
+  StrCpy $R2 0
+  gone_loop:
+    nsExec::ExecToStack 'cmd /c tasklist /FI "IMAGENAME eq ${EXE_NAME}" /NH /FO CSV | find /I "${EXE_NAME}"'
+    Pop $R3
+    Pop $R4
+    StrCmp $R3 "0" 0 gone_done
+    IntOp $R2 $R2 + 1
+    IntCmp $R2 20 gone_done 0 gone_done
+    Sleep 500
+    Goto gone_loop
+  gone_done:
+FunctionEnd
+
+; Замена exe при обычной установке поверх. Писать поверх старого файла нельзя: его
+; права могли оказаться «только для администраторов» (так их оставляло самообновление
+; до 3.12.1 из повышенного лаунчера), или файл ещё держит процесс. Переименование
+; разрешают права на саму папку, поэтому старый exe уходит в .old (с повторами),
+; на его место ложится новый, и только потом .old удаляется.
+Function ReplaceLauncherExe
+  CreateDirectory "$INSTDIR"
+  Delete "$INSTDIR\${EXE_NAME}.old"
+  IfFileExists "$INSTDIR\${EXE_NAME}" 0 replace_write
+  StrCpy $R2 0
+  replace_rename:
+    ClearErrors
+    Rename "$INSTDIR\${EXE_NAME}" "$INSTDIR\${EXE_NAME}.old"
+    IfErrors 0 replace_write
+    IntOp $R2 $R2 + 1
+    IntCmp $R2 10 replace_busy 0 replace_busy
+    Sleep 1000
+    Goto replace_rename
+  replace_busy:
+    DetailPrint "Файл лаунчера занят — установка прервана"
+    MessageBox MB_OK|MB_ICONSTOP "$(TEXT_ExeBusy)" /SD IDOK
+    SetErrorLevel 5
+    Abort
+  replace_write:
+  SetOutPath "$INSTDIR"
+  SetOverwrite on
+  ClearErrors
+  File "${PUBLISH_DIR}\${EXE_NAME}"
+  IfErrors replace_failed
+  ; Старый exe может ещё держать процесс, который не закрылся, — тогда .old
+  ; останется и уберётся следующей установкой или удалением.
+  Delete "$INSTDIR\${EXE_NAME}.old"
+  Return
+  replace_failed:
+    Delete "$INSTDIR\${EXE_NAME}"
+    IfFileExists "$INSTDIR\${EXE_NAME}.old" 0 +2
+      Rename "$INSTDIR\${EXE_NAME}.old" "$INSTDIR\${EXE_NAME}"
+    DetailPrint "Не удалось записать новый exe — возвращена прежняя версия"
+    MessageBox MB_OK|MB_ICONSTOP "$(TEXT_ExeBusy)" /SD IDOK
+    SetErrorLevel 3
+    Abort
 FunctionEnd
 
 ; Тихое самообновление установленной копии: бэкап → установка → проверка →
 ; при неудаче откат. Ярлыки, автозапуск, настройки и каталог клиента не трогаются.
 Function UpdateInstall
   DetailPrint "Тихое самообновление ${APP_NAME} до версии ${VERSION}"
-  InitPluginsDir
 
-  ; 1. Новый exe во временную папку установщика + контроль его версии
-  File "/oname=$PLUGINSDIR\${EXE_NAME}" "${PUBLISH_DIR}\${EXE_NAME}"
-  ${GetFileVersion} "$PLUGINSDIR\${EXE_NAME}" $R5
+  ; 1. Новый exe — сразу в папку установки под временным именем, ДО того, как
+  ;    трогать рабочий: долгая запись идёт, пока старый exe ещё на месте, а сама
+  ;    замена ниже — два переименования на одном томе.
+  ;    Не через $PLUGINSDIR, как было до 3.12.1: повышенный NSIS создаёт её с
+  ;    правами «запись — только администраторам», переименование эти права
+  ;    сохраняет, и exe после обновления из лаунчера «от имени администратора»
+  ;    больше не перезаписывался без повышения. File создаёт файл прямо в папке
+  ;    установки, и права он наследует от неё.
+  CreateDirectory "$INSTDIR"
+  Delete "$INSTDIR\${EXE_NAME}.new"
+  SetOverwrite on
+  ClearErrors
+  File "/oname=$INSTDIR\${EXE_NAME}.new" "${PUBLISH_DIR}\${EXE_NAME}"
+  IfErrors 0 stage_ok
+    DetailPrint "Не удалось подготовить новый exe в папке установки — обновление отменено"
+    Delete "$INSTDIR\${EXE_NAME}.new"
+    StrCpy $R9 3
+    Call WriteUpdateResult
+    SetErrorLevel 3
+    Call RelaunchInstalled
+    Quit
+  stage_ok:
+
+  ; Контроль версии подготовленного exe.
+  ${GetFileVersion} "$INSTDIR\${EXE_NAME}.new" $R5
   StrCmp $R5 "${VERSION}.0" version_ok
     DetailPrint "Версия нового exe ($R5) не совпадает с ожидаемой (${VERSION}.0) — отмена"
+    Delete "$INSTDIR\${EXE_NAME}.new"
+    StrCpy $R9 4
+    Call WriteUpdateResult
     SetErrorLevel 4
     Call RelaunchInstalled
     Quit
@@ -371,23 +477,6 @@ Function UpdateInstall
   IfFileExists "$INSTDIR\${EXE_NAME}.bak" 0 restore_done
   Rename "$INSTDIR\${EXE_NAME}.bak" "$INSTDIR\${EXE_NAME}"
   restore_done:
-
-  ; 2б. Новый exe кладём в папку установки под временным именем ДО того, как
-  ;     трогать рабочий. Раньше 48 МБ копировались уже после переименования
-  ;     старого exe в .bak, и обрыв посреди копирования оставлял лаунчер вовсе
-  ;     без exe (ярлык в никуда). Теперь долгое копирование идёт, пока старый
-  ;     exe ещё на месте, а сама замена — два переименования на одном томе.
-  CreateDirectory "$INSTDIR"
-  Delete "$INSTDIR\${EXE_NAME}.new"
-  ClearErrors
-  Rename "$PLUGINSDIR\${EXE_NAME}" "$INSTDIR\${EXE_NAME}.new"
-  IfErrors 0 stage_ok
-    DetailPrint "Не удалось подготовить новый exe в папке установки — обновление отменено"
-    Delete "$INSTDIR\${EXE_NAME}.new"
-    SetErrorLevel 3
-    Call RelaunchInstalled
-    Quit
-  stage_ok:
 
   ; 3. Бэкап текущего exe. Rename не проходит, пока файл занят другим
   ;    процессом — это одновременно и проверка разблокировки (до 15 попыток).
@@ -405,6 +494,8 @@ Function UpdateInstall
   backup_failed:
     DetailPrint "Файл лаунчера занят — обновление отменено, старая версия сохранена"
     Delete "$INSTDIR\${EXE_NAME}.new"
+    StrCpy $R9 5
+    Call WriteUpdateResult
     SetErrorLevel 5
     Call RelaunchInstalled
     Quit
@@ -426,6 +517,8 @@ Function UpdateInstall
   ; Языковой пакет меняется вместе с exe: прежний пакет новой сборке не подходит.
   Call InstallLanguagePack
   Call WriteUninstallRegistry
+  StrCpy $R9 0
+  Call WriteUpdateResult
   DetailPrint "Обновление до ${VERSION} завершено"
   Call RelaunchInstalled
   Return
@@ -438,6 +531,8 @@ Function UpdateInstall
   IfFileExists "$INSTDIR\${EXE_NAME}.bak" 0 rollback_done
   Rename "$INSTDIR\${EXE_NAME}.bak" "$INSTDIR\${EXE_NAME}"
   rollback_done:
+  StrCpy $R9 3
+  Call WriteUpdateResult
   SetErrorLevel 3
   Call RelaunchInstalled
   Quit
@@ -456,15 +551,13 @@ Section "$(NAME_SecMain)" SEC_MAIN
   Goto section_done
 
   normal_install:
-  ; Закрываем работающий лаунчер, чтобы exe не был занят (переустановка поверх).
-  ; nsExec прячет окно консоли taskkill.
+  ; Закрываем работающий лаунчер (переустановка поверх) и ждём, пока процесс
+  ; действительно завершится. nsExec прячет окно консоли taskkill.
   nsExec::Exec 'taskkill /f /im "${EXE_NAME}"'
   Pop $0
-  Sleep 500
+  Call WaitForLauncherProcessesGone
 
-  SetOutPath "$INSTDIR"
-  SetOverwrite on
-  File "${PUBLISH_DIR}\${EXE_NAME}"
+  Call ReplaceLauncherExe
 
   ; Язык: пакет перевода — по выбранному языку. Сам выбор запоминается, только если
   ; его сделал человек: тихая установка (/S) оставляет «как в системе».
@@ -586,6 +679,8 @@ Section "Uninstall"
   ; Файлы лаунчера (включая возможный бэкап незавершённого самообновления)
   Delete "$INSTDIR\${EXE_NAME}"
   Delete "$INSTDIR\${EXE_NAME}.bak"
+  Delete "$INSTDIR\${EXE_NAME}.old"
+  Delete "$INSTDIR\${EXE_NAME}.new"
   Delete "$INSTDIR\uninstall.exe"
   Delete "$INSTDIR\install-winget.pending"
   Delete "$INSTDIR\install-chocolatey.pending"
@@ -603,6 +698,7 @@ Section "Uninstall"
   DeleteRegValue HKCU "${RUN_KEY}" "${RUN_VALUE}"
   DeleteRegKey   HKCU "${UNINST_KEY}"
   DeleteRegValue HKCU "${LANG_KEY}" "${LANG_VALUE}"
+  DeleteRegValue HKCU "${LANG_KEY}" "${UPDATE_RESULT_VALUE}"
   DeleteRegKey /ifempty HKCU "${LANG_KEY}"
 
   ; Папка установки (удалится, только если пуста — лишнего не трогаем)
@@ -610,7 +706,8 @@ Section "Uninstall"
 
   ; Пользовательские данные — спрашиваем явно.
   ; При тихой деинсталляции (/S) по умолчанию НЕ удаляем (/SD IDNO).
-  ; Клиент по умолчанию ставится в «Документы» (или в папку, выбранную в лаунчере),
+  ; Клиент по умолчанию ставится в %LOCALAPPDATA%\Programs\Ven4Tools (до 3.12 — в «Документы»)
+  ; или в папку, выбранную в лаунчере,
   ; а не в ${DATA_DIR} — обещать его удаление здесь нельзя: удаляется только то,
   ; что лежит внутри этой папки (клиент — лишь при старой раскладке рядом с лаунчером).
   MessageBox MB_YESNO|MB_ICONQUESTION "$(TEXT_RemoveData)" /SD IDNO IDNO skip_data

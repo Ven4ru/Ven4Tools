@@ -34,6 +34,42 @@ namespace Ven4Tools.Launcher.Models
 
         [JsonPropertyName("historicalClientArchives")]
         public List<HistoricalClientArchive>? HistoricalClientArchives { get; set; }
+
+        // Выключатели новых веток поведения лаунчера — подписаны вместе со всем
+        // манифестом. Нужны, чтобы при сбое у живых пользователей выключить поведение
+        // без выпуска новой версии лаунчера. Объекта нет — всё по умолчанию
+        // (см. LauncherFlags и LauncherFeatureFlags).
+        [JsonPropertyName("launcher_flags")]
+        public LauncherFlags? LauncherFlags { get; set; }
+    }
+
+    /// <summary>
+    /// Флаги поведения лаунчера из подписанного version.json. Каждое поле — bool?:
+    /// отсутствие поля (null) всегда означает значение по умолчанию, поэтому старый
+    /// манифест без объекта и новый с пустым объектом ведут себя одинаково. Схема
+    /// согласована в договоре стыков (раздел «Лаунчер 3.12.0»).
+    /// </summary>
+    public class LauncherFlags
+    {
+        // Детектор «зависшей» загрузки и докачка с того же байта на следующем
+        // источнике (FallbackDownloader). null/нет поля — ВКЛ; false — поведение 3.11:
+        // простой 60 с, каждый источник качается с нуля.
+        [JsonPropertyName("stall_detection")]
+        public bool? StallDetection { get; set; }
+
+        // --- Прокси (Services/LauncherProxy.cs, LauncherHttp.cs). null = ВКЛ. ---
+
+        // false — ручной прокси из настроек не применяется, режим «Системный» (как 3.11).
+        [JsonPropertyName("proxy_manual")]
+        public bool? ProxyManual { get; set; }
+
+        // false — системному прокси НЕ передаются учётные данные Windows (как 3.11).
+        [JsonPropertyName("proxy_default_credentials")]
+        public bool? ProxyDefaultCredentials { get; set; }
+
+        // false — при ошибке прокси запрос НЕ повторяется напрямую (как 3.11).
+        [JsonPropertyName("proxy_direct_fallback")]
+        public bool? ProxyDirectFallback { get; set; }
     }
 
     public class CdnClientInfo
@@ -115,6 +151,12 @@ namespace Ven4Tools.Launcher.Models
         // SHA256 установщика лаунчера для проверки целостности после скачивания.
         [JsonPropertyName("setup_sha256")]
         public string? SetupSha256 { get; set; }
+
+        // SHA256 УСТАНОВЛЕННОГО Ven4Tools.Launcher.exe этой версии (того, что установщик
+        // кладёт в %LOCALAPPDATA%\Ven4Tools\Launcher). Только для «Проверить подлинность»
+        // (Services/AuthenticityChecker.cs) — в загрузке не участвует. Нет поля = «нет данных».
+        [JsonPropertyName("installed_exe_sha256")]
+        public string? InstalledExeSha256 { get; set; }
     }
 
     public class HistoricalClientArchive

@@ -53,6 +53,7 @@ namespace Ven4Tools.Views.Tabs
             if (rbApps.IsChecked == true) _viewModel.CategoryFilter = "app";
             else if (rbPrivacy.IsChecked == true) _viewModel.CategoryFilter = "privacy";
             else if (rbServices.IsChecked == true) _viewModel.CategoryFilter = "service";
+            else if (rbAds.IsChecked == true) _viewModel.CategoryFilter = "ads";
             else _viewModel.CategoryFilter = "all";
         }
 

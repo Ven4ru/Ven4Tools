@@ -152,6 +152,14 @@ namespace Ven4Tools.Services.WindowsUpdate
                 .Distinct()
                 .ToList();
 
+        /// <summary>Выбранные патчи — по одному на UpdateId (патч может стоять в нескольких категориях).</summary>
+        public static IReadOnlyList<WindowsUpdateItem> GetSelectedItems(IReadOnlyList<WindowsUpdateCategoryNode> tree) =>
+            tree.SelectMany(c => c.Items)
+                .Where(i => i.IsChecked)
+                .Select(i => i.Item)
+                .DistinctBy(i => i.UpdateId)
+                .ToList();
+
         public static long GetSelectedTotalSizeBytes(IReadOnlyList<WindowsUpdateCategoryNode> tree) =>
             tree.SelectMany(c => c.Items)
                 .Where(i => i.IsChecked)

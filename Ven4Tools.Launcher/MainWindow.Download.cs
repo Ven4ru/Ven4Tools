@@ -53,7 +53,10 @@ namespace Ven4Tools.Launcher
             };
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                _installPath = dialog.SelectedPath;
+                string? chosen = ConfirmInstallLocation(dialog.SelectedPath);
+                if (chosen == null) return;
+
+                _installPath = chosen;
                 _clientPath  = Path.Combine(_installPath, "Ven4Tools_Client");
                 // Заранее не создаём — выбор папки ещё не означает установку;
                 // каталог появится вместе с первой установкой клиента.
@@ -62,6 +65,37 @@ namespace Ven4Tools.Launcher
                 AddLog($"📁 Папка установки изменена: {_clientPath}");
                 CheckExistingClient();
             }
+        }
+
+        /// <summary>
+        /// Предупреждение о рискованной папке установки (OneDrive, «Контролируемый
+        /// доступ к папкам»). Возвращает папку, которую использовать: выбранную,
+        /// безопасную по умолчанию или null — пользователь передумал. Нет рисков (или нет
+        /// данных о CFA) — выбранная папка без вопросов.
+        /// </summary>
+        private string? ConfirmInstallLocation(string selectedRoot)
+        {
+            // Состояние CFA запрошено при старте; если ответ ещё не пришёл — «нет
+            // данных», и по CFA не предупреждаем (OneDrive проверяется всегда).
+            var risk = InstallLocationRisk.Assess(selectedRoot, InstallLocationRisk.CfaStatusIfReady());
+            if (!risk.IsRisky) return selectedRoot;
+
+            string safeRoot = LauncherPaths.DefaultInstallRoot;
+            AddLog($"⚠️ Выбранная папка установки может мешать работе клиента: {selectedRoot}\n{risk.Describe()}");
+
+            var answer = MessageBox.Show(
+                $"Выбранная папка:\n{selectedRoot}\n\n{risk.Describe()}\n\n" +
+                $"«Да» — выбрать безопасную папку:\n{safeRoot}\n" +
+                "«Нет» — всё равно использовать выбранную.\n" +
+                "«Отмена» — ничего не менять.",
+                "Папка установки", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Yes);
+
+            return answer switch
+            {
+                MessageBoxResult.Yes => safeRoot,
+                MessageBoxResult.No => selectedRoot,
+                _ => null,
+            };
         }
 
         // Что именно сделала зачистка остатков прерванной установки. Нужен только для
@@ -123,6 +157,13 @@ namespace Ven4Tools.Launcher
                         catch { /* не удалось восстановить — оставляем бэкап на месте, не удаляя */ }
                         continue;
                     }
+
+                    // Резервная копия с посторонними файлами — это прежняя папка, в
+                    // которой рядом с клиентом лежало что-то ещё (см. ClientFolderInspector).
+                    // Её не удаляем: установка должна была перенести её в сохранённую
+                    // папку, и если не смогла — чужие файлы остаются здесь.
+                    if (isBackup && ClientFolderInspector.FindForeignEntries(dir).Count > 0)
+                        continue;
 
                     // target на месте (установка завершилась) либо это staging —
                     // такой каталог действительно осиротевший, его можно удалить.
@@ -210,6 +251,10 @@ namespace Ven4Tools.Launcher
 
             AddLog($"📥 Скачивание клиента {version.Version}...");
 
+            // Компьютер не уходит в сон до конца загрузки и установки (снимается при
+            // выходе из метода любым путём — см. SleepBlocker).
+            using var keepAwake = SleepBlocker.Acquire("загрузка и установка клиента");
+
             string tempZip = Path.Combine(
                 Path.GetTempPath(),
                 $"Ven4Tools_Client_{version.Version}_{Guid.NewGuid():N}.zip");
@@ -263,6 +308,7 @@ namespace Ven4Tools.Launcher
                 var deltaOutcome = await TryDeltaUpdateAsync(version, token, silent);
                 if (deltaOutcome == DeltaUpdateOutcome.Installed)
                 {
+                    HideCancelButton();
                     if (!silent)
                         MessageBox.Show(
                             $"Клиент {version.Version} успешно обновлён в:\n{_clientPath}",
@@ -316,10 +362,13 @@ namespace Ven4Tools.Launcher
                     switchingTo: (label, reason) =>
                     {
                         AddLog($"⚠️ Предыдущий источник {reason}, переключаюсь: {label}...");
+                        // Полосу прогресса не сбрасываем: следующий источник может
+                        // продолжить с того же байта (докачка), и откат к 0% выглядел бы
+                        // как начало заново. Если он начнёт с нуля — прогресс сам
+                        // покажет это первым же обновлением.
                         Dispatcher.BeginInvoke(() =>
                         {
-                            progressDownload.Value = 0;
-                            txtDownloadStatus.Text = "Скачивание: 0%";
+                            txtDownloadStatus.Text = $"Смена источника: {label}...";
                         });
                     });
                 string usedSource = downloadResult.SourceLabel;
@@ -368,6 +417,7 @@ namespace Ven4Tools.Launcher
                 bool installed = await ExtractAndInstallClientAsync(tempZip, version.Version, token, silent);
                 if (!installed) return;
 
+                HideCancelButton();
                 if (!silent)
                     MessageBox.Show(
                         $"Клиент {version.Version} успешно установлен в:\n{_clientPath}",
@@ -385,7 +435,7 @@ namespace Ven4Tools.Launcher
                 txtDownloadStatus.Text = "Ошибка";
                 SetOperationStage(0);
                 AddLog($"❌ Ошибка скачивания: {ex.Message}");
-                if (!silent)
+                if (!silent && !ShowWriteFailureExplanation(ex, version.ExpectedSha256))
                     MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -417,6 +467,11 @@ namespace Ven4Tools.Launcher
                 // ещё работающей операции.
             }
         }
+
+        // Операция уже завершилась, а окно «Установка завершена» показывается до блока
+        // finally, который прячет «Отмену», — кнопка висела под окном успеха и нажималась.
+        private void HideCancelButton() =>
+            Dispatcher.Invoke(() => btnCancelDownload.Visibility = Visibility.Collapsed);
 
         // Общие предустановочные проверки, обязательные для ЛЮБОГО способа положить
         // файлы в папку клиента: клиент не должен быть запущен (иначе его файлы
@@ -562,7 +617,31 @@ namespace Ven4Tools.Launcher
                 // ClientDeltaInstaller.Apply: убитый посреди установки процесс не должен
                 // оставить описание прошлой версии для следующей дельты.
                 new InstalledManifestStore().Invalidate();
-                installer.Install(extractPath, _clientPath, token);
+
+                // Установка заменяет папку клиента целиком. Если рядом с клиентом
+                // лежит что-то ещё (папку привязали «Найти клиент на диске» до 3.12.1),
+                // прежнее содержимое не удаляется, а сохраняется рядом.
+                string? keepReplacedAs = null;
+                var foreign = ClientFolderInspector.FindForeignEntries(_clientPath);
+                if (foreign.Count > 0)
+                {
+                    keepReplacedAs = $"{Path.GetFullPath(_clientPath).TrimEnd(Path.DirectorySeparatorChar)} " +
+                                     $"(до обновления {DateTime.Now:yyyy-MM-dd HH-mm})";
+                    AddLog($"⚠️ В папке клиента есть посторонние файлы ({string.Join(", ", foreign)}) — " +
+                           $"прежнее содержимое папки будет сохранено в: {keepReplacedAs}");
+                }
+                installer.Install(extractPath, _clientPath, token, keepReplacedAs);
+                if (keepReplacedAs != null && Directory.Exists(keepReplacedAs))
+                {
+                    AddLog($"📁 Прежнее содержимое папки клиента сохранено: {keepReplacedAs}");
+                    if (!silent)
+                        Dispatcher.Invoke(() => MessageBox.Show(
+                            $"В папке клиента кроме него лежали другие файлы. Чтобы они не пропали, " +
+                            $"прежнее содержимое папки сохранено сюда:\n{keepReplacedAs}\n\n" +
+                            "Перенесите нужные файлы обратно или в другое место. Клиент лучше держать " +
+                            "в отдельной папке — например, «Перенести клиент» в настройках.",
+                            "Файлы сохранены", MessageBoxButton.OK, MessageBoxImage.Information));
+                }
 
                 Dispatcher.Invoke(() =>
                 {
@@ -571,6 +650,7 @@ namespace Ven4Tools.Launcher
                     progressDownload.Value = 100;
                 });
                 AddLog($"✅ Клиент {versionLabel} установлен");
+                _ = WatchClientFilesAfterWriteAsync(_clientPath);
 
                 // Пересчёт локального манифеста установленной версии — состав папки
                 // клиента только что заменён целиком, и прежний кэш ей больше не

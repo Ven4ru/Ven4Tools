@@ -162,6 +162,71 @@
                 </StackPanel>
             </GroupBox>
 
+            <!-- Сохранённые сети Wi-Fi (скрыт, если беспроводного адаптера нет) -->
+            <GroupBox x:Name="grpWifiProfiles" Header="📶 Сохранённые сети Wi-Fi" Margin="0,0,0,14"
+                      Visibility="{Binding WifiAvailable, Converter={StaticResource BoolToVis}}">
+                <StackPanel Margin="10">
+                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,8"
+                               Foreground="{DynamicResource TextSecondary}"
+                               Text="Пароли сетей, к которым этот компьютер уже подключался. Пароль показывается только по кнопке и никуда не сохраняется."/>
+                    <ItemsControl x:Name="lstWifiProfiles" ItemsSource="{Binding WifiNetworks}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="8,6" Margin="0,2" CornerRadius="7"
+                                        Background="{DynamicResource CardBackground}">
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimary}"/>
+                                                <!-- Поле НЕ IsReadOnly намеренно: такие поля переводчик интерфейса
+                                                     прогоняет через таблицу перевода, и пароль, совпавший с русской
+                                                     фразой, подменился бы. Привязка OneWay — правка в поле никуда не уходит. -->
+                                                <TextBox Text="{Binding PasswordText, Mode=OneWay}" IsUndoEnabled="False"
+                                                         BorderThickness="0" Background="Transparent" Padding="0"
+                                                         FontFamily="JetBrains Mono, Consolas" FontSize="12"
+                                                         AutomationProperties.Name="Пароль сети"
+                                                         Foreground="{DynamicResource TextSecondary}"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="{Binding PasswordButtonText}" Height="28" Padding="10,0" Margin="8,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    ToolTip="Покажет пароль этой сети, сохранённый в Windows. Повторное нажатие скроет его."
+                                                    Command="{Binding DataContext.ToggleWifiPasswordCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Grid.Column="2" Content="{Binding QrButtonText}" Height="28" Padding="10,0" Margin="6,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    ToolTip="Покажет QR-код: наведите на него камеру телефона, и он подключится к этой сети без ввода пароля."
+                                                    Command="{Binding DataContext.ToggleWifiQrCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding Note}" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   Visibility="{Binding HasNote, Converter={StaticResource BoolToVis}}"/>
+                                        <!-- QR всегда чёрный на белом: так его читает камера при любой теме -->
+                                        <Image Source="{Binding QrImage}" Width="220" Height="220" Margin="0,8,0,4"
+                                               HorizontalAlignment="Left" RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                               AutomationProperties.Name="QR-код сети Wi-Fi"
+                                               Visibility="{Binding HasQr, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button x:Name="btnRefreshWifi" Content="🔄 Обновить" Height="30" Width="100"
+                                ToolTip="Перечитает список сохранённых сетей Wi-Fi. Открытые пароли и QR-коды скроются."
+                                Command="{Binding RefreshWifiCommand}"/>
+                        <TextBlock Text="{Binding WifiStatusText}" TextWrapping="Wrap" FontSize="11" Margin="10,0,0,0"
+                                   VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
             <!-- Инструменты -->
             <GroupBox Header="⚙️ Инструменты" Margin="0,0,0,14">
                 <StackPanel Margin="10">

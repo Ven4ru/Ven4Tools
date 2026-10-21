@@ -120,6 +120,7 @@ namespace Ven4Tools.Launcher
             try
             {
                 AddLog($"📂 Установка из локального файла: {archivePath}");
+                using var keepAwake = SleepBlocker.Acquire("установка клиента из файла");
                 // FileShare.Read-хендл от проверки подписи до конца распаковки — та же
                 // защита от подмены (TOCTOU), что у сетевого пути (DownloadResult): архив
                 // выбран пользователем в папке, доступной на запись любому его процессу,
@@ -225,6 +226,7 @@ namespace Ven4Tools.Launcher
                 bool installed = await ExtractAndInstallClientAsync(archivePath, result.Version ?? "?", token, silent);
                 // Архив больше не нужен — не держим его занятым, пока висит сообщение ниже.
                 archiveGuard.Dispose();
+                if (installed) HideCancelButton();
                 if (installed && !silent)
                     Dispatcher.Invoke(() => MessageBox.Show(
                         $"Клиент {result.Version} успешно установлен в:\n{_clientPath}",

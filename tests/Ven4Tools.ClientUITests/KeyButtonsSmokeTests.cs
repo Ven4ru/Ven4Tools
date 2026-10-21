@@ -102,6 +102,8 @@ namespace Ven4Tools.ClientUITests
             GoTo("btnOfficeTab", "btnDownloadOffice", "Office");
             GoTo("btnActivationTab", "btnCheckStatus", "Лицензия");
             GoTo("btnDebloaterTab", "btnDebloatSelectAll", "Очистка");
+            GoTo("btnStartupTab", "btnStartupRefresh", "Автозагрузка");
+            GoTo("btnDiskSpaceTab", "btnDiskScan", "Место и файлы");
             GoTo("btnNetworkTab", "btnRunAll", "Сеть");
             GoTo("btnHistoryTab", "btnClearHistory", "История");
             GoTo("btnAboutTab", "btnGitHub", "О программе");

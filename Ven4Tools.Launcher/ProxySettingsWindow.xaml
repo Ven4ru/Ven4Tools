@@ -1,0 +1,58 @@
+<Window x:Class="Ven4Tools.Launcher.ProxySettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Прокси — Ven4Tools Launcher" Height="560" Width="440"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{DynamicResource WindowBackground}"
+        FontFamily="Segoe UI Variable Text, Segoe UI">
+    <!-- Л6. Ручная настройка сохраняется ТОЛЬКО после успешной проверки: неверный прокси
+         отрезал бы лаунчер от загрузок и от собственного обновления. -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+            <TextBlock Text="ПРОКСИ" Style="{StaticResource EyebrowStyle}" Margin="0,0,0,8"/>
+            <RadioButton x:Name="rbSystem" GroupName="ProxyMode" Margin="0,4"
+                         Foreground="{DynamicResource TextPrimary}" Checked="RbMode_Changed">
+                <TextBlock Text="Системный — как настроено в Windows (с учётной записью Windows)" TextWrapping="Wrap"/>
+            </RadioButton>
+            <RadioButton x:Name="rbManual" GroupName="ProxyMode" Margin="0,4"
+                         Foreground="{DynamicResource TextPrimary}" Checked="RbMode_Changed">
+                <TextBlock Text="Вручную" TextWrapping="Wrap"/>
+            </RadioButton>
+
+            <StackPanel x:Name="pnlManual" Margin="22,6,0,0">
+                <TextBlock Text="Адрес и порт (например, proxy.company.ru:3128)" FontSize="11"
+                           Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,4"/>
+                <TextBox x:Name="txtAddress" Height="28" Padding="6,4" TextChanged="Field_Changed"
+                         AutomationProperties.Name="Адрес прокси"/>
+                <TextBlock Text="Логин (если прокси требует)" FontSize="11"
+                           Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,4"/>
+                <TextBox x:Name="txtUser" Height="28" Padding="6,4" TextChanged="Field_Changed"
+                         AutomationProperties.Name="Логин прокси"/>
+                <TextBlock Text="Пароль" FontSize="11"
+                           Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,4"/>
+                <PasswordBox x:Name="pwdPassword" Height="28" Padding="6,4" PasswordChanged="Field_Changed"
+                             Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
+                             BorderBrush="{DynamicResource BorderBrush}" CaretBrush="{DynamicResource TextPrimary}"
+                             AutomationProperties.Name="Пароль прокси"/>
+                <TextBlock x:Name="txtPasswordHint" Visibility="Collapsed" FontSize="11" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"
+                           Text="Пароль сохранён. Оставьте поле пустым, чтобы не менять его."/>
+                <Button x:Name="btnTest" Content="Проверить" Height="32" Margin="0,10,0,0" Click="BtnTest_Click"
+                        ToolTip="Откроет version.json на CDN (или страницу релизов на GitHub) строго через указанный прокси."/>
+            </StackPanel>
+
+            <TextBlock x:Name="txtStatus" TextWrapping="Wrap" FontSize="12" Margin="0,12,0,0" Visibility="Collapsed"/>
+            <TextBlock x:Name="txtFlagOff" TextWrapping="Wrap" FontSize="11" Margin="0,8,0,0" Visibility="Collapsed"
+                       Foreground="{StaticResource StatusWarning}"
+                       Text="Ручной прокси временно отключён разработчиком (подписанный манифест обновлений) — сейчас действует системный."/>
+
+            <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextSecondary}" Margin="0,12,0,0"
+                       Text="Пароль хранится зашифрованным средствами Windows и расшифровывается только под вашей учётной записью на этом компьютере. Если прокси не отвечает, лаунчер пробует соединиться напрямую."/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button x:Name="btnSave" Content="Сохранить" Width="110" Height="34" Click="BtnSave_Click" ToolTip="Сохранит настройку. Ручной прокси сохраняется только после успешной проверки."/>
+                <Button Content="Отмена" Width="100" Height="34" IsCancel="True" Click="BtnCancel_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

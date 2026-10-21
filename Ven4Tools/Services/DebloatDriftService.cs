@@ -128,7 +128,7 @@ namespace Ven4Tools.Services
         private static bool IsDrifted(
             string category, string id, IDebloatSystemState system, IReadOnlyCollection<string>? installedAppx)
         {
-            if (category == "app")
+            if (DebloatTweakExecutor.IsAppxTweak(category, id))
             {
                 // Удаление идёт по вхождению имени (см. RemoveAppxAsync) — так же и ищем.
                 return installedAppx != null
