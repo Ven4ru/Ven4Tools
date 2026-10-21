@@ -316,10 +316,13 @@ namespace Ven4Tools.Launcher
                     switchingTo: (label, reason) =>
                     {
                         AddLog($"⚠️ Предыдущий источник {reason}, переключаюсь: {label}...");
+                        // Полосу прогресса не сбрасываем: следующий источник может
+                        // продолжить с того же байта (докачка), и откат к 0% выглядел бы
+                        // как начало заново. Если он начнёт с нуля — прогресс сам
+                        // покажет это первым же обновлением.
                         Dispatcher.BeginInvoke(() =>
                         {
-                            progressDownload.Value = 0;
-                            txtDownloadStatus.Text = "Скачивание: 0%";
+                            txtDownloadStatus.Text = $"Смена источника: {label}...";
                         });
                     });
                 string usedSource = downloadResult.SourceLabel;

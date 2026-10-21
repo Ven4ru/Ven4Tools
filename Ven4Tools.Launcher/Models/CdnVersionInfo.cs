@@ -34,6 +34,28 @@ namespace Ven4Tools.Launcher.Models
 
         [JsonPropertyName("historicalClientArchives")]
         public List<HistoricalClientArchive>? HistoricalClientArchives { get; set; }
+
+        // Выключатели новых веток поведения лаунчера — подписаны вместе со всем
+        // манифестом. Нужны, чтобы при сбое у живых пользователей выключить поведение
+        // без выпуска новой версии лаунчера. Объекта нет — всё по умолчанию
+        // (см. LauncherFlags и LauncherFeatureFlags).
+        [JsonPropertyName("launcher_flags")]
+        public LauncherFlags? LauncherFlags { get; set; }
+    }
+
+    /// <summary>
+    /// Флаги поведения лаунчера из подписанного version.json. Каждое поле — bool?:
+    /// отсутствие поля (null) всегда означает значение по умолчанию, поэтому старый
+    /// манифест без объекта и новый с пустым объектом ведут себя одинаково. Схема
+    /// согласована в договоре стыков (раздел «Лаунчер 3.12.0»).
+    /// </summary>
+    public class LauncherFlags
+    {
+        // Детектор «зависшей» загрузки и докачка с того же байта на следующем
+        // источнике (FallbackDownloader). null/нет поля — ВКЛ; false — поведение 3.11:
+        // простой 60 с, каждый источник качается с нуля.
+        [JsonPropertyName("stall_detection")]
+        public bool? StallDetection { get; set; }
     }
 
     public class CdnClientInfo

@@ -100,6 +100,12 @@ namespace Ven4Tools.Launcher
             _dataFolderPath = appData;
 
             LoadSettings();
+            // Флаг поведения из свежего подписанного манифеста сохраняется сразу:
+            // выключатель должен пережить перезапуск, даже если CDN потом недоступен.
+            LauncherFeatureFlags.Changed += () =>
+            {
+                try { Dispatcher.BeginInvoke(SaveSettings); } catch { /* завершение приложения */ }
+            };
             ApplyUiMode();
             if (_isUiTestMode)
                 _minimizeToTray = false;
@@ -373,6 +379,9 @@ namespace Ven4Tools.Launcher
             public string? LastNotifiedNotificationId  { get; set; }
             // Вид окна: "modern" (по умолчанию) или "classic" — см. MainWindow.UiMode.cs.
             public string? UiMode                      { get; set; }
+            // Последнее подтверждённое подписью значение флага манифеста
+            // launcher_flags.stall_detection (null — манифест ещё не получали).
+            public bool?   LauncherFlagStallDetection  { get; set; }
         }
     }
 }
