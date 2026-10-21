@@ -56,6 +56,7 @@ namespace Ven4Tools.Launcher
                 {
                     var absent = ClientIntegrityReport.NotInstalled();
                     AddLog($"🩺 Проверка: {absent.Summary}");
+                    ExplainMissingClientExe(_clientPath);
                     return absent;
                 }
 
@@ -308,6 +309,7 @@ namespace Ven4Tools.Launcher
 
                 AddLog($"✅ Клиент восстановлен: заменено файлов {plan.ToDownload.Count}, " +
                        $"удалено лишних {plan.ToDelete.Count}");
+                _ = WatchClientFilesAfterWriteAsync(clientPath);
                 return true;
             }
             catch (OperationCanceledException)

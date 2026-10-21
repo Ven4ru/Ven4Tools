@@ -385,7 +385,7 @@ namespace Ven4Tools.Launcher
                 txtDownloadStatus.Text = "Ошибка";
                 SetOperationStage(0);
                 AddLog($"❌ Ошибка скачивания: {ex.Message}");
-                if (!silent)
+                if (!silent && !ShowWriteFailureExplanation(ex, version.ExpectedSha256))
                     MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -572,6 +572,7 @@ namespace Ven4Tools.Launcher
                     progressDownload.Value = 100;
                 });
                 AddLog($"✅ Клиент {versionLabel} установлен");
+                _ = WatchClientFilesAfterWriteAsync(_clientPath);
 
                 // Пересчёт локального манифеста установленной версии — состав папки
                 // клиента только что заменён целиком, и прежний кэш ей больше не
