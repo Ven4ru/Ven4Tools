@@ -672,7 +672,10 @@
                                     Padding="0,0,0,6">
                                 <TabPanel IsItemsHost="True" KeyboardNavigation.TabIndex="1" Background="Transparent"/>
                             </Border>
-                            <ContentPresenter Grid.Row="1" ContentSource="SelectedContent"
+                            <!-- Имя PART_SelectedContentHost обязательно: по нему автоматизация
+                                 Windows (UI-тесты, экранный диктор) находит содержимое выбранной
+                                 вкладки. Без него элементы страницы для неё невидимы. -->
+                            <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Row="1" ContentSource="SelectedContent"
                                               Margin="{TemplateBinding Padding}"
                                               KeyboardNavigation.TabNavigation="Local"
                                               KeyboardNavigation.DirectionalNavigation="Contained"
