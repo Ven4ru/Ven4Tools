@@ -210,6 +210,10 @@ namespace Ven4Tools.Launcher
 
             AddLog($"📥 Скачивание клиента {version.Version}...");
 
+            // Компьютер не уходит в сон до конца загрузки и установки (снимается при
+            // выходе из метода любым путём — см. SleepBlocker).
+            using var keepAwake = SleepBlocker.Acquire("загрузка и установка клиента");
+
             string tempZip = Path.Combine(
                 Path.GetTempPath(),
                 $"Ven4Tools_Client_{version.Version}_{Guid.NewGuid():N}.zip");
