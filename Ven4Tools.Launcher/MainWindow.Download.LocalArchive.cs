@@ -120,6 +120,7 @@ namespace Ven4Tools.Launcher
             try
             {
                 AddLog($"📂 Установка из локального файла: {archivePath}");
+                using var keepAwake = SleepBlocker.Acquire("установка клиента из файла");
                 // FileShare.Read-хендл от проверки подписи до конца распаковки — та же
                 // защита от подмены (TOCTOU), что у сетевого пути (DownloadResult): архив
                 // выбран пользователем в папке, доступной на запись любому его процессу,

@@ -38,6 +38,8 @@ namespace Ven4Tools.Launcher
                         // Любое значение, кроме «classic», — новый вид: так его получают
                         // и те, у кого настройки записаны прежней версией лаунчера.
                         _uiMode                      = settings.UiMode ?? UiModeModern;
+                        _deferUpdatesOnMetered       = settings.DeferUpdatesOnMetered;
+                        LauncherFeatureFlags.Seed(settings.LauncherFlagStallDetection);
                     }
                 }
             }
@@ -49,7 +51,12 @@ namespace Ven4Tools.Launcher
             }
         }
 
-        private void SaveSettings()
+        private void SaveSettings() => TrySaveSettings();
+
+        // false — записать не удалось (причина уже в журнале). Нужен переносу клиента:
+        // смена указателя на новую папку считается состоявшейся только после того, как
+        // она действительно легла на диск.
+        private bool TrySaveSettings()
         {
             try
             {
@@ -67,16 +74,20 @@ namespace Ven4Tools.Launcher
                     LastNotifiedLauncherVersion = _lastNotifiedLauncherVersion,
                     LastNotifiedClientVersion   = _lastNotifiedClientVersion,
                     LastNotifiedNotificationId  = _lastNotifiedNotificationId,
-                    UiMode                      = _uiMode
+                    UiMode                      = _uiMode,
+                    DeferUpdatesOnMetered       = _deferUpdatesOnMetered,
+                    LauncherFlagStallDetection  = (bool?)LauncherFeatureFlags.StallDetectionEnabled
                 };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented);
                 FileHelper.WriteAllTextAtomic(_settingsPath, json);
+                return true;
             }
             catch (Exception ex)
             {
                 // Иначе выглядит как «настройка не сохраняется» — переключатель встаёт
                 // в новое положение, а после перезапуска возвращается к прежнему.
                 AddLog($"⚠️ Не удалось сохранить настройки лаунчера: {ex.Message}");
+                return false;
             }
         }
 

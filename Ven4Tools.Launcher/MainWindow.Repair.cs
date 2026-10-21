@@ -197,6 +197,7 @@ namespace Ven4Tools.Launcher
                 }
 
                 AddLog("🛠 Восстановление файлов клиента...");
+                using var keepAwake = SleepBlocker.Acquire("восстановление файлов клиента");
                 using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, lease.Token);
                 var checker = new ClientIntegrityChecker(_httpClient, this);
                 return await checker.RepairAsync(report, _clientPath, linked.Token);

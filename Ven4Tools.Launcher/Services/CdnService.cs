@@ -88,6 +88,7 @@ namespace Ven4Tools.Launcher.Services
             {
                 var info = await FetchAndVerifyAsync(_httpClient, token);
                 CacheCdnIp(info?.CdnIp);
+                ApplyFlags(info);
                 if (info == null)
                     _log?.Invoke("подпись манифеста CDN не подтверждена (version.json.sig)");
                 return info;
@@ -124,6 +125,7 @@ namespace Ven4Tools.Launcher.Services
                 var pinned = IpPinnedHttpClientFactory.GetOrCreate(ip, TimeSpan.FromSeconds(TimeoutSeconds));
                 var info = await FetchAndVerifyAsync(pinned, token);
                 CacheCdnIp(info?.CdnIp);
+                ApplyFlags(info);
                 if (info == null)
                     _log?.Invoke($"по прямому IP {ip} подпись манифеста не подтверждена");
                 return info;
@@ -187,6 +189,14 @@ namespace Ven4Tools.Launcher.Services
         private static void CacheCdnIp(string? ip)
         {
             if (IsValidIp(ip)) _lastKnownCdnIp = ip;
+        }
+
+        // Флаги поведения — только из манифеста с подтверждённой подписью: null здесь
+        // означает «манифест не получен или подпись не сошлась», и тогда действующие
+        // значения не трогаем (а не сбрасываем на умолчания).
+        private static void ApplyFlags(CdnVersionInfo? info)
+        {
+            if (info != null) LauncherFeatureFlags.Apply(info.LauncherFlags);
         }
 
         private static bool IsValidIp(string? ip) =>
