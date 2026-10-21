@@ -38,6 +38,7 @@ namespace Ven4Tools
             {
                 btnCatalogTab, btnInstalledTab, btnSystemTab, btnDiagnosticsTab, btnBenchmarkTab,
                 gridWindowsUpdateNav, btnOfficeTab, btnActivationTab, btnDebloaterTab,
+                btnStartupTab, btnDiskSpaceTab,
                 btnNetworkTab, btnHistoryTab, btnAboutTab
             };
             foreach (var element in movable)
@@ -47,7 +48,8 @@ namespace Ven4Tools
             {
                 slotCatalog.Children.Add(btnCatalogTab);
                 slotInstalled.Children.Add(btnInstalledTab);
-                foreach (var element in new FrameworkElement[] { gridWindowsUpdateNav, btnOfficeTab, btnActivationTab, btnDebloaterTab })
+                foreach (var element in new FrameworkElement[]
+                         { gridWindowsUpdateNav, btnOfficeTab, btnActivationTab, btnDebloaterTab, btnStartupTab, btnDiskSpaceTab })
                     pnlGroupWindows.Children.Add(element);
                 foreach (var element in new FrameworkElement[] { btnNetworkTab, btnDiagnosticsTab, btnBenchmarkTab })
                     pnlGroupService.Children.Add(element);
