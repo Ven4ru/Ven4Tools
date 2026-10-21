@@ -1,4 +1,4 @@
-; ============================================================================
+﻿; ============================================================================
 ; Ven4Tools.Setup.nsi — установщик Ven4Tools Launcher
 ; ============================================================================
 ; Компиляция (из корня репозитория):
@@ -157,8 +157,8 @@ LangString NAME_SecChoco     ${LANG_ENGLISH} "Install Chocolatey (optional)"
 LangString NAME_UninstallLink ${LANG_RUSSIAN} "Удалить ${APP_NAME}"
 LangString NAME_UninstallLink ${LANG_ENGLISH} "Uninstall ${APP_NAME}"
 
-LangString TEXT_RemoveData ${LANG_RUSSIAN} "Удалить пользовательские данные?$\r$\n$\r$\nБудут удалены: логи, настройки и сохранённая сессия.$\r$\nПапка: ${DATA_DIR}$\r$\n$\r$\nПапка клиента Ven4Tools, если она находится вне этой папки (по умолчанию — в «Документах»), не удаляется — её можно удалить кнопкой «Удалить клиент» в лаунчере до деинсталляции."
-LangString TEXT_RemoveData ${LANG_ENGLISH} "Delete user data?$\r$\n$\r$\nThis removes logs, settings and the saved session.$\r$\nFolder: ${DATA_DIR}$\r$\n$\r$\nThe Ven4Tools client folder, if it is outside this folder (by default it is in Documents), is not removed — you can remove it with the “Uninstall client” button in the launcher before uninstalling."
+LangString TEXT_RemoveData ${LANG_RUSSIAN} "Удалить пользовательские данные?$\r$\n$\r$\nБудут удалены: логи, настройки и сохранённая сессия.$\r$\nПапка: ${DATA_DIR}$\r$\n$\r$\nПапка клиента Ven4Tools, если она находится вне этой папки (по умолчанию — в %LOCALAPPDATA%\Programs\Ven4Tools, у установок до версии 3.12 — в «Документах»), не удаляется — её можно удалить кнопкой «Удалить клиент» в лаунчере до деинсталляции."
+LangString TEXT_RemoveData ${LANG_ENGLISH} "Delete user data?$\r$\n$\r$\nThis removes logs, settings and the saved session.$\r$\nFolder: ${DATA_DIR}$\r$\n$\r$\nThe Ven4Tools client folder, if it is outside this folder (by default it is in %LOCALAPPDATA%\Programs\Ven4Tools, or in Documents for installs made before version 3.12), is not removed — you can remove it with the “Uninstall client” button in the launcher before uninstalling."
 
 ; ============================================================================
 ; Параметры командной строки (режим самообновления)
@@ -610,7 +610,8 @@ Section "Uninstall"
 
   ; Пользовательские данные — спрашиваем явно.
   ; При тихой деинсталляции (/S) по умолчанию НЕ удаляем (/SD IDNO).
-  ; Клиент по умолчанию ставится в «Документы» (или в папку, выбранную в лаунчере),
+  ; Клиент по умолчанию ставится в %LOCALAPPDATA%\Programs\Ven4Tools (до 3.12 — в «Документы»)
+  ; или в папку, выбранную в лаунчере,
   ; а не в ${DATA_DIR} — обещать его удаление здесь нельзя: удаляется только то,
   ; что лежит внутри этой папки (клиент — лишь при старой раскладке рядом с лаунчером).
   MessageBox MB_YESNO|MB_ICONQUESTION "$(TEXT_RemoveData)" /SD IDNO IDNO skip_data
