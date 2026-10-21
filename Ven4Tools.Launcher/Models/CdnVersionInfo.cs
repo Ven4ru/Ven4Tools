@@ -56,6 +56,20 @@ namespace Ven4Tools.Launcher.Models
         // простой 60 с, каждый источник качается с нуля.
         [JsonPropertyName("stall_detection")]
         public bool? StallDetection { get; set; }
+
+        // --- Прокси (Services/LauncherProxy.cs, LauncherHttp.cs). null = ВКЛ. ---
+
+        // false — ручной прокси из настроек не применяется, режим «Системный» (как 3.11).
+        [JsonPropertyName("proxy_manual")]
+        public bool? ProxyManual { get; set; }
+
+        // false — системному прокси НЕ передаются учётные данные Windows (как 3.11).
+        [JsonPropertyName("proxy_default_credentials")]
+        public bool? ProxyDefaultCredentials { get; set; }
+
+        // false — при ошибке прокси запрос НЕ повторяется напрямую (как 3.11).
+        [JsonPropertyName("proxy_direct_fallback")]
+        public bool? ProxyDirectFallback { get; set; }
     }
 
     public class CdnClientInfo
@@ -137,6 +151,12 @@ namespace Ven4Tools.Launcher.Models
         // SHA256 установщика лаунчера для проверки целостности после скачивания.
         [JsonPropertyName("setup_sha256")]
         public string? SetupSha256 { get; set; }
+
+        // SHA256 УСТАНОВЛЕННОГО Ven4Tools.Launcher.exe этой версии (того, что установщик
+        // кладёт в %LOCALAPPDATA%\Ven4Tools\Launcher). Только для «Проверить подлинность»
+        // (Services/AuthenticityChecker.cs) — в загрузке не участвует. Нет поля = «нет данных».
+        [JsonPropertyName("installed_exe_sha256")]
+        public string? InstalledExeSha256 { get; set; }
     }
 
     public class HistoricalClientArchive

@@ -52,6 +52,13 @@ namespace Ven4Tools.Launcher.Services
         {
             var handler = new SocketsHttpHandler
             {
+                // Строго напрямую, мимо любого прокси. При прокси SocketsHttpHandler зовёт
+                // ConnectCallback для подключения к САМОМУ ПРОКСИ — и колбэк ниже соединил бы
+                // сокет с IP CDN вместо прокси (так и было до 3.12 при системном прокси).
+                // Обход DNS через прокси смысла не имеет: имя резолвит прокси. За
+                // обязательным прокси этот источник честно отказывает, и цепочка источников
+                // идёт дальше (CDN по домену, зеркало, GitHub — через прокси, LauncherHttp).
+                UseProxy = false,
                 ConnectCallback = async (context, cancellationToken) =>
                 {
                     var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
