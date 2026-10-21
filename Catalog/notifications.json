@@ -1,11 +1,4 @@
 {
   "version": 1,
-  "notifications": [
-    {
-      "id": "release-5.3.0-office",
-      "title": "Ven4Tools 5.3.0",
-      "message": "На вкладке Office теперь можно удалить установленный Office или заменить его другой версией или языком. Плюс исправления установки через winget и надёжное обновление даже при недоступном CDN.",
-      "type": "info"
-    }
-  ]
+  "notifications": []
 }
