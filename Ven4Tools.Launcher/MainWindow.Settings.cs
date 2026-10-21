@@ -51,7 +51,12 @@ namespace Ven4Tools.Launcher
             }
         }
 
-        private void SaveSettings()
+        private void SaveSettings() => TrySaveSettings();
+
+        // false — записать не удалось (причина уже в журнале). Нужен переносу клиента:
+        // смена указателя на новую папку считается состоявшейся только после того, как
+        // она действительно легла на диск.
+        private bool TrySaveSettings()
         {
             try
             {
@@ -75,12 +80,14 @@ namespace Ven4Tools.Launcher
                 };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented);
                 FileHelper.WriteAllTextAtomic(_settingsPath, json);
+                return true;
             }
             catch (Exception ex)
             {
                 // Иначе выглядит как «настройка не сохраняется» — переключатель встаёт
                 // в новое положение, а после перезапуска возвращается к прежнему.
                 AddLog($"⚠️ Не удалось сохранить настройки лаунчера: {ex.Message}");
+                return false;
             }
         }
 

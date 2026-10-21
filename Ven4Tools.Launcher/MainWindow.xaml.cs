@@ -170,6 +170,11 @@ namespace Ven4Tools.Launcher
             if (!_isUiTestMode)
                 StartBackgroundService();
 
+            // Состояние «Контролируемого доступа к папкам» — запрос WMI в фоне заранее,
+            // чтобы предупреждение при выборе папки не ждало его на UI-потоке.
+            if (!_isUiTestMode)
+                _ = InstallLocationRisk.GetCfaStatusAsync();
+
             Loaded += async (s, e) =>
             {
                 if (_isUiTestMode)
@@ -187,6 +192,11 @@ namespace Ven4Tools.Launcher
                         ExitApplication();
                         return;
                     }
+
+                    // Остатки прерванного переноса клиента (см. MainWindow.Download.Move.cs)
+                    // и подсказка, если клиент уже стоит в OneDrive или под CFA.
+                    await RecoverInterruptedClientMoveAsync();
+                    _ = ReportClientLocationRiskAsync();
 
                     if (_startMinimized)
                     {
@@ -245,43 +255,40 @@ namespace Ven4Tools.Launcher
 
         /// <summary>
         /// Куда ставить клиент, когда в настройках пути ещё нет (первый запуск).
-        /// По умолчанию — «Документы» пользователя: раньше здесь стояла папка самого
-        /// лаунчера (<c>%LocalAppData%\Ven4Tools\Launcher</c>), и клиент разворачивался
-        /// внутри служебного каталога профиля, куда пользователь не заглядывает и где
-        /// его не ожидает найти.
+        /// По умолчанию — %LocalAppData%\Programs\Ven4Tools (см.
+        /// <see cref="LauncherPaths.DefaultInstallRoot"/>): вне OneDrive и вне папок под
+        /// «Контролируемым доступом к папкам» Defender, без UAC.
         ///
-        /// Исключение — уже установленный клиент рядом с exe лаунчера: так работали
-        /// все версии до этой, и смена умолчания не должна «терять» рабочую копию у
-        /// того, у кого настройки не сохранились (битый или удалённый
-        /// launcher_settings.json). Такой пользователь остаётся на своём месте, а
-        /// перенести папку может кнопкой «Изменить…» в карточке пути.
+        /// Прежние умолчания не должны «терять» рабочую копию у того, у кого настройки
+        /// не сохранились (битый или удалённый launcher_settings.json): уже
+        /// установленный клиент рядом с exe лаунчера (так работали версии до 3.x) или
+        /// в «Документах» (умолчание до 3.12) остаётся на своём месте. Перенести его
+        /// можно кнопкой «Перенести клиент» в настройках — сам по себе он не переезжает.
         /// </summary>
         private static string ResolveInitialInstallRoot()
         {
             string legacyRoot = AppDomain.CurrentDomain.BaseDirectory;
             try
             {
-                if (File.Exists(Path.Combine(legacyRoot, "Ven4Tools_Client", "Ven4Tools.exe")))
+                if (File.Exists(Path.Combine(legacyRoot, LauncherPaths.ClientFolderName, LauncherPaths.ClientExeName)))
                     return legacyRoot;
             }
-            catch { /* путь недоступен — просто идём за «Документами» */ }
+            catch { /* путь недоступен — идём дальше */ }
 
             try
             {
-                // SpecialFolderOption.Create: папка «Документы» может быть перенаправлена
-                // (OneDrive, сетевой профиль) и физически ещё не существовать — тогда её
-                // создаёт сама ОС по актуальному пути перенаправления.
-                string documents = Environment.GetFolderPath(
-                    Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.Create);
-                if (!string.IsNullOrWhiteSpace(documents) && Directory.Exists(documents))
+                // Без SpecialFolderOption.Create: здесь только проверка, есть ли там
+                // клиент, — создавать «Документы» ради неё незачем.
+                string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                if (!string.IsNullOrWhiteSpace(documents) &&
+                    File.Exists(Path.Combine(documents, LauncherPaths.ClientFolderName, LauncherPaths.ClientExeName)))
                     return documents;
             }
-            catch { /* перенаправление на недоступный диск и т.п. — откат ниже */ }
+            catch { /* перенаправление на недоступный диск и т.п. — новое умолчание ниже */ }
 
-            // Крайний случай: «Документы» недоступны. Профиль пользователя есть всегда,
-            // и он точно доступен на запись — лучше, чем вернуться в каталог лаунчера.
-            string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            return string.IsNullOrWhiteSpace(profile) ? legacyRoot : profile;
+            // Саму папку здесь не создаём (см. комментарий в конструкторе): она
+            // появится вместе с первой установкой клиента.
+            return LauncherPaths.DefaultInstallRoot;
         }
 
         // Показ отложенных модальных отчётов при старте: крэш клиента и неуспешные

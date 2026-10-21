@@ -53,7 +53,10 @@ namespace Ven4Tools.Launcher
             };
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                _installPath = dialog.SelectedPath;
+                string? chosen = ConfirmInstallLocation(dialog.SelectedPath);
+                if (chosen == null) return;
+
+                _installPath = chosen;
                 _clientPath  = Path.Combine(_installPath, "Ven4Tools_Client");
                 // Заранее не создаём — выбор папки ещё не означает установку;
                 // каталог появится вместе с первой установкой клиента.
@@ -62,6 +65,37 @@ namespace Ven4Tools.Launcher
                 AddLog($"📁 Папка установки изменена: {_clientPath}");
                 CheckExistingClient();
             }
+        }
+
+        /// <summary>
+        /// Предупреждение о рискованной папке установки (OneDrive, «Контролируемый
+        /// доступ к папкам»). Возвращает папку, которую использовать: выбранную,
+        /// безопасную по умолчанию или null — пользователь передумал. Нет рисков (или нет
+        /// данных о CFA) — выбранная папка без вопросов.
+        /// </summary>
+        private string? ConfirmInstallLocation(string selectedRoot)
+        {
+            // Состояние CFA запрошено при старте; если ответ ещё не пришёл — «нет
+            // данных», и по CFA не предупреждаем (OneDrive проверяется всегда).
+            var risk = InstallLocationRisk.Assess(selectedRoot, InstallLocationRisk.CfaStatusIfReady());
+            if (!risk.IsRisky) return selectedRoot;
+
+            string safeRoot = LauncherPaths.DefaultInstallRoot;
+            AddLog($"⚠️ Выбранная папка установки может мешать работе клиента: {selectedRoot}\n{risk.Describe()}");
+
+            var answer = MessageBox.Show(
+                $"Выбранная папка:\n{selectedRoot}\n\n{risk.Describe()}\n\n" +
+                $"«Да» — выбрать безопасную папку:\n{safeRoot}\n" +
+                "«Нет» — всё равно использовать выбранную.\n" +
+                "«Отмена» — ничего не менять.",
+                "Папка установки", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Yes);
+
+            return answer switch
+            {
+                MessageBoxResult.Yes => safeRoot,
+                MessageBoxResult.No => selectedRoot,
+                _ => null,
+            };
         }
 
         // Что именно сделала зачистка остатков прерванной установки. Нужен только для
