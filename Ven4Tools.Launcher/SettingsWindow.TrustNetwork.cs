@@ -14,12 +14,12 @@ namespace Ven4Tools.Launcher
 
         private void RefreshProxyStatus()
         {
-            string text = LauncherProxy.EffectiveMode == ProxyMode.Manual
-                ? "Сейчас: вручную (адрес задан в лаунчере)."
-                : "Сейчас: системный — как настроено в Windows.";
             if (LauncherProxy.Mode == ProxyMode.Manual && !LauncherProxy.ManualAllowed)
-                text += " Ручной прокси временно отключён разработчиком.";
-            txtProxyStatus.Text = text;
+                txtProxyStatus.Text = "Сейчас: системный — как настроено в Windows. Ручной прокси временно отключён разработчиком.";
+            else
+                txtProxyStatus.Text = LauncherProxy.EffectiveMode == ProxyMode.Manual
+                    ? "Сейчас: вручную (адрес задан в лаунчере)."
+                    : "Сейчас: системный — как настроено в Windows.";
         }
 
         private void BtnProxySettings_Click(object sender, RoutedEventArgs e)

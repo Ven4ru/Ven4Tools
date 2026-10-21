@@ -350,7 +350,7 @@ namespace Ven4Tools.Launcher.Services
                 sb.AppendLine("Установленный антивирус: Центр безопасности Windows не сообщил ни одного.");
             else
                 sb.AppendLine("Установленный антивирус: " + string.Join(", ", products.Select(p =>
-                    p.Name + (p.Enabled == false ? " (защита, похоже, выключена)" : ""))) + ".");
+                    p.Enabled == false ? $"{p.Name} (защита, похоже, выключена)" : p.Name)) + ".");
 
             sb.AppendLine();
             sb.AppendLine("Ven4Tools не содержит вредоносного кода, но новые версии без «репутации» иногда принимают за угрозу. " +

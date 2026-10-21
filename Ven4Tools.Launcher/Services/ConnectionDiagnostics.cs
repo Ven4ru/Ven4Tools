@@ -423,8 +423,10 @@ namespace Ven4Tools.Launcher.Services
                 if (p.BytesRead > 0 || p.Stalled)
                 {
                     string speed = p.SpeedKBps is { } k ? FormatSpeed(k) : p.SpeedMeasured ? "нет данных" : "не замерялась (нет адреса файла)";
-                    sb.AppendLine($"  Получено: {p.BytesRead / 1024} КБ за {p.Seconds.ToString("0.0", CultureInfo.InvariantCulture)} с; скорость: {speed}" +
-                                  (p.Stalled ? "; ПОТОК ЗАМЕР" : ""));
+                    string seconds = p.Seconds.ToString("0.0", CultureInfo.InvariantCulture);
+                    sb.AppendLine(p.Stalled
+                        ? $"  Получено: {p.BytesRead / 1024} КБ за {seconds} с; скорость: {speed}; ПОТОК ЗАМЕР"
+                        : $"  Получено: {p.BytesRead / 1024} КБ за {seconds} с; скорость: {speed}");
                 }
             }
             sb.AppendLine();
@@ -440,9 +442,19 @@ namespace Ven4Tools.Launcher.Services
             null => "не проверялось",
         };
 
-        private static string FormatSkew(TimeSpan s) =>
-            (s > TimeSpan.Zero ? "часы ПК отстают на " : "часы ПК спешат на ") +
-            (s.Duration().TotalDays >= 1 ? $"{(int)s.Duration().TotalDays} дн." : $"{(int)s.Duration().TotalMinutes} мин.");
+        // Каждый вариант — целый шаблон: склейку из кусков языковой пакет не переводит.
+        private static string FormatSkew(TimeSpan s)
+        {
+            bool behind = s > TimeSpan.Zero;
+            var d = s.Duration();
+            if (d.TotalDays >= 1)
+            {
+                int days = (int)d.TotalDays;
+                return behind ? $"часы ПК отстают на {days} дн." : $"часы ПК спешат на {days} дн.";
+            }
+            int minutes = (int)d.TotalMinutes;
+            return behind ? $"часы ПК отстают на {minutes} мин." : $"часы ПК спешат на {minutes} мин.";
+        }
 
         /// <summary>Описание прокси без адреса и логина (они могут быть внутренними данными организации).</summary>
         private static string DescribeProxy()

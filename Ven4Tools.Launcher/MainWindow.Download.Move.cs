@@ -97,7 +97,7 @@ namespace Ven4Tools.Launcher
                     StagingPath = stagingPath,
                 }.Save(journalPath);
 
-                txtDownloadStatus.Text = "Перенос: проверка файлов...";
+                SetMoveStatus("Перенос: проверка файлов...");
                 var manifest = await Task.Run(() => ClientFolderManifest.CaptureAsync(oldClientPath, lease.Token));
                 AddLog($"🔒 Манифест переноса: файлов {manifest.FileCount}, {manifest.TotalBytes / (1024 * 1024)} МБ");
 
@@ -105,7 +105,7 @@ namespace Ven4Tools.Launcher
                 string? refusalBySpace = CheckFreeSpace(newClientPath, manifest.TotalBytes);
                 if (refusalBySpace != null) throw new IOException(refusalBySpace);
 
-                txtDownloadStatus.Text = "Перенос: копирование...";
+                SetMoveStatus("Перенос: копирование...");
                 long total = Math.Max(1, manifest.TotalBytes);
                 await Task.Run(() => ClientFolderMover.CopyTreeAsync(oldClientPath, stagingPath, copied =>
                 {
@@ -119,7 +119,7 @@ namespace Ven4Tools.Launcher
                 Directory.Move(stagingPath, newClientPath);
                 newCopyCommitted = true;
 
-                txtDownloadStatus.Text = "Перенос: проверка копии...";
+                SetMoveStatus("Перенос: проверка копии...");
                 string? difference = await Task.Run(() => manifest.FindDifferenceAsync(newClientPath, lease.Token));
                 if (difference != null)
                     throw new IOException($"копия клиента не совпала с оригиналом ({difference})");
@@ -140,7 +140,7 @@ namespace Ven4Tools.Launcher
                 txtInstallPath.Text = _clientPath;
                 AddLog($"📁 Клиент теперь запускается из: {_clientPath}");
 
-                txtDownloadStatus.Text = "Перенос: ярлыки...";
+                SetMoveStatus("Перенос: ярлыки...");
                 var shortcuts = await Task.Run(() =>
                     ClientShortcutRetargeter.Retarget(oldClientPath, newClientPath, AddLog));
                 if (shortcuts.Updated > 0)
@@ -148,7 +148,7 @@ namespace Ven4Tools.Launcher
                 foreach (string failed in shortcuts.Failed)
                     AddLog($"⚠️ Ярлык не обновлён (нужны права администратора или он занят): {failed}");
 
-                txtDownloadStatus.Text = "Перенос: удаление старой папки...";
+                SetMoveStatus("Перенос: удаление старой папки...");
                 bool oldRemoved = await RemoveOldClientCopyAsync(oldClientPath, newClientPath);
                 if (oldRemoved)
                 {
@@ -198,8 +198,11 @@ namespace Ven4Tools.Launcher
             finally
             {
                 SetMoveUiBusy(false);
-                if (txtDownloadStatus.Text.StartsWith("Перенос", StringComparison.Ordinal))
+                // Сравнение с запомненным текстом, а не с «Перенос…»: в английском интерфейсе
+                // в строке состояния уже перевод.
+                if (_moveStatus != null && txtDownloadStatus.Text == _moveStatus)
                     txtDownloadStatus.Text = "";
+                _moveStatus = null;
                 SetOperationStage(0);
             }
         }
@@ -320,6 +323,16 @@ namespace Ven4Tools.Launcher
         }
 
         // Те же кнопки, что гасит загрузка: перенос делит с ней папку клиента.
+        // Текст, который показал перенос, — уже в том виде, в каком его вернула строка состояния
+        // (в английском интерфейсе — перевод). По нему в конце понятно, чистить ли строку.
+        private string? _moveStatus;
+
+        private void SetMoveStatus(string text)
+        {
+            txtDownloadStatus.Text = text;
+            _moveStatus = txtDownloadStatus.Text;
+        }
+
         private void SetMoveUiBusy(bool busy)
         {
             btnLaunchApp.IsEnabled = !busy;
