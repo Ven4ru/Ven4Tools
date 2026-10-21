@@ -672,8 +672,8 @@
     "t": "DISM did not report the feature state."
   },
   {
-    "s": "DNS не находит cdn.ven4tools.ru (похоже на блокировку по DNS) — лаунчер обходит её прямым IP, загрузка работает.",
-    "t": "DNS cannot find cdn.ven4tools.ru (looks like DNS blocking) — the launcher bypasses it via a direct IP, downloads work."
+    "s": "DNS не находит cdn.ven4tools.ru — лаунчер подключается к нему по IP-адресу, загрузка работает.",
+    "t": "DNS cannot resolve cdn.ven4tools.ru — the launcher connects to it by IP address, downloads work."
   },
   {
     "s": "Dr.Web: сообщить о ложном срабатывании",
