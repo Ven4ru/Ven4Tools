@@ -46,9 +46,7 @@ namespace Ven4Tools.Launcher.Services
 
         private static HttpClient CreateClient()
         {
-            var client = new HttpClient { Timeout = TimeSpan.FromSeconds(TimeoutSeconds) };
-            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools.Launcher");
-            return client;
+            return LauncherHttp.CreateClient(TimeSpan.FromSeconds(TimeoutSeconds));
         }
 
         // Куда сообщать причину отказа. Раньше её не было вовсе: и сетевая ошибка, и
@@ -144,7 +142,9 @@ namespace Ven4Tools.Launcher.Services
         {
             string json = await BoundedHttpText.GetStringAsync(client, VersionUrl, token);
             string signature = await BoundedHttpText.GetStringAsync(client, VersionSignatureUrl, token);
-            return ParseVerified(json, signature);
+            var info = ParseVerified(json, signature);
+            if (info != null) LauncherProxy.ApplyManifestFlags(info.LauncherFlags);
+            return info;
         }
 
         /// <summary>

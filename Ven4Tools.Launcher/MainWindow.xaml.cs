@@ -21,9 +21,7 @@ namespace Ven4Tools.Launcher
 
         private static HttpClient CreateHttpClient()
         {
-            var client = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
-            client.DefaultRequestHeaders.Add("User-Agent", "Ven4Tools-Launcher");
-            return client;
+            return LauncherHttp.CreateClient(Timeout.InfiniteTimeSpan, "Ven4Tools-Launcher");
         }
 
         private NotifyIcon?          _notifyIcon;

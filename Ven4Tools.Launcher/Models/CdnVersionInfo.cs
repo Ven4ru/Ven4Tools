@@ -34,6 +34,34 @@ namespace Ven4Tools.Launcher.Models
 
         [JsonPropertyName("historicalClientArchives")]
         public List<HistoricalClientArchive>? HistoricalClientArchives { get; set; }
+
+        // Выключатели поведения лаунчера (подписаны вместе со всем манифестом).
+        // Нет объекта — все поведения по умолчанию (см. LauncherFlags).
+        [JsonPropertyName("launcher_flags")]
+        public LauncherFlags? LauncherFlags { get; set; }
+    }
+
+    /// <summary>
+    /// Выключатели новых веток поведения лаунчера из подписанного version.json: если
+    /// новое поведение сломается у живых пользователей, его выключают правкой
+    /// манифеста, без новой версии лаунчера. Все поля — bool?, null (нет поля) =
+    /// значение по умолчанию, описанное у поля.
+    /// </summary>
+    public class LauncherFlags
+    {
+        // --- Прокси (Services/LauncherProxy.cs, LauncherHttp.cs). null = ВКЛ. ---
+
+        // false — ручной прокси из настроек не применяется, режим «Системный» (как 3.11).
+        [JsonPropertyName("proxy_manual")]
+        public bool? ProxyManual { get; set; }
+
+        // false — системному прокси НЕ передаются учётные данные Windows (как 3.11).
+        [JsonPropertyName("proxy_default_credentials")]
+        public bool? ProxyDefaultCredentials { get; set; }
+
+        // false — при ошибке прокси запрос НЕ повторяется напрямую (как 3.11).
+        [JsonPropertyName("proxy_direct_fallback")]
+        public bool? ProxyDirectFallback { get; set; }
     }
 
     public class CdnClientInfo
