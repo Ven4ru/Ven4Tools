@@ -379,6 +379,8 @@ namespace Ven4Tools.Launcher
             public string? LastNotifiedNotificationId  { get; set; }
             // Вид окна: "modern" (по умолчанию) или "classic" — см. MainWindow.UiMode.cs.
             public string? UiMode                      { get; set; }
+            // Не скачивать фоновые обновления по лимитному подключению (Л10).
+            public bool    DeferUpdatesOnMetered       { get; set; } = true;
             // Последнее подтверждённое подписью значение флага манифеста
             // launcher_flags.stall_detection (null — манифест ещё не получали).
             public bool?   LauncherFlagStallDetection  { get; set; }

@@ -38,6 +38,7 @@ namespace Ven4Tools.Launcher
                         // Любое значение, кроме «classic», — новый вид: так его получают
                         // и те, у кого настройки записаны прежней версией лаунчера.
                         _uiMode                      = settings.UiMode ?? UiModeModern;
+                        _deferUpdatesOnMetered       = settings.DeferUpdatesOnMetered;
                         LauncherFeatureFlags.Seed(settings.LauncherFlagStallDetection);
                     }
                 }
@@ -69,6 +70,7 @@ namespace Ven4Tools.Launcher
                     LastNotifiedClientVersion   = _lastNotifiedClientVersion,
                     LastNotifiedNotificationId  = _lastNotifiedNotificationId,
                     UiMode                      = _uiMode,
+                    DeferUpdatesOnMetered       = _deferUpdatesOnMetered,
                     LauncherFlagStallDetection  = (bool?)LauncherFeatureFlags.StallDetectionEnabled
                 };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented);
