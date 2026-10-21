@@ -20,16 +20,14 @@
                        Foreground="{DynamicResource TextPrimary}"/>
             <TextBlock TextWrapping="Wrap" Margin="0,4,0,0"
                        Foreground="{DynamicResource TextSecondary}" FontSize="12">
-                Удаление предустановленного мусора, рекламы и навязанного ИИ, настройка конфиденциальности, автозагрузка.
+                Удаление предустановленного мусора, рекламы и навязанного ИИ, настройка конфиденциальности.
                 Изменённые настройки возвращаются кнопкой «Вернуть», удалённые приложения — из Microsoft Store.
             </TextBlock>
         </StackPanel>
 
-        <!-- Подразделы вкладки. Третий («Место и файлы») — блок соседней функции,
-             см. договор стыков: он подключается одной строкой. -->
-        <TabControl x:Name="debloatSections" Grid.Row="1">
-        <TabItem Header="Твики">
-        <Grid Margin="0,12,0,0">
+        <!-- «Автозагрузка» и «Место на диске» были вкладками этой страницы, теперь это
+             отдельные пункты меню (StartupTab, DiskSpaceTab): три разные задачи. -->
+        <Grid Grid.Row="1">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -204,13 +202,5 @@
                     Command="{Binding ApplyCommand}" Margin="12,0,0,0"/>
         </Grid>
         </Grid>
-        </TabItem>
-        <TabItem Header="Автозагрузка">
-            <tabs:StartupPanel x:Name="startupPanel"/>
-        </TabItem>
-        <TabItem x:Name="tabDiskSpace" Header="Место и файлы">
-            <tabs:DiskSpacePanel/>
-        </TabItem>
-        </TabControl>
     </Grid>
 </UserControl>

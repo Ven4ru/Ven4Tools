@@ -38,6 +38,36 @@ internal static class CliInstallRunner
     internal const int ExitFailed = 1;
     internal const int ExitDowngradeRefused = 4;
 
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+    private static extern bool AttachConsole(int processId);
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+    private static extern IntPtr GetStdHandle(int stdHandle);
+
+    private const int AttachParentProcess = -1;
+    private const int StdErrorHandle = -12;
+
+    /// <summary>
+    /// Лаунчер — оконное приложение, своей консоли у него нет, и причина отказа,
+    /// которую пишет этот режим, уходила в никуда: скрипт видел только код возврата.
+    /// Если поток ошибок не перенаправлен вызывающим, подключаемся к консоли
+    /// родителя (cmd, PowerShell). Вызывать до первого обращения к Console.Error —
+    /// .NET запоминает поток при первом обращении.
+    /// </summary>
+    internal static void AttachParentConsoleIfNeeded()
+    {
+        try
+        {
+            IntPtr handle = GetStdHandle(StdErrorHandle);
+            if (handle != IntPtr.Zero && handle != new IntPtr(-1)) return; // перенаправлен — пишем туда
+            AttachConsole(AttachParentProcess);
+        }
+        catch
+        {
+            // Нет консоли у родителя — остаются код возврата и журнал лаунчера.
+        }
+    }
+
     public static async Task<int> RunAsync(
         MainWindow window, string archivePath, bool silent, bool allowDowngrade)
     {

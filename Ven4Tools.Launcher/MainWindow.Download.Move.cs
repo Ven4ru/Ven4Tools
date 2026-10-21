@@ -50,6 +50,21 @@ namespace Ven4Tools.Launcher
                 return false;
             }
 
+            // Перенос уносит папку целиком. Если рядом с клиентом лежит что-то ещё
+            // (папку привязали «Найти клиент на диске»), это чужое уехало бы вместе с
+            // ним, а старая папка была бы удалена.
+            var foreign = ClientFolderInspector.FindForeignEntries(oldClientPath);
+            if (foreign.Count > 0)
+            {
+                AddLog($"⛔ Перенос клиента отменён: в его папке есть посторонние файлы ({oldClientPath})");
+                MessageBox.Show(
+                    $"В папке клиента\n{oldClientPath}\nкроме него лежит и другое:\n" +
+                    $"{ClientFolderInspector.Describe(foreign)}\n\n" +
+                    "Перенос забрал бы эти файлы с собой. Уберите их из папки клиента и повторите перенос.",
+                    "Перенос клиента", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
             string? newRoot = ChooseMoveDestination();
             if (newRoot == null) return false;
             string newClientPath = ClientFolderMover.Normalize(Path.Combine(newRoot, LauncherPaths.ClientFolderName));
@@ -163,6 +178,7 @@ namespace Ven4Tools.Launcher
                 txtDownloadStatus.Text = "Готово";
                 progressDownload.Value = 100;
                 CheckExistingClient(quiet: true);
+                HideCancelButton();
                 MessageBox.Show(
                     $"Клиент перенесён в:\n{newClientPath}" +
                     (oldRemoved ? "" : $"\n\nСтарую папку удалить не удалось — лаунчер попробует ещё раз при следующем запуске:\n{oldClientPath}"),

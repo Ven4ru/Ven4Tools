@@ -125,7 +125,7 @@
                         <StackPanel x:Name="slotInstalled"/>
                         <Grid>
                             <Button x:Name="btnGroupWindows" Style="{StaticResource NavButtonStyle}" Tag="&#xE770;" Content="Windows"
-                                    Click="BtnGroupWindows_Click" ToolTip="Раскрывает разделы Windows: обновления, Office, лицензия и очистка."/>
+                                    Click="BtnGroupWindows_Click" ToolTip="Раскрывает разделы Windows: обновления, Office, лицензия, очистка, автозагрузка и место на диске."/>
                             <TextBlock x:Name="chevGroupWindows" Text="&#xE70D;" FontFamily="Segoe Fluent Icons" FontSize="9"
                                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
                                        IsHitTestVisible="False" Foreground="{DynamicResource TextSecondary}"/>
@@ -166,6 +166,8 @@
                         <Button x:Name="btnOfficeTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE8A5;" Content="Office" Click="NavigateToOffice"/>
                         <Button x:Name="btnActivationTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE8D7;" Content="Лицензия" Click="NavigateToActivation"/>
                         <Button x:Name="btnDebloaterTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE74D;" Content="Очистка" Click="NavigateToDebloater"/>
+                        <Button x:Name="btnStartupTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE7E8;" Content="Автозагрузка" Click="NavigateToStartup"/>
+                        <Button x:Name="btnDiskSpaceTab" Style="{StaticResource NavButtonStyle}" Tag="&#xEDA2;" Content="Место и файлы" Click="NavigateToDiskSpace"/>
 
                         <TextBlock Text="СЕРВИС" Style="{StaticResource SectionLabel}"/>
                         <Button x:Name="btnNetworkTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE968;" Content="Сеть" Click="NavigateToNetwork"/>

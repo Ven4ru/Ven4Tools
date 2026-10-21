@@ -229,7 +229,7 @@ namespace Ven4Tools.Launcher
             if (File.Exists(clientExe))
             {
                 var versionInfo    = FileVersionInfo.GetVersionInfo(clientExe);
-                string currentVersion = versionInfo.FileVersion ?? "unknown";
+                string currentVersion = VersionComparer.ToDisplay(versionInfo.FileVersion ?? "unknown");
                 txtInstalledVersion.Text = $"Текущая версия: {currentVersion}";
                 SetLaunchButtonState(LaunchButtonState.Launch);
                 if (!_isUiTestMode)
@@ -264,7 +264,7 @@ namespace Ven4Tools.Launcher
             _clientUpdateAvailable  = true;
             UpdateVersionDisplay(latest);
             SetLaunchButtonState(LaunchButtonState.Update);
-            AddLog($"📢 Доступно обновление клиента: {installedVersion} → {latest.Version}");
+            AddLog($"📢 Доступно обновление клиента: {VersionComparer.ToDisplay(installedVersion)} → {latest.Version}");
         }
 
         // Единственная доступная (актуальная) версия клиента — старые релизы больше

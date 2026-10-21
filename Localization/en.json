@@ -204,6 +204,10 @@
     "t": "   ✅ Free: ≈{0} GB"
   },
   {
+    "s": "   ✅ Файлы клиента удалены; в папке оставлены посторонние файлы ({0}): {1}",
+    "t": "   ✅ Client files removed; other files were left in the folder ({0}): {1}"
+  },
+  {
     "s": "   ✅ Ярлыки клиента проверены",
     "t": "   ✅ Client shortcuts checked"
   },
@@ -1086,6 +1090,10 @@
   {
     "s": "Ven4Tools-настройки-{0}.zip",
     "t": "Ven4Tools-settings-{0}.zip"
+  },
+  {
+    "s": "Ven4Tools.exe найден в папке:\n{0}\n\nКроме клиента в ней лежит и другое:\n{1}\n\nОбновление клиента заменяет его папку целиком, и эти файлы были бы удалены. Переместите клиент в отдельную папку или установите его заново кнопкой «Изменить…» в карточке «Папка установки».",
+    "t": "Ven4Tools.exe was found in:\n{0}\n\nBesides the client, the folder also contains:\n{1}\n\nA client update replaces its whole folder, and these files would be deleted. Move the client to a separate folder or install it again with the \"Change…\" button on the \"Install folder\" card."
   },
   {
     "s": "Ven4Tools.exe найден прямо в:\n{0}\n\nЭта папка не может стать папкой установки клиента целиком — при обновлении или удалении её содержимое было бы уничтожено.\n\nПереместите клиент в отдельную подпапку или укажите её вручную — кнопка «Изменить…» в карточке «Папка установки».",
@@ -2564,6 +2572,10 @@
     "t": "{0} ({1} free)"
   },
   {
+    "s": "{0} (до обновления {1})",
+    "t": "{0} (before update {1})"
+  },
+  {
     "s": "{0} (защита, похоже, выключена)",
     "t": "{0} (protection appears to be off)"
   },
@@ -3300,12 +3312,20 @@
     "t": "The offline cache has no installers — nothing to build the kit from."
   },
   {
+    "s": "В папке клиента\n{0}\nкроме него лежит и другое:\n{1}\n\nПеренос забрал бы эти файлы с собой. Уберите их из папки клиента и повторите перенос.",
+    "t": "Besides the client, the client folder\n{0}\nalso contains:\n{1}\n\nMoving would take these files along. Remove them from the client folder and try again."
+  },
+  {
     "s": "В папке клиента есть ссылка на другую папку: {0}",
     "t": "The client folder contains a link to another folder: {0}"
   },
   {
     "s": "В папке клиента есть файл-ссылка: {0}",
     "t": "The client folder contains a file link: {0}"
+  },
+  {
+    "s": "В папке клиента кроме него лежали другие файлы. Чтобы они не пропали, прежнее содержимое папки сохранено сюда:\n{0}\n\nПеренесите нужные файлы обратно или в другое место. Клиент лучше держать в отдельной папке — например, «Перенести клиент» в настройках.",
+    "t": "The client folder also contained other files. So that they are not lost, the previous contents of the folder were saved here:\n{0}\n\nMove the files you need back or elsewhere. It is best to keep the client in a separate folder, for example with \"Move client\" in the settings."
   },
   {
     "s": "В папке клиента нет Ven4Tools.exe — копировать нечего.",
@@ -6584,6 +6604,10 @@
     "t": "Launcher update {0}"
   },
   {
+    "s": "Обновление лаунчера до версии {0} не установилось: {1}.\n\nОставлена прежняя версия, она работает как обычно. Попробуйте обновиться ещё раз кнопкой «Обновить лаунчер» или скачайте установщик с ven4tools.ru.",
+    "t": "The launcher update to version {0} was not installed: {1}.\n\nThe previous version was kept and works as usual. Try updating again with the \"Update launcher\" button or download the setup from ven4tools.ru."
+  },
+  {
     "s": "Обновление лаунчера отменено: контрольная сумма установщика недоступна (CDN не ответил или версия на CDN не совпадает с релизом).",
     "t": "Launcher update canceled: the installer checksum is unavailable (the CDN did not respond or its version does not match the release)."
   },
@@ -6790,6 +6814,10 @@
   {
     "s": "Освободить место",
     "t": "Free up space"
+  },
+  {
+    "s": "Освобождение места на диске C и поиск программы, которая держит файл.",
+    "t": "Free up space on drive C and find the program that is holding a file."
   },
   {
     "s": "Освобождено {0} (свободно было {1}, стало {2}).",
@@ -7554,6 +7582,10 @@
   {
     "s": "Папка для кэширования установщиков:",
     "t": "Installer cache folder:"
+  },
+  {
+    "s": "Папка занята другими файлами",
+    "t": "The folder contains other files"
   },
   {
     "s": "Папка клиента:\n{0}\n\nсовпадает с защищённой пользовательской папкой (Downloads/Документы/Рабочий стол и т.п.) целиком. Удаление отменено во избежание потери данных.",
@@ -8912,6 +8944,10 @@
     "t": "The app is installed in the user profile — winget does not change it as administrator."
   },
   {
+    "s": "Программы и задачи, которые запускаются вместе с Windows.",
+    "t": "Programs and tasks that start with Windows."
+  },
+  {
     "s": "Программы из каталога вернутся сами. Остальные попадут в файл «Поставить вручную.txt» — с памяткой, что ещё проверить.",
     "t": "Apps from the catalog come back automatically. The rest go into the “Install manually.txt” file — with a checklist of what else to verify."
   },
@@ -9122,6 +9158,10 @@
   {
     "s": "Раскрывает разделы Windows: обновления, Office, лицензия и очистка.",
     "t": "Expands the Windows sections: updates, Office, license, and cleanup."
+  },
+  {
+    "s": "Раскрывает разделы Windows: обновления, Office, лицензия, очистка, автозагрузка и место на диске.",
+    "t": "Expands the Windows sections: updates, Office, license, cleanup, startup and disk space."
   },
   {
     "s": "Раскрывает служебные разделы: сеть, диагностика и бенчмарк.",
@@ -10416,6 +10456,10 @@
     "t": "Removes preinstalled bloat, ads and imposed AI, adjusts privacy settings and startup. Changed settings are restored with the “Revert” button; removed apps can be reinstalled from Microsoft Store."
   },
   {
+    "s": "Удаление предустановленного мусора, рекламы и навязанного ИИ, настройка конфиденциальности. Изменённые настройки возвращаются кнопкой «Вернуть», удалённые приложения — из Microsoft Store.",
+    "t": "Remove preinstalled junk, ads and imposed AI, and adjust privacy. Changed settings are restored with the \"Restore\" button, removed apps from the Microsoft Store."
+  },
+  {
     "s": "Удаление программ вместе с оставшимися файлами и записями реестра.",
     "t": "Uninstalls programs together with leftover files and registry entries."
   },
@@ -10948,6 +10992,10 @@
     "t": "The app's files are in use. Close it and try the installation again."
   },
   {
+    "s": "Файлы сохранены",
+    "t": "Files saved"
+  },
+  {
     "s": "Файлы, удалённые в корзину на диске C.",
     "t": "Files moved to the Recycle Bin on drive C."
   },
@@ -11302,6 +11350,10 @@
   {
     "s": "версия архива {0} старее установленной {1} — откат не выполняется",
     "t": "archive version {0} is older than the installed {1} — rollback is not performed"
+  },
+  {
+    "s": "версия скачанного файла не совпала с ожидаемой",
+    "t": "the version of the downloaded file did not match the expected one"
   },
   {
     "s": "видеокарты и звука в набор не входят — их ставит установщик производителя.",
@@ -11780,6 +11832,10 @@
     "t": "the new folder is a system folder or overlaps the Ven4Tools data folder"
   },
   {
+    "s": "новый файл не удалось записать в папку лаунчера",
+    "t": "the new file could not be written to the launcher folder"
+  },
+  {
     "s": "нужен драйвер датчиков",
     "t": "sensor driver needed"
   },
@@ -12176,6 +12232,10 @@
     "t": "installed {0}, already present {1}, failed {2}, not in the catalog {3}, unavailable {4}"
   },
   {
+    "s": "установщик завершился с кодом {0}",
+    "t": "the setup exited with code {0}"
+  },
+  {
     "s": "файл {0}",
     "t": "file {0}"
   },
@@ -12186,6 +12246,10 @@
   {
     "s": "файл клиента",
     "t": "the client file"
+  },
+  {
+    "s": "файл лаунчера был занят (лаунчер не закрылся или файл проверял антивирус)",
+    "t": "the launcher file was in use (the launcher did not close or an antivirus was scanning the file)"
   },
   {
     "s": "файл не найден",
@@ -13076,6 +13140,10 @@
     "t": "⚠️ Incremental update failed: {0} — switching to full download"
   },
   {
+    "s": "⚠️ В папке клиента есть посторонние файлы ({0}) — прежнее содержимое папки будет сохранено в: {1}",
+    "t": "⚠️ The client folder contains other files ({0}); the previous folder contents will be saved to: {1}"
+  },
+  {
     "s": "⚠️ В подписанном манифесте CDN нет пригодных сведений о клиенте (версия, ссылка, SHA256) — список версий недоступен",
     "t": "⚠️ The signed CDN manifest has no usable client info (version, link, SHA256) — version list unavailable"
   },
@@ -13198,6 +13266,10 @@
   {
     "s": "⚠️ Нет релизов с подходящим .zip-активом (см. детали выше)",
     "t": "⚠️ No releases with a suitable .zip asset (see details above)"
+  },
+  {
+    "s": "⚠️ Обновление лаунчера до {0} не установлено: {1}. Оставлена прежняя версия.",
+    "t": "⚠️ The launcher update to {0} was not installed: {1}. The previous version was kept."
   },
   {
     "s": "⚠️ Обновление недоступно (нет списка версий) — запускаю установленный клиент",
@@ -13356,6 +13428,10 @@
     "t": "⚡ Turbo Boost mode: {0}"
   },
   {
+    "s": "⛔ В папке найденного клиента есть посторонние файлы — путь не принят: {0}",
+    "t": "⛔ The folder of the found client contains other files; the path was not accepted: {0}"
+  },
+  {
     "s": "⛔ Версия {0} не установлена: {1}",
     "t": "⛔ Version {0} was not installed: {1}"
   },
@@ -13390,6 +13466,10 @@
   {
     "s": "⛔ Перенос клиента отменён: {0} ({1})",
     "t": "⛔ Client move canceled: {0} ({1})"
+  },
+  {
+    "s": "⛔ Перенос клиента отменён: в его папке есть посторонние файлы ({0})",
+    "t": "⛔ Client move cancelled: its folder contains other files ({0})"
   },
   {
     "s": "⛔ Подлинность Windows App Runtime не подтверждена ({0}) — пропускаю установку рантайма",
@@ -13598,6 +13678,10 @@
   {
     "s": "✅ Кэш очищен",
     "t": "✅ Cache cleared"
+  },
+  {
+    "s": "✅ Лаунчер обновлён до версии {0}",
+    "t": "✅ Launcher updated to version {0}"
   },
   {
     "s": "✅ Набор готов: программ {0}, клиент {1} МБ. На другом компьютере откройте {2} из этой папки.{3}",
@@ -14548,6 +14632,10 @@
     "t": "\uD83D\uDCBB Development"
   },
   {
+    "s": "\uD83D\uDCBD Место и файлы",
+    "t": "\uD83D\uDCBD Space and files"
+  },
+  {
     "s": "\uD83D\uDCBD Освободить место на диске C",
     "t": "\uD83D\uDCBD Free up space on drive C"
   },
@@ -14660,6 +14748,10 @@
     "t": "\uD83D\uDCC1 Folder…"
   },
   {
+    "s": "\uD83D\uDCC1 Прежнее содержимое папки клиента сохранено: {0}",
+    "t": "\uD83D\uDCC1 Previous contents of the client folder saved: {0}"
+  },
+  {
     "s": "\uD83D\uDCC2 {0}: локальный файл {1}",
     "t": "\uD83D\uDCC2 {0}: local file {1}"
   },
@@ -14674,6 +14766,10 @@
   {
     "s": "\uD83D\uDCC2 Открыта вкладка: Windows Update",
     "t": "\uD83D\uDCC2 Tab opened: Windows Update"
+  },
+  {
+    "s": "\uD83D\uDCC2 Открыта вкладка: Автозагрузка",
+    "t": "\uD83D\uDCC2 Opened tab: Startup"
   },
   {
     "s": "\uD83D\uDCC2 Открыта вкладка: Бенчмарк",
@@ -14694,6 +14790,10 @@
   {
     "s": "\uD83D\uDCC2 Открыта вкладка: Лицензия",
     "t": "\uD83D\uDCC2 Tab opened: License"
+  },
+  {
+    "s": "\uD83D\uDCC2 Открыта вкладка: Место и файлы",
+    "t": "\uD83D\uDCC2 Opened tab: Space and files"
   },
   {
     "s": "\uD83D\uDCC2 Открыта вкладка: Настройки",
@@ -15514,6 +15614,10 @@
   {
     "s": "\uD83D\uDE48 Скрыть",
     "t": "\uD83D\uDE48 Hide"
+  },
+  {
+    "s": "\uD83D\uDE80 Автозагрузка",
+    "t": "\uD83D\uDE80 Startup"
   },
   {
     "s": "\uD83D\uDE80 Запуск Ven4Tools...",

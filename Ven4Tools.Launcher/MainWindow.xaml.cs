@@ -191,6 +191,8 @@ namespace Ven4Tools.Launcher
                         return;
                     }
 
+                    ReportLauncherUpdateResult();
+
                     // Остатки прерванного переноса клиента (см. MainWindow.Download.Move.cs)
                     // и подсказка, если клиент уже стоит в OneDrive или под CFA.
                     await RecoverInterruptedClientMoveAsync();
