@@ -143,6 +143,12 @@ namespace Ven4Tools.Launcher.Models
         // SHA256 установщика лаунчера для проверки целостности после скачивания.
         [JsonPropertyName("setup_sha256")]
         public string? SetupSha256 { get; set; }
+
+        // SHA256 УСТАНОВЛЕННОГО Ven4Tools.Launcher.exe этой версии (того, что установщик
+        // кладёт в %LOCALAPPDATA%\Ven4Tools\Launcher). Только для «Проверить подлинность»
+        // (Services/AuthenticityChecker.cs) — в загрузке не участвует. Нет поля = «нет данных».
+        [JsonPropertyName("installed_exe_sha256")]
+        public string? InstalledExeSha256 { get; set; }
     }
 
     public class HistoricalClientArchive

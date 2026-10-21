@@ -1,0 +1,40 @@
+<Window x:Class="Ven4Tools.Launcher.AuthenticityWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Проверить подлинность — Ven4Tools Launcher" Height="620" Width="640"
+        MinHeight="420" MinWidth="480"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        Background="{DynamicResource WindowBackground}"
+        FontFamily="Segoe UI Variable Text, Segoe UI">
+    <!-- Л7: только чтение. Сверка хешей лаунчера и клиента с опубликованными на CDN
+         (подписанный манифест) и на GitHub, статус подписи манифеста, отпечатки ключей. -->
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Сверяет SHA256 лаунчера и установленного клиента с хешами, опубликованными в двух независимых местах: в подписанном манифесте на CDN и в релизе на GitHub. Ничего не скачивает, кроме коротких списков хешей, и ничего не меняет."
+                   TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
+
+        <TextBlock x:Name="txtVerdict" Grid.Row="1" TextWrapping="Wrap" FontSize="13" FontWeight="SemiBold"
+                   Margin="0,0,0,10" Text="Проверка…"/>
+
+        <TextBox x:Name="txtReport" Grid.Row="2" IsReadOnly="True" FontFamily="Consolas" FontSize="11"
+                 TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                 AutomationProperties.Name="Результат проверки подлинности"/>
+
+        <WrapPanel Grid.Row="3" Margin="0,12,0,0">
+            <Button x:Name="btnRelease" Content="Страница релиза" Padding="12,0" Click="BtnRelease_Click"
+                    ToolTip="Откроет страницу этой версии лаунчера на GitHub: там установщик и SHA256SUMS.txt."/>
+            <Button x:Name="btnVirusTotal" Content="VirusTotal по хешу лаунчера" Padding="12,0" IsEnabled="False"
+                    Click="BtnVirusTotal_Click"
+                    ToolTip="Откроет результаты проверки этого файла на VirusTotal по SHA256. Сам файл никуда не загружается."/>
+            <Button x:Name="btnCopy" Content="Скопировать отчёт" Padding="12,0" IsEnabled="False" Click="BtnCopy_Click"/>
+            <Button x:Name="btnRerun" Content="Проверить снова" Padding="12,0" IsEnabled="False" Click="BtnRerun_Click"/>
+            <Button Content="Закрыть" Width="100" IsCancel="True" Click="BtnClose_Click"/>
+        </WrapPanel>
+    </Grid>
+</Window>
