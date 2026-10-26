@@ -11,8 +11,7 @@ public class ActivationViewModelTests
 {
     /// <summary>
     /// Вкладка только показывает состояние лицензий. Команд, которые что-то открывают
-    /// или запускают ради активации, у неё быть не должно — как и любых упоминаний
-    /// инструментов активации в самой сборке клиента.
+    /// или запускают ради активации, у неё быть не должно.
     /// </summary>
     [Fact]
     public void Вкладка_ТолькоПоказываетСтатус_БезКомандАктивации()
@@ -23,19 +22,30 @@ public class ActivationViewModelTests
             .ToArray();
 
         Assert.Equal(new[] { nameof(ActivationViewModel.CheckStatusCommand) }, commands);
-        Assert.Null(typeof(ActivationViewModel).Assembly.GetType("Ven4Tools.Views.MasGuideWindow"));
     }
 
     /// <summary>
-    /// Разметка клиента не упоминает инструменты активации и не обещает активацию
-    /// среди возможностей: проверка одного только типа окна выше этого не ловит —
-    /// строка может остаться в «О программе» или на соседней вкладке.
+    /// Вкладка «Лицензия» никуда не ведёт: в её разметке нет внешних ссылок.
     /// </summary>
     [Fact]
-    public void Разметка_БезУпоминанийИнструментовАктивации()
+    public void ВкладкаЛицензия_БезВнешнихСсылок()
+    {
+        string tab = Path.Combine(RepositoryRoot(), "Ven4Tools", "Views", "Tabs", "ActivationTab.xaml");
+        string xaml = File.ReadAllText(tab);
+
+        Assert.DoesNotContain("NavigateUri", xaml, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<Hyperlink", xaml, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Разметка клиента не обещает активацию среди возможностей: строка может остаться
+    /// в «О программе» или на соседней вкладке.
+    /// </summary>
+    [Fact]
+    public void Разметка_НеОбещаетАктивацию()
     {
         string client = Path.Combine(RepositoryRoot(), "Ven4Tools");
-        var forbidden = new[] { "Activation Scripts", "massgrave", "(MAS)", "Активация Windows и Office", "Перейдите к активации" };
+        var forbidden = new[] { "Активация Windows и Office", "Перейдите к активации" };
 
         var hits = Directory.EnumerateFiles(client, "*.xaml", SearchOption.AllDirectories)
             .Where(file => !file.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)

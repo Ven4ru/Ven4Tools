@@ -9,8 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Ven4Tools.ClientUITests
 {
     /// <summary>
-    /// Фаза 1 плана живого клика кнопок 2026-07-11 (см. память
-    /// project_button_test_plan_2026_07_11): остаток CatalogTab + диалогов.
+    /// Фаза 1 плана живого клика кнопок 2026-07-11: остаток CatalogTab + диалогов.
     /// LocalInstallerDialog пропущен — достижим только drag-and-drop.
     /// AddAppDialog (был нигде не инстанцируемым мёртвым кодом) удалён из
     /// проекта целиком 2026-07-13.
@@ -128,7 +127,7 @@ namespace Ven4Tools.ClientUITests
             // WPF ICommand.CanExecuteChanged (CommandManager.RequerySuggested) переоценивает
             // состояние по обычным input-событиям и не гарантированно успевает синхронно с
             // таким переключением. Тот же паттерн уже есть у btnInstall в CatalogInstallTests —
-            // ждём IsEnabled, а не слепой Thread.Sleep (round 40: без этого ловили
+            // ждём IsEnabled, а не слепой Thread.Sleep (без этого ловили
             // ElementNotEnabledException, т.к. кнопка ещё не успела активироваться).
             Retry.WhileFalse(
                 () => saveBtn!.AsButton().IsEnabled,

@@ -2,7 +2,7 @@
 
 Заготовка манифеста пакета `Ven4ru.Ven4Tools` для [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs). Пакет ставит лаунчер (`Ven4Tools.Setup-X.Y.Z.exe`), а тот скачивает и обновляет клиент.
 
-В каталог winget манифест пока **не отправлен**.
+Заявка в каталог winget подана (microsoft/winget-pkgs#446225) и ждёт проверки модератором.
 
 ## Что проверено (лаунчер 3.9.0)
 

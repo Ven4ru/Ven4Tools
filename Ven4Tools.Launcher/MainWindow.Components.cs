@@ -97,7 +97,7 @@ namespace Ven4Tools.Launcher
             AddLog("🔍 Обновления лаунчера...");
             // CDN version.json — основной источник обнаружения версии лаунчера, GitHub —
             // резерв (та же CDN-first логика, что у ручной/фоновой проверки). Раньше здесь
-            // была GitHub-only проверка — при блокировке GitHub по SNI обновление не
+            // была GitHub-only проверка — при недоступности GitHub обновление не
             // обнаруживалось бы вовсе (структурно идентичная, но не исправленная дыра).
             var launcherUpdateSvc = new LauncherUpdateService(AddLog, _downloadSource);
             var updateInfo = await launcherUpdateSvc.CheckForUpdateAsync();

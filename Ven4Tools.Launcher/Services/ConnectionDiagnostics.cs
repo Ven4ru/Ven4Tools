@@ -366,7 +366,7 @@ namespace Ven4Tools.Launcher.Services
             {
                 var domain = Get(DiagSource.CdnDomain);
                 if (domain is { HttpOk: false, DnsOk: false } && Ok(DiagSource.CdnDirectIp))
-                    list.Add("DNS не находит cdn.ven4tools.ru (похоже на блокировку по DNS) — лаунчер обходит её прямым IP, загрузка работает.");
+                    list.Add("DNS не находит cdn.ven4tools.ru — лаунчер подключается к нему по IP-адресу, загрузка работает.");
                 else if (!cdnOk && mirrorOk)
                     list.Add("Провайдер режет CDN, работает зеркало ven4tools.ru — лаунчер переключится на него сам.");
                 else if (!cdnOk && !mirrorOk && githubOk)

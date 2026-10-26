@@ -7,8 +7,8 @@ using Ven4Tools.Services;
 namespace Ven4Tools.Tests;
 
 /// <summary>
-/// Классификация RegionBlocked — таблица из docs/dev/specs/
-/// 2026-09-10-catalog-region-availability-design.md. Приложение с Id, начинающимся
+/// Классификация RegionBlocked: 451 всегда геоблок, 403 — только при сноске regionNote.
+/// Приложение с Id, начинающимся
 /// на "User." (см. AvailabilityChecker.CheckAppAvailabilityWithSize), и пустым
 /// ChocoId гарантированно минует winget/choco — единственный сетевой вызов идёт
 /// через подменный HttpMessageHandler на прямую ссылку InstallerUrls[0].
@@ -46,7 +46,7 @@ public sealed class AvailabilityCheckerRegionTests
             Response(request.RequestUri!, HttpStatusCode.OK, "application/octet-stream"));
 
         var (status, _) = await checker.CheckAppAvailabilityWithSize(
-            AppWithUrl(regionNote: "разработчик ушёл из РФ, загрузка через VPN"));
+            AppWithUrl(regionNote: "издатель ограничил загрузку для вашего региона"));
 
         Assert.Equal(AvailabilityChecker.AvailabilityStatus.Available, status);
     }
@@ -69,7 +69,7 @@ public sealed class AvailabilityCheckerRegionTests
             new HttpResponseMessage(HttpStatusCode.Forbidden) { RequestMessage = request });
 
         var (status, _) = await checker.CheckAppAvailabilityWithSize(
-            AppWithUrl(regionNote: "разработчик ушёл из РФ"));
+            AppWithUrl(regionNote: "издатель ограничил загрузку"));
 
         Assert.Equal(AvailabilityChecker.AvailabilityStatus.RegionBlocked, status);
     }

@@ -550,8 +550,7 @@ namespace Ven4Tools.Launcher
         // и локальной установкой из файла (InstallFromLocalArchiveAsync), и CLI
         // --install-from — единый путь, чтобы не плодить два параллельных места
         // с риском разойтись друг с другом (тот же класс проблемы, что был найден
-        // и исправлен в InstallationService.Choco.cs/.Winget.cs в раунде аудита
-        // 2026-08-02).
+        // и исправлен в InstallationService.Choco.cs/.Winget.cs 2026-08-02).
         // sourceArchivePath — уже проверенный (SHA256 для сетевого пути, LocalArchiveVerifier
         // для локального) архив на диске, готовый к распаковке без дальнейших проверок.
         private async Task<bool> ExtractAndInstallClientAsync(

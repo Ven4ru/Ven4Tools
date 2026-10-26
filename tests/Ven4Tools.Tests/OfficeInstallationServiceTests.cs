@@ -5,8 +5,7 @@ namespace Ven4Tools.Tests;
 /// <summary>
 /// Разбор состояния Office из реестра — реестр подменён, тестируется только логика
 /// выбора C2R/MSI/NotFound и разбор значений. Фикстура ClickToRun-ветки — реальные
-/// значения, снятые с живой машины при планировании (docs/dev/plans/
-/// 2026-09-14-office-uninstall-and-version-change-plan.md).
+/// значения, снятые с живой машины.
 /// </summary>
 public sealed class OfficeInstallationServiceTests
 {

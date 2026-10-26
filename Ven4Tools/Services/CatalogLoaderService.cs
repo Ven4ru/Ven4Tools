@@ -109,7 +109,7 @@ namespace Ven4Tools.Services
         private const string HostingCatalogUrl =
             "https://ven4tools.ru/catalog/master.json";
 
-        // CDN — второй источник: быстрее GitHub и без RKN-блокировок.
+        // CDN — второй источник: быстрее GitHub и доступнее для пользователей из РФ.
         private const string CdnCatalogUrl =
             "https://cdn.ven4tools.ru/master.json";
 
