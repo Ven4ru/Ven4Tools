@@ -30,7 +30,7 @@ public sealed class LauncherSmokeTests : IDisposable
             Path.GetTempPath(),
             $"Ven4Tools.UI.Tests-{Guid.NewGuid():N}");
         string executable = FindLauncher();
-        LauncherTestEnvironment.PrepareShell(_testRoot);
+        Directory.CreateDirectory(_testRoot);
         var startInfo = new ProcessStartInfo(executable);
         startInfo.Environment["VEN4TOOLS_UI_TEST"] = "1";
         // Проверки ищут элементы по русским подписям; на нерусской Windows лаунчер выбрал бы английский.
@@ -65,8 +65,7 @@ public sealed class LauncherSmokeTests : IDisposable
         string resultDirectory = Path.Combine(root, "TestResults", "Snapshots");
         Directory.CreateDirectory(snapshotDirectory);
         Directory.CreateDirectory(resultDirectory);
-        // У каждого вида окна свой эталон: набор прогоняется дважды, в прежнем и в новом.
-        string snapshotName = LauncherTestEnvironment.SuiteUsesModernShell ? "launcher-main-modern" : "launcher-main";
+        const string snapshotName = "launcher-main";
         string actual = Path.Combine(resultDirectory, snapshotName + ".actual.png");
         string baseline = Path.Combine(snapshotDirectory, snapshotName + ".png");
 
@@ -250,43 +249,11 @@ public sealed class LauncherSmokeTests : IDisposable
     }
 
     [Fact]
-    public void UiModeSwitch_TogglesShellBothWaysAndKeepsControls()
+    public void UiModeSwitch_IsGone()
     {
-        bool startedModern = LauncherTestEnvironment.SuiteUsesModernShell;
-        string settingsPath = Path.Combine(_testRoot, "launcher_settings.json");
-
-        Assert.Equal(startedModern ? "Старый интерфейс" : "Новый интерфейс", SwitchButton().Name);
+        Assert.Null(_window.FindFirstDescendant(condition => condition.ByAutomationId("btnUiModeSwitch")));
         AssertPrimaryControlsAreAvailable();
-
-        // ── В другой вид ──
-        SwitchButton().Invoke();
-        Assert.True(
-            Retry.WhileFalse(
-                () => SwitchButton().Name == (startedModern ? "Новый интерфейс" : "Старый интерфейс"),
-                timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200)).Success,
-            "После переключения подпись кнопки должна называть противоположный вид.");
-        AssertPrimaryControlsAreAvailable();
-        Assert.Contains(startedModern ? "classic" : "modern", ReadSettings(settingsPath));
-
-        // ── И обратно ──
-        SwitchButton().Invoke();
-        Assert.True(
-            Retry.WhileFalse(
-                () => SwitchButton().Name == (startedModern ? "Старый интерфейс" : "Новый интерфейс"),
-                timeout: TimeSpan.FromSeconds(5), interval: TimeSpan.FromMilliseconds(200)).Success,
-            "Повторное переключение должно возвращать исходный вид.");
-        AssertPrimaryControlsAreAvailable();
-        Assert.Contains(startedModern ? "modern" : "classic", ReadSettings(settingsPath));
-        Assert.False(_application.HasExited, "Переключение вида завершило launcher.");
     }
-
-    private Button SwitchButton() =>
-        _window.FindFirstDescendant(condition => condition.ByAutomationId("btnUiModeSwitch"))?.AsButton()
-        ?? throw new InvalidOperationException("Кнопка переключения вида (btnUiModeSwitch) не найдена.");
-
-    private static string ReadSettings(string path) =>
-        Retry.WhileException(() => File.ReadAllText(path), timeout: TimeSpan.FromSeconds(3),
-            interval: TimeSpan.FromMilliseconds(200)).Result ?? "";
 
     private void ExerciseSettingsWindow()
     {

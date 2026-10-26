@@ -49,8 +49,7 @@ namespace Ven4Tools.ClientUITests
             {
                 string dir = Path.Combine(ResolveSolutionRoot(), "TestResults", "ClientUI", "failures");
                 Directory.CreateDirectory(dir);
-                string shell = AppSession.SuiteUsesModernShell ? "modern" : "classic";
-                string baseName = Path.Combine(dir, shell + "-" + SafeFileName(name));
+                string baseName = Path.Combine(dir, SafeFileName(name));
 
                 var report = new StringBuilder();
                 if (header != null) report.AppendLine(header);

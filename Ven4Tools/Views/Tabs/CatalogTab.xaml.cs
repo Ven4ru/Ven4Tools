@@ -35,11 +35,7 @@ namespace Ven4Tools.Views.Tabs
             InitializeComponent();
             DataContext = _viewModel;
             _viewModel.OwnerWindowProvider = () => Window.GetWindow(this);
-
-            // Прокидываем словарь заголовков категорий в конвертер — обычный способ
-            // передать контекст в IValueConverter, когда для XAML-ресурсов нет DI.
-            if (Resources["CategoryHeaderConverter"] is CategoryNameToHeaderConverter conv)
-                conv.Headers = _viewModel.CategoryHeaders;
+            Content = new CatalogCardsView(_viewModel.CategoryHeaders);
 
             _profileChangedHandler = () => Dispatcher.Invoke(_viewModel.ApplyProfileFilters);
 
@@ -108,33 +104,5 @@ namespace Ven4Tools.Views.Tabs
         /// <summary>Отмечает в каталоге программы готового набора (с «Обзора»). Установку не начинает.</summary>
         public void ApplyAppSet(System.Collections.Generic.IReadOnlyList<string> appIds, string setTitle) =>
             TabInitGuard.Run(() => _viewModel.ApplyAppSetAsync(appIds, setTitle), "CatalogTab.ApplyAppSet");
-
-        // ── Два вида каталога ───────────────────────────────────────────────────
-
-        private UIElement? _classicRoot;
-        private CatalogCardsView? _cardsView;
-
-        /// <summary>
-        /// Переключает вид каталога вместе с оболочкой окна: карточки с панелью «Ваш
-        /// набор» в новой, прежний список — в старой. Модель одна на оба вида, поэтому
-        /// отметки, поиск и идущая установка при переключении сохраняются. В дереве
-        /// остаётся только один вид — второй не тратит время на раскладку и не
-        /// дублирует имена элементов для автоматизации.
-        /// </summary>
-        public void ApplyUiMode(bool modern)
-        {
-            _classicRoot ??= (UIElement)Content;
-            if (modern)
-            {
-                _cardsView ??= new CatalogCardsView(_viewModel.CategoryHeaders);
-                Content = _cardsView;
-            }
-            else
-            {
-                Content = _classicRoot;
-                // Кнопок-категорий в прежнем виде нет — оставшийся фильтр было бы нечем снять.
-                _viewModel.CategoryFilter = null;
-            }
-        }
     }
 }

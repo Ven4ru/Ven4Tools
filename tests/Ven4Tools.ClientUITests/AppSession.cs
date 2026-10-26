@@ -129,25 +129,17 @@ namespace Ven4Tools.ClientUITests
         /// Бросает исключение, если окно не появилось за отведённое время —
         /// вызывающий код переводит тесты в Inconclusive в headless-окружении.
         /// </summary>
-        /// <summary>
-        /// Оболочка главного окна, в которой идёт весь набор. Набор прогоняется дважды —
-        /// в прежней и в новой оболочке: переменная окружения VEN4TOOLS_UITEST_SHELL
-        /// (classic | modern) задаётся запускающим скриптом, по умолчанию — прежняя.
-        /// </summary>
-        public static bool SuiteUsesModernShell => string.Equals(
-            Environment.GetEnvironmentVariable("VEN4TOOLS_UITEST_SHELL"), "modern", StringComparison.OrdinalIgnoreCase);
-
         public static AppSession Launch()
         {
-            var session = Launch(SuiteUsesModernShell);
-            if (SuiteUsesModernShell) session.OpenCatalog();
+            var session = LaunchAtOverview();
+            session.OpenCatalog();
             return session;
         }
 
         /// <summary>
-        /// Новая оболочка открывается на «Обзоре», прежняя — на каталоге. Тесты разделов
-        /// написаны от каталога как исходной точки, поэтому в новой оболочке набор
-        /// начинает с него же; сам стартовый «Обзор» проверяет ModernShellUiTests.
+        /// Клиент открывается на «Обзоре». Тесты разделов написаны от каталога как
+        /// исходной точки, поэтому набор начинает с него; сам стартовый «Обзор»
+        /// проверяет ModernShellUiTests.
         /// </summary>
         private void OpenCatalog()
         {
@@ -159,9 +151,6 @@ namespace Ven4Tools.ClientUITests
         }
 
         /// <summary>
-        /// Запуск с явным выбором оболочки — что бы ни было записано в профиле.
-        /// </summary>
-        /// <summary>
         /// Файл очереди установки, переживающей перезагрузку. Тест, убивший клиент
         /// посреди установки, оставил бы его — и следующий класс встретил бы на старте
         /// вопрос «продолжить?», о котором ничего не знает.
@@ -170,21 +159,18 @@ namespace Ven4Tools.ClientUITests
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Ven4Tools", "pending_install.json");
 
-        public static AppSession Launch(bool modernUi) => Launch(modernUi, keepPendingInstall: false);
+        /// <summary>Запуск без перехода в каталог: окно остаётся на «Обзоре».</summary>
+        public static AppSession LaunchAtOverview() => LaunchAtOverview(keepPendingInstall: false);
 
         /// <param name="keepPendingInstall">
         /// Оставить файл очереди как есть — только для теста самого вопроса о продолжении.
         /// </param>
-        public static AppSession Launch(bool modernUi, bool keepPendingInstall)
+        public static AppSession LaunchAtOverview(bool keepPendingInstall)
         {
             if (!keepPendingInstall)
             {
                 try { File.Delete(PendingInstallPath); } catch { }
             }
-
-            // Переменную читает UiModeService клиента; дочерний процесс наследует
-            // окружение тестового.
-            Environment.SetEnvironmentVariable("VEN4TOOLS_UI_CLASSIC", modernUi ? null : "1");
 
             // Клиент — single-instance (Mutex "Ven4Tools.Client.SingleInstance"):
             // если предыдущий процесс (из другого тестового класса) не успел

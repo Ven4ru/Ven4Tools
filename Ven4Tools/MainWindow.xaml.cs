@@ -103,12 +103,10 @@ namespace Ven4Tools
                 System.Threading.Tasks.Task.Run(() => HardwareSensorService.Instance.ReleaseDriverAsync())
                     .Wait(TimeSpan.FromSeconds(5));
 
-            // Оболочку выбираем до первой навигации: ApplyUiMode раскладывает кнопки меню.
-            ApplyUiMode();
-            // Каталог создаётся в обоих видах: его загрузка стартует здесь, а не при первом
-            // открытии, — к моменту перехода из «Обзора» список уже готов.
+            // Окно открывается на «Обзоре», но каталог создаётся сразу: его загрузка
+            // стартует здесь, а не при первом открытии, — к моменту перехода список уже готов.
             NavigateToCatalog(null, null);
-            if (_uiModern) NavigateToOverview(null, null);
+            NavigateToOverview(null, null);
 
             Loaded += (s, e) => ShowCategorySelectionIfNeeded();
             Loaded += (s, e) =>
@@ -256,7 +254,6 @@ namespace Ven4Tools
                     _installedTab.ShowUpdatesFilter();
                     NavigateToInstalled(null, null);
                 };
-                _catalogTab.ApplyUiMode(_uiModern);
             }
             MainFrame.Content = (_catalogTab);
             UpdateMascot("catalog");

@@ -92,24 +92,6 @@ namespace Ven4Tools.ViewModels
             set => SetField(ref _matchesProfile, value);
         }
 
-        // Отступ строки — раньше ApplyProfileFilters выставлял его императивно на
-        // каждый child (Thickness(0) для CompactMode, иначе (0,2,0,2)). Значение по
-        // умолчанию читает текущий профиль сразу при создании строки, чтобы вновь
-        // добавленные приложения (поиск/локальный установщик) не ждали следующего
-        // ApplyProfileFilters — CatalogViewModel.ApplyProfileFilters всё равно
-        // обновляет его у всех строк при смене профиля.
-        private bool _isCompact = ProfileService.Current.CompactMode;
-        public bool IsCompact
-        {
-            get => _isCompact;
-            set
-            {
-                if (SetField(ref _isCompact, value)) OnPropertyChanged(nameof(RowMargin));
-            }
-        }
-
-        public Thickness RowMargin => IsCompact ? new Thickness(0) : new Thickness(0, 2, 0, 2);
-
         public AppRowViewModel(AppInfo app)
         {
             App = app;
@@ -143,7 +125,7 @@ namespace Ven4Tools.ViewModels
 
         public event Action? SelectionChanged;
 
-        // ── Карточка каталога (новый интерфейс) ─────────────────────────────────
+        // ── Карточка каталога ───────────────────────────────────────────────────
 
         /// <summary>Версия и размер одной строкой под названием: «157.0 · 89,6 МБ».</summary>
         public string CardMetaText

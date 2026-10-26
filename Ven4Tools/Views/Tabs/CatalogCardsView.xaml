@@ -4,14 +4,13 @@
              xmlns:vm="clr-namespace:Ven4Tools.ViewModels"
              xmlns:views="clr-namespace:Ven4Tools.Views"
              Background="{DynamicResource ContentBackground}">
-    <!-- Каталог нового интерфейса: карточки вместо строк и панель «Ваш набор» справа.
-         Данные и команды — те же, что у прежнего вида (CatalogTab.xaml): оба привязаны к
-         одному CatalogViewModel, который отдаёт им CatalogTab. Имена элементов для
-         автоматизации совпадают с прежними намеренно — в дереве всегда только один вид. -->
+    <!-- Каталог: карточки и панель «Ваш набор» справа. Привязан к CatalogViewModel,
+         который отдаёт ему CatalogTab. Имена элементов для автоматизации сохранены
+         от прежнего списка — на них держатся UI-тесты. -->
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Шаблоны и стили, общие для обоих видов каталога. -->
+                <!-- Шаблоны строк подсказок, наборов и хода установки. -->
                 <ResourceDictionary Source="CatalogShared.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
@@ -98,8 +97,8 @@
             </Style>
 
             <!-- Переключатель «в набор» на карточке. Остаётся CheckBox'ом — для клавиатуры,
-                 программ чтения с экрана и автоматизации это та же отметка, что в прежнем
-                 списке, — но выглядит кнопкой во всю ширину карточки. -->
+                 программ чтения с экрана и автоматизации это обычная отметка, —
+                 но выглядит кнопкой во всю ширину карточки. -->
             <Style x:Key="SetToggle" TargetType="CheckBox">
                 <Setter Property="Height" Value="32"/>
                 <Setter Property="Margin" Value="0"/>
@@ -132,8 +131,8 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-            <!-- Подложка строки набора в списке lstPresets: шаблон строки общий
-                 (CatalogShared.xaml, PresetRowTemplate), цвет подложки у видов разный. -->
+            <!-- Подложка строки набора в списке lstPresets; сам шаблон строки —
+                 CatalogShared.xaml, PresetRowTemplate. -->
             <Style x:Key="PresetRowBorderStyle" TargetType="Border">
                 <Setter Property="Background" Value="{DynamicResource SurfaceRaised}"/>
             </Style>
@@ -255,9 +254,9 @@
                         <GroupStyle>
                             <GroupStyle.ContainerStyle>
                                 <Style TargetType="{x:Type GroupItem}">
-                                    <!-- Имя категории для автоматизации и программ чтения с экрана —
-                                         как у прежнего списка: GroupItem остаётся узлом, внутри
-                                         которого лежат все карточки категории. -->
+                                    <!-- Имя категории для автоматизации и программ чтения с экрана:
+                                         GroupItem остаётся узлом, внутри которого лежат все
+                                         карточки категории. -->
                                     <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
                                     <Setter Property="Template">
                                         <Setter.Value>
@@ -366,7 +365,7 @@
                                                        Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
-                                            <!-- Блокировка по региону — отдельный значок, как в прежнем списке. -->
+                                            <!-- Блокировка по региону — отдельный значок. -->
                                             <TextBlock Text="🌍" Width="20" Height="20" TextAlignment="Center" FontSize="12"
                                                        VerticalAlignment="Center"
                                                        Foreground="{DynamicResource StatusRegionBlocked}"
@@ -508,7 +507,7 @@
                                 ToolTip="Установит все отмеченные приложения по очереди. Для нескольких приложений будет предложена точка восстановления."
                                 Command="{Binding InstallSelectedCommand}">
                             <!-- StringFormat на Button.Content (object) не срабатывает — подпись
-                                 форматирует вложенный TextBlock, как в прежнем виде. -->
+                                 форматирует вложенный TextBlock. -->
                             <TextBlock Text="{Binding SelectedCount, StringFormat='Установить ({0})'}"
                                        Foreground="{DynamicResource AccentForeground}"/>
                         </Button>

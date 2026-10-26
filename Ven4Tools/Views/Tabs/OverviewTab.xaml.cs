@@ -8,7 +8,7 @@ using Ven4Tools.ViewModels;
 namespace Ven4Tools.Views.Tabs
 {
     /// <summary>
-    /// Экран «Обзор» новой оболочки. Вся логика — в <see cref="OverviewViewModel"/>;
+    /// Экран «Обзор». Вся логика — в <see cref="OverviewViewModel"/>;
     /// здесь только жизненный цикл подписок и проброс просьбы открыть раздел.
     /// </summary>
     public partial class OverviewTab : UserControl

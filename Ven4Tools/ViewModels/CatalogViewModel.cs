@@ -31,8 +31,7 @@ namespace Ven4Tools.ViewModels
     //   • CatalogViewModel.Install.cs   — установка, отмена, прогресс, неудачные установки;
     //   • CatalogViewModel.Presets.cs   — пресеты и экспорт/импорт списка;
     //   • CatalogViewModel.Disks.cs     — диск установки и проверка свободного места;
-    //   • CatalogViewModel.Selection.cs — панель «Ваш набор» и кнопки-категории
-    //                                     нового интерфейса;
+    //   • CatalogViewModel.Selection.cs — панель «Ваш набор» и кнопки-категории;
     //   • CatalogViewModel.Unattended.cs — установка набора по заданию из командной
     //                                     строки или файла ответа.
     public sealed partial class CatalogViewModel : ViewModelBase

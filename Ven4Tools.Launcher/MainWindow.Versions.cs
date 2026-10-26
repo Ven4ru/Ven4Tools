@@ -193,8 +193,7 @@ namespace Ven4Tools.Launcher
         // цветом — единый источник вместо повторяющихся хардкод-RGB в четырёх местах.
         private enum LaunchButtonState { Launch, Download, Update }
 
-        private static readonly System.Windows.Media.Brush LaunchBrush   = CreateFrozenBrush(0, 120, 212);   // синий
-        private static readonly System.Windows.Media.Brush DownloadBrush = CreateFrozenBrush(255, 140, 0);   // оранжевый
+        // Зелёный — фирменный цвет действия «вперёд», янтарный оставлен обновлению.
         private static readonly System.Windows.Media.Brush UpdateBrush   = CreateFrozenBrush(251, 191, 36);  // янтарный
 
         private static System.Windows.Media.Brush CreateFrozenBrush(byte r, byte g, byte b)
@@ -206,18 +205,26 @@ namespace Ven4Tools.Launcher
 
         private void SetLaunchButtonState(LaunchButtonState state)
         {
-            (btnLaunchApp.Content, btnLaunchApp.Background) = state switch
+            btnLaunchApp.Content = state switch
             {
-                LaunchButtonState.Launch   => ("🚀 Запустить Ven4Tools", LaunchBrush),
-                LaunchButtonState.Download => ("📥 Загрузить Ven4Tools", DownloadBrush),
-                LaunchButtonState.Update   => ("⬆ Обновить Ven4Tools",   UpdateBrush),
-                _                          => (btnLaunchApp.Content, btnLaunchApp.Background)
+                LaunchButtonState.Launch   => "🚀 Запустить Ven4Tools",
+                LaunchButtonState.Download => "📥 Загрузить Ven4Tools",
+                LaunchButtonState.Update   => "⬆ Обновить Ven4Tools",
+                _                          => btnLaunchApp.Content
             };
+            btnLaunchApp.Background = state == LaunchButtonState.Update
+                ? UpdateBrush
+                : (System.Windows.Media.Brush)FindResource("BrandGreen");
 
-            // Новый вид окна: свой цвет кнопки и заголовок карточки по состоянию клиента.
-            _launchState = state;
-            if (_uiModern) btnLaunchApp.Background = ModernLaunchBrush(state);
-            UpdateHeroTitle();
+            // Заголовок карточки говорит, что с клиентом сейчас, — рядом стоит кнопка,
+            // которая на это отвечает.
+            txtHeroTitle.Text = state switch
+            {
+                LaunchButtonState.Launch   => "Клиент установлен",
+                LaunchButtonState.Download => "Клиент не установлен",
+                LaunchButtonState.Update   => "Доступно обновление клиента",
+                _                          => "Готов к установке"
+            };
         }
 
         // quiet=true — вызов на этапе инициализации окна: состояние кнопки и панель

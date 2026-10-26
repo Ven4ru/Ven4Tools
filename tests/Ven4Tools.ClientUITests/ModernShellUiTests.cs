@@ -8,12 +8,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Ven4Tools.ClientUITests
 {
     /// <summary>
-    /// Новая оболочка главного окна и возврат к прежней.
+    /// Оболочка главного окна и каталог карточками.
     ///
-    /// Остальные классы набора запускают клиент в прежней оболочке (см.
-    /// <see cref="AppSession.Launch(bool)"/>) и проверяют разделы. Здесь проверяется
-    /// только то, чем оболочки различаются: стартовый «Обзор», свёрнутые группы меню,
-    /// кнопка переключения и то, что выбор записывается в профиль.
+    /// Остальные классы набора начинают с каталога (см. <see cref="AppSession.Launch()"/>)
+    /// и проверяют разделы. Здесь проверяется сама оболочка: стартовый «Обзор»,
+    /// свёрнутые группы меню, шапка с названием раздела, готовые наборы и карточки.
     /// </summary>
     [TestClass]
     public class ModernShellUiTests
@@ -36,9 +35,9 @@ namespace Ven4Tools.ClientUITests
             _profileExisted = File.Exists(ProfilePath);
             if (_profileExisted) _profileBackup = File.ReadAllText(ProfilePath);
             File.WriteAllText(ProfilePath,
-                "{\"CatalogMode\":\"full\",\"HasSelectedCategory\":true,\"UiMode\":\"modern\"}");
+                "{\"CatalogMode\":\"full\",\"HasSelectedCategory\":true}");
 
-            try { _session = AppSession.Launch(modernUi: true); }
+            try { _session = AppSession.LaunchAtOverview(); }
             catch (Exception ex) { _launchError = ex.Message; _session = null; }
         }
 
@@ -76,27 +75,20 @@ namespace Ven4Tools.ClientUITests
             Retry.WhileTrue(() => Find(s, automationId) is { IsOffscreen: false }, timeout: ElementTimeout,
                 interval: TimeSpan.FromMilliseconds(250), throwOnTimeout: false).Success;
 
-        private static string ProfileText() =>
-            Retry.WhileException(() => File.ReadAllText(ProfilePath), timeout: TimeSpan.FromSeconds(3),
-                interval: TimeSpan.FromMilliseconds(200)).Result ?? "";
-
         [TestMethod]
-        public void НоваяОболочка_Обзор_ГруппыМеню_ВозвратКПрежнейИОбратно()
+        public void Оболочка_Обзор_ГруппыМеню_ШапкаРаздела()
         {
             var s = Require();
 
             // ── Старт: «Обзор», меню свёрнуто до шести пунктов ──
-            Assert.IsNotNull(WaitFor(s, "btnOverviewTab"), "В новой оболочке нет пункта «Обзор».");
-            Assert.IsNotNull(WaitFor(s, "txtOverviewSummary"), "Клиент в новой оболочке должен открываться на «Обзоре».");
-            Assert.IsNotNull(Find(s, "btnCatalogTab"), "Пункт «Каталог» должен быть в меню новой оболочки.");
+            Assert.IsNotNull(WaitFor(s, "btnOverviewTab"), "В меню нет пункта «Обзор».");
+            Assert.IsNotNull(WaitFor(s, "txtOverviewSummary"), "Клиент должен открываться на «Обзоре».");
+            Assert.IsNotNull(Find(s, "btnCatalogTab"), "Пункт «Каталог» должен быть в меню.");
+            Assert.IsNull(Find(s, "btnUiModeSwitch"), "Переключателя на прежний интерфейс больше быть не должно.");
             Assert.IsNull(Find(s, "btnDebloaterTab"),
                 "«Очистка» должна быть спрятана в группу «Windows», пока группа свёрнута.");
             Assert.IsNull(Find(s, "btnBenchmarkTab"),
                 "«Бенчмарк» должен быть спрятан в группу «Сервис», пока группа свёрнута.");
-
-            var switchButton = Find(s, "btnUiModeSwitch");
-            Assert.IsNotNull(switchButton, "Нет кнопки переключения оболочки.");
-            Assert.AreEqual("Старый интерфейс", switchButton!.Name);
 
             // ── Группа раскрывается и ведёт в раздел ──
             Find(s, "btnGroupWindows")!.AsButton().Invoke();
@@ -106,7 +98,7 @@ namespace Ven4Tools.ClientUITests
             Assert.IsTrue(
                 Retry.WhileFalse(() => Find(s, "txtHeaderTitle")?.Name == "Очистка", timeout: ElementTimeout,
                     interval: TimeSpan.FromMilliseconds(250), throwOnTimeout: false).Success,
-                "В шапке новой оболочки должно стоять название открытого раздела.");
+                "В шапке должно стоять название открытого раздела.");
 
             // ── Быстрое действие «Обзора» ведёт в каталог ──
             Find(s, "btnOverviewTab")!.AsButton().Invoke();
@@ -114,28 +106,12 @@ namespace Ven4Tools.ClientUITests
             Assert.IsNotNull(toCatalog, "На «Обзоре» нет действия «Собрать набор программ».");
             toCatalog!.AsButton().Invoke();
             Assert.IsNotNull(WaitFor(s, "btnInstall"), "Действие «Обзора» должно открывать каталог.");
-
-            // ── Возврат к прежней оболочке ──
-            Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
-            Assert.IsNotNull(WaitFor(s, "btnDebloaterTab"), "В прежней оболочке все разделы — отдельными пунктами.");
-            Assert.IsNotNull(Find(s, "btnBenchmarkTab"), "В прежней оболочке «Бенчмарк» — отдельный пункт.");
-            Assert.IsTrue(WaitGone(s, "btnOverviewTab"), "В прежней оболочке пункта «Обзор» быть не должно.");
-            Assert.AreEqual("Новый интерфейс", Find(s, "btnUiModeSwitch")!.Name);
-            StringAssert.Contains(ProfileText(), "classic", "Выбор прежней оболочки должен записаться в профиль.");
-
-            // ── И обратно ──
-            Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
-            Assert.IsNotNull(WaitFor(s, "btnOverviewTab"), "Новая оболочка не вернулась.");
-            Assert.IsNotNull(WaitFor(s, "txtOverviewSummary"), "После возврата в новую оболочку должен открыться «Обзор».");
-            StringAssert.Contains(ProfileText(), "modern", "Выбор новой оболочки должен записаться в профиль.");
         }
 
         [TestMethod]
         public void ГотовыйНабор_СОбзора_ОтмечаетПрограммыВКаталоге()
         {
             var s = Require();
-            if (Find(s, "btnUiModeSwitch")?.Name == "Новый интерфейс")
-                Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
 
             Find(s, "btnOverviewTab")!.AsButton().Invoke();
             var home = WaitFor(s, "btnReadySet_home");
@@ -183,8 +159,6 @@ namespace Ven4Tools.ClientUITests
         public void НовыйКаталог_КнопкиКарточек_ПослеВозвратаНаВкладку()
         {
             var s = Require();
-            if (Find(s, "btnUiModeSwitch")?.Name == "Новый интерфейс")
-                Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
 
             UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
             Assert.IsNotNull(Retry.WhileNull(() => Find(s, "chkApp_7zip"), timeout: TimeSpan.FromSeconds(40),
@@ -209,11 +183,9 @@ namespace Ven4Tools.ClientUITests
         public void НовыйКаталог_Карточки_ВашНабор_Категории()
         {
             var s = Require();
-            if (Find(s, "btnUiModeSwitch")?.Name == "Новый интерфейс")
-                Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
 
             UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
-            Assert.IsNotNull(WaitFor(s, "chipCategory_all"), "В новом каталоге нет кнопок-категорий.");
+            Assert.IsNotNull(WaitFor(s, "chipCategory_all"), "В каталоге нет кнопок-категорий.");
 
             var card = Retry.WhileNull(() => Find(s, "chkApp_7zip"), timeout: TimeSpan.FromSeconds(40),
                 interval: TimeSpan.FromMilliseconds(400), throwOnTimeout: false).Result;
@@ -241,18 +213,15 @@ namespace Ven4Tools.ClientUITests
             Assert.AreEqual(true, IsChecked(s, "chkApp_7zip"), "Отметка должна пережить смену категории.");
 
             // ── Редкие действия свёрнуты ──
-            Assert.IsNull(Find(s, "btnRefreshCatalog"), "Инструменты каталога в новом виде должны быть свёрнуты.");
+            Assert.IsNull(Find(s, "btnRefreshCatalog"), "Инструменты каталога должны быть свёрнуты.");
             Assert.IsNotNull(UiNav.FindCatalogTool(s, "btnRefreshCatalog"), "Инструменты каталога не раскрылись.");
 
-            // ── Прежний вид показывает тот же выбор, и обратно ──
-            Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
-            Assert.IsTrue(WaitGone(s, "chipCategory_all"), "В прежнем виде каталога кнопок-категорий нет.");
-            Assert.AreEqual(true, IsChecked(s, "chkApp_7zip"), "Отметка должна сохраниться при возврате к прежнему виду.");
-            Assert.AreEqual("Выбрано приложений: 1", Find(s, "txtSelectionBar")?.Name);
-
-            Find(s, "btnUiModeSwitch")!.AsButton().Invoke();
+            // ── Уход с вкладки и возврат: набор на месте ──
+            UiNav.Find(s, "btnOverviewTab")!.AsButton().Invoke();
+            Assert.IsTrue(WaitGone(s, "chipCategory_all"), "Уход с вкладки каталога не сработал.");
             UiNav.Find(s, "btnCatalogTab")!.AsButton().Invoke();
-            Assert.IsNotNull(WaitFor(s, "btnSetRemove_7zip"), "После возврата в новый вид набор должен быть на месте.");
+            Assert.IsNotNull(WaitFor(s, "btnSetRemove_7zip"), "После возврата на вкладку набор должен быть на месте.");
+            Assert.AreEqual(true, IsChecked(s, "chkApp_7zip"), "Отметка должна пережить уход с вкладки.");
             // Категории обязаны остаться в дереве автоматизации и после ухода с вкладки:
             // раньше после возврата они были видны на экране, но не программам чтения с экрана.
             Assert.IsNotNull(Find(s, "chipCategory_all"), "После возврата на вкладку категории пропали из дерева автоматизации.");

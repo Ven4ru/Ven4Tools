@@ -67,7 +67,6 @@ namespace Ven4Tools.ViewModels
             // пользовательском изменении, не при загрузке текущего состояния.
             _themeTag     = ProfileService.Current.Theme;
             _languageTag  = ProfileService.Current.Language;
-            _compactMode  = ProfileService.Current.CompactMode;
             _reduceMotion = ProfileService.Current.ReduceMotion;
             MotionService.Enabled = !ProfileService.Current.ReduceMotion;
             _loadingAppearance = false;

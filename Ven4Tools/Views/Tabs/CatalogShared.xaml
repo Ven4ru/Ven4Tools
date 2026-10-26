@@ -1,9 +1,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:vm="clr-namespace:Ven4Tools.ViewModels">
-    <!-- Шаблоны и стили, одинаковые в обоих видах каталога: прежнем (CatalogTab.xaml) и
-         новом (CatalogCardsView.xaml). Оба вида подключают этот словарь в своих ресурсах.
-         Правка здесь меняет сразу оба вида; то, что у видов различается, остаётся в них. -->
+    <!-- Шаблоны и стили каталога (CatalogCardsView.xaml), вынесенные из самого вида:
+         строки подсказок поиска, наборов и хода установки. -->
 
     <!-- Строка панели «Не нашли в каталоге? Поиск по источникам». -->
     <DataTemplate x:Key="SearchSuggestionTemplate" DataType="{x:Type vm:SearchSuggestionViewModel}">
@@ -51,8 +50,8 @@
         </Grid>
     </DataTemplate>
 
-    <!-- Строка списка сохранённых наборов (lstPresets). Цвет подложки строки у видов
-         разный, поэтому он задан стилем PresetRowBorderStyle в ресурсах каждого вида. -->
+    <!-- Строка списка сохранённых наборов (lstPresets). Цвет подложки строки задан
+         стилем PresetRowBorderStyle в ресурсах вида (CatalogCardsView.xaml). -->
     <DataTemplate x:Key="PresetRowTemplate">
         <Border Margin="0,2" Padding="8,6"
                 Style="{DynamicResource PresetRowBorderStyle}"

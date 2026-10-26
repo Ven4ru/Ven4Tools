@@ -17,7 +17,7 @@
             <GroupBox Header="Внешний вид" Margin="0,0,0,15">
                 <Grid Margin="8">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="230"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                     <TextBlock Text="Тема" VerticalAlignment="Center"/>
                     <ComboBox x:Name="cmbTheme" Grid.Column="1" SelectedValuePath="Tag" SelectedValue="{Binding ThemeTag, Mode=TwoWay}">
                         <ComboBoxItem Content="Как на ven4tools.ru" Tag="web"/>
@@ -32,10 +32,8 @@
                         <ComboBoxItem Content="Русский" Tag="ru"/>
                         <ComboBoxItem Content="English" Tag="en"/>
                     </ComboBox>
-                    <TextBlock Grid.Row="2" Text="Плотность" VerticalAlignment="Center" Margin="0,10,0,0"/>
-                    <CheckBox x:Name="chkCompactMode" Grid.Row="2" Grid.Column="1" Content="Компактные строки каталога"
-                              Margin="3,10,3,3" IsChecked="{Binding CompactMode, Mode=TwoWay}"/>
-                    <CheckBox x:Name="chkReduceMotion" Grid.Row="3" Grid.Column="1" Content="Уменьшить анимации"
+                    <TextBlock Grid.Row="2" Text="Анимации" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                    <CheckBox x:Name="chkReduceMotion" Grid.Row="2" Grid.Column="1" Content="Уменьшить анимации"
                               Margin="3,10,3,3" IsChecked="{Binding ReduceMotion, Mode=TwoWay}"/>
                     <StackPanel Grid.Column="2" Grid.RowSpan="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
                         <Ellipse Width="18" Height="18" Fill="{DynamicResource StatusSuccess}" Margin="3"/><Ellipse Width="18" Height="18" Fill="{DynamicResource StatusInfo}" Margin="3"/>
