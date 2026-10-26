@@ -22,7 +22,7 @@
     <!-- AssemblyVersion/FileVersion намеренно не заданы отдельно: SDK выводит их из
          Version. Иначе литерал AssemblyVersion перебивает Version и рассинхронизируется
          при релизе (реальный билд показывал/отправлял версию отличную от Version). -->
-    <Version>6.4.0</Version>
+    <Version>6.5.1</Version>
     
     <!-- Явная точка входа -->
     <StartupObject>Ven4Tools.App</StartupObject>
@@ -40,6 +40,12 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\embedded_catalog.json" />
+  </ItemGroup>
+
+  <!-- Справочные данные «Диагностики»: словарь кодов синего экрана и правила списка
+       процессоров Windows 11 (источники — внутри файлов). -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Diagnostics\*.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -62,6 +62,8 @@ namespace Ven4Tools.Launcher
                 UpdateVersionDisplay(latest);
             }
 
+            if (!ConfirmSmartAppControlBeforeInstall()) return;
+
             // Таймаут аренды страхует от подвисшего (не оборванного) соединения: без него
             // HttpClient с Timeout=Infinite может ждать байты бесконечно, и кнопка
             // «Отмена» — единственный выход. См. тот же паттерн в LauncherUpdateService.
@@ -127,6 +129,7 @@ namespace Ven4Tools.Launcher
             catch (Exception ex)
             {
                 AddLog($"❌ Ошибка запуска: {ex.Message}");
+                if (ShowLaunchFailureExplanation(ex, clientExe)) return;
                 MessageBox.Show($"Не удалось запустить клиент: {ex.Message}", "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

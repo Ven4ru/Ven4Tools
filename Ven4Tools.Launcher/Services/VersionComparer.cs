@@ -3,6 +3,20 @@ namespace Ven4Tools.Launcher.Services
     internal static class VersionComparer
     {
         /// <summary>
+        /// Версия для показа: «6.5.0.0» из метаданных exe → «6.5.0», как пишутся версии
+        /// релизов. Иначе рядом стояли «Текущая версия: 6.5.0.0» и «Актуальная: 6.5.0».
+        /// Четвёртое число отбрасывается, только если оно ноль; прочее — без изменений.
+        /// </summary>
+        public static string ToDisplay(string? version)
+        {
+            if (string.IsNullOrWhiteSpace(version)) return version ?? "";
+            string[] parts = version.Trim().Split('.');
+            return parts.Length == 4 && parts[3] == "0" && System.Array.TrueForAll(parts, p => int.TryParse(p, out _))
+                ? string.Join(".", parts, 0, 3)
+                : version.Trim();
+        }
+
+        /// <summary>
         /// Возвращает положительное число, если v1 > v2, отрицательное, если v1 &lt; v2,
         /// и 0 при равенстве. Стабильная версия старше предрелизной с тем же номером:
         /// "3.1.0" > "3.1.0-pre".

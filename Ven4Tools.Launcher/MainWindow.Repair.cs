@@ -56,6 +56,7 @@ namespace Ven4Tools.Launcher
                 {
                     var absent = ClientIntegrityReport.NotInstalled();
                     AddLog($"🩺 Проверка: {absent.Summary}");
+                    ExplainMissingClientExe(_clientPath);
                     return absent;
                 }
 
@@ -197,6 +198,7 @@ namespace Ven4Tools.Launcher
                 }
 
                 AddLog("🛠 Восстановление файлов клиента...");
+                using var keepAwake = SleepBlocker.Acquire("восстановление файлов клиента");
                 using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, lease.Token);
                 var checker = new ClientIntegrityChecker(_httpClient, this);
                 return await checker.RepairAsync(report, _clientPath, linked.Token);
@@ -308,6 +310,7 @@ namespace Ven4Tools.Launcher
 
                 AddLog($"✅ Клиент восстановлен: заменено файлов {plan.ToDownload.Count}, " +
                        $"удалено лишних {plan.ToDelete.Count}");
+                _ = WatchClientFilesAfterWriteAsync(clientPath);
                 return true;
             }
             catch (OperationCanceledException)

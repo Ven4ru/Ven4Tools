@@ -71,7 +71,23 @@ namespace Ven4Tools.Launcher
                 {
                     if (Directory.Exists(_clientPath))
                     {
-                        try { Directory.Delete(_clientPath, true); AddLog("   ✅ Папка клиента удалена"); }
+                        // Если рядом с клиентом лежит что-то ещё (папку привязали через
+                        // «Найти клиент на диске»), удаляем только файлы клиента, а
+                        // папку с чужим содержимым оставляем.
+                        var foreign = ClientFolderInspector.FindForeignEntries(_clientPath, limit: int.MaxValue);
+                        try
+                        {
+                            if (foreign.Count == 0)
+                            {
+                                Directory.Delete(_clientPath, true);
+                                AddLog("   ✅ Папка клиента удалена");
+                            }
+                            else
+                            {
+                                ClientFolderInspector.DeleteOwnEntries(_clientPath);
+                                AddLog($"   ✅ Файлы клиента удалены; в папке оставлены посторонние файлы ({foreign.Count}): {_clientPath}");
+                            }
+                        }
                         catch (Exception ex) { AddLog($"   ⚠️ Папка клиента: {ex.Message}"); }
                     }
                     else

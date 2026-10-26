@@ -71,7 +71,12 @@ internal sealed class TransactionalDirectoryInstaller
         _files = files;
     }
 
-    public void Install(string stagingPath, string targetPath, CancellationToken cancellationToken)
+    /// <param name="keepReplacedAs">Если задан, прежнее содержимое папки после успешной
+    /// замены не удаляется, а переносится сюда. Нужен, когда в папке клиента лежало
+    /// что-то постороннее (см. <see cref="ClientFolderInspector"/>): чужие файлы
+    /// должны пережить обновление клиента.</param>
+    public void Install(string stagingPath, string targetPath, CancellationToken cancellationToken,
+        string? keepReplacedAs = null)
     {
         string staging = Path.GetFullPath(stagingPath);
         string target = Path.GetFullPath(targetPath);
@@ -126,11 +131,15 @@ internal sealed class TransactionalDirectoryInstaller
         {
             try
             {
-                _directories.Delete(backup, recursive: true);
+                if (keepReplacedAs != null)
+                    _directories.Move(backup, Path.GetFullPath(keepReplacedAs));
+                else
+                    _directories.Delete(backup, recursive: true);
             }
             catch
             {
-                // не критично — см. комментарий выше
+                // не критично — см. комментарий выше; резервную копию с посторонними
+                // файлами зачистка при старте не удаляет (CleanupStaleInstallArtifacts).
             }
         }
     }

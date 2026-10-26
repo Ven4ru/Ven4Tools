@@ -37,6 +37,12 @@
 .PARAMETER LauncherSetup
     Установщик лаунчера Ven4Tools.Setup-X.Y.Z.exe.
 
+.PARAMETER LauncherExe
+    Ven4Tools.Launcher.exe, упакованный в этот установщик (build_installer.ps1 берёт его из
+    Ven4Tools.Launcher\bin\Release\net10.0-windows\win-x64\publish). Его SHA256 пишется в
+    launcher.installed_exe_sha256 — по нему «Проверить подлинность» сверяет установленный лаунчер.
+    Без ключа поле убирается, чтобы не остался хеш прежней версии.
+
 .PARAMETER VersionJsonPath
     Куда сохранить собранный манифест перед подписью. По умолчанию — version.json
     в корне репозитория (в .gitignore).
@@ -54,7 +60,8 @@
     .\Tools\deploy-cdn-release.ps1 -ClientZip .\_release\Ven4Tools-Client-5.4.0.zip
 
 .EXAMPLE
-    .\Tools\deploy-cdn-release.ps1 -LauncherSetup .\_release\Ven4Tools.Setup-3.9.0.exe
+    .\Tools\deploy-cdn-release.ps1 -LauncherSetup .\_release\Ven4Tools.Setup-3.12.0.exe `
+        -LauncherExe .\Ven4Tools.Launcher\bin\Release\net10.0-windows\win-x64\publish\Ven4Tools.Launcher.exe
 
 .NOTES
     Требуется SSH-алиас "jump" (тот же, что у deploy-version-manifest.ps1).
@@ -62,6 +69,7 @@
 param(
     [string]$ClientZip,
     [string]$LauncherSetup,
+    [string]$LauncherExe,
     [string]$VersionJsonPath = (Join-Path $PSScriptRoot '..\version.json'),
     [switch]$SkipClientFilesCheck,
     [switch]$SkipLanguagePack
@@ -247,6 +255,11 @@ if ($LauncherSetup) {
     Set-Field $manifest.launcher 'setup_fallback' "$GitHubBase/launcher-v$launcherVersion/$setupName"
     Set-Field $manifest.launcher 'setup_mirror_hosting' "$MirrorBase/releases/$setupName"
     Set-Field $manifest.launcher 'setup_sha256' $sha
+    if ($LauncherExe) {
+        Set-Field $manifest.launcher 'installed_exe_sha256' (Get-FileHash -LiteralPath $LauncherExe -Algorithm SHA256).Hash.ToLowerInvariant()
+    } elseif ($manifest.launcher.PSObject.Properties['installed_exe_sha256']) {
+        $manifest.launcher.PSObject.Properties.Remove('installed_exe_sha256')
+    }
 }
 
 Set-Field $manifest 'updated_at' ((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))

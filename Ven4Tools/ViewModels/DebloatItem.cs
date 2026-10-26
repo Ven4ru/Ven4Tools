@@ -10,9 +10,11 @@ namespace Ven4Tools.ViewModels
     {
         public string Name        { get; }
         public string Id          { get; }
-        public string Category    { get; } // "app", "privacy", "service"
+        public string Category    { get; } // "app", "privacy", "service", "ads"
         public string Risk        { get; } // "safe", "moderate", "caution"
         public string Description { get; }
+        /// <summary>Для какой Windows твик: null — для любой, "win11" или "win10".</summary>
+        public string? Os         { get; }
 
         private bool _isSelected;
         public bool IsSelected
@@ -45,9 +47,9 @@ namespace Ven4Tools.ViewModels
             _          => Risk
         };
 
-        public DebloatItem(string name, string id, string category, string risk, string description)
+        public DebloatItem(string name, string id, string category, string risk, string description, string? os = null)
         {
-            Name = name; Id = id; Category = category; Risk = risk; Description = description;
+            Name = name; Id = id; Category = category; Risk = risk; Description = description; Os = os;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

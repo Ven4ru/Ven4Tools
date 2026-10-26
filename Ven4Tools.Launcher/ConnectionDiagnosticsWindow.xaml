@@ -1,0 +1,47 @@
+<Window x:Class="Ven4Tools.Launcher.ConnectionDiagnosticsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Диагностика соединения — Ven4Tools Launcher" Height="620" Width="640"
+        MinHeight="420" MinWidth="480"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        Background="{DynamicResource WindowBackground}"
+        FontFamily="Segoe UI Variable Text, Segoe UI">
+    <!-- Л8: только чтение. DNS, TCP, TLS, скорость по каждому источнику, прокси, часы. -->
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Проверяет каждый источник загрузки — CDN по имени и по прямому адресу, зеркало ven4tools.ru и GitHub: DNS, соединение, защищённое соединение, скорость (около 1 МБ с каждого), прокси и часы компьютера. Ничего не меняет."
+                   TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+            <TextBlock x:Name="txtProgress" FontSize="12" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
+            <ItemsControl x:Name="lstConclusions" Margin="0,6,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- Маркер отдельно от текста: строка вывода целиком — ключ перевода. -->
+                        <DockPanel Margin="0,2">
+                            <TextBlock DockPanel.Dock="Left" Text="•" FontSize="13" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="13" FontWeight="SemiBold"/>
+                        </DockPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <TextBox x:Name="txtReport" Grid.Row="2" IsReadOnly="True" FontFamily="Consolas" FontSize="11"
+                 TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                 AutomationProperties.Name="Подробности диагностики соединения"/>
+
+        <WrapPanel Grid.Row="3" Margin="0,12,0,0" HorizontalAlignment="Right">
+            <Button x:Name="btnCopy" Content="Скопировать отчёт" Padding="12,0" IsEnabled="False" Click="BtnCopy_Click"
+                    ToolTip="Скопирует отчёт в буфер обмена. Имя компьютера, имя пользователя, пути и адрес прокси в отчёт не попадают."/>
+            <Button x:Name="btnRun" Content="Проверить снова" Padding="12,0" IsEnabled="False" Click="BtnRun_Click" ToolTip="Заново проверит DNS, соединение, TLS и скорость каждого источника загрузки."/>
+            <Button Content="Закрыть" Width="100" IsCancel="True" Click="BtnClose_Click"/>
+        </WrapPanel>
+    </Grid>
+</Window>

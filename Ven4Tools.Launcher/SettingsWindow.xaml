@@ -15,6 +15,13 @@
                       Checked="ChkBackgroundUpdates_Changed" Unchecked="ChkBackgroundUpdates_Changed">
                 <TextBlock Text="Проверять обновления в фоне" TextWrapping="Wrap"/>
             </CheckBox>
+            <!-- Л10: лимитное подключение. Обработчики и начальное значение — в
+                 SettingsWindow.InstallFolder.cs. -->
+            <CheckBox x:Name="chkDeferOnMetered" Margin="0,4"
+                      Checked="ChkDeferOnMetered_Changed" Unchecked="ChkDeferOnMetered_Changed"
+                      ToolTip="Автоматическое обновление клиента ждёт сети без лимита трафика, если Windows отмечает подключение как лимитное (модем, точка доступа на телефоне, роуминг). Ручное обновление работает всегда.">
+                <TextBlock Text="Не скачивать обновления в фоне по лимитному подключению" TextWrapping="Wrap"/>
+            </CheckBox>
             <CheckBox x:Name="chkStartMinimized" Margin="0,4"
                       Checked="ChkStartMinimized_Changed" Unchecked="ChkStartMinimized_Changed">
                 <TextBlock Text="Запускать свёрнутым в трей" TextWrapping="Wrap"/>
@@ -62,6 +69,21 @@
                        TextWrapping="Wrap" FontSize="11"
                        Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
 
+            <!-- Л1: папка клиента и перенос. Код — SettingsWindow.InstallFolder.cs. -->
+            <TextBlock Text="ПАПКА КЛИЕНТА" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
+            <TextBlock x:Name="txtClientFolderPath" TextWrapping="Wrap" FontSize="11"
+                       FontFamily="Cascadia Mono, Consolas"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,4"/>
+            <TextBlock x:Name="txtClientFolderRisk" TextWrapping="Wrap" FontSize="11"
+                       Foreground="{StaticResource StatusWarning}"
+                       Margin="0,2,0,6" Visibility="Collapsed"/>
+            <TextBlock Text="Рекомендуемое место — %LOCALAPPDATA%\Programs\Ven4Tools: вне OneDrive и вне папок, защищённых Защитником Windows. Перенос копирует клиент, сверяет копию с оригиналом и только после этого удаляет старую папку. Настройки и данные не затрагиваются."
+                       TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+            <Button x:Name="btnMoveClient" Content="Перенести клиент…" Height="34" Margin="0,4"
+                    Click="BtnMoveClient_Click"
+                    ToolTip="Перенесёт установленный клиент в другую папку и обновит его ярлыки. При сбое клиент остаётся в прежней папке."/>
+
             <TextBlock Text="ДИАГНОСТИКА КЛИЕНТА" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
             <TextBlock Text="Сверяет файлы установленного клиента с подписанным списком опубликованной версии и восстанавливает повреждённые или отсутствующие."
                        TextWrapping="Wrap" FontSize="11"
@@ -103,6 +125,29 @@
             <Button x:Name="btnRepairIntegrity" Content="Исправить" Height="34"
                     Margin="0,8,0,0" Visibility="Collapsed" Click="BtnRepairIntegrity_Click"
                     ToolTip="Докачает повреждённые или отсутствующие файлы и удалит лишние — по списку, который показала проверка выше."/>
+
+            <!-- Блоки G (лаунчер 3.12): прокси, подлинность, диагностика соединения.
+                 Код — SettingsWindow.TrustNetwork.cs. -->
+            <TextBlock Text="ПРОКСИ" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
+            <TextBlock x:Name="txtProxyStatus" TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+            <Button x:Name="btnProxySettings" Content="Настроить прокси" Height="34" Margin="0,4"
+                    Click="BtnProxySettings_Click"
+                    ToolTip="Системный прокси Windows (с вашей учётной записью) или адрес, логин и пароль вручную — с проверкой перед сохранением."/>
+
+            <TextBlock Text="ПОДЛИННОСТЬ" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
+            <TextBlock Text="Сверяет SHA256 лаунчера и клиента с хешами, опубликованными на CDN (в подписанном манифесте) и на GitHub, и показывает отпечаток ключа подписи."
+                       TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+            <Button x:Name="btnAuthenticity" Content="Проверить подлинность" Height="34" Margin="0,4"
+                    Click="BtnAuthenticity_Click" ToolTip="Сверит SHA256 лаунчера и файлов клиента с опубликованными на CDN и на GitHub и покажет статус подписи. Ничего не меняет."/>
+
+            <TextBlock Text="ДИАГНОСТИКА СОЕДИНЕНИЯ" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
+            <TextBlock Text="Проверяет CDN, зеркало ven4tools.ru и GitHub: DNS, соединение, скорость, прокси и часы компьютера — и объясняет, что мешает загрузке."
+                       TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+            <Button x:Name="btnConnectionDiagnostics" Content="Диагностика соединения" Height="34" Margin="0,4"
+                    Click="BtnConnectionDiagnostics_Click" ToolTip="Проверит каждый источник загрузки: DNS, соединение, TLS, скорость, прокси и часы ПК — и объяснит, что мешает. Ничего не меняет."/>
 
             <TextBlock Text="ЖУРНАЛ ЛАУНЧЕРА" Style="{StaticResource EyebrowStyle}" Margin="0,20,0,8"/>
             <TextBlock Text="Ход работы лаунчера пишется в файл — его удобно приложить к обращению. Имя пользователя, имя компьютера и пути профиля из журнала вычищаются при записи."

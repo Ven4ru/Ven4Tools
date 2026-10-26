@@ -14,6 +14,7 @@ namespace Ven4Tools.Services.WindowsUpdate
             { unchecked((int)0x80240022), "Патч больше не предлагается сервером обновлений (устарел)." },
             { unchecked((int)0x8007000E), "Недостаточно памяти для выполнения операции." },
             { unchecked((int)0x80070005), "Отказано в доступе — операция требует прав администратора." },
+            { unchecked((int)0x80240044), "Изменить это обновление можно только с правами администратора." },
         };
 
         public static string MapHResult(int hresult) =>
