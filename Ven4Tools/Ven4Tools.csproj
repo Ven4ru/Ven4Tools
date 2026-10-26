@@ -17,6 +17,8 @@
     <!-- Application settings -->
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>Ven4Tools</AssemblyName>
+    <!-- Одно имя продукта у клиента, лаунчера и установщика — условие подписи кода. -->
+    <Product>Ven4Tools</Product>
     <!-- AssemblyVersion/FileVersion намеренно не заданы отдельно: SDK выводит их из
          Version. Иначе литерал AssemblyVersion перебивает Version и рассинхронизируется
          при релизе (реальный билд показывал/отправлял версию отличную от Version). -->

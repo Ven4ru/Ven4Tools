@@ -73,14 +73,16 @@ ShowUninstDetails show
 BrandingText "Ven4Tools — ven4tools.ru"
 
 ; --- Метаданные exe-файла установщика ---
+; ProductName — «Ven4Tools», как у клиента и лаунчера (условие подписи кода). APP_NAME
+; не трогаем: от него зависят папка установки, ярлыки и запись в «Программах и компонентах».
 VIProductVersion "${VERSION}.0"
-VIAddVersionKey /LANG=1049 "ProductName"     "${APP_NAME}"
+VIAddVersionKey /LANG=1049 "ProductName"     "Ven4Tools"
 VIAddVersionKey /LANG=1049 "ProductVersion"  "${VERSION}"
 VIAddVersionKey /LANG=1049 "FileVersion"     "${VERSION}.0"
 VIAddVersionKey /LANG=1049 "FileDescription" "Установщик ${APP_NAME}"
 VIAddVersionKey /LANG=1049 "CompanyName"     "${PUBLISHER}"
 VIAddVersionKey /LANG=1049 "LegalCopyright"  "© ${PUBLISHER}"
-VIAddVersionKey /LANG=1033 "ProductName"     "${APP_NAME}"
+VIAddVersionKey /LANG=1033 "ProductName"     "Ven4Tools"
 VIAddVersionKey /LANG=1033 "ProductVersion"  "${VERSION}"
 VIAddVersionKey /LANG=1033 "FileVersion"     "${VERSION}.0"
 VIAddVersionKey /LANG=1033 "FileDescription" "${APP_NAME} Setup"
