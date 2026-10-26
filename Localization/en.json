@@ -3088,6 +3088,10 @@
     "t": "No battery (desktop computer or the battery is not detected)."
   },
   {
+    "s": "Без интернета вкладка Office скрывается автоматически. Этот флаг включает офлайн вручную и скрывает ещё и вкладку Сеть.",
+    "t": "Without internet, the Office tab is hidden automatically. This option turns on offline mode manually and also hides the Network tab."
+  },
+  {
     "s": "Без этих инструкций Windows 11 24H2 и новее не запускается вообще, даже в обход проверок. Это свойство самого процессора, настройками не исправить.",
     "t": "Without these instructions Windows 11 24H2 and later does not start at all, even when bypassing the checks. This is a property of the processor itself and cannot be fixed in settings."
   },

@@ -143,7 +143,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Grid, а не горизонтальный StackPanel: StackPanel отдаёт подписи
+                             бесконечную ширину, TextWrapping не срабатывает, и длинная подпись
+                             обрезалась краем окна («…по лимитному по» в настройках). -->
+                        <Grid VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
                             <Border x:Name="CheckBorder"
                                     Width="15" Height="15"
                                     Background="{DynamicResource CardBackground}"
@@ -159,9 +166,9 @@
                                       Stretch="Uniform" Margin="2"
                                       Visibility="Collapsed"/>
                             </Border>
-                            <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center"
+                            <ContentPresenter Grid.Column="1" Margin="6,0,0,0" VerticalAlignment="Center"
                                               RecognizesAccessKey="True"/>
-                        </StackPanel>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Checkmark" Property="Visibility" Value="Visible"/>

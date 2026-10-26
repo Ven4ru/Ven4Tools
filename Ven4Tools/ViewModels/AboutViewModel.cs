@@ -37,7 +37,8 @@ namespace Ven4Tools.ViewModels
         public AboutViewModel()
         {
             var version = Assembly.GetExecutingAssembly().GetName().Version;
-            VersionText = $"Версия {version?.ToString() ?? "—"}";
+            // Три части, как в боковой панели: «6.5.1», а не «6.5.1.0».
+            VersionText = $"Версия {version?.ToString(3) ?? "—"}";
 
             GitHubCommand = new RelayCommand(_ => OpenGitHub());
             FeedbackCommand = new RelayCommand(_ => OpenFeedback());

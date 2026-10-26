@@ -327,7 +327,7 @@
                               Content="Принудительный офлайн режим (скрыть вкладки, требующие интернет)"
                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"
                               IsChecked="{Binding OfflineMode, Mode=TwoWay}"/>
-                    <TextBlock Text="Вкладки Office и Сеть скрываются автоматически при потере соединения. Этот флаг форсирует офлайн вручную."
+                    <TextBlock Text="Без интернета вкладка Office скрывается автоматически. Этот флаг включает офлайн вручную и скрывает ещё и вкладку Сеть."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
                                FontSize="11" Margin="0,0,0,14"/>
 
