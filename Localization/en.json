@@ -1292,6 +1292,10 @@
     "t": "[App] Could not apply the theme"
   },
   {
+    "s": "[App] Недоступен файл шрифта при разметке текста",
+    "t": "[App] Font file unavailable while laying out text"
+  },
+  {
     "s": "[App] Незавершённая установка набора: пользователь отказался продолжать",
     "t": "[App] Unfinished kit installation: the user declined to continue"
   },

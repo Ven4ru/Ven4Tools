@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
+using Ven4Tools.Helpers;
 using Ven4Tools.Services;
 using Ven4Tools.Shared;
 using Ven4Tools.Views;
@@ -15,6 +16,8 @@ namespace Ven4Tools
         private static WindowsUpdateBackgroundService? _windowsUpdateBgService;
         private static ClientControlServer? _clientControlServer;
         private static Mutex? _instanceMutex;
+        private static readonly FontFileFailureGuard _fontFailureGuard = new();
+        private static bool _fontFailureReported;
 
         /// <summary>Задание на установку набора из командной строки; null — обычный запуск.</summary>
         public static UnattendedRequest? Unattended { get; private set; }
@@ -535,6 +538,21 @@ namespace Ven4Tools
         private void Current_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             Exception ex = e.Exception;
+
+            // Недоступный файл шрифта (отчёт id 6) — сбой системы пользователя, а не
+            // клиента: строка списка не отрисуется, но программа продолжает работать.
+            // Отчёт о сбое пишется один раз, чтобы о проблеме всё же стало известно.
+            if (_fontFailureGuard.TrySuppress(ex))
+            {
+                AppLogger.Write(ex, "[App] Недоступен файл шрифта при разметке текста");
+                if (!_fontFailureReported)
+                {
+                    _fontFailureReported = true;
+                    try { CrashReportService.Write(ex); } catch { }
+                }
+                e.Handled = true;
+                return;
+            }
 
             try { CrashReportService.Write(ex); } catch { }
 
