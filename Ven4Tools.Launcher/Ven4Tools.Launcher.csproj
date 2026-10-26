@@ -27,7 +27,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <!-- Только чтение WMI: какой антивирус установлен (root\SecurityCenter2) и что нашёл
          Defender (root\Microsoft\Windows\Defender). Та же версия, что у клиента. -->
-    <PackageReference Include="System.Management" Version="10.0.12" />
+    <PackageReference Include="System.Management" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup>
