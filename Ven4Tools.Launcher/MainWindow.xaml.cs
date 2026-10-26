@@ -104,7 +104,6 @@ namespace Ven4Tools.Launcher
             {
                 try { Dispatcher.BeginInvoke(SaveSettings); } catch { /* завершение приложения */ }
             };
-            ApplyUiMode();
             if (_isUiTestMode)
                 _minimizeToTray = false;
             if (!_isUiTestMode)
@@ -384,8 +383,6 @@ namespace Ven4Tools.Launcher
             public string? LastNotifiedLauncherVersion { get; set; }
             public string? LastNotifiedClientVersion   { get; set; }
             public string? LastNotifiedNotificationId  { get; set; }
-            // Вид окна: "modern" (по умолчанию) или "classic" — см. MainWindow.UiMode.cs.
-            public string? UiMode                      { get; set; }
             // Не скачивать фоновые обновления по лимитному подключению (Л10).
             public bool    DeferUpdatesOnMetered       { get; set; } = true;
             // Последнее подтверждённое подписью значение флага манифеста

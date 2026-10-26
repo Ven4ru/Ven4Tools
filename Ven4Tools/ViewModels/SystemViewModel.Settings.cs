@@ -399,7 +399,6 @@ namespace Ven4Tools.ViewModels
                 // прежнюю тему глохла в сеттере на проверке «значение не изменилось».
                 SetField(ref _themeTag, ProfileService.Current.Theme, nameof(ThemeTag));
                 SetField(ref _languageTag, ProfileService.Current.Language, nameof(LanguageTag));
-                SetField(ref _compactMode, ProfileService.Current.CompactMode, nameof(CompactMode));
                 SetField(ref _reduceMotion, ProfileService.Current.ReduceMotion, nameof(ReduceMotion));
                 Ven4Tools.Shared.MotionService.Enabled = !ProfileService.Current.ReduceMotion;
                 ThemeService.Apply(ProfileService.Current.Theme);

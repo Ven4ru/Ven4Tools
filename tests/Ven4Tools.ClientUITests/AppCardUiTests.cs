@@ -130,34 +130,18 @@ namespace Ven4Tools.ClientUITests
                 .FirstOrDefault(t => (t.Name ?? "").Contains(titleFragment, StringComparison.OrdinalIgnoreCase)
                                      && t.BoundingRectangle.Width > 0);
 
-        // Строка каталога (Grid) для чекбокса — StackPanel(кол.0) → Grid.
-        private static AutomationElement? RowGridForCheckBox(AutomationElement chk) =>
-            chk.Parent?.Parent;
-
         /// <summary>
-        /// Есть ли у ЭТОЙ строки кнопка «▶». Принадлежность строке определяем
-        /// геометрически — по вертикальному перекрытию с чекбоксом, а не подъёмом
-        /// на два уровня по дереву: если подняться выше самой строки, в выборку
-        /// попадёт ▶ соседнего приложения, и тест решит, что запускаемо не то,
-        /// чью карточку он потом открывает.
+        /// Есть ли у ЭТОЙ карточки кнопка «▶». Ищется только внутри карточки: выше неё
+        /// в выборку попала бы ▶ соседнего приложения, и тест решил бы, что запускаемо
+        /// не то, чью карточку он потом открывает.
         /// </summary>
         private static bool RowHasPlayButton(AutomationElement chk)
         {
-            // На карточке нового вида «▶» стоит НАД кнопкой «в набор», а не в одной с ней
-            // строке, поэтому геометрия прежнего списка здесь не годится. Зато карточка —
-            // отдельный узел дерева, и всё, что внутри него, принадлежит этому приложению.
-            if (AppSession.SuiteUsesModernShell)
-                return chk.Parent?.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
-                    .Any(b => (b.Name ?? "") == "▶") == true;
-
-            var chkRect = chk.BoundingRectangle;
-            var scope = RowGridForCheckBox(chk);
-            if (scope == null) return false;
-
-            return scope.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
-                .Any(b => (b.Name ?? "") == "▶"
-                          && b.BoundingRectangle.Top < chkRect.Bottom
-                          && b.BoundingRectangle.Bottom > chkRect.Top);
+            // На карточке «▶» стоит НАД кнопкой «в набор», а не в одной с ней строке, зато
+            // карточка — отдельный узел дерева, и всё, что внутри него, принадлежит этому
+            // приложению.
+            return chk.Parent?.FindAllDescendants(cf => cf.ByControlType(ControlType.Button))
+                .Any(b => (b.Name ?? "") == "▶") == true;
         }
 
         // ── Карточка ─────────────────────────────────────────────────────────────
@@ -513,10 +497,9 @@ namespace Ven4Tools.ClientUITests
             }
 
             bool? before = ReadState();
-            // В прежнем списке отметка — квадрат, и проверяется почти самый угол. На карточке
-            // нового вида это кнопка со скруглением 7 px: её геометрический угол лежит за
-            // пределами самой кнопки, поэтому точка берётся сразу за скруглением.
-            int inset = AppSession.SuiteUsesModernShell ? 8 : 2;
+            // Отметка на карточке — кнопка со скруглением 7 px: её геометрический угол лежит
+            // за пределами самой кнопки, поэтому точка берётся сразу за скруглением.
+            const int inset = 8;
             var corner = new Point(rect.Left + inset, rect.Top + inset);
 
             // Физический клик по экранным координатам долетает до контрола только

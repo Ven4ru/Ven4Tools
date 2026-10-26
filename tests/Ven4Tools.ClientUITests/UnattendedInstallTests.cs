@@ -100,9 +100,6 @@ namespace Ven4Tools.ClientUITests
         {
             KillClient();
             var psi = new ProcessStartInfo(AppSession.ResolveClientExePath(), arguments) { UseShellExecute = false };
-            // Вид окна — тот же, в котором идёт весь набор (см. AppSession.Launch).
-            if (AppSession.SuiteUsesModernShell) psi.Environment.Remove("VEN4TOOLS_UI_CLASSIC");
-            else psi.Environment["VEN4TOOLS_UI_CLASSIC"] = "1";
 
             using var process = Process.Start(psi)!;
             if (!process.WaitForExit((int)timeout.TotalMilliseconds))
@@ -199,7 +196,7 @@ namespace Ven4Tools.ClientUITests
             AppSession? session = null;
             try
             {
-                session = AppSession.Launch(AppSession.SuiteUsesModernShell, keepPendingInstall: true);
+                session = AppSession.LaunchAtOverview(keepPendingInstall: true);
 
                 var question = Retry.WhileNull(
                     () => session.MainWindow.ModalWindows.FirstOrDefault(

@@ -5,20 +5,19 @@ using FlaUI.Core.Tools;
 namespace Ven4Tools.ClientUITests
 {
     /// <summary>
-    /// Поиск пункта бокового меню, одинаковый для обеих оболочек главного окна.
+    /// Поиск пункта бокового меню.
     ///
-    /// В прежней оболочке все разделы — отдельные пункты и видны сразу. В новой часть
-    /// разделов лежит в группах «Windows» и «Сервис», и пока группа свёрнута, её
-    /// пунктов нет в дереве автоматизации. Весь набор тестов прогоняется в обеих
-    /// оболочках, поэтому тесты ищут пункт меню только через этот помощник: он, если
-    /// нужно, раскрывает группу — так же, как это сделал бы пользователь.
+    /// Часть разделов лежит в группах «Windows» и «Сервис», и пока группа свёрнута, её
+    /// пунктов нет в дереве автоматизации. Поэтому тесты ищут пункт меню только через
+    /// этот помощник: он, если нужно, раскрывает группу — так же, как это сделал бы
+    /// пользователь.
     /// </summary>
     public static class UiNav
     {
         private static readonly string[] GroupHeaders = { "btnGroupWindows", "btnGroupService" };
 
         /// <summary>
-        /// Пункт меню по AutomationId или <c>null</c>, если его нет ни в одной оболочке
+        /// Пункт меню по AutomationId или <c>null</c>, если его нет в меню
         /// (например, сетевой раздел скрыт без интернета).
         /// </summary>
         public static AutomationElement? Find(AppSession session, string automationId)
@@ -29,7 +28,7 @@ namespace Ven4Tools.ClientUITests
             foreach (string headerId in GroupHeaders)
             {
                 var header = Lookup(session, headerId);
-                if (header == null) continue; // прежняя оболочка: групп нет
+                if (header == null) continue;
 
                 header.AsButton().Invoke();
                 element = Retry.WhileNull(() => Lookup(session, automationId),
@@ -42,9 +41,8 @@ namespace Ven4Tools.ClientUITests
         }
 
         /// <summary>
-        /// Кнопка из «Инструментов каталога». В прежнем виде каталога они всегда на
-        /// виду, в новом — лежат в свёрнутом блоке под панелью набора, и до раскрытия
-        /// их нет в дереве автоматизации.
+        /// Кнопка из «Инструментов каталога». Они лежат в свёрнутом блоке под панелью
+        /// набора, и до раскрытия их нет в дереве автоматизации.
         /// </summary>
         public static AutomationElement? FindCatalogTool(AppSession session, string automationId)
         {

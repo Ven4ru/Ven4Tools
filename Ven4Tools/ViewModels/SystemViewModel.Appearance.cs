@@ -40,19 +40,6 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        private bool _compactMode;
-        public bool CompactMode
-        {
-            get => _compactMode;
-            set
-            {
-                if (_loadingAppearance || _compactMode == value) return;
-                SetField(ref _compactMode, value);
-                ProfileService.Current.CompactMode = value;
-                ProfileService.Save();
-            }
-        }
-
         private bool _reduceMotion;
         public bool ReduceMotion
         {

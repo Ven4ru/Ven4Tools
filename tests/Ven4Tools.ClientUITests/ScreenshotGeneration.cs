@@ -91,7 +91,7 @@ namespace Ven4Tools.ClientUITests
         };
 
         /// <summary>
-        /// Обход всех разделов клиента в обеих оболочках со снимком каждого экрана: раздел,
+        /// Обход всех разделов клиента со снимком каждого экрана: раздел,
         /// его внутренние вкладки и прокрутка длинных страниц. Язык берётся из переменной
         /// окружения VEN4TOOLS_LANG — так проверяется вёрстка на другом языке: не обрезан
         /// ли текст и не осталось ли русских строк. Разделы ищутся по идентификаторам,
@@ -102,75 +102,69 @@ namespace Ven4Tools.ClientUITests
         public void СделатьСнимкиВсехРазделов()
         {
             string language = Environment.GetEnvironmentVariable("VEN4TOOLS_LANG") ?? "ru";
-            foreach (bool modern in new[] { true, false })
+            string dir = Path.Combine(OutDir, $"tour-{language}");
+            Directory.CreateDirectory(dir);
+
+            AppSession? session = null;
+            try { session = AppSession.LaunchAtOverview(); }
+            catch (Exception ex) { Assert.Inconclusive("Клиент не запущен: " + ex.Message); }
+
+            var s = session!;
+            try
             {
-                string dir = Path.Combine(OutDir, $"tour-{language}-{(modern ? "modern" : "classic")}");
-                Directory.CreateDirectory(dir);
+                s.MainWindow.SetForeground();
+                s.WaitForAvailabilityChecked();
+                int number = 0;
 
-                AppSession? session = null;
-                try { session = AppSession.Launch(modern); }
-                catch (Exception ex) { Assert.Inconclusive("Клиент не запущен: " + ex.Message); }
-
-                var s = session!;
-                try
+                void Save(string name)
                 {
-                    s.MainWindow.SetForeground();
-                    s.WaitForAvailabilityChecked();
-                    int number = 0;
+                    using var capture = s.MainWindow.Capture();
+                    capture.Save(Path.Combine(dir, $"{++number:00}-{name}.png"));
+                }
 
-                    void Save(string name)
+                foreach (string sectionId in TourSections)
+                {
+                    string section = sectionId.Replace("btn", "").Replace("Tab", "");
+                    // Сбой автоматизации на одном разделе (окно занято, элемент исчез
+                    // посреди обхода) не должен лишать снимков все остальные.
+                    try
                     {
-                        using var capture = s.MainWindow.Capture();
-                        capture.Save(Path.Combine(dir, $"{++number:00}-{name}.png"));
-                    }
+                        var button = UiNav.Find(s, sectionId);
+                        if (button == null) continue;   // раздела нет без сети
+                        button.AsButton().Invoke();
+                        Thread.Sleep(1800);
+                        DismissDialogs(s);
 
-                    foreach (string sectionId in TourSections)
-                    {
-                        string section = sectionId.Replace("btn", "").Replace("Tab", "");
-                        // Сбой автоматизации на одном разделе (окно занято, элемент исчез
-                        // посреди обхода) не должен лишать снимков все остальные.
-                        try
+                        Save(section);
+                        ScrollAndSave(s, name => Save($"{section}-{name}"));
+
+                        var innerTabs = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.TabItem));
+                        for (int i = 1; i < innerTabs.Length; i++)
                         {
-                            var button = UiNav.Find(s, sectionId);
-                            if (button == null) continue;   // раздела нет в этой оболочке или без сети
-                            button.AsButton().Invoke();
-                            Thread.Sleep(1800);
+                            try { innerTabs[i].AsTabItem().Select(); }
+                            catch { continue; }
+                            Thread.Sleep(900);
                             DismissDialogs(s);
-
-                            Save(section);
-                            ScrollAndSave(s, name => Save($"{section}-{name}"));
-
-                            var innerTabs = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.TabItem));
-                            for (int i = 1; i < innerTabs.Length; i++)
-                            {
-                                try { innerTabs[i].AsTabItem().Select(); }
-                                catch { continue; }
-                                Thread.Sleep(900);
-                                DismissDialogs(s);
-                                Save($"{section}-tab{i}");
-                                ScrollAndSave(s, name => Save($"{section}-tab{i}-{name}"));
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Раздел {section} снят не полностью: {ex.GetType().Name}: {ex.Message}");
-                            try { Save($"{section}-partial"); } catch { }
+                            Save($"{section}-tab{i}");
+                            ScrollAndSave(s, name => Save($"{section}-tab{i}-{name}"));
                         }
                     }
-
-                    // Диалоговые окна — один раз, в новой оболочке: они от оболочки не зависят.
-                    if (modern)
+                    catch (Exception ex)
                     {
-                        CaptureDialog(s, "btnOverviewTab", () => UiNav.Find(s, "btnOverviewReinstallKit"), Path.Combine(dir, "90-dialog-ReinstallKit.png"));
-                        CaptureDialog(s, "btnCatalogTab", () => UiNav.FindCatalogTool(s, "btnPresetByCode"), Path.Combine(dir, "91-dialog-PresetCode.png"));
-                        CaptureDialog(s, "btnCatalogTab", () => UiNav.FindCatalogTool(s, "btnSetFromInstalled"), Path.Combine(dir, "92-dialog-InstalledSet.png"));
-                        CaptureDialog(s, "btnAboutTab", () => UiNav.Find(s, "btnFeedback"), Path.Combine(dir, "93-dialog-Feedback.png"));
+                        Console.WriteLine($"Раздел {section} снят не полностью: {ex.GetType().Name}: {ex.Message}");
+                        try { Save($"{section}-partial"); } catch { }
                     }
                 }
-                finally
-                {
-                    s.Dispose();
-                }
+
+                // Диалоговые окна: каждый открывается кнопкой раздела и закрывается без действий.
+                CaptureDialog(s, "btnOverviewTab", () => UiNav.Find(s, "btnOverviewReinstallKit"), Path.Combine(dir, "90-dialog-ReinstallKit.png"));
+                CaptureDialog(s, "btnCatalogTab", () => UiNav.FindCatalogTool(s, "btnPresetByCode"), Path.Combine(dir, "91-dialog-PresetCode.png"));
+                CaptureDialog(s, "btnCatalogTab", () => UiNav.FindCatalogTool(s, "btnSetFromInstalled"), Path.Combine(dir, "92-dialog-InstalledSet.png"));
+                CaptureDialog(s, "btnAboutTab", () => UiNav.Find(s, "btnFeedback"), Path.Combine(dir, "93-dialog-Feedback.png"));
+            }
+            finally
+            {
+                s.Dispose();
             }
         }
 

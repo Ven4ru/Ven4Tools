@@ -5,9 +5,9 @@ using Ven4Tools.ViewModels;
 namespace Ven4Tools.Views.Tabs
 {
     /// <summary>
-    /// Каталог нового интерфейса — карточки и панель «Ваш набор». Своей логики нет:
-    /// вид создаёт и держит <see cref="CatalogTab"/>, от него же наследуется DataContext
-    /// (тот же <see cref="CatalogViewModel"/>, что у прежнего списка).
+    /// Каталог — карточки и панель «Ваш набор». Своей логики нет: вид создаёт и держит
+    /// <see cref="CatalogTab"/>, от него же наследуется DataContext
+    /// (<see cref="CatalogViewModel"/>).
     /// </summary>
     public partial class CatalogCardsView : UserControl
     {

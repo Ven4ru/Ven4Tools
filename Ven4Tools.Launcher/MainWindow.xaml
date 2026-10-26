@@ -54,39 +54,12 @@
             </Setter>
         </Style>
 
-        <!-- Подпись кнопки с полями: общий шаблон кнопки не учитывает Padding, а в новом
-             интерфейсе кнопки стоят в ряд и берут ширину по тексту. -->
+        <!-- Подпись кнопки с полями: общий шаблон кнопки не учитывает Padding, а здесь
+             кнопки стоят в ряд и берут ширину по тексту. -->
         <DataTemplate x:Key="PaddedButtonText">
             <TextBlock Text="{Binding}" Margin="14,0"
                        Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ButtonBase}}"/>
         </DataTemplate>
-        <Style x:Key="UiModeSwitch" TargetType="Button">
-            <Setter Property="Height" Value="30"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
-            <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
-            <Setter Property="ToolTipService.BetweenShowDelay" Value="100"/>
-            <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="Transparent" Padding="8,0">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE8AB;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="11"
-                                           Margin="0,1,7,0" Foreground="{TemplateBinding Foreground}"/>
-                                <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"/>
-                            </StackPanel>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
         <Style x:Key="StageDot" TargetType="Border">
             <Setter Property="Width" Value="24"/>
@@ -98,50 +71,30 @@
         </Style>
     </Window.Resources>
 
-    <!-- Два вида одного окна. В прежнем — боковая панель с кнопками и рабочая область.
-         В новом боковой панели нет: вверху полоса с названием, в центре карточка клиента
-         с главным действием, внизу полоса редких действий. Кнопки и подписи не
-         дублируются — код переставляет те же элементы между панелями (MainWindow.UiMode.cs). -->
+    <!-- Вверху полоса с названием и частыми действиями, в центре карточка клиента
+         с главным действием, внизу полоса редких действий. -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="colSidebar" Width="232"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
 
-        <Border x:Name="barTop" Grid.Row="0" Grid.ColumnSpan="2" Visibility="Collapsed" Height="64"
+        <Border Grid.Row="0" Height="64"
                 Background="{DynamicResource SidebarBackground}"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,0">
             <DockPanel>
-                <StackPanel x:Name="slotTopActions" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"/>
-                <Grid x:Name="slotBrand" HorizontalAlignment="Left" Width="200"/>
-            </DockPanel>
-        </Border>
-
-        <Border x:Name="barBottom" Grid.Row="2" Grid.ColumnSpan="2" Visibility="Collapsed" Height="50"
-                Background="{DynamicResource SidebarBackground}"
-                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="14,0,20,0">
-            <DockPanel>
-                <StackPanel x:Name="slotBottomLeft" DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center"/>
-                <StackPanel x:Name="slotBottomActions" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-            </DockPanel>
-        </Border>
-
-        <Border x:Name="sidebar" Grid.Row="1" Grid.Column="0" Background="{DynamicResource SidebarBackground}"
-                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
-            <Grid Margin="14,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="82"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <Grid x:Name="brandBlock" Grid.Row="0">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="btnCheckUpdates" Content="Проверить обновления"
+                            ToolTip="Обновит список версий клиента и проверит обновление лаунчера. Ничего не устанавливает автоматически."
+                            Style="{StaticResource SideCommand}" Margin="0,0,8,0" Height="34"
+                            ContentTemplate="{StaticResource PaddedButtonText}" Click="BtnCheckUpdates_Click"/>
+                    <Button x:Name="btnOpenSettings" Content="⚙ Настройки"
+                            ToolTip="Откроет настройки фоновых проверок, автозапуска, обновления клиента и источника загрузки."
+                            Style="{StaticResource SideCommand}" Margin="0" Height="34"
+                            ContentTemplate="{StaticResource PaddedButtonText}" Click="BtnOpenSettings_Click"/>
+                </StackPanel>
+                <Grid HorizontalAlignment="Left" Width="200">
                     <Border Width="3" Height="38" HorizontalAlignment="Left"
                             Background="{StaticResource BrandGreen}" CornerRadius="2"
                             Effect="{StaticResource BrandAuraEffect}"/>
@@ -152,116 +105,45 @@
                         <TextBlock x:Name="txtLauncherVersionLabel" Text="LAUNCHER" Style="{StaticResource EyebrowStyle}" Margin="0,3,0,0"/>
                     </StackPanel>
                 </Grid>
-
-                <StackPanel Grid.Row="1">
-                    <TextBlock Text="БЫСТРЫЙ ЗАПУСК" Style="{StaticResource EyebrowStyle}" Margin="2,4,0,8"/>
-                    <Button x:Name="btnLaunchApp" Content="Установить Ven4Tools" Height="48" Margin="0,0,0,8"
-                            Background="{StaticResource BrandGreen}" Foreground="#06130D" FontSize="14"
-                            FontWeight="Bold" Effect="{StaticResource BrandAuraEffect}"
-                            ToolTip="Запустит установленный клиент. Если его нет, скачает, проверит и установит выбранную версию."
-                            Click="BtnLaunchApp_Click"/>
-                    <Button x:Name="btnInstallFromFile" Content="Установить из файла..." Height="32" Margin="0,0,0,8"
-                            ToolTip="Установить клиента из уже скачанного вами архива (.zip) — на случай, если обычная загрузка недоступна лаунчеру, но архив у вас уже есть другим путём."
-                            Click="BtnInstallFromFile_Click"/>
-                    <Button x:Name="btnCheckUpdates" Content="Проверить обновления"
-                            ToolTip="Обновит список версий клиента и проверит обновление лаунчера. Ничего не устанавливает автоматически."
-                            Style="{StaticResource SideCommand}" Click="BtnCheckUpdates_Click"/>
-                    <Button x:Name="btnChangelog" Content="Что нового"
-                            ToolTip="Покажет или скроет описание изменений выбранной версии клиента."
-                            Style="{StaticResource SideCommand}" Click="BtnChangelog_Click"/>
-                </StackPanel>
-
-                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,16,0,8">
-                    <StackPanel>
-                        <Expander Header="Параметры установки" IsExpanded="True" Margin="0,0,0,8">
-                            <StackPanel Margin="0,8,0,4">
-                                <!-- «Выбрать папку» отсюда убрана: выбор папки живёт прямо
-                                     в карточке «ПАПКА УСТАНОВКИ» на главном экране, рядом
-                                     с показом текущего пути (btnSelectFolder ниже). Две
-                                     точки входа в один и тот же диалог только прятали
-                                     действие: в сайдбаре его никто не связывал с путём,
-                                     который виден в другом месте окна. -->
-                                <Button x:Name="btnFindClient" Content="Найти клиент на диске"
-                                        ToolTip="Найдёт Ven4Tools.exe в стандартных папках и предложит привязать лаунчер к найденной копии."
-                                        Style="{StaticResource SideCommand}" Click="BtnFindClient_Click"/>
-                                <TextBlock Text="ВЕРСИЯ КЛИЕНТА" Style="{StaticResource EyebrowStyle}" Margin="2,12,0,5"/>
-                                <TextBlock x:Name="txtInstalledVersion" Text="Текущая версия: —"
-                                           FontSize="12" Margin="3,0,3,2"/>
-                                <TextBlock x:Name="txtClientVersion" Text="Актуальная версия: —"
-                                           FontSize="12" FontWeight="SemiBold" Margin="3,0,3,2"/>
-                                <TextBlock x:Name="txtVersionInfo" Text="Получение списка версий..."
-                                           Foreground="{DynamicResource TextSecondary}" FontSize="10"
-                                           TextWrapping="Wrap" Margin="3,0,3,0"/>
-                            </StackPanel>
-                        </Expander>
-
-                        <Button x:Name="btnOpenSettings" Content="⚙ Настройки"
-                                ToolTip="Откроет настройки фоновых проверок, автозапуска, обновления клиента и источника загрузки."
-                                Style="{StaticResource SideCommand}" Click="BtnOpenSettings_Click" Margin="0,0,0,8"/>
-
-                        <Button x:Name="btnInstallUpdate" Content="Обновить лаунчер" Height="38"
-                                Visibility="Collapsed" Background="#243FBA65" Foreground="{StaticResource StatusSuccess}"
-                                ToolTip="Скачает проверенный установщик новой версии, обновит лаунчер и перезапустит его."
-                                Click="BtnInstallUpdate_Click"/>
-                        <Button x:Name="btnInstallMissing" Content="Установить компоненты" Height="38"
-                                Visibility="Collapsed" Background="#24FBBF24" Foreground="{StaticResource StatusWarning}"
-                                ToolTip="Проверит недостающие системные компоненты и предложит установить каждый из них с подтверждением."
-                                Click="BtnInstallMissing_Click"/>
-                    </StackPanel>
-                </ScrollViewer>
-
-                <StackPanel x:Name="pnlSidebarBottom" Grid.Row="3" Margin="0,0,0,8">
-                    <Separator Margin="0,0,0,8"/>
-                    <Button x:Name="btnDeleteClient" Content="Удалить клиент"
-                            Style="{StaticResource SideCommand}" Foreground="{StaticResource StatusDanger}"
-                            Background="Transparent"
-                            ToolTip="После подтверждения удалит папку клиента, его ярлыки и записи автозапуска. Настройки и логи лаунчера сохранятся."
-                            Click="BtnDeleteClient_Click"/>
-                    <Button x:Name="btnExit" Content="Закрыть лаунчер"
-                            Style="{StaticResource SideCommand}" Background="Transparent"
-                            Foreground="{DynamicResource TextSecondary}" Click="BtnExit_Click"/>
-                    <Button x:Name="btnUiModeSwitch" Content="Новый интерфейс" Style="{StaticResource UiModeSwitch}"
-                            ToolTip="Переключает вид окна между новым и прежним. Вернуться можно этой же кнопкой."
-                            Click="BtnUiModeSwitch_Click"/>
-                </StackPanel>
-            </Grid>
+            </DockPanel>
         </Border>
 
-        <Grid x:Name="gridMain" Grid.Row="1" Grid.Column="1" Background="{DynamicResource ContentBackground}">
+        <Border Grid.Row="2" Height="50"
+                Background="{DynamicResource SidebarBackground}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="14,0,20,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button x:Name="btnFindClient" Content="Найти клиент на диске"
+                        ToolTip="Найдёт Ven4Tools.exe в стандартных папках и предложит привязать лаунчер к найденной копии."
+                        Style="{StaticResource SideCommand}" Margin="0,0,8,0" Height="32"
+                        ContentTemplate="{StaticResource PaddedButtonText}" Click="BtnFindClient_Click"/>
+                <Button x:Name="btnDeleteClient" Content="Удалить клиент"
+                        Style="{StaticResource SideCommand}" Foreground="{StaticResource StatusDanger}"
+                        Background="Transparent" Margin="0,0,8,0" Height="32"
+                        ContentTemplate="{StaticResource PaddedButtonText}"
+                        ToolTip="После подтверждения удалит папку клиента, его ярлыки и записи автозапуска. Настройки и логи лаунчера сохранятся."
+                        Click="BtnDeleteClient_Click"/>
+                <Button x:Name="btnExit" Content="Закрыть лаунчер"
+                        Style="{StaticResource SideCommand}" Background="Transparent"
+                        Foreground="{DynamicResource TextSecondary}" Margin="0" Height="32"
+                        ContentTemplate="{StaticResource PaddedButtonText}" Click="BtnExit_Click"/>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="1" Background="{DynamicResource ContentBackground}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="colMain" Width="*"/>
                 <ColumnDefinition x:Name="colDetails" Width="0"/>
             </Grid.ColumnDefinitions>
 
-            <Grid x:Name="gridContent" Grid.Column="0" Margin="28,22,28,24">
+            <Grid Grid.Column="0" Margin="28,20,28,16">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Grid x:Name="pageHeader" Grid.Row="0" Margin="0,0,0,18">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Text="Центр управления" Style="{StaticResource PageTitleStyle}"/>
-                        <TextBlock Text="Установка, обновление и восстановление клиента"
-                                   Foreground="{DynamicResource TextSecondary}" FontSize="13" Margin="0,4,0,0"/>
-                    </StackPanel>
-                    <Border Grid.Column="1" Style="{StaticResource PillStatusStyle}" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="7" Height="7" Fill="{StaticResource StatusSuccess}" Margin="0,0,7,0"
-                                     Effect="{StaticResource BrandAuraEffect}"/>
-                            <TextBlock Text="Система готова" Foreground="{StaticResource StatusSuccess}" FontSize="11"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-
-                <Border Grid.Row="1" Background="{StaticResource SurfaceCard}"
+                <Border Grid.Row="0" Background="{StaticResource SurfaceCard}"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                         CornerRadius="8" Padding="18" Effect="{StaticResource PanelShadowEffect}">
                     <Grid>
@@ -271,17 +153,39 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="КЛИЕНТ VEN4TOOLS" Style="{StaticResource EyebrowStyle}"/>
+                            <!-- Заголовок ставит UpdateHeroTitle по состоянию клиента. -->
                             <TextBlock x:Name="txtHeroTitle" Text="Готов к установке" FontSize="22" FontWeight="SemiBold" Margin="0,7,0,6"/>
-                            <TextBlock x:Name="txtHeroDescription" Text="Лаунчер автоматически выберет актуальную версию, проверит целостность и установит клиент без лишних шагов."
-                                       Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" MaxWidth="520"/>
-                            <!-- Новый интерфейс: версии и главное действие — в самой карточке клиента. -->
-                            <WrapPanel x:Name="slotHeroVersions" Visibility="Collapsed" Margin="0,0,0,2"/>
-                            <WrapPanel x:Name="slotHeroActions" Visibility="Collapsed" Margin="0,12,0,0"/>
+                            <WrapPanel Margin="0,0,0,2">
+                                <TextBlock x:Name="txtInstalledVersion" Text="Текущая версия: —"
+                                           FontSize="12" Margin="0,0,18,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="txtClientVersion" Text="Актуальная версия: —"
+                                           FontSize="12" FontWeight="SemiBold" Margin="0,0,18,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="txtVersionInfo" Text="Получение списка версий..."
+                                           Foreground="{DynamicResource TextSecondary}" FontSize="12"
+                                           TextWrapping="Wrap" Margin="0,0,18,0" VerticalAlignment="Center"/>
+                            </WrapPanel>
+                            <WrapPanel Margin="0,12,0,0">
+                                <Button x:Name="btnLaunchApp" Content="Установить Ven4Tools" Height="44" MinWidth="230" Margin="0,0,10,0"
+                                        Background="{StaticResource BrandGreen}" Foreground="#06130D" FontSize="14"
+                                        FontWeight="Bold" Effect="{StaticResource BrandAuraEffect}"
+                                        ContentTemplate="{StaticResource PaddedButtonText}"
+                                        ToolTip="Запустит установленный клиент. Если его нет, скачает, проверит и установит выбранную версию."
+                                        Click="BtnLaunchApp_Click"/>
+                                <Button x:Name="btnChangelog" Content="Что нового"
+                                        ToolTip="Покажет или скроет описание изменений выбранной версии клиента."
+                                        Style="{StaticResource SideCommand}" Margin="0,0,8,0" Height="44"
+                                        ContentTemplate="{StaticResource PaddedButtonText}" Click="BtnChangelog_Click"/>
+                                <Button x:Name="btnInstallFromFile" Content="Установить из файла..." Height="44" Margin="0"
+                                        ContentTemplate="{StaticResource PaddedButtonText}"
+                                        ToolTip="Установить клиента из уже скачанного вами архива (.zip) — на случай, если обычная загрузка недоступна лаунчеру, но архив у вас уже есть другим путём."
+                                        Click="BtnInstallFromFile_Click"/>
+                            </WrapPanel>
                             <!-- Папка установки: не просто подпись, а точка входа в её выбор.
                                  Кликабельна вся карточка, плюс явная кнопка-подсказка справа —
-                                 путь и способ его изменить теперь в одном месте. -->
+                                 путь и способ его изменить теперь в одном месте. По левому краю:
+                                 растянутая на всю ширину карточки панель с MaxWidth встала бы по центру. -->
                             <Button x:Name="btnSelectFolder" Style="{StaticResource InstallPathCard}"
-                                    Margin="0,14,0,0" HorizontalAlignment="Stretch" MaxWidth="520"
+                                    Margin="0,14,0,0" HorizontalAlignment="Left" MinWidth="520" MaxWidth="520"
                                     AutomationProperties.Name="Изменить папку установки"
                                     ToolTip="Откроет выбор папки, куда лаунчер установит и будет обновлять клиент. Текущая папка показана здесь же."
                                     Click="BtnSelectFolder_Click">
@@ -370,11 +274,21 @@
                     </Grid>
                 </Border>
 
-                <!-- Новый интерфейс: сюда встают «Обновить лаунчер» и «Установить компоненты»,
-                     когда они нужны; пустая панель места не занимает. -->
-                <WrapPanel x:Name="slotAlerts" Grid.Row="2" Visibility="Collapsed" Margin="0,12,0,0"/>
+                <!-- Сюда встают «Обновить лаунчер» и «Установить компоненты», когда они нужны. -->
+                <WrapPanel Grid.Row="1" Margin="0,12,0,0">
+                    <Button x:Name="btnInstallUpdate" Content="Обновить лаунчер" Height="38" Margin="0,0,8,0"
+                            Visibility="Collapsed" Background="#243FBA65" Foreground="{StaticResource StatusSuccess}"
+                            ContentTemplate="{StaticResource PaddedButtonText}"
+                            ToolTip="Скачает проверенный установщик новой версии, обновит лаунчер и перезапустит его."
+                            Click="BtnInstallUpdate_Click"/>
+                    <Button x:Name="btnInstallMissing" Content="Установить компоненты" Height="38" Margin="0"
+                            Visibility="Collapsed" Background="#24FBBF24" Foreground="{StaticResource StatusWarning}"
+                            ContentTemplate="{StaticResource PaddedButtonText}"
+                            ToolTip="Проверит недостающие системные компоненты и предложит установить каждый из них с подтверждением."
+                            Click="BtnInstallMissing_Click"/>
+                </WrapPanel>
 
-                <Border Grid.Row="3" Margin="0,16,0,0" Background="{StaticResource SurfaceCard}"
+                <Border Grid.Row="2" Margin="0,16,0,0" Background="{StaticResource SurfaceCard}"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
                     <StackPanel>
                         <Grid>
@@ -410,8 +324,8 @@
                     </StackPanel>
                 </Border>
 
-                <Expander x:Name="logExpander" Grid.Row="4" Header="Журнал и технические подробности" Margin="0,14,0,0"
-                          VerticalAlignment="Stretch" IsExpanded="True">
+                <Expander x:Name="logExpander" Grid.Row="3" Header="Журнал и технические подробности" Margin="0,14,0,0"
+                          VerticalAlignment="Stretch" IsExpanded="False">
                     <Border Margin="0,8,0,0" Background="#700A0A14" BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="6" Padding="10">
                         <TextBox x:Name="txtLog" IsReadOnly="True" TextWrapping="Wrap"

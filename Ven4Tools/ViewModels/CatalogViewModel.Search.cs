@@ -24,7 +24,7 @@ namespace Ven4Tools.ViewModels
                 if (SetField(ref _searchText, value))
                 {
                     OnPropertyChanged(nameof(HasSearchText));
-                    // Поиск идёт по всему каталогу: выбранная категория (новый интерфейс)
+                    // Поиск идёт по всему каталогу: выбранная категория
                     // иначе прятала бы найденное в других разделах.
                     if (value.Length > 0 && _categoryFilter != null) CategoryFilter = null;
                     AppsView.Refresh();
@@ -160,7 +160,6 @@ namespace Ven4Tools.ViewModels
         public void ApplyProfileFilters()
         {
             int modeLevel = ProfileService.Current.CatalogMode switch { "basic" => 0, "extended" => 1, _ => 2 };
-            bool compact = ProfileService.Current.CompactMode;
             foreach (var row in Apps)
             {
                 // Пользовательские приложения видимы в ЛЮБОМ режиме каталога (см.
@@ -174,7 +173,6 @@ namespace Ven4Tools.ViewModels
                     int appLevel = row.Profile switch { "extended" => 1, "full" => 2, _ => 0 };
                     row.MatchesProfile = appLevel <= modeLevel;
                 }
-                row.IsCompact = compact;
             }
             ApplySortOrder();
             AppsView.Refresh();
