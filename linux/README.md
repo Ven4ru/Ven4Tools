@@ -49,3 +49,9 @@ dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishSingleFil
 
 ВМ Hyper-V `Ubuntu-Ven4Tools` на VenchWork (Ubuntu 26.04, `ssh v4t-linux`).
 Перед тестом установки можно откатиться к снимку «Чистая установка 22.10.2026».
+
+Живые сессии (без установки системы), проверено 31.10.2026: Ubuntu 26.04.1, Linux Mint 22.3 Cinnamon,
+Fedora Workstation 44. Во всех трёх программа определила дистрибутив, загрузила подписанный каталог
+и поставила Audacity с Flathub; на Ubuntu Flatpak сначала поставлен кнопкой «Включить Flathub»
+(apt-get через окно пароля). В живой сессии диск для записи маленький: ВМ нужно 12 ГБ памяти, а в Fedora
+папку `~/.local/share/flatpak` на время проверки — в tmpfs, иначе Flathub упирается в «Not enough disk space».
