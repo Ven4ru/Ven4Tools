@@ -56,7 +56,7 @@
        отдельный проект под .NET Framework 4.8; её сборка кладётся сюда же как Venchik.scr. -->
   <ItemGroup>
     <None Include="Personalization\Venchik\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <ProjectReference Include="..\Ven4Tools.Screensaver\Ven4Tools.Screensaver.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
+    <ProjectReference Include="..\Ven4Tools.Screensaver\Ven4Tools.Screensaver.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
   </ItemGroup>
   <Target Name="CopyVenchikScreensaver" AfterTargets="ResolveProjectReferences">
     <ItemGroup>

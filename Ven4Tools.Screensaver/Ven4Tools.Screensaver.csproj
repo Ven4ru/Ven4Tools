@@ -16,6 +16,11 @@
     <AssemblyTitle>Венчик — заставка Ven4Tools</AssemblyTitle>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- SDK подставляет программе .NET Framework платформу сам (win-x86), а при публикации клиента
+         с -r win-x64 — ту. Восстановление готово к обеим, а файл всегда ложится в bin\<конфигурация>\net48\:
+         оттуда его забирает Ven4Tools.csproj. -->
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
