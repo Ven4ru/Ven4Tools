@@ -116,6 +116,7 @@ public static class L
         ["Отключение"] = "Removed",
         ["Нет проигрывателя звука (pw-play, paplay или aplay)."] = "No audio player found (pw-play, paplay or aplay).",
         ["В уже открытых программах курсор сменится после их перезапуска."] = "Apps that are already open switch the cursor after a restart.",
+        ["Полностью курсор сменится после выхода из системы и повторного входа."] = "The cursor fully switches after you log out and back in.",
         ["Ядро"] = "Kernel",
         ["Рабочий стол"] = "Desktop",
         ["Процессор"] = "CPU",

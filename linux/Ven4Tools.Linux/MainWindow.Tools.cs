@@ -82,15 +82,13 @@ public partial class MainWindow
                 : applied ? L.T("Применено. Прежнее оформление сохранено.")
                 : L.T("Сейчас стоит ваше оформление.");
         }
-        // Проверено на Ubuntu 26.04: GNOME показывает на экране блокировки размытые обои рабочего стола,
-        // отдельная картинка ему не задаётся. Кнопку не прячем - на Cinnamon и MATE она работает
-        if (Personalization.IsGnome || Personalization.IsKde)
-        {
-            LockApply.IsEnabled = false;
-            LockState.Text = L.T("Здесь экран блокировки показывает обои рабочего стола: поставьте обои с Венчиком.");
-        }
+        // Экран блокировки в Linux показывает обои рабочего стола (см. Personalization.IsSupported)
+        LockState.Text = L.T("Здесь экран блокировки показывает обои рабочего стола: поставьте обои с Венчиком.");
+        // На X11 (Cinnamon, MATE) курсор панели и рабочего стола меняется только с новым сеансом
         if (Personalization.HasUndo(LookPart.Cursors))
-            CursorsState.Text += " " + L.T("В уже открытых программах курсор сменится после их перезапуска.");
+            CursorsState.Text += " " + L.T(Personalization.IsX11
+                ? "Полностью курсор сменится после выхода из системы и повторного входа."
+                : "В уже открытых программах курсор сменится после их перезапуска.");
     }
 
     private async void OnLookApply(object? sender, RoutedEventArgs e) => await RunLookAsync(sender, revert: false);

@@ -23,7 +23,8 @@
 - Избранное, английский интерфейс, экспорт и импорт профиля (архив совместим с клиентом Windows).
 - «Персонализация» из клиента 7.0: обои и экран блокировки с Венчиком через `gsettings` (GNOME, Cinnamon, MATE)
   или `plasma-apply-wallpaperimage` (KDE), прежние значения сохраняются и возвращаются одной кнопкой.
-  В GNOME и KDE экран блокировки показывает обои рабочего стола, отдельная картинка там не ставится.
+  Экран блокировки в GNOME (Ubuntu 26.04) показывает размытые обои рабочего стола, в Cinnamon (Mint 22.3) — сами обои;
+  отдельная картинка не ставится, карточка это объясняет. На X11 (Cinnamon) курсор полностью меняется после перезахода.
   Курсоры-лапы ставятся темой Xcursor в `~/.local/share/icons/Venchik` (те же кадры, что у курсоров Windows,
   собирает `Tools/PersonalizationAssets/make_assets.py`), звуки — темой freedesktop в `~/.local/share/sounds/Venchik`;
   Cinnamon берёт звуки по событиям из `org.cinnamon.sounds`.
@@ -58,7 +59,8 @@ dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishSingleFil
 
 ## Тестовые машины
 
-ВМ Hyper-V `Ubuntu-Test` на домашнем тестовом ноутбуке (Ubuntu 26.04.1, установлена 01.11.2026, снимок «Чистая установка 01.11.2026»).
+ВМ Hyper-V на домашнем тестовом ноутбуке, у каждой снимок «Чистая установка 01.11.2026»:
+`Ubuntu-Test` (Ubuntu 26.04.1, GNOME, Wayland), `Mint-Test` (Linux Mint 22.3, Cinnamon, X11).
 
 ВМ Hyper-V `Ubuntu-Ven4Tools` на VenchWork (Ubuntu 26.04, `ssh v4t-linux`).
 Перед тестом установки можно откатиться к снимку «Чистая установка 22.10.2026».

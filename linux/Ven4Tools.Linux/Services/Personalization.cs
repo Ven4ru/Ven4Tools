@@ -92,14 +92,18 @@ public static class Personalization
     // Ubuntu пишет «ubuntu:GNOME», чистый GNOME - «GNOME»
     public static bool IsGnome => Desktop.Contains("GNOME", StringComparison.OrdinalIgnoreCase);
 
-    public static bool IsSupported(LookPart part) => IsKde
+    public static bool IsX11 => Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") == "x11";
+
+    // Отдельной картинки экрана блокировки нет ни в одном проверенном рабочем столе: GNOME (Ubuntu 26.04)
+    // показывает размытые обои, Cinnamon (Mint 22.3) - сами обои. Поэтому эта часть только объясняет
+    public static bool IsSupported(LookPart part) => part != LookPart.LockScreen && (IsKde
         ? part switch
         {
             LookPart.Wallpaper => Shell.Exists("plasma-apply-wallpaperimage"),
             LookPart.Cursors => Shell.Exists("plasma-apply-cursortheme"),
             _ => false,
         }
-        : Shell.Exists("gsettings");
+        : Shell.Exists("gsettings"));
 
     public static bool HasUndo(LookPart part) => LoadUndo().ContainsKey(part.ToString());
 
@@ -111,15 +115,20 @@ public static class Personalization
 
         var undo = LoadUndo();
         var saved = undo.TryGetValue(part.ToString(), out var old) ? old : new Dictionary<string, string>();
-        var applied = 0;
+        // Сначала читаем все прежние значения, потом меняем: Cinnamon сам копирует обои из ключа GNOME
+        // в свой, и при чтении после записи в «прежние» попадал бы уже Венчик (найдено на Mint 22.3)
+        var present = new List<Key>();
         foreach (var key in Keys[part])
         {
             var current = await GetAsync(key);
             if (current is null) continue; // такой схемы в этом рабочем столе нет
+            present.Add(key);
             // Сохраняем самое первое значение: повторное «Применить» не должно затирать исходное оформление
             saved.TryAdd(Id(key), current);
-            if (await SetAsync(key, Value(key, file), log) && key.Kind is not (Kind.Zoom or Kind.True)) applied++;
         }
+        var applied = 0;
+        foreach (var key in present)
+            if (await SetAsync(key, Value(key, file), log) && key.Kind is not (Kind.Zoom or Kind.True)) applied++;
 
         undo[part.ToString()] = saved;
         AppPaths.WriteAtomic(UndoPath, JsonSerializer.Serialize(undo));
@@ -215,6 +224,15 @@ public static class Personalization
                 // Чего нет у Венчика (стрелки изменения размера, текстовый курсор), берётся из стандартной темы
                 AppPaths.WriteAtomic(Path.Combine(CursorDir, "index.theme"),
                     "[Icon Theme]\nName=Venchik\nComment=Ven4Tools\nInherits=Adwaita,breeze_cursors,DMZ-White,default\n");
+                // libXcursor до 1.2.2 (Mint 22, Ubuntu 24.04) не смотрит в ~/.local/share/icons - только в ~/.icons
+                var legacy = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".icons", ThemeName);
+                // Битая ссылка Path.Exists не видит, но место занимает - её заменяем
+                if (!Path.Exists(legacy))
+                {
+                    if (new FileInfo(legacy).LinkTarget is not null) File.Delete(legacy);
+                    Directory.CreateDirectory(Path.GetDirectoryName(legacy)!);
+                    Directory.CreateSymbolicLink(legacy, CursorDir);
+                }
                 return CursorDir;
 
             case LookPart.Sounds:
