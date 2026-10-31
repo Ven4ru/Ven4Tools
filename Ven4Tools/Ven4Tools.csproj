@@ -52,6 +52,19 @@
     <Resource Include="Resources\Splash\*.png" />
   </ItemGroup>
 
+  <!-- «Персонализация»: файлы оформления «Венчик» лежат рядом с программой. Заставка —
+       отдельный проект под .NET Framework 4.8; её сборка кладётся сюда же как Venchik.scr. -->
+  <ItemGroup>
+    <None Include="Personalization\Venchik\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <ProjectReference Include="..\Ven4Tools.Screensaver\Ven4Tools.Screensaver.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
+  </ItemGroup>
+  <Target Name="CopyVenchikScreensaver" AfterTargets="ResolveProjectReferences">
+    <ItemGroup>
+      <_VenchikScr Include="$(MSBuildThisFileDirectory)..\Ven4Tools.Screensaver\bin\$(Configuration)\net48\Venchik.exe" />
+      <None Include="@(_VenchikScr)" Link="Personalization\Venchik\Venchik.scr" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <Page Include="..\Shared\DesignTokens.xaml" Link="Resources\DesignTokens.xaml" />
     <Compile Include="..\Shared\MotionService.cs" Link="Services\MotionService.cs" />
