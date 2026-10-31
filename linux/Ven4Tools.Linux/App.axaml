@@ -1,8 +1,84 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Ven4Tools.Linux.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Dark">
+  <!-- Цвета - тема «Бирюзовая» клиента Windows (Ven4Tools/Services/ThemeService.cs, ThemeTeal),
+       она там выбрана по умолчанию. Подложки, текст и акцент совпадают один в один. -->
+  <Application.Resources>
+    <SolidColorBrush x:Key="WindowBackground" Color="#0A0A14" />
+    <SolidColorBrush x:Key="SidebarBackground" Color="#0D1018" />
+    <SolidColorBrush x:Key="ContentBackground" Color="#0A0A14" />
+    <SolidColorBrush x:Key="CardBackground" Color="#11161F" />
+    <SolidColorBrush x:Key="RaisedBackground" Color="#151C27" />
+    <SolidColorBrush x:Key="TextPrimary" Color="#E2E8F0" />
+    <SolidColorBrush x:Key="TextSecondary" Color="#AAB8CE" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#1E2A38" />
+    <SolidColorBrush x:Key="AccentColor" Color="#00BCD4" />
+    <SolidColorBrush x:Key="AccentForeground" Color="#04161A" />
+    <SolidColorBrush x:Key="AccentHoverBackground" Color="#1400BCD4" />
+    <SolidColorBrush x:Key="AccentSoftBackground" Color="#2400BCD4" />
+    <SolidColorBrush x:Key="StatusSuccess" Color="#4ADE80" />
+    <SolidColorBrush x:Key="StatusWarning" Color="#FBBF24" />
+    <SolidColorBrush x:Key="StatusDanger" Color="#F87171" />
+  </Application.Resources>
+
   <Application.Styles>
-    <FluentTheme />
+    <FluentTheme>
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Dark" Accent="#00BCD4" RegionColor="#0A0A14"
+                               BaseHigh="#E2E8F0" BaseMediumHigh="#AAB8CE" BaseMedium="#8A9BB5"
+                               ChromeMediumLow="#11161F" ChromeMedium="#151C27" ChromeLow="#0D1018"
+                               ChromeHigh="#1E2A38" ListLow="#1400BCD4" ListMedium="#2400BCD4" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
+
+    <Style Selector="Window">
+      <Setter Property="Background" Value="{StaticResource WindowBackground}" />
+      <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+    </Style>
+
+    <!-- Главная кнопка: акцентная заливка, тёмный текст, как в клиенте -->
+    <Style Selector="Button.accent">
+      <Setter Property="Background" Value="{StaticResource AccentColor}" />
+      <Setter Property="Foreground" Value="{StaticResource AccentForeground}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#26C6DA" />
+      <Setter Property="Foreground" Value="{StaticResource AccentForeground}" />
+    </Style>
+    <Style Selector="Button">
+      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="Padding" Value="14,7" />
+    </Style>
+
+    <!-- Карточки: подложка CardBackground и тонкая рамка -->
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{StaticResource CardBackground}" />
+      <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <!-- Надзаголовок раздела, как EyebrowStyle клиента -->
+    <Style Selector="TextBlock.eyebrow">
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="LetterSpacing" Value="1.2" />
+      <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+    </Style>
+    <Style Selector="TextBlock.pageTitle">
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="ListBox">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="ListBoxItem">
+      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="CornerRadius" Value="6" />
+    </Style>
   </Application.Styles>
 </Application>

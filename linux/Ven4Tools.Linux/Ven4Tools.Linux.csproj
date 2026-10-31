@@ -28,6 +28,9 @@
     <EmbeddedResource Include="..\..\Catalog\master.json" LogicalName="master.json" />
     <EmbeddedResource Include="..\..\Catalog\master.json.sig" LogicalName="master.json.sig" />
     <EmbeddedResource Include="linux-packages.json" LogicalName="linux-packages.json" />
+    <!-- «Персонализация»: те же обои и экран блокировки, что в клиенте Windows -->
+    <EmbeddedResource Include="..\..\Ven4Tools\Personalization\Venchik\wallpaper.jpg" LogicalName="venchik/wallpaper.jpg" />
+    <EmbeddedResource Include="..\..\Ven4Tools\Personalization\Venchik\lockscreen.jpg" LogicalName="venchik/lockscreen.jpg" />
   </ItemGroup>
 
 </Project>

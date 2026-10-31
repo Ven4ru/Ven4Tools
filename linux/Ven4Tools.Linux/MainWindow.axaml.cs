@@ -33,6 +33,10 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         ApplyTexts();
+        InitToolTabs();
+        // Шапка показывает название открытого раздела, как заголовок страницы в клиенте Windows
+        Tabs.SelectionChanged += (_, _) => TitleText.Text = (Tabs.SelectedItem as TabItem)?.Header as string ?? "";
+        TitleText.Text = (Tabs.SelectedItem as TabItem)?.Header as string ?? "";
         SearchBox.TextChanged += (_, _) => ApplyFilter();
         CategoryBox.SelectionChanged += (_, _) => ApplyFilter();
         LinuxOnlyBox.IsCheckedChanged += (_, _) => ApplyFilter();
@@ -43,7 +47,7 @@ public partial class MainWindow : Window
 
     private void ApplyTexts()
     {
-        Title = TitleText.Text = L.T("Ven4Tools для Linux");
+        Title = L.T("Ven4Tools для Linux");
         StatusLine.Text = L.T("Загружаю каталог…");
         CatalogTab.Header = L.T("Каталог");
         SetsTab.Header = L.T("Наборы");
@@ -65,7 +69,7 @@ public partial class MainWindow : Window
         ProfileHint.Text = L.T("Избранное и ваши наборы. Архив совместим с Ven4Tools для Windows.");
         ExportButton.Content = L.T("Экспорт профиля");
         ImportButton.Content = L.T("Импорт профиля");
-        LogLabel.Text = L.T("Журнал");
+        LogLabel.Text = L.T("Журнал").ToUpperInvariant();
         LanguageBox.ItemsSource = new[] { "Русский", "English" };
         LanguageBox.SelectedIndex = L.IsEnglish ? 1 : 0;
         UpdateSelectionButton();
