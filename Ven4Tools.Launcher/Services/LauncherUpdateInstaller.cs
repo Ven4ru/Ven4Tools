@@ -107,7 +107,10 @@ namespace Ven4Tools.Launcher.Services
         /// установщик ждёт завершения процесса и только потом меняет файлы.
         /// </summary>
         /// <param name="updateInfo">Готовая информация об обновлении; если null — проверяется заново.</param>
-        internal async Task<bool> DownloadAndRunSetupUpdateAsync(UpdateInfo? updateInfo = null)
+        /// <param name="progress">Ход загрузки (получено, всего байт); приходит с потока пула.</param>
+        internal async Task<bool> DownloadAndRunSetupUpdateAsync(
+            UpdateInfo? updateInfo = null,
+            Action<long, long?>? progress = null)
         {
             string? stagingDir = null;
             try
@@ -153,7 +156,8 @@ namespace Ven4Tools.Launcher.Services
                     candidates,
                     setupPath,
                     downloadCts.Token,
-                    updateInfo.ExpectedSha256);
+                    updateInfo.ExpectedSha256,
+                    progress);
                 string source = downloadResult.SourceLabel;
                 Log($"Целостность установщика подтверждена (SHA256), источник: {source}.");
 

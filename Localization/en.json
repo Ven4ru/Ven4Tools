@@ -6680,12 +6680,20 @@
     "t": "The launcher update to version {0} was not installed: {1}.\n\nThe previous version was kept and works as usual. Try updating again with the \"Update launcher\" button or download the setup from ven4tools.ru."
   },
   {
+    "s": "Обновление лаунчера не выполнено",
+    "t": "Launcher update failed"
+  },
+  {
     "s": "Обновление лаунчера отменено: контрольная сумма установщика недоступна (CDN не ответил или версия на CDN не совпадает с релизом).",
     "t": "Launcher update canceled: the installer checksum is unavailable (the CDN did not respond or its version does not match the release)."
   },
   {
     "s": "Обновление лаунчера отменено: нет доступных источников установщика.",
     "t": "Launcher update canceled: no installer sources are available."
+  },
+  {
+    "s": "Обновление лаунчера: {0}%",
+    "t": "Launcher update: {0}%"
   },
   {
     "s": "Обновление недоступно — версия в источнике не подходит для данной системы.",
@@ -9704,6 +9712,10 @@
     "t": "Update download failed (code {0})."
   },
   {
+    "s": "Скачивание обновления лаунчера...",
+    "t": "Downloading launcher update..."
+  },
+  {
     "s": "Скачивание установщика {0}...",
     "t": "Downloading installer {0}..."
   },
@@ -10862,6 +10874,10 @@
   {
     "s": "Установка не удалась: перезагрузите компьютер и попробуйте снова.",
     "t": "Installation failed: restart the computer and try again."
+  },
+  {
+    "s": "Установка обновления, лаунчер перезапустится...",
+    "t": "Installing update, the launcher will restart..."
   },
   {
     "s": "Установка отклонена",

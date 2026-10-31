@@ -119,23 +119,47 @@ namespace Ven4Tools.Launcher
                 // выполняется (fail-closed — проверяется внутри DownloadAndRunSetupUpdateAsync).
                 var updateInfo = await updateSvc.CheckForUpdateAsync();
 
-                var result = await updateSvc.DownloadAndRunSetupUpdateAsync(updateInfo);
+                // Тот же «Ход операции», что у загрузки клиента: раньше обновление лаунчера
+                // шло только строками журнала, и окно полминуты выглядело замершим.
+                SetOperationStage(1); // Загрузка
+                progressDownload.Value = 0;
+                txtDownloadStatus.Text = "Скачивание обновления лаунчера...";
+
+                var result = await updateSvc.DownloadAndRunSetupUpdateAsync(updateInfo,
+                    // Колбэк приходит с потока пула — маршалим сами, без ожидания отрисовки.
+                    (received, total) =>
+                    {
+                        if (total is > 0)
+                        {
+                            int percent = (int)((double)received / total.Value * 100);
+                            Dispatcher.BeginInvoke(() =>
+                            {
+                                progressDownload.Value = percent;
+                                txtDownloadStatus.Text = $"Обновление лаунчера: {percent}%";
+                            });
+                        }
+                    });
 
                 if (result)
                 {
                     // Установщик запущен в режиме самообновления: он дождётся завершения
                     // этого процесса, заменит exe и перезапустит лаунчер.
+                    progressDownload.Value = 100;
+                    SetOperationStage(4); // Проверка пройдена, дальше ставит установщик
+                    txtDownloadStatus.Text = "Установка обновления, лаунчер перезапустится...";
                     AddLog("✅ Установщик обновления запущен. Лаунчер перезапустится через несколько секунд...");
                     await Task.Delay(500);
                     ExitApplication();
                 }
                 else
                 {
+                    ResetUpdateProgress("Обновление лаунчера не выполнено");
                     AddLog("❌ Обновление не выполнено — подробности выше в журнале");
                 }
             }
             catch (Exception ex)
             {
+                ResetUpdateProgress("Обновление лаунчера не выполнено");
                 AddLog($"❌ Ошибка: {ex.Message}");
             }
             finally
@@ -143,6 +167,13 @@ namespace Ven4Tools.Launcher
                 if (IsLoaded)
                     btnInstallUpdate.Visibility = Visibility.Visible;
             }
+        }
+
+        private void ResetUpdateProgress(string status)
+        {
+            SetOperationStage(0);
+            progressDownload.Value = 0;
+            txtDownloadStatus.Text = status;
         }
     }
 }
