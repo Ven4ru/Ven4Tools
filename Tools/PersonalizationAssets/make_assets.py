@@ -3,7 +3,8 @@
     python Tools/PersonalizationAssets/make_assets.py
 
 Собирает в Ven4Tools/Personalization/Venchik/ курсоры (.cur, .ani), обои и экран
-блокировки (.jpg) и звуки (.wav). Исходные рисунки лежат рядом, в art/:
+блокировки (.jpg) и звуки (.wav), а в linux/Ven4Tools.Linux/Personalization/cursors/ -
+те же курсоры в формате Xcursor для Linux. Исходные рисунки лежат рядом, в art/:
 wallpaper.png и lockscreen.png — картинки целиком, paws.png — лист с тремя лапами
 на белом фоне (стрелка, лапа для ссылок, стрелка с вопросом). Бег Венчика для
 курсора «Подождите» — та же лента, что в заставке. Звуки синтезируются здесь же.
@@ -22,6 +23,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 ART = HERE / "art"
 OUT = ROOT / "Ven4Tools" / "Personalization" / "Venchik"
+LINUX_CURSORS = ROOT / "linux" / "Ven4Tools.Linux" / "Personalization" / "cursors"
 RUN = ROOT / "Ven4Tools.Screensaver" / "Resources" / "run.png"
 
 ACCENT = (74, 222, 128)
@@ -151,6 +153,27 @@ def ani_bytes(frames, jiffies):
     return b"RIFF" + struct.pack("<I", len(body)) + body
 
 
+def xcursor_bytes(frames, delay_ms=0):
+    """Курсор Linux (формат Xcursor): кадры анимации, в каждом - те же размеры, что у .cur.
+    Точки хранятся как ARGB с предумноженной альфой, по четыре байта на точку."""
+    images = [x for f in frames for x in f]
+    toc_size = 12 * len(images)
+    head = struct.pack("<4sIII", b"Xcur", 16, 0x10000, len(images))
+    toc, blobs = b"", b""
+    offset = 16 + toc_size
+    for img, hx, hy in images:
+        w, h = img.size
+        px = np.array(img.convert("RGBA")).astype(np.uint32)
+        a = px[:, :, 3]
+        r, g, b = (px[:, :, c] * a // 255 for c in range(3))
+        argb = (a << 24 | r << 16 | g << 8 | b).astype("<u4").tobytes()
+        chunk_head = struct.pack("<IIIIIIIII", 36, 0xFFFD0002, w, 1, w, h, hx, hy, delay_ms)
+        toc += struct.pack("<III", 0xFFFD0002, w, offset)
+        blobs += chunk_head + argb
+        offset += len(chunk_head) + len(argb)
+    return head + toc + blobs
+
+
 # ---------- обои и экран блокировки ----------
 
 def fullscreen(name):
@@ -222,6 +245,14 @@ def main():
     (OUT / "paw-busy.ani").write_bytes(ani_bytes(busy_frames(arrow), 6))
     (OUT / "venchik-wait.ani").write_bytes(ani_bytes(wait_frames(), 4))
 
+    # Те же курсоры для Linux; имена - основные по спецификации CSS, остальные ставит программа ссылками
+    LINUX_CURSORS.mkdir(parents=True, exist_ok=True)
+    (LINUX_CURSORS / "default").write_bytes(xcursor_bytes([sizes(arrow, tip(arrow))]))
+    (LINUX_CURSORS / "help").write_bytes(xcursor_bytes([sizes(help_arrow, tip(help_arrow))]))
+    (LINUX_CURSORS / "pointer").write_bytes(xcursor_bytes([sizes(paw, top_center(paw))]))
+    (LINUX_CURSORS / "progress").write_bytes(xcursor_bytes(busy_frames(arrow), 100))
+    (LINUX_CURSORS / "wait").write_bytes(xcursor_bytes(wait_frames(), 66))
+
     fullscreen("wallpaper.png").save(OUT / "wallpaper.jpg", quality=92, optimize=True)
     fullscreen("lockscreen.png").save(OUT / "lockscreen.jpg", quality=92, optimize=True)
 
@@ -232,7 +263,7 @@ def main():
     save_wav(OUT / "connect.wav", tone(lambda t: 600 + 3600 * t, 0.3, decay=9))
     save_wav(OUT / "disconnect.wav", tone(lambda t: 1300 - 3600 * t, 0.3, decay=9))
 
-    for f in sorted(OUT.iterdir()):
+    for f in sorted(list(OUT.iterdir()) + list(LINUX_CURSORS.iterdir())):
         print(f"{f.name:20} {f.stat().st_size:>9}")
 
 

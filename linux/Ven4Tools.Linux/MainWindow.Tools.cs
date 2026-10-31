@@ -19,8 +19,17 @@ public partial class MainWindow
         LookIntro.Text = L.T("Оформление рабочего стола под Венчика. Всё возвращается как было одной кнопкой.");
         WallpaperTitle.Text = L.T("Обои");
         LockTitle.Text = L.T("Экран блокировки");
-        WallpaperApply.Content = LockApply.Content = L.T("Применить");
-        WallpaperRevert.Content = LockRevert.Content = L.T("Вернуть как было");
+        CursorsTitle.Text = L.T("Курсоры-лапы");
+        SoundsTitle.Text = L.T("Звуки Венчика");
+        SoundsHint.Text = L.T("Сведения, предупреждение, ошибка, уведомление, подключение и отключение устройства. Нажмите, чтобы послушать.");
+        WallpaperApply.Content = LockApply.Content = CursorsApply.Content = SoundsApply.Content = L.T("Применить");
+        WallpaperRevert.Content = LockRevert.Content = CursorsRevert.Content = SoundsRevert.Content = L.T("Вернуть как было");
+        foreach (var file in Personalization.SoundFiles)
+        {
+            var play = new Button { Content = "▶ " + L.T(SoundTitles[file]), Margin = new Avalonia.Thickness(0, 0, 6, 6), Tag = file };
+            play.Click += async (_, _) => await Personalization.PlayAsync(file, Log);
+            SoundButtons.Children.Add(play);
+        }
         CleanupLabel.Text = L.T("Место на диске");
         CleanupScanButton.Content = L.T("Проверить");
         CleanupRunButton.Content = L.T("Очистить отмеченное");
@@ -28,6 +37,7 @@ public partial class MainWindow
 
         WallpaperPreview.Source = LoadPreview("venchik/wallpaper.jpg");
         LockPreview.Source = LoadPreview("venchik/lockscreen.jpg");
+        CursorsPreview.Source = LoadPreview("venchik/paws.png");
         UpdateLookState();
         ShowSystemInfo();
         var autostart = Autostart.List();
@@ -44,15 +54,27 @@ public partial class MainWindow
         return s is null ? null : Bitmap.DecodeToWidth(s, 760);
     }
 
+    private static readonly Dictionary<string, string> SoundTitles = new()
+    {
+        ["info.wav"] = "Сведения",
+        ["warning.wav"] = "Предупреждение",
+        ["error.wav"] = "Ошибка",
+        ["notify.wav"] = "Уведомление",
+        ["connect.wav"] = "Подключение",
+        ["disconnect.wav"] = "Отключение",
+    };
+
     private void UpdateLookState()
     {
-        var supported = Personalization.IsSupported;
         foreach (var (part, state, apply, revert) in new[]
                  {
                      (LookPart.Wallpaper, WallpaperState, WallpaperApply, WallpaperRevert),
                      (LookPart.LockScreen, LockState, LockApply, LockRevert),
+                     (LookPart.Cursors, CursorsState, CursorsApply, CursorsRevert),
+                     (LookPart.Sounds, SoundsState, SoundsApply, SoundsRevert),
                  })
         {
+            var supported = Personalization.IsSupported(part);
             var applied = Personalization.HasUndo(part);
             apply.IsEnabled = supported && !_busy;
             revert.IsEnabled = applied && !_busy;
@@ -67,6 +89,8 @@ public partial class MainWindow
             LockApply.IsEnabled = false;
             LockState.Text = L.T("Здесь экран блокировки показывает обои рабочего стола: поставьте обои с Венчиком.");
         }
+        if (Personalization.HasUndo(LookPart.Cursors))
+            CursorsState.Text += " " + L.T("В уже открытых программах курсор сменится после их перезапуска.");
     }
 
     private async void OnLookApply(object? sender, RoutedEventArgs e) => await RunLookAsync(sender, revert: false);
