@@ -1,0 +1,324 @@
+{
+  "comment": "Соответствие id каталога master.json пакетам Linux. Проверено 22.10.2026: Flathub API (flatpakVerified - пакет подтверждён автором программы), snap info (только проверенные издатели Snap Store или сами авторы программ).",
+  "apps": {
+    "firefox": {
+      "flatpak": "org.mozilla.firefox",
+      "flatpakVerified": true,
+      "snap": "firefox",
+      "snapPublisher": "Mozilla"
+    },
+    "google-chrome": {
+      "flatpak": "com.google.Chrome",
+      "flatpakVerified": false
+    },
+    "microsoft-edge": {
+      "flatpak": "com.microsoft.Edge",
+      "flatpakVerified": false
+    },
+    "opera": {
+      "flatpak": "com.opera.Opera",
+      "flatpakVerified": false,
+      "snap": "opera",
+      "snapPublisher": "Opera"
+    },
+    "brave": {
+      "flatpak": "com.brave.Browser",
+      "flatpakVerified": true,
+      "snap": "brave",
+      "snapPublisher": "Brave Software"
+    },
+    "yandex-browser": {
+      "flatpak": "ru.yandex.Browser",
+      "flatpakVerified": true
+    },
+    "librewolf": {
+      "flatpak": "io.gitlab.librewolf-community",
+      "flatpakVerified": true
+    },
+    "onlyoffice": {
+      "flatpak": "org.onlyoffice.desktopeditors",
+      "flatpakVerified": true,
+      "snap": "onlyoffice-desktopeditors",
+      "snapPublisher": "Ascensio System SIA"
+    },
+    "drawio": {
+      "flatpak": "com.jgraph.drawio.desktop",
+      "flatpakVerified": false,
+      "snap": "drawio",
+      "snapPublisher": "draw.io"
+    },
+    "libreoffice": {
+      "flatpak": "org.libreoffice.LibreOffice",
+      "flatpakVerified": true,
+      "snap": "libreoffice",
+      "snapPublisher": "Canonical"
+    },
+    "obsidian": {
+      "flatpak": "md.obsidian.Obsidian",
+      "flatpakVerified": true,
+      "snap": "obsidian",
+      "snapPublisher": "Obsidian",
+      "snapClassic": true
+    },
+    "gimp": {
+      "flatpak": "org.gimp.GIMP",
+      "flatpakVerified": true,
+      "snap": "gimp",
+      "snapPublisher": "GIMP team"
+    },
+    "krita": {
+      "flatpak": "org.kde.krita",
+      "flatpakVerified": true,
+      "snap": "krita",
+      "snapPublisher": "Stichting Krita Foundation"
+    },
+    "blender": {
+      "flatpak": "org.blender.Blender",
+      "flatpakVerified": false,
+      "snap": "blender",
+      "snapPublisher": "Blender Foundation",
+      "snapClassic": true
+    },
+    "inkscape": {
+      "flatpak": "org.inkscape.Inkscape",
+      "flatpakVerified": true,
+      "snap": "inkscape",
+      "snapPublisher": "Inkscape Project"
+    },
+    "lunacy": {
+      "flatpak": "com.icons8.Lunacy",
+      "flatpakVerified": true,
+      "snap": "lunacy",
+      "snapPublisher": "Icons8"
+    },
+    "xnview": {
+      "flatpak": "com.xnview.XnViewMP",
+      "flatpakVerified": true
+    },
+    "vscode": {
+      "flatpak": "com.visualstudio.code",
+      "flatpakVerified": false,
+      "snap": "code",
+      "snapPublisher": "Visual Studio Code",
+      "snapClassic": true
+    },
+    "nodejs": {
+      "snap": "node",
+      "snapPublisher": "OpenJS Foundation",
+      "snapClassic": true
+    },
+    "postman": {
+      "flatpak": "com.getpostman.Postman",
+      "flatpakVerified": false,
+      "snap": "postman",
+      "snapPublisher": "Postman, Inc."
+    },
+    "github-desktop": {
+      "flatpak": "io.github.shiftey.Desktop",
+      "flatpakVerified": false
+    },
+    "putty": {
+      "flatpak": "uk.org.greenend.chiark.sgtatham.putty",
+      "flatpakVerified": false
+    },
+    "telegram": {
+      "flatpak": "org.telegram.desktop",
+      "flatpakVerified": true,
+      "snap": "telegram-desktop",
+      "snapPublisher": "Telegram FZ-LLC"
+    },
+    "discord": {
+      "flatpak": "com.discordapp.Discord",
+      "flatpakVerified": true,
+      "snap": "discord",
+      "snapPublisher": "Snapcrafters"
+    },
+    "slack": {
+      "flatpak": "com.slack.Slack",
+      "flatpakVerified": false,
+      "snap": "slack",
+      "snapPublisher": "Slack"
+    },
+    "zoom": {
+      "flatpak": "us.zoom.Zoom",
+      "flatpakVerified": false
+    },
+    "microsoft-teams": {
+      "flatpak": "com.github.IsmaelMartinez.teams_for_linux",
+      "flatpakVerified": true,
+      "snap": "teams-for-linux",
+      "snapPublisher": "Ismael Martinez Ramos",
+      "alternative": "Teams for Linux"
+    },
+    "element": {
+      "flatpak": "im.riot.Riot",
+      "flatpakVerified": false,
+      "snap": "element-desktop",
+      "snapPublisher": "Ken VanDine"
+    },
+    "vlc": {
+      "flatpak": "org.videolan.VLC",
+      "flatpakVerified": false,
+      "snap": "vlc",
+      "snapPublisher": "VideoLAN"
+    },
+    "obs-studio": {
+      "flatpak": "com.obsproject.Studio",
+      "flatpakVerified": true,
+      "snap": "obs-studio",
+      "snapPublisher": "Snapcrafters"
+    },
+    "handbrake": {
+      "flatpak": "fr.handbrake.ghb",
+      "flatpakVerified": true
+    },
+    "audacity": {
+      "flatpak": "org.audacityteam.Audacity",
+      "flatpakVerified": false,
+      "snap": "audacity",
+      "snapPublisher": "Snapcrafters"
+    },
+    "steam": {
+      "flatpak": "com.valvesoftware.Steam",
+      "flatpakVerified": false,
+      "snap": "steam",
+      "snapPublisher": "Canonical"
+    },
+    "itch": {
+      "flatpak": "io.itch.itch",
+      "flatpakVerified": false
+    },
+    "anydesk": {
+      "flatpak": "com.anydesk.Anydesk",
+      "flatpakVerified": false
+    },
+    "rustdesk": {
+      "flatpak": "com.rustdesk.RustDesk",
+      "flatpakVerified": true
+    },
+    "tailscale": {
+      "snap": "tailscale",
+      "snapPublisher": "Canonical"
+    },
+    "thunderbird": {
+      "flatpak": "org.mozilla.Thunderbird",
+      "flatpakVerified": true,
+      "snap": "thunderbird",
+      "snapPublisher": "Canonical"
+    },
+    "calibre": {
+      "flatpak": "com.calibre_ebook.calibre",
+      "flatpakVerified": false
+    },
+    "joplin": {
+      "flatpak": "net.cozic.joplin_desktop",
+      "flatpakVerified": false,
+      "snap": "joplin-desktop",
+      "snapPublisher": "James Carroll"
+    },
+    "freecad": {
+      "flatpak": "org.freecad.FreeCAD",
+      "flatpakVerified": true,
+      "snap": "freecad",
+      "snapPublisher": "FreeCAD"
+    },
+    "powershell": {
+      "snap": "powershell",
+      "snapPublisher": "Canonical",
+      "snapClassic": true
+    },
+    "filezilla": {
+      "flatpak": "org.filezillaproject.Filezilla",
+      "flatpakVerified": false
+    },
+    "dbeaver": {
+      "flatpak": "io.dbeaver.DBeaverCommunity",
+      "flatpakVerified": false,
+      "snap": "dbeaver-ce",
+      "snapPublisher": "DBeaver",
+      "snapClassic": true
+    },
+    "wireshark": {
+      "flatpak": "org.wireshark.Wireshark",
+      "flatpakVerified": false
+    },
+    "teamspeak": {
+      "flatpak": "com.teamspeak.TeamSpeak",
+      "flatpakVerified": false
+    },
+    "kdenlive": {
+      "flatpak": "org.kde.kdenlive",
+      "flatpakVerified": true
+    },
+    "mediainfo": {
+      "flatpak": "net.mediaarea.MediaInfo",
+      "flatpakVerified": true
+    },
+    "keepassxc": {
+      "flatpak": "org.keepassxc.KeePassXC",
+      "flatpakVerified": true,
+      "snap": "keepassxc",
+      "snapPublisher": "Jonathan White"
+    },
+    "localsend": {
+      "flatpak": "org.localsend.localsend_app",
+      "flatpakVerified": true,
+      "snap": "localsend",
+      "snapPublisher": "Tien Do Nam"
+    },
+    "prism-launcher": {
+      "flatpak": "org.prismlauncher.PrismLauncher",
+      "flatpakVerified": true
+    },
+    "qbittorrent": {
+      "flatpak": "org.qbittorrent.qBittorrent",
+      "flatpakVerified": true
+    },
+    "zen-browser": {
+      "flatpak": "app.zen_browser.zen",
+      "flatpakVerified": true
+    },
+    "wps-office": {
+      "flatpak": "com.wps.Office",
+      "flatpakVerified": false
+    },
+    "free-download-manager": {
+      "flatpak": "org.freedownloadmanager.Manager",
+      "flatpakVerified": true
+    },
+    "epic-games": {
+      "flatpak": "com.heroicgameslauncher.hgl",
+      "flatpakVerified": true,
+      "alternative": "Heroic Games Launcher"
+    },
+    "gog-galaxy": {
+      "flatpak": "com.heroicgameslauncher.hgl",
+      "flatpakVerified": true,
+      "alternative": "Heroic Games Launcher"
+    },
+    "sharex": {
+      "flatpak": "org.flameshot.Flameshot",
+      "flatpakVerified": true,
+      "snap": "flameshot",
+      "snapPublisher": "Jeremy Borgman",
+      "alternative": "Flameshot"
+    },
+    "greenshot": {
+      "flatpak": "org.flameshot.Flameshot",
+      "flatpakVerified": true,
+      "snap": "flameshot",
+      "snapPublisher": "Jeremy Borgman",
+      "alternative": "Flameshot"
+    },
+    "everything": {
+      "flatpak": "io.github.cboxdoerfer.FSearch",
+      "flatpakVerified": true,
+      "alternative": "FSearch"
+    },
+    "7zip": {
+      "flatpak": "io.github.peazip.PeaZip",
+      "flatpakVerified": true,
+      "alternative": "PeaZip"
+    }
+  }
+}

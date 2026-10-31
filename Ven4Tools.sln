@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientManifestSigner", "Too
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguagePackTool", "Tools\LanguagePackTool\LanguagePackTool.csproj", "{FE23AEB1-DCF3-4648-BF70-DB81E15D6375}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ven4Tools.Screensaver", "Ven4Tools.Screensaver\Ven4Tools.Screensaver.csproj", "{52815132-3C18-45FC-B1E2-5ED93AD6C345}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -169,6 +171,18 @@ Global
 		{FE23AEB1-DCF3-4648-BF70-DB81E15D6375}.Release|x64.Build.0 = Release|Any CPU
 		{FE23AEB1-DCF3-4648-BF70-DB81E15D6375}.Release|x86.ActiveCfg = Release|Any CPU
 		{FE23AEB1-DCF3-4648-BF70-DB81E15D6375}.Release|x86.Build.0 = Release|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Debug|x64.Build.0 = Debug|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Debug|x86.Build.0 = Debug|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Release|x64.ActiveCfg = Release|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Release|x64.Build.0 = Release|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Release|x86.ActiveCfg = Release|Any CPU
+		{52815132-3C18-45FC-B1E2-5ED93AD6C345}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

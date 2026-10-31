@@ -110,8 +110,8 @@
                 </Grid>
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <!-- Шесть пунктов: «Обзор», «Каталог», «Установленные», группы «Windows»
-                         и «Сервис», «История»; «Настройки» и «О программе» — ниже черты. -->
+                    <!-- Семь пунктов: «Обзор», «Каталог», «Установленные», группы «Windows»
+                         и «Сервис», «Персонализация», «История»; «Настройки» и «О программе» — ниже черты. -->
                     <StackPanel Margin="0,4,0,0">
                         <Button x:Name="btnOverviewTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE80F;" Content="Обзор" Click="NavigateToOverview"/>
                         <Button x:Name="btnCatalogTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE71D;" Content="Каталог" Click="NavigateToCatalog"/>
@@ -151,6 +151,7 @@
                             <Button x:Name="btnDiagnosticsTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE9D9;" Content="Диагностика" Click="NavigateToDiagnostics"/>
                             <Button x:Name="btnBenchmarkTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE916;" Content="Бенчмарк" Click="NavigateToBenchmark"/>
                         </StackPanel>
+                        <Button x:Name="btnPersonalizationTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE771;" Content="Персонализация" Click="NavigateToPersonalization"/>
                         <Button x:Name="btnHistoryTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE81C;" Content="История" Click="NavigateToHistory"/>
                         <Border Height="1" Margin="8,10" Background="{DynamicResource BorderBrush}"/>
                         <Button x:Name="btnSystemTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE713;" Content="Настройки" Click="NavigateToSystem"/>

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Заставка «Венчик» для раздела «Персонализация». Собирается под .NET Framework 4.8:
+       он есть в любой Windows 10 и 11, поэтому файл заставки весит сотни килобайт и не
+       тянет за собой среду выполнения, как сам клиент. Клиент кладёт её рядом с собой
+       под именем Personalization\Venchik\Venchik.scr. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Venchik</AssemblyName>
+    <RootNamespace>Ven4Tools.Screensaver</RootNamespace>
+    <Product>Ven4Tools</Product>
+    <AssemblyTitle>Венчик — заставка Ven4Tools</AssemblyTitle>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- SDK подставляет программе .NET Framework платформу сам (win-x86), а при публикации клиента
+         с -r win-x64 — ту. Восстановление готово к обеим, а файл всегда ложится в bin\<конфигурация>\net48\:
+         оттуда его забирает Ven4Tools.csproj. -->
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\*.png" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

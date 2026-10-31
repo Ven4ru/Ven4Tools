@@ -1148,6 +1148,10 @@
     "t": "Windows Update will stop offering them and will not install them on its own. You can bring them back in the “Hidden” section."
   },
   {
+    "s": "Windows в стиле Венчика. Каждый пункт применяется отдельно и возвращается кнопкой «Вернуть как было».",
+    "t": "Windows in Venchik style. Each item is applied separately and undone with the \"Restore\" button."
+  },
+  {
     "s": "Windows ждёт перезагрузки, чтобы завершить прошлое восстановление. Перезагрузите компьютер и запустите проверку ещё раз.",
     "t": "Windows is waiting for a restart to finish a previous repair. Restart the computer and run the check again."
   },
@@ -3420,6 +3424,10 @@
     "t": "Case fans"
   },
   {
+    "s": "Венчик ночью в компьютерном классе. Левая половина тёмная — значки на рабочем столе хорошо видны.",
+    "t": "Venchik in the computer classroom at night. The left half is dark, so desktop icons stay easy to see."
+  },
+  {
     "s": "Вернутся сами — их поставит {0}: {1}",
     "t": "Will come back automatically — {0} installs them: {1}"
   },
@@ -3428,12 +3436,20 @@
     "t": "Revert “{0}” to its state before it was applied?\n\nThe previous registry values and service startup type will be restored. Other changes are not affected."
   },
   {
+    "s": "Вернуть всё как было",
+    "t": "Restore everything"
+  },
+  {
     "s": "Вернуть выбранные",
     "t": "Restore selected"
   },
   {
     "s": "Вернуть выбранные обновления ({0})?\n\nWindows Update снова будет их предлагать и сможет установить сам по своему расписанию.",
     "t": "Restore the selected updates ({0})?\n\nWindows Update will offer them again and may install them on its own schedule."
+  },
+  {
+    "s": "Вернуть как было",
+    "t": "Restore"
   },
   {
     "s": "Вернуть обновления",
@@ -3528,6 +3544,10 @@
     "t": "The Office and Network tabs are hidden automatically when the connection is lost. This option forces offline mode manually."
   },
   {
+    "s": "Включает этот пункт оформления. Прежние настройки запоминаются для отката.",
+    "t": "Turns on this item. Previous settings are saved so they can be restored."
+  },
+  {
     "s": "Включена.",
     "t": "Enabled."
   },
@@ -3594,6 +3614,14 @@
   {
     "s": "Возврат драйверов и Wi-Fi пропущен: без вопроса он выполняется только при запуске с --silent",
     "t": "Restoring drivers and Wi-Fi skipped: it runs without asking only when started with --silent"
+  },
+  {
+    "s": "Возвращает курсоры, обои, экран блокировки, звуки и заставку, какими они были до Ven4Tools.",
+    "t": "Restores the cursors, wallpaper, lock screen, sounds and screensaver to how they were before Ven4Tools."
+  },
+  {
+    "s": "Возвращает этот пункт, каким он был до первого применения.",
+    "t": "Restores this item to how it was before it was first applied."
   },
   {
     "s": "Возвращено обновлений: {0}. Они снова в разделе «Обновления».",
@@ -4692,12 +4720,20 @@
     "t": "A game with {0} anti-cheat is running. You can allow the overlay in such games with a checkbox in Diagnostics — at your own risk."
   },
   {
+    "s": "Заставка",
+    "t": "Screensaver"
+  },
+  {
     "s": "Защитник Windows сообщает об обнаружении в папке клиента:",
     "t": "Microsoft Defender reports detections in the client folder:"
   },
   {
     "s": "Защищённая частная сеть между своими устройствами: доступ к домашнему или рабочему компьютеру без проброса портов.",
     "t": "Secure private network between your devices: access your home or work computer without port forwarding."
+  },
+  {
+    "s": "Звуки Windows",
+    "t": "Windows sounds"
   },
   {
     "s": "Здесь появятся установленные через Ven4Tools программы.",
@@ -5164,6 +5200,10 @@
     "t": "Client installed"
   },
   {
+    "s": "Когда компьютер простаивает, по экрану бегает Венчик. Если заставка была выключена, она включится через 10 минут простоя.",
+    "t": "When the computer is idle, Venchik runs across the screen. If the screensaver was off, it turns on after 10 minutes of inactivity."
+  },
+  {
     "s": "Когда снято — новые установки не записываются в историю. Уже сохранённые записи остаются, удалить их можно кнопкой «Очистить».",
     "t": "When unchecked — new installations are not recorded in the history. Entries already saved stay; you can delete them with the “Clear” button."
   },
@@ -5274,6 +5314,10 @@
   {
     "s": "Крупнейший игровой магазин и платформа для игр.",
     "t": "The largest game store and gaming platform."
+  },
+  {
+    "s": "Курсоры-лапы",
+    "t": "Paw cursors"
   },
   {
     "s": "Кэш обновлений Windows",
@@ -5796,6 +5840,14 @@
     "t": "Failed: {0}"
   },
   {
+    "s": "Не получилось: {0}. Подробности — в журнале.",
+    "t": "Failed: {0}. See the log for details."
+  },
+  {
+    "s": "Не применено",
+    "t": "Not applied"
+  },
+  {
     "s": "Не проверялась: раздел «Диагностика» ещё не открывался.",
     "t": "Not checked: the “Diagnostics” section has not been opened yet."
   },
@@ -6260,6 +6312,10 @@
     "t": "Unknown"
   },
   {
+    "s": "Неизвестный раздел реестра: {0}",
+    "t": "Unknown registry hive: {0}"
+  },
+  {
     "s": "Неисправимые ошибки: {0}",
     "t": "Uncorrectable errors: {0}"
   },
@@ -6394,6 +6450,10 @@
   {
     "s": "Нет сохранённых снапшотов",
     "t": "No saved snapshots"
+  },
+  {
+    "s": "Нет файлов оформления: {0}",
+    "t": "Theme files are missing: {0}"
   },
   {
     "s": "Нечего скачивать.",
@@ -6678,6 +6738,10 @@
   {
     "s": "Обновлять установленные программы автоматически",
     "t": "Update installed apps automatically"
+  },
+  {
+    "s": "Обои",
+    "t": "Wallpaper"
   },
   {
     "s": "Обработка компонента завершилась ошибкой: нет связи с серверами Microsoft или повреждено хранилище компонентов. Попробуйте «Проверить системные файлы» и повторите.",
@@ -7804,6 +7868,10 @@
     "t": "Reread startup entries."
   },
   {
+    "s": "Персонализация",
+    "t": "Personalization"
+  },
+  {
     "s": "Персональные советы по данным диагностики",
     "t": "Tailored tips based on diagnostic data"
   },
@@ -8600,8 +8668,20 @@
     "t": "Apps hidden from the catalog with the \uD83D\uDE48 button in their row. There is no per-app list — only restoring all of them at once."
   },
   {
+    "s": "Применить",
+    "t": "Apply"
+  },
+  {
+    "s": "Применить всё",
+    "t": "Apply all"
+  },
+  {
     "s": "Применить заново",
     "t": "Reapply"
+  },
+  {
+    "s": "Применяет все пункты, которые ещё не применены. Прежние настройки запоминаются для отката.",
+    "t": "Applies every item that isn't applied yet. Previous settings are saved so they can be restored."
   },
   {
     "s": "Применялся, но сейчас не действует",
@@ -10096,6 +10176,10 @@
     "t": "Asks DISM whether the feature is enabled. Changes nothing."
   },
   {
+    "s": "Спящий Венчик на экране входа в Windows. Пока картинка включена, сменить экран блокировки в параметрах Windows нельзя.",
+    "t": "Sleeping Venchik on the Windows sign-in screen. While this picture is on, the lock screen can't be changed in Windows Settings."
+  },
+  {
     "s": "Сравнение с заводской ёмкостью по данным самой батареи. Со временем ёмкость снижается у всех батарей.",
     "t": "Comparison with the design capacity based on the battery's own data. Every battery loses capacity over time."
   },
@@ -10424,6 +10508,10 @@
     "t": "Remove from set: {0}"
   },
   {
+    "s": "Уведомления мяукают, ошибки и подключение устройств звучат мягкими сигналами.",
+    "t": "Notifications meow; errors and device connections play soft tones."
+  },
+  {
     "s": "Уведомления не запрашиваются: в клиенте включён параноидальный режим.",
     "t": "Notifications are not requested: paranoid mode is on in the client."
   },
@@ -10578,6 +10666,10 @@
   {
     "s": "Укажите папку набора.",
     "t": "Specify the kit folder."
+  },
+  {
+    "s": "Указатель — стрелка в полоску, как шерсть Венчика, на ссылках — лапка с подушечками, а пока Windows занята, Венчик бежит на месте.",
+    "t": "The pointer is a striped arrow like Venchik's fur, links get a paw with toe beans, and while Windows is busy Venchik runs in place."
   },
   {
     "s": "Указать ISO-образ…",
@@ -11000,6 +11092,10 @@
     "t": "Client files are in place."
   },
   {
+    "s": "Файлы оформления не найдены",
+    "t": "Theme files not found"
+  },
+  {
     "s": "Файлы программы заняты — закройте её и повторите установку.",
     "t": "The app's files are in use. Close it and try the installation again."
   },
@@ -11198,6 +11294,10 @@
   {
     "s": "Штатная проверка Windows. Идёт при перезагрузке, до загрузки системы; итог появится здесь.",
     "t": "Built-in Windows test. Runs on restart, before the system loads; the result will appear here."
+  },
+  {
+    "s": "Экран блокировки",
+    "t": "Lock screen"
   },
   {
     "s": "Экран приветствия после обновлений",
@@ -13316,6 +13416,18 @@
     "t": "⚠️ The client folder may interfere with installing updates:\n{0}\n   Move the client to a safe folder: Settings → “Move client”."
   },
   {
+    "s": "⚠️ Персонализация: Windows не приняла «{0}» (код {1})",
+    "t": "⚠️ Personalization: Windows did not accept \"{0}\" (code {1})"
+  },
+  {
+    "s": "⚠️ Персонализация: не открыта картинка — {0}",
+    "t": "⚠️ Personalization: couldn't open the picture — {0}"
+  },
+  {
+    "s": "⚠️ Персонализация: не прочитан файл отката — {0}",
+    "t": "⚠️ Personalization: couldn't read the undo file — {0}"
+  },
+  {
     "s": "⚠️ Подсчёт состава установленной версии прерван — следующее обновление будет полным",
     "t": "⚠️ Computing the file list of the installed version was interrupted — the next update will be a full one"
   },
@@ -13892,6 +14004,10 @@
     "t": "✓ This PC is compatible with Windows 11."
   },
   {
+    "s": "✓ Применено",
+    "t": "✓ Applied"
+  },
+  {
     "s": "✓ Уже установлено",
     "t": "✓ Already installed"
   },
@@ -14284,6 +14400,10 @@
     "t": "❌ Portable offline kit not built: {0}"
   },
   {
+    "s": "❌ Персонализация: «{0}» — {1}",
+    "t": "❌ Personalization: \"{0}\" — {1}"
+  },
+  {
     "s": "❌ Повтор не удался",
     "t": "❌ Retry failed"
   },
@@ -14608,6 +14728,18 @@
     "t": "\uD83D\uDC1B Report a problem"
   },
   {
+    "s": "\uD83D\uDC3E Персонализация",
+    "t": "\uD83D\uDC3E Personalization"
+  },
+  {
+    "s": "\uD83D\uDC3E Персонализация: возвращено «{0}»",
+    "t": "\uD83D\uDC3E Personalization: restored \"{0}\""
+  },
+  {
+    "s": "\uD83D\uDC3E Персонализация: применено «{0}»",
+    "t": "\uD83D\uDC3E Personalization: applied \"{0}\""
+  },
+  {
     "s": "\uD83D\uDC41 Показаны скрытые приложения ({0})",
     "t": "\uD83D\uDC41 Hidden apps shown ({0})"
   },
@@ -14822,6 +14954,10 @@
   {
     "s": "\uD83D\uDCC2 Открыта вкладка: Очистка",
     "t": "\uD83D\uDCC2 Tab opened: Cleanup"
+  },
+  {
+    "s": "\uD83D\uDCC2 Открыта вкладка: Персонализация",
+    "t": "\uD83D\uDCC2 Tab opened: Personalization"
   },
   {
     "s": "\uD83D\uDCC2 Открыта вкладка: Сеть",

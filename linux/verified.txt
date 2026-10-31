@@ -1,0 +1,97 @@
+firefox|flatpak|org.mozilla.firefox|ok|True | Mozilla
+firefox|snap|firefox|ok|Mozilla**|
+google-chrome|flatpak|com.google.Chrome|ok|None | Google
+microsoft-edge|flatpak|com.microsoft.Edge|ok|None | Microsoft Corporation
+opera|flatpak|com.opera.Opera|ok|None | Opera
+opera|snap|opera|ok|Opera (opera-software**)|
+brave|flatpak|com.brave.Browser|ok|True | Brave Software
+brave|snap|brave|ok|Brave Software (brave**)|
+yandex-browser|flatpak|ru.yandex.Browser|ok|True | Yandex
+librewolf|flatpak|io.gitlab.librewolf-community|ok|True | LibreWolf Community
+onlyoffice|flatpak|org.onlyoffice.desktopeditors|ok|True | ONLYOFFICE
+onlyoffice|snap|onlyoffice-desktopeditors|ok|Ascensio System SIA (onlyoffice**)|
+drawio|flatpak|com.jgraph.drawio.desktop|ok|None | JGraph
+drawio|snap|drawio|ok|draw.io (jgraph**)|
+libreoffice|flatpak|org.libreoffice.LibreOffice|ok|True | The Document Foundation
+libreoffice|snap|libreoffice|ok|Canonical**|
+obsidian|flatpak|md.obsidian.Obsidian|ok|True | Obsidian
+obsidian|snap|obsidian|ok|Obsidian (obsidianmd)|classic
+notion|snap|notion-snap-reborn|ok|Maxime (sunshio)|
+gimp|flatpak|org.gimp.GIMP|ok|True | The GIMP team
+gimp|snap|gimp|ok|GIMP team (gimp**)|
+krita|flatpak|org.kde.krita|ok|True | Krita Foundation
+krita|snap|krita|ok|Stichting Krita Foundation (krita**)|
+blender|flatpak|org.blender.Blender|ok|None | Blender Foundation
+blender|snap|blender|ok|Blender Foundation (blenderfoundation**)|classic
+inkscape|flatpak|org.inkscape.Inkscape|ok|True | The Inkscape Community
+inkscape|snap|inkscape|ok|Inkscape Project (inkscape**)|
+lunacy|flatpak|com.icons8.Lunacy|ok|True | Icons8
+lunacy|snap|lunacy|ok|Icons8|
+xnview|flatpak|com.xnview.XnViewMP|ok|True | Pierre-e Gougelet
+vscode|flatpak|com.visualstudio.code|ok|None | Microsoft Corporation
+vscode|snap|code|ok|Visual Studio Code (vscode**)|classic
+nodejs|snap|node|ok|OpenJS Foundation (iojs**)|classic
+postman|flatpak|com.getpostman.Postman|ok|None | Postman Inc.
+postman|snap|postman|ok|Postman, Inc. (postman-inc**)|
+github-desktop|flatpak|io.github.shiftey.Desktop|ok|None | shiftkey
+putty|flatpak|uk.org.greenend.chiark.sgtatham.putty|ok|None | Simon Tatham
+telegram|flatpak|org.telegram.desktop|ok|True | Telegram FZ-LLC
+telegram|snap|telegram-desktop|ok|Telegram FZ-LLC (telegram-desktop**)|
+discord|flatpak|com.discordapp.Discord|ok|True | Discord Inc.
+discord|snap|discord|ok|Snapcrafters*|
+slack|flatpak|com.slack.Slack|ok|None | Slack Technologies Inc.
+slack|snap|slack|ok|Slack**|
+zoom|flatpak|us.zoom.Zoom|ok|false | zoom.us
+zoom|snap|zoom-client|ok|Oliver Grawert (ogra)|
+microsoft-teams|flatpak|com.github.IsmaelMartinez.teams_for_linux|ok|True | Ismael Martinez
+microsoft-teams|snap|teams-for-linux|ok|Ismael Martinez Ramos (ismaelmartinez)|
+element|flatpak|im.riot.Riot|ok|None | Element Creations Ltd
+element|snap|element-desktop|ok|Ken VanDine*|
+vlc|flatpak|org.videolan.VLC|ok|None | VideoLAN et al.
+vlc|snap|vlc|ok|VideoLAN**|
+obs-studio|flatpak|com.obsproject.Studio|ok|True | OBS Project
+obs-studio|snap|obs-studio|ok|Snapcrafters*|
+handbrake|flatpak|fr.handbrake.ghb|ok|True | HandBrake Team
+audacity|flatpak|org.audacityteam.Audacity|ok|false | Muse Group
+audacity|snap|audacity|ok|Snapcrafters*|
+steam|flatpak|com.valvesoftware.Steam|ok|None | Valve Corporation
+steam|snap|steam|ok|Canonical**|
+itch|flatpak|io.itch.itch|ok|None | itch.io
+anydesk|flatpak|com.anydesk.Anydesk|ok|None | AnyDesk Software GmbH
+rustdesk|flatpak|com.rustdesk.RustDesk|ok|True | RustDesk
+tailscale|snap|tailscale|ok|Canonical**|
+rclone|snap|rclone|ok|Yuzukosho (aoilinux)|
+thunderbird|flatpak|org.mozilla.Thunderbird|ok|True | MZLA Technologies, part of the Mozilla Foundation
+thunderbird|snap|thunderbird|ok|Canonical**|
+calibre|flatpak|com.calibre_ebook.calibre|ok|None | Kovid Goyal
+joplin|flatpak|net.cozic.joplin_desktop|ok|None | laurent22
+joplin|snap|joplin-desktop|ok|James Carroll*|
+freecad|flatpak|org.freecad.FreeCAD|ok|True | The FreeCAD Team
+freecad|snap|freecad|ok|FreeCAD (freecad-project-association**)|
+powershell|snap|powershell|ok|Canonical**|classic
+filezilla|flatpak|org.filezillaproject.Filezilla|ok|None | Tim Kosse
+dbeaver|flatpak|io.dbeaver.DBeaverCommunity|ok|false | DBeaver Corporation
+dbeaver|snap|dbeaver-ce|ok|DBeaver (dbeaver-corp)|classic
+wireshark|flatpak|org.wireshark.Wireshark|ok|None | The Wireshark developer community
+ollama|snap|ollama|ok|Matias Piipari (mz2)|
+teamspeak|flatpak|com.teamspeak.TeamSpeak|ok|None | TeamSpeak Systems, Inc.
+kdenlive|flatpak|org.kde.kdenlive|ok|True | KDE
+mediainfo|flatpak|net.mediaarea.MediaInfo|ok|True | MediaArea.net SARL
+keepassxc|flatpak|org.keepassxc.KeePassXC|ok|True | KeePassXC Team
+keepassxc|snap|keepassxc|ok|Jonathan White (keepassxreboot)|
+localsend|flatpak|org.localsend.localsend_app|ok|True | Tien Do Nam
+localsend|snap|localsend|ok|Tien Do Nam (tienisto)|
+prism-launcher|flatpak|org.prismlauncher.PrismLauncher|ok|True | Prism Launcher Contributors
+prism-launcher|snap|prismlauncher|ok|Ashton (ashtonn)|
+qbittorrent|flatpak|org.qbittorrent.qBittorrent|ok|True | The qBittorrent Project
+zen-browser|flatpak|app.zen_browser.zen|ok|True | Zen Team
+wps-office|flatpak|com.wps.Office|ok|None | Kingsoft Office Corporation
+free-download-manager|flatpak|org.freedownloadmanager.Manager|ok|True | FreeDownloadManager Team
+epic-games|flatpak|com.heroicgameslauncher.hgl|ok|True | Heroic Games Launcher
+gog-galaxy|flatpak|com.heroicgameslauncher.hgl|ok|True | Heroic Games Launcher
+sharex|flatpak|org.flameshot.Flameshot|ok|True | Flameshot Developers
+sharex|snap|flameshot|ok|Jeremy Borgman (borgman-jeremy)|
+greenshot|flatpak|org.flameshot.Flameshot|ok|True | Flameshot Developers
+greenshot|snap|flameshot|ok|Jeremy Borgman (borgman-jeremy)|
+everything|flatpak|io.github.cboxdoerfer.FSearch|ok|True | Christian Boxdörfer
+7zip|flatpak|io.github.peazip.PeaZip|ok|True | Giorgio Tani

@@ -86,3 +86,7 @@ _deploy_env.ps1
 # Маска — страховка от случайного `git add` рядом с инструментом подписи.
 *-private.pem
 *.key.pem
+
+# Скомпилированный Python (Tools/PersonalizationAssets)
+__pycache__/
+*.pyc

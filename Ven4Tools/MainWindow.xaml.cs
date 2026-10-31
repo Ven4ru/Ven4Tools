@@ -42,6 +42,7 @@ namespace Ven4Tools
         private HistoryTab?    _historyTab;
         private DebloaterTab?  _debloaterTab;
         private StartupTab?    _startupTab;
+        private PersonalizationTab? _personalizationTab;
         private DiskSpaceTab?  _diskSpaceTab;
 
         private readonly GlobalLogController _globalLog;
@@ -444,6 +445,15 @@ namespace Ven4Tools
             UpdateMascot("debloater");
         }
 
+        private void NavigateToPersonalization(object? sender, RoutedEventArgs? e)
+        {
+            SetActiveButton(btnPersonalizationTab);
+            AppLogger.Write("📂 Открыта вкладка: Персонализация");
+            _personalizationTab ??= new PersonalizationTab();
+            MainFrame.Content = _personalizationTab;
+            UpdateMascot("debloater");
+        }
+
         // «Автозагрузка» и «Место и файлы» раньше были вкладками «Очистки».
         private void NavigateToStartup(object? sender, RoutedEventArgs? e)
         {
@@ -595,7 +605,7 @@ namespace Ven4Tools
 
         private void SetActiveButton(Button activeButton)
         {
-            var buttons = new[] { btnOverviewTab, btnCatalogTab, btnInstalledTab, btnSystemTab, btnDiagnosticsTab, btnBenchmarkTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnStartupTab, btnDiskSpaceTab, btnWindowsUpdateTab };
+            var buttons = new[] { btnOverviewTab, btnCatalogTab, btnInstalledTab, btnSystemTab, btnDiagnosticsTab, btnBenchmarkTab, btnOfficeTab, btnActivationTab, btnAboutTab, btnNetworkTab, btnHistoryTab, btnDebloaterTab, btnStartupTab, btnDiskSpaceTab, btnWindowsUpdateTab, btnPersonalizationTab };
             foreach (var btn in buttons)
             {
                 if (btn != null) btn.Style = (Style)FindResource("NavButtonStyle");

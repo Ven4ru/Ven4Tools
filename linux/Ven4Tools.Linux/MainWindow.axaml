@@ -1,0 +1,129 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:m="using:Ven4Tools.Linux.Models"
+        xmlns:s="using:Ven4Tools.Linux.Services"
+        x:Class="Ven4Tools.Linux.MainWindow"
+        Width="1040" Height="760" MinWidth="760" MinHeight="520">
+  <Grid RowDefinitions="Auto,*,Auto,130" Margin="16">
+
+    <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,8">
+      <TextBlock x:Name="TitleText" FontSize="22" FontWeight="SemiBold" />
+      <TextBlock x:Name="StatusLine" Opacity="0.7" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <TabControl x:Name="Tabs" Grid.Row="1" Padding="0,8,0,0">
+
+      <!-- Каталог -->
+      <TabItem x:Name="CatalogTab">
+        <Grid RowDefinitions="Auto,*,Auto">
+          <Grid ColumnDefinitions="*,200,Auto,Auto,Auto" Margin="0,0,0,8">
+            <TextBox x:Name="SearchBox" Grid.Column="0" />
+            <ComboBox x:Name="CategoryBox" Grid.Column="1" Margin="8,0,0,0" HorizontalAlignment="Stretch" />
+            <CheckBox x:Name="LinuxOnlyBox" Grid.Column="2" Margin="12,0,0,0" IsChecked="True" />
+            <CheckBox x:Name="FavoritesOnlyBox" Grid.Column="3" Margin="12,0,0,0" />
+            <Button x:Name="FlatpakButton" Grid.Column="4" Margin="8,0,0,0" IsVisible="False" Click="OnSetupFlatpak" />
+          </Grid>
+
+          <ListBox x:Name="AppList" Grid.Row="1">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="m:AppItem">
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="0,2">
+                  <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" IsEnabled="{Binding CanSelect}"
+                            VerticalAlignment="Center" Click="OnSelectionChanged" />
+                  <Button Grid.Column="1" Content="{Binding FavoriteGlyph}" Click="OnToggleFavorite"
+                          Background="Transparent" FontSize="18" Padding="6,0" VerticalAlignment="Center"
+                          Foreground="#E0A100" />
+                  <StackPanel Grid.Column="2" Spacing="2" Margin="6,0,0,0">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="15" />
+                      <TextBlock Text="{Binding Category}" Opacity="0.55" VerticalAlignment="Bottom" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Opacity="0.85" />
+                    <TextBlock Text="{Binding AlternativeText}" IsVisible="{Binding HasAlternative}"
+                               Foreground="#C77C02" />
+                    <TextBlock Text="{Binding SourceText}" FontSize="12" Opacity="0.55" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="3" Text="{Binding StatusText}" Foreground="#2E9D4F"
+                             VerticalAlignment="Center" Margin="12,0" />
+                  <Button Grid.Column="4" Content="{Binding ActionText}" IsEnabled="{Binding CanAct}"
+                          MinWidth="110" HorizontalContentAlignment="Center" VerticalAlignment="Center"
+                          Click="OnAppAction" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+
+          <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,*,220,Auto" Margin="0,8,0,0">
+            <Button x:Name="InstallSelectedButton" Grid.Column="0" Classes="accent" Click="OnInstallSelected" />
+            <Button x:Name="ClearSelectionButton" Grid.Column="1" Margin="8,0,0,0" Click="OnClearSelection" />
+            <TextBox x:Name="PresetNameBox" Grid.Column="3" />
+            <Button x:Name="SavePresetButton" Grid.Column="4" Margin="8,0,0,0" Click="OnSavePreset" />
+          </Grid>
+        </Grid>
+      </TabItem>
+
+      <!-- Наборы -->
+      <TabItem x:Name="SetsTab">
+        <ScrollViewer>
+          <ItemsControl x:Name="SetList">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="m:SetCard">
+                <Border BorderBrush="#33808080" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="{Binding Title}" FontSize="17" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Opacity="0.85" />
+                      <TextBlock Text="{Binding AppsText}" TextWrapping="Wrap" FontSize="12" Opacity="0.7" />
+                      <TextBlock Text="{Binding MissingText}" IsVisible="{Binding HasMissing}" TextWrapping="Wrap"
+                                 FontSize="12" Foreground="#C77C02" />
+                      <TextBlock Text="{Binding FlathubOnlyText}" IsVisible="{Binding HasFlathubOnly}" TextWrapping="Wrap"
+                                 FontSize="12" Opacity="0.7" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="6" Margin="12,0,0,0" VerticalAlignment="Center">
+                      <Button Tag="install" Content="{x:Static s:UiText.InstallSet}" Click="OnSetAction" IsEnabled="{Binding CanInstall}" Classes="accent"
+                              HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                      <Button Tag="select" Content="{x:Static s:UiText.SelectInCatalog}" Click="OnSetAction" IsEnabled="{Binding CanInstall}"
+                              HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                      <Button Tag="delete" Content="{x:Static s:UiText.DeleteSet}" Click="OnSetAction" IsVisible="{Binding IsUser}"
+                              HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </TabItem>
+
+      <!-- Обновления -->
+      <TabItem x:Name="UpdatesTab">
+        <Grid RowDefinitions="Auto,*">
+          <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+            <Button x:Name="CheckUpdatesButton" Click="OnCheckUpdates" />
+            <Button x:Name="UpdateAllButton" Classes="accent" Click="OnUpdateAll" IsEnabled="False" />
+          </StackPanel>
+          <TextBlock x:Name="UpdatesText" Grid.Row="1" TextWrapping="Wrap" />
+        </Grid>
+      </TabItem>
+
+      <!-- Настройки -->
+      <TabItem x:Name="SettingsTab">
+        <StackPanel Spacing="10" MaxWidth="640" HorizontalAlignment="Left">
+          <TextBlock x:Name="LanguageLabel" FontWeight="SemiBold" />
+          <ComboBox x:Name="LanguageBox" Width="220" />
+          <TextBlock x:Name="LanguageHint" Opacity="0.7" IsVisible="False" />
+          <TextBlock x:Name="ProfileLabel" FontWeight="SemiBold" Margin="0,12,0,0" />
+          <TextBlock x:Name="ProfileHint" TextWrapping="Wrap" Opacity="0.8" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button x:Name="ExportButton" Click="OnExportProfile" />
+            <Button x:Name="ImportButton" Click="OnImportProfile" />
+          </StackPanel>
+        </StackPanel>
+      </TabItem>
+    </TabControl>
+
+    <TextBlock x:Name="LogLabel" Grid.Row="2" Margin="0,10,0,4" Opacity="0.7" />
+    <TextBox x:Name="LogBox" Grid.Row="3" IsReadOnly="True" AcceptsReturn="True"
+             TextWrapping="Wrap" FontFamily="monospace" FontSize="12" />
+  </Grid>
+</Window>
