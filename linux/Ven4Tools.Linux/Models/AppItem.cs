@@ -16,7 +16,8 @@ public sealed class AppItem : INotifyPropertyChanged
     public string LinuxName => Package?.Alternative is { } alt ? $"{alt} ({L.T("вместо")} {Name})" : Name;
     public string Description =>
         L.IsEnglish && App.DescriptionEn.Length > 0 ? App.DescriptionEn : App.Description;
-    public string Category => App.Category;
+    // Категория из каталога — русская; в английском интерфейсе — те же слова, что у клиента Windows.
+    public string Category => L.T(App.Category);
 
     // Источник выбирается при сборке списка (Flatpak, если он есть в системе)
     public BackendKind? Backend { get; init; }

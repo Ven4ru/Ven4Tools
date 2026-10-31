@@ -78,6 +78,19 @@ public static class L
         ["Подпись встроенного каталога не сошлась"] = "Built-in catalog signature mismatch",
         ["Кэш каталога не записался: "] = "Catalog cache was not saved: ",
         ["Каталог v{0} старее принятого v{1}, источник пропущен: "] = "Catalog v{0} is older than accepted v{1}, source skipped: ",
+        // Категории каталога
+        ["Браузеры"] = "Browsers",
+        ["Графика"] = "Graphics",
+        ["Драйверпаки"] = "Drivers",
+        ["Другое"] = "Other",
+        ["ИИ"] = "AI",
+        ["Игровые сервисы"] = "Game services",
+        ["Компоненты"] = "Components",
+        ["Мессенджеры"] = "Messengers",
+        ["Мультимедиа"] = "Multimedia",
+        ["Офис"] = "Office",
+        ["Разработка"] = "Development",
+        ["Системные"] = "System",
         ["Не найден менеджер пакетов: поставьте Flatpak средствами своей системы."] = "No package manager found: install Flatpak with your system's tools.",
     };
 }
