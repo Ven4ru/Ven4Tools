@@ -1,0 +1,69 @@
+firefox flatpak=org.mozilla.firefox snap=firefox
+google-chrome flatpak=com.google.Chrome
+microsoft-edge flatpak=com.microsoft.Edge
+opera flatpak=com.opera.Opera snap=opera
+brave flatpak=com.brave.Browser snap=brave
+yandex-browser flatpak=ru.yandex.Browser
+librewolf flatpak=io.gitlab.librewolf-community
+onlyoffice flatpak=org.onlyoffice.desktopeditors snap=onlyoffice-desktopeditors
+drawio flatpak=com.jgraph.drawio.desktop snap=drawio
+libreoffice flatpak=org.libreoffice.LibreOffice snap=libreoffice
+obsidian flatpak=md.obsidian.Obsidian snap=obsidian
+notion snap=notion-snap-reborn
+gimp flatpak=org.gimp.GIMP snap=gimp
+krita flatpak=org.kde.krita snap=krita
+blender flatpak=org.blender.Blender snap=blender
+inkscape flatpak=org.inkscape.Inkscape snap=inkscape
+lunacy flatpak=com.icons8.Lunacy snap=lunacy
+xnview flatpak=com.xnview.XnViewMP
+vscode flatpak=com.visualstudio.code snap=code
+nodejs snap=node
+postman flatpak=com.getpostman.Postman snap=postman
+github-desktop flatpak=io.github.shiftey.Desktop
+putty flatpak=uk.org.greenend.chiark.sgtatham.putty
+telegram flatpak=org.telegram.desktop snap=telegram-desktop
+discord flatpak=com.discordapp.Discord snap=discord
+slack flatpak=com.slack.Slack snap=slack
+zoom flatpak=us.zoom.Zoom snap=zoom-client
+microsoft-teams flatpak=com.github.IsmaelMartinez.teams_for_linux snap=teams-for-linux
+element flatpak=im.riot.Riot snap=element-desktop
+whatsapp flatpak=com.github.eneshecan.WhatsAppForLinux snap=whatsapp-for-linux
+vlc flatpak=org.videolan.VLC snap=vlc
+obs-studio flatpak=com.obsproject.Studio snap=obs-studio
+handbrake flatpak=fr.handbrake.ghb
+audacity flatpak=org.audacityteam.Audacity snap=audacity
+steam flatpak=com.valvesoftware.Steam snap=steam
+itch flatpak=io.itch.itch
+anydesk flatpak=com.anydesk.Anydesk
+rustdesk flatpak=com.rustdesk.RustDesk
+tailscale snap=tailscale
+rclone snap=rclone
+thunderbird flatpak=org.mozilla.Thunderbird snap=thunderbird
+calibre flatpak=com.calibre_ebook.calibre
+joplin flatpak=net.cozic.joplin_desktop snap=joplin-desktop
+naps2 flatpak=com.naps2.Naps2
+freecad flatpak=org.freecad.FreeCAD snap=freecad
+powershell snap=powershell
+filezilla flatpak=org.filezillaproject.Filezilla
+dbeaver flatpak=io.dbeaver.DBeaverCommunity snap=dbeaver-ce
+wireshark flatpak=org.wireshark.Wireshark snap=wireshark
+ollama snap=ollama
+lm-studio flatpak=ai.lmstudio.LMStudio
+cursor flatpak=com.cursor.Cursor
+teamspeak flatpak=com.teamspeak.TeamSpeak
+kdenlive flatpak=org.kde.kdenlive snap=kdenlive
+mediainfo flatpak=net.mediaarea.MediaInfo
+keepassxc flatpak=org.keepassxc.KeePassXC snap=keepassxc
+localsend flatpak=org.localsend.localsend_app snap=localsend
+prism-launcher flatpak=org.prismlauncher.PrismLauncher snap=prismlauncher
+qbittorrent flatpak=org.qbittorrent.qBittorrent
+zen-browser flatpak=app.zen_browser.zen
+wps-office flatpak=com.wps.Office
+free-download-manager flatpak=org.freedownloadmanager.Manager
+epic-games flatpak=com.heroicgameslauncher.hgl
+gog-galaxy flatpak=com.heroicgameslauncher.hgl
+7zip snap=7zip
+sharex flatpak=org.flameshot.Flameshot snap=flameshot
+greenshot flatpak=org.flameshot.Flameshot snap=flameshot
+everything flatpak=io.github.cboxdoerfer.FSearch
+crystaldiskinfo flatpak=org.gnome.DiskUtility

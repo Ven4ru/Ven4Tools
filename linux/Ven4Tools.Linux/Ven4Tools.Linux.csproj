@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <RootNamespace>Ven4Tools.Linux</RootNamespace>
+    <AssemblyName>ven4tools</AssemblyName>
+    <Version>0.1.0</Version>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.20" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Проверка подписи каталога - тот же код, что в клиенте Windows -->
+    <Compile Include="..\..\Ven4Tools\Services\CatalogSignatureVerifier.cs" Link="Services\CatalogSignatureVerifier.cs" />
+    <!-- Готовые наборы - те же, что на экране «Обзор» клиента Windows -->
+    <Compile Include="..\..\Ven4Tools\Services\ReadySets.cs" Link="Services\ReadySets.cs" />
+    <!-- Встроенный каталог - запасной вариант, если сеть недоступна (подпись проверяется так же) -->
+    <EmbeddedResource Include="..\..\Catalog\master.json" LogicalName="master.json" />
+    <EmbeddedResource Include="..\..\Catalog\master.json.sig" LogicalName="master.json.sig" />
+    <EmbeddedResource Include="linux-packages.json" LogicalName="linux-packages.json" />
+  </ItemGroup>
+
+</Project>
