@@ -1184,6 +1184,10 @@
     "t": "Windows does not allow writing to the client folder. This is a matter of folder permissions, not an antivirus."
   },
   {
+    "s": "Windows не разрешает менять эти настройки программам: {0}. Сейчас откроется окно «Параметры» — там это можно сделать вручную.",
+    "t": "Windows doesn't let apps change these settings: {0}. Windows Settings will open now — you can change them there manually."
+  },
+  {
     "s": "Windows не смог получить файлы компонента — чаще всего из-за настроек сервера обновлений организации (WSUS) или установленного языкового пакета. Укажите установочную флешку/ISO той же версии Windows.",
     "t": "Windows could not get the feature files — most often because of your organization's update server settings (WSUS) or an installed language pack. Specify a Windows installation USB drive/ISO of the same version."
   },
@@ -2960,6 +2964,10 @@
     "t": "Auto-check is off (paranoid mode). Click “Check for updates” manually."
   },
   {
+    "s": "Автоскрытие",
+    "t": "Auto-hide"
+  },
+  {
     "s": "Агрессивный",
     "t": "Aggressive"
   },
@@ -3100,6 +3108,10 @@
     "t": "Without internet, the Office tab is hidden automatically. This option turns on offline mode manually and also hides the Network tab."
   },
   {
+    "s": "Без секунд",
+    "t": "No seconds"
+  },
+  {
     "s": "Без этих инструкций Windows 11 24H2 и новее не запускается вообще, даже в обход проверок. Это свойство самого процессора, настройками не исправить.",
     "t": "Without these instructions Windows 11 24H2 and later does not start at all, even when bypassing the checks. This is a property of the processor itself and cannot be fixed in settings."
   },
@@ -3170,6 +3182,18 @@
   {
     "s": "Более старая версия",
     "t": "Older version"
+  },
+  {
+    "s": "Больше закреплённых",
+    "t": "More pins"
+  },
+  {
+    "s": "Больше закреплённых значков, без советов, недавних файлов и рекламы.",
+    "t": "More pinned icons, no tips, recent files or ads."
+  },
+  {
+    "s": "Больше рекомендаций",
+    "t": "More recommendations"
   },
   {
     "s": "Браузер на базе Firefox с вертикальными вкладками и разделением окна.",
@@ -3536,6 +3560,10 @@
     "t": "Microsoft video editor."
   },
   {
+    "s": "Виджеты",
+    "t": "Widgets"
+  },
+  {
     "s": "Виджеты (новости и погода)",
     "t": "Widgets (news and weather)"
   },
@@ -3546,6 +3574,10 @@
   {
     "s": "Включает этот пункт оформления. Прежние настройки запоминаются для отката.",
     "t": "Turns on this item. Previous settings are saved so they can be restored."
+  },
+  {
+    "s": "Включена",
+    "t": "On"
   },
   {
     "s": "Включена.",
@@ -3618,6 +3650,10 @@
   {
     "s": "Возвращает курсоры, обои, экран блокировки, звуки и заставку, какими они были до Ven4Tools.",
     "t": "Restores the cursors, wallpaper, lock screen, sounds and screensaver to how they were before Ven4Tools."
+  },
+  {
+    "s": "Возвращает панель задач и Пуск, какими они были до Ven4Tools.",
+    "t": "Returns the taskbar and Start to how they were before Ven4Tools."
   },
   {
     "s": "Возвращает этот пункт, каким он был до первого применения.",
@@ -3730,6 +3766,14 @@
   {
     "s": "Все сторонние драйверы, включая сетевой: без него на свежей системе не будет интернета. От одного до нескольких гигабайт и пара минут.",
     "t": "All third-party drivers, including the network one: without it, a fresh system has no internet. It takes one to several gigabytes and a couple of minutes."
+  },
+  {
+    "s": "Всегда видна",
+    "t": "Always visible"
+  },
+  {
+    "s": "Всегда объединять",
+    "t": "Always combine"
   },
   {
     "s": "Всегда считать соединение активным (для сетей, где автоопределение ошибается). Игнорирует автодетект сети, чтобы онлайн-вкладки не скрывались при ложноотрицательном определении.",
@@ -3908,6 +3952,10 @@
     "t": "Disabled. The feature files are already on the system — enabling will be quick."
   },
   {
+    "s": "Выключена",
+    "t": "Off"
+  },
+  {
     "s": "Выключение .NET Framework 3.5",
     "t": "Disabling .NET Framework 3.5"
   },
@@ -4002,6 +4050,10 @@
   {
     "s": "Графика",
     "t": "Graphics"
+  },
+  {
+    "s": "Группировка кнопок",
+    "t": "Combine buttons"
   },
   {
     "s": "ДИАГНОСТИКА КЛИЕНТА",
@@ -4744,6 +4796,14 @@
     "t": "ven4tools.ru mirror"
   },
   {
+    "s": "Значки слева, поле поиска, окна не объединяются.",
+    "t": "Icons on the left, search box, windows not combined."
+  },
+  {
+    "s": "Значок и подпись",
+    "t": "Icon and label"
+  },
+  {
     "s": "ИИ",
     "t": "AI"
   },
@@ -5032,6 +5092,14 @@
     "t": "Like “Enabled”, but on processors without their own frequency control Windows requests the highest frequency right away."
   },
   {
+    "s": "Как в Windows 10",
+    "t": "Like Windows 10"
+  },
+  {
+    "s": "Как в Windows сейчас",
+    "t": "As currently in Windows"
+  },
+  {
     "s": "Как измерено",
     "t": "Measurement method"
   },
@@ -5198,6 +5266,18 @@
   {
     "s": "Клиент установлен",
     "t": "Client installed"
+  },
+  {
+    "s": "Кнопка «Представление задач»",
+    "t": "“Task view” button"
+  },
+  {
+    "s": "Кнопка «Пуск» и значки — по центру или у левого края, как в Windows 10.",
+    "t": "The Start button and icons — centered or on the left edge, as in Windows 10."
+  },
+  {
+    "s": "Кнопка обзора окон и рабочих столов. Win+Tab работает и без неё.",
+    "t": "Button for an overview of windows and desktops. Win+Tab works without it too."
   },
   {
     "s": "Когда компьютер простаивает, по экрану бегает Венчик. Если заставка была выключена, она включится через 10 минут простоя.",
@@ -5442,6 +5522,14 @@
   {
     "s": "Максимум за сеанс",
     "t": "Session maximum"
+  },
+  {
+    "s": "Маленькие",
+    "t": "Small"
+  },
+  {
+    "s": "Маленькие значки",
+    "t": "Small icons"
   },
   {
     "s": "Манифест обновлений: {0}",
@@ -5784,6 +5872,10 @@
     "t": "Configure proxy"
   },
   {
+    "s": "Настройка родных панели задач и Пуска Windows. Выберите значения и нажмите «Применить» — прежние настройки запоминаются, «Вернуть как было» восстановит их.",
+    "t": "Settings for the built-in Windows taskbar and Start. Choose values and click “Apply” — the previous settings are saved, and “Restore” brings them back."
+  },
+  {
     "s": "Настройки",
     "t": "Settings"
   },
@@ -5834,6 +5926,10 @@
   {
     "s": "Не получать драйверы через Windows Update?\n\nБудет включена политика «Не включать драйверы в обновления качества Windows». Это снижает вероятность, что Windows Update вернёт старый драйвер видеокарты поверх нового, но не гарантирует: политика работает не во всех случаях, а драйверы для нового оборудования Windows может ставить и сама.\n\nСвежие драйверы придётся ставить вручную — с сайта производителя.\nВыключить можно здесь же, прежнее значение вернётся.",
     "t": "Stop getting drivers via Windows Update?\n\nThe “Do not include drivers with Windows Updates” policy will be enabled. This makes it less likely that Windows Update puts an old graphics driver back over a newer one, but does not guarantee it: the policy does not work in all cases, and Windows may install drivers for new hardware on its own.\n\nYou will have to install fresh drivers manually — from the manufacturer's website.\nYou can turn this off right here, and the previous value will be restored."
+  },
+  {
+    "s": "Не получилось изменить настройки. Подробности — в журнале.",
+    "t": "Failed to change the settings. See the log for details."
   },
   {
     "s": "Не получилось: {0}",
@@ -6240,6 +6336,10 @@
     "t": "Invalid DISM command parameter."
   },
   {
+    "s": "Недавние файлы",
+    "t": "Recent files"
+  },
+  {
     "s": "Недопустимый ID «{0}»",
     "t": "Invalid ID “{0}”"
   },
@@ -6318,6 +6418,10 @@
   {
     "s": "Неисправимые ошибки: {0}",
     "t": "Uncorrectable errors: {0}"
+  },
+  {
+    "s": "Некоторые настройки (например, секунды в часах) видны только после перезапуска проводника. Открытые окна папок закроются.",
+    "t": "Some settings (such as seconds in the clock) show up only after File Explorer restarts. Open folder windows will close."
   },
   {
     "s": "Немедленно перезагрузит Windows, чтобы завершить установку обновлений.",
@@ -6478,6 +6582,10 @@
   {
     "s": "Ни один установщик пакета не подходит для этой системы.",
     "t": "None of the package installers fit this system."
+  },
+  {
+    "s": "Никогда",
+    "t": "Never"
   },
   {
     "s": "Никто из запущенных программ этот файл не держит. Если он всё равно не удаляется — дело в правах доступа или файл занят на уровне драйвера.",
@@ -6768,6 +6876,10 @@
     "t": "General"
   },
   {
+    "s": "Объединять окна одной программы в одну кнопку или показывать каждое окно с подписью.",
+    "t": "Combine windows of one app into a single button, or show each window with a label."
+  },
+  {
     "s": "Объём:",
     "t": "Capacity:"
   },
@@ -6782,6 +6894,10 @@
   {
     "s": "Обычно синхронизация занимает несколько минут — повторите попытку позже.",
     "t": "Syncing usually takes a few minutes — try again later."
+  },
+  {
+    "s": "Обычные",
+    "t": "Normal"
   },
   {
     "s": "Обычный",
@@ -7190,6 +7306,10 @@
   {
     "s": "Откроет текущую папку офлайн-кэша в Проводнике.",
     "t": "Opens the current offline cache folder in File Explorer."
+  },
+  {
+    "s": "Открывает раздел «Панель задач» в параметрах Windows.",
+    "t": "Opens the “Taskbar” page in Windows Settings."
   },
   {
     "s": "Открытая программа удалённого доступа к компьютеру, можно подключаться через свой сервер.",
@@ -7660,6 +7780,22 @@
     "t": "The quick access bar is full (maximum {0})."
   },
   {
+    "s": "Панель задач",
+    "t": "Taskbar"
+  },
+  {
+    "s": "Панель задач и Пуск",
+    "t": "Taskbar and Start"
+  },
+  {
+    "s": "Панель задач и Пуск окрашиваются в цвет акцента. Работает при тёмном режиме Windows.",
+    "t": "The taskbar and Start take the accent color. Works in Windows dark mode."
+  },
+  {
+    "s": "Панель прячется за край экрана и появляется, когда к нему подводишь мышь.",
+    "t": "The taskbar hides behind the screen edge and appears when you move the mouse there."
+  },
+  {
     "s": "Папка «Автозагрузка»",
     "t": "“Startup” folder"
   },
@@ -7730,6 +7866,10 @@
   {
     "s": "Параметры 1–4:",
     "t": "Parameters 1–4:"
+  },
+  {
+    "s": "Параметры Windows",
+    "t": "Windows Settings"
   },
   {
     "s": "Параметры установки",
@@ -7810,6 +7950,14 @@
   {
     "s": "Перезагрузить сейчас",
     "t": "Restart now"
+  },
+  {
+    "s": "Перезапустить проводник",
+    "t": "Restart File Explorer"
+  },
+  {
+    "s": "Перезапустить проводник? Панель задач на пару секунд пропадёт, открытые окна папок закроются.",
+    "t": "Restart File Explorer? The taskbar will disappear for a couple of seconds, and open folder windows will close."
   },
   {
     "s": "Переключает вид окна между новым и прежним. Вернуться можно этой же кнопкой.",
@@ -7936,6 +8084,10 @@
     "t": "By default the overlay hides itself when a game with anti-cheat starts (Vanguard, Easy Anti-Cheat, BattlEye, FACEIT, etc.): anti-cheat systems see windows on top of the game."
   },
   {
+    "s": "По центру",
+    "t": "Center"
+  },
+  {
     "s": "Повреждено хранилище компонентов Windows (не хватает сборки). Сначала выполните «Проверить системные файлы» в разделе «Ремонт».",
     "t": "The Windows component store is damaged (an assembly is missing). First run “Check system files” in the “Repair” section."
   },
@@ -7982,6 +8134,10 @@
   {
     "s": "Повторно установит это приложение из доступного источника.",
     "t": "Reinstalls this app from an available source."
+  },
+  {
+    "s": "Погода и новости слева на панели. В новых сборках Windows эту настройку разрешает менять только окно «Параметры» — тогда откроем его.",
+    "t": "Weather and news on the left of the taskbar. In newer Windows builds only the Settings app may change this — in that case we'll open it."
   },
   {
     "s": "Подготовка ODT: {0}",
@@ -8080,6 +8236,10 @@
     "t": "Windows tips. Intrusive pop-up hints."
   },
   {
+    "s": "Подсказки, рекомендуемые приложения и предложения Microsoft в разделе «Рекомендуем».",
+    "t": "Tips, recommended apps and Microsoft offers in the “Recommended” section."
+  },
+  {
     "s": "Подсчёт завершён. Отметьте, что удалить, и нажмите «Очистить выбранное».",
     "t": "Calculation finished. Select what to delete and click “Clean selected”."
   },
@@ -8132,12 +8292,20 @@
     "t": "Later"
   },
   {
+    "s": "Поиск",
+    "t": "Search"
+  },
+  {
     "s": "Поиск Windows перестаёт искать в интернете через Bing и показывать веб-подсказки — только файлы и программы на ПК. Это политика: заодно пропадают подсказки недавних запросов в поиске Проводника.",
     "t": "Windows Search stops searching the web via Bing and showing web suggestions — only files and apps on the PC. This is a policy: it also removes recent search suggestions in File Explorer search."
   },
   {
     "s": "Поиск в Chocolatey превысил {0}с",
     "t": "Chocolatey search exceeded {0}s"
+  },
+  {
+    "s": "Поиск значком, без виджетов и кнопки представления задач.",
+    "t": "Search as an icon, no widgets or Task view button."
   },
   {
     "s": "Поиск клиента на диске",
@@ -8216,8 +8384,16 @@
     "t": "Shows the activation status of Windows and Office. Ven4Tools does not activate software: use your own key or a digital license to activate."
   },
   {
+    "s": "Показывать",
+    "t": "Show"
+  },
+  {
     "s": "Показывать Венчика в оверлее: жарко, нормально или холодно — по температурам",
     "t": "Show Venchik in the overlay: hot, fine or cold — by temperatures"
+  },
+  {
+    "s": "Показывать в Пуске и списках переходов недавно открытые файлы.",
+    "t": "Show recently opened files in Start and jump lists."
   },
   {
     "s": "Показывать оверлей в играх с античитом (на свой риск)",
@@ -8230,6 +8406,14 @@
   {
     "s": "Показывать это обновление снова",
     "t": "Show this update again"
+  },
+  {
+    "s": "Поле поиска",
+    "t": "Search box"
+  },
+  {
+    "s": "Поле поиска на панели занимает много места; можно оставить только значок.",
+    "t": "The search box takes up a lot of taskbar space; you can keep just the icon."
   },
   {
     "s": "Политика «Отключить Windows Copilot» и скрытие кнопки Copilot на панели задач. На новых сборках Copilot — отдельное приложение: его убирает пункт ниже. Действует после перезапуска Проводника.",
@@ -8276,12 +8460,20 @@
     "t": "Full"
   },
   {
+    "s": "Положение значков",
+    "t": "Icon alignment"
+  },
+  {
     "s": "Положит в корень флешки файл, по которому установка Windows сама создаст локальную учётную запись и после первого входа запустит этот набор.",
     "t": "Puts a file in the root of the USB drive that makes Windows Setup create a local account by itself and run this kit after the first sign-in."
   },
   {
     "s": "Положит в папку кэша копию клиента, файл ответа и файл запуска: программы из кэша можно будет поставить на другом компьютере без интернета.",
     "t": "Puts a copy of the client, an answer file and a launch file into the cache folder: apps from the cache can then be installed on another computer without internet."
+  },
+  {
+    "s": "Полупрозрачные панель задач и Пуск. Без прозрачности слабым видеокартам чуть легче.",
+    "t": "Translucent taskbar and Start. Without transparency, weak graphics cards have it a bit easier."
   },
   {
     "s": "Получаю список источников…",
@@ -8330,6 +8522,10 @@
   {
     "s": "Популярный российский аудиоплеер: плейлисты, эквалайзер, интернет-радио.",
     "t": "Popular Russian audio player: playlists, equalizer, internet radio."
+  },
+  {
+    "s": "Поровну",
+    "t": "Balanced"
   },
   {
     "s": "Порядок важен: сначала преобразуйте системный диск в GPT (пункт ниже), и только потом в BIOS/UEFI выключите CSM/Legacy и включите UEFI. Если переключить режим раньше, Windows перестанет загружаться.",
@@ -8644,6 +8840,10 @@
     "t": "Presets"
   },
   {
+    "s": "При заполнении",
+    "t": "When full"
+  },
+  {
     "s": "Приложение Claude от Anthropic: чат с ИИ, работа с файлами и подключение инструментов.",
     "t": "Anthropic's Claude app: AI chat, working with files, and connecting tools."
   },
@@ -8690,6 +8890,10 @@
   {
     "s": "Применяет все пункты, которые ещё не применены. Прежние настройки запоминаются для отката.",
     "t": "Applies every item that isn't applied yet. Previous settings are saved so they can be restored."
+  },
+  {
+    "s": "Применяет выбранные значения. Прежние настройки запоминаются для отката.",
+    "t": "Applies the chosen values. The previous settings are saved for rollback."
   },
   {
     "s": "Применялся, но сейчас не действует",
@@ -9064,6 +9268,10 @@
     "t": "Continue"
   },
   {
+    "s": "Прозрачность",
+    "t": "Transparency"
+  },
+  {
     "s": "Произошла непредвиденная ошибка, приложение будет закрыто.\n\n{0}",
     "t": "An unexpected error occurred, the app will close.\n\n{0}"
   },
@@ -9184,8 +9392,24 @@
     "t": "Direct link unavailable: {0}"
   },
   {
+    "s": "Прятать",
+    "t": "Hide"
+  },
+  {
     "s": "Публикация:",
     "t": "Publication:"
+  },
+  {
+    "s": "Пуск",
+    "t": "Start"
+  },
+  {
+    "s": "Пуск без лишнего",
+    "t": "Clean Start"
+  },
+  {
+    "s": "Пуск запоминает, что запускается чаще, и выводит это наверх.",
+    "t": "Start remembers what you launch most often and puts it at the top."
   },
   {
     "s": "Путь задачи неизвестен.",
@@ -9256,6 +9480,10 @@
     "t": "Only the administrator of this computer can allow it to start."
   },
   {
+    "s": "Раскладка Пуска",
+    "t": "Start layout"
+  },
+  {
     "s": "Раскрывает разделы Windows: обновления, Office, лицензия и очистка.",
     "t": "Expands the Windows sections: updates, Office, license, and cleanup."
   },
@@ -9322,6 +9550,10 @@
   {
     "s": "Режим Turbo Boost",
     "t": "Turbo Boost mode"
+  },
+  {
+    "s": "Режим Windows",
+    "t": "Windows mode"
   },
   {
     "s": "Режим {0}",
@@ -9440,6 +9672,10 @@
     "t": "Venchik sits next to the numbers: he wipes sweat when the CPU or graphics card gets very hot, gives a thumbs up at normal temperatures and shivers in a scarf when the computer is almost idle."
   },
   {
+    "s": "С секундами",
+    "t": "With seconds"
+  },
+  {
     "s": "СЕРВИС",
     "t": "TOOLS"
   },
@@ -9536,6 +9772,14 @@
     "t": "Light"
   },
   {
+    "s": "Светлые или тёмные панель задач, Пуск и центр уведомлений.",
+    "t": "Light or dark taskbar, Start and notification center."
+  },
+  {
+    "s": "Светлый",
+    "t": "Light"
+  },
+  {
     "s": "Свободно на {0}: {1}",
     "t": "Free on {0}: {1}"
   },
@@ -9586,6 +9830,10 @@
   {
     "s": "Сейчас: системный — как настроено в Windows. Ручной прокси временно отключён разработчиком.",
     "t": "Current: system — as configured in Windows. Manual proxy is temporarily disabled by the developer."
+  },
+  {
+    "s": "Секунды в часах",
+    "t": "Seconds in clock"
   },
   {
     "s": "Сервер вернул {0}: {1}",
@@ -9740,6 +9988,10 @@
     "t": "Downloading Windows updates"
   },
   {
+    "s": "Сколько места отдать закреплённым значкам, а сколько — рекомендациям.",
+    "t": "How much space goes to pinned icons and how much to recommendations."
+  },
+  {
     "s": "Сколько приложений показывать в каталоге:",
     "t": "How many apps to show in the catalog:"
   },
@@ -9820,6 +10072,10 @@
     "t": "No hidden apps."
   },
   {
+    "s": "Скрыть",
+    "t": "Hide"
+  },
+  {
     "s": "Скрыть QR-код",
     "t": "Hide QR code"
   },
@@ -9834,6 +10090,10 @@
   {
     "s": "Скрыть обновления",
     "t": "Hide updates"
+  },
+  {
+    "s": "Слева",
+    "t": "Left"
   },
   {
     "s": "Слежение за вводом",
@@ -9966,6 +10226,10 @@
   {
     "s": "Советы и предложения",
     "t": "Tips and suggestions"
+  },
+  {
+    "s": "Советы и реклама в Пуске",
+    "t": "Tips and ads in Start"
   },
   {
     "s": "Совместимый с MS Office редактор с облачной интеграцией.",
@@ -10416,6 +10680,10 @@
     "t": "Media type:     {0}"
   },
   {
+    "s": "Только значок",
+    "t": "Icon only"
+  },
+  {
     "s": "Только с обновлениями",
     "t": "With updates only"
   },
@@ -10473,6 +10741,18 @@
   },
   {
     "s": "Тёмная",
+    "t": "Dark"
+  },
+  {
+    "s": "Тёмная с акцентом",
+    "t": "Dark with accent"
+  },
+  {
+    "s": "Тёмные панель и Пуск, окрашенные в цвет акцента.",
+    "t": "Dark taskbar and Start in the accent color."
+  },
+  {
+    "s": "Тёмный",
     "t": "Dark"
   },
   {
@@ -10670,6 +10950,10 @@
   {
     "s": "Уже установлено — пропущено",
     "t": "Already installed — skipped"
+  },
+  {
+    "s": "Узкая панель задач с маленькими значками.",
+    "t": "A narrow taskbar with small icons."
   },
   {
     "s": "Укажите имя учётной записи.",
@@ -11184,6 +11468,18 @@
     "t": "Component store (WinSxS)"
   },
   {
+    "s": "Цвет",
+    "t": "Color"
+  },
+  {
+    "s": "Цвет акцента",
+    "t": "Accent color"
+  },
+  {
+    "s": "Цвет акцента на панели и в Пуске",
+    "t": "Accent color on taskbar and Start"
+  },
+  {
     "s": "Целостность нарушена",
     "t": "Integrity compromised"
   },
@@ -11220,6 +11516,10 @@
     "t": "Parts of updates that Windows keeps to share them with other computers."
   },
   {
+    "s": "Часто используемые программы",
+    "t": "Most used apps"
+  },
+  {
     "s": "Частота",
     "t": "Clock"
   },
@@ -11236,12 +11536,20 @@
     "t": "Some changes will take effect after File Explorer restarts.\n\nRestart File Explorer now? The taskbar and open folder windows will disappear for a few seconds; running apps will not close."
   },
   {
+    "s": "Часть настроек появится после перезапуска проводника. Открытые окна папок закроются. Перезапустить сейчас?",
+    "t": "Some settings will take effect after File Explorer restarts. Open folder windows will close. Restart now?"
+  },
+  {
     "s": "Часы ПК: {0}",
     "t": "PC clock: {0}"
   },
   {
     "s": "Часы компьютера {0} на {1} Из-за неверного времени не проходят защищённые соединения (сертификаты кажутся просроченными или ещё не действующими). Включите «Установить время автоматически» в параметрах Windows.",
     "t": "The computer clock is {0} by {1} Because of the wrong time, secure connections fail (certificates look expired or not yet valid). Turn on “Set time automatically” in Windows settings."
+  },
+  {
+    "s": "Часы на панели показывают секунды. Немного чаще будит процессор — на ноутбуке от батареи лучше без них.",
+    "t": "The taskbar clock shows seconds. Wakes the CPU a bit more often — on a laptop on battery, better without them."
   },
   {
     "s": "Через Центр обновления не получилось — попробуйте установочную флешку или ISO.",
@@ -11254,6 +11562,10 @@
   {
     "s": "Через прокси ни один источник не открылся, а напрямую — открылся: прокси, похоже, неисправен. Проверьте «Настройки → Прокси».",
     "t": "No source opened through the proxy, but they open directly: the proxy seems to be broken. Check “Settings → Proxy”."
+  },
+  {
+    "s": "Чистая панель",
+    "t": "Clean taskbar"
   },
   {
     "s": "Читаю автозагрузку: реестр, папки, планировщик заданий…",
@@ -13332,6 +13644,10 @@
     "t": "⚠️ Not detected"
   },
   {
+    "s": "⚠️ Не открылись параметры панели задач — {0}",
+    "t": "⚠️ Could not open taskbar settings — {0}"
+  },
+  {
     "s": "⚠️ Не подействовали повторно: {0}. Возможно, эта версия Windows больше не даёт их отключить.",
     "t": "⚠️ Reapplying had no effect: {0}. This Windows version may no longer allow turning them off."
   },
@@ -13428,6 +13744,18 @@
     "t": "⚠️ Failed to create the tray icon: {0}"
   },
   {
+    "s": "⚠️ Панель задач: Windows не дала изменить «{0}» — {1}",
+    "t": "⚠️ Taskbar: Windows did not allow changing “{0}” — {1}"
+  },
+  {
+    "s": "⚠️ Панель задач: не вернулось «{0}» — {1}",
+    "t": "⚠️ Taskbar: “{0}” was not restored — {1}"
+  },
+  {
+    "s": "⚠️ Панель задач: файл отката не прочитан — {0}",
+    "t": "⚠️ Taskbar: rollback file not read — {0}"
+  },
+  {
     "s": "⚠️ Папка клиента может мешать установке обновлений:\n{0}\n   Перенести клиент в безопасную папку: Настройки → «Перенести клиент».",
     "t": "⚠️ The client folder may interfere with installing updates:\n{0}\n   Move the client to a safe folder: Settings → “Move client”."
   },
@@ -13474,6 +13802,10 @@
   {
     "s": "⚠️ Проверка целостности не выполнена: {0}",
     "t": "⚠️ Integrity check did not run: {0}"
+  },
+  {
+    "s": "⚠️ Проводник не закрылся — {0}",
+    "t": "⚠️ File Explorer did not close — {0}"
   },
   {
     "s": "⚠️ Процесс установки не обнаружен — возможно Office уже установлен или завершился мгновенно",
@@ -14016,6 +14348,10 @@
     "t": "✓ All Windows 11 requirements are met."
   },
   {
+    "s": "✓ Изменено Ven4Tools — можно вернуть",
+    "t": "✓ Changed by Ven4Tools — can be restored"
+  },
+  {
     "s": "✓ ПК подходит для Windows 11.",
     "t": "✓ This PC is compatible with Windows 11."
   },
@@ -14406,6 +14742,18 @@
   {
     "s": "❌ Ошибка: не удалось загрузить каталог",
     "t": "❌ Error: could not load the catalog"
+  },
+  {
+    "s": "❌ Панель задач: {0}",
+    "t": "❌ Taskbar: {0}"
+  },
+  {
+    "s": "❌ Панель задач: настройки не прочитаны — {0}",
+    "t": "❌ Taskbar: settings not read — {0}"
+  },
+  {
+    "s": "❌ Перезапуск проводника: {0}",
+    "t": "❌ File Explorer restart: {0}"
   },
   {
     "s": "❌ Перенос клиента не выполнен: {0}",
@@ -15958,6 +16306,10 @@
   {
     "s": "\uD83E\uDDEA Экспериментальный модуль. Датчики и оверлей работают без драйвера ядра — так они не мешают играм с античитом. Поэтому пока нет температур и частот процессора и вентиляторов платы. Расскажите, чего вам не хватает и стоит ли развивать модуль дальше.",
     "t": "\uD83E\uDDEA Experimental module. Sensors and the overlay work without a kernel driver, so they do not interfere with games with anti-cheat. That is why there are no CPU temperatures and clocks or motherboard fans yet. Tell us what you are missing and whether the module is worth developing further."
+  },
+  {
+    "s": "\uD83E\uDDED Панель задач и Пуск",
+    "t": "\uD83E\uDDED Taskbar and Start"
   },
   {
     "s": "\uD83E\uDDF3 Перед переустановкой Windows…",

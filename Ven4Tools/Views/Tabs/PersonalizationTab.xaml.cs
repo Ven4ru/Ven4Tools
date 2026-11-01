@@ -48,6 +48,129 @@ namespace Ven4Tools.Views.Tabs
         {
             InitializeComponent();
             Refresh();
+            RefreshTaskbar();
+        }
+
+        // ── Панель задач и Пуск ─────────────────────────────────────────────
+
+        public sealed class Choice
+        {
+            public int Value { get; init; }
+            public string Label { get; init; } = "";
+        }
+
+        public sealed class TaskbarItem
+        {
+            public TaskbarSetting Setting { get; init; } = null!;
+            public string Group => Setting.Group;
+            public string Title => Setting.Title;
+            public string Description => Setting.Description;
+            public List<Choice> Choices { get; init; } = new();
+            public Choice? Selected { get; set; }
+            public int CurrentValue { get; init; }
+            public bool Changed { get; init; }
+            public string Status => Changed ? "✓ Изменено Ven4Tools — можно вернуть" : "Как в Windows сейчас";
+        }
+
+        public sealed class PresetItem
+        {
+            public string Title { get; init; } = "";
+            public string Description { get; init; } = "";
+            public Dictionary<string, int> Values { get; init; } = new();
+        }
+
+        private readonly TaskbarStartService _taskbar = TaskbarStartService.Default;
+
+        private void RefreshTaskbar()
+        {
+            try
+            {
+                lstTaskbar.ItemsSource = _taskbar.Available.Select(s =>
+                {
+                    var choices = s.Choices.Select(c => new Choice { Value = c.Value, Label = Tr(c.Label) }).ToList();
+                    var current = _taskbar.Current(s);
+                    return new TaskbarItem
+                    {
+                        Setting = s,
+                        Choices = choices,
+                        CurrentValue = current,
+                        Selected = choices.FirstOrDefault(c => c.Value == current) ?? choices.FirstOrDefault(),
+                        Changed = _taskbar.IsChanged(s),
+                    };
+                }).ToList();
+                lstPresets.ItemsSource = TaskbarStartService.Presets
+                    .Select(p => new PresetItem { Title = p.Title, Description = p.Description, Values = p.Values }).ToList();
+                btnTaskbarRevert.IsEnabled = _taskbar.HasUndo;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write("❌ Панель задач: настройки не прочитаны — " + ex.Message);
+            }
+        }
+
+        private async Task ApplyTaskbarAsync(IReadOnlyDictionary<string, int> values, bool revert)
+        {
+            IsEnabled = false;
+            TaskbarStartService.ApplyResult? result = null;
+            try
+            {
+                result = await Task.Run(() => revert ? _taskbar.RevertAll() : _taskbar.Apply(values));
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write("❌ Панель задач: " + ex.Message);
+                MessageBox.Show("Не получилось изменить настройки. Подробности — в журнале.", "Панель задач и Пуск",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            finally
+            {
+                IsEnabled = true;
+                RefreshTaskbar();
+            }
+            if (result == null) return;
+            if (result.Blocked.Count > 0)
+            {
+                MessageBox.Show(string.Format("Windows не разрешает менять эти настройки программам: {0}. Сейчас откроется окно «Параметры» — там это можно сделать вручную.",
+                    string.Join(", ", result.Blocked.Select(Tr))), "Панель задач и Пуск", MessageBoxButton.OK, MessageBoxImage.Information);
+                OpenTaskbarSettings_Click(this, new RoutedEventArgs());
+            }
+            if (result.NeedsExplorerRestart &&
+                MessageBox.Show("Часть настроек появится после перезапуска проводника. Открытые окна папок закроются. Перезапустить сейчас?",
+                    "Панель задач и Пуск", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                await Task.Run(_taskbar.RestartExplorer);
+        }
+
+        private async void TaskbarApply_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstTaskbar.ItemsSource is not IEnumerable<TaskbarItem> items) return;
+            var values = items.Where(i => i.Selected != null && i.Selected.Value != i.CurrentValue)
+                .ToDictionary(i => i.Setting.Id, i => i.Selected!.Value);
+            if (values.Count == 0) return;
+            await ApplyTaskbarAsync(values, revert: false);
+        }
+
+        private async void Preset_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.Tag is PresetItem preset) await ApplyTaskbarAsync(preset.Values, revert: false);
+        }
+
+        private async void TaskbarRevert_Click(object sender, RoutedEventArgs e) =>
+            await ApplyTaskbarAsync(new Dictionary<string, int>(), revert: true);
+
+        private async void RestartExplorer_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Перезапустить проводник? Панель задач на пару секунд пропадёт, открытые окна папок закроются.",
+                    "Панель задач и Пуск", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            IsEnabled = false;
+            try { await Task.Run(_taskbar.RestartExplorer); }
+            catch (Exception ex) { AppLogger.Write("❌ Перезапуск проводника: " + ex.Message); }
+            finally { IsEnabled = true; RefreshTaskbar(); }
+        }
+
+        private void OpenTaskbarSettings_Click(object sender, RoutedEventArgs e)
+        {
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ms-settings:taskbar") { UseShellExecute = true }); }
+            catch (Exception ex) { AppLogger.Write("⚠️ Не открылись параметры панели задач — " + ex.Message); }
         }
 
         private void Refresh()

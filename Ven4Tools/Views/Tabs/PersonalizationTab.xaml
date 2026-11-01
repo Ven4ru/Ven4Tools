@@ -67,6 +67,55 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
+            <!-- Блок «Панель задач и Пуск»: родные элементы Windows, свой откат. -->
+            <TextBlock Text="🧭 Панель задач и Пуск" FontSize="18" FontWeight="Bold" Margin="0,14,0,0" Foreground="{DynamicResource TextPrimary}"/>
+            <TextBlock Text="Настройка родных панели задач и Пуска Windows. Выберите значения и нажмите «Применить» — прежние настройки запоминаются, «Вернуть как было» восстановит их."
+                       TextWrapping="Wrap" Margin="0,4,0,10" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+
+            <TextBlock Text="Готовые наборы" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="{DynamicResource TextPrimary}"/>
+            <ItemsControl x:Name="lstPresets" Margin="0,0,0,12">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding Title}" ToolTip="{Binding Description}" Tag="{Binding}"
+                                Style="{StaticResource PersonalAction}" Margin="0,0,8,8" Click="Preset_Click"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <ItemsControl x:Name="lstTaskbar">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource PersonalCard}" Padding="16,12">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Group}" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                                <TextBlock Text="{Binding Description}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,8"
+                                           Foreground="{DynamicResource TextSecondary}"/>
+                                <ComboBox ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedItem="{Binding Selected, Mode=TwoWay}" Height="30"/>
+                                <TextBlock Text="{Binding Status}" FontSize="11" Margin="0,6,0,0" Foreground="{DynamicResource TextSecondary}"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <Button x:Name="btnTaskbarApply" Content="Применить" Style="{StaticResource PersonalAction}" Click="TaskbarApply_Click"
+                        ToolTip="Применяет выбранные значения. Прежние настройки запоминаются для отката."/>
+                <Button x:Name="btnTaskbarRevert" Content="Вернуть как было" Style="{StaticResource PersonalAction}" Click="TaskbarRevert_Click"
+                        ToolTip="Возвращает панель задач и Пуск, какими они были до Ven4Tools."/>
+                <Button Content="Перезапустить проводник" Style="{StaticResource PersonalAction}" Click="RestartExplorer_Click"
+                        ToolTip="Некоторые настройки (например, секунды в часах) видны только после перезапуска проводника. Открытые окна папок закроются."/>
+                <Button Content="Параметры Windows" Style="{StaticResource PersonalAction}" Click="OpenTaskbarSettings_Click"
+                        ToolTip="Открывает раздел «Панель задач» в параметрах Windows."/>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
