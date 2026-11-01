@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>Ven4Start</AssemblyName>
+    <RootNamespace>Ven4Start</RootNamespace>
+    <Version>0.1.0</Version>
+    <Product>Свой Пуск (Ven4Start)</Product>
+    <Description>Заготовка своего меню «Пуск» для Ven4Tools</Description>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
+    <!-- WPF-приложение: DPI задаётся манифестом, предупреждение WinForms тут не к месту -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+
+</Project>
