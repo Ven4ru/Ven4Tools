@@ -225,7 +225,7 @@ namespace Ven4Tools.ViewModels
             else if (unattended?.RestorePoint == null && !silent && appCount >= 2)
             {
                 var rpOutcome = await Views.UiGuards.ConfirmAndCreateRestorePointAsync(
-                    $"Будет установлено {appCount} приложений.\n\nСоздать точку восстановления Windows перед установкой?",
+                    $"Будет установлено приложений: {appCount}.\n\nСоздать точку восстановления Windows перед установкой?",
                     "Ven4Tools — перед установкой", Log);
                 if (rpOutcome == Views.RestorePointOutcome.Cancelled)
                 {
