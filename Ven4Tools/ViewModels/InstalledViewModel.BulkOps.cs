@@ -74,7 +74,7 @@ namespace Ven4Tools.ViewModels
                 if (visible.Count >= 2)
                 {
                     var rpOutcome = await Views.UiGuards.ConfirmAndCreateRestorePointAsync(
-                        $"Будет обновлено {visible.Count} приложений.\n\nСоздать точку восстановления Windows перед обновлением?",
+                        $"Будет обновлено приложений: {visible.Count}.\n\nСоздать точку восстановления Windows перед обновлением?",
                         "Ven4Tools — перед массовым обновлением");
                     if (rpOutcome == Views.RestorePointOutcome.Cancelled) return;
                 }
@@ -215,7 +215,7 @@ namespace Ven4Tools.ViewModels
                 if (selected.Count >= 2)
                 {
                     var rpOutcome = await Views.UiGuards.ConfirmAndCreateRestorePointAsync(
-                        $"Будет удалено {selected.Count} приложений.\n\nСоздать точку восстановления Windows перед удалением?",
+                        $"Будет удалено приложений: {selected.Count}.\n\nСоздать точку восстановления Windows перед удалением?",
                         "Ven4Tools — перед групповым удалением");
                     if (rpOutcome == Views.RestorePointOutcome.Cancelled) return;
                 }

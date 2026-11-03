@@ -218,12 +218,12 @@ namespace Ven4Tools.ViewModels
 
                 // Единый диалог: подтверждение действия (Отмена = прервать) + предложение
                 // точки восстановления. Раньше здесь было два подряд диалога с одинаковым
-                // текстом «Будет применено N действий» — предупреждение о рисках свёрнуто
+                // текстом «Будет применено действий: N» — предупреждение о рисках свёрнуто
                 // в этот же вопрос.
                 var hasRisky = selected.Any(i => i.Risk is "caution" or "moderate");
                 bool removesOneDrive = selected.Any(i => i.Id == DebloatTweakExecutor.OneDriveId);
                 var rpOutcome = await Views.UiGuards.ConfirmAndCreateRestorePointAsync(
-                    $"Будет применено {selected.Count} действий.{(hasRisky ? "\n\n⚠️ Среди них есть умеренные/опасные операции." : "")}" +
+                    $"Будет применено действий: {selected.Count}.{(hasRisky ? "\n\n⚠️ Среди них есть умеренные/опасные операции." : "")}" +
                     (removesOneDrive ? "\n\nOneDrive будет удалён: синхронизация остановится, файлы в облаке и папка OneDrive на диске останутся." : "") +
                     "\n\nСоздать точку восстановления Windows перед очисткой?",
                     "Ven4Tools — перед очисткой системы");
