@@ -28,6 +28,13 @@
     <EmbeddedResource Include="..\..\Catalog\master.json" LogicalName="master.json" />
     <EmbeddedResource Include="..\..\Catalog\master.json.sig" LogicalName="master.json.sig" />
     <EmbeddedResource Include="linux-packages.json" LogicalName="linux-packages.json" />
+    <!-- «Персонализация»: те же обои и экран блокировки, что в клиенте Windows -->
+    <EmbeddedResource Include="..\..\Ven4Tools\Personalization\Venchik\wallpaper.jpg" LogicalName="venchik/wallpaper.jpg" />
+    <EmbeddedResource Include="..\..\Ven4Tools\Personalization\Venchik\lockscreen.jpg" LogicalName="venchik/lockscreen.jpg" />
+    <!-- Звуки - те же файлы, курсоры - те же кадры в формате Xcursor (Tools/PersonalizationAssets/make_assets.py) -->
+    <EmbeddedResource Include="..\..\Ven4Tools\Personalization\Venchik\*.wav" LogicalName="venchik/sounds/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Personalization\cursors\*" LogicalName="venchik/cursors/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\Tools\PersonalizationAssets\art\paws.png" LogicalName="venchik/paws.png" />
   </ItemGroup>
 
 </Project>

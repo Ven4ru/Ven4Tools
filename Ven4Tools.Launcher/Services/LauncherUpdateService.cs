@@ -58,8 +58,11 @@ namespace Ven4Tools.Launcher.Services
         /// установщик ждёт завершения процесса и только потом меняет файлы.
         /// </summary>
         /// <param name="updateInfo">Готовая информация об обновлении; если null — проверяется заново.</param>
-        public Task<bool> DownloadAndRunSetupUpdateAsync(UpdateInfo? updateInfo = null) =>
-            _installer.DownloadAndRunSetupUpdateAsync(updateInfo);
+        /// <param name="progress">Ход загрузки (получено, всего байт); приходит с потока пула.</param>
+        public Task<bool> DownloadAndRunSetupUpdateAsync(
+            UpdateInfo? updateInfo = null,
+            Action<long, long?>? progress = null) =>
+            _installer.DownloadAndRunSetupUpdateAsync(updateInfo, progress);
 
         /// <summary>
         /// Если лаунчер запущен не из папки установки — предлагает скачать и

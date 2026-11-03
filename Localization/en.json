@@ -3208,7 +3208,7 @@
     "t": "All packages from this file will be installed in bulk:\n\n{0}\n\nContinue?"
   },
   {
-    "s": "Будет обновлено {0} приложений.\n\nСоздать точку восстановления Windows перед обновлением?",
+    "s": "Будет обновлено приложений: {0}.\n\nСоздать точку восстановления Windows перед обновлением?",
     "t": "Apps to update: {0}.\n\nCreate a Windows restore point before updating?"
   },
   {
@@ -3216,11 +3216,11 @@
     "t": "{0} will be completely uninstalled.\n\nThe installed Office apps and activation will be lost. Documents saved on disk are not affected.\n\nContinue?"
   },
   {
-    "s": "Будет применено {0} действий.{1}\n\nСоздать точку восстановления Windows перед очисткой?",
+    "s": "Будет применено действий: {0}.{1}\n\nСоздать точку восстановления Windows перед очисткой?",
     "t": "Actions to apply: {0}.{1}\n\nCreate a Windows restore point before cleanup?"
   },
   {
-    "s": "Будет удалено {0} приложений.\n\nСоздать точку восстановления Windows перед удалением?",
+    "s": "Будет удалено приложений: {0}.\n\nСоздать точку восстановления Windows перед удалением?",
     "t": "Apps to uninstall: {0}.\n\nCreate a Windows restore point before uninstalling?"
   },
   {
@@ -3232,7 +3232,7 @@
     "t": "The following will be removed:\n• Client folder: {0}\n• Desktop shortcuts\n• Start menu shortcuts\n• Autostart entry in the registry\n\nLauncher settings and logs are kept.\n\nContinue?"
   },
   {
-    "s": "Будет установлено {0} приложений.\n\nСоздать точку восстановления Windows перед установкой?",
+    "s": "Будет установлено приложений: {0}.\n\nСоздать точку восстановления Windows перед установкой?",
     "t": "Apps to install: {0}.\n\nCreate a Windows restore point before installing?"
   },
   {
@@ -6680,12 +6680,20 @@
     "t": "The launcher update to version {0} was not installed: {1}.\n\nThe previous version was kept and works as usual. Try updating again with the \"Update launcher\" button or download the setup from ven4tools.ru."
   },
   {
+    "s": "Обновление лаунчера не выполнено",
+    "t": "Launcher update failed"
+  },
+  {
     "s": "Обновление лаунчера отменено: контрольная сумма установщика недоступна (CDN не ответил или версия на CDN не совпадает с релизом).",
     "t": "Launcher update canceled: the installer checksum is unavailable (the CDN did not respond or its version does not match the release)."
   },
   {
     "s": "Обновление лаунчера отменено: нет доступных источников установщика.",
     "t": "Launcher update canceled: no installer sources are available."
+  },
+  {
+    "s": "Обновление лаунчера: {0}%",
+    "t": "Launcher update: {0}%"
   },
   {
     "s": "Обновление недоступно — версия в источнике не подходит для данной системы.",
@@ -9704,6 +9712,10 @@
     "t": "Update download failed (code {0})."
   },
   {
+    "s": "Скачивание обновления лаунчера...",
+    "t": "Downloading launcher update..."
+  },
+  {
     "s": "Скачивание установщика {0}...",
     "t": "Downloading installer {0}..."
   },
@@ -10862,6 +10874,10 @@
   {
     "s": "Установка не удалась: перезагрузите компьютер и попробуйте снова.",
     "t": "Installation failed: restart the computer and try again."
+  },
+  {
+    "s": "Установка обновления, лаунчер перезапустится...",
+    "t": "Installing update, the launcher will restart..."
   },
   {
     "s": "Установка отклонена",
