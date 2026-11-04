@@ -87,7 +87,7 @@ namespace Ven4Tools.ClientUITests
         {
             "btnOverviewTab", "btnCatalogTab", "btnInstalledTab", "btnSystemTab", "btnDiagnosticsTab",
             "btnBenchmarkTab", "btnWindowsUpdateTab", "btnOfficeTab", "btnActivationTab", "btnDebloaterTab",
-            "btnStartupTab", "btnDiskSpaceTab", "btnNetworkTab", "btnHistoryTab", "btnAboutTab",
+            "btnStartupTab", "btnDiskSpaceTab", "btnNetworkTab", "btnPersonalizationTab", "btnHistoryTab", "btnAboutTab",
         };
 
         /// <summary>
