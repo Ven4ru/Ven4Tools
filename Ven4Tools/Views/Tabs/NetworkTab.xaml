@@ -187,18 +187,18 @@
                                                 <!-- Поле НЕ IsReadOnly намеренно: такие поля переводчик интерфейса
                                                      прогоняет через таблицу перевода, и пароль, совпавший с русской
                                                      фразой, подменился бы. Привязка OneWay — правка в поле никуда не уходит. -->
-                                                <TextBox Text="{Binding PasswordText, Mode=OneWay}" IsUndoEnabled="False"
+                                                <TextBox AutomationProperties.AutomationId="{Binding Name, StringFormat='txtWifiPassword_{0}'}" Text="{Binding PasswordText, Mode=OneWay}" IsUndoEnabled="False"
                                                          BorderThickness="0" Background="Transparent" Padding="0"
                                                          FontFamily="JetBrains Mono, Consolas" FontSize="12"
                                                          AutomationProperties.Name="Пароль сети"
                                                          Foreground="{DynamicResource TextSecondary}"/>
                                             </StackPanel>
-                                            <Button Grid.Column="1" Content="{Binding PasswordButtonText}" Height="28" Padding="10,0" Margin="8,0,0,0"
+                                            <Button AutomationProperties.AutomationId="{Binding Name, StringFormat='btnWifiPassword_{0}'}" Grid.Column="1" Content="{Binding PasswordButtonText}" Height="28" Padding="10,0" Margin="8,0,0,0"
                                                     VerticalAlignment="Center"
                                                     ToolTip="Покажет пароль этой сети, сохранённый в Windows. Повторное нажатие скроет его."
                                                     Command="{Binding DataContext.ToggleWifiPasswordCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"/>
-                                            <Button Grid.Column="2" Content="{Binding QrButtonText}" Height="28" Padding="10,0" Margin="6,0,0,0"
+                                            <Button AutomationProperties.AutomationId="{Binding Name, StringFormat='btnWifiQr_{0}'}" Grid.Column="2" Content="{Binding QrButtonText}" Height="28" Padding="10,0" Margin="6,0,0,0"
                                                     VerticalAlignment="Center"
                                                     ToolTip="Покажет QR-код: наведите на него камеру телефона, и он подключится к этой сети без ввода пароля."
                                                     Command="{Binding DataContext.ToggleWifiQrCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"

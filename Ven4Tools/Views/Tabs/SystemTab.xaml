@@ -426,7 +426,7 @@
                                 <views:FlatItemsControl x:Name="listCacheApps" ItemsSource="{Binding FilteredCacheApps}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                            <CheckBox AutomationProperties.AutomationId="{Binding Id, StringFormat='chkCacheApp_{0}'}" Content="{Binding DisplayName}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                       Foreground="{DynamicResource TextPrimary}"
                                                       Margin="2,2"/>
                                         </DataTemplate>
@@ -571,13 +571,13 @@
                                                            TextWrapping="Wrap"
                                                            VerticalAlignment="Center"/>
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                    <Button Content="↺ Восстановить"
+                                                    <Button AutomationProperties.AutomationId="{Binding Info.Name, StringFormat='btnSnapshotRestore_{0}'}" Content="↺ Восстановить"
                                                             Height="26" Padding="8,0"
                                                             FontSize="11" Margin="6,0,0,0"
                                                             ToolTip="После подтверждения восстановит твики очистки и пресеты из этого снапшота."
                                                             Command="{Binding DataContext.RestoreSnapshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                             CommandParameter="{Binding}"/>
-                                                    <Button Content="✕"
+                                                    <Button AutomationProperties.AutomationId="{Binding Info.Name, StringFormat='btnSnapshotDelete_{0}'}" Content="✕"
                                                             Width="26" Height="26" Padding="0"
                                                             FontSize="11" Margin="4,0,0,0"
                                                             Background="Transparent"

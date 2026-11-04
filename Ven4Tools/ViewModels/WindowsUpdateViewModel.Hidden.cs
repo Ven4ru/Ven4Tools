@@ -82,7 +82,7 @@ namespace Ven4Tools.ViewModels
         private void InitHiddenCommands()
         {
             HideSelectedCommand = RelayCommand.FromAsync(_ => RunHideSelectedAsync());
-            RefreshHiddenCommand = RelayCommand.FromAsync(_ => RefreshHiddenAsync(), _ => !IsHiding);
+            RefreshHiddenCommand = RelayCommand.FromAsync(_ => RefreshHiddenAsync(), _ => !IsHiding && !_isResettingWu);
             UnhideSelectedCommand = RelayCommand.FromAsync(_ => RunUnhideSelectedAsync());
         }
 
@@ -108,7 +108,7 @@ namespace Ven4Tools.ViewModels
         // internal — вызывается из юнит-тестов напрямую.
         internal async Task RefreshHiddenAsync()
         {
-            if (IsHiding) return;
+            if (IsHiding || _isResettingWu) return;
             _hiddenLoadedOnce = true;
             IsHiding = true;
             HiddenStatusText = "⏳ Поиск скрытых обновлений...";

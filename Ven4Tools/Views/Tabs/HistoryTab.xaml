@@ -107,7 +107,7 @@
                             <!-- spacer -->
 
                             <!-- Reinstall -->
-                            <Button Grid.Column="3" Content="🔄"
+                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnHistoryReinstall_{0}'}" Grid.Column="3" Content="🔄"
                                     Height="28" Width="36" FontSize="14"
                                     VerticalAlignment="Center"
                                     ToolTip="Повторно установит это приложение из доступного источника."

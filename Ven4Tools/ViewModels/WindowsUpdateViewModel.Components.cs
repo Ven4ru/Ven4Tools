@@ -165,7 +165,20 @@ namespace Ven4Tools.ViewModels
             if (!ConfirmSourceInstall(caption, iso)) return;
 
             NetFxStatusText = "⏳ Подключение образа...";
-            var (root, error) = await NetFx3Service.MountIsoAsync(iso, CancellationToken.None);
+            // Подключение образа идёт секунды — на это время остальные системные действия
+            // недоступны: иначе можно было запустить второе, а RunNetFxEnableAsync потом
+            // затёр бы его токен отмены своим (BeginSystemTask).
+            BeginSystemTask(cancellable: false);
+            string? root;
+            string error;
+            try
+            {
+                (root, error) = await NetFx3Service.MountIsoAsync(iso, CancellationToken.None);
+            }
+            finally
+            {
+                EndSystemTask();
+            }
             if (root == null)
             {
                 NetFxStatusText = $"❌ {error}";

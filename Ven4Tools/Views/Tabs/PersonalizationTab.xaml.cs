@@ -49,6 +49,10 @@ namespace Ven4Tools.Views.Tabs
             InitializeComponent();
             Refresh();
             RefreshTaskbar();
+            // Цвета статусов, рамок наборов и плашки читаемости — разовые снимки ресурса
+            // (FindResource), сами о смене темы клиента они не узнают. Отписки нет:
+            // экземпляр вкладки один на весь сеанс (как у ViewModel других вкладок).
+            ThemeService.ThemeChanged += () => Dispatcher.Invoke(() => { Refresh(); RefreshTaskbarSelection(); });
         }
 
         // ── Панель задач и Пуск (блок 1, дизайн 04.11.2026) ─────────────────
@@ -185,7 +189,15 @@ namespace Ven4Tools.Views.Tabs
                 }).ToList();
 
                 chkEars.IsEnabled = TaskbarThemeService.EarsAvailable;
-                if (st.Ears || _themes.AppliedTheme == null) chkEars.IsChecked = TaskbarThemeService.EarsAvailable && (st.Ears || st.ThemeId == null);
+                // Всегда по сохранённому состоянию: раньше при применённой теме без ушек
+                // флажок оставался «включён» из разметки, и следующее «Применить»
+                // возвращало ушки, которые человек выключил.
+                chkEars.IsChecked = TaskbarThemeService.EarsAvailable && (st.Ears || st.ThemeId == null);
+                // Так же и прозрачность: тема применена без неё — флажок не должен
+                // включать её обратно при следующем «Применить».
+                // Только для темы, которая сама прозрачность допускает: иначе выключенная
+                // темой прозрачность сняла бы флажок и для остальных тем.
+                if (_themes.AppliedTheme is { Transparency: true }) chkTransparency.IsChecked = SystemTransparency();
                 cmbEdge.IsEnabled = _themes.CanMoveLeft;
                 var cur = _themes.CanMoveLeft ? _themes.Edge : TaskbarThemeService.EdgeBottom;
                 cmbEdge.SelectedItem = cmbEdge.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == cur.ToString()) ?? cmbEdge.Items[0];
@@ -240,6 +252,16 @@ namespace Ven4Tools.Views.Tabs
             catch { return true; }
         }
 
+        private static bool SystemTransparency()
+        {
+            try
+            {
+                using var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+                return k?.GetValue("EnableTransparency") is not int v || v != 0;
+            }
+            catch { return true; }
+        }
+
         private TaskbarTheme PreviewTheme()
         {
             var t = _selTheme ?? TaskbarThemeService.Themes[0];
@@ -263,7 +285,9 @@ namespace Ven4Tools.Views.Tabs
             var r = TaskbarThemeService.Readability(t);
             txtReadability.Text = string.Format(Tr("Читаемость подписей: {0:0.0}:1 · {1}"), r, Tr(r >= 7 ? "отлично" : r >= 4.5 ? "хорошо" : "плохо"));
             pillReadability.Background = (Brush)Application.Current.FindResource(r >= 4.5 ? "AccentSoftBackground" : "StatusDanger");
-            txtReadability.Foreground = (Brush)Application.Current.FindResource(r >= 4.5 ? "AccentColor" : "TextPrimary");
+            // На красной плашке — парный ей цвет надписи: TextPrimary тёмных тем (почти белый)
+            // на светло-красном StatusDanger читался плохо.
+            txtReadability.Foreground = (Brush)Application.Current.FindResource(r >= 4.5 ? "AccentColor" : "StatusDangerForeground");
             txtCustomNote.Visibility = _selTheme?.Id == "custom" && _customDarkened ? Visibility.Visible : Visibility.Collapsed;
         }
 
@@ -370,7 +394,11 @@ namespace Ven4Tools.Views.Tabs
             if (restart &&
                 MessageBox.Show("Часть настроек появится после перезапуска проводника. Открытые окна папок закроются. Перезапустить сейчас?",
                     "Панель задач и Пуск", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-                await Task.Run(_taskbar.RestartExplorer);
+            {
+                // Вызывается из async void-обработчиков кнопок: исключение отсюда уронило бы программу.
+                try { await Task.Run(_taskbar.RestartExplorer); }
+                catch (Exception ex) { AppLogger.Write("❌ Перезапуск проводника: " + ex.Message); }
+            }
         }
 
         private async void TaskbarFineApply_Click(object sender, RoutedEventArgs e)
@@ -407,7 +435,11 @@ namespace Ven4Tools.Views.Tabs
                     restart |= r.NeedsExplorerRestart;
                 });
             }
-            catch (Exception ex) { AppLogger.Write("❌ Панель задач: откат — " + ex.Message); }
+            catch (Exception ex)
+            {
+                AppLogger.Write("❌ Панель задач: откат — " + ex.Message);
+                MessageBox.Show("Не получилось изменить настройки. Подробности — в журнале.", "Панель задач и Пуск", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
             finally
             {
                 IsEnabled = true;
@@ -435,18 +467,27 @@ namespace Ven4Tools.Views.Tabs
 
         private void Refresh()
         {
-            var items = Parts.Select(p => new PartItem
+            // Зовётся из конструктора и из finally обработчиков: сбой чтения состояния
+            // не должен ронять создание вкладки или программу.
+            try
             {
-                Part = p.Part,
-                Title = p.Title,
-                Description = p.Description,
-                Preview = LoadPreview(_service.PreviewPath(p.Part)),
-                IsAvailable = _service.IsAvailable(p.Part),
-                IsApplied = _service.IsApplied(p.Part),
-            }).ToList();
-            lstParts.ItemsSource = items;
-            btnApplyAll.IsEnabled = items.Any(i => i.CanApply);
-            btnRevertAll.IsEnabled = items.Any(i => i.IsApplied);
+                var items = Parts.Select(p => new PartItem
+                {
+                    Part = p.Part,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Preview = LoadPreview(_service.PreviewPath(p.Part)),
+                    IsAvailable = _service.IsAvailable(p.Part),
+                    IsApplied = _service.IsApplied(p.Part),
+                }).ToList();
+                lstParts.ItemsSource = items;
+                btnApplyAll.IsEnabled = items.Any(i => i.CanApply);
+                btnRevertAll.IsEnabled = items.Any(i => i.IsApplied);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write("❌ Персонализация: состояние не прочитано — " + ex.Message);
+            }
         }
 
         private static ImageSource? LoadPreview(string? path, int width = 640)

@@ -228,7 +228,10 @@ public partial class MainWindow : Window
         }
         finally
         {
-            await RefreshInstalledAsync();
+            // Сбой опроса установленных (flatpak/snap не запустился) не должен оставить
+            // очередь «занятой» навсегда — и не должен уронить программу.
+            try { await RefreshInstalledAsync(); }
+            catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
             foreach (var i in queue) i.IsBusy = false;
             _busy = false;
             UpdateSelectionButton();
@@ -239,16 +242,22 @@ public partial class MainWindow : Window
     {
         FlatpakButton.IsEnabled = false;
         Log("--- Flatpak");
-        var ok = await Flatpak.SetupAsync(Log);
-        Log(ok ? L.T("Готово.") : L.T("Не получилось, подробности выше."));
-        if (ok)
+        // async void: без catch исключение (например, нет pkexec) роняет программу,
+        // а без finally кнопка оставалась выключенной.
+        try
         {
-            // Источник у строк сменился - пересобираем список целиком
-            BuildItems(_items.Select(i => i.App).ToList());
-            await RefreshInstalledAsync();
-            UpdateStatus();
+            var ok = await Flatpak.SetupAsync(Log);
+            Log(ok ? L.T("Готово.") : L.T("Не получилось, подробности выше."));
+            if (ok)
+            {
+                // Источник у строк сменился - пересобираем список целиком
+                BuildItems(_items.Select(i => i.App).ToList());
+                await RefreshInstalledAsync();
+                UpdateStatus();
+            }
         }
-        FlatpakButton.IsEnabled = true;
+        catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
+        finally { FlatpakButton.IsEnabled = true; }
     }
 
     // ---------- Наборы ----------
@@ -337,6 +346,7 @@ public partial class MainWindow : Window
             _pendingFlatpakUpdates = flatpaks.Count > 0;
             _pendingSnapUpdates = snaps.Count > 0;
         }
+        catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
         finally
         {
             CheckUpdatesButton.IsEnabled = true;
@@ -347,12 +357,25 @@ public partial class MainWindow : Window
 
     private async void OnUpdateAll(object? sender, RoutedEventArgs e)
     {
+        // Обновление и установка из каталога внахлёст дерутся за блокировку flatpak/snap.
+        if (_busy) return;
+        _busy = true;
         UpdateAllButton.IsEnabled = false;
+        UpdateSelectionButton();
         Log(L.IsEnglish ? "--- Updating" : "--- Обновление");
-        var ok = true;
-        if (_pendingFlatpakUpdates) ok &= await Flatpak.UpdateAllAsync(Log);
-        if (_pendingSnapUpdates) ok &= await Snap.UpdateAllAsync(Log);
-        Log(ok ? L.T("Готово.") : L.T("Не получилось, подробности выше."));
+        try
+        {
+            var ok = true;
+            if (_pendingFlatpakUpdates) ok &= await Flatpak.UpdateAllAsync(Log);
+            if (_pendingSnapUpdates) ok &= await Snap.UpdateAllAsync(Log);
+            Log(ok ? L.T("Готово.") : L.T("Не получилось, подробности выше."));
+        }
+        catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
+        finally
+        {
+            _busy = false;
+            UpdateSelectionButton();
+        }
         OnCheckUpdates(sender, e);
     }
 

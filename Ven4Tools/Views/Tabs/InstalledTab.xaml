@@ -88,13 +88,14 @@
                     <TextBox x:Name="txtSearch" Grid.Column="0"
                              Height="34" Padding="10,6"
                              FontSize="13"
-                             Background="{DynamicResource CardBackground}"
-                             Foreground="{DynamicResource TextPrimary}"
-                             BorderBrush="{DynamicResource BorderBrush}"
-                             BorderThickness="1"
                              Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <!-- Фон задаётся сеттером стиля, а не атрибутом: локальное значение
+                             перекрывает триггер, и подсказка в пустом поле не показывалась.
+                             BasedOn — чтобы не терять общий стиль (курсор ввода и выделение
+                             в тёмной теме, рамка при фокусе). -->
                         <TextBox.Style>
-                            <Style TargetType="TextBox">
+                            <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
                                 <Style.Triggers>
                                     <Trigger Property="Text" Value="">
                                         <Setter Property="Background">
@@ -303,7 +304,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Чекбокс -->
-                                    <CheckBox Grid.Column="0" VerticalAlignment="Center"
+                                    <CheckBox AutomationProperties.AutomationId="{Binding Name, StringFormat='chkInstalled_{0}'}" Grid.Column="0" VerticalAlignment="Center"
                                               IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                               IsEnabled="{Binding CanAct}"
                                               Command="{Binding DataContext.RowSelectionChangedCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
@@ -363,7 +364,7 @@
                                     <!-- Действия -->
                                     <StackPanel Grid.Column="5" Orientation="Horizontal"
                                                 VerticalAlignment="Center">
-                                        <Button Content="Обновить"
+                                        <Button AutomationProperties.AutomationId="{Binding Name, StringFormat='btnUpdateApp_{0}'}" Content="Обновить"
                                                 Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
                                                 IsEnabled="{Binding CanAct}"
                                                 Height="26" Padding="10,0" Margin="0,0,6,0"
@@ -372,7 +373,7 @@
                                                 ToolTip="Обновит это приложение до доступной версии."
                                                 Command="{Binding DataContext.UpdateAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"/>
-                                        <Button Content="Удалить"
+                                        <Button AutomationProperties.AutomationId="{Binding Name, StringFormat='btnUninstallApp_{0}'}" Content="Удалить"
                                                 Style="{StaticResource DangerButtonStyle}"
                                                 IsEnabled="{Binding CanAct}"
                                                 Height="26" Padding="10,0"

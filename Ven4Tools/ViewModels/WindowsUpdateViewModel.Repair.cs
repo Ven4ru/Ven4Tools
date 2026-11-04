@@ -20,6 +20,10 @@ namespace Ven4Tools.ViewModels
         public RelayCommand ResetWindowsUpdateCommand { get; private set; } = null!;
         public RelayCommand OpenRepairLogsCommand { get; private set; } = null!;
 
+        // Идёт сброс Центра обновления: службы остановлены, папки переименовываются —
+        // поиск обновлений в это время запустил бы службу обратно посреди сброса.
+        private bool _isResettingWu;
+
         private string _repairStatusText = "";
         public string RepairStatusText { get => _repairStatusText; private set => SetField(ref _repairStatusText, value); }
 
@@ -35,7 +39,9 @@ namespace Ven4Tools.ViewModels
         private void InitRepairCommands()
         {
             RunSystemFileCheckCommand = RelayCommand.FromAsync(_ => RunSystemFileCheckAsync(), _ => !IsSystemTaskRunning);
-            ResetWindowsUpdateCommand = RelayCommand.FromAsync(_ => RunResetWindowsUpdateAsync(), _ => !IsSystemTaskRunning);
+            // Сброс останавливает wuauserv — во время поиска или скрытия он оборвал бы их.
+            ResetWindowsUpdateCommand = RelayCommand.FromAsync(_ => RunResetWindowsUpdateAsync(),
+                _ => !IsSystemTaskRunning && !IsSearching && !IsHiding);
             OpenRepairLogsCommand = new RelayCommand(_ => OpenRepairLogs());
         }
 
@@ -159,6 +165,7 @@ namespace Ven4Tools.ViewModels
                 caption, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
             if (answer != MessageBoxResult.Yes) return;
 
+            _isResettingWu = true;
             BeginSystemTask(cancellable: false);
             IsRepairRunning = true;
             IsRepairProgressIndeterminate = true;
@@ -171,6 +178,7 @@ namespace Ven4Tools.ViewModels
             }
             finally
             {
+                _isResettingWu = false;
                 IsRepairRunning = false;
                 IsRepairProgressIndeterminate = false;
                 EndSystemTask();

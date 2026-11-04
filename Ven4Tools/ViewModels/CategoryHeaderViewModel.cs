@@ -57,6 +57,9 @@ namespace Ven4Tools.ViewModels
             get => _selected;
             set
             {
+                // ComboBox присылает null, когда пересобирается шаблон группы (Refresh
+                // представления) — это не выбор пользователя, и value.SourceId упал бы.
+                if (value == null) return;
                 if (SetField(ref _selected, value))
                 {
                     SourceOrderService.SetCategoryPrimary(Label, value.SourceId);

@@ -114,8 +114,10 @@ namespace Ven4Tools.ViewModels
             var filtered = source;
 
             if (!string.IsNullOrEmpty(q))
-                filtered = filtered.Where(e => e.AppName.Contains(q, StringComparison.OrdinalIgnoreCase)
-                                            || e.Category.Contains(q, StringComparison.OrdinalIgnoreCase));
+                // «?? ""»: запись истории с "category": null (старый или правленный руками
+                // файл) роняла поиск NullReferenceException на каждом символе.
+                filtered = filtered.Where(e => (e.AppName ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)
+                                            || (e.Category ?? "").Contains(q, StringComparison.OrdinalIgnoreCase));
 
             if (successOnly && !failOnly) filtered = filtered.Where(e => e.Success);
             if (failOnly && !successOnly) filtered = filtered.Where(e => !e.Success);

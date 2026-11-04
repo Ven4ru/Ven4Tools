@@ -46,7 +46,9 @@ namespace Ven4Tools.ViewModels
 
         // ── Сохранение / смена / восстановление региона ───────────────────────
 
-        private void SaveRegion()
+        /// <summary>false — маркер «как было» не записан: без него сбой посреди установки
+        /// оставил бы регион US навсегда, поэтому регион тогда не меняется.</summary>
+        private bool SaveRegion()
         {
             try
             {
@@ -68,7 +70,7 @@ namespace Ven4Tools.ViewModels
             // чтобы при аварийном завершении его можно было восстановить при следующем
             // запуске. Сама работа с маркером — в OfficeRegionRecoveryService: вкладка
             // создаётся лениво, поэтому восстановление не может жить в её конструкторе.
-            OfficeRegionRecoveryService.Save(_originalOfficeCC, _originalGeoName, _originalGeoNation);
+            return OfficeRegionRecoveryService.Save(_originalOfficeCC, _originalGeoName, _originalGeoNation);
         }
 
         // Восстановление региона из persistent-маркера при открытии вкладки.

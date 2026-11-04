@@ -94,7 +94,7 @@ namespace Ven4Tools.ViewModels
             IsCheckingStatus = true;
             try
             {
-                await CheckActivationStatusAsync();
+                await CheckActivationStatusCoreAsync();
                 AppLogger.Write("🔄 Статус активации обновлён");
             }
             catch (Exception ex)
@@ -107,7 +107,20 @@ namespace Ven4Tools.ViewModels
             }
         }
 
+        /// <summary>
+        /// Проверка при показе вкладки. Тот же гейт, что у кнопки: раньше показ вкладки
+        /// шёл мимо него, и переключение вкладок туда-обратно или нажатие «Проверить
+        /// статус» во время проверки запускали несколько WMI-запросов и OSPP.VBS внахлёст.
+        /// </summary>
         public async Task CheckActivationStatusAsync()
+        {
+            if (IsCheckingStatus) return;
+            IsCheckingStatus = true;
+            try { await CheckActivationStatusCoreAsync(); }
+            finally { IsCheckingStatus = false; }
+        }
+
+        private async Task CheckActivationStatusCoreAsync()
         {
             try
             {

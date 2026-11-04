@@ -80,10 +80,10 @@ namespace Ven4Tools.ViewModels
             ImportSettingsCommand             = new RelayCommand(_ => ImportSettings());
             SelectAllCacheCommand             = new RelayCommand(_ => SelectAllCache());
             SelectNoneCacheCommand            = new RelayCommand(_ => SelectNoneCache());
-            BrowseCachePathCommand            = new RelayCommand(_ => BrowseCachePath());
+            BrowseCachePathCommand            = new RelayCommand(_ => BrowseCachePath(), _ => IsCacheIdle);
             OpenCacheFolderCommand            = new RelayCommand(_ => OpenCacheFolder());
-            ClearCacheCommand                 = new RelayCommand(_ => ClearCache());
-            DownloadToCacheCommand            = RelayCommand.FromAsync(_ => RunDownloadToCacheAsync(), _ => !IsDownloadingToCache);
+            ClearCacheCommand                 = new RelayCommand(_ => ClearCache(), _ => IsCacheIdle);
+            DownloadToCacheCommand            = RelayCommand.FromAsync(_ => RunDownloadToCacheAsync(), _ => IsCacheIdle);
             CancelCacheDownloadCommand        = new RelayCommand(_ => CancelCacheDownload());
             MoveSourceUpCommand               = new RelayCommand(_ => MoveSourceUp());
             MoveSourceDownCommand             = new RelayCommand(_ => MoveSourceDown());

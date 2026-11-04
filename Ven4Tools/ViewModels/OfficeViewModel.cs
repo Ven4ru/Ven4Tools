@@ -104,6 +104,14 @@ namespace Ven4Tools.ViewModels
         private (string DisplayName, string ProductId) GetSelectedVersion() =>
             ResolveVersion(IsO2024Selected, IsO2021Selected, IsO2019Selected, IsO2016Selected);
 
+        // Для какой версии и языка скачан _downloadedFilePath.
+        private (string ProductId, string Lang)? _downloadedFor;
+
+        private bool DownloadMatchesSelection() =>
+            _downloadedFor is { } d
+            && d.ProductId == GetSelectedVersion().ProductId
+            && string.Equals(d.Lang, SelectedLanguage, StringComparison.OrdinalIgnoreCase);
+
         // ── Язык интерфейса ──────────────────────────────────────────────────
 
         private string _selectedLanguage;
@@ -129,6 +137,9 @@ namespace Ven4Tools.ViewModels
             ReplaceCommand.RaiseCanExecuteChanged();
 
             if (_downloadedFilePath == null) return;
+            // Во время установки файл занят запущенным установщиком — его судьбу решает
+            // finally установки (сверит с выбранными версией и языком).
+            if (IsInstalling) return;
 
             try { if (System.IO.File.Exists(_downloadedFilePath)) System.IO.File.Delete(_downloadedFilePath); } catch { }
             _downloadedFilePath = null;

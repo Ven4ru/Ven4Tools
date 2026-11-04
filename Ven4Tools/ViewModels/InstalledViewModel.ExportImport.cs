@@ -16,7 +16,7 @@ namespace Ven4Tools.ViewModels
 
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
-                Title    = "Экспорт списка приложений",
+                Title    = Tr("Экспорт списка приложений"), // системное окно — переводчик WPF его не видит
                 Filter   = "Winget package list (*.winget)|*.winget|JSON (*.json)|*.json",
                 FileName = $"Ven4Tools-export-{DateTime.Now:yyyy-MM-dd}"
             };
@@ -45,7 +45,7 @@ namespace Ven4Tools.ViewModels
 
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
-                Title  = "Импорт списка приложений",
+                Title  = Tr("Импорт списка приложений"),
                 Filter = "Winget package list (*.winget)|*.winget|JSON (*.json)|*.json"
             };
             if (dlg.ShowDialog() != true) return;

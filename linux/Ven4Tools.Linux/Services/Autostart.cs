@@ -60,6 +60,8 @@ public static class Autostart
             .ToList();
         // Ключи - в секцию [Desktop Entry], сразу после её заголовка
         var at = lines.FindIndex(l => l.Trim() == "[Desktop Entry]") + 1;
+        // Без заголовка секции ключи легли бы до любой секции — файл стал бы неверным.
+        if (at == 0) { lines.Insert(0, "[Desktop Entry]"); at = 1; }
         lines.Insert(at, $"Hidden={(enabled ? "false" : "true")}");
         lines.Insert(at + 1, $"X-GNOME-Autostart-enabled={(enabled ? "true" : "false")}");
         AppPaths.WriteAtomic(userPath, string.Join('\n', lines) + "\n");

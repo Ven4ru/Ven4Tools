@@ -5,14 +5,14 @@
              Background="{DynamicResource ContentBackground}">
     <UserControl.Resources>
         <HierarchicalDataTemplate DataType="{x:Type wu:WindowsUpdateCategoryNode}" ItemsSource="{Binding Items}">
-            <CheckBox Content="{Binding HeaderText}"
+            <CheckBox AutomationProperties.AutomationId="{Binding Name, StringFormat='chkWuCategory_{0}'}" Content="{Binding HeaderText}"
                       IsThreeState="True"
                       IsChecked="{Binding IsChecked, Mode=OneWay}"
                       Command="{Binding DataContext.ToggleCategoryCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"
                       CommandParameter="{Binding}"/>
         </HierarchicalDataTemplate>
         <DataTemplate DataType="{x:Type wu:WindowsUpdateItemNode}">
-            <CheckBox Content="{Binding DisplayText}" IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
+            <CheckBox AutomationProperties.AutomationId="{Binding Item.UpdateId, StringFormat='chkWuUpdate_{0}'}" Content="{Binding DisplayText}" IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
         </DataTemplate>
     </UserControl.Resources>
     <Grid Margin="20">
@@ -131,7 +131,7 @@
                              BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <CheckBox Content="{Binding DisplayText}" IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
+                                <CheckBox AutomationProperties.AutomationId="{Binding Item.UpdateId, StringFormat='chkWuHidden_{0}'}" Content="{Binding DisplayText}" IsChecked="{Binding IsChecked, Mode=TwoWay}"/>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
