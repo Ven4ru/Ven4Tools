@@ -115,7 +115,7 @@ namespace Ven4Tools.ViewModels
         internal static void SetRow(NetworkCheckResult row, string text, bool? ok)
         {
             row.Text = text;
-            if (ok == null) { row.IconText = "⬜"; row.SetIconBrush("TextSecondary", Brushes.Gray); return; }
+            if (ok == null) { row.IconText = "○"; row.SetIconBrush("TextSecondary", Brushes.Gray); return; }
             if (ok == true) { row.IconText = "✅"; row.SetIconBrush("StatusSuccess", _fallbackSuccess); }
             else            { row.IconText = "❌"; row.SetIconBrush("StatusDanger", Brushes.LightCoral); }
         }

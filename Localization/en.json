@@ -15636,12 +15636,24 @@
     "t": "\uD83D\uDCBB Development"
   },
   {
+    "s": "\uD83D\uDCBD Здоровье дисков",
+    "t": "\uD83D\uDCBD Disk health"
+  },
+  {
+    "s": "\uD83D\uDCBD Здоровье дисков: дисков {0}, со SMART {1}",
+    "t": "\uD83D\uDCBD Disk health: disks {0}, with SMART {1}"
+  },
+  {
     "s": "\uD83D\uDCBD Место и файлы",
     "t": "\uD83D\uDCBD Space and files"
   },
   {
     "s": "\uD83D\uDCBD Освободить место на диске C",
     "t": "\uD83D\uDCBD Free up space on drive C"
+  },
+  {
+    "s": "\uD83D\uDCBD Счётчики надёжности диска {0} недоступны: {1}",
+    "t": "\uD83D\uDCBD Reliability counters for disk {0} unavailable: {1}"
   },
   {
     "s": "\uD83D\uDCBD Что тестируем",
@@ -16528,12 +16540,32 @@
     "t": "\uD83D\uDD27 Technologies used"
   },
   {
+    "s": "\uD83D\uDD27 К восстановлению {0} файлов ({1}), к удалению лишних {2}",
+    "t": "\uD83D\uDD27 Files to repair: {0} ({1}), extra files to delete: {2}"
+  },
+  {
     "s": "\uD83D\uDD27 Отключить быстрый запуск",
     "t": "\uD83D\uDD27 Disable Fast Startup"
   },
   {
+    "s": "\uD83D\uDD27 Проверить системные файлы",
+    "t": "\uD83D\uDD27 Check system files"
+  },
+  {
+    "s": "\uD83D\uDD27 Проверка версии {0}: {1}",
+    "t": "\uD83D\uDD27 Check of version {0}: {1}"
+  },
+  {
     "s": "\uD83D\uDD27 Проверка компонентов...",
     "t": "\uD83D\uDD27 Checking components..."
+  },
+  {
+    "s": "\uD83D\uDD27 Проверка целостности установленного клиента...",
+    "t": "\uD83D\uDD27 Checking the integrity of the installed client..."
+  },
+  {
+    "s": "\uD83D\uDD27 Проверка: {0}",
+    "t": "\uD83D\uDD27 Check: {0}"
   },
   {
     "s": "\uD83D\uDD27 Устранение проблем...",
@@ -16546,6 +16578,22 @@
   {
     "s": "\uD83D\uDD50 Время",
     "t": "\uD83D\uDD50 Time"
+  },
+  {
+    "s": "\uD83D\uDDA5 Готов ли ПК к Windows 11",
+    "t": "\uD83D\uDDA5 Is this PC ready for Windows 11"
+  },
+  {
+    "s": "\uD83D\uDDA5 Закрыто окно, открытое после установки «{0}»: {1}",
+    "t": "\uD83D\uDDA5 Closed a window opened after installing “{0}”: {1}"
+  },
+  {
+    "s": "\uD83D\uDDA5 Проверить",
+    "t": "\uD83D\uDDA5 Check"
+  },
+  {
+    "s": "\uD83D\uDDA5 Проверка готовности к Windows 11: {0}, не выполнено {1}, нет данных {2}",
+    "t": "\uD83D\uDDA5 Windows 11 readiness check: {0}, failed {1}, no data {2}"
   },
   {
     "s": "\uD83D\uDDA5️ Поведение приложения",
@@ -16864,18 +16912,6 @@
     "t": "\uD83E\uDDFE File list of the installed version saved ({0} files) — the next update can be incremental"
   },
   {
-    "s": "\uD83E\uDE79 Проверить системные файлы",
-    "t": "\uD83E\uDE79 Check system files"
-  },
-  {
-    "s": "\uD83E\uDE7A Здоровье дисков",
-    "t": "\uD83E\uDE7A Disk health"
-  },
-  {
-    "s": "\uD83E\uDE7A Здоровье дисков: дисков {0}, со SMART {1}",
-    "t": "\uD83E\uDE7A Disk health: disks {0}, with SMART {1}"
-  },
-  {
     "s": "\uD83E\uDE7A К восстановлению {0} файлов ({1}), к удалению лишних {2}",
     "t": "\uD83E\uDE7A Files to repair: {0} ({1}), extra files to delete: {2}"
   },
@@ -16890,25 +16926,5 @@
   {
     "s": "\uD83E\uDE7A Проверка: {0}",
     "t": "\uD83E\uDE7A Check: {0}"
-  },
-  {
-    "s": "\uD83E\uDE7A Счётчики надёжности диска {0} недоступны: {1}",
-    "t": "\uD83E\uDE7A Reliability counters for disk {0} unavailable: {1}"
-  },
-  {
-    "s": "\uD83E\uDE9F Готов ли ПК к Windows 11",
-    "t": "\uD83E\uDE9F Is this PC ready for Windows 11"
-  },
-  {
-    "s": "\uD83E\uDE9F Закрыто окно, открытое после установки «{0}»: {1}",
-    "t": "\uD83E\uDE9F Closed a window opened after installing “{0}”: {1}"
-  },
-  {
-    "s": "\uD83E\uDE9F Проверить",
-    "t": "\uD83E\uDE9F Check"
-  },
-  {
-    "s": "\uD83E\uDE9F Проверка готовности к Windows 11: {0}, не выполнено {1}, нет данных {2}",
-    "t": "\uD83E\uDE9F Windows 11 readiness check: {0}, failed {1}, no data {2}"
   }
 ]

@@ -15,7 +15,7 @@
                                Text="Удаление идёт штатными средствами Windows («Очистка диска», DISM, корзина). Вернуть удалённое нельзя, поэтому по умолчанию ничего не отмечено."/>
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <Button x:Name="btnDiskScan" Content="📏 Посчитать" Height="32" Padding="14,0" Margin="0,0,8,0"
+                        <Button x:Name="btnDiskScan" Style="{StaticResource PrimaryButtonStyle}" Content="📏 Посчитать" Height="32" Padding="14,0" Margin="0,0,8,0"
                                 ToolTip="Посчитает, сколько места занимает каждая категория. Ничего не удаляет. Подсчёт хранилища компонентов через DISM занимает несколько минут."
                                 Command="{Binding ScanCommand}"/>
                         <Button x:Name="btnDiskScanCancel" Content="Остановить" Height="32" Padding="14,0" Margin="0,0,8,0"

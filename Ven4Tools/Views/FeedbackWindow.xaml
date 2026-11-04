@@ -85,10 +85,8 @@
                     Foreground="{DynamicResource TextSecondary}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                     Click="BtnSkip_Click"/>
-            <Button Grid.Column="2" x:Name="btnSend"
-                    Content="📨 Отправить отзыв" Height="36" Padding="20,0"
-                    Background="{DynamicResource AccentColor}"
-                    Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold" BorderThickness="0"
+            <Button Style="{StaticResource PrimaryButtonStyle}" Grid.Column="2" x:Name="btnSend"
+                    Content="📨 Отправить отзыв" Height="36" Padding="20,0" FontWeight="SemiBold" BorderThickness="0"
                     IsEnabled="False"
                     ToolTip="Отправит выбранную оценку и введённый комментарий разработчику."
                     Click="BtnSend_Click"/>

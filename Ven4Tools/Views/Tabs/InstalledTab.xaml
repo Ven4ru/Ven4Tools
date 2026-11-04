@@ -125,11 +125,9 @@
                                 FontSize="12"
                                 Command="{Binding RefreshCommand}"/>
                         <!-- Обновить все приложения через winget -->
-                        <Button x:Name="btnUpgradeAll"
+                        <Button x:Name="btnUpgradeAll" Style="{StaticResource PrimaryButtonStyle}"
                                 Content="Обновить всё"
                                 Margin="4,0,0,0" Height="34" Padding="14,0"
-                                Background="{DynamicResource AccentColor}"
-                                Foreground="{DynamicResource AccentForeground}"
                                 FontWeight="Bold"
                                 FontSize="12"
                                 ToolTip="После подтверждения обновит через winget все приложения, для которых доступна новая версия."
@@ -201,11 +199,9 @@
 
                 <!-- Кнопки действий -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="btnUpdateSelected"
+                    <Button x:Name="btnUpdateSelected" Style="{StaticResource PrimaryButtonStyle}"
                             Content="Обновить"
                             Height="30" Padding="12,0"
-                            Background="{DynamicResource AccentColor}"
-                            Foreground="{DynamicResource AccentForeground}"
                             FontWeight="Bold"
                             FontSize="12"
                             ToolTip="Обновит отмеченные приложения, для которых найдены новые версии."
@@ -229,8 +225,8 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="26"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="95"/>
-                    <ColumnDefinition Width="95"/>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="120"/>
                     <ColumnDefinition Width="110"/>
                     <ColumnDefinition Width="165"/>
                 </Grid.ColumnDefinitions>
@@ -297,8 +293,8 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="26"/>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="95"/>
-                                        <ColumnDefinition Width="95"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="120"/>
                                         <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="165"/>
                                     </Grid.ColumnDefinitions>
@@ -316,17 +312,21 @@
                                                TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
 
                                     <!-- Версия -->
+                                    <!-- Колонки версий по 120px с правым отступом 10px: при 95px
+                                         без отступа «19.2506.56051.0» вплотную слипалась со
+                                         следующей колонкой. Длиннее — многоточие и подсказка. -->
                                     <TextBlock Grid.Column="2" Text="{Binding Version}"
+                                               ToolTip="{Binding Version}"
                                                Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="12" VerticalAlignment="Center"
+                                               FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"
                                                TextTrimming="CharacterEllipsis"/>
 
-                                    <!-- Доступна: колонка фиксированной ширины (95px) — без
+                                    <!-- Доступна: колонка фиксированной ширины — без
                                          TextTrimming длинная версия обрезается границей колонки
                                          без многоточия, наезжая на соседнюю "Источник". -->
                                     <TextBlock Grid.Column="3"
                                                FontSize="12" VerticalAlignment="Center"
-                                               FontWeight="SemiBold"
+                                               FontWeight="SemiBold" Margin="0,0,10,0"
                                                TextTrimming="CharacterEllipsis">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
@@ -361,26 +361,31 @@
                                         </TextBlock.Style>
                                     </TextBlock>
 
-                                    <!-- Действия -->
-                                    <StackPanel Grid.Column="5" Orientation="Horizontal"
-                                                VerticalAlignment="Center">
-                                        <Button AutomationProperties.AutomationId="{Binding Name, StringFormat='btnUpdateApp_{0}'}" Content="Обновить"
+                                    <!-- Действия: две колонки постоянной ширины. В StackPanel «Удалить»
+                                         съезжала влево на место скрытой «Обновить», и в списке кнопки
+                                         стояли «лесенкой»; теперь у «Удалить» одно место во всех строках. -->
+                                    <Grid Grid.Column="5" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="86"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Button Style="{StaticResource PrimaryButtonStyle}" AutomationProperties.AutomationId="{Binding Name, StringFormat='btnUpdateApp_{0}'}" Content="Обновить"
                                                 Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
                                                 IsEnabled="{Binding CanAct}"
+                                                HorizontalAlignment="Left"
                                                 Height="26" Padding="10,0" Margin="0,0,6,0"
-                                                Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
                                                 FontSize="12" FontWeight="Bold"
                                                 ToolTip="Обновит это приложение до доступной версии."
                                                 Command="{Binding DataContext.UpdateAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"/>
-                                        <Button AutomationProperties.AutomationId="{Binding Name, StringFormat='btnUninstallApp_{0}'}" Content="Удалить"
+                                        <Button Grid.Column="1" AutomationProperties.AutomationId="{Binding Name, StringFormat='btnUninstallApp_{0}'}" Content="Удалить"
                                                 Style="{StaticResource DangerButtonStyle}"
                                                 IsEnabled="{Binding CanAct}"
                                                 Height="26" Padding="10,0"
                                                 ToolTip="После подтверждения удалит это приложение с компьютера."
                                                 Command="{Binding DataContext.UninstallAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"/>
-                                    </StackPanel>
+                                    </Grid>
                                 </Grid>
                             </Border>
                         </DataTemplate>

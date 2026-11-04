@@ -47,8 +47,7 @@
             <Button x:Name="btnDecline" Grid.Column="1" Content="Отклонить" Height="36" Padding="20,0" Margin="0,0,8,0"
                     Background="Transparent" Foreground="{DynamicResource TextSecondary}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Click="BtnDecline_Click"/>
-            <Button x:Name="btnAccept" Grid.Column="2" Content="Принять и установить" Height="36" Padding="20,0"
-                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold"
+            <Button x:Name="btnAccept" Style="{StaticResource PrimaryButtonStyle}" Grid.Column="2" Content="Принять и установить" Height="36" Padding="20,0" FontWeight="SemiBold"
                     ToolTip="Подтвердит условия лицензии и продолжит установку выбранного приложения."
                     BorderThickness="0" Click="BtnAccept_Click"/>
         </Grid>

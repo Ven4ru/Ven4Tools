@@ -154,14 +154,12 @@
         </Grid>
 
         <!-- Footer -->
-        <Button x:Name="btnContinue" Grid.Row="2"
+        <Button x:Name="btnContinue" Style="{StaticResource PrimaryButtonStyle}" Grid.Row="2"
                 Content="Продолжить"
                 ToolTip="Сохранит выбранные категории и откроет основной интерфейс клиента."
                 Height="42" Width="200" Margin="0,20,0,0"
                 HorizontalAlignment="Center"
-                IsEnabled="False"
-                Background="{DynamicResource AccentColor}"
-                Foreground="{DynamicResource AccentForeground}" FontSize="14" FontWeight="Bold"
+                IsEnabled="False" FontSize="14" FontWeight="Bold"
                 Click="BtnContinue_Click"/>
     </Grid>
 </Window>

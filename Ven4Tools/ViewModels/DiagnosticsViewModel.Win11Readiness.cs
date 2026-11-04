@@ -97,7 +97,7 @@ namespace Ven4Tools.ViewModels
                 var report = await Win11ReadinessService.CheckAsync();
                 _lastWin11Report = report;
                 ApplyWin11Report(report);
-                AppLogger.Write($"🪟 Проверка готовности к Windows 11: {report.Verdict.Kind}, не выполнено {report.Verdict.FailCount}, нет данных {report.Verdict.UnknownCount}");
+                AppLogger.Write($"🖥 Проверка готовности к Windows 11: {report.Verdict.Kind}, не выполнено {report.Verdict.FailCount}, нет данных {report.Verdict.UnknownCount}");
             }
             catch (Exception ex)
             {

@@ -31,7 +31,7 @@ namespace Ven4Tools.Services
             }
             var windows = await windowsTask;
             var readings = DiskHealthMerger.MergeAll(windows, smart);
-            AppLogger.Write($"🩺 Здоровье дисков: дисков {readings.Count}, со SMART {smart.Count}");
+            AppLogger.Write($"💽 Здоровье дисков: дисков {readings.Count}, со SMART {smart.Count}");
             return readings;
         }
 
@@ -99,7 +99,7 @@ namespace Ven4Tools.Services
             catch (Exception ex)
             {
                 // У USB-дисков и части контроллеров счётчиков нет — это не ошибка.
-                AppLogger.Write($"🩺 Счётчики надёжности диска {info.Number} недоступны: {ex.Message}");
+                AppLogger.Write($"💽 Счётчики надёжности диска {info.Number} недоступны: {ex.Message}");
             }
             return info;
         }

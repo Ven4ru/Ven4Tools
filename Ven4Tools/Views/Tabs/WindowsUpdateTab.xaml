@@ -106,10 +106,9 @@
                                 Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
                                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                 Command="{Binding HideSelectedCommand}"/>
-                        <Button x:Name="btnInstall" Grid.Column="2" Content="Установить выбранные" Height="38"
+                        <Button x:Name="btnInstall" Style="{StaticResource PrimaryButtonStyle}" Grid.Column="2" Content="Установить выбранные" Height="38"
                                 Padding="24,0" IsEnabled="{Binding IsInstallEnabled}"
-                                ToolTip="Скачает и установит отмеченные обновления Windows. После установки может потребоваться перезагрузка."
-                                Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold"
+                                ToolTip="Скачает и установит отмеченные обновления Windows. После установки может потребоваться перезагрузка." FontWeight="SemiBold"
                                 BorderThickness="0" Command="{Binding InstallCommand}"/>
                     </Grid>
                     </Border>
@@ -151,10 +150,9 @@
                                     Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
                                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     Command="{Binding RefreshHiddenCommand}"/>
-                            <Button x:Name="btnUnhide" Grid.Column="2" Content="Вернуть выбранные" Height="38"
+                            <Button x:Name="btnUnhide" Style="{StaticResource PrimaryButtonStyle}" Grid.Column="2" Content="Вернуть выбранные" Height="38"
                                     Padding="24,0" IsEnabled="{Binding IsUnhideEnabled}"
-                                    ToolTip="После подтверждения Windows Update снова будет предлагать отмеченные обновления и сможет поставить их сам."
-                                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold"
+                                    ToolTip="После подтверждения Windows Update снова будет предлагать отмеченные обновления и сможет поставить их сам." FontWeight="SemiBold"
                                     BorderThickness="0" Command="{Binding UnhideSelectedCommand}"/>
                         </Grid>
                     </Border>
@@ -244,7 +242,7 @@
             <TabItem Header="Ремонт">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="0,12,8,8">
-                        <GroupBox Header="🩹 Проверить системные файлы" Margin="0,0,0,15">
+                        <GroupBox Header="🔧 Проверить системные файлы" Margin="0,0,0,15">
                             <StackPanel Margin="10">
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
                                            Text="Сначала DISM восстанавливает хранилище компонентов (может скачать файлы через Центр обновления), затем sfc /scannow проверяет системные файлы и заменяет повреждённые. Обычно 10–30 минут, иногда дольше. Помогает не всегда."/>

@@ -299,7 +299,7 @@
                     </Border>
 
                     <!-- Save button -->
-                    <Button x:Name="btnSaveSourceOrder"
+                    <Button x:Name="btnSaveSourceOrder" Style="{StaticResource PrimaryButtonStyle}"
                             Content="💾 Сохранить и перепроверить доступность"
                             ToolTip="Сохранит порядок источников и заново проверит доступность приложений по новым правилам."
                             Height="36" Margin="0,12,0,0"

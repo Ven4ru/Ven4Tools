@@ -204,7 +204,7 @@
             </ListBox>
 
             <TextBlock DockPanel.Dock="Top" Text="{Binding StatusText}"
-                       Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,8"/>
+                       Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,6"/>
 
             <!-- Заглушка при ошибке загрузки каталога -->
             <Border DockPanel.Dock="Top"
@@ -240,6 +240,9 @@
                 </StackPanel>
             </Border>
 
+            <!-- Тонкая линия по верху прокручиваемой области: карточки уезжают под неё, а не
+                 обрезаются «в воздухе» под строкой «Загружено N приложений». -->
+            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,10,0,0">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <!-- Обычный ItemsControl намеренно: это список с группами (GroupStyle). Узел группы в WPF
                      берёт свои строки только у штатного узла списка, так что упрощённый узел
@@ -312,8 +315,11 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- Значок, название, версия и размер -->
-                                    <Grid Grid.Row="0">
+                                    <!-- Значок, название, версия и размер. Высота шапки постоянная
+                                         (две строки названия + строка версии): иначе у карточки с
+                                         названием в две строки описание и кнопки опускались ниже,
+                                         чем у соседей по ряду, и сетка «разъезжалась». -->
+                                    <Grid Grid.Row="0" Height="54">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
@@ -349,9 +355,13 @@
                                                 <Image Width="22" Height="22" Stretch="Uniform" Source="{Binding Icon}"/>
                                             </Grid>
                                         </Border>
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Top">
+                                            <!-- WrapWithOverflow, а не Wrap: перенос только между словами.
+                                                 При Wrap слово длиннее строки («Яндекс.Мессенджер»)
+                                                 рвалось посередине, и на вторую строку уходила одна
+                                                 буква; теперь оно обрезается многоточием. -->
                                             <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
-                                                       FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                       FontSize="13" FontWeight="SemiBold" TextWrapping="WrapWithOverflow"
                                                        MaxHeight="36" TextTrimming="CharacterEllipsis"
                                                        HorizontalAlignment="Left"
                                                        ToolTip="{Binding StatusTooltip}" Cursor="Hand" Style="{StaticResource HoverUnderlineTextStyle}">
@@ -373,7 +383,7 @@
                                                        ToolTip="{Binding RegionBlockedTooltip}"
                                                        ToolTipService.ShowDuration="20000"/>
                                             <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnFavorite_{0}'}" Content="{Binding FavoriteGlyph}" Style="{StaticResource CardAction}"
-                                                    FontSize="15" Foreground="Gold"
+                                                    FontSize="15" Foreground="{DynamicResource StatusWarning}"
                                                     ToolTip="{Binding FavoriteTooltip}"
                                                     Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"/>
@@ -447,6 +457,7 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
+            </Border>
         </DockPanel>
 
         <!-- Справа: набор, диск и ход установки, пресеты, инструменты -->
@@ -501,15 +512,16 @@
                             <TextBlock Text="Скачается" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
                         </DockPanel>
 
-                        <Button x:Name="btnInstall" Height="40" Margin="0,12,0,0"
-                                Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
+                        <Button x:Name="btnInstall" Style="{StaticResource PrimaryButtonStyle}" Height="40" Margin="0,12,0,0"
                                 Effect="{DynamicResource BrandAuraEffect}"
                                 ToolTip="Установит все отмеченные приложения по очереди. Для нескольких приложений будет предложена точка восстановления."
                                 Command="{Binding InstallSelectedCommand}">
                             <!-- StringFormat на Button.Content (object) не срабатывает — подпись
-                                 форматирует вложенный TextBlock. -->
+                                 форматирует вложенный TextBlock. Цвет он берёт у ContentPresenter
+                                 шаблона кнопки: так надпись сереет вместе с подложкой, когда
+                                 набор пуст и кнопка выключена. -->
                             <TextBlock Text="{Binding SelectedCount, StringFormat='Установить ({0})'}"
-                                       Foreground="{DynamicResource AccentForeground}"/>
+                                       Foreground="{Binding (TextElement.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}"/>
                         </Button>
                         <!-- winget получает согласие с условиями источников в командной строке,
                              поэтому человек должен видеть, что именно он принимает. -->
@@ -555,8 +567,25 @@
                                   SelectedItem="{Binding SelectedDisk}"/>
                         <TextBlock Text="{Binding SpaceStatus}" Style="{StaticResource SideHint}" Margin="0,6,0,0"/>
                         <!-- Mode=OneWay обязателен: RangeBase.Value связывается TwoWay по умолчанию. -->
+                        <!-- Это полоса хода установки, а не занятости диска. Пока установка не
+                             шла (0 % и ничего не ставится), она скрыта: пустая полоса прямо под
+                             «Свободно: 32 ГБ / 62 ГБ» читалась как сломанный индикатор диска. -->
                         <ProgressBar x:Name="installProgressBar" Height="6" Margin="0,8,0,0" Minimum="0" Maximum="100"
-                                     Value="{Binding OverallProgressPercentage, Mode=OneWay}"/>
+                                     Value="{Binding OverallProgressPercentage, Mode=OneWay}">
+                            <ProgressBar.Style>
+                                <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsInstalling}" Value="False"/>
+                                                <Condition Binding="{Binding OverallProgressPercentage}" Value="0"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ProgressBar.Style>
+                        </ProgressBar>
                         <TextBlock x:Name="txtOverallStatus" Text="{Binding InstallStatusText}" Style="{StaticResource SideHint}"
                                    HorizontalAlignment="Center" Margin="0,6,0,0"/>
                         <!-- Ход установки растёт по числу строк и прокручивается вместе со всей
@@ -650,8 +679,11 @@
                         <Button x:Name="btnRefreshAvailability" Content="Проверить доступность" Style="{StaticResource SideButton}"
                                 ToolTip="Повторно проверит, из каких источников сейчас можно скачать приложения."
                                 Command="{Binding RefreshAvailabilityCommand}"/>
-                        <Button x:Name="btnClearAllUserApps" Content="Очистить добавленные" Style="{StaticResource SideButton}"
-                                Foreground="{DynamicResource StatusDanger}"
+                        <!-- DangerButtonStyle вместо SideButton с красной надписью: у обычной кнопки
+                             при наведении заливка становится акцентом, и красный текст на ней не
+                             читался. Высота и отступ — как у соседних SideButton. -->
+                        <Button x:Name="btnClearAllUserApps" Content="Очистить добавленные" Style="{StaticResource DangerButtonStyle}"
+                                Height="32" Margin="0,6,0,0"
                                 ToolTip="После подтверждения удалит из каталога все приложения, добавленные пользователем."
                                 Command="{Binding ClearAllUserAppsCommand}"/>
                         <Button x:Name="btnSetFromInstalled" Content="Набор из установленного" Style="{StaticResource SideButton}"

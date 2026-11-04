@@ -1,9 +1,9 @@
 <Window x:Class="Ven4Tools.Views.ReinstallKitWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Перед переустановкой Windows" Height="740" Width="560"
+        Title="Перед переустановкой Windows" Height="748" Width="560"
         WindowStartupLocation="CenterOwner"
-        WindowStyle="ToolWindow" ResizeMode="NoResize"
+        ShowInTaskbar="False" ResizeMode="NoResize"
         Background="{DynamicResource WindowBackground}">
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -95,18 +95,18 @@
         </Border>
 
         <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <!-- Порядок кнопок — как во всех диалогах клиента: «Закрыть» слева, главная справа. -->
+            <Button x:Name="btnCloseKit" Content="Закрыть" Width="90" Height="32" Margin="0,0,8,0" IsCancel="True"
+                    ToolTip="Закроет окно."
+                    Click="Close_Click"/>
             <Button x:Name="btnOpenKitFolder" Content="Открыть папку" Width="120" Height="32" Margin="0,0,8,0"
                     IsEnabled="False"
                     ToolTip="Откроет папку собранного набора."
                     Click="OpenFolder_Click"/>
-            <Button x:Name="btnBuildKit" Content="Собрать набор" Width="140" Height="32" Margin="0,0,8,0"
-                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
+            <Button x:Name="btnBuildKit" Style="{StaticResource PrimaryButtonStyle}" Content="Собрать набор" Width="140" Height="32" Margin="0"
                     BorderThickness="0"
                     ToolTip="Соберёт набор в выбранной папке. Система при этом не меняется."
                     Click="Build_Click"/>
-            <Button x:Name="btnCloseKit" Content="Закрыть" Width="90" Height="32" IsCancel="True"
-                    ToolTip="Закроет окно."
-                    Click="Close_Click"/>
         </StackPanel>
     </Grid>
 </Window>

@@ -20,7 +20,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Button x:Name="btnRunDiagnostics" Content="🔍 Запустить диагностику"
+                        <Button x:Name="btnRunDiagnostics" Style="{StaticResource PrimaryButtonStyle}" Content="🔍 Запустить диагностику"
                                 ToolTip="Проверит состояние системы, дисков, недавние сбои, Windows Update и аппаратные события. Ничего не исправляет автоматически."
                                 Height="36" Width="220" HorizontalAlignment="Left"
                                 Command="{Binding RunDiagnosticsCommand}"/>
@@ -165,7 +165,7 @@
 
                 <!-- C: Здоровье дисков — SMART каждого физического диска и вердикт. Читается при
                      открытии раздела и по кнопке, постоянно не опрашивается. -->
-                <GroupBox Header="🩺 Здоровье дисков" Margin="0,0,0,15">
+                <GroupBox Header="💽 Здоровье дисков" Margin="0,0,0,15">
                     <StackPanel Margin="10">
                         <TextBlock Text="Износ, ошибки и наработка каждого диска по данным SMART. Только чтение: на диске ничего не меняется."
                                    TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
@@ -355,12 +355,12 @@
                 </GroupBox>
 
                 <!-- Готов ли ПК к Windows 11 (только чтение) -->
-                <GroupBox Header="🪟 Готов ли ПК к Windows 11" Margin="0,0,0,15">
+                <GroupBox Header="🖥 Готов ли ПК к Windows 11" Margin="0,0,0,15">
                     <StackPanel Margin="10">
                         <TextBlock Text="Проверяет требования Microsoft к Windows 11 и подсказывает, что мешает и как это исправить. Ничего не меняет и требования не обходит."
                                    TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"/>
                         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                            <Button x:Name="btnCheckWin11" Content="🪟 Проверить"
+                            <Button x:Name="btnCheckWin11" Content="🖥 Проверить"
                                     ToolTip="Проверит TPM, Secure Boot, режим загрузки, разметку диска, процессор, память, диск и видеокарту. Займёт до минуты: сведения о видеокарте собирает средство диагностики DirectX."
                                     Height="32" Padding="16,0" Margin="0,0,10,0"
                                     Command="{Binding CheckWin11Command}"/>

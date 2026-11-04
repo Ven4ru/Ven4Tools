@@ -60,7 +60,7 @@ namespace Ven4Tools.Services
                         if (exe.StartsWith(temp, StringComparison.OrdinalIgnoreCase)) continue;
                         if (!IsFreshlyInstalled(p.StartTime.ToUniversalTime(), File.GetCreationTimeUtc(exe), installStartedUtc)) continue;
                         if (p.CloseMainWindow())
-                            log?.Invoke($"🪟 Закрыто окно, открытое после установки «{appName}»: {Path.GetFileName(exe)}");
+                            log?.Invoke($"🖥 Закрыто окно, открытое после установки «{appName}»: {Path.GetFileName(exe)}");
                     }
                     catch { }
                 }

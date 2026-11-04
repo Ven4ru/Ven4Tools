@@ -11,7 +11,7 @@
                        Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,18"/>
 
             <!-- Главная кнопка -->
-            <Button x:Name="btnRunAll" Content="{Binding RunAllButtonText}"
+            <Button x:Name="btnRunAll" Style="{StaticResource PrimaryButtonStyle}" Content="{Binding RunAllButtonText}"
                     ToolTip="Проверит сетевые адаптеры, задержку, доступность сервисов, внешний IP и DNS. Настройки не изменяет. В параноидальном режиме выполняется только чтение адаптеров, остальные проверки пропускаются."
                     Height="42" FontSize="14" FontWeight="SemiBold"
                     HorizontalAlignment="Left" MinWidth="280"
