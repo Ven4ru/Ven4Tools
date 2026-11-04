@@ -88,6 +88,14 @@ namespace Ven4Tools.Views
         /// </summary>
         public void UnregisterNotifier() => UpdateBackgroundService.UnregisterNotifier();
 
-        public void Dispose() => _icon?.Dispose();
+        // Обнуляем ссылку: после выхода AntiCheatGuard и фоновый сервис ещё могут позвать
+        // ShowBalloon, и вызов на уничтоженной иконке бросал бы ObjectDisposedException.
+        // Повторный Dispose (Closing и ForceExit) тоже становится безвредным.
+        public void Dispose()
+        {
+            var icon = _icon;
+            _icon = null;
+            icon?.Dispose();
+        }
     }
 }

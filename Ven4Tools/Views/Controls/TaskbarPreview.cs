@@ -257,7 +257,8 @@ namespace Ven4Tools.Views.Controls
 
         private void Text(DrawingContext dc, string s, Point at, double size, Color col, bool center)
         {
-            var ft = new FormattedText(s, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"),
+            // Текст рисуется мимо TextBlock — переводчик интерфейса его не видит, переводим здесь.
+            var ft = new FormattedText(Tr(s), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"),
                 Math.Max(6, size), Solid(col), VisualTreeHelper.GetDpi(this).PixelsPerDip);
             dc.DrawText(ft, new Point(center ? at.X - ft.Width / 2 : at.X, at.Y - ft.Height / 2));
         }

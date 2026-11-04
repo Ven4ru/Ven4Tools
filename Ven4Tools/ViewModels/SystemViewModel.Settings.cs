@@ -391,6 +391,10 @@ namespace Ven4Tools.ViewModels
                 // Обновляем состояние вкладки и оформление по свежим данным сервисов
                 LoadSettings();
                 LoadOfflineSettings();
+                // Поля офлайн-режимов выставлены мимо сеттеров — без этого импортированный
+                // «Принудительный офлайн» не скрывал вкладки до перезапуска.
+                RefreshTabVisibility?.Invoke();
+                UpdateConnectivityStatus();
                 LoadSourceOrderUI();
                 SetField(ref _minimizeToTray, ProfileService.Current.MinimizeToTray, nameof(MinimizeToTray));
                 // Внешний вид — тем же путём, что в конструкторе (поля напрямую, без

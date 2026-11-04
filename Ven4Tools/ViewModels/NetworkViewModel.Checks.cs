@@ -91,9 +91,14 @@ namespace Ven4Tools.ViewModels
                     AppLogger.Write($"[Сеть] Пинг {host}: {r.Display}");
                 }));
             }
-            await Task.WhenAll(tasks);
-            // Во время полной диагностики флаг разблокирует RunAllAsync в finally.
-            if (!IsBusy) IsPinging = false;
+            // finally: сбой одного пинга (исключение из сервиса) раньше оставлял флаг
+            // взведённым, и кнопка «Пинговать» не включалась до перезапуска программы.
+            try { await Task.WhenAll(tasks); }
+            finally
+            {
+                // Во время полной диагностики флаг разблокирует RunAllAsync в finally.
+                if (!IsBusy) IsPinging = false;
+            }
         }
 
         // Значки строк берут цвета из темы. Фолбэк нужен, когда приложения WPF нет
@@ -166,8 +171,9 @@ namespace Ven4Tools.ViewModels
                     AppLogger.Write($"[Сеть] {name}: {(r.Available ? "✅" : "❌")} {r.Ms}мс");
                 }));
             }
-            await Task.WhenAll(tasks);
-            if (!IsBusy) IsCheckingServices = false;
+            // То же, что у пинга: без finally сбой одной проверки навсегда выключал кнопку.
+            try { await Task.WhenAll(tasks); }
+            finally { if (!IsBusy) IsCheckingServices = false; }
         }
 
         // ── Внешний IP ───────────────────────────────────────────────────────

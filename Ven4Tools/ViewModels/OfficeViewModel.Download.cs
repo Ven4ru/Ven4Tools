@@ -101,7 +101,17 @@ namespace Ven4Tools.ViewModels
                     $"{fi.Length / 1_048_576.0:F1} МБ");
 
                 _downloadedFilePath = tempFile;
-                HasDownloadedInstaller = true;
+                _downloadedFor = (productId, lang);
+                // Версию и язык можно переключить, пока идёт скачивание: OnVersionOrLanguageChanged
+                // тогда ещё не видит файла и ничего не сбрасывает, и «Установить» поставила бы
+                // уже не выбранную версию.
+                if (!DownloadMatchesSelection())
+                {
+                    TryDeleteDownloadedInstaller();
+                    AppLogger.Write("ℹ️ Версия/язык изменены — скачайте установщик заново");
+                    SetProgress(true, "ℹ️ Версия/язык изменены — скачайте установщик заново", 0, "");
+                }
+                else HasDownloadedInstaller = true;
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {

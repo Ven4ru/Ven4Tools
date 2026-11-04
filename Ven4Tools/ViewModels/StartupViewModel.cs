@@ -185,6 +185,13 @@ namespace Ven4Tools.ViewModels
                     StatusText = $"❌ {row.Name}: {error}";
                 }
             }
+            catch (Exception ex)
+            {
+                // Сбой самого переключения (реестр, планировщик) раньше уходил только
+                // в общий перехватчик команды — строка состояния молчала.
+                AppLogger.Write($"[Автозагрузка] Не изменено «{row.Name}»: {ex.Message}");
+                StatusText = $"❌ {row.Name}: {ex.Message}";
+            }
             finally
             {
                 row.IsBusy = false;

@@ -104,6 +104,8 @@ namespace Ven4Tools.ViewModels
 
                 await SystemHealthService.DisableFastStartupAsync();
                 AppLogger.Write("🔧 Быстрый запуск отключён");
+                // Уже выключен — кнопка больше не нужна (та же логика, что при показе).
+                ShowDisableFastStartupButton = false;
                 MessageBox.Show("✅ Быстрый запуск отключён.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)

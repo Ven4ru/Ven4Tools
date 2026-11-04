@@ -43,16 +43,18 @@ namespace Ven4Tools.ViewModels
         {
             if (IsSavingSnapshot) return;
 
-            var debloaterTab = DebloaterTabProvider?.Invoke();
-            var tweakIds = debloaterTab?.GetSelectedTweakIds() ?? new List<string>();
-            var presets = await PresetService.LoadAsync();
-
-            var dlg = new SnapshotNameDialog(tweakIds.Count, presets.Count) { Owner = OwnerWindowProvider?.Invoke() };
-            if (dlg.ShowDialog() != true) return;
-
+            // Флаг — до чтения пресетов: повторное нажатие, пока они читаются, открывало
+            // второе окно имени снапшота следом за первым.
             IsSavingSnapshot = true;
             try
             {
+                var debloaterTab = DebloaterTabProvider?.Invoke();
+                var tweakIds = debloaterTab?.GetSelectedTweakIds() ?? new List<string>();
+                var presets = await PresetService.LoadAsync();
+
+                var dlg = new SnapshotNameDialog(tweakIds.Count, presets.Count) { Owner = OwnerWindowProvider?.Invoke() };
+                if (dlg.ShowDialog() != true) return;
+
                 string? path = await ConfigSnapshotService.SaveAsync(dlg.SnapshotName, tweakIds);
                 SnapshotStatusText = path != null
                     ? $"✅ Снапшот «{dlg.SnapshotName}» сохранён {DateTime.Now:HH:mm:ss}"

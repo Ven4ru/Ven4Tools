@@ -272,7 +272,7 @@
                                                                     <StackPanel Orientation="Horizontal">
                                                                         <TextBlock Text="{Binding HeaderText}" FontWeight="SemiBold" FontSize="15"
                                                                                    Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
-                                                                        <ComboBox Width="160" Height="24" FontSize="11" Margin="12,0,0,0"
+                                                                        <ComboBox AutomationProperties.AutomationId="{Binding CategoryName, StringFormat='cmbCategorySource_{0}'}" Width="160" Height="24" FontSize="11" Margin="12,0,0,0"
                                                                                   Visibility="{Binding ShowCombo, Converter={StaticResource BoolToVis}}"
                                                                                   ItemsSource="{Binding Options}" DisplayMemberPath="Label"
                                                                                   SelectedItem="{Binding Selected}"/>
@@ -372,7 +372,7 @@
                                                        Visibility="{Binding ShowRegionBlockedGlyph, Converter={StaticResource BoolToVis}}"
                                                        ToolTip="{Binding RegionBlockedTooltip}"
                                                        ToolTipService.ShowDuration="20000"/>
-                                            <Button Content="{Binding FavoriteGlyph}" Style="{StaticResource CardAction}"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnFavorite_{0}'}" Content="{Binding FavoriteGlyph}" Style="{StaticResource CardAction}"
                                                     FontSize="15" Foreground="Gold"
                                                     ToolTip="{Binding FavoriteTooltip}"
                                                     Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -394,19 +394,19 @@
 
                                     <!-- Версия и действия: видны только те, что применимы к этой программе. -->
                                     <DockPanel Grid.Row="2" Margin="0,8,0,8" Height="24" LastChildFill="False">
-                                        <ComboBox DockPanel.Dock="Left" Width="98" Height="22" Margin="0" FontSize="10"
+                                        <ComboBox AutomationProperties.AutomationId="{Binding AppId, StringFormat='cmbVersion_{0}'}" DockPanel.Dock="Left" Width="98" Height="22" Margin="0" FontSize="10"
                                                   VerticalAlignment="Center"
                                                   Visibility="{Binding ShowVersionCombo, Converter={StaticResource BoolToVis}}"
                                                   IsEnabled="{Binding IsVersionComboEnabled}"
                                                   ItemsSource="{Binding VersionOptions}"
                                                   SelectedItem="{Binding SelectedVersionOption}"/>
                                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                            <Button Content="{Binding IgnoreUpdateGlyph}" Style="{StaticResource CardAction}"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnIgnoreUpdate_{0}'}" Content="{Binding IgnoreUpdateGlyph}" Style="{StaticResource CardAction}"
                                                     ToolTip="{Binding IgnoreUpdateTooltip}"
                                                     Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
                                                     Command="{Binding DataContext.ToggleIgnoreUpdateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"/>
-                                            <Button Content="▶" Style="{StaticResource CardAction}"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnLaunch_{0}'}" Content="▶" Style="{StaticResource CardAction}"
                                                     Command="{Binding LaunchCommand}"
                                                     Visibility="{Binding CanLaunch, Converter={StaticResource BoolToVis}}"
                                                     Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
@@ -417,19 +417,19 @@
                                                        Visibility="{Binding ShowLaunchBlocked, Converter={StaticResource BoolToVis}}"
                                                        ToolTip="{Binding LaunchBlockedReason}"
                                                        ToolTipService.ShowDuration="20000"/>
-                                            <Button Content="🔄" Style="{StaticResource CardAction}"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnSuggestAlternative_{0}'}" Content="🔄" Style="{StaticResource CardAction}"
                                                     Command="{Binding DataContext.SuggestAlternativeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"
                                                     Visibility="{Binding ShowSuggestButton, Converter={StaticResource BoolToVis}}"
                                                     Background="{DynamicResource StatusWarning}" Foreground="{DynamicResource StatusWarningForeground}"
                                                     ToolTip="Откроет выбор другого источника установки для этого приложения."/>
-                                            <Button Content="❌" Style="{StaticResource CardAction}" FontSize="10"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnRemoveUserApp_{0}'}" Content="❌" Style="{StaticResource CardAction}" FontSize="10"
                                                     Command="{Binding DataContext.RemoveUserAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"
                                                     Visibility="{Binding IsUserAdded, Converter={StaticResource BoolToVis}}"
                                                     Background="{DynamicResource StatusDanger}" Foreground="{DynamicResource StatusDangerForeground}"
                                                     ToolTip="После подтверждения уберёт это добавленное вручную приложение из каталога. С компьютера оно не удаляется."/>
-                                            <Button Content="🙈" Style="{StaticResource CardAction}"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnHideApp_{0}'}" Content="🙈" Style="{StaticResource CardAction}"
                                                     Command="{Binding DataContext.HideAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"
                                                     Visibility="{Binding ShowHideButton, Converter={StaticResource BoolToVis}}"
@@ -610,7 +610,7 @@
                                                        FontSize="10" Margin="0,4,0,0" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource AccentColor}"
                                                        Visibility="{Binding RetryStatus, Converter={StaticResource StringToVis}}"/>
-                                            <Button Content="🔁 Повторить" Margin="0,5,0,0"
+                                            <Button AutomationProperties.AutomationId="{Binding DisplayName, StringFormat='btnRetryInstall_{0}'}" Content="🔁 Повторить" Margin="0,5,0,0"
                                                     HorizontalAlignment="Left" Width="110" Height="26" FontSize="11"
                                                     Command="{Binding RetryCommand}"
                                                     ToolTip="Повторит установку этого приложения тем же способом, что и обычная установка из каталога. Кнопка недоступна, пока идёт другая установка."/>

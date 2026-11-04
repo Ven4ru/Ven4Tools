@@ -27,7 +27,13 @@ public partial class MainWindow
         foreach (var file in Personalization.SoundFiles)
         {
             var play = new Button { Content = "▶ " + L.T(SoundTitles[file]), Margin = new Avalonia.Thickness(0, 0, 6, 6), Tag = file };
-            play.Click += async (_, _) => await Personalization.PlayAsync(file, Log);
+            play.Click += async (_, _) =>
+            {
+                // async void-лямбда: исключение отсюда (файл не записался, проигрыватель
+                // не запустился) уронило бы программу.
+                try { await Personalization.PlayAsync(file, Log); }
+                catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
+            };
             SoundButtons.Children.Add(play);
         }
         CleanupLabel.Text = L.T("Место на диске");
@@ -137,10 +143,12 @@ public partial class MainWindow
         CleanupScanButton.IsEnabled = false;
         try
         {
-            _cleanup = await Cleanup.ScanAsync();
+            // Подсчёт размера корзины и эскизов — обход файлов, в фоне: иначе окно замирает.
+            _cleanup = await Task.Run(Cleanup.ScanAsync);
             CleanupList.ItemsSource = _cleanup;
             CleanupRunButton.IsEnabled = _cleanup.Count > 0;
         }
+        catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
         finally { CleanupScanButton.IsEnabled = true; }
     }
 

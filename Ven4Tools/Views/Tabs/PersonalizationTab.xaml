@@ -57,9 +57,11 @@
                                            Foreground="{Binding StatusBrush}"/>
                                 <StackPanel Orientation="Horizontal">
                                     <Button Content="Применить" Style="{StaticResource PersonalAction}" Tag="{Binding}"
+                                            AutomationProperties.AutomationId="{Binding Part, StringFormat='btnPersonalApply_{0}'}"
                                             IsEnabled="{Binding CanApply}" Click="Apply_Click"
                                             ToolTip="Включает этот пункт оформления. Прежние настройки запоминаются для отката."/>
                                     <Button Content="Вернуть как было" Style="{StaticResource PersonalAction}" Tag="{Binding}"
+                                            AutomationProperties.AutomationId="{Binding Part, StringFormat='btnPersonalRevert_{0}'}"
                                             IsEnabled="{Binding IsApplied}" Click="Revert_Click"
                                             ToolTip="Возвращает этот пункт, каким он был до первого применения."/>
                                 </StackPanel>
@@ -89,7 +91,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Tag="{Binding}" Click="Theme_Click" Margin="0,0,10,8" Padding="0" Cursor="Hand" Style="{x:Null}" Height="Auto" FocusVisualStyle="{x:Null}"
+                                <Button Tag="{Binding}" Click="Theme_Click" AutomationProperties.AutomationId="{Binding Theme.Id, StringFormat='btnTaskbarTheme_{0}'}" Margin="0,0,10,8" Padding="0" Cursor="Hand" Style="{x:Null}" Height="Auto" FocusVisualStyle="{x:Null}"
                                         Background="Transparent" BorderThickness="0" ToolTip="{Binding Tip}"
                                         AutomationProperties.Name="{Binding Title}">
                                     <Button.Template>
@@ -144,7 +146,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Tag="{Binding}" Click="Preset_Click" Margin="0,0,12,12" Padding="0" Cursor="Hand" Style="{x:Null}" Height="Auto" ToolTip="{Binding Description}"
+                                <Button AutomationProperties.AutomationId="{Binding Title, StringFormat='btnTaskbarPreset_{0}'}" Tag="{Binding}" Click="Preset_Click" Margin="0,0,12,12" Padding="0" Cursor="Hand" Style="{x:Null}" Height="Auto" ToolTip="{Binding Description}"
                                         AutomationProperties.Name="{Binding Title}">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
@@ -193,7 +195,7 @@
                                                 <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
                                                 <TextBlock Text="{Binding Description}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,8"
                                                            Foreground="{DynamicResource TextSecondary}"/>
-                                                <ComboBox ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedItem="{Binding Selected, Mode=TwoWay}" Height="30"/>
+                                                <ComboBox AutomationProperties.AutomationId="{Binding Setting.Id, StringFormat='cmbTaskbar_{0}'}" ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedItem="{Binding Selected, Mode=TwoWay}" Height="30"/>
                                                 <TextBlock Text="{Binding Status}" FontSize="11" Margin="0,6,0,0" Foreground="{DynamicResource TextSecondary}"/>
                                             </StackPanel>
                                         </Border>
@@ -201,11 +203,11 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <Button Content="Применить эти настройки" Style="{StaticResource PersonalAction}" Click="TaskbarFineApply_Click"
+                                <Button x:Name="btnTaskbarFineApply" Content="Применить эти настройки" Style="{StaticResource PersonalAction}" Click="TaskbarFineApply_Click"
                                         ToolTip="Применяет выбранные значения. Прежние настройки запоминаются для отката."/>
-                                <Button Content="Перезапустить проводник" Style="{StaticResource PersonalAction}" Click="RestartExplorer_Click"
+                                <Button x:Name="btnRestartExplorer" Content="Перезапустить проводник" Style="{StaticResource PersonalAction}" Click="RestartExplorer_Click"
                                         ToolTip="Некоторые настройки (например, секунды в часах) видны только после перезапуска проводника. Открытые окна папок закроются."/>
-                                <Button Content="Параметры Windows" Style="{StaticResource PersonalAction}" Click="OpenTaskbarSettings_Click"
+                                <Button x:Name="btnTaskbarSettings" Content="Параметры Windows" Style="{StaticResource PersonalAction}" Click="OpenTaskbarSettings_Click"
                                         ToolTip="Открывает раздел «Панель задач» в параметрах Windows."/>
                             </StackPanel>
                         </StackPanel>

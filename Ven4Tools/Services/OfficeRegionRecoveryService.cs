@@ -44,7 +44,8 @@ namespace Ven4Tools.Services
         /// (temp+rename): именно этот маркер должен пережить hard-kill, а обрыв посреди
         /// голого WriteAllText оставил бы битый файл и лишил бы восстановление смысла.
         /// </summary>
-        public static void Save(string? officeCC, string? geoName, string? geoNation)
+        /// <returns>true — маркер записан; false — записать не удалось, менять регион нельзя.</returns>
+        public static bool Save(string? officeCC, string? geoName, string? geoNation)
         {
             try
             {
@@ -55,8 +56,13 @@ namespace Ven4Tools.Services
                     GeoNation = geoNation
                 };
                 FileHelper.WriteAllTextAtomic(BackupPath, JsonConvert.SerializeObject(backup));
+                return true;
             }
-            catch (Exception ex) { AppLogger.Write($"⚠️ Сохранение маркера региона: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"⚠️ Сохранение маркера региона: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>Удаляет маркер: регион уже возвращён штатным путём.</summary>

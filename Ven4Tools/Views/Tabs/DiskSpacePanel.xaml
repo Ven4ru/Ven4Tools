@@ -38,7 +38,7 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                        <CheckBox Grid.Column="0" AutomationProperties.AutomationId="{Binding Category.Id, StringFormat='chkCleanup_{0}'}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                   IsEnabled="{Binding DataContext.SelectionEnabled, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                   AutomationProperties.Name="{Binding Title}"
                                                   VerticalAlignment="Top" Margin="0,2,10,0"/>

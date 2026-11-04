@@ -136,9 +136,16 @@ namespace Ven4Tools.ViewModels
                     string logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "logs");
                     if (Directory.Exists(logsPath))
                     {
+                        // По файлу: журнал идущей установки открыт на запись, и одно
+                        // исключение раньше обрывало цикл — остальные файлы и app.log
+                        // оставались неочищенными.
                         foreach (var file in Directory.GetFiles(logsPath))
                         {
-                            File.Delete(file);
+                            try { File.Delete(file); }
+                            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                            {
+                                AppLogger.Write($"❌ Ошибка очистки логов: {ex.Message}");
+                            }
                         }
                     }
                     // Общий журнал приложения (app.log / app.old.log) лежит НЕ в подпапке
