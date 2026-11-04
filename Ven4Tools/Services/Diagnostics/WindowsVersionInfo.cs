@@ -63,7 +63,11 @@ namespace Ven4Tools.Services.Diagnostics
                     notes.Add("Обычная поддержка Windows 10 закончилась 14 октября 2025 года. Microsoft продлила для домашних ПК расширенные обновления безопасности (ESU) до 12 октября 2027 года.");
                     notes.Add("Чтобы их получать, ПК нужно записать в программу ESU, а для записи нужна учётная запись Microsoft: Параметры → Обновление и безопасность → Центр обновления Windows → «Записаться». Работает ли запись из России, мы не проверяли и обещать не можем.");
                 }
-                else if (info.Build > 0 && info.Build < Win10_22H2Build)
+                // LTSC/LTSB (19044 — LTSC 2021, 17763 — LTSC 2019) живут на своих сборках и
+                // получают обновления безопасности годами — «обновитесь до 22H2» к ним неверно.
+                else if (info.Build > 0 && info.Build < Win10_22H2Build
+                         && !info.ProductName.Contains("LTSC", StringComparison.OrdinalIgnoreCase)
+                         && !info.ProductName.Contains("LTSB", StringComparison.OrdinalIgnoreCase))
                 {
                     notes.Add("Эта версия Windows 10 уже не получает обновлений безопасности. Последняя версия Windows 10 — 22H2: обновитесь до неё через Центр обновления Windows.");
                 }

@@ -20,6 +20,7 @@ namespace Ven4Tools.Services
         // Файл есть, но прочитать его не удалось: в Current — значения по умолчанию,
         // и запись стёрла бы настоящие настройки. См. SettingsFileReader.
         private static bool _loadFailed;
+        private static readonly object _saveLock = new();
 
         static ProfileService() => Load();
 
@@ -72,7 +73,11 @@ namespace Ven4Tools.Services
                     return;
                 }
 
-                FileHelper.WriteAllTextAtomic(_path, JsonConvert.SerializeObject(Current, Formatting.Indented));
+                // Save вызывают и UI-поток, и фоновые службы обновлений: без замка две записи
+                // могли переименовать временные файлы в обратном порядке и оставить на диске
+                // более старый снимок (как было в HiddenAppsStore до _saveLock).
+                lock (_saveLock)
+                    FileHelper.WriteAllTextAtomic(_path, JsonConvert.SerializeObject(Current, Formatting.Indented));
                 Changed?.Invoke();
             }
             catch (Exception ex) { AppLogger.Write($"[ProfileService] {ex.Message}"); }

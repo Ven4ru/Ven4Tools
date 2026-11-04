@@ -136,7 +136,8 @@ namespace Ven4Tools.Services
                 string baseDir  = Path.GetFullPath(SnapshotsDir)
                     .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                     + Path.DirectorySeparatorChar;
-                if (!fullPath.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase))
+                if (!fullPath.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase)
+                    || Helpers.PathHelper.IsReparsePoint(SnapshotsDir) || Helpers.PathHelper.IsReparsePoint(fullPath))
                 {
                     AppLogger.Write($"[Снапшоты] Отказ удаления вне папки снапшотов: {filePath}");
                     return false;
@@ -194,6 +195,13 @@ namespace Ven4Tools.Services
         {
             try
             {
+                // Папка снимков — в профиле пользователя: подменённая ссылкой, она увела бы
+                // удаление «старых» *.json в чужую папку с правами администратора.
+                if (Helpers.PathHelper.IsReparsePoint(SnapshotsDir))
+                {
+                    AppLogger.Write("[Снапшоты] Папка снимков — ссылка на другую папку, очистка пропущена");
+                    return;
+                }
                 var files = Directory.GetFiles(SnapshotsDir, "*.json")
                     .Select(f => new FileInfo(f))
                     .OrderByDescending(f => f.LastWriteTime)

@@ -181,7 +181,12 @@ namespace Ven4Tools.Services
             {
                 var st = Load();
                 if (st.ColorUndo.Count == 0)
+                {
                     foreach (var (k, n) in ThemeValues) st.ColorUndo[k + "\\" + n] = Snapshot(k, n);
+                    // «Как было» — на диск до первой записи: сбой посередине не должен оставить
+                    // реестр наполовину перекрашенным без возможности отката.
+                    Save(st);
+                }
                 _reg.Write(Accent, "AccentPalette", RegistryValueKind.Binary, BuildPalette(t));
                 _reg.Write(Accent, "AccentColorMenu", RegistryValueKind.DWord, Abgr(t.Accent));
                 _reg.Write(Accent, "StartColorMenu", RegistryValueKind.DWord, Abgr(t.Bar));
@@ -235,7 +240,11 @@ namespace Ven4Tools.Services
                 var v = _reg.Read(StuckRects, "Settings");
                 if (v?.Data is not byte[] b || b.Length <= 12) return false;
                 var st = Load();
-                st.LeftUndo ??= new RawValue(true, v.Value.Kind.ToString(), Convert.ToHexString(b));
+                if (st.LeftUndo == null)
+                {
+                    st.LeftUndo = new RawValue(true, v.Value.Kind.ToString(), Convert.ToHexString(b));
+                    Save(st);   // до записи — см. ApplyTheme
+                }
                 var original = Convert.FromHexString(st.LeftUndo.Data);
                 if (original.Length > 12 && original[12] == edge)
                 {
@@ -286,8 +295,12 @@ namespace Ven4Tools.Services
                 st.Ears = true;
                 Save(st);
             }
-            try { Process.Start(new ProcessStartInfo(dst, args) { UseShellExecute = false }); }
-            catch (Exception ex) { AppLogger.Write("⚠️ Ушки Венчика не запустились — " + ex.Message); }
+            // Без прав администратора: программа лежит в папке, куда пишет сам пользователь,
+            // и запуск из клиента с повышенными правами отдал бы ей (и подложенной рядом DLL)
+            // права администратора. Не вышло — ушки поднимет автозапуск при следующем входе.
+            // SW_SHOWNOACTIVATE (4) — как показывает себя сама программа ушек.
+            if (!UnelevatedLauncher.TryStart(dst, args, show: 4))
+                AppLogger.Write("⚠️ Ушки Венчика не запустились сейчас — появятся после следующего входа в Windows");
         }
 
         public void DisableEars()
@@ -308,8 +321,21 @@ namespace Ven4Tools.Services
         {
             try
             {
-                if (EventWaitHandle.TryOpenExisting(EarsQuitEvent, out var ev)) using (ev) ev.Set();
-                Thread.Sleep(300);
+                if (!EventWaitHandle.TryOpenExisting(EarsQuitEvent, out var ev)) return;
+                using (ev) ev.Set();
+                // Ждём, пока прежняя копия действительно закроется: иначе File.Copy поверх
+                // запущенного VenchikEars.exe падает с «файл занят» (300 мс хватало не всегда).
+                var name = Path.GetFileNameWithoutExtension(EarsExe);
+                int session = Process.GetCurrentProcess().SessionId;
+                for (int i = 0; i < 30; i++)
+                {
+                    Thread.Sleep(100);
+                    bool alive = false;
+                    foreach (var p in Process.GetProcessesByName(name))
+                        using (p) { try { alive |= p.SessionId == session && !p.HasExited; } catch (Exception) { /* процесс уже закрылся */ } }
+                    if (!alive) return;
+                }
+                AppLogger.Write("⚠️ Ушки Венчика: прежняя копия не закрылась за 3 с");
             }
             catch (Exception ex) { AppLogger.Write("⚠️ Ушки Венчика: сигнал закрытия — " + ex.Message); }
         }
@@ -320,18 +346,29 @@ namespace Ven4Tools.Services
         public bool RevertAll()
         {
             bool restart = false;
-            DisableEars();
+            // Сбой одного пункта не останавливает возврат остальных: что не вернулось,
+            // остаётся в файле состояния, и следующий «Вернуть» попробует ещё раз.
+            try { DisableEars(); }
+            catch (Exception ex) { AppLogger.Write("⚠️ Ушки Венчика: не выключились при откате — " + ex.Message); }
             lock (_lock)
             {
                 var st = Load();
-                foreach (var (path, v) in st.ColorUndo)
+                foreach (var (path, v) in st.ColorUndo.ToList())
                 {
                     var i = path.LastIndexOf('\\');
-                    Restore(path[..i], path[(i + 1)..], v);
+                    try
+                    {
+                        Restore(path[..i], path[(i + 1)..], v);
+                        st.ColorUndo.Remove(path);
+                    }
+                    catch (Exception ex) { AppLogger.Write($"⚠️ Тема панели: не вернулось «{path}» — {ex.Message}"); }
                 }
-                st.ColorUndo.Clear();
-                if (st.LeftUndo != null) { Restore(StuckRects, "Settings", st.LeftUndo); st.LeftUndo = null; restart = true; }
-                st.ThemeId = null; st.CustomColor = null;
+                if (st.LeftUndo != null)
+                {
+                    try { Restore(StuckRects, "Settings", st.LeftUndo); st.LeftUndo = null; restart = true; }
+                    catch (Exception ex) { AppLogger.Write("⚠️ Тема панели: не вернулось положение панели — " + ex.Message); }
+                }
+                if (st.ColorUndo.Count == 0) { st.ThemeId = null; st.CustomColor = null; }
                 Save(st);
             }
             _reg.NotifyColors();

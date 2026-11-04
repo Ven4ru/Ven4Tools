@@ -13,26 +13,35 @@ namespace Ven4Tools.Services
             "Ven4Tools", "version_tracking.json");
 
         private Dictionary<string, TrackedInstall> _data = new();
+        // Файл есть, но не прочитался: запись стёрла бы прежние записи (см. SettingsFileReader).
+        private bool _loadFailed;
 
         public VersionTrackingService() => Load();
 
         private void Load()
         {
+            const string Log = "[VersionTrackingService]";
+            var read = SettingsFileReader.TryRead(_path, Log, out string json);
+            _loadFailed = read == SettingsReadResult.Unreadable;
+            if (read != SettingsReadResult.Read) return;
             try
             {
-                if (File.Exists(_path))
-                    _data = JsonConvert.DeserializeObject<Dictionary<string, TrackedInstall>>(
-                        File.ReadAllText(_path)) ?? new();
+                _data = JsonConvert.DeserializeObject<Dictionary<string, TrackedInstall>>(json) ?? new();
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
-                AppLogger.Write($"[VersionTrackingService] Чтение данных трекинга версий: {ex.Message}");
                 _data = new();
+                _loadFailed = !SettingsFileReader.SetAsideCorrupt(_path, Log, ex.Message);
             }
         }
 
         private void Save()
         {
+            if (_loadFailed)
+            {
+                AppLogger.Write("[VersionTrackingService] Сохранение пропущено: файл не прочитан, запись стёрла бы прежние записи");
+                return;
+            }
             try
             {
                 FileHelper.WriteAllTextAtomic(_path, JsonConvert.SerializeObject(_data, Formatting.Indented));

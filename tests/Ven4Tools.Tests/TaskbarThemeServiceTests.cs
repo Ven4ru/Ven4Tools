@@ -14,10 +14,15 @@ public sealed class TaskbarThemeServiceTests : IDisposable
         public int Build { get; set; } = 26200;
         public Dictionary<string, (RegistryValueKind Kind, object Data)> Values { get; } = new();
         public int Notifications;
+        /// <summary>Запись этого значения падает — сбой посередине применения или отката.</summary>
+        public string? FailOn { get; set; }
         private static string K(string key, string name) => key + "|" + name;
         public (RegistryValueKind Kind, object Data)? Read(string key, string name) => Values.TryGetValue(K(key, name), out var v) ? v : null;
-        public void Write(string key, string name, RegistryValueKind kind, object data) =>
+        public void Write(string key, string name, RegistryValueKind kind, object data)
+        {
+            if (name == FailOn) throw new UnauthorizedAccessException("тест: запись запрещена");
             Values[K(key, name)] = (kind, data is byte[] b ? (byte[])b.Clone() : data);
+        }
         public void Delete(string key, string name) => Values.Remove(K(key, name));
         public void NotifyColors() => Notifications++;
 
@@ -113,6 +118,39 @@ public sealed class TaskbarThemeServiceTests : IDisposable
         Assert.Equal("custom", svc.Current.ThemeId);
         svc.RevertAll();
         Assert.Equal(before, reg.Dump());
+    }
+
+    [Fact]
+    public void FailureMidApply_KeepsUndo_AndRevertRestoresWhatWasWritten()
+    {
+        var reg = Windows();
+        var before = reg.Dump();
+        var svc = Make(reg);
+        reg.FailOn = "ColorizationColor";   // первые значения уже записаны, дальше — сбой
+        Assert.Throws<UnauthorizedAccessException>(() => svc.ApplyTheme(TaskbarThemeService.Themes.First(t => t.Id == "sea")));
+        Assert.NotEqual(before, reg.Dump());
+        reg.FailOn = null;
+        Assert.True(Make(reg).HasUndo);      // «как было» успело попасть на диск
+        Make(reg).RevertAll();
+        Assert.Equal(before, reg.Dump());
+    }
+
+    [Fact]
+    public void FailureMidRevert_RestoresTheRest_AndRetriesLater()
+    {
+        var reg = Windows();
+        var before = reg.Dump();
+        var svc = Make(reg);
+        svc.ApplyTheme(TaskbarThemeService.Themes.First(t => t.Id == "cherry"));
+        reg.FailOn = "AccentColorMenu";
+        svc.RevertAll();
+        Assert.True(svc.HasUndo);
+        Assert.Single(svc.Current.ColorUndo);
+        Assert.Equal(1, (int)reg.Read(TaskbarThemeService.Personalize, "SystemUsesLightTheme")!.Value.Data);
+        reg.FailOn = null;
+        svc.RevertAll();
+        Assert.Equal(before, reg.Dump());
+        Assert.False(svc.HasUndo);
     }
 
     [Fact]

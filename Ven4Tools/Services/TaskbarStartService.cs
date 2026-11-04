@@ -225,8 +225,12 @@ namespace Ven4Tools.Services
                     var s = Available.FirstOrDefault(x => x.Id == id);
                     if (s == null || !s.Choices.Any(c => c.Value == value) || Current(s) == value) continue;
                     // Прежнее состояние — только при первой правке, иначе «как было» станет нашим.
+                    // На диск — до записи: при неожиданном сбое посередине откат уже сделанного не теряется.
                     if (!undo.ContainsKey(s.Id))
+                    {
                         undo[s.Id] = Snapshot(s);
+                        Save(undo);
+                    }
                     try
                     {
                         Write(s, value);
@@ -385,17 +389,12 @@ namespace Ven4Tools.Services
                 SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, area, SMTO_ABORTIFHUNG, 1000, out _);
         }
 
-        public void RestartExplorer()
-        {
-            foreach (var p in Process.GetProcessesByName("explorer"))
-            {
-                try { p.Kill(); p.WaitForExit(5000); } catch (Exception ex) { AppLogger.Write("⚠️ Проводник не закрылся — " + ex.Message); }
-                finally { p.Dispose(); }
-            }
-            // Если Windows не подняла оболочку сама — запускаем.
-            System.Threading.Thread.Sleep(1500);
-            if (Process.GetProcessesByName("explorer").Length == 0)
-                Process.Start(new ProcessStartInfo("explorer.exe") { UseShellExecute = true });
-        }
+        /// <summary>
+        /// Тот же перезапуск, что у «Очистки»: только проводник своего сеанса (не чужих
+        /// пользователей при быстром переключении) и, если Windows не подняла его сама,
+        /// запуск без прав администратора. Ошибки не выбрасывает — пишет в журнал.
+        /// Вызывается из фонового потока (Task.Run), поэтому ожидание здесь безопасно.
+        /// </summary>
+        public void RestartExplorer() => DebloatTweakExecutor.RestartExplorerAsync().GetAwaiter().GetResult();
     }
 }

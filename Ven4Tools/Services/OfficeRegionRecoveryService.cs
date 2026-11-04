@@ -44,7 +44,8 @@ namespace Ven4Tools.Services
         /// (temp+rename): именно этот маркер должен пережить hard-kill, а обрыв посреди
         /// голого WriteAllText оставил бы битый файл и лишил бы восстановление смысла.
         /// </summary>
-        public static void Save(string? officeCC, string? geoName, string? geoNation)
+        /// <returns>false — маркер не записан: подменять регион нельзя, его не вернуть после сбоя.</returns>
+        public static bool Save(string? officeCC, string? geoName, string? geoNation)
         {
             try
             {
@@ -55,8 +56,9 @@ namespace Ven4Tools.Services
                     GeoNation = geoNation
                 };
                 FileHelper.WriteAllTextAtomic(BackupPath, JsonConvert.SerializeObject(backup));
+                return true;
             }
-            catch (Exception ex) { AppLogger.Write($"⚠️ Сохранение маркера региона: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"⚠️ Сохранение маркера региона: {ex.Message}"); return false; }
         }
 
         /// <summary>Удаляет маркер: регион уже возвращён штатным путём.</summary>
@@ -83,6 +85,9 @@ namespace Ven4Tools.Services
                     return false;
                 }
 
+                // Маркер удаляется только после полного возврата: иначе при сбое записи
+                // второго шанса (следующий запуск) уже не было бы.
+                bool restored = true;
                 // Office CountryCode — те же ключи, что и при штатном восстановлении.
                 try
                 {
@@ -100,7 +105,11 @@ namespace Ven4Tools.Services
                             key.DeleteValue("CountryCode", throwOnMissingValue: false);
                     }
                 }
-                catch { /* ключа может не быть — игнорируем */ }
+                catch (Exception ex)
+                {
+                    restored = false;
+                    AppLogger.Write($"⚠️ Восстановление региона Office (CountryCode): {ex.Message}");
+                }
 
                 // Windows GeoID
                 try
@@ -129,8 +138,17 @@ namespace Ven4Tools.Services
                             geo.DeleteValue("Nation", throwOnMissingValue: false);
                     }
                 }
-                catch { /* игнорируем */ }
+                catch (Exception ex)
+                {
+                    restored = false;
+                    AppLogger.Write($"⚠️ Восстановление региона Windows (Geo): {ex.Message}");
+                }
 
+                if (!restored)
+                {
+                    AppLogger.Write("⚠️ Регион после установки Office вернулся не полностью — повторю при следующем запуске");
+                    return true;
+                }
                 Delete();
                 AppLogger.Write("🔁 Регион восстановлен после аварийного завершения предыдущей установки Office");
                 return true;

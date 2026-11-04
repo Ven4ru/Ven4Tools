@@ -507,6 +507,15 @@ namespace Ven4Tools.Services
         private static void DeleteFilesUnder(string root, TimeSpan? minAge)
         {
             if (!Directory.Exists(root)) return;
+            // Сама папка-ссылка: AttributesToSkip отсекает ссылки только внутри, а начальную
+            // папку обход открывает с переходом. Процесс пользователя мог заменить свой Temp
+            // точкой соединения на «Program Files» — удалять там клиент с правами
+            // администратора не должен.
+            if (Helpers.PathHelper.IsReparsePoint(root))
+            {
+                AppLogger.Write($"[Место на диске] {root} — ссылка на другую папку, очистка пропущена");
+                return;
+            }
             DateTime cutoff = minAge is { } age ? DateTime.UtcNow - age : DateTime.MaxValue;
             int deleted = 0, skipped = 0;
             foreach (FileInfo f in new DirectoryInfo(root).EnumerateFiles("*", RecursiveOptions()))
