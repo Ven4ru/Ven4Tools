@@ -105,7 +105,7 @@ internal static class FileHelper
         var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
         try
         {
-            File.WriteAllText(tmp, content);
+            WriteDurable(tmp, new System.Text.UTF8Encoding(false).GetBytes(content));
             File.Move(tmp, path, overwrite: true);
         }
         catch
@@ -122,7 +122,7 @@ internal static class FileHelper
         var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
         try
         {
-            await File.WriteAllTextAsync(tmp, content);
+            await WriteDurableAsync(tmp, new System.Text.UTF8Encoding(false).GetBytes(content));
             File.Move(tmp, path, overwrite: true);
         }
         catch
@@ -139,7 +139,7 @@ internal static class FileHelper
         var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
         try
         {
-            await File.WriteAllBytesAsync(tmp, content);
+            await WriteDurableAsync(tmp, content);
             File.Move(tmp, path, overwrite: true);
         }
         catch
@@ -147,5 +147,25 @@ internal static class FileHelper
             try { File.Delete(tmp); } catch { }
             throw;
         }
+    }
+
+    /// <summary>
+    /// Запись временного файла со сбросом на диск до переименования (как в лаунчере). Без
+    /// Flush(true) данные могут ещё лежать в кэше, когда переименование уже попало в журнал
+    /// NTFS: после отключения питания на месте файла оказался бы пустой файл. Кодировка
+    /// текста — UTF-8 без BOM, как у прежнего File.WriteAllText.
+    /// </summary>
+    private static void WriteDurable(string tmp, byte[] content)
+    {
+        using var stream = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        stream.Write(content, 0, content.Length);
+        stream.Flush(flushToDisk: true);
+    }
+
+    private static async Task WriteDurableAsync(string tmp, byte[] content)
+    {
+        await using var stream = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, useAsync: true);
+        await stream.WriteAsync(content);
+        stream.Flush(flushToDisk: true);
     }
 }
