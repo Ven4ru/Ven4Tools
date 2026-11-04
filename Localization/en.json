@@ -1220,6 +1220,10 @@
     "t": "Winget installed"
   },
   {
+    "s": "[AlternativeSourceStore] Сохранение пропущено: файл не прочитан, запись стёрла бы прежние записи",
+    "t": "[AlternativeSourceStore] Save skipped: the file could not be read, writing would erase the existing entries"
+  },
+  {
     "s": "[AppUninstallService] «{0}» удалена, для завершения нужна перезагрузка",
     "t": "[AppUninstallService] \"{0}\" was removed, a restart is needed to finish"
   },
@@ -1364,6 +1368,10 @@
     "t": "[BugCheck] Dictionary resource not found: {0}"
   },
   {
+    "s": "[CatalogLoaderService] Версия встроенного каталога не прочитана: {0}",
+    "t": "[CatalogLoaderService] Could not read the built-in catalog version: {0}"
+  },
+  {
     "s": "[CatalogLoaderService] Встроенный каталог не найден среди ресурсов сборки",
     "t": "[CatalogLoaderService] Built-in catalog not found in assembly resources"
   },
@@ -1422,6 +1430,10 @@
   {
     "s": "[HiddenAppsStore] Сохранение пропущено: список скрытых не удалось прочитать",
     "t": "[HiddenAppsStore] Save skipped: the hidden apps list could not be read"
+  },
+  {
+    "s": "[IgnoredUpdatesService] Сохранение пропущено: файл не прочитан, запись стёрла бы прежние записи",
+    "t": "[IgnoredUpdatesService] Save skipped: the file could not be read, writing would erase the existing entries"
   },
   {
     "s": "[IgnoredUpdatesService] Чтение пропущенных обновлений: {0}",
@@ -1608,6 +1620,18 @@
     "t": "[PresentMon] winget install: code {0}"
   },
   {
+    "s": "[PresentMon] копия не удалена: {0}",
+    "t": "[PresentMon] copy not deleted: {0}"
+  },
+  {
+    "s": "[PresentMon] не запущен: {0}",
+    "t": "[PresentMon] not started: {0}"
+  },
+  {
+    "s": "[PresentMon] не запущен: не удалось подготовить копию — {0}",
+    "t": "[PresentMon] not started: could not prepare a copy — {0}"
+  },
+  {
     "s": "[PresentMon] не запущен: подпись не подтверждена ({0})",
     "t": "[PresentMon] not started: signature not confirmed ({0})"
   },
@@ -1714,6 +1738,10 @@
   {
     "s": "[UserAppsStore] Сохранение пропущено: apps.json не удалось прочитать, запись стёрла бы добавленные приложения",
     "t": "[UserAppsStore] Save skipped: apps.json could not be read, writing would erase the added apps"
+  },
+  {
+    "s": "[VersionTrackingService] Сохранение пропущено: файл не прочитан, запись стёрла бы прежние записи",
+    "t": "[VersionTrackingService] Save skipped: the file could not be read, writing would erase the existing entries"
   },
   {
     "s": "[VersionTrackingService] Чтение данных трекинга версий: {0}",
@@ -2072,6 +2100,10 @@
     "t": "[Disk space] {0}"
   },
   {
+    "s": "[Место на диске] {0} — ссылка на другую папку, очистка пропущена",
+    "t": "[Disk space] {0} is a link to another folder — cleanup skipped"
+  },
+  {
     "s": "[Место на диске] {0}: удалено файлов {1}, пропущено занятых {2}",
     "t": "[Disk space] {0}: files deleted {1}, in-use skipped {2}"
   },
@@ -2414,6 +2446,10 @@
   {
     "s": "[Снапшоты] Ошибка чтения списка: {0}",
     "t": "[Snapshots] Error reading the list: {0}"
+  },
+  {
+    "s": "[Снапшоты] Папка снимков — ссылка на другую папку, очистка пропущена",
+    "t": "[Snapshots] The snapshots folder is a link to another folder — cleanup skipped"
   },
   {
     "s": "[Снапшоты] Повреждённый файл {0}: {1}",
@@ -4928,6 +4964,10 @@
     "t": "Measuring..."
   },
   {
+    "s": "Идёт операция с обновлениями Windows — кэш не очищен",
+    "t": "A Windows Update operation is in progress — cache not cleared"
+  },
+  {
     "s": "Идёт проверка",
     "t": "Verifying"
   },
@@ -6396,6 +6436,10 @@
     "t": "Could not copy the report: {0}"
   },
   {
+    "s": "Не удалось скопировать установщик в защищённый каталог",
+    "t": "Could not copy the installer to a protected folder"
+  },
+  {
     "s": "Не удалось скопировать: {0}",
     "t": "Could not copy: {0}"
   },
@@ -6406,6 +6450,10 @@
   {
     "s": "Не удалось сохранить отчёт: {0}",
     "t": "Could not save the report: {0}"
+  },
+  {
+    "s": "Не удалось сохранить текущий регион Windows, поэтому установка Office остановлена: без этой записи регион нельзя было бы вернуть после сбоя. Подробности — в журнале.",
+    "t": "Could not save the current Windows region, so the Office installation was stopped: without this record, the region could not be restored after a failure. Details are in the log."
   },
   {
     "s": "Не удалось сохранить файл: {0}",
@@ -7222,6 +7270,10 @@
   {
     "s": "Остановить службы обновления Windows и очистить кэш загрузки? Службы будут перезапущены автоматически.",
     "t": "Stop the Windows Update services and clear the download cache? The services will be restarted automatically."
+  },
+  {
+    "s": "Остановить службы обновления Windows и очистить кэш загрузки? Службы, которые работали, будут запущены снова.",
+    "t": "Stop the Windows Update services and clear the download cache? The services that were running will be started again."
   },
   {
     "s": "Остановлено",
@@ -13980,8 +14032,20 @@
     "t": "⚠️ Repair canceled: the folder now has version {0}, but the report was made for {1} — run the check again"
   },
   {
+    "s": "⚠️ Восстановление региона Office (CountryCode): {0}",
+    "t": "⚠️ Restoring the Office region (CountryCode): {0}"
+  },
+  {
+    "s": "⚠️ Восстановление региона Windows (Geo): {0}",
+    "t": "⚠️ Restoring the Windows region (Geo): {0}"
+  },
+  {
     "s": "⚠️ Восстановление региона из маркера: {0}",
     "t": "⚠️ Restoring the region from the marker: {0}"
+  },
+  {
+    "s": "⚠️ Временная копия установщика не удалена: {0} — {1}",
+    "t": "⚠️ Temporary installer copy not deleted: {0} — {1}"
   },
   {
     "s": "⚠️ Выбранная папка установки может мешать работе клиента: {0}\n{1}",
@@ -14140,6 +14204,10 @@
     "t": "⚠️ Personalization: Windows did not accept \"{0}\" (code {1})"
   },
   {
+    "s": "⚠️ Персонализация: в файле отката чужая запись «{0}\\{1}» — пропущена",
+    "t": "⚠️ Personalization: unexpected entry “{0}\\{1}” in the revert file — skipped"
+  },
+  {
     "s": "⚠️ Персонализация: не открыта картинка — {0}",
     "t": "⚠️ Personalization: couldn't open the picture — {0}"
   },
@@ -14188,6 +14256,10 @@
     "t": "⚠️ Installer process not detected — Office may already be installed, or the installer exited instantly"
   },
   {
+    "s": "⚠️ Регион после установки Office вернулся не полностью — повторю при следующем запуске",
+    "t": "⚠️ The region was not fully restored after the Office installation — will retry on next start"
+  },
+  {
     "s": "⚠️ Сохранение маркера региона: {0}",
     "t": "⚠️ Saving the region marker: {0}"
   },
@@ -14216,6 +14288,14 @@
     "t": "⚠️ Wait timed out — continuing without confirmation"
   },
   {
+    "s": "⚠️ Тема панели: не вернулось «{0}» — {1}",
+    "t": "⚠️ Taskbar theme: “{0}” not restored — {1}"
+  },
+  {
+    "s": "⚠️ Тема панели: не вернулось положение панели — {0}",
+    "t": "⚠️ Taskbar theme: taskbar position not restored — {0}"
+  },
+  {
     "s": "⚠️ Тема панели: файл состояния не прочитан — {0}",
     "t": "⚠️ Taskbar theme: state file not read — {0}"
   },
@@ -14240,8 +14320,20 @@
     "t": "⚠️ Installation of an older version confirmed by the user"
   },
   {
+    "s": "⚠️ Ушки Венчика не запустились сейчас — появятся после следующего входа в Windows",
+    "t": "⚠️ Venchik's ears did not start now — they will appear after the next Windows sign-in"
+  },
+  {
     "s": "⚠️ Ушки Венчика не запустились — {0}",
     "t": "⚠️ Venchik's ears did not start — {0}"
+  },
+  {
+    "s": "⚠️ Ушки Венчика: не выключились при откате — {0}",
+    "t": "⚠️ Venchik's ears: not turned off on restore — {0}"
+  },
+  {
+    "s": "⚠️ Ушки Венчика: прежняя копия не закрылась за 3 с",
+    "t": "⚠️ Venchik's ears: the previous instance did not close within 3 s"
   },
   {
     "s": "⚠️ Ушки Венчика: сигнал закрытия — {0}",
@@ -14844,6 +14936,10 @@
     "t": "❌ {0}: local installer without SHA256 — launch rejected (fail-closed)"
   },
   {
+    "s": "❌ {0}: не удалось подготовить установщик к запуску — {1}",
+    "t": "❌ {0}: could not prepare the installer to run — {1}"
+  },
+  {
     "s": "❌ {0}: недопустимый ID «{1}» — установка отменена",
     "t": "❌ {0}: invalid ID “{1}” — installation canceled"
   },
@@ -15162,6 +15258,10 @@
   {
     "s": "❌ Персонализация: «{0}» — {1}",
     "t": "❌ Personalization: \"{0}\" — {1}"
+  },
+  {
+    "s": "❌ Персонализация: состояние не прочитано — {0}",
+    "t": "❌ Personalization: could not read the state — {0}"
   },
   {
     "s": "❌ Повтор не удался",
