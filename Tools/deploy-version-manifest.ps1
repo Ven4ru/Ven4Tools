@@ -32,6 +32,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Windows PowerShell 5.1 (powershell -File): $PSScriptRoot в значении параметра по
+# умолчанию пуст, если в том же param()-блоке есть Mandatory-параметр, — путь
+# превращался в «\UpdateManifestSigner\...» от корня диска. Досчитываем здесь,
+# как в sign-client-archive.ps1.
+if (-not $PSBoundParameters.ContainsKey('SignerDll')) {
+    $SignerDll = Join-Path $PSScriptRoot "UpdateManifestSigner\bin\Release\net10.0\UpdateManifestSigner.dll"
+}
+
 if (-not (Test-Path $VersionJsonPath)) { throw "Не найден $VersionJsonPath" }
 if (-not (Test-Path $PrivateKeyPath)) {
     throw "Не найден приватный ключ подписи манифеста: $PrivateKeyPath. " +

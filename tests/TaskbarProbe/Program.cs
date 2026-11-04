@@ -40,68 +40,94 @@ Dictionary<string, string> RegState()
 }
 
 var undoPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "taskbar_undo.json");
-if (File.Exists(undoPath)) File.Move(undoPath, undoPath + ".before-probe", true);
+var undoBackup = undoPath + ".before-probe";
+// Файл отката клиента откладывается на время проверки и возвращается в finally при любом исходе:
+// раньше он оставался под именем .before-probe, и клиент терял «как было» для своих правок.
+if (File.Exists(undoPath)) File.Move(undoPath, undoBackup, true);
 var svc = TaskbarStartService.Default;
-var os = Environment.OSVersion.Version;
-Log($"Windows {os} (сборка {os.Build}), Windows 11: {svc.IsWindows11}");
-Log("Доступные настройки: " + string.Join(", ", svc.Available.Select(s => s.Id)));
-
-var original = RegState();
-var originalAutoHide = svc.Current(TaskbarStartService.All.First(s => s.Id == TaskbarStartService.AutoHideId));
-Shot("00_исходно");
-
-// 1. Каждая настройка — каждое значение; после каждого прохода откат.
-foreach (var s in svc.Available)
+try
 {
-    foreach (var (value, label) in s.Choices)
+    var os = Environment.OSVersion.Version;
+    Log($"Windows {os} (сборка {os.Build}), Windows 11: {svc.IsWindows11}");
+    Log("Доступные настройки: " + string.Join(", ", svc.Available.Select(s => s.Id)));
+
+    var original = RegState();
+    var originalAutoHide = svc.Current(TaskbarStartService.All.First(s => s.Id == TaskbarStartService.AutoHideId));
+    Shot("00_исходно");
+
+    // 1. Каждая настройка — каждое значение; после каждого прохода откат.
+    foreach (var s in svc.Available)
     {
-        var r = svc.Apply(new Dictionary<string, int> { [s.Id] = value });
-        if (r.Blocked.Count > 0) { Log($"BLOCK {s.Id}={value} ({label}) — Windows не дала изменить (ожидаемо для защищённых)"); continue; }
-        Check(svc.Current(s) == value, $"{s.Id}={value} ({label}) применилось");
+        foreach (var (value, label) in s.Choices)
+        {
+            var r = svc.Apply(new Dictionary<string, int> { [s.Id] = value });
+            if (r.Blocked.Count > 0) { Log($"BLOCK {s.Id}={value} ({label}) — Windows не дала изменить (ожидаемо для защищённых)"); continue; }
+            Check(svc.Current(s) == value, $"{s.Id}={value} ({label}) применилось");
+        }
+        var rv = svc.RevertAll();
+        var now = RegState();
+        var diff = original.Where(kv => now[kv.Key] != kv.Value).Select(kv => $"{kv.Key}: было {kv.Value}, стало {now[kv.Key]}").ToList();
+        Check(diff.Count == 0 && rv.Blocked.Count == 0, $"{s.Id}: откат вернул реестр побайтно" + (diff.Count > 0 ? " — " + string.Join("; ", diff) : ""));
     }
-    var rv = svc.RevertAll();
-    var now = RegState();
-    var diff = original.Where(kv => now[kv.Key] != kv.Value).Select(kv => $"{kv.Key}: было {kv.Value}, стало {now[kv.Key]}").ToList();
-    Check(diff.Count == 0 && rv.Blocked.Count == 0, $"{s.Id}: откат вернул реестр побайтно" + (diff.Count > 0 ? " — " + string.Join("; ", diff) : ""));
-}
-Check(svc.Current(TaskbarStartService.All.First(s => s.Id == TaskbarStartService.AutoHideId)) == originalAutoHide, "автоскрытие вернулось");
+    Check(svc.Current(TaskbarStartService.All.First(s => s.Id == TaskbarStartService.AutoHideId)) == originalAutoHide, "автоскрытие вернулось");
 
-// 2. Повторное «Применить» не затирает «как было».
-var any = svc.Available.First(s => s.Id == "TaskView");
-svc.Apply(new Dictionary<string, int> { [any.Id] = 0 });
-svc.Apply(new Dictionary<string, int> { [any.Id] = 1 });
-svc.Apply(new Dictionary<string, int> { [any.Id] = 0 });
-svc.RevertAll();
-Check(RegState().SequenceEqual(original), "после трёх применений подряд откат вернул исходное");
-
-// 3. Готовые наборы: применить, снять экран, откатить.
-int i = 1;
-foreach (var p in TaskbarStartService.Presets)
-{
-    var r = svc.Apply(p.Values);
-    Log($"набор «{p.Title}»: заблокировано {r.Blocked.Count} ({string.Join(", ", r.Blocked)}), нужен перезапуск проводника: {r.NeedsExplorerRestart}");
-    Shot($"{i++:00}_набор_{p.Title}");
+    // 2. Повторное «Применить» не затирает «как было».
+    var any = svc.Available.First(s => s.Id == "TaskView");
+    svc.Apply(new Dictionary<string, int> { [any.Id] = 0 });
+    svc.Apply(new Dictionary<string, int> { [any.Id] = 1 });
+    svc.Apply(new Dictionary<string, int> { [any.Id] = 0 });
     svc.RevertAll();
-    Check(RegState().SequenceEqual(original), $"набор «{p.Title}» откатился побайтно");
+    Check(RegState().SequenceEqual(original), "после трёх применений подряд откат вернул исходное");
+
+    // 3. Готовые наборы: применить, снять экран, откатить.
+    int i = 1;
+    foreach (var p in TaskbarStartService.Presets)
+    {
+        var r = svc.Apply(p.Values);
+        Log($"набор «{p.Title}»: заблокировано {r.Blocked.Count} ({string.Join(", ", r.Blocked)}), нужен перезапуск проводника: {r.NeedsExplorerRestart}");
+        Shot($"{i++:00}_набор_{p.Title}");
+        svc.RevertAll();
+        Check(RegState().SequenceEqual(original), $"набор «{p.Title}» откатился побайтно");
+    }
+
+    // 4. Перезапуск проводника: оболочка поднимается и панель на месте.
+    svc.Apply(new Dictionary<string, int> { ["Seconds"] = 1 });
+    var sw = Stopwatch.StartNew();
+    svc.RestartExplorer();
+    bool back = false;
+    for (int t = 0; t < 30 && !back; t++) { Thread.Sleep(500); back = Process.GetProcessesByName("explorer").Length > 0; }
+    Log($"проводник поднялся за {sw.Elapsed.TotalSeconds:0.0} с");
+    Check(back, "проводник после перезапуска запущен");
+    Thread.Sleep(4000);
+    Shot("10_секунды_после_перезапуска");
+    svc.RevertAll();
+    svc.RestartExplorer();
+    Thread.Sleep(5000);
+    Check(RegState().SequenceEqual(original), "после отката с перезапуском реестр как был");
+    Shot("11_итог_как_было");
+
+    Check(!File.Exists(undoPath) || File.ReadAllText(undoPath).Trim() == "{}", "файл отката пуст после полного отката");
+    Log($"ИТОГ: прошло {pass}, не прошло {fail}");
+    Log("done");
+    return fail == 0 ? 0 : 1;
 }
-
-// 4. Перезапуск проводника: оболочка поднимается и панель на месте.
-svc.Apply(new Dictionary<string, int> { ["Seconds"] = 1 });
-var sw = Stopwatch.StartNew();
-svc.RestartExplorer();
-bool back = false;
-for (int t = 0; t < 30 && !back; t++) { Thread.Sleep(500); back = Process.GetProcessesByName("explorer").Length > 0; }
-Log($"проводник поднялся за {sw.Elapsed.TotalSeconds:0.0} с");
-Check(back, "проводник после перезапуска запущен");
-Thread.Sleep(4000);
-Shot("10_секунды_после_перезапуска");
-svc.RevertAll();
-svc.RestartExplorer();
-Thread.Sleep(5000);
-Check(RegState().SequenceEqual(original), "после отката с перезапуском реестр как был");
-Shot("11_итог_как_было");
-
-Check(!File.Exists(undoPath) || File.ReadAllText(undoPath).Trim() == "{}", "файл отката пуст после полного отката");
-Log($"ИТОГ: прошло {pass}, не прошло {fail}");
-Log("done");
-return fail == 0 ? 0 : 1;
+catch (Exception ex)
+{
+    Check(false, "исключение " + ex);
+    return 1;
+}
+finally
+{
+    // Проверка оборвалась посреди прохода — вернуть реестр, пока жив свой файл отката.
+    try
+    {
+        if (svc.HasUndo && svc.RevertAll().NeedsExplorerRestart) svc.RestartExplorer();
+    }
+    catch (Exception ex) { Log("откат после проверки не удался: " + ex.Message); }
+    if (File.Exists(undoBackup))
+    {
+        // Свой файл отката не пуст — значит, не всё вернулось; затирать его файлом клиента нельзя.
+        if (svc.HasUndo) Log($"не всё откатилось: файл отката проверки {undoPath}, файл клиента {undoBackup}");
+        else File.Move(undoBackup, undoPath, true);
+    }
+}

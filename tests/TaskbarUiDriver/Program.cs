@@ -20,6 +20,8 @@ internal static class Program
     static readonly StringBuilder LogText = new();
     static int Pass, Fail, Shots;
     static bool Win11 => Environment.OSVersion.Version.Build >= 22000;
+    /// <summary>Профиль клиента, созданный проверкой (до неё его не было), — убирается в конце.</summary>
+    static string? CreatedProfile;
 
     [STAThread]
     static int Main(string[] args)
@@ -28,6 +30,13 @@ internal static class Program
         Directory.CreateDirectory(Out);
         try { Run(exe); }
         catch (Exception ex) { Check(false, "исключение " + ex); Shot("ошибка"); }
+        finally
+        {
+            // При исключении посреди прохода клиент оставался открытым, а созданный здесь профиль —
+            // на диске (клиент у пользователя переставал показывать «Добро пожаловать»).
+            foreach (var p in Process.GetProcessesByName("Ven4Tools")) { try { p.CloseMainWindow(); p.WaitForExit(5000); if (!p.HasExited) p.Kill(); } catch { } }
+            if (CreatedProfile != null) { try { File.Delete(CreatedProfile); } catch (Exception ex) { Log("профиль проверки не удалён: " + ex.Message); } }
+        }
         Log($"ИТОГ: прошло {Pass}, не прошло {Fail}");
         Log("done");
         return Fail == 0 ? 0 : 1;
@@ -73,7 +82,7 @@ internal static class Program
         Log($"Windows {Environment.OSVersion.Version}, Windows 11: {Win11}");
         // Без профиля клиент сначала открывает «Добро пожаловать» — создаём профиль с полным каталогом.
         var profile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "profile.json");
-        if (!File.Exists(profile)) { Directory.CreateDirectory(Path.GetDirectoryName(profile)!); File.WriteAllText(profile, "{\"CatalogMode\":\"full\",\"HasSelectedCategory\":true}"); }
+        if (!File.Exists(profile)) { Directory.CreateDirectory(Path.GetDirectoryName(profile)!); File.WriteAllText(profile, "{\"CatalogMode\":\"full\",\"HasSelectedCategory\":true}"); CreatedProfile = profile; }
         var before = RegDump();
         Log("реестр до: " + before);
         Shot("00_рабочий_стол_до");

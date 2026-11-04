@@ -43,8 +43,51 @@ internal static class ManifestPathGuard
             // резервную копию первой в InstallPartial, и откат потерял бы оригинал.
             // Настоящий файл публикации таким именем на Windows быть не может.
             if (segment.EndsWith('.') || segment.EndsWith(' ')) return false;
+            // Короткое имя 8.3 («VEN4TO~1.DLL») — второе имя того же файла на диске:
+            // та же лазейка мимо проверки дубликатов, что и хвостовая точка выше.
+            // Генератор манифеста пишет только длинные имена публикации.
+            if (LooksLikeShortName(segment)) return false;
+            // Имена устройств DOS («NUL», «con.dll»): на Windows 10 такой путь ведёт
+            // не в файл папки клиента, а на устройство.
+            if (IsReservedDeviceName(segment)) return false;
         }
 
+        return true;
+    }
+
+    private static readonly string[] ReservedDeviceNames =
+    {
+        "CON", "PRN", "AUX", "NUL",
+        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+    };
+
+    private static bool IsReservedDeviceName(string segment)
+    {
+        int dot = segment.IndexOf('.');
+        string stem = (dot >= 0 ? segment[..dot] : segment).TrimEnd(' ');
+        foreach (string name in ReservedDeviceNames)
+        {
+            if (string.Equals(stem, name, StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
+    }
+
+    // Форма короткого имени: до 8 символов основы с «~цифры» в конце и не больше
+    // 3 символов расширения, одна точка.
+    private static bool LooksLikeShortName(string segment)
+    {
+        int dot = segment.LastIndexOf('.');
+        string stem = dot >= 0 ? segment[..dot] : segment;
+        int extensionLength = dot >= 0 ? segment.Length - dot - 1 : 0;
+        if (stem.Length == 0 || stem.Length > 8 || extensionLength > 3 || stem.Contains('.')) return false;
+
+        int tilde = stem.LastIndexOf('~');
+        if (tilde <= 0 || tilde == stem.Length - 1) return false;
+        for (int i = tilde + 1; i < stem.Length; i++)
+        {
+            if (!char.IsAsciiDigit(stem[i])) return false;
+        }
         return true;
     }
 

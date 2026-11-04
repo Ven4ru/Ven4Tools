@@ -98,16 +98,37 @@ namespace Ven4Tools.Launcher.Services
                 string dir = pending.Pop();
                 foreach (string sub in Directory.EnumerateDirectories(dir))
                 {
-                    if (FileHelper.IsReparsePoint(sub))
+                    if (IsLink(new DirectoryInfo(sub)))
                         throw new IOException($"В папке клиента есть ссылка на другую папку: {sub}");
                     pending.Push(sub);
                 }
                 foreach (string file in Directory.EnumerateFiles(dir))
                 {
-                    if (FileHelper.IsReparsePoint(file))
+                    if (IsLink(new FileInfo(file)))
                         throw new IOException($"В папке клиента есть файл-ссылка: {file}");
                     yield return file;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Ссылка (junction/symlink), а не просто reparse point. Файлы и папки OneDrive
+        /// «Файлы по запросу» тоже reparse points (облачный тег), но ведут не в чужое
+        /// место, а к собственному содержимому: по одному атрибуту клиент из OneDrive
+        /// нельзя было ни перенести (а перенос из OneDrive окно настроек и советует),
+        /// ни проверить. LinkTarget не null только у символьных ссылок и junction.
+        /// Не удалось определить — считаем ссылкой (fail-closed).
+        /// </summary>
+        internal static bool IsLink(FileSystemInfo info)
+        {
+            try
+            {
+                if ((info.Attributes & FileAttributes.ReparsePoint) == 0) return false;
+                return info.LinkTarget != null;
+            }
+            catch
+            {
+                return true;
             }
         }
 

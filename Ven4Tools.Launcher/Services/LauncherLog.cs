@@ -34,9 +34,20 @@ namespace Ven4Tools.Launcher.Services
         private static bool _sessionHeaderWritten;
         private static bool _disabled;
 
-        public static string LogDirectory => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Ven4Tools", "logs");
+        // Проверки интерфейса (VEN4TOOLS_UI_TEST=1) работают в своей песочнице — тот же
+        // корень, что берёт MainWindow для настроек. Раньше их журнал шёл в настоящий
+        // %LocalAppData%\Ven4Tools\logs: каждая проверка дописывала строки в журнал
+        // пользователя, а на больших прогонах ещё и ротировала его, затирая
+        // launcher.old.log — журнал прошлой настоящей сессии.
+        public static string LogDirectory =>
+            Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1"
+                ? Path.Combine(
+                    Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST_ROOT")
+                        ?? Path.Combine(Path.GetTempPath(), "Ven4Tools.UI.Tests"),
+                    "logs")
+                : Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Ven4Tools", "logs");
 
         public static string LogPath => Path.Combine(LogDirectory, "launcher.log");
 

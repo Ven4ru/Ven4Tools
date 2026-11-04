@@ -138,7 +138,7 @@ public partial class App : Application
     {
         _winHook?.Dispose();
         _hotkey?.Dispose();
-        if (_tray != null) { _tray.Visible = false; _tray.Dispose(); }
+        if (_tray != null) { _tray.Visible = false; _tray.Dispose(); _tray = null; }
         _menu?.Close();
         Shutdown();
     }
@@ -146,17 +146,27 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _winHook?.Dispose();
+        // Выход не через меню трея (конец сеанса, Shutdown извне): значок иначе остаётся «призраком» до наведения мыши.
+        if (_tray != null) { _tray.Visible = false; _tray.Dispose(); _tray = null; }
         _single?.Dispose();
         base.OnExit(e);
     }
 
-    private static void Log(Exception? ex)
+    private static void Log(Exception? ex) => Log(null, ex);
+
+    private static readonly object LogLock = new();
+
+    /// <summary>Запись в crash.log: что делали (<paramref name="what"/>) и почему не вышло.</summary>
+    internal static void Log(string? what, Exception? ex)
     {
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(LogFile)!);
-            File.AppendAllText(LogFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {ex}{Environment.NewLine}");
+            lock (LogLock)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(LogFile)!);
+                File.AppendAllText(LogFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {(what != null ? what + ": " : "")}{ex}{Environment.NewLine}");
+            }
         }
-        catch { }
+        catch { /* журнал не обязателен и сам не должен ронять меню */ }
     }
 }

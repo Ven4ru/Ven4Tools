@@ -33,11 +33,12 @@ internal static class Program
         NativeTaskbar.RestoreAfterCrash();
 
         AppDomain.CurrentDomain.ProcessExit += (_, _) => EmergencyCleanup();
-        AppDomain.CurrentDomain.UnhandledException += (_, _) => EmergencyCleanup();
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => { CrashLog.Write("необработанная ошибка", e.ExceptionObject as Exception); EmergencyCleanup(); };
 
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         app.DispatcherUnhandledException += (_, e) =>
         {
+            CrashLog.Write("ошибка в потоке окна", e.Exception);
             EmergencyCleanup();
             MessageBox.Show("Ven4Bar завершается из-за ошибки:\n" + e.Exception.Message,
                 "Ven4Bar", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -58,7 +59,7 @@ internal static class Program
             // новые настройки уже сохранены; --left не передаём — край теперь берётся из настроек
             var keep = args.Where(a => a != "--left" && a != "--restarted").Append("--restarted");
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!, string.Join(" ", keep)) { UseShellExecute = false }); }
-            catch { }
+            catch (Exception ex) { CrashLog.Write("не удалось перезапустить панель с новыми настройками", ex); }
             app.Shutdown();
         };
         CreateTray(app);
@@ -108,7 +109,7 @@ internal static class Program
 
     private static void EmergencyCleanup()
     {
-        try { _bar?.EmergencyCleanup(); } catch { }
-        try { NativeTaskbar.Restore(); } catch { }
+        try { _bar?.EmergencyCleanup(); } catch (Exception ex) { CrashLog.Write("аварийная уборка панели", ex); }
+        try { NativeTaskbar.Restore(); } catch (Exception ex) { CrashLog.Write("возврат родной панели задач", ex); }
     }
 }

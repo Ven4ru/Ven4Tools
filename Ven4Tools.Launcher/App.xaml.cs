@@ -205,9 +205,8 @@ public partial class App : Application
     {
         try
         {
-            var dir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Ven4Tools", "logs");
+            // Та же папка, что у журнала лаунчера (в проверках интерфейса — их песочница).
+            var dir = Services.LauncherLog.LogDirectory;
             Directory.CreateDirectory(dir);
             // Миллисекунды + GUID исключают коллизию имён при двух крашах в одну секунду
             var file = Path.Combine(dir, $"launcher_crash_{DateTime.Now:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}.txt");

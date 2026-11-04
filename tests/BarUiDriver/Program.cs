@@ -50,6 +50,8 @@ internal static class Program
         {
             foreach (var n in new[] { "Ven4Bar", "Ven4Start" }) foreach (var p in Process.GetProcessesByName(n)) { try { p.Kill(); } catch { } }
             foreach (var p in Process.GetProcessesByName("BarUiDriver").Where(p => p.Id != Environment.ProcessId)) { try { p.Kill(); } catch { } }
+            // Kill не даёт Ven4Bar вернуть автоскрытие родной панели — возвращаем сами.
+            if (AutoHideState() != stateBefore) { SetAutoHideState(stateBefore); Log($"родная панель возвращена вручную: {stateBefore & 1}"); }
             if (keep != null) File.WriteAllText(ThemeFile, keep); else File.Delete(ThemeFile);
             if (keepBar != null) File.WriteAllText(BarFile, keepBar); else File.Delete(BarFile);
         }
@@ -302,6 +304,8 @@ internal static class Program
     [DllImport("gdi32.dll", SetLastError = true)] static extern bool BitBlt(IntPtr d, int x, int y, int w, int h, IntPtr s, int sx, int sy, int op);
 
     static int AutoHideState() { var d = new APPBARDATA { cbSize = Marshal.SizeOf<APPBARDATA>() }; return (int)SHAppBarMessage(4, ref d); }
+    // ABM_SETSTATE: вернуть родную панель как была, если Ven4Bar убит посреди проверки и сам её не вернул.
+    static void SetAutoHideState(int st) { var d = new APPBARDATA { cbSize = Marshal.SizeOf<APPBARDATA>(), lParam = new IntPtr(st) }; SHAppBarMessage(10, ref d); }
     static IntPtr FindByTitle(string t) => FindWindowW(null, t);
     static void Desktop() { var b = Screen.PrimaryScreen!.Bounds; SetCursorPos(b.Width / 2, b.Height / 3); SetForegroundWindow(GetShellWindow()); Thread.Sleep(700); }
 

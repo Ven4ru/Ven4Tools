@@ -149,7 +149,7 @@ namespace Ven4Tools.Launcher
                             "Winget не обнаружен после установки.\n\nПерезагрузить компьютер сейчас?",
                             "Требуется перезагрузка", MessageBoxButton.YesNo, MessageBoxImage.Question);
                         if (reboot == MessageBoxResult.Yes)
-                            Process.Start(new ProcessStartInfo(Services.TrustedExecutablePaths.ShutdownExe, "/r /t 10") { UseShellExecute = true });
+                            Process.Start(new ProcessStartInfo(Services.TrustedExecutablePaths.ShutdownExe, "/r /t 10") { UseShellExecute = true })?.Dispose();
                     }
                     else
                     {
@@ -393,9 +393,9 @@ namespace Ven4Tools.Launcher
             // в момент старта процесса (тот же приём, что у InstallChocoAsync).
             string script =
                 "$ErrorActionPreference = 'Stop'\r\n" +
-                $"try {{ Add-AppxPackage -Path '{tempVcLibs.Replace("'", "''")}' }} catch {{}}\r\n" +
-                $"try {{ Add-AppxPackage -Path '{tempUiXaml.Replace("'", "''")}' }} catch {{}}\r\n" +
-                $"Add-AppxPackage -Path '{tempMsix.Replace("'", "''")}' -ForceApplicationShutdown\r\n";
+                $"try {{ Add-AppxPackage -Path '{PsSingleQuotedContent(tempVcLibs)}' }} catch {{}}\r\n" +
+                $"try {{ Add-AppxPackage -Path '{PsSingleQuotedContent(tempUiXaml)}' }} catch {{}}\r\n" +
+                $"Add-AppxPackage -Path '{PsSingleQuotedContent(tempMsix)}' -ForceApplicationShutdown\r\n";
             string encodedScript = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
 
             var psi = new ProcessStartInfo
@@ -425,6 +425,24 @@ namespace Ven4Tools.Launcher
                     AddLog($"⚠️ PowerShell: {stderr.Trim()}");
             }
             return true;
+        }
+
+        // Содержимое строки PowerShell в одинарных кавычках. Закрывающей кавычкой
+        // PowerShell считает не только ', но и типографские ‘ ’ ‚ ‛ — а путь идёт через
+        // %TEMP% профиля, и имя пользователя вида «O’Brien» обрывало строку: скрипт
+        // падал с синтаксической ошибкой, winget не ставился. Удвоение любой из них
+        // внутри одинарных кавычек даёт сам символ (то же делает
+        // CodeGeneration.EscapeSingleQuotedStringContent в самом PowerShell).
+        private static string PsSingleQuotedContent(string value)
+        {
+            var sb = new StringBuilder(value.Length + 8);
+            foreach (char c in value)
+            {
+                if (c is '\'' or '‘' or '’' or '‚' or '‛')
+                    sb.Append(c);
+                sb.Append(c);
+            }
+            return sb.ToString();
         }
     }
 }

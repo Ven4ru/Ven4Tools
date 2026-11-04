@@ -28,8 +28,9 @@ internal sealed class Volume : IDisposable
             _ep.RegisterControlChangeNotify(_cb);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            CrashLog.Write("громкость недоступна (нет устройства вывода звука?)", ex);
             _ep = null;
             return false;
         }
@@ -73,7 +74,7 @@ internal sealed class Volume : IDisposable
     {
         if (_ep != null && _cb != null)
         {
-            try { _ep.UnregisterControlChangeNotify(_cb); } catch { }
+            try { _ep.UnregisterControlChangeNotify(_cb); } catch (Exception ex) { CrashLog.Write("отписка от громкости", ex); }
         }
         _ep = null;
     }

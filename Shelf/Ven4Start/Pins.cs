@@ -26,9 +26,12 @@ internal static class Pins
         try
         {
             if (File.Exists(FilePath))
-                return JsonSerializer.Deserialize<List<string>>(File.ReadAllText(FilePath)) ?? new();
+                // null в испорченном файле ронял меню (ContainsKey(null)); повторы — двойные плитки.
+                return (JsonSerializer.Deserialize<List<string?>>(File.ReadAllText(FilePath)) ?? new())
+                    .Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p!)
+                    .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         }
-        catch { }
+        catch (Exception ex) { App.Log("закреплённые не прочитаны — беру набор по умолчанию", ex); }
         var list = new List<string>();
         foreach (var names in Defaults)
         {
@@ -46,6 +49,6 @@ internal static class Pins
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
             File.WriteAllText(FilePath, JsonSerializer.Serialize(pins));
         }
-        catch { }
+        catch (Exception ex) { App.Log("закреплённые не сохранены", ex); }
     }
 }

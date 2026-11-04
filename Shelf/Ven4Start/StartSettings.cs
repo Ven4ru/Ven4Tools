@@ -31,7 +31,7 @@ internal sealed class StartSettings
         {
             if (File.Exists(FilePath)) return JsonSerializer.Deserialize<StartSettings>(File.ReadAllText(FilePath)) ?? new();
         }
-        catch { }
+        catch (Exception ex) { App.Log("настройки меню не прочитаны — беру обычные", ex); }
         return new();
     }
 
@@ -42,6 +42,6 @@ internal sealed class StartSettings
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
             File.WriteAllText(FilePath, JsonSerializer.Serialize(this));
         }
-        catch { }
+        catch (Exception ex) { App.Log("настройки меню не сохранены", ex); }
     }
 }

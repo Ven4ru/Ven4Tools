@@ -18,6 +18,7 @@ internal static class Program
     static readonly StringBuilder LogText = new();
     static int Pass, Fail, Shots;
     static readonly string ThemeFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "taskbar_theme.json");
+    static readonly string SetFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Start", "settings.json");
 
     [STAThread]
     static int Main(string[] args)
@@ -25,12 +26,17 @@ internal static class Program
         Out = args[0]; var exe = args[1];
         Directory.CreateDirectory(Out);
         string? keep = File.Exists(ThemeFile) ? File.ReadAllText(ThemeFile) : null;
+        // Настройки меню запоминаются здесь, а не посреди прохода: возврат в finally
+        // срабатывает и тогда, когда проверка размеров упала исключением.
+        string? keepSet = File.Exists(SetFile) ? File.ReadAllText(SetFile) : null;
         try { Run(exe); }
         catch (Exception ex) { Check(false, "исключение " + ex); Shot("ошибка"); }
         finally
         {
-            foreach (var p in Process.GetProcessesByName("Ven4Start")) { try { p.Kill(); } catch { } }
+            // Сначала остановить меню: живое меню может переписать свои настройки после возврата.
+            foreach (var p in Process.GetProcessesByName("Ven4Start")) { try { p.Kill(); p.WaitForExit(3000); } catch { } }
             if (keep != null) File.WriteAllText(ThemeFile, keep); else File.Delete(ThemeFile);
+            if (keepSet != null) File.WriteAllText(SetFile, keepSet); else if (File.Exists(SetFile)) File.Delete(SetFile);
         }
         Log($"ИТОГ: прошло {Pass}, не прошло {Fail}");
         Log("done");
@@ -104,12 +110,12 @@ internal static class Program
         }
 
         // размеры и разделы (настройки меню)
-        var setFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Start", "settings.json");
-        string? keepSet = File.Exists(setFile) ? File.ReadAllText(setFile) : null;
+        // Исходные настройки запомнены в Main и возвращаются там же в finally.
         Theme("venchik");
+        Directory.CreateDirectory(Path.GetDirectoryName(SetFile)!);
         foreach (var (json, name) in new[] { ("{\"Size\":0}", "07_размер_компактный"), ("{\"Size\":2}", "08_размер_большой"), ("{\"Size\":1,\"ShowAll\":false}", "09_без_списка_программ") })
         {
-            File.WriteAllText(setFile, json);
+            File.WriteAllText(SetFile, json);
             // меню перечитывает настройки при запуске — перезапускаем
             foreach (var pr in Process.GetProcessesByName("Ven4Start")) { try { pr.Kill(); pr.WaitForExit(3000); } catch { } }
             var ms = Show(exe);
@@ -129,7 +135,6 @@ internal static class Program
         Check((m2?.Current.BoundingRectangle.Width ?? 0) > w0 + 50, "«Большой» в настройках сразу увеличивает меню");
         Shot("11_большой_из_настроек");
         Hide();
-        if (keepSet != null) File.WriteAllText(setFile, keepSet); else File.Delete(setFile);
 
         // нагрузка в простое: меню скрыто
         Thread.Sleep(3000);

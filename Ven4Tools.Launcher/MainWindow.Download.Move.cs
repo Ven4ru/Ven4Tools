@@ -10,6 +10,9 @@ namespace Ven4Tools.Launcher
 {
     public partial class MainWindow
     {
+        /// <summary>Папка установленного клиента — для окна настроек.</summary>
+        internal string CurrentClientPath => _clientPath;
+
         /// <summary>
         /// «Перенести клиент» (окно настроек): перенос уже установленного клиента в
         /// другую папку — по умолчанию в %LocalAppData%\Programs\Ven4Tools.
@@ -27,9 +30,6 @@ namespace Ven4Tools.Launcher
         /// велит убрать недоделанную копию; после шага 5 — доудалить старую.
         /// Без нажатия кнопки ничего не переносится.
         /// </summary>
-        /// <summary>Папка установленного клиента — для окна настроек.</summary>
-        internal string CurrentClientPath => _clientPath;
-
         internal async Task<bool> MoveClientAsync()
         {
             if (_isUiTestMode)
@@ -196,6 +196,8 @@ namespace Ven4Tools.Launcher
                 {
                     // Указатель уже на новой проверенной папке — клиент работоспособен.
                     // Старая копия осталась; журнал доделает её удаление при старте.
+                    // Версия и кнопка — уже по новой папке, как в успешной ветке.
+                    CheckExistingClient(quiet: true);
                     return true;
                 }
 

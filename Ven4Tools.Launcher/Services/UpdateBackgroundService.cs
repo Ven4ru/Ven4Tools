@@ -78,7 +78,18 @@ namespace Ven4Tools.Launcher.Services
         private async Task CheckAllAsync()
         {
             // Уже идёт проверка (таймер наложился на ручной вызов) — не ждём, выходим.
-            if (!await _checkGate.WaitAsync(0))
+            bool entered;
+            try
+            {
+                entered = await _checkGate.WaitAsync(0);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Срабатывание таймера, уже стоявшее в очереди пула, пришло после Dispose:
+                // исключение ушло бы в задачу «_ = CheckAllAsync()», которую никто не ждёт.
+                return;
+            }
+            if (!entered)
             {
                 Log("Проверка обновлений уже выполняется — повторный запуск пропущен.");
                 return;
