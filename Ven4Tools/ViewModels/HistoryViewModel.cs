@@ -179,8 +179,15 @@ namespace Ven4Tools.ViewModels
 
             AppLogger.Write($"🔄 Переустановка: {entry.AppName}...");
 
+            // В журнал — только смена текста статуса: отчёт о ходе приходит на каждый процент
+            // загрузки, и сотня одинаковых «📥 Скачивание...» затирала журнал ротацией.
+            string? lastStatus = null;
             var progress = new Progress<AppInstallProgress>(p =>
-                AppLogger.Write($"  {p.Status}"));
+            {
+                if (p.Status == lastStatus) return;
+                lastStatus = p.Status;
+                AppLogger.Write($"  {p.Status}");
+            });
 
             IsReinstalling = true;
             await InstallationService.InstallSemaphore.WaitAsync();

@@ -120,7 +120,14 @@ namespace Ven4Tools.Views
             // (тот же фикс, что уже применён к переустановке из истории — HistoryTab).
             if (!string.IsNullOrEmpty(catalogApp.SilentArgs))
                 appInfo.SilentArgs = catalogApp.SilentArgs;
-            var prog = new Progress<AppInstallProgress>(p => AppLogger.Write($"  {p.Status}"));
+            // В журнал — только смена статуса, не каждый процент загрузки (как в «Истории»).
+            string? lastStatus = null;
+            var prog = new Progress<AppInstallProgress>(p =>
+            {
+                if (p.Status == lastStatus) return;
+                lastStatus = p.Status;
+                AppLogger.Write($"  {p.Status}");
+            });
 
             // Общий семафор: не даём пину запустить установку параллельно с каталогом/историей.
             if (btn != null) btn.IsEnabled = false;
