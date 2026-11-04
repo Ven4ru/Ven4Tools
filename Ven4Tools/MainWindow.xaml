@@ -24,7 +24,7 @@
                         <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="5">
                             <Grid Margin="10,0">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{TemplateBinding Tag}" FontFamily="Segoe Fluent Icons"
+                                <TextBlock Grid.Column="0" Text="{TemplateBinding Tag}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                            FontSize="15" Foreground="{TemplateBinding Foreground}"
                                            VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="1" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"
@@ -61,7 +61,7 @@
                         <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="5"
                                 BorderBrush="Transparent" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Text="&#xE8AB;" FontFamily="Segoe Fluent Icons" FontSize="11" Margin="0,1,7,0"
+                                <TextBlock Text="&#xE8AB;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="11" Margin="0,1,7,0"
                                            Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
                                 <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
                             </StackPanel>
@@ -119,7 +119,7 @@
                         <Grid>
                             <Button x:Name="btnGroupWindows" Style="{StaticResource NavButtonStyle}" Tag="&#xE770;" Content="Windows"
                                     Click="BtnGroupWindows_Click" ToolTip="Раскрывает разделы Windows: обновления, Office, лицензия, очистка, автозагрузка и место на диске."/>
-                            <TextBlock x:Name="chevGroupWindows" Text="&#xE70D;" FontFamily="Segoe Fluent Icons" FontSize="9"
+                            <TextBlock x:Name="chevGroupWindows" Text="&#xE70D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="9"
                                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
                                        IsHitTestVisible="False" Foreground="{DynamicResource TextSecondary}"/>
                         </Grid>
@@ -142,7 +142,7 @@
                         <Grid>
                             <Button x:Name="btnGroupService" Style="{StaticResource NavButtonStyle}" Tag="&#xE90F;" Content="Сервис"
                                     Click="BtnGroupService_Click" ToolTip="Раскрывает служебные разделы: сеть, диагностика и бенчмарк."/>
-                            <TextBlock x:Name="chevGroupService" Text="&#xE70D;" FontFamily="Segoe Fluent Icons" FontSize="9"
+                            <TextBlock x:Name="chevGroupService" Text="&#xE70D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="9"
                                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
                                        IsHitTestVisible="False" Foreground="{DynamicResource TextSecondary}"/>
                         </Grid>
@@ -201,7 +201,7 @@
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
                     Padding="14,7" Visibility="Collapsed">
                 <DockPanel>
-                    <TextBlock Text="&#xE840;" FontFamily="Segoe Fluent Icons" Margin="0,0,8,0" Foreground="{DynamicResource AccentColor}"/>
+                    <TextBlock Text="&#xE840;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Margin="0,0,8,0" Foreground="{DynamicResource AccentColor}"/>
                     <WrapPanel x:Name="wrapPins"/>
                 </DockPanel>
             </Border>
@@ -241,7 +241,7 @@
             <Border x:Name="pnlDropOverlay" Grid.Row="0" Grid.RowSpan="4" Visibility="Collapsed" Panel.ZIndex="99"
                     Background="{DynamicResource OverlayBackground}" BorderBrush="{DynamicResource AccentColor}" BorderThickness="2" CornerRadius="8" Margin="12">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons" FontSize="44" Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="44" Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center"/>
                     <TextBlock Text="Добавить локальный установщик" FontSize="19" FontWeight="SemiBold" Margin="0,14,0,0"/>
                     <TextBlock Text="Отпустите файл, чтобы продолжить" Foreground="{DynamicResource TextSecondary}" Margin="0,5,0,0"/>
                 </StackPanel>

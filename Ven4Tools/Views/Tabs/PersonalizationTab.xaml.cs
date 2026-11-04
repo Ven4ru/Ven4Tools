@@ -51,7 +51,7 @@ namespace Ven4Tools.Views.Tabs
             RefreshTaskbar();
         }
 
-        // ── Панель задач и Пуск ─────────────────────────────────────────────
+        // ── Панель задач и Пуск (блок 1, дизайн 04.11.2026) ─────────────────
 
         public sealed class Choice
         {
@@ -72,20 +72,95 @@ namespace Ven4Tools.Views.Tabs
             public string Status => Changed ? "✓ Изменено Ven4Tools — можно вернуть" : "Как в Windows сейчас";
         }
 
+        public sealed class ThemeItem
+        {
+            public TaskbarTheme Theme { get; init; } = null!;
+            public string Title => Theme.Title;
+            public string Tip { get; init; } = "";
+            public Brush BarBrush { get; init; } = Brushes.Gray;
+            public Brush AccentBrush { get; init; } = Brushes.White;
+            public bool Selected { get; init; }
+            public Visibility RingVisibility => Selected ? Visibility.Visible : Visibility.Hidden;
+        }
+
         public sealed class PresetItem
         {
             public string Title { get; init; } = "";
             public string Description { get; init; } = "";
             public Dictionary<string, int> Values { get; init; } = new();
+            /// <summary>Набор только про цвет («Тёмная с акцентом») — выбирает тему, а не настройки.</summary>
+            public bool ThemeOnly { get; init; }
+            public ImageSource? Wallpaper { get; init; }
+            public TaskbarTheme Theme { get; init; } = TaskbarThemeService.Themes[2];
+            public bool Centered { get; init; }
+            public int Search { get; init; }
+            public bool TaskView { get; init; }
+            public bool Widgets { get; init; }
+            public bool Labels { get; init; }
+            public bool StartMenu { get; init; }
+            public bool Ears { get; init; }
+            public bool SearchLight { get; init; } = true;
+            public bool Selected { get; init; }
+            public Brush BorderBrush => Selected ? (Brush)Application.Current.FindResource("AccentColor") : (Brush)Application.Current.FindResource("BorderBrush");
+            public Thickness BorderThick => new(Selected ? 2 : 1);
         }
 
         private readonly TaskbarStartService _taskbar = TaskbarStartService.Default;
+        private readonly TaskbarThemeService _themes = TaskbarThemeService.Default;
+        private TaskbarTheme? _selTheme;
+        private TaskbarTheme? _custom;
+        private bool _customDarkened;
+        private PresetItem? _selPreset;
+        private ImageSource? _wallpaper;
+        private bool _loading;
 
-        private void RefreshTaskbar()
+        private static Brush Br(string hex) { var (r, g, b) = TaskbarThemeService.Rgb(hex); var br = new SolidColorBrush(Color.FromRgb(r, g, b)); br.Freeze(); return br; }
+
+        private ImageSource? UserWallpaper()
         {
             try
             {
-                lstTaskbar.ItemsSource = _taskbar.Available.Select(s =>
+                using var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop");
+                var path = k?.GetValue("Wallpaper") as string;
+                if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
+                    path = System.IO.Path.Combine(AppContext.BaseDirectory, "Personalization", "Venchik", PersonalizationService.WallpaperFile);
+                return System.IO.File.Exists(path) ? LoadPreview(path, 1100) : null;
+            }
+            catch (Exception ex) { AppLogger.Write("⚠️ Витрина панели: обои не прочитаны — " + ex.Message); return null; }
+        }
+
+        private int CurrentValue(string id)
+        {
+            var s = TaskbarStartService.All.FirstOrDefault(x => x.Id == id);
+            return s == null ? 0 : _taskbar.Current(s);
+        }
+
+        /// <summary>Как будет выглядеть панель: текущие настройки Windows поверх — значения набора.</summary>
+        private (bool Centered, int Search, bool TaskView, bool Widgets, bool Labels, bool StartMenu) Layout(PresetItem? p)
+        {
+            int V(string id) => p != null && p.Values.TryGetValue(id, out var v) ? v : CurrentValue(id);
+            bool win11 = _taskbar.IsWindows11;
+            return (win11 && V("Align") == 1,
+                    win11 ? V("Search11") : V("Search10"),
+                    V("TaskView") == 1,
+                    win11 && V("Widgets") == 1,
+                    V("Combine") != 0,
+                    p?.Values.ContainsKey("StartLayout") == true);
+        }
+
+        private void RefreshTaskbar()
+        {
+            _loading = true;
+            try
+            {
+                _wallpaper ??= UserWallpaper();
+                var st = _themes.Current;
+                _selTheme ??= _themes.AppliedTheme ?? TaskbarThemeService.Themes[0];
+                if (_selTheme.Id == "custom") _custom = _selTheme;
+
+                // Цвет теперь задают темы — пункты группы «Цвет» в тонкой настройке не дублируем.
+                var fine = _taskbar.Available.Where(s => s.Group != "Цвет").ToList();
+                lstTaskbar.ItemsSource = fine.Select(s =>
                 {
                     var choices = s.Choices.Select(c => new Choice { Value = c.Value, Label = Tr(c.Label) }).ToList();
                     var current = _taskbar.Current(s);
@@ -98,64 +173,249 @@ namespace Ven4Tools.Views.Tabs
                         Changed = _taskbar.IsChanged(s),
                     };
                 }).ToList();
-                lstPresets.ItemsSource = TaskbarStartService.Presets
-                    .Select(p => new PresetItem { Title = p.Title, Description = p.Description, Values = p.Values }).ToList();
-                btnTaskbarRevert.IsEnabled = _taskbar.HasUndo;
+                txtFineHeader.Text = string.Format(Tr("Тонкая настройка · {0} пунктов"), fine.Count);
+
+                lstThemes.ItemsSource = TaskbarThemeService.Themes.Select(t => new ThemeItem
+                {
+                    Theme = t,
+                    BarBrush = Br(t.Prevalence ? t.Bar : (t.Dark ? "#202020" : "#EEEEEE")),
+                    AccentBrush = Br(t.Inner),
+                    Selected = _selTheme.Id == t.Id,
+                    Tip = string.Format(Tr("Читаемость подписей {0:0.0}:1"), TaskbarThemeService.Readability(t)),
+                }).ToList();
+
+                chkEars.IsEnabled = TaskbarThemeService.EarsAvailable;
+                if (st.Ears || _themes.AppliedTheme == null) chkEars.IsChecked = TaskbarThemeService.EarsAvailable && (st.Ears || st.ThemeId == null);
+                cmbEdge.IsEnabled = _themes.CanMoveLeft;
+                var cur = _themes.CanMoveLeft ? _themes.Edge : TaskbarThemeService.EdgeBottom;
+                cmbEdge.SelectedItem = cmbEdge.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == cur.ToString()) ?? cmbEdge.Items[0];
+                cmbEdge.ToolTip = _themes.CanMoveLeft
+                    ? Tr("Панель задач у любого края экрана — родная настройка Windows 10. После применения проводник перезапустится.")
+                    : Tr("В Windows 11 родную панель задач нельзя переставить. Панель сверху, слева или справа — в своей панели Ven4Bar.");
+
+                RefreshPresets();
+                btnTaskbarRevert.IsEnabled = _taskbar.HasUndo || _themes.HasUndo;
+                var applied = _themes.AppliedTheme;
+                txtTaskbarStatus.Text = applied != null ? string.Format(Tr("✓ Применена тема «{0}»"), Tr(applied.Title)) : "";
             }
             catch (Exception ex)
             {
                 AppLogger.Write("❌ Панель задач: настройки не прочитаны — " + ex.Message);
             }
+            finally { _loading = false; }
+            UpdatePreview();
         }
 
-        private async Task ApplyTaskbarAsync(IReadOnlyDictionary<string, int> values, bool revert)
+        private void RefreshPresets()
         {
-            IsEnabled = false;
-            TaskbarStartService.ApplyResult? result = null;
+            var theme = PreviewTheme();
+            lstPresets.ItemsSource = TaskbarStartService.Presets.Select(p =>
+            {
+                bool themeOnly = p.Values.Keys.All(k => k is "DarkSystem" or "AccentBar" or "Transparency");
+                var item = new PresetItem { Title = p.Title, Description = p.Description, Values = p.Values, ThemeOnly = themeOnly };
+                var l = Layout(themeOnly ? null : item);
+                return new PresetItem
+                {
+                    Title = p.Title,
+                    Description = themeOnly ? "Тёмные панель и Пуск в цвете темы — всегда читаются." : p.Description,
+                    Values = p.Values,
+                    ThemeOnly = themeOnly,
+                    Wallpaper = _wallpaper,
+                    Theme = themeOnly ? TaskbarThemeService.Themes.First(t => t.Id == "violet") : theme,
+                    Centered = l.Centered, Search = l.Search, TaskView = l.TaskView, Widgets = l.Widgets, Labels = l.Labels, StartMenu = l.StartMenu,
+                    Ears = chkEars.IsChecked == true,
+                    SearchLight = AppsLight(),
+                    Selected = _selPreset?.Title == p.Title,
+                };
+            }).ToList();
+        }
+
+        private static bool AppsLight()
+        {
             try
             {
-                result = await Task.Run(() => revert ? _taskbar.RevertAll() : _taskbar.Apply(values));
+                using var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+                return k?.GetValue("AppsUseLightTheme") is not int v || v != 0;
+            }
+            catch { return true; }
+        }
+
+        private TaskbarTheme PreviewTheme()
+        {
+            var t = _selTheme ?? TaskbarThemeService.Themes[0];
+            return t with { Transparency = t.Transparency && chkTransparency.IsChecked == true };
+        }
+
+        private void UpdatePreview()
+        {
+            if (_loading) return;
+            var t = PreviewTheme();
+            var l = Layout(_selPreset is { ThemeOnly: false } ? _selPreset : null);
+            preview.Wallpaper = _wallpaper;
+            preview.Theme = t;
+            preview.Transparency = t.Transparency;
+            preview.Centered = l.Centered; preview.Search = l.Search; preview.TaskView = l.TaskView;
+            preview.Widgets = l.Widgets; preview.Labels = l.Labels; preview.StartMenu = l.StartMenu;
+            preview.Ears = chkEars.IsChecked == true;
+            preview.SearchLight = AppsLight();
+            preview.Edge = _themes.CanMoveLeft ? SelectedEdge() : TaskbarThemeService.EdgeBottom;
+
+            var r = TaskbarThemeService.Readability(t);
+            txtReadability.Text = string.Format(Tr("Читаемость подписей: {0:0.0}:1 · {1}"), r, Tr(r >= 7 ? "отлично" : r >= 4.5 ? "хорошо" : "плохо"));
+            pillReadability.Background = (Brush)Application.Current.FindResource(r >= 4.5 ? "AccentSoftBackground" : "StatusDanger");
+            txtReadability.Foreground = (Brush)Application.Current.FindResource(r >= 4.5 ? "AccentColor" : "TextPrimary");
+            txtCustomNote.Visibility = _selTheme?.Id == "custom" && _customDarkened ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void Theme_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.Tag is not ThemeItem item) return;
+            _selTheme = item.Theme;
+            if (_selPreset is { ThemeOnly: true }) _selPreset = null;
+            RefreshTaskbarSelection();
+        }
+
+        private void CustomColor_Click(object sender, RoutedEventArgs e)
+        {
+            using var dlg = new System.Windows.Forms.ColorDialog { FullOpen = true, AnyColor = true };
+            if (_custom != null) { var (r, g, b) = TaskbarThemeService.Rgb(_custom.Accent); dlg.Color = System.Drawing.Color.FromArgb(r, g, b); }
+            if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+            var hex = $"#{dlg.Color.R:X2}{dlg.Color.G:X2}{dlg.Color.B:X2}";
+            _custom = TaskbarThemeService.FromCustom(hex, true, out _customDarkened);
+            _selTheme = _custom;
+            RefreshTaskbarSelection();
+        }
+
+        private void RefreshTaskbarSelection()
+        {
+            if (lstThemes.ItemsSource is IEnumerable<ThemeItem> themes)
+                lstThemes.ItemsSource = themes.Select(t => new ThemeItem { Theme = t.Theme, BarBrush = t.BarBrush, AccentBrush = t.AccentBrush, Tip = t.Tip, Selected = _selTheme?.Id == t.Theme.Id }).ToList();
+            RefreshPresets();
+            UpdatePreview();
+        }
+
+        private int SelectedEdge() => cmbEdge.SelectedItem is ComboBoxItem { Tag: string t } && int.TryParse(t, out var v) ? v : TaskbarThemeService.EdgeBottom;
+
+        private void TaskbarEdge_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || !IsLoaded) return;
+            UpdatePreview();
+        }
+
+        private void TaskbarOption_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_loading || !IsLoaded) return;
+            RefreshPresets();
+            UpdatePreview();
+        }
+
+        private void Preset_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.Tag is not PresetItem p) return;
+            if (_selPreset?.Title == p.Title) _selPreset = null;     // повторное нажатие снимает выбор
+            else
+            {
+                _selPreset = p;
+                if (p.ThemeOnly) _selTheme = p.Theme;
+            }
+            RefreshTaskbarSelection();
+        }
+
+        private async void TaskbarApply_Click(object sender, RoutedEventArgs e)
+        {
+            var theme = PreviewTheme();
+            var preset = _selPreset is { ThemeOnly: false } ? _selPreset.Values : null;
+            bool ears = chkEars.IsChecked == true && TaskbarThemeService.EarsAvailable;
+            int edge = SelectedEdge();
+            IsEnabled = false;
+            bool restart = false;
+            var blocked = new List<string>();
+            try
+            {
+                await Task.Run(() =>
+                {
+                    _themes.ApplyTheme(theme);
+                    if (preset != null)
+                    {
+                        var r = _taskbar.Apply(preset);
+                        blocked.AddRange(r.Blocked);
+                        restart |= r.NeedsExplorerRestart;
+                    }
+                    if (ears) _themes.EnableEars(theme); else _themes.DisableEars();
+                    if (_themes.CanMoveLeft && edge != _themes.Edge && _themes.SetEdge(edge)) restart = true;
+                });
             }
             catch (Exception ex)
             {
                 AppLogger.Write("❌ Панель задач: " + ex.Message);
-                MessageBox.Show("Не получилось изменить настройки. Подробности — в журнале.", "Панель задач и Пуск",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Не получилось изменить настройки. Подробности — в журнале.", "Панель задач и Пуск", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             finally
             {
                 IsEnabled = true;
+                _selPreset = null;
                 RefreshTaskbar();
             }
-            if (result == null) return;
-            if (result.Blocked.Count > 0)
+            await AfterTaskbarChange(blocked, restart);
+        }
+
+        private async Task AfterTaskbarChange(List<string> blocked, bool restart)
+        {
+            if (blocked.Count > 0)
             {
                 MessageBox.Show(string.Format("Windows не разрешает менять эти настройки программам: {0}. Сейчас откроется окно «Параметры» — там это можно сделать вручную.",
-                    string.Join(", ", result.Blocked.Select(Tr))), "Панель задач и Пуск", MessageBoxButton.OK, MessageBoxImage.Information);
+                    string.Join(", ", blocked.Select(Tr))), "Панель задач и Пуск", MessageBoxButton.OK, MessageBoxImage.Information);
                 OpenTaskbarSettings_Click(this, new RoutedEventArgs());
             }
-            if (result.NeedsExplorerRestart &&
+            if (restart &&
                 MessageBox.Show("Часть настроек появится после перезапуска проводника. Открытые окна папок закроются. Перезапустить сейчас?",
                     "Панель задач и Пуск", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 await Task.Run(_taskbar.RestartExplorer);
         }
 
-        private async void TaskbarApply_Click(object sender, RoutedEventArgs e)
+        private async void TaskbarFineApply_Click(object sender, RoutedEventArgs e)
         {
             if (lstTaskbar.ItemsSource is not IEnumerable<TaskbarItem> items) return;
             var values = items.Where(i => i.Selected != null && i.Selected.Value != i.CurrentValue)
                 .ToDictionary(i => i.Setting.Id, i => i.Selected!.Value);
             if (values.Count == 0) return;
-            await ApplyTaskbarAsync(values, revert: false);
+            IsEnabled = false;
+            TaskbarStartService.ApplyResult? result = null;
+            try { result = await Task.Run(() => _taskbar.Apply(values)); }
+            catch (Exception ex)
+            {
+                AppLogger.Write("❌ Панель задач: " + ex.Message);
+                MessageBox.Show("Не получилось изменить настройки. Подробности — в журнале.", "Панель задач и Пуск", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            finally { IsEnabled = true; RefreshTaskbar(); }
+            if (result != null) await AfterTaskbarChange(result.Blocked, result.NeedsExplorerRestart);
         }
 
-        private async void Preset_Click(object sender, RoutedEventArgs e)
+        private async void TaskbarRevert_Click(object sender, RoutedEventArgs e)
         {
-            if ((sender as FrameworkElement)?.Tag is PresetItem preset) await ApplyTaskbarAsync(preset.Values, revert: false);
+            IsEnabled = false;
+            bool restart = false;
+            var blocked = new List<string>();
+            try
+            {
+                await Task.Run(() =>
+                {
+                    // Сначала тема (её «как было» снято раньше настроек), потом остальные настройки.
+                    restart |= _themes.RevertAll();
+                    var r = _taskbar.RevertAll();
+                    blocked.AddRange(r.Blocked);
+                    restart |= r.NeedsExplorerRestart;
+                });
+            }
+            catch (Exception ex) { AppLogger.Write("❌ Панель задач: откат — " + ex.Message); }
+            finally
+            {
+                IsEnabled = true;
+                _selTheme = null; _selPreset = null;
+                RefreshTaskbar();
+            }
+            await AfterTaskbarChange(blocked, restart);
         }
-
-        private async void TaskbarRevert_Click(object sender, RoutedEventArgs e) =>
-            await ApplyTaskbarAsync(new Dictionary<string, int>(), revert: true);
 
         private async void RestartExplorer_Click(object sender, RoutedEventArgs e)
         {
@@ -189,7 +449,7 @@ namespace Ven4Tools.Views.Tabs
             btnRevertAll.IsEnabled = items.Any(i => i.IsApplied);
         }
 
-        private static ImageSource? LoadPreview(string? path)
+        private static ImageSource? LoadPreview(string? path, int width = 640)
         {
             if (path == null) return null;
             try
@@ -198,7 +458,7 @@ namespace Ven4Tools.Views.Tabs
                 var image = new BitmapImage();
                 image.BeginInit();
                 image.CacheOption = BitmapCacheOption.OnLoad;
-                image.DecodePixelWidth = 640;
+                image.DecodePixelWidth = width;
                 image.UriSource = new Uri(path);
                 image.EndInit();
                 image.Freeze();

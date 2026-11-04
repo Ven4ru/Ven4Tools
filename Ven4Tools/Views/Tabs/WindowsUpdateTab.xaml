@@ -62,7 +62,7 @@
                         <StackPanel x:Name="pnlUpdatesEmpty"
                                     HorizontalAlignment="Center" VerticalAlignment="Center"
                                     Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="&#xE72E;" FontFamily="Segoe Fluent Icons" FontSize="40"
+                            <TextBlock Text="&#xE72E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="40"
                                        IsHitTestVisible="False"
                                        Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center"/>
                             <TextBlock x:Name="txtUpdatesEmptyTitle" Text="{Binding EmptyStateTitle}"
