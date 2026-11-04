@@ -324,7 +324,7 @@ namespace Ven4Tools.Launcher
             var psi = new ProcessStartInfo { FileName = exeName, UseShellExecute = true, Verb = "runas" };
             try
             {
-                Process.Start(psi);
+                Process.Start(psi)?.Dispose();
             }
             catch
             {
@@ -375,7 +375,9 @@ namespace Ven4Tools.Launcher
 
         private bool IsRunAsAdmin()
         {
-            var identity  = System.Security.Principal.WindowsIdentity.GetCurrent();
+            // WindowsIdentity держит дескриптор токена — освобождаем сразу, метод
+            // вызывается при каждой проверке и установке компонентов.
+            using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
             var principal = new System.Security.Principal.WindowsPrincipal(identity);
             return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
         }

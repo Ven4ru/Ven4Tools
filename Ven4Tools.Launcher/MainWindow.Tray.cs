@@ -79,10 +79,20 @@ namespace Ven4Tools.Launcher
                 _notifyIcon.ContextMenuStrip = contextMenu;
                 _notifyIcon.DoubleClick      += (s, e) => Dispatcher.Invoke(ShowWindow);
                 _notifyIcon.BalloonTipClicked += (s, e) => Dispatcher.Invoke(ShowWindow);
+
+                // Значок убирается и тогда, когда процесс завершается мимо ExitApplication
+                // (Shutdown(1) после необработанного исключения в App.OnDispatcherException):
+                // иначе в трее оставался «мёртвый» значок до наведения мыши.
+                Closed += (_, _) => _notifyIcon?.Dispose();
             }
             catch (Exception ex)
             {
                 AddLog($"⚠️ Ошибка создания иконки в трее: {ex.Message}");
+                // Значок без меню и без двойного щелчка вернуть окно не может. Пусть
+                // лучше его не будет вовсе: тогда крестик и «запуск свёрнутым» не прячут
+                // окно в трей (см. CanHideToTray), а процесс не становится невидимым.
+                try { _notifyIcon?.Dispose(); } catch { }
+                _notifyIcon = null;
             }
         }
 
@@ -274,7 +284,9 @@ namespace Ven4Tools.Launcher
             if (_exiting) return;
 
             // Крестик прячет окно в трей только если включена соответствующая настройка
-            if (_minimizeToTray)
+            // и значок в трее действительно есть: без него спрятанное окно вернуть
+            // нечем, и лаунчер оставался бы невидимым процессом до перезагрузки.
+            if (_minimizeToTray && CanHideToTray)
             {
                 e.Cancel = true;
                 Hide();
@@ -284,6 +296,10 @@ namespace Ven4Tools.Launcher
                 ExitApplication();
             }
         }
+
+        // Спрятать окно можно, только если его есть чем вернуть — значком в трее.
+        // Его нет в режиме проверок интерфейса и когда CreateTrayIcon не удался.
+        private bool CanHideToTray => _notifyIcon != null;
 
         // Выход идёт ровно один раз. Shutdown закрывает главное окно, и его Closing
         // (при выключенном «сворачивать в трей») снова вызывал ExitApplication:

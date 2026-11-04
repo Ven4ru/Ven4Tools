@@ -70,6 +70,11 @@ internal static class Program
             if (diff.Count == 0) File.Delete(backupPath);
         }
         catch (Exception ex) { Check(false, "исключение " + ex); }
+        finally
+        {
+            // Окна-пустышки проверки ушек при исключении посреди неё оставались висеть.
+            foreach (var p in Process.GetProcessesByName("TaskbarThemeProbe").Where(p => p.Id != Environment.ProcessId)) { try { p.Kill(); } catch { } }
+        }
         Log($"ИТОГ: прошло {Pass}, не прошло {Fail}");
         Log("done");
         return Fail == 0 ? 0 : 1;

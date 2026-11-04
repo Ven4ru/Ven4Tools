@@ -174,7 +174,7 @@ public partial class MenuWindow : Window
     /// <summary>Запомнить, где стоит «Пуск» своей панели (передаёт Ven4Bar при щелчке).</summary>
     public static void SaveAnchor(string value)
     {
-        try { System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(AnchorFile)!); System.IO.File.WriteAllText(AnchorFile, value); } catch { }
+        try { System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(AnchorFile)!); System.IO.File.WriteAllText(AnchorFile, value); } catch (Exception ex) { App.Log("место «Пуска» Ven4Bar не записано", ex); }
     }
 
     /// <summary>Свежая (не старше 5 с) точка «Пуска» Ven4Bar; после чтения файл удаляется.</summary>
@@ -189,7 +189,7 @@ public partial class MenuWindow : Window
             if (!fresh || parts.Length < 2 || !int.TryParse(parts[0], out var x) || !int.TryParse(parts[1], out var y)) return null;
             return (x, y, parts.Length > 2 && parts[2] == "left");
         }
-        catch { return null; }
+        catch (Exception ex) { App.Log("место «Пуска» Ven4Bar не прочитано", ex); return null; }
     }
 
     // ---------- список и поиск ----------

@@ -50,6 +50,17 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Windows PowerShell 5.1 (powershell -File): $PSScriptRoot в значении параметра по
+# умолчанию пуст, если в том же param()-блоке есть Mandatory-параметры, — пути
+# превращались в «\ClientManifestSigner\...» от корня диска. Досчитываем здесь,
+# как в sign-client-archive.ps1.
+if (-not $PSBoundParameters.ContainsKey('PublicKeyPath')) {
+    $PublicKeyPath = Join-Path $PSScriptRoot "ClientManifestSigner\client-manifest-signing-public.pem"
+}
+if (-not $PSBoundParameters.ContainsKey('SignerDll')) {
+    $SignerDll = Join-Path $PSScriptRoot "ClientManifestSigner\bin\Release\net10.0\ClientManifestSigner.dll"
+}
+
 # $Version подставляется в путь на CDN и в текст команд удалённого bash (ssh jump
 # "mkdir -p ..." / mv / chown -R) — без проверки опечатка вроде "5.1.0 /" или
 # "../x" превращалась бы в chown -R/запись вне client-files, а ';' — в

@@ -350,7 +350,7 @@ internal sealed class BarWindow : Window
     private static void Start(string what)
     {
         try { Process.Start(new ProcessStartInfo(what) { UseShellExecute = true }); }
-        catch (Exception e) { Debug.WriteLine(e); }
+        catch (Exception e) { Debug.WriteLine(e); CrashLog.Write("не удалось открыть " + what, e); }
     }
 
     private Button MakeButton(object content, string tip)
@@ -681,6 +681,7 @@ internal sealed class BarWindow : Window
             catch (Exception e)
             {
                 Debug.WriteLine(e);
+                CrashLog.Write("Ven4Start не запустился — открываю родной «Пуск»", e);
             }
         }
         // Родной «Пуск»: Ctrl+Esc — документированное сочетание клавиш Windows.
@@ -719,7 +720,7 @@ internal sealed class BarWindow : Window
         _hoverTimer.Stop();
         _hideTimer.Stop();
         _dragTimer.Stop();
-        try { _thumb.Close(); } catch { }
+        try { _thumb.Close(); } catch (Exception ex) { CrashLog.Write("закрытие миниатюры", ex); }
         _tracker?.Dispose();
         _volume.Dispose();
         _appBar?.Unregister();

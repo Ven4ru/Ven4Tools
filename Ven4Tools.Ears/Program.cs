@@ -27,14 +27,35 @@ namespace Ven4Tools.Ears
                 if (args[i] == "--inner") try { inner = ColorTranslator.FromHtml(args[i + 1]); } catch { }
                 if (args[i] == "--log") LogPath = args[i + 1];
             }
+            // Одна копия: мьютекс держит работающая копия, пока не завершится.
+            using var single = new Mutex(false, SingleMutex);
             // Прежняя копия — закрыть (так же клиент меняет цвет: запускает новую).
-            if (EventWaitHandle.TryOpenExisting(QuitEvent, out var old)) { using (old) old.Set(); Thread.Sleep(400); }
+            bool signalled = false;
+            if (EventWaitHandle.TryOpenExisting(QuitEvent, out var old)) { using (old) old.Set(); signalled = true; }
+            bool owned;
+            try { owned = single.WaitOne(3000); }
+            catch (AbandonedMutexException) { owned = true; }   // прежняя копия упала — место свободно
+            if (!owned) Log("прежняя копия не закрылась за 3 с — запускаемся рядом");
+            if (signalled) Thread.Sleep(400);   // копии без мьютекса (старые версии) успевают закрыться
             using var quit = new EventWaitHandle(false, EventResetMode.AutoReset, QuitEvent);
+            // Сигнал, который прежняя копия так и не забрала, — устаревший: иначе новая копия закрыла бы сама себя.
+            if (owned) quit.Reset();
             Application.EnableVisualStyles();
             var form = new EarsForm(inner);
-            new Thread(() => { quit.WaitOne(); try { form.BeginInvoke(new Action(form.Close)); } catch { } }) { IsBackground = true }.Start();
+            // Ждать сигнал — только когда у окна есть дескриптор: раньше BeginInvoke до создания окна
+            // бросал исключение, сигнал терялся, и копия оставалась висеть вместе с новой (двойные ушки).
+            bool waiting = false;
+            form.HandleCreated += (_, _) =>
+            {
+                if (waiting) return;   // дескриптор может пересоздаваться — ждущий поток нужен один
+                waiting = true;
+                new Thread(() => { quit.WaitOne(); try { form.BeginInvoke(new Action(form.Close)); } catch (Exception ex) { Log("закрытие по сигналу: " + ex.Message); } }) { IsBackground = true }.Start();
+            };
             Application.Run(form);
+            if (owned) try { single.ReleaseMutex(); } catch (ApplicationException) { }
         }
+
+        private const string SingleMutex = @"Local\Ven4ToolsEarsSingle";
 
         internal static void Log(string s)
         {
@@ -232,9 +253,12 @@ namespace Ven4Tools.Ears
                 g.ScaleTransform(w / 62f, h / 18f);
                 using var o = new SolidBrush(Color.FromArgb(255, outer));
                 using var i = new SolidBrush(Color.FromArgb(230, inner));
-                g.FillPath(o, Ear(1, 15.5f, 12.5f, 22.5f)); g.FillPath(o, Ear(39.5f, 15.5f, 49.5f, 61));
+                // GraphicsPath держит объект GDI+ — освобождаем сразу, а не ждём сборщика (ушки перерисовываются часто).
+                using (var p1 = Ear(1, 15.5f, 12.5f, 22.5f)) g.FillPath(o, p1);
+                using (var p2 = Ear(39.5f, 15.5f, 49.5f, 61)) g.FillPath(o, p2);
                 g.FillRectangle(o, 1.6f, 15.2f, 20.3f, 2.8f); g.FillRectangle(o, 40.1f, 15.2f, 20.3f, 2.8f);   // корень в панели
-                g.FillPath(i, Ear(6.2f, 15.5f, 13.6f, 20.2f)); g.FillPath(i, Ear(41.8f, 15.5f, 48.4f, 55.8f));
+                using (var p3 = Ear(6.2f, 15.5f, 13.6f, 20.2f)) g.FillPath(i, p3);
+                using (var p4 = Ear(41.8f, 15.5f, 48.4f, 55.8f)) g.FillPath(i, p4);
             }
             Native.UpdateLayered(Handle, bmp, x, y);
         }

@@ -36,7 +36,7 @@ internal sealed class BarSettings
         {
             if (File.Exists(FilePath)) return JsonSerializer.Deserialize<BarSettings>(File.ReadAllText(FilePath)) ?? new();
         }
-        catch { }
+        catch (Exception ex) { CrashLog.Write("настройки панели не прочитаны — беру обычные", ex); }
         return new();
     }
 
@@ -47,6 +47,6 @@ internal sealed class BarSettings
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
             File.WriteAllText(FilePath, JsonSerializer.Serialize(this));
         }
-        catch { }
+        catch (Exception ex) { CrashLog.Write("настройки панели не сохранены", ex); }
     }
 }

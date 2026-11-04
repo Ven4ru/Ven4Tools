@@ -21,7 +21,11 @@ namespace Ven4Tools.Launcher.Services
         /// <returns>null — можно; иначе причина отказа.</returns>
         public static string? CheckBeforeDownload(string requestedVersion, string? installedVersion)
         {
-            if (installedVersion != null && VersionComparer.Compare(requestedVersion, installedVersion) < 0)
+            // Сравнение — как у сетевого пути с хешем (ClientDowngradePolicy): версия на
+            // диске читается из exe без предрелизной метки, и «6.1.0-beta.2» поверх
+            // «6.1.0.0» иначе считалась бы откатом — обновление предрелиза без
+            // подтверждения CDN не проходило бы никогда.
+            if (ClientDowngradePolicy.IsOlderThanInstalled(requestedVersion, installedVersion))
                 return $"версия {requestedVersion} старее установленной {installedVersion} — без подтверждения CDN откат не выполняется";
             return null;
         }
@@ -41,7 +45,7 @@ namespace Ven4Tools.Launcher.Services
             if (VersionComparer.Compare(signedVersion, requestedVersion) != 0)
                 return $"подпись архива относится к версии {signedVersion}, а ставится {requestedVersion} — архив подменён";
 
-            if (installedVersion != null && VersionComparer.Compare(signedVersion, installedVersion) < 0)
+            if (ClientDowngradePolicy.IsOlderThanInstalled(signedVersion, installedVersion))
                 return $"версия архива {signedVersion} старее установленной {installedVersion} — откат не выполняется";
 
             return null;

@@ -102,8 +102,11 @@ if (args.Length == 4 && args[0] == "verify")
             Convert.FromBase64String(signatureV),
             HashAlgorithmName.SHA256);
     }
-    catch
+    catch (Exception ex)
     {
+        // Результат остаётся «невалидно», но причина нужна: битый base64 подписи
+        // и неподходящий ключ иначе неотличимы от честного несовпадения.
+        Console.Error.WriteLine($"Ошибка проверки подписи: {ex.GetType().Name}: {ex.Message}");
         valid = false;
     }
 

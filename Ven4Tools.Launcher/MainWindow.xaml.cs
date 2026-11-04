@@ -197,7 +197,10 @@ namespace Ven4Tools.Launcher
                     await RecoverInterruptedClientMoveAsync();
                     _ = ReportClientLocationRiskAsync();
 
-                    if (_startMinimized)
+                    // Свернуть в трей можно, только если значок в трее есть: иначе
+                    // скрытое окно вернуть нечем (см. CanHideToTray).
+                    bool startHidden = _startMinimized && CanHideToTray;
+                    if (startHidden)
                     {
                         // Окно скрыто (автозапуск в трее) — не запускаем установку выбранных
                         // в setup компонентов незаметно. Откладываем до первого показа окна
@@ -214,7 +217,7 @@ namespace Ven4Tools.Launcher
 
                     // Модальные отчёты не показываем поверх скрытого окна (автозапуск в
                     // трее) — откладываем до первого показа из трея (см. ShowWindow).
-                    if (_startMinimized)
+                    if (startHidden)
                         _pendingStartupReports = true;
                     else
                         ShowStartupReports();

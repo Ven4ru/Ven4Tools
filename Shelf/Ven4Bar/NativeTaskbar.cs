@@ -56,9 +56,10 @@ internal static class NativeTaskbar
                 SetState(st);
             File.Delete(StateFile);
         }
-        catch
+        catch (Exception ex)
         {
-            // не критично
+            // не критично, но без записи не понять, почему родная панель осталась скрытой
+            CrashLog.Write("возврат родной панели после аварийного выхода", ex);
         }
     }
 
@@ -74,9 +75,10 @@ internal static class NativeTaskbar
                 Directory.CreateDirectory(Path.GetDirectoryName(StateFile)!);
                 File.WriteAllText(StateFile, prev.ToString());
             }
-            catch
+            catch (Exception ex)
             {
                 // без файла тоже работаем, просто без защиты от аварии
+                CrashLog.Write("не удалось запомнить состояние родной панели", ex);
             }
             SetState(prev | Native.ABS_AUTOHIDE);
         }
@@ -112,7 +114,7 @@ internal static class NativeTaskbar
             if (!_savedState.HasValue) return;
             SetState(_savedState.Value.ToInt32());
             _savedState = null;
-            try { File.Delete(StateFile); } catch { }
+            try { File.Delete(StateFile); } catch (Exception ex) { CrashLog.Write("не удалось убрать файл состояния родной панели", ex); }
         }
     }
 }

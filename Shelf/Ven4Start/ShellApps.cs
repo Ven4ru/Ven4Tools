@@ -63,9 +63,18 @@ internal static class ShellApps
         try
         {
             if (File.Exists(CacheFile))
-                return JsonSerializer.Deserialize<List<AppEntry>>(File.ReadAllText(CacheFile)) ?? new();
+            {
+                // Кэш мог быть испорчен или поправлен руками: записи без имени и повторы идентификатора
+                // роняли меню при старте (null в поиске, повтор ключа в словаре).
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var list = new List<AppEntry>();
+                foreach (var a in JsonSerializer.Deserialize<List<AppEntry?>>(File.ReadAllText(CacheFile)) ?? new())
+                    if (a != null && !string.IsNullOrWhiteSpace(a.Name) && !string.IsNullOrWhiteSpace(a.ParsingName) && seen.Add(a.ParsingName))
+                        list.Add(a);
+                return list;
+            }
         }
-        catch { /* битый кэш — просто перечитаем */ }
+        catch (Exception ex) { App.Log("кэш списка программ не прочитан — перечитаю", ex); }
         return new();
     }
 
@@ -76,7 +85,7 @@ internal static class ShellApps
             Directory.CreateDirectory(CacheDir);
             File.WriteAllText(CacheFile, JsonSerializer.Serialize(list));
         }
-        catch { /* кэш — не обязателен */ }
+        catch (Exception ex) { App.Log("кэш списка программ не сохранён", ex); }
     }
 
     /// <summary>Перечитывает AppsFolder в отдельном STA-потоке (COM оболочки требует STA).</summary>
