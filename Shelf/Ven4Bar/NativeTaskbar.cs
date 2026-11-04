@@ -25,8 +25,9 @@ internal static class NativeTaskbar
         return new Native.APPBARDATA
         {
             cbSize = Marshal.SizeOf<Native.APPBARDATA>(),
-            // Для ABM_SETSTATE в APPBARDATA указывается окно панели задач.
-            hWnd = Native.FindWindow("Shell_TrayWnd", null),
+            // ABM_GETSTATE/ABM_SETSTATE окно не нужно (так же делает блок 1 клиента, проверено 02.11.2026) —
+            // недокументированный класс Shell_TrayWnd не используем.
+            hWnd = IntPtr.Zero,
         };
     }
 

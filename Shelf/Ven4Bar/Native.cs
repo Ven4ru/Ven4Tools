@@ -23,7 +23,11 @@ internal static class Native
     public const int ABN_POSCHANGED = 0x1;
     public const int ABN_FULLSCREENAPP = 0x2;
 
+    public const int ABE_LEFT = 0;
+    public const int ABE_TOP = 1;
+    public const int ABE_RIGHT = 2;
     public const int ABE_BOTTOM = 3;
+    public const ushort VK_D = 0x44;
     public const int ABS_AUTOHIDE = 0x1;
     public const int ABS_ALWAYSONTOP = 0x2;
 
@@ -95,8 +99,6 @@ internal static class Native
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    public static extern IntPtr FindWindow(string lpClassName, string? lpWindowName);
 
     [DllImport("user32.dll")]
     public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint flags);
