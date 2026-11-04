@@ -11,7 +11,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>Ven4Start</AssemblyName>
     <RootNamespace>Ven4Start</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Product>Свой Пуск (Ven4Start)</Product>
     <Description>Заготовка своего меню «Пуск» для Ven4Tools</Description>
     <InvariantGlobalization>false</InvariantGlobalization>
@@ -19,5 +19,10 @@
     <!-- WPF-приложение: DPI задаётся манифестом, предупреждение WinForms тут не к месту -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Морда Венчика: шапка меню и значок в трее (та же картинка, что на «Пуске» Ven4Bar) -->
+    <Resource Include="Resources\venchik-face.png" />
+  </ItemGroup>
 
 </Project>
