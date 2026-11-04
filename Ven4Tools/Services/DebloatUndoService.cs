@@ -109,7 +109,12 @@ namespace Ven4Tools.Services
                     var (exists, value) = _system.ReadDword(change.Path, change.Name);
                     record.Registry.Add(new RegistryState { Path = change.Path, Name = change.Name, Existed = exists, Value = value });
                 }
-                if (service != null && _system.ReadServiceStartMode(service) is { } mode)
+                // Одну службу отключают два твика (diag_track и svc_diagtrack): если её уже
+                // запомнил другой, берём его «как было» — иначе второй запомнил бы «отключена»
+                // и после отката служба так и осталась бы выключенной.
+                var prior = service == null ? null : all.Values.SelectMany(r => r.Services)
+                    .FirstOrDefault(s => string.Equals(s.Name, service, StringComparison.OrdinalIgnoreCase));
+                if (service != null && (prior?.StartMode ?? _system.ReadServiceStartMode(service)) is { } mode)
                     record.Services.Add(new ServiceState { Name = service, StartMode = mode });
 
                 // Службы нет в системе, а значений реестра твик не трогает — возвращать нечего.

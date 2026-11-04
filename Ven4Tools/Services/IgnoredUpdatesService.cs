@@ -17,26 +17,35 @@ namespace Ven4Tools.Services
             "Ven4Tools", "ignored_updates.json");
 
         private Dictionary<string, string> _ignored = new();
+        // Файл есть, но не прочитался: запись стёрла бы прежние записи (см. SettingsFileReader).
+        private bool _loadFailed;
 
         public IgnoredUpdatesService() => Load();
 
         private void Load()
         {
+            const string Log = "[IgnoredUpdatesService]";
+            var read = SettingsFileReader.TryRead(FilePath, Log, out string json);
+            _loadFailed = read == SettingsReadResult.Unreadable;
+            if (read != SettingsReadResult.Read) return;
             try
             {
-                if (File.Exists(FilePath))
-                    _ignored = JsonConvert.DeserializeObject<Dictionary<string, string>>(
-                        File.ReadAllText(FilePath)) ?? new();
+                _ignored = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new();
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
-                AppLogger.Write($"[IgnoredUpdatesService] Чтение пропущенных обновлений: {ex.Message}");
                 _ignored = new();
+                _loadFailed = !SettingsFileReader.SetAsideCorrupt(FilePath, Log, ex.Message);
             }
         }
 
         private void Save()
         {
+            if (_loadFailed)
+            {
+                AppLogger.Write("[IgnoredUpdatesService] Сохранение пропущено: файл не прочитан, запись стёрла бы прежние записи");
+                return;
+            }
             try
             {
                 FileHelper.WriteAllTextAtomic(FilePath,

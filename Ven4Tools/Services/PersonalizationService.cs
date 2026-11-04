@@ -205,8 +205,17 @@ namespace Ven4Tools.Services
                 if (!all.TryGetValue(part.ToString(), out record)) return;
             }
 
+            // Файл отката лежит в папке пользователя, а пишет по нему процесс администратора
+            // (в том числе в HKLM): возвращаются только значения, которые этот пункт меняет
+            // сам, — как в DebloatUndoService. Подложенные записи пропускаются.
+            var allowed = Targets(part).ToHashSet();
             foreach (var v in record.Values)
             {
+                if (!allowed.Contains((v.Path, v.Name)))
+                {
+                    AppLogger.Write($"⚠️ Персонализация: в файле отката чужая запись «{v.Path}\\{v.Name}» — пропущена");
+                    continue;
+                }
                 if (!v.Existed) _system.DeleteValue(v.Path, v.Name);
                 else if (v.Dword is int d) _system.WriteDword(v.Path, v.Name, d);
                 else _system.WriteString(v.Path, v.Name, v.Text ?? "");
@@ -239,19 +248,8 @@ namespace Ven4Tools.Services
         /// <summary>Что пункт меняет — это и запоминается перед применением.</summary>
         internal List<ValueState> Snapshot(PersonalizationPart part)
         {
-            var targets = part switch
-            {
-                PersonalizationPart.Cursors => CursorFiles.Keys.Select(n => (Cursors, n)).Append((Cursors, "")),
-                // Путь к обоям меняет сама Windows при применении — его тоже запоминаем.
-                PersonalizationPart.Wallpaper => new[] { (Desktop, "Wallpaper"), (Desktop, "WallpaperStyle"), (Desktop, "TileWallpaper") },
-                PersonalizationPart.LockScreen => new[] { (LockScreenCsp, "LockScreenImagePath"), (LockScreenCsp, "LockScreenImageUrl"), (LockScreenCsp, "LockScreenImageStatus") },
-                PersonalizationPart.Sounds => SoundFiles.Keys.Select(e => (SoundEvents + "\\" + e + "\\.Current", "")).Append((SoundScheme, "")),
-                PersonalizationPart.Screensaver => new[] { (Desktop, "SCRNSAVE.EXE"), (Desktop, "ScreenSaveActive"), (Desktop, "ScreenSaveTimeOut") },
-                _ => Enumerable.Empty<(string, string)>(),
-            };
-
             var result = new List<ValueState>();
-            foreach (var (path, name) in targets)
+            foreach (var (path, name) in Targets(part))
             {
                 if (name == "LockScreenImageStatus")
                 {
@@ -263,6 +261,21 @@ namespace Ven4Tools.Services
                 result.Add(new ValueState { Path = path, Name = name, Existed = text != null, Text = text });
             }
             return result;
+        }
+
+        /// <summary>Значения реестра, которые меняет пункт; по этому же списку отсеивается файл отката.</summary>
+        private static IEnumerable<(string Path, string Name)> Targets(PersonalizationPart part)
+        {
+            return part switch
+            {
+                PersonalizationPart.Cursors => CursorFiles.Keys.Select(n => (Cursors, n)).Append((Cursors, "")),
+                // Путь к обоям меняет сама Windows при применении — его тоже запоминаем.
+                PersonalizationPart.Wallpaper => new[] { (Desktop, "Wallpaper"), (Desktop, "WallpaperStyle"), (Desktop, "TileWallpaper") },
+                PersonalizationPart.LockScreen => new[] { (LockScreenCsp, "LockScreenImagePath"), (LockScreenCsp, "LockScreenImageUrl"), (LockScreenCsp, "LockScreenImageStatus") },
+                PersonalizationPart.Sounds => SoundFiles.Keys.Select(e => (SoundEvents + "\\" + e + "\\.Current", "")).Append((SoundScheme, "")),
+                PersonalizationPart.Screensaver => new[] { (Desktop, "SCRNSAVE.EXE"), (Desktop, "ScreenSaveActive"), (Desktop, "ScreenSaveTimeOut") },
+                _ => Enumerable.Empty<(string, string)>(),
+            };
         }
 
         private static IEnumerable<string> SourceFiles(PersonalizationPart part) => part switch

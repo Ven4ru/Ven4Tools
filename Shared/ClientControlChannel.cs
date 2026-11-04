@@ -51,8 +51,11 @@ namespace Ven4Tools.Shared
                 {
                     break;
                 }
-                catch (IOException)
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
+                    // UnauthorizedAccessException — имя занято чужим экземпляром с запрещающими
+                    // правами: без этой ветки задача молча завершалась, и канал закрытия
+                    // оставался мёртвым до конца сеанса.
                     // Клиент pipe мог отключиться между подключением и чтением.
                     // Та же ошибка приходит и при создании pipe, если имя уже занято
                     // другим процессом («все экземпляры заняты»), — без паузы цикл

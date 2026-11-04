@@ -20,8 +20,9 @@ namespace Ven4Tools.Services
     /// </remarks>
     internal static class UnelevatedLauncher
     {
+        /// <param name="show">Как показать окно (SW_*); по умолчанию 0 — скрыто, для консольных удаляторов и winget.</param>
         /// <returns>false — оболочка недоступна (нет рабочего стола, explorer не запущен).</returns>
-        public static bool TryStart(string file, string arguments)
+        public static bool TryStart(string file, string arguments, int show = 0)
         {
             object? shellWindows = null;
             try
@@ -43,8 +44,8 @@ namespace Ven4Tools.Services
                 view.GetItemObject(SVGIO_BACKGROUND, ref iidDispatch, out var bg);
                 dynamic folderView = bg;
                 dynamic shell = folderView.Application;
-                // vShow = 0 (SW_HIDE): удаляторы и winget не нуждаются в окне консоли.
-                shell.ShellExecute(file, arguments, "", "open", 0);
+                // vShow = 0 (SW_HIDE) по умолчанию: удаляторы и winget не нуждаются в окне консоли.
+                shell.ShellExecute(file, arguments, "", "open", show);
                 return true;
             }
             catch (Exception ex)

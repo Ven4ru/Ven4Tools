@@ -25,6 +25,8 @@ namespace Ven4Tools.Services
         private readonly string _path;
         private readonly object _lock = new object();
         private Dictionary<string, AlternativeSource> _entries = new();
+        // Файл есть, но не прочитался: запись стёрла бы прежние записи (см. SettingsFileReader).
+        private volatile bool _loadFailed;
 
         public AlternativeSourceStore(string path)
         {
@@ -37,17 +39,29 @@ namespace Ven4Tools.Services
         /// </summary>
         public void Reload()
         {
+            const string Log = "[AlternativeSourceStore]";
             try
             {
-                if (!File.Exists(_path)) return;
+                var read = SettingsFileReader.TryRead(_path, Log, out string json);
+                if (read == SettingsReadResult.Unreadable) { _loadFailed = true; return; }
+                if (read == SettingsReadResult.Missing) return;
 
-                var json = File.ReadAllText(_path);
-                var loaded = JsonConvert.DeserializeObject<Dictionary<string, AlternativeSource>>(json)
-                    ?? new Dictionary<string, AlternativeSource>();
+                Dictionary<string, AlternativeSource> loaded;
+                try
+                {
+                    loaded = JsonConvert.DeserializeObject<Dictionary<string, AlternativeSource>>(json)
+                        ?? new Dictionary<string, AlternativeSource>();
+                }
+                catch (JsonException ex)
+                {
+                    _loadFailed = !SettingsFileReader.SetAsideCorrupt(_path, Log, ex.Message);
+                    return;
+                }
 
                 lock (_lock) { _entries = loaded; }
+                _loadFailed = false;
             }
-            catch (Exception ex) { AppLogger.Write($"[AlternativeSourceStore] Reload: {ex.Message}"); }
+            catch (Exception ex) { AppLogger.Write($"{Log} Reload: {ex.Message}"); }
         }
 
         /// <summary>Применяет сохранённые записи к переданным приложениям.</summary>
@@ -171,6 +185,11 @@ namespace Ven4Tools.Services
 
         private void Save()
         {
+            if (_loadFailed)
+            {
+                AppLogger.Write("[AlternativeSourceStore] Сохранение пропущено: файл не прочитан, запись стёрла бы прежние записи");
+                return;
+            }
             try
             {
                 string json;

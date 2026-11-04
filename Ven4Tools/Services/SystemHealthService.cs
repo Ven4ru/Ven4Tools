@@ -302,6 +302,14 @@ namespace Ven4Tools.Services
 
         public static async Task ClearWindowsUpdateCacheAsync()
         {
+            // Остановка служб и удаление Download посреди установки или фоновой загрузки
+            // обновлений оборвали бы её на середине.
+            if (WindowsUpdate.WindowsUpdateService.IsWindowsUpdateBusy)
+                throw new InvalidOperationException("Идёт операция с обновлениями Windows — кэш не очищен");
+            // Обратно запускаем только то, что работало: отключённую или остановленную
+            // пользователем службу очистка поднимать не должна (как в WindowsUpdateResetService).
+            bool wuWasRunning = IsServiceRunning("wuauserv");
+            bool bitsWasRunning = IsServiceRunning("bits");
             await RunNetAsync("stop", "wuauserv");
             await RunNetAsync("stop", "bits");
             try
@@ -346,9 +354,20 @@ namespace Ven4Tools.Services
             }
             finally
             {
-                await RunNetAsync("start", "bits");
-                await RunNetAsync("start", "wuauserv");
+                if (bitsWasRunning) await RunNetAsync("start", "bits");
+                if (wuWasRunning) await RunNetAsync("start", "wuauserv");
             }
+        }
+
+        private static bool IsServiceRunning(string name)
+        {
+            try
+            {
+                using var sc = new System.ServiceProcess.ServiceController(name);
+                return sc.Status != System.ServiceProcess.ServiceControllerStatus.Stopped;
+            }
+            // Не удалось узнать — считаем, что работала: лучше поднять лишний раз, чем оставить WU выключенным.
+            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { return true; }
         }
 
         private static async Task RunNetAsync(string action, string service)

@@ -15,8 +15,14 @@ public sealed class TaskbarStartPresetsTests : IDisposable
         public int Build { get; set; } = 26200;
         public Dictionary<string, int> Values { get; } = new();
         public bool AutoHide { get; set; }
+        /// <summary>Запись этого значения падает неожиданной ошибкой (не «доступ запрещён»).</summary>
+        public string? FailOn { get; set; }
         public int? ReadDword(string key, string name) => Values.TryGetValue(key + "|" + name, out var v) ? v : null;
-        public void WriteDword(string key, string name, int value) => Values[key + "|" + name] = value;
+        public void WriteDword(string key, string name, int value)
+        {
+            if (name == FailOn) throw new InvalidOperationException("тест: сбой записи");
+            Values[key + "|" + name] = value;
+        }
         public void DeleteValue(string key, string name) => Values.Remove(key + "|" + name);
         public void NotifyChanged() { }
         public void RestartExplorer() { }
@@ -61,6 +67,21 @@ public sealed class TaskbarStartPresetsTests : IDisposable
         Assert.Equal(1, sys.ReadDword(@"Software\Policies\Microsoft\Windows\Explorer", "DisableSearchBoxSuggestions"));
         Assert.Equal(0, sys.ReadDword(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SubscribedContent-338388Enabled"));
         svc.RevertAll();
+        Assert.Equal(before, sys.Dump());
+    }
+
+    [Fact]
+    public void UnexpectedFailureMidApply_KeepsUndoOfWhatWasWritten()
+    {
+        var sys = new FakeSystem();
+        var before = sys.Dump();
+        var path = Path.Combine(_dir, "undo-fail.json");
+        var preset = TaskbarStartService.Presets.First(p => p.Title == "Без рекламы и Bing");
+        sys.FailOn = "BingSearchEnabled";   // в наборе не первая — до неё уже что-то записано
+        Assert.Throws<InvalidOperationException>(() => new TaskbarStartService(path, sys).Apply(preset.Values));
+        Assert.NotEqual(before, sys.Dump());
+        sys.FailOn = null;
+        new TaskbarStartService(path, sys).RevertAll();
         Assert.Equal(before, sys.Dump());
     }
 
