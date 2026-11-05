@@ -95,7 +95,7 @@
         <!-- Стиль для TextBlock -->
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
         </Style>
 
         <!-- Кнопка деструктивного действия (Удалить и т.п.): контур по умолчанию,
@@ -129,7 +129,7 @@
                                                Margin="{TemplateBinding Padding}">
                                 <ContentPresenter.Resources>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
                                     </Style>
                                 </ContentPresenter.Resources>
                             </ContentPresenter>
@@ -284,7 +284,7 @@
                                      неявного стиля TextBlock — см. комментарий у стиля Button. -->
                                 <ContentPresenter.Resources>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
                                     </Style>
                                 </ContentPresenter.Resources>
                             </ContentPresenter>
@@ -335,7 +335,7 @@
                             <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True">
                                 <ContentPresenter.Resources>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
                                     </Style>
                                 </ContentPresenter.Resources>
                             </ContentPresenter>
@@ -407,7 +407,7 @@
                                               Margin="{TemplateBinding Padding}">
                                 <ContentPresenter.Resources>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
                                     </Style>
                                 </ContentPresenter.Resources>
                             </ContentPresenter>
@@ -461,7 +461,7 @@
                                                   TextElement.Foreground="{TemplateBinding Foreground}">
                                     <ContentPresenter.Resources>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+                                            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
                                         </Style>
                                     </ContentPresenter.Resources>
                                 </ContentPresenter>
@@ -546,7 +546,7 @@
                                               Margin="{TemplateBinding Padding}">
                                 <ContentPresenter.Resources>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
                                     </Style>
                                 </ContentPresenter.Resources>
                             </ContentPresenter>

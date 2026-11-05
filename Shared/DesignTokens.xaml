@@ -55,14 +55,14 @@
                       Color="#000000" BlurRadius="20" ShadowDepth="4" Opacity="0.35"/>
 
     <Style x:Key="PageTitleStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI"/>
+        <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
         <Setter Property="FontSize" Value="24"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
 
     <Style x:Key="EyebrowStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <!-- Подпись категории («ПРИЛОЖЕНИЯ», «ВЫБРАННЫЕ ПРИЛОЖЕНИЯ», «LAUNCHER»).

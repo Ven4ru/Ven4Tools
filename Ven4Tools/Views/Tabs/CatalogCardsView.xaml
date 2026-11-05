@@ -176,7 +176,7 @@
                         Command="{Binding ToggleFavoritesOnlyCommand}"
                         Foreground="{Binding FavoritesOnlyBrush}"
                         Background="Transparent" BorderThickness="1"/>
-                <Button x:Name="btnHideInstalled" Grid.Column="3" Content="&#xED1A;" ContentTemplate="{StaticResource IconGlyphTemplate}"
+                <Button x:Name="btnHideInstalled" Grid.Column="3" Content="&#xE71C;" ContentTemplate="{StaticResource IconGlyphTemplate}"
                         Width="36" Height="36" Margin="6,0,0,0"
                         FontSize="16" ToolTip="Включит или выключит скрытие уже установленных приложений из списка."
                         Command="{Binding ToggleHideInstalledCommand}"
