@@ -3,26 +3,26 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource ContentBackground}">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="0,4,0,0">
+        <StackPanel>
 
             <!-- Освободить место на C -->
-            <GroupBox Header="💽 Освободить место на диске C" Margin="0,0,0,14">
-                <StackPanel Margin="10">
+            <GroupBox Header="💽 Освободить место на диске C">
+                <StackPanel>
                     <TextBlock Text="{Binding FreeSpaceText}" FontWeight="SemiBold" FontSize="13"
                                Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
-                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,10"
+                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,12"
                                Foreground="{DynamicResource TextSecondary}"
                                Text="Удаление идёт штатными средствами Windows («Очистка диска», DISM, корзина). Вернуть удалённое нельзя, поэтому по умолчанию ничего не отмечено."/>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <Button x:Name="btnDiskScan" Style="{StaticResource PrimaryButtonStyle}" Content="📏 Посчитать" Height="32" Padding="14,0" Margin="0,0,8,0"
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <Button x:Name="btnDiskScan" Style="{StaticResource PrimaryButtonStyle}" Content="📏 Посчитать" Height="32" Padding="16,0" Margin="0,0,8,0"
                                 ToolTip="Посчитает, сколько места занимает каждая категория. Ничего не удаляет. Подсчёт хранилища компонентов через DISM занимает несколько минут."
                                 Command="{Binding ScanCommand}"/>
-                        <Button x:Name="btnDiskScanCancel" Content="Остановить" Height="32" Padding="14,0" Margin="0,0,8,0"
+                        <Button x:Name="btnDiskScanCancel" Content="Остановить" Height="32" Padding="12,0" Margin="0,0,8,0"
                                 ToolTip="Прервёт подсчёт. Уже посчитанные категории останутся в списке."
                                 Visibility="{Binding IsScanning, Converter={StaticResource BoolToVis}}"
                                 Command="{Binding CancelScanCommand}"/>
-                        <Button x:Name="btnDiskClean" Content="🧹 Очистить выбранное" Height="32" Padding="14,0"
+                        <Button x:Name="btnDiskClean" Style="{StaticResource DangerFilledButtonStyle}" Content="🧹 Очистить выбранное" Height="32" Padding="16,0" Margin="0"
                                 ToolTip="После подтверждения удалит отмеченные категории. Отката нет. Доступна после подсчёта."
                                 Command="{Binding CleanCommand}"/>
                     </StackPanel>
@@ -30,7 +30,7 @@
                     <ItemsControl x:Name="lstDiskCategories" ItemsSource="{Binding Categories}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Padding="8,6" Margin="0,2" CornerRadius="7"
+                                <Border Padding="12,8" Margin="0,2" CornerRadius="4"
                                         Background="{DynamicResource CardBackground}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -41,16 +41,16 @@
                                         <CheckBox Grid.Column="0" AutomationProperties.AutomationId="{Binding Category.Id, StringFormat='chkCleanup_{0}'}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                   IsEnabled="{Binding DataContext.SelectionEnabled, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                   AutomationProperties.Name="{Binding Title}"
-                                                  VerticalAlignment="Top" Margin="0,2,10,0"/>
+                                                  VerticalAlignment="Top" Margin="0,1,12,0"/>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13"
                                                        Foreground="{DynamicResource TextPrimary}"/>
-                                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="11"
+                                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="12"
                                                        Foreground="{DynamicResource TextSecondary}"/>
-                                            <TextBlock Text="{Binding Note}" TextWrapping="Wrap" FontSize="11"
+                                            <TextBlock Text="{Binding Note}" TextWrapping="Wrap" FontSize="12"
                                                        Foreground="{DynamicResource TextSecondary}"
                                                        Visibility="{Binding HasNote, Converter={StaticResource BoolToVis}}"/>
-                                            <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,2,0,0"
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,0"
                                                        Foreground="{DynamicResource StatusWarning}"
                                                        Visibility="{Binding HasWarning, Converter={StaticResource BoolToVis}}">
                                                 <Run Text="⚠ "/><Run Text="{Binding Warning, Mode=OneWay}"/>
@@ -66,17 +66,17 @@
                     </ItemsControl>
 
                     <TextBlock x:Name="txtDiskStatus" Text="{Binding StatusText}" TextWrapping="Wrap" FontSize="12"
-                               Foreground="{DynamicResource TextSecondary}" Margin="0,10,0,0"/>
+                               Foreground="{DynamicResource TextSecondary}" Margin="0,12,0,0"/>
                     <TextBlock x:Name="txtDiskResult" Text="{Binding ResultText}" TextWrapping="Wrap" FontSize="14"
-                               FontWeight="SemiBold" Foreground="{DynamicResource StatusSuccess}" Margin="0,6,0,0"
+                               FontWeight="SemiBold" Foreground="{DynamicResource StatusSuccess}" Margin="0,4,0,0"
                                Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </GroupBox>
 
             <!-- Кто держит файл -->
-            <GroupBox Header="🔒 Кто держит файл" Margin="0,0,0,14">
-                <StackPanel Margin="10">
-                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,10"
+            <GroupBox Header="🔒 Кто держит файл">
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,12"
                                Foreground="{DynamicResource TextSecondary}"
                                Text="Файл или папка не удаляется, потому что «открыт в другой программе»? Выберите его — покажем, какая программа его держит."/>
                     <Grid Margin="0,0,0,8">
@@ -86,21 +86,21 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="txtLockPath" Grid.Column="0" Height="30" VerticalContentAlignment="Center"
+                        <TextBox x:Name="txtLockPath" Grid.Column="0" Height="32" VerticalContentAlignment="Center" Padding="8,0"
                                  AutomationProperties.Name="Путь к файлу или папке"
                                  ToolTip="Путь к файлу или папке. Можно вставить из адресной строки Проводника."
                                  Text="{Binding LockPath, UpdateSourceTrigger=PropertyChanged}"/>
-                        <Button x:Name="btnLockBrowseFile" Grid.Column="1" Content="📄 Файл…" Height="30" Padding="10,0" Margin="8,0,0,0"
+                        <Button x:Name="btnLockBrowseFile" Grid.Column="1" Content="📄 Файл…" Height="32" Padding="12,0" Margin="8,0,0,0"
                                 ToolTip="Выбрать файл, который не удаётся удалить, и сразу проверить его."
                                 Command="{Binding BrowseLockFileCommand}"/>
-                        <Button x:Name="btnLockBrowseFolder" Grid.Column="2" Content="📁 Папка…" Height="30" Padding="10,0" Margin="6,0,0,0"
+                        <Button x:Name="btnLockBrowseFolder" Grid.Column="2" Content="📁 Папка…" Height="32" Padding="12,0" Margin="8,0,0,0"
                                 ToolTip="Выбрать папку и проверить её файлы (до 5000 файлов) и программы, запущенные из неё."
                                 Command="{Binding BrowseLockFolderCommand}"/>
-                        <Button x:Name="btnLockFind" Grid.Column="3" Content="🔍 Проверить" Height="30" Padding="10,0" Margin="6,0,0,0"
+                        <Button x:Name="btnLockFind" Grid.Column="3" Content="🔍 Проверить" Height="32" Padding="12,0" Margin="8,0,0,0"
                                 ToolTip="Найдёт программы, которые держат указанный файл или файлы папки. Ничего не меняет."
                                 Command="{Binding FindLocksCommand}"/>
                     </Grid>
-                    <Button x:Name="btnLockCancel" Content="Остановить" Height="28" Padding="12,0" HorizontalAlignment="Left"
+                    <Button x:Name="btnLockCancel" Content="Остановить" Height="32" Padding="12,0" HorizontalAlignment="Left"
                             Margin="0,0,0,8"
                             ToolTip="Прервёт проверку папки."
                             Visibility="{Binding IsFindingLocks, Converter={StaticResource BoolToVis}}"
@@ -111,7 +111,7 @@
                     <ItemsControl x:Name="lstLockingProcesses" ItemsSource="{Binding LockingProcesses}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Padding="8,6" Margin="0,2" CornerRadius="7"
+                                <Border Padding="12,8" Margin="0,2" CornerRadius="4"
                                         Background="{DynamicResource CardBackground}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -122,22 +122,22 @@
                                         <StackPanel>
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"
                                                        Foreground="{DynamicResource TextPrimary}"/>
-                                            <TextBlock Text="{Binding Details}" FontSize="11"
+                                            <TextBlock Text="{Binding Details}" FontSize="12"
                                                        Foreground="{DynamicResource TextSecondary}"/>
                                             <TextBlock Text="{Binding ExePath}" FontSize="11" TextWrapping="Wrap"
                                                        FontFamily="JetBrains Mono, Consolas"
                                                        Foreground="{DynamicResource TextSecondary}"/>
-                                            <TextBlock Text="Системный процесс или служба — завершать нельзя." FontSize="11"
+                                            <TextBlock Text="Системный процесс или служба — завершать нельзя." FontSize="12"
                                                        Foreground="{DynamicResource StatusWarning}"
                                                        Visibility="{Binding IsSystem, Converter={StaticResource BoolToVis}}"/>
                                         </StackPanel>
-                                        <Button Grid.Column="1" Content="Закрыть окно" Height="28" Padding="10,0" Margin="8,0,0,0"
+                                        <Button Grid.Column="1" Content="Закрыть окно" Height="28" Padding="12,0" Margin="8,0,0,0"
                                                 VerticalAlignment="Center"
                                                 AutomationProperties.AutomationId="{Binding ProcessId, StringFormat='btnLockClose_{0}'}"
                                                 ToolTip="Вежливо попросит программу закрыться, как при нажатии на крестик. Программа сможет спросить о сохранении."
                                                 Command="{Binding DataContext.CloseLockingWindowCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"/>
-                                        <Button Grid.Column="2" Content="Завершить" Height="28" Padding="10,0" Margin="6,0,0,0"
+                                        <Button Grid.Column="2" Style="{StaticResource DangerButtonStyle}" Content="Завершить" Height="28" Padding="12,0" Margin="8,0,0,0"
                                                 VerticalAlignment="Center"
                                                 AutomationProperties.AutomationId="{Binding ProcessId, StringFormat='btnLockKill_{0}'}"
                                                 ToolTip="После подтверждения принудительно завершит программу. Несохранённые данные в ней будут потеряны."

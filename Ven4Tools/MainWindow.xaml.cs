@@ -67,6 +67,7 @@ namespace Ven4Tools
         public MainWindow()
         {
             InitializeComponent();
+            FitToWorkArea();
             // Три числа, как пишутся версии релизов: «6.5.1», а не «6.5.1.0».
             txtSidebarVersion.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "—";
             MotionService.Enabled = Environment.GetEnvironmentVariable("VEN4TOOLS_REDUCE_MOTION") != "1";

@@ -4,15 +4,14 @@
              xmlns:tabs="clr-namespace:Ven4Tools.Views.Tabs"
              Background="{DynamicResource ContentBackground}">
     <!-- Раздел «Автозагрузка». Раньше был вкладкой «Очистки»; сама панель не менялась. -->
-    <Grid Margin="20">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,4">
-            <TextBlock Text="🚀 Автозагрузка" FontSize="22" FontWeight="Bold"
-                       Foreground="{DynamicResource TextPrimary}"/>
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Автозагрузка" Style="{StaticResource PageTitleStyle}"/>
             <TextBlock Text="Программы и задачи, которые запускаются вместе с Windows."
                        TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"
                        Foreground="{DynamicResource TextSecondary}"/>

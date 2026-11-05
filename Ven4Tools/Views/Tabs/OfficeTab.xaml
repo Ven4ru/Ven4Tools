@@ -5,9 +5,9 @@
     <UserControl.Resources>
         <Style x:Key="VersionCardStyle" TargetType="RadioButton">
             <Setter Property="GroupName" Value="OfficeVersion"/>
-            <Setter Property="Margin" Value="0,0,10,10"/>
-            <Setter Property="Width" Value="178"/>
-            <Setter Property="Height" Value="54"/>
+            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="Width" Value="176"/>
+            <Setter Property="Height" Value="56"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -15,7 +15,7 @@
                         <Border x:Name="border"
                                 Background="{DynamicResource CardBackground}"
                                 BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1.5"
+                                BorderThickness="1"
                                 CornerRadius="8">
                             <TextBlock x:Name="lbl"
                                        Text="{TemplateBinding Content}"
@@ -45,38 +45,37 @@
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20">
-            <TextBlock Text="Установка Microsoft Office" FontSize="24" FontWeight="Bold"
-                       Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20"/>
+        <StackPanel Margin="24">
+            <TextBlock Text="Установка Microsoft Office" Style="{StaticResource PageTitleStyle}"/>
 
-            <TextBlock Text="Загрузка официального установщика Office с серверов Microsoft"
-                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,20" TextWrapping="Wrap"/>
+            <TextBlock Text="Загрузка официального установщика Office с серверов Microsoft" FontSize="12"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,16" TextWrapping="Wrap"/>
 
             <!-- Установлено — видна только когда на машине найден Office -->
             <Border Visibility="{Binding ShowInstalledCard, Converter={StaticResource BoolToVis}}"
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource AccentColor}" BorderThickness="1"
-                    CornerRadius="8" Padding="14,10" Margin="0,0,0,15">
+                    CornerRadius="8" Padding="16,12" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="УСТАНОВЛЕНО" FontSize="11" FontWeight="Bold"
                                Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,4"/>
                     <TextBlock Text="{Binding InstalledSummaryText}" FontSize="14" FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                               Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
                     <!-- C2R: удалить/заменить. MSI: ODT его не удаляет — только системная панель. -->
                     <WrapPanel Visibility="{Binding IsClickToRunInstallation, Converter={StaticResource BoolToVis}}">
-                        <Button x:Name="btnUninstallOffice" Style="{StaticResource DangerFilledButtonStyle}" Content="🗑 Удалить" Height="34" Padding="12,0" Margin="0,0,8,0"
+                        <Button x:Name="btnUninstallOffice" Style="{StaticResource DangerFilledButtonStyle}" Content="🗑 Удалить" Height="32" Padding="12,0" Margin="0,0,8,0"
                                 ToolTip="Полностью удалит установленный Office. Приложения и активация будут потеряны, документы на диске не затрагиваются." FontWeight="Bold"
                                 Command="{Binding UninstallCommand}"/>
-                        <Button x:Name="btnReplaceOffice" Content="↻ Заменить на выбранную" Height="34" Padding="12,0" Margin="0,0,8,0"
+                        <Button x:Name="btnReplaceOffice" Content="↻ Заменить на выбранную" Height="32" Padding="12,0" Margin="0"
                                 ToolTip="Скачает выбранную ниже версию, удалит установленный Office и поставит новую."
                                 Command="{Binding ReplaceCommand}"/>
                     </WrapPanel>
 
                     <StackPanel Visibility="{Binding IsMsiInstallation, Converter={StaticResource BoolToVis}}">
                         <TextBlock Text="Это классическая MSI-установка Office — Office Deployment Tool такие не удаляет."
-                                   Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"/>
-                        <Button x:Name="btnOpenOfficeAppsFeatures" Content="Открыть «Установленные приложения»" Height="34" HorizontalAlignment="Left" Padding="12,0"
+                                   Foreground="{DynamicResource TextSecondary}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                        <Button x:Name="btnOpenOfficeAppsFeatures" Content="Открыть «Установленные приложения»" Height="32" HorizontalAlignment="Left" Padding="12,0" Margin="0"
                                 ToolTip="Откроет системную панель управления для удаления MSI-версии Office вручную."
                                 Command="{Binding OpenAppsFeaturesCommand}"/>
                     </StackPanel>
@@ -84,8 +83,10 @@
             </Border>
 
             <!-- Выбор версии — карточки -->
-            <GroupBox Header="📦 Выбор версии" Margin="0,0,0,15">
-                <WrapPanel Margin="10,10,0,0">
+            <!-- Отрицательный отступ справа и снизу гасит Margin 0,0,8,8 последних карточек ряда:
+                 поле карточки со всех сторон ровно 16 (Padding GroupBox). -->
+            <GroupBox Header="📦 Выбор версии">
+                <WrapPanel Margin="0,0,-8,-8">
                     <RadioButton x:Name="rdbO365"  Style="{StaticResource VersionCardStyle}" Content="Office 365&#x0a;ProPlus"       IsChecked="{Binding IsO365Selected, Mode=TwoWay}"/>
                     <RadioButton x:Name="rdbO2024" Style="{StaticResource VersionCardStyle}" Content="Office 2024&#x0a;ProPlus"      IsChecked="{Binding IsO2024Selected, Mode=TwoWay}"/>
                     <RadioButton x:Name="rdbO2021" Style="{StaticResource VersionCardStyle}" Content="Office 2021&#x0a;Professional" IsChecked="{Binding IsO2021Selected, Mode=TwoWay}"/>
@@ -95,34 +96,36 @@
             </GroupBox>
 
             <!-- Язык -->
-            <GroupBox Header="🌐 Язык Office" Margin="0,0,0,15">
-                <Grid Margin="10">
-                    <ComboBox x:Name="cmbOfficeLanguage" Height="35"
+            <!-- Короткий код языка — поле не на всю ширину карточки. -->
+            <GroupBox Header="🌐 Язык Office">
+                <Grid>
+                    <ComboBox x:Name="cmbOfficeLanguage" Height="32" Margin="0"
+                              Width="320" HorizontalAlignment="Left"
                               ItemsSource="{Binding OfficeLanguages}"
                               SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
                 </Grid>
             </GroupBox>
 
             <CheckBox x:Name="chkSaveInstaller" Content="Сохранить установщик после установки"
-                      Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10"
+                      Foreground="{DynamicResource TextPrimary}" Margin="0,4,0,16"
                       IsChecked="{Binding SaveInstaller, Mode=TwoWay}"/>
 
-            <WrapPanel Margin="0,10,0,10">
+            <!-- Кнопки одной высоты 32, как во всех разделах; MinWidth держит две главные одинаковыми. -->
+            <WrapPanel Margin="0,0,0,4">
                 <Button x:Name="btnDownloadOffice" Style="{StaticResource PrimaryButtonStyle}" Content="📥 Скачать"
                         ToolTip="Скачает установочные файлы выбранной версии и языка Office с серверов Microsoft."
-                        Height="45" Width="205" FontWeight="Bold" FontSize="14"
-                        Margin="0,0,10,10"
+                        Height="32" MinWidth="160" Padding="16,0"
+                        Margin="0,0,8,8"
                         Command="{Binding DownloadCommand}"/>
                 <Button x:Name="btnInstallOffice" Style="{StaticResource PrimaryButtonStyle}" Content="🚀 Установить"
                         ToolTip="Запустит установку Office с выбранными параметрами из ранее скачанных файлов."
-                        Height="45" Width="205" FontWeight="Bold" FontSize="14"
-                        Margin="0,0,10,10"
+                        Height="32" MinWidth="160" Padding="16,0"
+                        Margin="0,0,8,8"
                         Command="{Binding InstallCommand}"/>
                 <Button x:Name="btnCancelOffice" Content="⏹️ Отмена"
                         ToolTip="Остановит текущую загрузку или подготовку Office. Уже скачанные файлы могут сохраниться."
-                        Height="45" Width="120"
-                        FontWeight="Bold" FontSize="13"
-                        Margin="0,0,0,10"
+                        Height="32" Padding="12,0"
+                        Margin="0,0,0,8"
                         Command="{Binding CancelCommand}"
                         Visibility="{Binding CancelVisible, Converter={StaticResource BoolToVis}}"/>
             </WrapPanel>
@@ -130,7 +133,7 @@
             <!-- Статус региона -->
             <Border Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                    CornerRadius="6" Padding="12,8" Margin="0,0,0,12">
+                    CornerRadius="8" Padding="16,8" Margin="0,0,0,12">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="🌐 " VerticalAlignment="Center" FontSize="13"/>
                     <TextBlock Text="Регион Windows: " Foreground="{DynamicResource TextSecondary}"
@@ -149,7 +152,7 @@
                     Visibility="{Binding ProgressVisible, Converter={StaticResource BoolToVis}}"
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                    CornerRadius="8" Padding="16,12" Margin="0,0,0,16">
+                    CornerRadius="8" Padding="16,12" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock x:Name="txtInstallPhase"
                                Text="{Binding InstallPhaseText}"
@@ -163,17 +166,17 @@
                                  Background="{DynamicResource BorderBrush}"/>
                     <TextBlock x:Name="txtInstallDetail"
                                Text="{Binding InstallDetailText}"
-                               FontSize="11" Margin="0,6,0,0"
+                               FontSize="12" Margin="0,4,0,0"
                                Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
             </Border>
 
             <TextBlock Text="ℹ️ На время установки меняются региональные параметры Windows и Office: по ним загрузчик Microsoft выбирает сервер. После установки прежние значения возвращаются."
-                       Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap"/>
+                       Foreground="{DynamicResource TextSecondary}" FontSize="12" TextWrapping="Wrap"/>
             <TextBlock Text="⚠️ Требуется подключение к интернету для скачивания установщика."
-                       Foreground="{DynamicResource StatusWarning}" FontSize="11" Margin="0,5,0,0"/>
+                       Foreground="{DynamicResource StatusWarning}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"/>
             <TextBlock Text="🔑 Office устанавливается без активации: для работы нужна ваша лицензия Microsoft. Ven4Tools только скачивает официальный установщик и ничего не активирует."
-                       Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                       Foreground="{DynamicResource TextSecondary}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
 
             <!-- Переход на вкладку «Лицензия»: там только показ состояния, без активации -->
             <Border x:Name="pnlActivationHint"
@@ -181,17 +184,16 @@
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource AccentColor}"
                     BorderThickness="1" CornerRadius="8"
-                    Padding="16,12" Margin="0,20,0,0">
+                    Padding="16,12" Margin="0,16,0,0">
                 <DockPanel>
                     <Button x:Name="btnGoActivation" DockPanel.Dock="Right"
                             Content="🔑 Состояние лицензии →"
                             ToolTip="Откроет вкладку «Лицензия»: там видно, активированы ли Windows и Office. Ven4Tools ничего не активирует."
-                            Height="36" Padding="16,0"
-                            FontWeight="Bold" FontSize="13"
+                            Height="32" Padding="12,0" Margin="0"
                             Command="{Binding GoActivationCommand}"/>
                     <TextBlock Text="Office уже установлен? Посмотрите состояние его лицензии."
                                Foreground="{DynamicResource TextSecondary}"
-                               VerticalAlignment="Center" TextWrapping="Wrap"
+                               VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"
                                Margin="0,0,12,0"/>
                 </DockPanel>
             </Border>

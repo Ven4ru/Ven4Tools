@@ -744,6 +744,10 @@
     "t": "GitHub responded {0}"
   },
   {
+    "s": "GitHub репозиторий",
+    "t": "GitHub repository"
+  },
+  {
     "s": "Intel PresentMon — счётчик FPS",
     "t": "Intel PresentMon — FPS counter"
   },
@@ -4332,6 +4336,10 @@
     "t": "Diagnostics failed: {0}"
   },
   {
+    "s": "Диагностика сети",
+    "t": "Network diagnostics"
+  },
+  {
     "s": "Диагностика соединения",
     "t": "Connection diagnostics"
   },
@@ -4844,6 +4852,10 @@
     "t": "Written"
   },
   {
+    "s": "Записей нет. Здесь появятся программы, установленные и удалённые через Ven4Tools.",
+    "t": "No entries yet. Apps installed and removed through Ven4Tools will appear here."
+  },
+  {
     "s": "Запись",
     "t": "Write"
   },
@@ -5216,6 +5228,10 @@
     "t": "Use this link first"
   },
   {
+    "s": "Используемые технологии",
+    "t": "Technologies used"
+  },
+  {
     "s": "Исправить",
     "t": "Fix"
   },
@@ -5234,6 +5250,14 @@
   {
     "s": "История изменений будет доступна после загрузки каталога.",
     "t": "The changelog will be available once the catalog has loaded."
+  },
+  {
+    "s": "История изменений каталога",
+    "t": "Catalog changelog"
+  },
+  {
+    "s": "История установок",
+    "t": "Installation history"
   },
   {
     "s": "Источник",
@@ -7130,6 +7154,10 @@
   {
     "s": "Образ диска (*.iso)|*.iso",
     "t": "Disk image (*.iso)|*.iso"
+  },
+  {
+    "s": "Обратная связь",
+    "t": "Feedback"
   },
   {
     "s": "Обратная связь: {0}",
@@ -10692,6 +10720,10 @@
     "t": "Creates a snapshot of the current settings and selected data under the given name."
   },
   {
+    "s": "Сообщить о проблеме",
+    "t": "Report a problem"
+  },
+  {
     "s": "Сортировка: по версии",
     "t": "Sort: by version"
   },
@@ -10882,6 +10914,10 @@
   {
     "s": "Ссылка должна начинаться с https:// (незашифрованный http:// не поддерживается — установщик по нему нечем защитить от подмены)",
     "t": "The link must start with https:// (unencrypted http:// is not supported — an installer sent over it cannot be protected from tampering)"
+  },
+  {
+    "s": "Ссылки",
+    "t": "Links"
   },
   {
     "s": "Ставить приложения без окна установщика (только источник winget)",
@@ -15690,6 +15726,10 @@
   {
     "s": "\uD83C\uDFA8 Включён прежний интерфейс",
     "t": "\uD83C\uDFA8 Classic interface enabled"
+  },
+  {
+    "s": "\uD83C\uDFA8 Внешний вид",
+    "t": "\uD83C\uDFA8 Appearance"
   },
   {
     "s": "\uD83C\uDFA8 Графика",

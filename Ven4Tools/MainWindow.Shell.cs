@@ -17,6 +17,18 @@ namespace Ven4Tools
         private const string ChevronDown = "";
         private const string ChevronUp = "";
 
+        /// <summary>
+        /// Окно 1280×900 на экране высотой 900 (ноутбуки 1280×800/900, ВМ) уходило низом под
+        /// панель задач, и «Центр активности» вместе с нижним краем разделов был не виден.
+        /// Размер по умолчанию ужимается до рабочей области, но не меньше MinWidth/MinHeight.
+        /// </summary>
+        private void FitToWorkArea()
+        {
+            var area = SystemParameters.WorkArea;
+            if (Width > area.Width) Width = System.Math.Max(MinWidth, area.Width);
+            if (Height > area.Height) Height = System.Math.Max(MinHeight, area.Height);
+        }
+
         /// <summary>Вызывается после смены раздела: шапка и раскрытие группы меню.</summary>
         private void OnNavigated(Button activeButton)
         {

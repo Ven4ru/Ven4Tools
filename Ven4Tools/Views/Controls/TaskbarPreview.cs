@@ -232,9 +232,23 @@ namespace Ven4Tools.Views.Controls
                 }
                 sp.Freeze(); dc.DrawGeometry(Solid(fg), null, sp);
                 x -= 26 * u;
+                // Сеть — веер из трёх дуг над точкой, как значок Wi-Fi в Windows. Прежние полные
+                // концентрические круги читались как мишень, а не как сеть.
+                var wc = new Point(x - 8 * u, bar.Top + bh / 2 + 5 * u);
+                dc.DrawEllipse(Solid(fg), null, wc, 1.5 * u, 1.5 * u);
+                var wifiPen = new Pen(Solid(fg), 1.4 * u) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
                 for (int i = 0; i < 3; i++)
-                    dc.DrawEllipse(null, new Pen(Solid(Color.FromArgb((byte)(255 - i * 50), fg.R, fg.G, fg.B)), 1.4 * u),
-                        new Point(x - 8 * u, bar.Top + bh / 2 + 5 * u), (3 + i * 3.5) * u, (3 + i * 3.5) * u);
+                {
+                    double r = (4.5 + i * 3.5) * u, d = r * Math.Sqrt(0.5);
+                    var arc = new StreamGeometry();
+                    using (var g = arc.Open())
+                    {
+                        g.BeginFigure(new Point(wc.X - d, wc.Y - d), false, false);
+                        g.ArcTo(new Point(wc.X + d, wc.Y - d), new Size(r, r), 0, false, SweepDirection.Clockwise, true, false);
+                    }
+                    arc.Freeze();
+                    dc.DrawGeometry(null, wifiPen, arc);
+                }
             }
             else
             {

@@ -50,6 +50,9 @@
     <Resource Include="Resources\Mascots\*.png" />
     <Resource Include="Resources\Overlay\*.png" />
     <Resource Include="Resources\Splash\*.png" />
+    <!-- Знак программы на вкладке «О программе» (Image Source="/icon.ico"). Без этой
+         строки значок есть только у exe, а на вкладке вместо него пустое место 96 px. -->
+    <Resource Include="icon.ico" />
   </ItemGroup>
 
   <!-- «Персонализация»: файлы оформления «Венчик» лежат рядом с программой. Заставка —

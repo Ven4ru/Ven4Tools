@@ -9,14 +9,14 @@
     <!-- Окно не принимает щелчки и фокус (см. OverlayWindow.xaml.cs): игра под ним
          получает мышь и клавиатуру как обычно. Цвета постоянные, не из темы: оверлей
          рисуется поверх чужой картинки и должен читаться на любом фоне. -->
-    <Border Background="#B0101418" CornerRadius="6" Padding="10,6">
+    <Border Background="#B0101418" CornerRadius="8" Padding="12,8">
       <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <!-- Венчик: жарко, нормально или холодно (галочка «Показывать Венчика» в «Диагностике») -->
-        <Image x:Name="imgMascot" Grid.Column="1" Height="84" Margin="10,0,0,0" VerticalAlignment="Top"
+        <Image x:Name="imgMascot" Grid.Column="1" Height="84" Margin="12,0,0,0" VerticalAlignment="Top"
                Visibility="Collapsed" RenderOptions.BitmapScalingMode="HighQuality"/>
         <Grid>
             <!-- Компактный вид: три строки -->
@@ -41,7 +41,7 @@
                                     <Setter TargetName="txt" Property="Foreground" Value="#FF7FE0D0"/>
                                     <Setter TargetName="txt" Property="FontWeight" Value="SemiBold"/>
                                     <Setter TargetName="txt" Property="FontSize" Value="14"/>
-                                    <Setter TargetName="txt" Property="Margin" Value="0,6,0,1"/>
+                                    <Setter TargetName="txt" Property="Margin" Value="0,8,0,1"/>
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding Style}" Value="{x:Static svc:OverlayLineStyle.Dim}">
                                     <Setter TargetName="txt" Property="Foreground" Value="#FFA9B8B5"/>
@@ -56,8 +56,8 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock x:Name="txtFrameGraph" Text="Время кадра, мс" Foreground="#FFA9B8B5" FontFamily="Consolas" FontSize="11" Margin="0,8,0,2"/>
-                <Border Height="54" Background="#24FFFFFF" CornerRadius="3">
+                <TextBlock x:Name="txtFrameGraph" Text="Время кадра, мс" Foreground="#FFA9B8B5" FontFamily="Consolas" FontSize="11" Margin="0,8,0,4"/>
+                <Border Height="54" Background="#24FFFFFF" CornerRadius="4">
                     <Grid>
                         <Canvas x:Name="cnvFrames" ClipToBounds="True">
                             <Polyline x:Name="plFrames" Stroke="#FF7FE0D0" StrokeThickness="1.2"/>
@@ -67,13 +67,13 @@
                     </Grid>
                 </Border>
 
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,2">
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,4">
                     <TextBlock Text="Загрузка, 60 с: " Foreground="#FFA9B8B5" FontFamily="Consolas" FontSize="11"/>
                     <TextBlock Text="CPU" Foreground="#FF7FB8FF" FontFamily="Consolas" FontSize="11" FontWeight="SemiBold"/>
                     <TextBlock Text=" · " Foreground="#FFA9B8B5" FontFamily="Consolas" FontSize="11"/>
                     <TextBlock Text="GPU" Foreground="#FFFF9F7F" FontFamily="Consolas" FontSize="11" FontWeight="SemiBold"/>
                 </StackPanel>
-                <Border Height="54" Background="#24FFFFFF" CornerRadius="3">
+                <Border Height="54" Background="#24FFFFFF" CornerRadius="4">
                     <Canvas x:Name="cnvLoad" ClipToBounds="True">
                         <Polyline x:Name="plCpuLoad" Stroke="#FF7FB8FF" StrokeThickness="1.2"/>
                         <Polyline x:Name="plGpuLoad" Stroke="#FFFF9F7F" StrokeThickness="1.2"/>

@@ -66,7 +66,7 @@
         </Grid.RowDefinitions>
 
         <!-- Заголовок + тулбар -->
-        <Border Grid.Row="0" Padding="16,16,16,12"
+        <Border Grid.Row="0" Padding="24,16,24,12"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.RowDefinitions>
@@ -81,12 +81,12 @@
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" MinWidth="120"/>
-                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="8"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <TextBox x:Name="txtSearch" Grid.Column="0"
-                             Height="34" Padding="10,6"
+                             Height="32" Padding="8,0" VerticalContentAlignment="Center"
                              FontSize="13"
                              Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                         <!-- Фон задаётся сеттером стиля, а не атрибутом: локальное значение
@@ -103,7 +103,7 @@
                                                 <VisualBrush Stretch="None" AlignmentX="Left">
                                                     <VisualBrush.Visual>
                                                         <TextBlock Text="🔍 Поиск по названию или ID..."
-                                                                   Foreground="Gray" FontSize="12"
+                                                                   Foreground="{DynamicResource TextSecondary}" FontSize="13"
                                                                    Margin="11,0,0,0" VerticalAlignment="Center"/>
                                                     </VisualBrush.Visual>
                                                 </VisualBrush>
@@ -119,7 +119,7 @@
                         <Button x:Name="btnRefresh"
                                 Content="Проверить обновления"
                                 ToolTip="Обновит список установленных приложений и найдёт доступные новые версии. Ничего не устанавливает."
-                                Height="34" Padding="14,0"
+                                Height="32" Padding="12,0" Margin="0"
                                 Background="{DynamicResource CardBackground}"
                                 Foreground="{DynamicResource TextPrimary}"
                                 FontSize="12"
@@ -127,20 +127,20 @@
                         <!-- Обновить все приложения через winget -->
                         <Button x:Name="btnUpgradeAll" Style="{StaticResource PrimaryButtonStyle}"
                                 Content="Обновить всё"
-                                Margin="4,0,0,0" Height="34" Padding="14,0"
+                                Margin="8,0,0,0" Height="32" Padding="16,0"
                                 FontWeight="Bold"
                                 FontSize="12"
                                 ToolTip="После подтверждения обновит через winget все приложения, для которых доступна новая версия."
                                 Command="{Binding UpgradeAllCommand}"/>
                         <Button x:Name="btnExport" Content="Экспорт"
-                                Margin="4,0,0,0" Height="34" Padding="10,0"
+                                Margin="8,0,0,0" Height="32" Padding="12,0"
                                 Background="{DynamicResource CardBackground}"
                                 Foreground="{DynamicResource TextPrimary}"
                                 FontSize="12"
                                 ToolTip="Сохранит список установленных приложений в файл winget или JSON."
                                 Command="{Binding ExportCommand}"/>
                         <Button x:Name="btnImport" Content="Импорт"
-                                Margin="4,0,0,0" Height="34" Padding="10,0"
+                                Margin="8,0,0,0" Height="32" Padding="12,0"
                                 Background="{DynamicResource CardBackground}"
                                 Foreground="{DynamicResource TextPrimary}"
                                 FontSize="12"
@@ -152,7 +152,7 @@
         </Border>
 
         <!-- Фильтры + статистика + кнопки действий -->
-        <Border Grid.Row="1" Padding="16,8"
+        <Border Grid.Row="1" Padding="24,8"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
                 Background="{DynamicResource SidebarBackground}">
             <Grid>
@@ -164,23 +164,23 @@
 
                 <StackPanel Orientation="Horizontal" Grid.Column="0">
                     <RadioButton x:Name="rdbAll" Style="{StaticResource FilterTabStyle}"
-                                 Content="Все" Margin="0,0,6,0"
+                                 Content="Все" Margin="0,0,8,0"
                                  IsChecked="{Binding IsAllFilterSelected, Mode=TwoWay}"/>
                     <RadioButton x:Name="rdbUnknown" Style="{StaticResource FilterTabStyle}"
                                  Content="Неизвестные"
                                  IsChecked="{Binding IsUnknownFilterSelected, Mode=TwoWay}"/>
 
                     <!-- Разделитель -->
-                    <Border Width="1" Margin="10,4" Background="{DynamicResource BorderBrush}"/>
+                    <Border Width="1" Margin="12,4" Background="{DynamicResource BorderBrush}"/>
 
                     <!-- Фильтр: только с обновлениями -->
                     <CheckBox x:Name="chkOnlyUpdates" Content="Только с обновлениями"
-                              VerticalAlignment="Center" Margin="0,0,8,0"
+                              VerticalAlignment="Center" Margin="0,0,12,0"
                               Foreground="{DynamicResource TextSecondary}" FontSize="12"
                               IsChecked="{Binding OnlyUpdates, Mode=TwoWay}"/>
 
                     <!-- Сортировка -->
-                    <ComboBox x:Name="cmbSort" Width="190" Height="28" VerticalAlignment="Center"
+                    <ComboBox x:Name="cmbSort" Width="200" Height="32" Margin="0" VerticalAlignment="Center"
                               FontSize="12"
                               SelectedIndex="{Binding SortIndex, Mode=TwoWay}">
                         <ComboBoxItem Content="Сортировка: по имени"/>
@@ -201,15 +201,15 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="btnUpdateSelected" Style="{StaticResource PrimaryButtonStyle}"
                             Content="Обновить"
-                            Height="30" Padding="12,0"
+                            Height="32" Padding="12,0" Margin="0"
                             FontWeight="Bold"
                             FontSize="12"
                             ToolTip="Обновит отмеченные приложения, для которых найдены новые версии."
                             Command="{Binding UpdateSelectedCommand}"/>
                     <Button x:Name="btnUninstallSelected" Content="Удалить"
                             Style="{StaticResource DangerButtonStyle}"
-                            Margin="4,0,0,0"
-                            Height="30" Padding="10,0"
+                            Margin="8,0,0,0"
+                            Height="32" Padding="12,0"
                             FontSize="12"
                             ToolTip="После общего подтверждения удалит все отмеченные приложения по очереди."
                             Command="{Binding UninstallSelectedCommand}"/>
@@ -218,17 +218,31 @@
         </Border>
 
         <!-- Заголовок таблицы с чекбоксом "Выбрать все" -->
-        <Border Grid.Row="2" Padding="16,6,16,6"
+        <!-- Шапка таблицы стоит вне прокрутки, а строки — внутри: когда у списка появляется
+             полоса прокрутки (10 px), колонки строк сдвигаются влево, и «Версия», «Доступна»,
+             «Источник» переставали стоять над своими значениями. Правый отступ шапки
+             увеличивается на ширину полосы, пока она видна. -->
+        <Border Grid.Row="2"
                 Background="{DynamicResource CardBackground}"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Padding" Value="24,8,24,8"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ComputedVerticalScrollBarVisibility, ElementName=listScroll}" Value="Visible">
+                            <Setter Property="Padding" Value="24,8,34,8"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="26"/>
+                    <ColumnDefinition Width="32"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="136"/>
+                    <ColumnDefinition Width="136"/>
                     <ColumnDefinition Width="120"/>
-                    <ColumnDefinition Width="120"/>
-                    <ColumnDefinition Width="110"/>
-                    <ColumnDefinition Width="165"/>
+                    <ColumnDefinition Width="168"/>
                 </Grid.ColumnDefinitions>
                 <CheckBox x:Name="chkSelectAll" Grid.Column="0" VerticalAlignment="Center"
                           IsChecked="{Binding SelectAllState, Mode=TwoWay}"/>
@@ -276,7 +290,7 @@
                 <views:FlatItemsControl x:Name="lstApps" Margin="0" ItemsSource="{Binding DisplayedApps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Padding="16,0"
+                            <Border Padding="24,0"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="0,0,0,1"
                                     Background="Transparent">
@@ -289,14 +303,14 @@
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
-                                <Grid Height="38">
+                                <Grid Height="40">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="26"/>
+                                        <ColumnDefinition Width="32"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="136"/>
+                                        <ColumnDefinition Width="136"/>
                                         <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="110"/>
-                                        <ColumnDefinition Width="165"/>
+                                        <ColumnDefinition Width="168"/>
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Чекбокс -->
@@ -312,13 +326,13 @@
                                                TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
 
                                     <!-- Версия -->
-                                    <!-- Колонки версий по 120px с правым отступом 10px: при 95px
+                                    <!-- Колонки версий по 136px с правым отступом 12px: при 95px
                                          без отступа «19.2506.56051.0» вплотную слипалась со
                                          следующей колонкой. Длиннее — многоточие и подсказка. -->
                                     <TextBlock Grid.Column="2" Text="{Binding Version}"
                                                ToolTip="{Binding Version}"
                                                Foreground="{DynamicResource TextSecondary}"
-                                               FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"
+                                               FontSize="12" VerticalAlignment="Center" Margin="0,0,12,0"
                                                TextTrimming="CharacterEllipsis"/>
 
                                     <!-- Доступна: колонка фиксированной ширины — без
@@ -326,7 +340,7 @@
                                          без многоточия, наезжая на соседнюю "Источник". -->
                                     <TextBlock Grid.Column="3"
                                                FontSize="12" VerticalAlignment="Center"
-                                               FontWeight="SemiBold" Margin="0,0,10,0"
+                                               FontWeight="SemiBold" Margin="0,0,12,0"
                                                TextTrimming="CharacterEllipsis">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
@@ -345,7 +359,8 @@
                                     <!-- Источник -->
                                     <TextBlock Grid.Column="4"
                                                Text="{Binding SourceDisplay}"
-                                               FontSize="12" VerticalAlignment="Center">
+                                               FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"
+                                               TextTrimming="CharacterEllipsis">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
@@ -366,14 +381,14 @@
                                          стояли «лесенкой»; теперь у «Удалить» одно место во всех строках. -->
                                     <Grid Grid.Column="5" VerticalAlignment="Center">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="86"/>
+                                            <ColumnDefinition Width="88"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <Button Style="{StaticResource PrimaryButtonStyle}" AutomationProperties.AutomationId="{Binding Name, StringFormat='btnUpdateApp_{0}'}" Content="Обновить"
                                                 Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
                                                 IsEnabled="{Binding CanAct}"
                                                 HorizontalAlignment="Left"
-                                                Height="26" Padding="10,0" Margin="0,0,6,0"
+                                                Height="28" Padding="12,0" Margin="0,0,8,0"
                                                 FontSize="12" FontWeight="Bold"
                                                 ToolTip="Обновит это приложение до доступной версии."
                                                 Command="{Binding DataContext.UpdateAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -381,7 +396,7 @@
                                         <Button Grid.Column="1" AutomationProperties.AutomationId="{Binding Name, StringFormat='btnUninstallApp_{0}'}" Content="Удалить"
                                                 Style="{StaticResource DangerButtonStyle}"
                                                 IsEnabled="{Binding CanAct}"
-                                                Height="26" Padding="10,0"
+                                                Height="28" Padding="12,0"
                                                 ToolTip="После подтверждения удалит это приложение с компьютера."
                                                 Command="{Binding DataContext.UninstallAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"/>

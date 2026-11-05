@@ -7,11 +7,11 @@
         UseLayoutRounding="True" SnapsToDevicePixels="True">
     <Window.Resources>
         <Style x:Key="NavButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="40"/>
+            <!-- Шаг пунктов 40: высота 36 + промежуток 4 (подсветки соседних пунктов не слипаются). -->
+            <Setter Property="Height" Value="36"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding" Value="13,0"/>
-            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="Margin" Value="0,2"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -21,11 +21,11 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="5">
-                            <Grid Margin="10,0">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="4">
+                            <Grid Margin="12,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{TemplateBinding Tag}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                           FontSize="15" Foreground="{TemplateBinding Foreground}"
+                                           FontSize="16" Foreground="{TemplateBinding Foreground}"
                                            VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="1" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"
                                            VerticalAlignment="Center"/>
@@ -58,10 +58,10 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="5"
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="4"
                                 BorderBrush="Transparent" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Text="&#xE8AB;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="11" Margin="0,1,7,0"
+                                <TextBlock Text="&#xE8AB;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="11" Margin="0,0,8,0"
                                            Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
                                 <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
                             </StackPanel>
@@ -103,9 +103,9 @@
 
                     <Border Width="3" Height="40" HorizontalAlignment="Left" Background="{DynamicResource AccentColor}"
                             CornerRadius="2" Effect="{DynamicResource BrandAuraEffect}"/>
-                    <StackPanel VerticalAlignment="Center" Margin="15,0,0,0">
+                    <StackPanel VerticalAlignment="Center" Margin="16,0,0,0">
                         <TextBlock FontSize="19" FontWeight="Bold"><Run Text="Ven4"/><Run Text="Tools" Foreground="{DynamicResource AccentColor}"/></TextBlock>
-                        <TextBlock Text="WINDOWS TOOLKIT" Style="{StaticResource EyebrowStyle}" Margin="0,3,0,0"/>
+                        <TextBlock Text="WINDOWS TOOLKIT" Style="{StaticResource EyebrowStyle}" Margin="0,2,0,0"/>
                     </StackPanel>
                 </Grid>
 
@@ -119,11 +119,11 @@
                         <Grid>
                             <Button x:Name="btnGroupWindows" Style="{StaticResource NavButtonStyle}" Tag="&#xE770;" Content="Windows"
                                     Click="BtnGroupWindows_Click" ToolTip="Раскрывает разделы Windows: обновления, Office, лицензия, очистка, автозагрузка и место на диске."/>
-                            <TextBlock x:Name="chevGroupWindows" Text="&#xE70D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="9"
+                            <TextBlock x:Name="chevGroupWindows" Text="&#xE70D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10"
                                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
                                        IsHitTestVisible="False" Foreground="{DynamicResource TextSecondary}"/>
                         </Grid>
-                        <StackPanel x:Name="pnlGroupWindows" Margin="14,0,0,0" Visibility="Collapsed">
+                        <StackPanel x:Name="pnlGroupWindows" Margin="16,0,0,0" Visibility="Collapsed">
                             <Grid x:Name="gridWindowsUpdateNav">
                                 <Button x:Name="btnWindowsUpdateTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE72E;" Content="Windows Update" Click="NavigateToWindowsUpdate"/>
                                 <Border x:Name="badgeWindowsUpdateCount" Background="{DynamicResource StatusDanger}" CornerRadius="7"
@@ -142,11 +142,11 @@
                         <Grid>
                             <Button x:Name="btnGroupService" Style="{StaticResource NavButtonStyle}" Tag="&#xE90F;" Content="Сервис"
                                     Click="BtnGroupService_Click" ToolTip="Раскрывает служебные разделы: сеть, диагностика и бенчмарк."/>
-                            <TextBlock x:Name="chevGroupService" Text="&#xE70D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="9"
+                            <TextBlock x:Name="chevGroupService" Text="&#xE70D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10"
                                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
                                        IsHitTestVisible="False" Foreground="{DynamicResource TextSecondary}"/>
                         </Grid>
-                        <StackPanel x:Name="pnlGroupService" Margin="14,0,0,0" Visibility="Collapsed">
+                        <StackPanel x:Name="pnlGroupService" Margin="16,0,0,0" Visibility="Collapsed">
                             <Button x:Name="btnNetworkTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE968;" Content="Сеть" Click="NavigateToNetwork"/>
                             <Button x:Name="btnDiagnosticsTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE9D9;" Content="Диагностика" Click="NavigateToDiagnostics"/>
                             <Button x:Name="btnBenchmarkTab" Style="{StaticResource NavButtonStyle}" Tag="&#xE916;" Content="Бенчмарк" Click="NavigateToBenchmark"/>
@@ -159,15 +159,19 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <StackPanel Grid.Row="2" Margin="0,8,0,12">
-                    <Image x:Name="imgMascot" Visibility="Collapsed" MaxHeight="110" MaxWidth="150" Margin="10,0,10,8" Stretch="Uniform"/>
-                    <Border Style="{StaticResource PillStatusStyle}" Margin="0,0,0,6">
-                        <Grid>
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse x:Name="dotConnectionStatus" Width="7" Height="7" Fill="{DynamicResource StatusSuccess}" Margin="0,0,7,0"/>
-                                <TextBlock x:Name="txtConnectionStatus" Text="Интернет доступен" FontSize="10" Foreground="{DynamicResource StatusSuccess}"/>
-                            </StackPanel>
-                            <TextBlock x:Name="txtSidebarVersion" HorizontalAlignment="Right" FontFamily="Cascadia Mono, Consolas" FontSize="9" Foreground="{DynamicResource TextSecondary}"/>
+                <!-- Низ панели — на одной линии с «Центром активности» (отступ 8 снизу). -->
+                <StackPanel Grid.Row="2" Margin="0,8,0,8">
+                    <Image x:Name="imgMascot" Visibility="Collapsed" MaxHeight="112" MaxWidth="152" Margin="8,0,8,8" Stretch="Uniform"/>
+                    <Border Style="{StaticResource PillStatusStyle}" MinHeight="32">
+                        <!-- Версия — своей колонкой: длинное состояние («Онлайн-режим принудительно»)
+                             раньше заезжало под номер версии, теперь переносится на вторую строку. -->
+                        <Grid VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <Ellipse x:Name="dotConnectionStatus" Width="8" Height="8" Fill="{DynamicResource StatusSuccess}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="txtConnectionStatus" Grid.Column="1" Text="Интернет доступен" FontSize="11" Foreground="{DynamicResource StatusSuccess}"
+                                       VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="txtSidebarVersion" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center"
+                                       FontFamily="Cascadia Mono, Consolas" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
                         </Grid>
                     </Border>
                 </StackPanel>
@@ -178,17 +182,18 @@
               DragEnter="MainArea_DragEnter" DragOver="MainArea_DragOver" DragLeave="MainArea_DragLeave" Drop="MainArea_Drop">
             <Grid.RowDefinitions><RowDefinition Height="48"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
-            <Border Grid.Row="0" Background="{DynamicResource SidebarBackground}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,0">
+            <Border Grid.Row="0" Background="{DynamicResource SidebarBackground}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="24,0">
                 <Grid>
                     <StackPanel VerticalAlignment="Center">
                         <!-- Название открытого раздела ставит OnNavigated. -->
                         <TextBlock x:Name="txtHeaderTitle" Text="Ven4Tools" FontSize="16" FontWeight="SemiBold"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Border Style="{StaticResource PillStatusStyle}" Margin="0,0,8,0">
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse x:Name="dotActiveTasks" Width="7" Height="7" Fill="{DynamicResource TextSecondary}" Margin="0,0,7,0"/>
-                                <TextBlock x:Name="txtActiveTasks" Text="Нет активных задач" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
+                        <!-- Плашка той же высоты, что кнопка настроек рядом (32). -->
+                        <Border Style="{StaticResource PillStatusStyle}" Margin="0,0,8,0" Height="32">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse x:Name="dotActiveTasks" Width="8" Height="8" Fill="{DynamicResource TextSecondary}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="txtActiveTasks" Text="Нет активных задач" FontSize="11" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
                         <Button Content="&#xE713;" Style="{StaticResource IconButtonStyle}" ToolTip="Настройки"
@@ -199,7 +204,7 @@
 
             <Border x:Name="pnlPins" Grid.Row="1" Background="{DynamicResource SidebarBackground}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
-                    Padding="14,7" Visibility="Collapsed">
+                    Padding="24,8" Visibility="Collapsed">
                 <DockPanel>
                     <TextBlock Text="&#xE840;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Margin="0,0,8,0" Foreground="{DynamicResource AccentColor}"/>
                     <WrapPanel x:Name="wrapPins"/>
@@ -208,16 +213,17 @@
 
             <ContentControl x:Name="MainFrame" Grid.Row="2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
 
-            <Expander Grid.Row="3" Header="Центр активности" IsExpanded="False" Margin="16,8,16,12">
-                <Border Height="150" Margin="0,7,0,0" Background="{DynamicResource CardBackground}"
+            <!-- Поля по бокам — как у разделов (24), снизу 8 — на одной линии с низом боковой панели. -->
+            <Expander Grid.Row="3" Header="Центр активности" IsExpanded="False" Margin="24,8,24,8">
+                <Border Height="152" Margin="0,8,0,0" Background="{DynamicResource CardBackground}"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6">
                     <Grid>
                         <Button x:Name="btnClearGlobalLog" Content="&#xE74D;" Style="{StaticResource IconButtonStyle}"
-                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,5,5,0"
+                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0"
                                 Background="Transparent" Panel.ZIndex="2"
                                 ToolTip="Удалит все сообщения из видимого журнала текущего сеанса."
                                 Click="BtnClearGlobalLog_Click"/>
-                        <ListBox x:Name="lstGlobalLog" Margin="6" Background="Transparent" BorderThickness="0"
+                        <ListBox x:Name="lstGlobalLog" Margin="8" Background="Transparent" BorderThickness="0"
                                  SelectionMode="Extended" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  VirtualizingPanel.IsVirtualizing="True" HorizontalContentAlignment="Stretch">
                             <ListBox.ContextMenu>
@@ -225,11 +231,12 @@
                             </ListBox.ContextMenu>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="4,2,36,2">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="62"/><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding Time}" FontFamily="Cascadia Mono, Consolas" FontSize="9" Foreground="{DynamicResource TextSecondary}"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Icon}" FontSize="10" Foreground="{Binding IconBrush}"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding Message}" FontSize="10" TextWrapping="Wrap"/>
+                                    <!-- Справа 40: под кнопкой очистки (32 + 8) строки не проходят. -->
+                                    <Grid Margin="4,2,40,2">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="72"/><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Time}" FontFamily="Cascadia Mono, Consolas" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Icon}" FontSize="12" Foreground="{Binding IconBrush}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Message}" FontSize="12" TextWrapping="Wrap"/>
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -242,8 +249,8 @@
                     Background="{DynamicResource OverlayBackground}" BorderBrush="{DynamicResource AccentColor}" BorderThickness="2" CornerRadius="8" Margin="12">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="44" Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Добавить локальный установщик" FontSize="19" FontWeight="SemiBold" Margin="0,14,0,0"/>
-                    <TextBlock Text="Отпустите файл, чтобы продолжить" Foreground="{DynamicResource TextSecondary}" Margin="0,5,0,0"/>
+                    <TextBlock Text="Добавить локальный установщик" FontSize="22" FontWeight="SemiBold" Margin="0,16,0,0"/>
+                    <TextBlock Text="Отпустите файл, чтобы продолжить" Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
                 </StackPanel>
             </Border>
         </Grid>

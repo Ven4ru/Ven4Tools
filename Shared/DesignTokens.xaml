@@ -56,7 +56,8 @@
 
     <Style x:Key="PageTitleStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
-        <Setter Property="FontSize" Value="24"/>
+        <!-- 22 SemiBold — заголовок раздела по общим правилам дизайна клиента (05.11.2026). -->
+        <Setter Property="FontSize" Value="22"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
@@ -84,8 +85,9 @@
          App.xaml, и ссылка на неявный стиль Button разрешалась в системный — кнопка
          выходила светло-серой на тёмном окне. -->
     <Style x:Key="IconButtonStyle" TargetType="Button">
-        <Setter Property="Width" Value="34"/>
-        <Setter Property="Height" Value="34"/>
+        <!-- 32×32 — одна высота с обычными кнопками и полями (общие правила 05.11.2026). -->
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceRaised}"/>

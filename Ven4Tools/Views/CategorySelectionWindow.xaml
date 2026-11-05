@@ -1,12 +1,12 @@
 <Window x:Class="Ven4Tools.Views.CategorySelectionWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ven4Tools" Height="590" Width="720"
+        Title="Ven4Tools" Width="720" SizeToContent="Height"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{DynamicResource WindowBackground}"
         ShowInTaskbar="False">
 
-    <Grid Margin="32,28,32,24">
+    <Grid Margin="32,24,32,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -39,13 +39,13 @@
             <Border x:Name="cardBasic" Grid.Column="0"
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="2"
-                    CornerRadius="10" Cursor="Hand"
+                    CornerRadius="8" Cursor="Hand"
                     MouseDown="Card_MouseDown" Tag="basic">
-                <StackPanel Margin="16,20,16,20">
+                <StackPanel Margin="16,24,16,16">
                     <TextBlock Text="🚀"
-                               FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                               FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
                     <TextBlock Text="Базовый"
-                               FontSize="16" FontWeight="Bold"
+                               FontSize="16" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="Быстрый старт Windows"
@@ -53,16 +53,16 @@
                                Foreground="{DynamicResource AccentColor}"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="Самое нужное, чтобы сразу начать работать: браузер, офис, мессенджеры, плеер, архиватор и библиотеки Windows"
-                               FontSize="11" TextWrapping="Wrap" TextAlignment="Center"
+                               FontSize="12" TextWrapping="Wrap" TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondary}"/>
-                    <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
+                    <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,12"/>
                     <!-- Состав режима задан у каждой программы отдельно (поле profile каталога),
                          поэтому здесь примеры программ, а не категории. Каждая строка — свой
                          TextBlock: перевод заменяет текст блока целиком. -->
                     <StackPanel>
                         <StackPanel.Resources>
                             <Style TargetType="TextBlock">
-                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="FontSize" Value="12"/>
                                 <Setter Property="TextWrapping" Value="Wrap"/>
                                 <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
                             </Style>
@@ -78,13 +78,13 @@
             <Border x:Name="cardExtended" Grid.Column="2"
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="2"
-                    CornerRadius="10" Cursor="Hand"
+                    CornerRadius="8" Cursor="Hand"
                     MouseDown="Card_MouseDown" Tag="extended">
-                <StackPanel Margin="16,20,16,20">
+                <StackPanel Margin="16,24,16,16">
                     <TextBlock Text="⚙️"
-                               FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                               FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
                     <TextBlock Text="Расширенный"
-                               FontSize="16" FontWeight="Bold"
+                               FontSize="16" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="Для энтузиастов"
@@ -92,16 +92,16 @@
                                Foreground="{DynamicResource AccentColor}"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="Всё из базового плюс программы для тех, кто делает больше: разработка, графика, монтаж, диагностика ПК"
-                               FontSize="11" TextWrapping="Wrap" TextAlignment="Center"
+                               FontSize="12" TextWrapping="Wrap" TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondary}"/>
-                    <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
+                    <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,12"/>
                     <!-- Состав режима задан у каждой программы отдельно (поле profile каталога),
                          поэтому здесь примеры программ, а не категории. Каждая строка — свой
                          TextBlock: перевод заменяет текст блока целиком. -->
                     <StackPanel>
                         <StackPanel.Resources>
                             <Style TargetType="TextBlock">
-                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="FontSize" Value="12"/>
                                 <Setter Property="TextWrapping" Value="Wrap"/>
                                 <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
                             </Style>
@@ -117,13 +117,13 @@
             <Border x:Name="cardFull" Grid.Column="4"
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="2"
-                    CornerRadius="10" Cursor="Hand"
+                    CornerRadius="8" Cursor="Hand"
                     MouseDown="Card_MouseDown" Tag="full">
-                <StackPanel Margin="16,20,16,20">
+                <StackPanel Margin="16,24,16,16">
                     <TextBlock Text="💎"
-                               FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                               FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
                     <TextBlock Text="Полный"
-                               FontSize="16" FontWeight="Bold"
+                               FontSize="16" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="Весь каталог"
@@ -131,16 +131,16 @@
                                Foreground="{DynamicResource AccentColor}"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="Весь каталог, включая драйверпаки, инструменты ИИ и узкоспециальные программы"
-                               FontSize="11" TextWrapping="Wrap" TextAlignment="Center"
+                               FontSize="12" TextWrapping="Wrap" TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondary}"/>
-                    <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,10"/>
+                    <Separator Background="{DynamicResource BorderBrush}" Margin="0,12,0,12"/>
                     <!-- Состав режима задан у каждой программы отдельно (поле profile каталога),
                          поэтому здесь примеры программ, а не категории. Каждая строка — свой
                          TextBlock: перевод заменяет текст блока целиком. -->
                     <StackPanel>
                         <StackPanel.Resources>
                             <Style TargetType="TextBlock">
-                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="FontSize" Value="12"/>
                                 <Setter Property="TextWrapping" Value="Wrap"/>
                                 <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
                             </Style>
@@ -157,9 +157,9 @@
         <Button x:Name="btnContinue" Style="{StaticResource PrimaryButtonStyle}" Grid.Row="2"
                 Content="Продолжить"
                 ToolTip="Сохранит выбранные категории и откроет основной интерфейс клиента."
-                Height="42" Width="200" Margin="0,20,0,0"
+                Height="32" MinWidth="200" Padding="16,0" Margin="0,24,0,0"
                 HorizontalAlignment="Center"
-                IsEnabled="False" FontSize="14" FontWeight="Bold"
+                IsEnabled="False"
                 Click="BtnContinue_Click"/>
     </Grid>
 </Window>
