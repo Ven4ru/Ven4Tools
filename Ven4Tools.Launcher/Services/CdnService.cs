@@ -84,11 +84,13 @@ namespace Ven4Tools.Launcher.Services
             // Первая попытка — обычный DNS-путь.
             try
             {
-                var info = await FetchAndVerifyAsync(_httpClient, token);
+                var (info, staleReason) = await FetchAndVerifyAsync(_httpClient, token);
                 CacheCdnIp(info?.CdnIp);
                 ApplyFlags(info);
                 if (info == null)
-                    _log?.Invoke("подпись манифеста CDN не подтверждена (version.json.sig)");
+                    _log?.Invoke(staleReason != null
+                        ? $"манифест CDN отклонён: {staleReason}"
+                        : "подпись манифеста CDN не подтверждена (version.json.sig)");
                 return info;
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
@@ -121,11 +123,13 @@ namespace Ven4Tools.Launcher.Services
             {
                 string ip = _lastKnownCdnIp ?? IpPinnedHttpClientFactory.FallbackCdnIp;
                 var pinned = IpPinnedHttpClientFactory.GetOrCreate(ip, TimeSpan.FromSeconds(TimeoutSeconds));
-                var info = await FetchAndVerifyAsync(pinned, token);
+                var (info, staleReason) = await FetchAndVerifyAsync(pinned, token);
                 CacheCdnIp(info?.CdnIp);
                 ApplyFlags(info);
                 if (info == null)
-                    _log?.Invoke($"по прямому IP {ip} подпись манифеста не подтверждена");
+                    _log?.Invoke(staleReason != null
+                        ? $"по прямому IP {ip} манифест отклонён: {staleReason}"
+                        : $"по прямому IP {ip} подпись манифеста не подтверждена");
                 return info;
             }
             catch (Exception ex)
@@ -137,16 +141,33 @@ namespace Ven4Tools.Launcher.Services
 
         /// <summary>
         /// Скачивает version.json + подпись указанным клиентом и проверяет ECDSA.
-        /// Возвращает распарсенный манифест или null, если подпись невалидна.
+        /// Возвращает распарсенный манифест или null, если подпись невалидна либо
+        /// манифест старее уже принятого (тогда StaleReason — причина).
         /// Сетевые ошибки ПРОБРАСЫВАЮТСЯ — вызывающий решает про IP-fallback.
         /// </summary>
-        private static async Task<CdnVersionInfo?> FetchAndVerifyAsync(HttpClient client, CancellationToken token)
+        private static async Task<(CdnVersionInfo? Info, string? StaleReason)> FetchAndVerifyAsync(
+            HttpClient client, CancellationToken token)
         {
             string json = await BoundedHttpText.GetStringAsync(client, VersionUrl, token);
             string signature = await BoundedHttpText.GetStringAsync(client, VersionSignatureUrl, token);
-            var info = ParseVerified(json, signature);
+            var info = AcceptFresh(ParseVerified(json, signature), ManifestSequenceGuard.Default, out string? staleReason);
             if (info != null) LauncherProxy.ApplyManifestFlags(info.LauncherFlags);
-            return info;
+            return (info, staleReason);
+        }
+
+        /// <summary>
+        /// Повтор старого подписанного манифеста отвергается так же, как неподписанный:
+        /// ни одно его поле (флаги, cdn_ip, списки отзыва) не доходит до вызывающего
+        /// кода. Вызывается только для манифеста с уже подтверждённой подписью —
+        /// иначе подделка с огромным номером заблокировала бы настоящие манифесты.
+        /// Покрыто unit-тестами.
+        /// </summary>
+        internal static CdnVersionInfo? AcceptFresh(
+            CdnVersionInfo? verified, ManifestSequenceGuard guard, out string? staleReason)
+        {
+            staleReason = null;
+            if (verified == null) return null;
+            return guard.TryAccept(verified.ManifestSeq, out staleReason) ? verified : null;
         }
 
         /// <summary>

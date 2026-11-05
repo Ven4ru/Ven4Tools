@@ -282,6 +282,20 @@ namespace Ven4Tools.Launcher
                 // сверки с GitHub, — поэтому решение принимается ещё раз, по версии на
                 // диске, и до дельты: она точно так же вернула бы старые файлы.
                 // Без подтверждённого хеша то же самое решает политика ниже.
+                // Отозванная версия не ставится никаким путём (дельта, архив с хешем CDN,
+                // архив по встроенной подписи) — тот же отказ, что у отзыва по хешу.
+                if (ClientRevocation.IsVersionRevoked(_cdnRevocationInfo, version.Version))
+                {
+                    txtDownloadStatus.Text = "Версия отозвана";
+                    SetOperationStage(0);
+                    AddLog($"⛔ Версия {version.Version} не установлена: {ClientRevocation.RejectionMessage}");
+                    if (!silent)
+                        MessageBox.Show(
+                            $"Версия {version.Version}: {ClientRevocation.RejectionMessage}",
+                            "Версия отозвана", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 bool hashConfirmed = DownloadValidator.IsValidSha256(version.ExpectedSha256);
                 string? installedVersion = ReadInstalledClientVersion();
                 if (hashConfirmed && ClientDowngradePolicy.IsOlderThanInstalled(version.Version, installedVersion))

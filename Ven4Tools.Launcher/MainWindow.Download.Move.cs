@@ -164,9 +164,11 @@ namespace Ven4Tools.Launcher
                     AddLog($"⚠️ Ярлык не обновлён (нужны права администратора или он занят): {failed}");
 
                 SetMoveStatus("Перенос: удаление старой папки...");
-                bool oldRemoved = await RemoveOldClientCopyAsync(oldClientPath, newClientPath);
-                if (oldRemoved)
+                var oldRemoval = await RemoveOldClientCopyAsync(oldClientPath, newClientPath);
+                if (oldRemoval != OldCopyRemoval.NotRemoved)
                 {
+                    // Удалена — или оставлена из-за посторонних файлов: повторять
+                    // удаление при следующем запуске незачем.
                     ClientMoveJournal.Delete(journalPath);
                 }
                 else
@@ -179,9 +181,16 @@ namespace Ven4Tools.Launcher
                 progressDownload.Value = 100;
                 CheckExistingClient(quiet: true);
                 HideCancelButton();
+                string oldCopyNote = oldRemoval switch
+                {
+                    OldCopyRemoval.NotRemoved =>
+                        $"\n\nСтарую папку удалить не удалось — лаунчер попробует ещё раз при следующем запуске:\n{oldClientPath}",
+                    OldCopyRemoval.KeptForeign =>
+                        $"\n\nСтарая папка оставлена: в ней есть посторонние файлы. Проверьте её и удалите сами:\n{oldClientPath}",
+                    _ => "",
+                };
                 MessageBox.Show(
-                    $"Клиент перенесён в:\n{newClientPath}" +
-                    (oldRemoved ? "" : $"\n\nСтарую папку удалить не удалось — лаунчер попробует ещё раз при следующем запуске:\n{oldClientPath}"),
+                    $"Клиент перенесён в:\n{newClientPath}" + oldCopyNote,
                     "Перенос клиента", MessageBoxButton.OK, MessageBoxImage.Information);
                 return true;
             }
@@ -269,20 +278,20 @@ namespace Ven4Tools.Launcher
             return null;
         }
 
-        // Удаление старой копии — только если новая на месте и старая действительно
-        // выглядит как папка клиента: путь к ней пришёл из настроек и журнала, которые
-        // лежат в доступном пользователю каталоге.
-        private async Task<bool> RemoveOldClientCopyAsync(string oldClientPath, string newClientPath)
+        // Удаление старой копии — правила в ClientFolderMover.TryRemoveOldCopyAsync.
+        // С посторонними файлами старая папка остаётся целиком, и об этом пишется в
+        // журнал: удалять её позже незачем, журнал переноса закрывается.
+        private async Task<OldCopyRemoval> RemoveOldClientCopyAsync(string oldClientPath, string newClientPath)
         {
-            if (!Directory.Exists(oldClientPath)) return true;
-            if (ClientFolderMover.PathsEqual(oldClientPath, newClientPath)) return false;
-            if (!File.Exists(Path.Combine(newClientPath, LauncherPaths.ClientExeName))) return false;
-            if (!File.Exists(Path.Combine(oldClientPath, LauncherPaths.ClientExeName))) return false;
-            if (!InstallPathGuard.IsClientPathSafe(oldClientPath, _dataFolderPath)) return false;
-
-            bool removed = await ClientFolderMover.TryDeleteDirectoryAsync(oldClientPath);
-            if (removed) AddLog($"🧹 Старая папка клиента удалена: {oldClientPath}");
-            return removed;
+            bool existed = Directory.Exists(oldClientPath);
+            var (result, foreign) = await ClientFolderMover.TryRemoveOldCopyAsync(
+                oldClientPath, newClientPath, _dataFolderPath);
+            if (result == OldCopyRemoval.Removed && existed)
+                AddLog($"🧹 Старая папка клиента удалена: {oldClientPath}");
+            else if (result == OldCopyRemoval.KeptForeign)
+                AddLog($"⚠️ Старая папка клиента не удалена — в ней посторонние файлы, проверьте и уберите её сами: {oldClientPath}\n" +
+                       ClientFolderInspector.Describe(foreign));
+            return result;
         }
 
         /// <summary>
@@ -303,10 +312,18 @@ namespace Ven4Tools.Launcher
             switch (ClientMoveJournal.Decide(journal, _clientPath))
             {
                 case ClientMoveRecoveryAction.RemoveOldCopy:
-                    if (await RemoveOldClientCopyAsync(journal.OldClientPath, journal.NewClientPath))
+                    switch (await RemoveOldClientCopyAsync(journal.OldClientPath, journal.NewClientPath))
                     {
-                        AddLog("🧹 Перенос клиента доделан: старая копия удалена");
-                        ClientMoveJournal.Delete(journalPath);
+                        case OldCopyRemoval.Removed:
+                            AddLog("🧹 Перенос клиента доделан: старая копия удалена");
+                            ClientMoveJournal.Delete(journalPath);
+                            break;
+                        case OldCopyRemoval.KeptForeign:
+                            // Сообщение с перечнем уже в журнале; повторять при каждом
+                            // запуске незачем — посторонние файлы сами не исчезнут.
+                            AddLog("ℹ️ Перенос клиента доделан, старая папка оставлена из-за посторонних файлов");
+                            ClientMoveJournal.Delete(journalPath);
+                            break;
                     }
                     break;
 

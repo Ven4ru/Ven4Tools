@@ -18,6 +18,12 @@ namespace Ven4Tools.Launcher
         private bool _cdnManifestLoaded;
         private string? _cdnClientVersion;
 
+        // Последний подписанный манифест CDN, полученный в этом сеансе, — ради списка
+        // отозванных версий: отозванную версию из списка не качаем вовсе (иначе отказ
+        // пришёл бы только после загрузки, и то лишь на пути без хеша CDN). CDN не
+        // ответил при очередной загрузке списка — остаётся прежний.
+        private CdnVersionInfo? _cdnRevocationInfo;
+
         private async Task LoadVersionsAsync()
         {
             try
@@ -41,6 +47,13 @@ namespace Ven4Tools.Launcher
                     cdnInfo = await cdnService.GetVersionInfoAsync();
                     _cdnManifestLoaded = cdnInfo != null;
                     _cdnClientVersion = cdnInfo?.Client?.Version;
+                    if (cdnInfo != null)
+                    {
+                        _cdnRevocationInfo = cdnInfo;
+                        string? installedVersion = ReadInstalledClientVersion();
+                        if (ClientRevocation.IsVersionRevoked(cdnInfo, installedVersion))
+                            AddLog($"⚠️ Установленная версия клиента {VersionComparer.ToDisplay(installedVersion)} отозвана — обновите клиент");
+                    }
                     if (cdnInfo?.Client?.ZipUrl != null)
                         AddLog($"🌐 CDN доступен: клиент {cdnInfo.Client.Version}");
                     else

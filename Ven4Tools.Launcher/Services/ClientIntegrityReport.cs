@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Ven4Tools.Launcher.Models;
 
 namespace Ven4Tools.Launcher.Services;
@@ -222,12 +224,23 @@ internal sealed class ClientIntegrityReport
         };
     }
 
+    /// <summary>
+    /// Файлы, которых нет в манифесте, но которые починка не удалит: не похожи на
+    /// файлы публикации клиента или лежат в чужой подпапке (см.
+    /// <see cref="ClientRepairDeletionPolicy"/>). Относительные пути через «/».
+    /// </summary>
+    public IReadOnlyList<string> KeptForeignFiles { get; private init; } = Array.Empty<string>();
+
     internal static ClientIntegrityReport FromPlan(
         ClientDeltaPlan plan,
         bool aclCompromised,
         ClientFileManifest remoteManifest,
-        ClientIntegritySources sources)
+        ClientIntegritySources sources,
+        IReadOnlyList<string>? keptForeignFiles = null)
     {
+        var kept = keptForeignFiles ?? Array.Empty<string>();
+        string keptNote = kept.Count > 0 ? $"; посторонних файлов не трогаю: {kept.Count}" : "";
+
         if (plan.FullDownloadRecommended)
         {
             return new(ClientIntegrityStatus.FullReinstallRecommended, true, true, plan, aclCompromised,
@@ -242,6 +255,9 @@ internal sealed class ClientIntegrityReport
             : $"найдено расхождений: {plan.ToDownload.Count} повреждённых/отсутствующих, " +
               $"{plan.ToDelete.Count} лишних (совпало {plan.Unchanged.Count})";
 
-        return new(status, true, true, plan, aclCompromised, summary, remoteManifest, sources);
+        return new(status, true, true, plan, aclCompromised, summary + keptNote, remoteManifest, sources)
+        {
+            KeptForeignFiles = kept,
+        };
     }
 }
