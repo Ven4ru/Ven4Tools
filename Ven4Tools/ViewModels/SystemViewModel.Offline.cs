@@ -80,7 +80,9 @@ namespace Ven4Tools.ViewModels
             }
         }
 
-        private string _connIconText = "🟢";
+        // Кружок ● из Segoe UI, цвет — из темы по ключу статуса (ConnIconBrush). Цветные
+        // эмодзи 🟢🟠🟡 WPF на Windows 10 рисует квадратом или полосатым одноцветным контуром.
+        private string _connIconText = "●";
         public string ConnIconText { get => _connIconText; private set => SetField(ref _connIconText, value); }
 
         private string _connStatusText = "Интернет доступен";
@@ -98,6 +100,10 @@ namespace Ven4Tools.ViewModels
         public Brush ConnStatusBackground =>
             _connStatusTintKey is null ? Brushes.Transparent : StatusTint(_connStatusTintKey);
 
+        /// <summary>Цвет кружка в плашке состояния сети — цвет статуса текущей темы.</summary>
+        public Brush ConnIconBrush =>
+            _connStatusTintKey is null ? BrushResolver.Resolve("TextSecondary") : BrushResolver.Resolve(_connStatusTintKey);
+
         public void UpdateConnectivityStatus()
         {
             bool online        = ConnectivityMonitor.IsOnline;
@@ -106,25 +112,25 @@ namespace Ven4Tools.ViewModels
 
             if (offlineForced)
             {
-                ConnIconText = "🟡";
+                ConnIconText = "●";
                 ConnStatusText = "Принудительный офлайн — вкладки скрыты вручную";
                 SetConnStatusTint("StatusWarning");
             }
             else if (!online && onlineForced)
             {
-                ConnIconText = "🟠";
+                ConnIconText = "●";
                 ConnStatusText = "Соединение не обнаружено, но онлайн-режим принудительно включён";
                 SetConnStatusTint("StatusWarning");
             }
             else if (!online)
             {
-                ConnIconText = "🔴";
+                ConnIconText = "●";
                 ConnStatusText = "Интернет недоступен — онлайн-вкладки скрыты";
                 SetConnStatusTint("StatusDanger");
             }
             else
             {
-                ConnIconText = "🟢";
+                ConnIconText = "●";
                 ConnStatusText = "Интернет доступен — все вкладки активны";
                 SetConnStatusTint("StatusSuccess");
             }
@@ -135,10 +141,15 @@ namespace Ven4Tools.ViewModels
         {
             _connStatusTintKey = statusResourceKey;
             OnPropertyChanged(nameof(ConnStatusBackground));
+            OnPropertyChanged(nameof(ConnIconBrush));
         }
 
         /// <summary>Перечитать подложку плашки состояния сети после смены темы.</summary>
-        private void RefreshThemeBrushes() => OnPropertyChanged(nameof(ConnStatusBackground));
+        private void RefreshThemeBrushes()
+        {
+            OnPropertyChanged(nameof(ConnStatusBackground));
+            OnPropertyChanged(nameof(ConnIconBrush));
+        }
 
         /// <summary>
         /// Полупрозрачная подложка плашки состояния сети. Раньше здесь были четыре
