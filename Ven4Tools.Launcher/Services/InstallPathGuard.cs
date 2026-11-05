@@ -23,16 +23,40 @@ namespace Ven4Tools.Launcher.Services
     {
         public static bool IsClientPathSafe(string clientPath, string dataFolderPath)
         {
-            string client = Normalize(clientPath);
-            string data = Normalize(dataFolderPath);
+            // Путь приходит и из файла настроек, который пользователь может испортить:
+            // пустая строка или недопустимые символы — не повод уронить вызывающего
+            // ArgumentException, а отказ (fail-closed: по такому пути ничего не пишем
+            // и не удаляем).
+            try
+            {
+                string client = Normalize(clientPath);
+                string data = Normalize(dataFolderPath);
 
-            if (string.Equals(client, data, StringComparison.OrdinalIgnoreCase)) return false;
-            if (IsSameOrSubPath(client, data)) return false;
-            if (IsSameOrSubPath(data, client)) return false;
-            if (IsProtectedUserRoot(client)) return false;
-            if (IsVolumeRoot(clientPath)) return false;
+                if (string.Equals(client, data, StringComparison.OrdinalIgnoreCase)) return false;
+                if (IsSameOrSubPath(client, data)) return false;
+                if (IsSameOrSubPath(data, client)) return false;
+                if (IsProtectedUserRoot(client)) return false;
+                if (IsInsideWindowsFolder(client)) return false;
+                if (IsVolumeRoot(clientPath)) return false;
 
-            return true;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // Папка Windows и всё внутри неё: она не предок папки данных, поэтому проверки
+        // пересечения выше её не ловили, а лаунчер, запущенный от имени администратора,
+        // смог бы перенести такую папку в резервную копию и удалить.
+        private static bool IsInsideWindowsFolder(string normalizedClientPath)
+        {
+            string windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            if (string.IsNullOrEmpty(windows)) return false;
+            string root = Normalize(windows);
+            return string.Equals(normalizedClientPath, root, StringComparison.OrdinalIgnoreCase) ||
+                   IsSameOrSubPath(normalizedClientPath, root);
         }
 
         // Корень диска или сетевой шары («D:\», «\\server\share»). Системный диск уже
@@ -59,8 +83,20 @@ namespace Ven4Tools.Launcher.Services
                 Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                 Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
                 Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                // Остальные корни, содержимое которых целиком чужое: перемещаемые
+                // «Изображения»/«Видео»/«Музыка» не обязаны лежать в профиле, а
+                // AppData\Roaming и ProgramData — папки данных всех программ сразу.
+                Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+                Environment.GetFolderPath(Environment.SpecialFolder.MyVideos),
+                Environment.GetFolderPath(Environment.SpecialFolder.MyMusic),
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments),
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory),
             };
             roots.AddRange(DownloadsFolderResolver.GetExistingCandidates());
+            // Корень OneDrive целиком — это все облачные файлы пользователя.
+            roots.AddRange(InstallLocationRisk.OneDriveRoots());
 
             return roots
                 .Where(r => !string.IsNullOrEmpty(r))

@@ -28,6 +28,14 @@ namespace Ven4Tools.ViewModels
         private string _sensorDriverText = "";
         public string SensorDriverText { get => _sensorDriverText; private set => SetField(ref _sensorDriverText, value); }
 
+        /// <summary>
+        /// Показывать строку о драйвере. В экспериментальной сборке (драйвер не ставится)
+        /// её обычный текст повторял плашку эксперимента — тогда строка скрыта; остаётся
+        /// только если найден чужой драйвер датчиков (это новое сведение, а не повтор).
+        /// </summary>
+        private bool _showSensorDriverText;
+        public bool ShowSensorDriverText { get => _showSensorDriverText; private set => SetField(ref _showSensorDriverText, value); }
+
         private bool _showInstallSensorDriver;
         public bool ShowInstallSensorDriver { get => _showInstallSensorDriver; private set => SetField(ref _showInstallSensorDriver, value); }
 
@@ -133,6 +141,20 @@ namespace Ven4Tools.ViewModels
 
         private async Task InstallFpsCounterAsync()
         {
+            // Гейт реентерабельности до диалога — как в RunDisableFastStartupAsync:
+            // CanExecute отстаёт от ввода, и двойное нажатие открывало два окна и
+            // запускало две установки winget подряд.
+            if (IsInstallingFpsCounter) return;
+            IsInstallingFpsCounter = true;
+            try
+            {
+                await InstallFpsCounterCoreAsync();
+            }
+            finally { IsInstallingFpsCounter = false; }
+        }
+
+        private async Task InstallFpsCounterCoreAsync()
+        {
             var answer = MessageBox.Show(
                 "Для счётчика FPS нужен Intel PresentMon — бесплатная программа Intel с открытым исходным кодом.\n\n" +
                 "• Она читает события Windows о показе кадров и в игры не внедряется: античиты такой способ не трогают.\n" +
@@ -142,7 +164,6 @@ namespace Ven4Tools.ViewModels
                 "Счётчик FPS", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (answer != MessageBoxResult.Yes) return;
 
-            IsInstallingFpsCounter = true;
             try
             {
                 var result = await PresentMonService.InstallAsync();
@@ -162,7 +183,6 @@ namespace Ven4Tools.ViewModels
                 AppLogger.Write(ex, "DiagnosticsViewModel.InstallFpsCounter");
                 MessageBox.Show("Не удалось установить счётчик FPS: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            finally { IsInstallingFpsCounter = false; }
         }
 
         /// <summary>Вкладка показана: сразу прочитать датчики и дальше раз в 2 секунды.</summary>
@@ -175,21 +195,41 @@ namespace Ven4Tools.ViewModels
                 _sensorTimer.Tick += async (_, _) => await ReadSensorsAsync();
             }
             _sensorTimer.Start();
-            _ = AcquireAndReadAsync();
+            _sensorLease = AcquireAndReadAsync(_sensorLease);
         }
 
-        private async Task AcquireAndReadAsync()
+        // Захват и освобождение датчиков идут строго по очереди: раньше оба вызова
+        // запускались без ожидания, и при быстром уходе с вкладки освобождение могло
+        // пройти раньше включения драйвера — драйвер оставался включённым.
+        private Task _sensorLease = Task.CompletedTask;
+
+        private async Task AcquireAndReadAsync(Task previous)
         {
-            await HardwareSensorService.Instance.AcquireAsync("diagnostics");
-            RefreshSensorDriverState();
-            await ReadSensorsAsync();
+            try
+            {
+                await previous;
+                await HardwareSensorService.Instance.AcquireAsync("diagnostics");
+                RefreshSensorDriverState();
+                await ReadSensorsAsync();
+            }
+            catch (Exception ex) { AppLogger.Write(ex, "DiagnosticsViewModel.AcquireSensors"); }
+        }
+
+        private static async Task ReleaseAfterAsync(Task previous)
+        {
+            try
+            {
+                await previous;
+                await HardwareSensorService.Instance.ReleaseAsync("diagnostics");
+            }
+            catch (Exception ex) { AppLogger.Write(ex, "DiagnosticsViewModel.ReleaseSensors"); }
         }
 
         /// <summary>Вкладка скрыта: опрос останавливается.</summary>
         public void StopSensors()
         {
             _sensorTimer?.Stop();
-            _ = HardwareSensorService.Instance.ReleaseAsync("diagnostics");
+            _sensorLease = ReleaseAfterAsync(_sensorLease);
         }
 
         private async Task ReadSensorsAsync()
@@ -221,6 +261,7 @@ namespace Ven4Tools.ViewModels
             bool installed = PawnIoDriver.IsInstalled();
             ShowInstallSensorDriver = PawnIoDriver.FeatureEnabled && !installed;
             ShowRemoveSensorDriver = PawnIoDriver.FeatureEnabled && installed;
+            ShowSensorDriverText = PawnIoDriver.FeatureEnabled || (installed && PawnIoDriver.IsRunning());
             if (!PawnIoDriver.FeatureEnabled)
             {
                 // Экспериментальный модуль: драйвер Ven4Tools не ставит и не трогает.
@@ -290,6 +331,8 @@ namespace Ven4Tools.ViewModels
 
         private async Task InstallSensorDriverAsync()
         {
+            // Повторное нажатие, пока идёт установка или удаление, — не второй winget.
+            if (IsChangingSensorDriver) return;
             // PawnIO 2.2.0 исправлял синий экран на старых Windows 10 (до версии 2004):
             // на них драйвер не предлагаем вовсе.
             if (Environment.OSVersion.Version.Build < PawnIoDriver.MinWindowsBuild)
@@ -346,6 +389,7 @@ namespace Ven4Tools.ViewModels
 
         private async Task RemoveSensorDriverAsync()
         {
+            if (IsChangingSensorDriver) return;
             var answer = MessageBox.Show(
                 "Удалить драйвер датчиков PawnIO?\n\n" +
                 "Температуры и частоты процессора и датчики платы станут недоступны. " +

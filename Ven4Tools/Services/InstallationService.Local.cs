@@ -63,32 +63,49 @@ namespace Ven4Tools.Services
             // установщику/msiexec читать файл на исполнение, но блокирует запись.
             // Зеркалирует защиту лаунчера (DownloadVerifyAndRunElevatedAsync).
             (bool Ok, bool Reboot, int ExitCode)? run;
-            using (var verifiedStream = new FileStream(app.LocalInstallerPath!, FileMode.Open, FileAccess.Read, FileShare.Read))
+            // Запуск — из копии в защищённом каталоге: рядом с файлом в «Загрузках» любой
+            // процесс пользователя может подложить DLL, которую установщик подхватит с правами
+            // администратора (см. InstallerTempDirectory).
+            string? runPath = CopyToProtectedTemp(app.LocalInstallerPath!, app.DisplayName);
+            if (runPath == null)
             {
-                if (!await HashHelper.VerifyHashAsync(verifiedStream, app.Sha256!))
-                {
-                    appProgress.Status = "❌ Файл изменён с момента добавления";
-                    appProgress.Phase = InstallPhase.Error;
-                    appProgress.IsIndeterminate = false;
-                    progress.Report(appProgress);
-                    Log($"❌ {app.DisplayName}: SHA256 локального файла не совпадает с зафиксированным при добавлении");
-                    InstallFailureService.Append(app.DisplayName, app.Id, "local", "SHA256 не совпадает — файл изменён с момента добавления");
-                    return (false, "Файл изменён с момента добавления", appProgress);
-                }
-
-                var psiLocal = new ProcessStartInfo
-                {
-                    FileName        = isMsi ? TrustedExecutablePaths.MsiExec : app.LocalInstallerPath!,
-                    Arguments       = isMsi
-                                      ? $"/i \"{app.LocalInstallerPath}\" /quiet /norestart{locArgLocal}"
-                                      : silentArgsLocal + locArgLocal,
-                    UseShellExecute = true,
-                    Verb            = "runas",
-                    WindowStyle     = ProcessWindowStyle.Hidden
-                };
-
-                run = await RunElevatedInstallerAsync(psiLocal, token);
+                appProgress.Status = "❌ Не удалось запустить установщик";
+                appProgress.Phase = InstallPhase.Error;
+                appProgress.IsIndeterminate = false;
+                progress.Report(appProgress);
+                InstallFailureService.Append(app.DisplayName, app.Id, "local", "Не удалось скопировать установщик в защищённый каталог");
+                return (false, "Не удалось запустить установщик", appProgress);
             }
+            try
+            {
+                using (var verifiedStream = new FileStream(runPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    if (!await HashHelper.VerifyHashAsync(verifiedStream, app.Sha256!))
+                    {
+                        appProgress.Status = "❌ Файл изменён с момента добавления";
+                        appProgress.Phase = InstallPhase.Error;
+                        appProgress.IsIndeterminate = false;
+                        progress.Report(appProgress);
+                        Log($"❌ {app.DisplayName}: SHA256 локального файла не совпадает с зафиксированным при добавлении");
+                        InstallFailureService.Append(app.DisplayName, app.Id, "local", "SHA256 не совпадает — файл изменён с момента добавления");
+                        return (false, "Файл изменён с момента добавления", appProgress);
+                    }
+
+                    var psiLocal = new ProcessStartInfo
+                    {
+                        FileName        = isMsi ? TrustedExecutablePaths.MsiExec : runPath,
+                        Arguments       = isMsi
+                                          ? $"/i \"{runPath}\" /quiet /norestart{locArgLocal}"
+                                          : silentArgsLocal + locArgLocal,
+                        UseShellExecute = true,
+                        Verb            = "runas",
+                        WindowStyle     = ProcessWindowStyle.Hidden
+                    };
+
+                    run = await RunElevatedInstallerAsync(psiLocal, token);
+                }
+            }
+            finally { TryDeleteProtectedCopy(runPath); }
             if (run == null)
             {
                 appProgress.Status = "❌ Не удалось запустить установщик";
@@ -157,24 +174,33 @@ namespace Ven4Tools.Services
             // ниже (using завершается раньше) — на удаление это не влияет.
             bool hashOk;
             (bool Ok, bool Reboot, int ExitCode)? run = null;
-            using (var verifiedStream = new FileStream(cachedPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            // Кэш лежит в папке, куда пишет сам пользователь: запуск прямо оттуда отдал бы
+            // правам администратора и подложенную рядом DLL (version.dll и т.п.). Поэтому
+            // проверяется и запускается копия в защищённом каталоге — как у прямой ссылки.
+            string? runPath = CopyToProtectedTemp(cachedPath, app.DisplayName);
+            if (runPath == null) return null;
+            try
             {
-                hashOk = await HashHelper.VerifyHashAsync(verifiedStream, app.Sha256!);
-                if (hashOk)
+                using (var verifiedStream = new FileStream(runPath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    var psiCache = new ProcessStartInfo
+                    hashOk = await HashHelper.VerifyHashAsync(verifiedStream, app.Sha256!);
+                    if (hashOk)
                     {
-                        FileName       = cacheIsMsi ? TrustedExecutablePaths.MsiExec : cachedPath,
-                        Arguments      = cacheIsMsi
-                                         ? $"/i \"{cachedPath}\" /quiet /norestart{locArgCache}"
-                                         : silentArgsCache + locArgCache,
-                        UseShellExecute = true, Verb = "runas",
-                        WindowStyle     = ProcessWindowStyle.Hidden
-                    };
+                        var psiCache = new ProcessStartInfo
+                        {
+                            FileName       = cacheIsMsi ? TrustedExecutablePaths.MsiExec : runPath,
+                            Arguments      = cacheIsMsi
+                                             ? $"/i \"{runPath}\" /quiet /norestart{locArgCache}"
+                                             : silentArgsCache + locArgCache,
+                            UseShellExecute = true, Verb = "runas",
+                            WindowStyle     = ProcessWindowStyle.Hidden
+                        };
 
-                    run = await RunElevatedInstallerAsync(psiCache, token);
+                        run = await RunElevatedInstallerAsync(psiCache, token);
+                    }
                 }
             }
+            finally { TryDeleteProtectedCopy(runPath); }
             if (!hashOk)
             {
                 // Переносной набор — чужой носитель: с флешки ничего не удаляется. Файл
@@ -196,6 +222,28 @@ namespace Ven4Tools.Services
             // (цепочку источников), которая сама сверит результат по факту, если тоже
             // окажется терминальной неудачей. Проверять здесь нечего.
             return null;
+        }
+
+        /// <summary>Копия установщика в защищённом каталоге (см. InstallerTempDirectory); null — не вышло.</summary>
+        private string? CopyToProtectedTemp(string source, string displayName)
+        {
+            try
+            {
+                var dst = Helpers.InstallerTempDirectory.NewFilePath($"{Guid.NewGuid():N}_{Path.GetFileName(source)}");
+                File.Copy(source, dst, overwrite: false);
+                return dst;
+            }
+            catch (Exception ex)
+            {
+                Log($"❌ {displayName}: не удалось подготовить установщик к запуску — {ex.Message}");
+                return null;
+            }
+        }
+
+        private static void TryDeleteProtectedCopy(string path)
+        {
+            try { File.Delete(path); }
+            catch (Exception ex) { AppLogger.Write($"⚠️ Временная копия установщика не удалена: {Path.GetFileName(path)} — {ex.Message}"); }
         }
     }
 }

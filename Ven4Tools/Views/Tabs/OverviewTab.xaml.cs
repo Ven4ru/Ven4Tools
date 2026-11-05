@@ -25,6 +25,31 @@ namespace Ven4Tools.Views.Tabs
             _viewModel.NavigateRequested += key => NavigateRequested?.Invoke(key);
             Loaded += (_, _) => _viewModel.Attach();
             Unloaded += (_, _) => _viewModel.Detach();
+            _viewModel.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName is nameof(OverviewViewModel.AppUpdatesNeedAttention)
+                                   or nameof(OverviewViewModel.WindowsUpdateNeedsAttention))
+                {
+                    // Сводка может пересчитываться из фонового потока — стиль ставим в потоке окна.
+                    if (Dispatcher.CheckAccess()) ApplyActionEmphasis();
+                    else Dispatcher.BeginInvoke((Action)ApplyActionEmphasis);
+                }
+            };
+            ApplyActionEmphasis();
+        }
+
+        /// <summary>
+        /// Кнопка карточки, которая требует внимания (жёлтая рамка), становится главной
+        /// (<c>PrimaryButtonStyle</c>); остальное время — обычной. Стиль меняется целиком:
+        /// триггер внутри стиля не может подменить сам стиль, а набор отдельных цветов
+        /// разошёлся бы с поведением Primary (затемнение при наведении, выключенный вид).
+        /// </summary>
+        private void ApplyActionEmphasis()
+        {
+            var normal = (Style)FindResource("OverviewAction");
+            var primary = (Style)FindResource("OverviewActionPrimary");
+            btnOverviewAppUpdates.Style = _viewModel.AppUpdatesNeedAttention ? primary : normal;
+            btnOverviewWindowsUpdate.Style = _viewModel.WindowsUpdateNeedsAttention ? primary : normal;
         }
     }
 

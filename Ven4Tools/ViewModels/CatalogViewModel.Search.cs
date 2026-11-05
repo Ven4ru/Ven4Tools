@@ -258,7 +258,10 @@ namespace Ven4Tools.ViewModels
                         () => AddChocoSuggestion(captureId)));
                 }
             }
-            catch (OperationCanceledException) { }
+            // Только своя отмена (новый символ в поиске) — молча. Отмена изнутри источника
+            // (таймаут HttpClient/процесса) раньше гасилась здесь же, и панель навсегда
+            // оставалась на «⏳ Поиск по источникам...».
+            catch (OperationCanceledException) when (token.IsCancellationRequested) { }
             catch (Exception ex) when (!token.IsCancellationRequested)
             {
                 // Прочие сбои источников (не таймаут) раньше уходили только в журнал

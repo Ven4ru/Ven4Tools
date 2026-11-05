@@ -45,6 +45,19 @@ namespace Ven4Tools.ViewModels
         /// </param>
         public async Task LoadAsync(bool forceReload = false)
         {
+            // Повтор, нажатый пока идёт загрузка (двойной щелчок, первичная загрузка ещё
+            // не закончилась), запускал вторую параллельную загрузку и второй прогон
+            // проверки доступности поверх первого.
+            if (_catalogLoading) return;
+            _catalogLoading = true;
+            try { await LoadCoreAsync(forceReload); }
+            finally { _catalogLoading = false; }
+        }
+
+        private bool _catalogLoading;
+
+        private async Task LoadCoreAsync(bool forceReload)
+        {
             CatalogErrorVisible = false;
             StatusText = "⏳ Загрузка каталога...";
             _catalogLoader ??= new CatalogLoaderService();
@@ -130,6 +143,17 @@ namespace Ven4Tools.ViewModels
         }
 
         private async Task RefreshCatalogAsync()
+        {
+            // Пересборка строк посреди установки отрывала пачку от списка: отметки
+            // «только что установлено» ложились на уже выброшенные строки. И двойное
+            // нажатие не должно запускать две загрузки сразу.
+            if (_catalogLoading || IsInstalling) return;
+            _catalogLoading = true;
+            try { await RefreshCatalogCoreAsync(); }
+            finally { _catalogLoading = false; }
+        }
+
+        private async Task RefreshCatalogCoreAsync()
         {
             Log("🔄 Обновление каталога...");
             // Заглушка снимается на время попытки: иначе после успешного «Обновить каталог»

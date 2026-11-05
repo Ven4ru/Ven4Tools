@@ -1,9 +1,9 @@
 <Window x:Class="Ven4Tools.Views.AppCardWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="{Binding DisplayName}" Height="260" Width="620"
+        Title="{Binding DisplayName}" Height="268" Width="620"
         WindowStartupLocation="CenterOwner"
-        WindowStyle="ToolWindow" ResizeMode="NoResize"
+        ShowInTaskbar="False" ResizeMode="NoResize"
         Background="{DynamicResource WindowBackground}">
     <Grid>
         <Grid.ColumnDefinitions>
@@ -23,65 +23,62 @@
              никогда не уходила за пределы окна. -->
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="16,14,14,14">
-                <TextBlock Text="{Binding DisplayName}" FontSize="18" FontWeight="Bold"
+            <StackPanel Margin="16">
+                <TextBlock Text="{Binding DisplayName}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"
                            Foreground="{DynamicResource TextPrimary}"/>
-                <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,2,0,10">
+                <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,4,0,12">
                     <Run Text="{Binding CategoryString, Mode=OneWay}"/>
                     <Run Text=" · "/>
                     <Run Text="{Binding VersionText, Mode=OneWay}"/>
                 </TextBlock>
                 <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
-                           Foreground="{DynamicResource TextPrimary}" FontSize="12" Margin="0,0,0,10"/>
+                           Foreground="{DynamicResource TextPrimary}" FontSize="12" Margin="0,0,0,12"/>
                 <!-- Ссылка извлекается из адреса установщика (scheme://host), это не
                      гарантированно официальный сайт продукта — подпись нейтральная,
                      реальный адрес показываем в подсказке. -->
-                <TextBlock Margin="0,0,0,6" Visibility="{Binding OfficialSiteUrl, Converter={StaticResource StringToVis}}">
+                <TextBlock Margin="0,0,0,8" Visibility="{Binding OfficialSiteUrl, Converter={StaticResource StringToVis}}">
                     <Hyperlink NavigateUri="{Binding OfficialSiteUrl}" RequestNavigate="Hyperlink_RequestNavigate"
                                ToolTip="{Binding OfficialSiteUrl}">
                         <Run Text="🔗 Сайт-источник"/>
                     </Hyperlink>
                 </TextBlock>
-                <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="10" Margin="0,4,0,0">
+                <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0" TextWrapping="Wrap">
                     <Run Text="ID: "/>
                     <Run Text="{Binding PackageIdText, Mode=OneWay}"/>
                     <Run Text="  ·  Размер: "/>
                     <Run Text="{Binding SizeText, Mode=OneWay}"/>
                 </TextBlock>
                 <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource TextSecondary}"
-                           FontSize="11" Margin="0,10,0,0"/>
+                           FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap"/>
             </StackPanel>
         </ScrollViewer>
 
         <!-- Панель действий справа -->
         <StackPanel Grid.Column="2" Background="{DynamicResource CardBackground}"
-                    Margin="10" VerticalAlignment="Center">
+                    Margin="16" VerticalAlignment="Center">
             <!-- Кнопка запуска скрыта, если exe не резолвится (как в строке каталога:
                  fail-closed, не гадаем) — единообразно с CatalogTab. -->
-            <Button Content="▶ Запустить" Height="34" Margin="0,0,0,6"
+            <Button Style="{StaticResource PrimaryButtonStyle}" Content="▶ Запустить" Height="32" Margin="0,0,0,8"
                     Command="{Binding LaunchCommand}"
                     ToolTip="Запустит установленное приложение."
-                    Visibility="{Binding ShowLaunchButton, Converter={StaticResource BoolToVis}}"
-                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="Bold"/>
-            <Button Content="Установить" Height="34" Margin="0,0,0,6"
+                    Visibility="{Binding ShowLaunchButton, Converter={StaticResource BoolToVis}}" FontWeight="Bold"/>
+            <Button Style="{StaticResource PrimaryButtonStyle}" Content="Установить" Height="32" Margin="0,0,0,8"
                     Command="{Binding InstallCommand}"
                     ToolTip="Скачает и установит приложение из доступного доверенного источника."
-                    Visibility="{Binding ShowInstallButton, Converter={StaticResource BoolToVis}}"
-                    Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}" FontWeight="Bold"/>
-            <Button Content="🔄 Переустановить" Height="30" Margin="0,0,0,6"
+                    Visibility="{Binding ShowInstallButton, Converter={StaticResource BoolToVis}}" FontWeight="Bold"/>
+            <Button Content="🔄 Переустановить" Height="32" Margin="0,0,0,8"
                     Command="{Binding ReinstallCommand}"
                     ToolTip="Повторно установит приложение. Текущая версия может быть заменена."
                     Visibility="{Binding ShowInstalledActions, Converter={StaticResource BoolToVis}}"/>
-            <Button Content="🗑 Удалить" Height="30" Margin="0,0,0,6"
+            <Button Style="{StaticResource DangerFilledButtonStyle}" Content="🗑 Удалить" Height="32" Margin="0,0,0,8"
                     Command="{Binding UninstallCommand}"
                     ToolTip="После подтверждения удалит приложение с компьютера."
-                    Visibility="{Binding ShowInstalledActions, Converter={StaticResource BoolToVis}}"
-                    Background="{DynamicResource StatusDanger}" Foreground="{DynamicResource StatusDangerForeground}"/>
-            <Button Height="30" Command="{Binding TogglePinCommand}" ToolTip="{Binding PinTooltip}"
+                    Visibility="{Binding ShowInstalledActions, Converter={StaticResource BoolToVis}}"/>
+            <Button Height="32" Margin="0" Command="{Binding TogglePinCommand}" ToolTip="{Binding PinTooltip}"
                     Background="Transparent" BorderThickness="1">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding PinGlyph}" Margin="0,0,6,0"/>
-                    <TextBlock Text="Быстрый доступ" Foreground="{DynamicResource TextPrimary}" FontSize="11"/>
+                    <TextBlock Text="{Binding PinGlyph}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Быстрый доступ" Foreground="{DynamicResource TextPrimary}" FontSize="12" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
         </StackPanel>

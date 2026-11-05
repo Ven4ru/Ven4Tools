@@ -29,8 +29,34 @@ namespace Ven4Tools.Launcher.Models
         [JsonPropertyName("cdn_ip")]
         public string? CdnIp { get; set; }
 
+        // Отзыв архивов клиента. Все три списка подписаны вместе со всем манифестом
+        // (подпись ставится на текст version.json целиком) и необязательны: старый
+        // манифест без новых полей разбирается как раньше. Проверка — ClientRevocation.
+        //
+        // SHA256 файла архива целиком. Сам по себе обходится: подпись архива стоит на
+        // каноническом хеше СОДЕРЖИМОГО, и тот же подписанный архив, пересжатый
+        // заново, имеет другой SHA256 файла, но проходит проверку подписи.
         [JsonPropertyName("revokedClientHashes")]
         public List<string>? RevokedClientHashes { get; set; }
+
+        // Канонический хеш содержимого (CanonicalArchiveHasher, поле sha256_canonical
+        // в _ven4tools_signature.json архива) — от пересжатия не меняется.
+        [JsonPropertyName("revokedClientCanonicalHashes")]
+        public List<string>? RevokedClientCanonicalHashes { get; set; }
+
+        // Версии клиента, которые ставить нельзя (сравнение через VersionComparer:
+        // «6.1.0» отзывает и архив «6.1.0.0»).
+        [JsonPropertyName("revokedClientVersions")]
+        public List<string>? RevokedClientVersions { get; set; }
+
+        // Порядковый номер выпуска манифеста — защита от повтора старого подписанного
+        // version.json (он откатил бы флаги, cdn_ip и снял бы отзыв). Растёт с каждой
+        // подписью (Tools/UpdateManifestSigner edit --seq auto: не меньше текущего
+        // времени в секундах Unix). Лаунчер помнит наибольший принятый номер и
+        // отвергает манифест с меньшим, а после первого номера — и манифест без него
+        // (см. ManifestSequenceGuard). Нет поля — принимается, как раньше.
+        [JsonPropertyName("manifest_seq")]
+        public long? ManifestSeq { get; set; }
 
         [JsonPropertyName("historicalClientArchives")]
         public List<HistoricalClientArchive>? HistoricalClientArchives { get; set; }

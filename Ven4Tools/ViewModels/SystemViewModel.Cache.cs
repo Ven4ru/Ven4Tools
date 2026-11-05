@@ -61,9 +61,24 @@ namespace Ven4Tools.ViewModels
         private bool _buildingKit;
         private RelayCommand? _buildOfflineKitCommand;
         public RelayCommand BuildOfflineKitCommand => _buildOfflineKitCommand ??=
-            RelayCommand.FromAsync(async _ => await BuildOfflineKitAsync(), _ => !_buildingKit);
+            RelayCommand.FromAsync(async _ => await BuildOfflineKitAsync(), _ => !_buildingKit && !IsDownloadingToCache);
 
         private async Task BuildOfflineKitAsync()
+        {
+            // Флаг — до проверки контрольных сумм: она идёт секундами, и повторное
+            // нажатие в это время запускало вторую сборку в ту же папку.
+            if (_buildingKit) return;
+            _buildingKit = true;
+            BuildOfflineKitCommand.RaiseCanExecuteChanged();
+            try { await BuildOfflineKitCoreAsync(); }
+            finally
+            {
+                _buildingKit = false;
+                BuildOfflineKitCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        private async Task BuildOfflineKitCoreAsync()
         {
             var candidates = _cacheAppItems.Where(a => OfflineService.HasCachedInstaller(a.Id)).ToList();
             if (candidates.Count == 0)
@@ -96,8 +111,6 @@ namespace Ven4Tools.ViewModels
                     "Переносной офлайн-набор", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 return;
 
-            _buildingKit = true;
-            BuildOfflineKitCommand.RaiseCanExecuteChanged();
             try
             {
                 var progress = new Progress<string>(text => OfflineKitStatusText = "⏳ " + text);
@@ -115,11 +128,6 @@ namespace Ven4Tools.ViewModels
             {
                 OfflineKitStatusText = $"❌ Набор не собран: {ex.Message}";
                 AppLogger.Write($"❌ Переносной офлайн-набор не собран: {ex.Message}");
-            }
-            finally
-            {
-                _buildingKit = false;
-                BuildOfflineKitCommand.RaiseCanExecuteChanged();
             }
         }
 
@@ -241,6 +249,7 @@ namespace Ven4Tools.ViewModels
 
         private void BrowseCachePath()
         {
+            if (!IsCacheIdle) return;
             using var dlg = new System.Windows.Forms.FolderBrowserDialog
             {
                 Description         = Tr("Выберите папку для кэша установщиков"),
@@ -262,12 +271,22 @@ namespace Ven4Tools.ViewModels
             catch (Exception ex) { AppLogger.Write($"❌ {ex.Message}"); }
         }
 
+        /// <summary>
+        /// Пока идёт докачка в кэш или сборка переносного набора, кэш нельзя ни очистить,
+        /// ни перенести в другую папку: файлы удалялись бы из-под записи и чтения.
+        /// </summary>
+        private bool IsCacheIdle => !IsDownloadingToCache && !_buildingKit;
+
         private void ClearCache()
         {
+            if (!IsCacheIdle) return;
             var r = MessageBox.Show("Удалить все кэшированные установщики?",
                 "Очистка кэша", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return;
-            OfflineService.ClearCache();
+            // Синхронная команда: исключение (файл занят антивирусом) ушло бы в
+            // необработанные исключения окна.
+            try { OfflineService.ClearCache(); }
+            catch (Exception ex) { AppLogger.Write($"❌ {ex.Message}"); }
             UpdateCacheStats();
             LoadCacheAppsList();
             AppLogger.Write("✅ Кэш очищен");
@@ -306,7 +325,7 @@ namespace Ven4Tools.ViewModels
 
         private async Task RunDownloadToCacheAsync()
         {
-            if (IsDownloadingToCache) return;
+            if (IsDownloadingToCache || _buildingKit) return;
 
             var selected = _cacheAppItems.Where(a => a.IsSelected).ToList();
             if (selected.Count == 0)

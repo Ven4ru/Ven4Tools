@@ -14,7 +14,7 @@ namespace Ven4Tools.Tests
             NetworkViewModel.SetRow(row, "отключено", null);
 
             Assert.Equal("отключено", row.Text);
-            Assert.Equal("⬜", row.IconText);
+            Assert.Equal("○", row.IconText);
             Assert.Same(Brushes.Gray, row.IconBrush);
         }
 
@@ -58,7 +58,7 @@ namespace Ven4Tools.Tests
             var row = new NetworkCheckResult();
 
             Assert.Equal("—", row.Text);
-            Assert.Equal("⬜", row.IconText);
+            Assert.Equal("○", row.IconText);
         }
 
         [Fact]

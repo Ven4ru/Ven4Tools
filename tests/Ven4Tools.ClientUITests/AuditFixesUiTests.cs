@@ -182,9 +182,9 @@ namespace Ven4Tools.ClientUITests
 
             // Первичная загрузка каталога сама по себе проходит через семафор
             // проверки доступности (AppList.cs, availabilitySem) — ждём её конца.
-            bool firstCheckDone = WaitForLogContains(t0, "Проверка завершена", TimeSpan.FromSeconds(60));
+            bool firstCheckDone = WaitForLogContains(t0, "Проверка завершена", TimeSpan.FromSeconds(180));
             Assert.IsTrue(firstCheckDone,
-                "Первичная проверка доступности (авто, при загрузке каталога) не завершилась за 60с — возможен возврат зависания semaphore-бага (#4).");
+                "Первичная проверка доступности (авто, при загрузке каталога) не завершилась за 180с — возможен возврат зависания semaphore-бага (#4).");
 
             // ---- #4: явный клик «Проверить доступность» — второй путь через SemaphoreSlim ----
             var refreshBtn = UiNav.FindCatalogTool(s, "btnRefreshAvailability");

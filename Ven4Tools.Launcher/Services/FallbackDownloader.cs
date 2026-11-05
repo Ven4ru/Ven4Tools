@@ -468,8 +468,12 @@ internal sealed class FallbackDownloader
             guard?.Dispose();
             // Сетевой сбой посреди тела при докачке — .partial оставляем следующему
             // источнику. Всё остальное (отмена, недоверенный редирект, несовпадение
-            // данных, режим без докачки) убирает его, как раньше.
-            if (!(resume && !committed && IsResumableFailure(ex)))
+            // данных, режим без докачки) убирает его, как раньше. Таймаут заголовков
+            // (OperationCanceledException при неотменённом токене вызывающего) — тоже
+            // сетевой сбой источника: раньше он стирал всё, что успел скачать
+            // предыдущий источник, и докачка начиналась с нуля.
+            bool sourceTimedOut = ex is OperationCanceledException && !cancellationToken.IsCancellationRequested;
+            if (!(resume && !committed && (IsResumableFailure(ex) || sourceTimedOut)))
             {
                 TryDelete(partialPath);
             }

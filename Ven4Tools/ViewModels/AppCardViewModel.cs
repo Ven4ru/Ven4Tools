@@ -57,7 +57,14 @@ namespace Ven4Tools.ViewModels
 
             InstallCommand   = RelayCommand.FromAsync(async _ => await InstallAsync(),   _ => !IsInstalled && !IsBusy);
             ReinstallCommand = RelayCommand.FromAsync(async _ => await ReinstallAsync(), _ => IsInstalled && !IsBusy);
-            UninstallCommand = RelayCommand.FromAsync(async _ => await UninstallAsync(), _ => IsInstalled && !IsBusy);
+            // Удаление из карточки шло сразу по нажатию, без вопроса, — в отличие от той же
+            // кнопки на «Установленных». Подтверждение — тем же текстом, что там.
+            UninstallCommand = RelayCommand.FromAsync(async _ =>
+            {
+                if (MessageBox.Show($"Удалить «{Row.DisplayName}»?", "Подтверждение",
+                        System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes) return;
+                await UninstallAsync();
+            }, _ => IsInstalled && !IsBusy);
 
             TogglePinCommand = new RelayCommand(_ =>
             {

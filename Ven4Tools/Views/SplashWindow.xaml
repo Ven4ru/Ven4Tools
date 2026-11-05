@@ -17,7 +17,7 @@
 
             <!-- Венчик в исходном 2D-стиле: лента кадров, поза меняется по этапу
                  предзагрузки (SplashWindow.xaml.cs). Под ним — мягкое свечение в цвет темы. -->
-            <Grid Grid.Row="0" Margin="20,20,20,8">
+            <Grid Grid.Row="0" Margin="24,24,24,8">
                 <Ellipse Width="320" Height="280" Opacity="0.28" Fill="{DynamicResource AccentColor}">
                     <Ellipse.OpacityMask>
                         <RadialGradientBrush>
@@ -35,7 +35,7 @@
                 </Rectangle>
             </Grid>
 
-            <StackPanel Grid.Row="1" Margin="30,0,30,20">
+            <StackPanel Grid.Row="1" Margin="32,0,32,24">
                 <TextBlock x:Name="txtStatus"
                            Text="Запуск..."
                            FontSize="12"
@@ -51,9 +51,9 @@
                         ToolTip="Остановит оставшиеся стартовые проверки и откроет клиент с уже загруженными данными."
                         Click="BtnSkip_Click"
                         HorizontalAlignment="Right"
-                        Width="110" Height="26"
-                        FontSize="11" FontWeight="Normal"
-                        Margin="0,10,0,0"/>
+                        MinWidth="112" Height="32" Padding="12,0"
+                        FontSize="12" FontWeight="Normal"
+                        Margin="0,12,0,0"/>
             </StackPanel>
         </Grid>
     </Border>

@@ -152,8 +152,15 @@ namespace Ven4Tools.Services
                             totalRead += bytesRead;
                             if (totalBytes > 0)
                             {
-                                appProgress.Percentage = (int)((double)totalRead / totalBytes * 100);
-                                progress.Report(appProgress);
+                                // Только при смене целого процента: отчёт на каждые 8 КБ —
+                                // тысячи вызовов в UI-поток, а у пинов и переустановки из истории
+                                // обработчик пишет каждый в журнал и затирает его ротацией.
+                                int pct = (int)((double)totalRead / totalBytes * 100);
+                                if (pct != appProgress.Percentage)
+                                {
+                                    appProgress.Percentage = pct;
+                                    progress.Report(appProgress);
+                                }
                             }
                         }
                     }

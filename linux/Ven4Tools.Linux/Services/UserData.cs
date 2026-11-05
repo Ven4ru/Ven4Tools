@@ -88,14 +88,18 @@ public static class UserData
 
         if (favs is not null)
         {
-            Favorites.UnionWith(favs);
+            Favorites.UnionWith(favs.Where(f => !string.IsNullOrWhiteSpace(f)));
             SaveFavorites();
         }
         if (presets is not null)
         {
             // Наборы с тем же именем заменяются, новые добавляются
-            foreach (var p in presets.Where(p => p.Name.Length > 0))
+            // Архив чужой: "Name": null или "Apps": null в JSON дают null в свойствах,
+            // а сохранённый набор без списка ронял бы сборку наборов при каждом запуске.
+            foreach (var p in presets.Where(p => p is { Name.Length: > 0 }))
             {
+                p.Description ??= "";
+                p.Apps = (p.Apps ?? new()).Where(a => !string.IsNullOrWhiteSpace(a)).Distinct().ToList();
                 Presets.RemoveAll(x => x.Name == p.Name);
                 p.Id = Presets.Count == 0 ? 1 : Presets.Max(x => x.Id) + 1;
                 Presets.Add(p);

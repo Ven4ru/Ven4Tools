@@ -17,6 +17,10 @@ namespace Ven4Tools.Launcher
         private bool _verified;
         private Uri? _verifiedAddress;
         private CancellationTokenSource? _testCts;
+        // Счётчик правок полей. Поля во время проверки не блокируются: если человек
+        // изменил адрес, логин или пароль, пока шла проверка, её успех относится к
+        // прежним значениям и не должен разрешать сохранение новых.
+        private int _editGeneration;
 
         public ProxySettingsWindow()
         {
@@ -47,6 +51,7 @@ namespace Ven4Tools.Launcher
         {
             if (_loading) return;
             _verified = false;
+            _editGeneration++;
             // Сменили логин или начали вводить пароль — сохранённый пароль больше не подставляем.
             if (sender == pwdPassword || sender == txtUser) txtPasswordHint.Visibility = Visibility.Collapsed;
             UpdateState();
@@ -78,10 +83,17 @@ namespace Ven4Tools.Launcher
             _testCts = new CancellationTokenSource();
             btnTest.IsEnabled = false;
             ShowStatus("Проверяю соединение через прокси…", "TextSecondary");
+            int generation = _editGeneration;
             try
             {
                 string? error = await LauncherHttp.TestProxyAsync(address, txtUser.Text.Trim(), CurrentPassword(), _testCts.Token);
-                if (error == null)
+                if (generation != _editGeneration)
+                {
+                    // Поля изменили во время проверки — результат к ним не относится.
+                    _verified = false;
+                    txtStatus.Visibility = Visibility.Collapsed;
+                }
+                else if (error == null)
                 {
                     _verified = true;
                     _verifiedAddress = address;

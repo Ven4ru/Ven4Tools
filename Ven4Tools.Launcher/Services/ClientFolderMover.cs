@@ -98,16 +98,37 @@ namespace Ven4Tools.Launcher.Services
                 string dir = pending.Pop();
                 foreach (string sub in Directory.EnumerateDirectories(dir))
                 {
-                    if (FileHelper.IsReparsePoint(sub))
+                    if (IsLink(new DirectoryInfo(sub)))
                         throw new IOException($"В папке клиента есть ссылка на другую папку: {sub}");
                     pending.Push(sub);
                 }
                 foreach (string file in Directory.EnumerateFiles(dir))
                 {
-                    if (FileHelper.IsReparsePoint(file))
+                    if (IsLink(new FileInfo(file)))
                         throw new IOException($"В папке клиента есть файл-ссылка: {file}");
                     yield return file;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Ссылка (junction/symlink), а не просто reparse point. Файлы и папки OneDrive
+        /// «Файлы по запросу» тоже reparse points (облачный тег), но ведут не в чужое
+        /// место, а к собственному содержимому: по одному атрибуту клиент из OneDrive
+        /// нельзя было ни перенести (а перенос из OneDrive окно настроек и советует),
+        /// ни проверить. LinkTarget не null только у символьных ссылок и junction.
+        /// Не удалось определить — считаем ссылкой (fail-closed).
+        /// </summary>
+        internal static bool IsLink(FileSystemInfo info)
+        {
+            try
+            {
+                if ((info.Attributes & FileAttributes.ReparsePoint) == 0) return false;
+                return info.LinkTarget != null;
+            }
+            catch
+            {
+                return true;
             }
         }
 
@@ -120,6 +141,20 @@ namespace Ven4Tools.Launcher.Services
     /// последовательность (журнал, смена указателя, удаление старой) — в
     /// MainWindow.Download.Move.cs; здесь только то, что не зависит от окна.
     /// </summary>
+    /// <summary>Исход удаления старой копии клиента после переноса.</summary>
+    internal enum OldCopyRemoval
+    {
+        /// <summary>Старой папки больше нет.</summary>
+        Removed,
+
+        /// <summary>Не удалена (не похожа на папку клиента, новой нет, файлы заняты) —
+        /// можно повторить позже.</summary>
+        NotRemoved,
+
+        /// <summary>В старой папке посторонние файлы — оставлена целиком, повторять незачем.</summary>
+        KeptForeign,
+    }
+
     internal static class ClientFolderMover
     {
         /// <summary>
@@ -204,6 +239,31 @@ namespace Ven4Tools.Launcher.Services
                 try { File.SetLastWriteTimeUtc(target, File.GetLastWriteTimeUtc(file)); }
                 catch { /* время изменения не влияет на работу клиента */ }
             }
+        }
+
+        /// <summary>
+        /// Удаление старой копии после переноса (и при доделке прерванного переноса).
+        /// Только если новая на месте и старая действительно выглядит как папка
+        /// клиента: путь к ней пришёл из настроек и журнала, которые лежат в доступном
+        /// пользователю каталоге. Посторонние файлы в старой папке (их могли положить
+        /// после начала переноса, или журнал указывает не туда) — повод не удалять её
+        /// вовсе: Foreign перечисляет их для сообщения. Покрыто unit-тестами.
+        /// </summary>
+        internal static async Task<(OldCopyRemoval Result, IReadOnlyList<string> Foreign)> TryRemoveOldCopyAsync(
+            string oldClientPath, string newClientPath, string dataFolderPath)
+        {
+            var none = Array.Empty<string>();
+            if (!Directory.Exists(oldClientPath)) return (OldCopyRemoval.Removed, none);
+            if (PathsEqual(oldClientPath, newClientPath)) return (OldCopyRemoval.NotRemoved, none);
+            if (!File.Exists(Path.Combine(newClientPath, LauncherPaths.ClientExeName))) return (OldCopyRemoval.NotRemoved, none);
+            if (!File.Exists(Path.Combine(oldClientPath, LauncherPaths.ClientExeName))) return (OldCopyRemoval.NotRemoved, none);
+            if (!InstallPathGuard.IsClientPathSafe(oldClientPath, dataFolderPath)) return (OldCopyRemoval.NotRemoved, none);
+
+            var foreign = ClientFolderInspector.FindForeignEntries(oldClientPath, limit: 20);
+            if (foreign.Count > 0) return (OldCopyRemoval.KeptForeign, foreign);
+
+            bool removed = await TryDeleteDirectoryAsync(oldClientPath).ConfigureAwait(false);
+            return (removed ? OldCopyRemoval.Removed : OldCopyRemoval.NotRemoved, none);
         }
 
         /// <summary>Рекурсивное удаление с повторами (файлы может держать антивирус

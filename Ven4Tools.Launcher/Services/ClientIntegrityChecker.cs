@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
@@ -237,7 +238,23 @@ internal sealed class ClientIntegrityChecker
         // 6. Тот же планировщик, что и у блочного обновления — второй реализации
         //    сравнения в проекте быть не должно.
         var plan = ClientDeltaPlanner.Plan(remote, local);
-        return ClientIntegrityReport.FromPlan(plan, aclCompromised, remote, sources);
+
+        // 7. Лишние файлы удаляются не все: папка могла быть привязана вручную, и
+        //    рядом с клиентом лежит чужое (см. ClientRepairDeletionPolicy). Чужое
+        //    остаётся и попадает в отчёт отдельным списком «не трогаю».
+        IReadOnlyList<string> kept = Array.Empty<string>();
+        if (!plan.FullDownloadRecommended && plan.ToDelete.Count > 0)
+        {
+            var (delete, keep) = ClientRepairDeletionPolicy.Split(plan.ToDelete, ClientFolderInspector.For(clientPath));
+            if (keep.Count > 0)
+            {
+                kept = keep;
+                plan = ClientDeltaPlan.Delta(
+                    plan.ToDownload, delete, plan.Unchanged,
+                    $"{plan.Reason}; посторонних файлов не трогаю: {keep.Count}");
+            }
+        }
+        return ClientIntegrityReport.FromPlan(plan, aclCompromised, remote, sources, kept);
     }
 
     /// <summary>

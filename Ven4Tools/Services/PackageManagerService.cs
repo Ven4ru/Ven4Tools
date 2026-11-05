@@ -255,7 +255,9 @@ namespace Ven4Tools.Services
                         token.ThrowIfCancellationRequested();
                     }
                 }
-                return (p.ExitCode == 0, p.ExitCode);
+                // 3010/1641 — «установлено, нужна перезагрузка» (choco отдаёт код установщика
+                // пакета): это успех, иначе цепочка ушла бы ставить ту же программу повторно.
+                return (p.ExitCode is 0 or 3010 or 1641, p.ExitCode);
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception ex) { log?.Invoke($"❌ Choco: {ex.Message}"); return (false, -1); }

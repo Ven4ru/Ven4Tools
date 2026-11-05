@@ -5,7 +5,7 @@
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="{DynamicResource WindowBackground}">
 
-    <Grid Margin="28,24,28,20">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="16"/>
@@ -14,21 +14,21 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="12"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="16"/>
+            <RowDefinition Height="24"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
         <StackPanel Grid.Row="0">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="🧪" FontSize="22" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="🧪" FontSize="24" VerticalAlignment="Center" Margin="0,0,12,0"/>
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock x:Name="txtTitle"
                                FontSize="16" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"/>
                     <TextBlock Text="Ваш отзыв помогает улучшить продукт"
                                FontSize="12" Foreground="{DynamicResource TextSecondary}"
-                               Margin="0,3,0,0"/>
+                               Margin="0,4,0,0"/>
                 </StackPanel>
             </StackPanel>
         </StackPanel>
@@ -38,19 +38,19 @@
             <TextBlock Text="Оцените эту версию:" FontSize="12"
                        Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
             <StackPanel x:Name="pnlStars" Orientation="Horizontal">
-                <Button x:Name="star1" Content="★" Tag="1" FontSize="28" Width="44"
+                <Button x:Name="star1" Content="★" Tag="1" FontSize="28" Width="44" Height="40" Margin="0" Padding="0"
                         Background="Transparent" BorderThickness="0" Cursor="Hand"
                         Foreground="{DynamicResource TextSecondary}" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
-                <Button x:Name="star2" Content="★" Tag="2" FontSize="28" Width="44"
+                <Button x:Name="star2" Content="★" Tag="2" FontSize="28" Width="44" Height="40" Margin="0" Padding="0"
                         Background="Transparent" BorderThickness="0" Cursor="Hand"
                         Foreground="{DynamicResource TextSecondary}" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
-                <Button x:Name="star3" Content="★" Tag="3" FontSize="28" Width="44"
+                <Button x:Name="star3" Content="★" Tag="3" FontSize="28" Width="44" Height="40" Margin="0" Padding="0"
                         Background="Transparent" BorderThickness="0" Cursor="Hand"
                         Foreground="{DynamicResource TextSecondary}" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
-                <Button x:Name="star4" Content="★" Tag="4" FontSize="28" Width="44"
+                <Button x:Name="star4" Content="★" Tag="4" FontSize="28" Width="44" Height="40" Margin="0" Padding="0"
                         Background="Transparent" BorderThickness="0" Cursor="Hand"
                         Foreground="{DynamicResource TextSecondary}" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
-                <Button x:Name="star5" Content="★" Tag="5" FontSize="28" Width="44"
+                <Button x:Name="star5" Content="★" Tag="5" FontSize="28" Width="44" Height="40" Margin="0" Padding="0"
                         Background="Transparent" BorderThickness="0" Cursor="Hand"
                         Foreground="{DynamicResource TextSecondary}" Click="Star_Click" MouseEnter="Star_Hover" MouseLeave="Star_Leave"/>
             </StackPanel>
@@ -67,31 +67,25 @@
                  TextWrapping="Wrap" AcceptsReturn="True"
                  VerticalScrollBarVisibility="Auto"
                  MaxLength="2000"
-                 Padding="10,8" FontSize="13"
+                 Padding="8" FontSize="12"
                  Background="{DynamicResource CardBackground}"
                  Foreground="{DynamicResource TextPrimary}"
                  BorderBrush="{DynamicResource BorderBrush}"
                  BorderThickness="1"/>
 
-        <!-- Buttons -->
-        <Grid Grid.Row="8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="10"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Content="Пропустить" Height="36"
+        <!-- Buttons: пара справа, как во всех диалогах клиента — «Пропустить» слева, главная справа.
+             Раньше «Пропустить» растягивалась на всю ширину и спорила с главной кнопкой. -->
+        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Пропустить" MinWidth="96" Height="32" Padding="16,0" Margin="0,0,8,0"
                     Background="Transparent"
                     Foreground="{DynamicResource TextSecondary}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                     Click="BtnSkip_Click"/>
-            <Button Grid.Column="2" x:Name="btnSend"
-                    Content="📨 Отправить отзыв" Height="36" Padding="20,0"
-                    Background="{DynamicResource AccentColor}"
-                    Foreground="{DynamicResource AccentForeground}" FontWeight="SemiBold" BorderThickness="0"
+            <Button Style="{StaticResource PrimaryButtonStyle}" x:Name="btnSend"
+                    Content="📨 Отправить отзыв" MinWidth="96" Height="32" Padding="16,0" Margin="0" BorderThickness="0"
                     IsEnabled="False"
                     ToolTip="Отправит выбранную оценку и введённый комментарий разработчику."
                     Click="BtnSend_Click"/>
-        </Grid>
+        </StackPanel>
     </Grid>
 </Window>

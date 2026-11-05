@@ -49,13 +49,13 @@ namespace Ven4Tools.Launcher
             _integrityOperationRunning = true;
             try
             {
-                AddLog("🩺 Проверка целостности установленного клиента...");
+                AddLog("🔧 Проверка целостности установленного клиента...");
 
                 string clientExe = Path.Combine(_clientPath, LauncherPaths.ClientExeName);
                 if (!File.Exists(clientExe))
                 {
                     var absent = ClientIntegrityReport.NotInstalled();
-                    AddLog($"🩺 Проверка: {absent.Summary}");
+                    AddLog($"🔧 Проверка: {absent.Summary}");
                     ExplainMissingClientExe(_clientPath);
                     return absent;
                 }
@@ -107,14 +107,21 @@ namespace Ven4Tools.Launcher
                 _lastIntegrityReport = report;
                 _lastIntegrityReportClientPath = checkedClientPath;
 
-                AddLog($"🩺 Проверка версии {installedVersion ?? "не читается"}: {report.Summary}");
+                AddLog($"🔧 Проверка версии {installedVersion ?? "не читается"}: {report.Summary}");
                 if (report.AclCompromised)
                 {
                     AddLog("⚠️ Права доступа к папке клиента ослаблены — файлы может изменить любой пользователь этого компьютера");
                 }
+                // Чужие файлы в папке клиента (её могли привязать вручную) починка не
+                // удаляет — и пишет, что именно оставила.
+                const int keptShown = 20;
+                foreach (string kept in report.KeptForeignFiles.Take(keptShown))
+                    AddLog($"   ℹ️ Не трогаю: {kept} — не похож на файл клиента");
+                if (report.KeptForeignFiles.Count > keptShown)
+                    AddLog($"   ℹ️ Не трогаю ещё посторонних файлов: {report.KeptForeignFiles.Count - keptShown}");
                 if (report.HasRepairableFindings && report.Plan != null)
                 {
-                    AddLog($"🩺 К восстановлению {report.Plan.ToDownload.Count} файлов " +
+                    AddLog($"🔧 К восстановлению {report.Plan.ToDownload.Count} файлов " +
                            $"({FormatBytes(report.Plan.DownloadBytes)}), к удалению лишних {report.Plan.ToDelete.Count}");
                 }
 

@@ -28,6 +28,10 @@
     "t": "\n\nHiding a driver helps when Windows Update installs an old driver (for example, a graphics driver) over a newer one."
   },
   {
+    "s": "\n\nСтарая папка оставлена: в ней есть посторонние файлы. Проверьте её и удалите сами:\n{0}",
+    "t": "\n\nThe old folder was kept: it contains other files. Check it and delete it yourself:\n{0}"
+  },
+  {
     "s": "\n\nСтарую папку удалить не удалось — лаунчер попробует ещё раз при следующем запуске:\n{0}",
     "t": "\n\nThe old folder could not be deleted — the launcher will try again on the next start:\n{0}"
   },
@@ -104,8 +108,20 @@
     "t": "   Reason: {0}"
   },
   {
+    "s": "   ℹ️ Не трогаю ещё посторонних файлов: {0}",
+    "t": "   ℹ️ More other files left untouched: {0}"
+  },
+  {
+    "s": "   ℹ️ Не трогаю: {0} — не похож на файл клиента",
+    "t": "   ℹ️ Left untouched: {0} — does not look like a client file"
+  },
+  {
     "s": "   ℹ️ Папка клиента не найдена",
     "t": "   ℹ️ Client folder not found"
+  },
+  {
+    "s": "   ℹ️ Ярлык оставлен — он ведёт не в папку клиента: {0}",
+    "t": "   ℹ️ Shortcut kept — it does not point to the client folder: {0}"
   },
   {
     "s": "   ↳ Описание и дата релиза недоступны — их даёт только GitHub",
@@ -536,6 +552,10 @@
     "t": "; STREAM STALLED"
   },
   {
+    "s": "; посторонних файлов не трогаю: {0}",
+    "t": "; other files left untouched: {0}"
+  },
+  {
     "s": "< 1 МБ",
     "t": "< 1 MB"
   },
@@ -724,6 +744,10 @@
     "t": "GitHub responded {0}"
   },
   {
+    "s": "GitHub репозиторий",
+    "t": "GitHub repository"
+  },
+  {
     "s": "Intel PresentMon — счётчик FPS",
     "t": "Intel PresentMon — FPS counter"
   },
@@ -754,6 +778,10 @@
   {
     "s": "Microsoft: отправить файл на анализ (ложное срабатывание Defender)",
     "t": "Microsoft: submit the file for analysis (Defender false positive)"
+  },
+  {
+    "s": "Office на этом компьютере не найден. Установить его можно в разделе «Office».",
+    "t": "Office was not found on this computer. You can install it in the “Office” section."
   },
   {
     "s": "Office уже установлен? Посмотрите состояние его лицензии.",
@@ -1184,6 +1212,10 @@
     "t": "Windows does not allow writing to the client folder. This is a matter of folder permissions, not an antivirus."
   },
   {
+    "s": "Windows не разрешает менять эти настройки программам: {0}. Сейчас откроется окно «Параметры» — там это можно сделать вручную.",
+    "t": "Windows doesn't let apps change these settings: {0}. Windows Settings will open now — you can change them there manually."
+  },
+  {
     "s": "Windows не смог получить файлы компонента — чаще всего из-за настроек сервера обновлений организации (WSUS) или установленного языкового пакета. Укажите установочную флешку/ISO той же версии Windows.",
     "t": "Windows could not get the feature files — most often because of your organization's update server settings (WSUS) or an installed language pack. Specify a Windows installation USB drive/ISO of the same version."
   },
@@ -1214,6 +1246,10 @@
   {
     "s": "Winget установлен",
     "t": "Winget installed"
+  },
+  {
+    "s": "[AlternativeSourceStore] Сохранение пропущено: файл не прочитан, запись стёрла бы прежние записи",
+    "t": "[AlternativeSourceStore] Save skipped: the file could not be read, writing would erase the existing entries"
   },
   {
     "s": "[AppUninstallService] «{0}» удалена, для завершения нужна перезагрузка",
@@ -1360,6 +1396,10 @@
     "t": "[BugCheck] Dictionary resource not found: {0}"
   },
   {
+    "s": "[CatalogLoaderService] Версия встроенного каталога не прочитана: {0}",
+    "t": "[CatalogLoaderService] Could not read the built-in catalog version: {0}"
+  },
+  {
     "s": "[CatalogLoaderService] Встроенный каталог не найден среди ресурсов сборки",
     "t": "[CatalogLoaderService] Built-in catalog not found in assembly resources"
   },
@@ -1418,6 +1458,10 @@
   {
     "s": "[HiddenAppsStore] Сохранение пропущено: список скрытых не удалось прочитать",
     "t": "[HiddenAppsStore] Save skipped: the hidden apps list could not be read"
+  },
+  {
+    "s": "[IgnoredUpdatesService] Сохранение пропущено: файл не прочитан, запись стёрла бы прежние записи",
+    "t": "[IgnoredUpdatesService] Save skipped: the file could not be read, writing would erase the existing entries"
   },
   {
     "s": "[IgnoredUpdatesService] Чтение пропущенных обновлений: {0}",
@@ -1604,6 +1648,18 @@
     "t": "[PresentMon] winget install: code {0}"
   },
   {
+    "s": "[PresentMon] копия не удалена: {0}",
+    "t": "[PresentMon] copy not deleted: {0}"
+  },
+  {
+    "s": "[PresentMon] не запущен: {0}",
+    "t": "[PresentMon] not started: {0}"
+  },
+  {
+    "s": "[PresentMon] не запущен: не удалось подготовить копию — {0}",
+    "t": "[PresentMon] not started: could not prepare a copy — {0}"
+  },
+  {
     "s": "[PresentMon] не запущен: подпись не подтверждена ({0})",
     "t": "[PresentMon] not started: signature not confirmed ({0})"
   },
@@ -1710,6 +1766,10 @@
   {
     "s": "[UserAppsStore] Сохранение пропущено: apps.json не удалось прочитать, запись стёрла бы добавленные приложения",
     "t": "[UserAppsStore] Save skipped: apps.json could not be read, writing would erase the added apps"
+  },
+  {
+    "s": "[VersionTrackingService] Сохранение пропущено: файл не прочитан, запись стёрла бы прежние записи",
+    "t": "[VersionTrackingService] Save skipped: the file could not be read, writing would erase the existing entries"
   },
   {
     "s": "[VersionTrackingService] Чтение данных трекинга версий: {0}",
@@ -1828,6 +1888,14 @@
     "t": "[WingetVersionsService] Getting version list for “{0}”: {1}"
   },
   {
+    "s": "[{0}] «{1}» ещё держит другой раздел — значение оставлено, снято только владение «{2}».",
+    "t": "[{0}] “{1}” is still held by another section — the value was kept, only the “{2}” ownership was released."
+  },
+  {
+    "s": "[{0}] Оригинал «{1}» в учёте владения не разобран: {2} — возвращаю по своей записи.",
+    "t": "[{0}] Original of “{1}” in the ownership ledger could not be parsed: {2} — restoring from own record."
+  },
+  {
     "s": "[Автозагрузка] {0}: {1} ({2})",
     "t": "[Startup] {0}: {1} ({2})"
   },
@@ -1918,6 +1986,10 @@
   {
     "s": "[Деблоатер] SetReg: тайм-аут или отмена [{0}\\{1}]",
     "t": "[Debloater] SetReg: timeout or cancellation [{0}\\{1}]"
+  },
+  {
+    "s": "[Деблоатер] «{0}» не применён: нет надёжной записи отката",
+    "t": "[Debloater] “{0}” not applied: no reliable revert record"
   },
   {
     "s": "[Деблоатер] Неизвестный tweakId: {0}",
@@ -2068,6 +2140,10 @@
     "t": "[Disk space] {0}"
   },
   {
+    "s": "[Место на диске] {0} — ссылка на другую папку, очистка пропущена",
+    "t": "[Disk space] {0} is a link to another folder — cleanup skipped"
+  },
+  {
     "s": "[Место на диске] {0}: удалено файлов {1}, пропущено занятых {2}",
     "t": "[Disk space] {0}: files deleted {1}, in-use skipped {2}"
   },
@@ -2146,6 +2222,10 @@
   {
     "s": "[Очистка] Журнал применённых твиков не сохранён: {0}",
     "t": "[Cleanup] Applied tweaks log could not be saved: {0}"
+  },
+  {
+    "s": "[Очистка] Записи отката испорчены и отложены как {0}: {1}",
+    "t": "[Cleanup] Revert records are corrupted and were moved aside as {0}: {1}"
   },
   {
     "s": "[Очистка] Записи отката испорчены и отложены: {0}",
@@ -2410,6 +2490,10 @@
   {
     "s": "[Снапшоты] Ошибка чтения списка: {0}",
     "t": "[Snapshots] Error reading the list: {0}"
+  },
+  {
+    "s": "[Снапшоты] Папка снимков — ссылка на другую папку, очистка пропущена",
+    "t": "[Snapshots] The snapshots folder is a link to another folder — cleanup skipped"
   },
   {
     "s": "[Снапшоты] Повреждённый файл {0}: {1}",
@@ -2864,6 +2948,10 @@
     "t": "{0}: hashes on the CDN and GitHub match ({1}…)."
   },
   {
+    "s": "{0}; посторонних файлов не трогаю: {1}",
+    "t": "{0}; other files left untouched: {1}"
+  },
+  {
     "s": "{0}Не найдено в текущем каталоге: {1}Возможно, набор собран при более широкой области каталога — проверьте её в настройках.",
     "t": "{0}Not found in the current catalog: {1}The set may have been made with a wider catalog scope — check it in Settings."
   },
@@ -2898,6 +2986,14 @@
   {
     "s": "«{0}» — программа Microsoft (например, OneDrive, Edge, Office).\n\nЕё можно выключить, но тогда она не будет запускаться и обновляться в фоне вместе с Windows. Выключить?",
     "t": "“{0}” is a Microsoft app (for example, OneDrive, Edge, Office).\n\nYou can disable it, but then it will not start and update in the background with Windows. Disable?"
+  },
+  {
+    "s": "«Давайте завершим настройку устройства»",
+    "t": "“Let's finish setting up your device”"
+  },
+  {
+    "s": "«Завершить задачу» в меню панели",
+    "t": "“End task” in the taskbar menu"
   },
   {
     "s": "«Нет данных» — диск или USB-переходник не передаёт SMART; это не значит, что диск исправен.",
@@ -2960,6 +3056,10 @@
     "t": "Auto-check is off (paranoid mode). Click “Check for updates” manually."
   },
   {
+    "s": "Автоскрытие",
+    "t": "Auto-hide"
+  },
+  {
     "s": "Агрессивный",
     "t": "Aggressive"
   },
@@ -2994,6 +3094,10 @@
   {
     "s": "Анализатор сетевого трафика: захват и разбор пакетов сотен протоколов.",
     "t": "Network traffic analyzer: captures and dissects packets of hundreds of protocols."
+  },
+  {
+    "s": "Английский, США (en-us)",
+    "t": "English, US (en-us)"
   },
   {
     "s": "Анимации",
@@ -3100,6 +3204,14 @@
     "t": "Without internet, the Office tab is hidden automatically. This option turns on offline mode manually and also hides the Network tab."
   },
   {
+    "s": "Без рекламы и Bing",
+    "t": "No ads and no Bing"
+  },
+  {
+    "s": "Без секунд",
+    "t": "No seconds"
+  },
+  {
     "s": "Без этих инструкций Windows 11 24H2 и новее не запускается вообще, даже в обход проверок. Это свойство самого процессора, настройками не исправить.",
     "t": "Without these instructions Windows 11 24H2 and later does not start at all, even when bypassing the checks. This is a property of the processor itself and cannot be fixed in settings."
   },
@@ -3170,6 +3282,22 @@
   {
     "s": "Более старая версия",
     "t": "Older version"
+  },
+  {
+    "s": "Больше закреплённых",
+    "t": "More pins"
+  },
+  {
+    "s": "Больше закреплённых значков, без советов, недавних файлов и рекламы.",
+    "t": "More pinned icons, no tips, recent files or ads."
+  },
+  {
+    "s": "Больше рекомендаций",
+    "t": "More recommendations"
+  },
+  {
+    "s": "Браузер",
+    "t": "Browser"
   },
   {
     "s": "Браузер на базе Firefox с вертикальными вкладками и разделением окна.",
@@ -3276,6 +3404,14 @@
     "t": "Fast, secure, and private open-source browser."
   },
   {
+    "s": "В Windows 11 родную панель задач нельзя переставить. Панель сверху, слева или справа — в своей панели Ven4Bar.",
+    "t": "Windows 11 does not let you move the built-in taskbar. A taskbar at the top, left or right comes with Ven4Bar, our own taskbar."
+  },
+  {
+    "s": "В Windows 11 родную панель задач нельзя переставить. Панель слева появится в своей панели Ven4Bar — следующем блоке «Персонализации».",
+    "t": "Windows 11 does not let you move the built-in taskbar. A left-side taskbar will come with Ven4Bar, our own taskbar — the next Personalization block."
+  },
+  {
     "s": "В Windows обнаружен Smart App Control ({0}).\n\nОн запрещает запуск программ без цифровой подписи и «репутации» у Microsoft, и кнопки «всё равно запустить» у него нет. Клиент Ven4Tools пока такой репутации не имеет, поэтому после установки Windows может не дать его запустить.\n\nЛаунчер ничего не меняет в настройках Windows. Если запуск будет заблокирован, лаунчер покажет причину. Выключить Smart App Control можно только вручную: Безопасность Windows → Управление приложениями и браузером → Smart App Control (обратно включить его, возможно, можно будет только переустановкой Windows).\n\nПродолжить установку?",
     "t": "Smart App Control was detected in Windows ({0}).\n\nIt prevents programs without a digital signature and Microsoft “reputation” from running, and it has no “run anyway” button. The Ven4Tools client does not have such reputation yet, so Windows may not let it start after installation.\n\nThe launcher does not change any Windows settings. If the start is blocked, the launcher will show the reason. Smart App Control can only be turned off manually: Windows Security → App & browser control → Smart App Control (turning it back on may only be possible by reinstalling Windows).\n\nContinue installation?"
   },
@@ -3368,6 +3504,10 @@
     "t": "Release {0} has no Ven4Tools.Setup installer — update skipped."
   },
   {
+    "s": "В списке несколько записей с этим названием: так они различаются (архитектура или область установки).",
+    "t": "The list has several entries with this name: this is how they differ (architecture or install scope)."
+  },
+  {
     "s": "В экспериментальной версии температуры и частоты процессора не показываются: для них нужен драйвер ядра, а его мы пока не ставим, чтобы не мешать играм с античитом. Видеокарта, диски, загрузка процессора, FPS и оверлей работают.",
     "t": "In the experimental version CPU temperatures and clocks are not shown: they need a kernel driver, and we do not install it yet so as not to interfere with games with anti-cheat. Graphics card, disks, CPU load, FPS and the overlay work."
   },
@@ -3412,6 +3552,10 @@
     "t": "Enter a name."
   },
   {
+    "s": "Веб-подсказки в поиске Пуска",
+    "t": "Web suggestions in Start search"
+  },
+  {
     "s": "Вежливо попросит программу закрыться, как при нажатии на крестик. Программа сможет спросить о сохранении.",
     "t": "Politely asks the app to close, as if you clicked its close button. The app can ask about saving."
   },
@@ -3422,6 +3566,14 @@
   {
     "s": "Вентиляторы корпуса",
     "t": "Case fans"
+  },
+  {
+    "s": "Венчик",
+    "t": "Venchik"
+  },
+  {
+    "s": "Венчик ночной",
+    "t": "Venchik at Night"
   },
   {
     "s": "Венчик ночью в компьютерном классе. Левая половина тёмная — значки на рабочем столе хорошо видны.",
@@ -3450,6 +3602,10 @@
   {
     "s": "Вернуть как было",
     "t": "Restore"
+  },
+  {
+    "s": "Вернуть нечего: файл отката был повреждён, его содержимое сохранено как {0}. Новые изменения снова можно применять.",
+    "t": "Nothing to restore: the revert file was corrupted, its contents were saved as {0}. New changes can be applied again."
   },
   {
     "s": "Вернуть обновления",
@@ -3492,6 +3648,14 @@
     "t": "Version {0} is older than the installed {1}.\n\nDownloading does not downgrade the client. If you need this exact version — install its signed archive via “Install from file”."
   },
   {
+    "s": "Версия {0}: {1}",
+    "t": "Version {0}: {1}"
+  },
+  {
+    "s": "Версия отозвана",
+    "t": "Version revoked"
+  },
+  {
     "s": "Версия старее установленной",
     "t": "Version is older than the installed one"
   },
@@ -3500,12 +3664,20 @@
     "t": "Version:"
   },
   {
+    "s": "Вертикальная панель у левого края экрана — родная настройка Windows 10. После применения проводник перезапустится.",
+    "t": "A vertical taskbar on the left edge of the screen — a built-in Windows 10 setting. Explorer restarts after applying."
+  },
+  {
     "s": "Весь каталог",
     "t": "Full catalog"
   },
   {
     "s": "Весь каталог, включая драйверпаки, инструменты ИИ и узкоспециальные программы",
     "t": "The whole catalog, including driver packs, AI tools and specialized apps"
+  },
+  {
+    "s": "Вид значения {0} не поддерживается: {1}",
+    "t": "Value type {0} is not supported: {1}"
   },
   {
     "s": "Видео",
@@ -3536,8 +3708,20 @@
     "t": "Microsoft video editor."
   },
   {
+    "s": "Виджеты",
+    "t": "Widgets"
+  },
+  {
     "s": "Виджеты (новости и погода)",
     "t": "Widgets (news and weather)"
+  },
+  {
+    "s": "Витрина панели задач",
+    "t": "Taskbar preview"
+  },
+  {
+    "s": "Вишня",
+    "t": "Cherry"
   },
   {
     "s": "Вкладки Office и Сеть скрываются автоматически при потере соединения. Этот флаг форсирует офлайн вручную.",
@@ -3546,6 +3730,10 @@
   {
     "s": "Включает этот пункт оформления. Прежние настройки запоминаются для отката.",
     "t": "Turns on this item. Previous settings are saved so they can be restored."
+  },
+  {
+    "s": "Включена",
+    "t": "On"
   },
   {
     "s": "Включена.",
@@ -3604,6 +3792,10 @@
     "t": "Enabled"
   },
   {
+    "s": "Внешний IP",
+    "t": "External IP"
+  },
+  {
     "s": "Внешний вид",
     "t": "Appearance"
   },
@@ -3618,6 +3810,14 @@
   {
     "s": "Возвращает курсоры, обои, экран блокировки, звуки и заставку, какими они были до Ven4Tools.",
     "t": "Restores the cursors, wallpaper, lock screen, sounds and screensaver to how they were before Ven4Tools."
+  },
+  {
+    "s": "Возвращает панель задач и Пуск, какими они были до Ven4Tools.",
+    "t": "Returns the taskbar and Start to how they were before Ven4Tools."
+  },
+  {
+    "s": "Возвращает цвет, панель задач, Пуск и ушки, какими они были до Ven4Tools.",
+    "t": "Restores the color, taskbar, Start and ears the way they were before Ven4Tools."
   },
   {
     "s": "Возвращает этот пункт, каким он был до первого применения.",
@@ -3732,12 +3932,24 @@
     "t": "All third-party drivers, including the network one: without it, a fresh system has no internet. It takes one to several gigabytes and a couple of minutes."
   },
   {
+    "s": "Всегда видна",
+    "t": "Always visible"
+  },
+  {
+    "s": "Всегда объединять",
+    "t": "Always combine"
+  },
+  {
     "s": "Всегда считать соединение активным (для сетей, где автоопределение ошибается). Игнорирует автодетект сети, чтобы онлайн-вкладки не скрывались при ложноотрицательном определении.",
     "t": "Always treat the connection as active (for networks where auto-detection gets it wrong). Ignores network auto-detection so that online tabs are not hidden on a false negative."
   },
   {
     "s": "Всего: {0}  |  Обновлений: {1}  |  Неизвестных: {2}",
     "t": "Total: {0}  |  Updates: {1}  |  Unknown: {2}"
+  },
+  {
+    "s": "Всплывающие советы и «рекомендации» Windows во время работы.",
+    "t": "Pop-up tips and “recommendations” from Windows while you work."
   },
   {
     "s": "Вся история",
@@ -3824,6 +4036,10 @@
     "t": "Choose the catalog display mode"
   },
   {
+    "s": "Выберите тему и набор — витрина сразу покажет, как будет выглядеть панель на ваших обоях. Применяется только после «Применить», «Вернуть как было» возвращает всё, как было до Ven4Tools.",
+    "t": "Pick a theme and a preset — the preview instantly shows how the taskbar will look on your wallpaper. Nothing changes until you press “Apply”; “Restore” brings everything back to how it was before Ven4Tools."
+  },
+  {
     "s": "Выберите установочную флешку Windows или папку sources\\sxs",
     "t": "Select a Windows installation USB drive or the sources\\sxs folder"
   },
@@ -3900,12 +4116,20 @@
     "t": "Exporting Wi-Fi profiles…"
   },
   {
+    "s": "Выключен",
+    "t": "Off"
+  },
+  {
     "s": "Выключен. Файлов компонента в системе нет — Windows скачает их через Центр обновления (или возьмёт с установочного носителя).",
     "t": "Disabled. The feature files are not on the system — Windows will download them via Windows Update (or take them from installation media)."
   },
   {
     "s": "Выключен. Файлы компонента уже есть в системе — включится быстро.",
     "t": "Disabled. The feature files are already on the system — enabling will be quick."
+  },
+  {
+    "s": "Выключена",
+    "t": "Off"
   },
   {
     "s": "Выключение .NET Framework 3.5",
@@ -3948,8 +4172,16 @@
     "t": "Exit"
   },
   {
+    "s": "Где показывать кнопку окна, когда панель есть на всех мониторах.",
+    "t": "Where to show a window's button when the taskbar is on every display."
+  },
+  {
     "s": "Гибкое управление вентиляторами по кривым от температур процессора, видеокарты и дисков.",
     "t": "Flexible fan control with curves based on CPU, GPU, and drive temperatures."
+  },
+  {
+    "s": "Глубокое море",
+    "t": "Deep Sea"
   },
   {
     "s": "Голосовая связь с низкой задержкой для игр и сообществ на своих или публичных серверах.",
@@ -4002,6 +4234,14 @@
   {
     "s": "Графика",
     "t": "Graphics"
+  },
+  {
+    "s": "Графит",
+    "t": "Graphite"
+  },
+  {
+    "s": "Группировка кнопок",
+    "t": "Combine buttons"
   },
   {
     "s": "ДИАГНОСТИКА КЛИЕНТА",
@@ -4110,6 +4350,10 @@
   {
     "s": "Диагностика не выполнена: {0}",
     "t": "Diagnostics failed: {0}"
+  },
+  {
+    "s": "Диагностика сети",
+    "t": "Network diagnostics"
   },
   {
     "s": "Диагностика соединения",
@@ -4428,6 +4672,14 @@
     "t": "If a device does not work, restart the computer."
   },
   {
+    "s": "Если мониторов несколько — панель задач на каждом из них.",
+    "t": "With several displays — a taskbar on each of them."
+  },
+  {
+    "s": "Есть",
+    "t": "On"
+  },
+  {
     "s": "Есть в winget, но нет в каталоге Ven4Tools: {0}",
     "t": "In winget but not in the Ven4Tools catalog: {0}"
   },
@@ -4616,6 +4868,10 @@
     "t": "Written"
   },
   {
+    "s": "Записей нет. Здесь появятся программы, установленные и удалённые через Ven4Tools.",
+    "t": "No entries yet. Apps installed and removed through Ven4Tools will appear here."
+  },
+  {
     "s": "Запись",
     "t": "Write"
   },
@@ -4744,6 +5000,22 @@
     "t": "ven4tools.ru mirror"
   },
   {
+    "s": "Значки в области уведомлений",
+    "t": "Notification area icons"
+  },
+  {
+    "s": "Значки слева, поле поиска, окна не объединяются.",
+    "t": "Icons on the left, search box, windows not combined."
+  },
+  {
+    "s": "Значок и подпись",
+    "t": "Icon and label"
+  },
+  {
+    "s": "Значок и уведомления у имени пользователя в Пуске: «войдите в учётную запись Microsoft», «завершите настройку».",
+    "t": "The badge and notifications by your user name in Start: “sign in with a Microsoft account”, “finish setup”."
+  },
+  {
     "s": "ИИ",
     "t": "AI"
   },
@@ -4774,6 +5046,10 @@
   {
     "s": "Идёт измерение...",
     "t": "Measuring..."
+  },
+  {
+    "s": "Идёт операция с обновлениями Windows — кэш не очищен",
+    "t": "A Windows Update operation is in progress — cache not cleared"
   },
   {
     "s": "Идёт проверка",
@@ -4960,12 +5236,20 @@
     "t": "Exception"
   },
   {
+    "s": "Испанский (es-es)",
+    "t": "Spanish (es-es)"
+  },
+  {
     "s": "Использовать этот источник первым",
     "t": "Use this source first"
   },
   {
     "s": "Использовать эту ссылку первой",
     "t": "Use this link first"
+  },
+  {
+    "s": "Используемые технологии",
+    "t": "Technologies used"
   },
   {
     "s": "Исправить",
@@ -4986,6 +5270,18 @@
   {
     "s": "История изменений будет доступна после загрузки каталога.",
     "t": "The changelog will be available once the catalog has loaded."
+  },
+  {
+    "s": "История изменений каталога",
+    "t": "Catalog changelog"
+  },
+  {
+    "s": "История перезагрузок и сбоев, диски, ошибки Windows Update и аппаратные события за 7 дней.",
+    "t": "Restart and crash history, disks, Windows Update errors and hardware events for the last 7 days."
+  },
+  {
+    "s": "История установок",
+    "t": "Installation history"
   },
   {
     "s": "Источник",
@@ -5012,6 +5308,10 @@
     "t": "Sources"
   },
   {
+    "s": "Итальянский (it-it)",
+    "t": "Italian (it-it)"
+  },
+  {
     "s": "Итог проверки памяти читается при открытии раздела",
     "t": "The memory test result is read when the section opens"
   },
@@ -5030,6 +5330,14 @@
   {
     "s": "Как «Включён», но на процессорах без собственного управления частотой Windows сразу запрашивает наибольшую.",
     "t": "Like “Enabled”, but on processors without their own frequency control Windows requests the highest frequency right away."
+  },
+  {
+    "s": "Как в Windows 10",
+    "t": "Like Windows 10"
+  },
+  {
+    "s": "Как в Windows сейчас",
+    "t": "As currently in Windows"
   },
   {
     "s": "Как измерено",
@@ -5124,6 +5432,10 @@
     "t": "Category:"
   },
   {
+    "s": "Китайский упрощённый (zh-cn)",
+    "t": "Chinese Simplified (zh-cn)"
+  },
+  {
     "s": "Классический двухпанельный файловый менеджер с архивами, FTP и плагинами.",
     "t": "Classic two-pane file manager with archives, FTP, and plugins."
   },
@@ -5200,6 +5512,38 @@
     "t": "Client installed"
   },
   {
+    "s": "Кнопка Copilot",
+    "t": "Copilot button"
+  },
+  {
+    "s": "Кнопка «Представление задач»",
+    "t": "“Task view” button"
+  },
+  {
+    "s": "Кнопка «Пуск» и значки — по центру или у левого края, как в Windows 10.",
+    "t": "The Start button and icons — centered or on the left edge, as in Windows 10."
+  },
+  {
+    "s": "Кнопка «Чат»",
+    "t": "“Chat” button"
+  },
+  {
+    "s": "Кнопка обзора окон и рабочих столов. Win+Tab работает и без неё.",
+    "t": "Button for an overview of windows and desktops. Win+Tab works without it too."
+  },
+  {
+    "s": "Кнопка помощника Copilot на панели задач. Сам Copilot остаётся, пропадает только кнопка.",
+    "t": "The Copilot assistant button on the taskbar. Copilot itself stays, only the button goes away."
+  },
+  {
+    "s": "Кнопка чата Microsoft Teams в первых выпусках Windows 11. В новых сборках её нет — настройка ничего не сломает.",
+    "t": "The Microsoft Teams chat button from early Windows 11 releases. Newer builds don't have it — the setting won't break anything."
+  },
+  {
+    "s": "Кнопки окон на других мониторах",
+    "t": "Window buttons on other displays"
+  },
+  {
     "s": "Когда компьютер простаивает, по экрану бегает Венчик. Если заставка была выключена, она включится через 10 минут простоя.",
     "t": "When the computer is idle, Venchik runs across the screen. If the screensaver was off, it turns on after 10 minutes of inactivity."
   },
@@ -5246,6 +5590,10 @@
   {
     "s": "Компоненты",
     "t": "Components"
+  },
+  {
+    "s": "Компьютер и Bing",
+    "t": "PC and Bing"
   },
   {
     "s": "Компьютер настроен получать обновления с сервера организации (WSUS), и там нет файлов компонента. Укажите установочную флешку/ISO.",
@@ -5420,6 +5768,10 @@
     "t": "Local installer"
   },
   {
+    "s": "Любой цвет из палитры. Если белые подписи на нём будут плохо видны, Ven4Tools затемнит оттенок ровно настолько, чтобы читались.",
+    "t": "Any color from the palette. If white labels would be hard to read on it, Ven4Tools darkens the shade just enough to keep them readable."
+  },
+  {
     "s": "Лёгкий медиаплеер на базе Media Player Classic с современными кодеками.",
     "t": "Lightweight media player based on Media Player Classic with modern codecs."
   },
@@ -5442,6 +5794,14 @@
   {
     "s": "Максимум за сеанс",
     "t": "Session maximum"
+  },
+  {
+    "s": "Маленькие",
+    "t": "Small"
+  },
+  {
+    "s": "Маленькие значки",
+    "t": "Small icons"
   },
   {
     "s": "Манифест обновлений: {0}",
@@ -5560,6 +5920,18 @@
     "t": "DOES NOT MATCH the published hash. The file has been modified or is not an official build. Do not run it again; download the installer from ven4tools.ru or from the GitHub release page."
   },
   {
+    "s": "На всех",
+    "t": "On all"
+  },
+  {
+    "s": "На всех панелях",
+    "t": "On all taskbars"
+  },
+  {
+    "s": "На главной и там, где окно",
+    "t": "Main taskbar and where the window is"
+  },
+  {
     "s": "На диске не хватает места.",
     "t": "There is not enough disk space."
   },
@@ -5626,6 +5998,10 @@
   {
     "s": "Наведите камеру телефона на код — телефон предложит подключиться к сети.",
     "t": "Point your phone camera at the code — the phone will offer to join the network."
+  },
+  {
+    "s": "Над кнопкой «Пуск» появляются ушки Венчика в цвет панели. Клики проходят сквозь них, в полноэкранных играх и видео они прячутся.",
+    "t": "Venchik's ears appear above the Start button in the taskbar color. Clicks pass through them, and they hide in full-screen games and videos."
   },
   {
     "s": "Нажмите «Запустить диагностику»",
@@ -5760,6 +6136,10 @@
     "t": "Cumulative updates have not been installed for more than two months — check Windows Update."
   },
   {
+    "s": "Напоминания учётной записи в Пуске",
+    "t": "Account reminders in Start"
+  },
+  {
     "s": "Например: Python.Python.3.14",
     "t": "For example: Python.Python.3.14"
   },
@@ -5782,6 +6162,10 @@
   {
     "s": "Настроить прокси",
     "t": "Configure proxy"
+  },
+  {
+    "s": "Настройка родных панели задач и Пуска Windows. Выберите значения и нажмите «Применить» — прежние настройки запоминаются, «Вернуть как было» восстановит их.",
+    "t": "Settings for the built-in Windows taskbar and Start. Choose values and click “Apply” — the previous settings are saved, and “Restore” brings them back."
   },
   {
     "s": "Настройки",
@@ -5828,6 +6212,10 @@
     "t": "Not supported: {0}."
   },
   {
+    "s": "Не показывать",
+    "t": "Don't show"
+  },
+  {
     "s": "Не получать драйверы через Windows Update",
     "t": "Don't get drivers via Windows Update"
   },
@@ -5836,12 +6224,20 @@
     "t": "Stop getting drivers via Windows Update?\n\nThe “Do not include drivers with Windows Updates” policy will be enabled. This makes it less likely that Windows Update puts an old graphics driver back over a newer one, but does not guarantee it: the policy does not work in all cases, and Windows may install drivers for new hardware on its own.\n\nYou will have to install fresh drivers manually — from the manufacturer's website.\nYou can turn this off right here, and the previous value will be restored."
   },
   {
+    "s": "Не получилось изменить настройки. Подробности — в журнале.",
+    "t": "Failed to change the settings. See the log for details."
+  },
+  {
     "s": "Не получилось: {0}",
     "t": "Failed: {0}"
   },
   {
     "s": "Не получилось: {0}. Подробности — в журнале.",
     "t": "Failed: {0}. See the log for details."
+  },
+  {
+    "s": "Не предлагать",
+    "t": "Don't suggest"
   },
   {
     "s": "Не применено",
@@ -6152,6 +6548,10 @@
     "t": "Could not copy the report: {0}"
   },
   {
+    "s": "Не удалось скопировать установщик в защищённый каталог",
+    "t": "Could not copy the installer to a protected folder"
+  },
+  {
     "s": "Не удалось скопировать: {0}",
     "t": "Could not copy: {0}"
   },
@@ -6162,6 +6562,10 @@
   {
     "s": "Не удалось сохранить отчёт: {0}",
     "t": "Could not save the report: {0}"
+  },
+  {
+    "s": "Не удалось сохранить текущий регион Windows, поэтому установка Office остановлена: без этой записи регион нельзя было бы вернуть после сбоя. Подробности — в журнале.",
+    "t": "Could not save the current Windows region, so the Office installation was stopped: without this record, the region could not be restored after a failure. Details are in the log."
   },
   {
     "s": "Не удалось сохранить файл: {0}",
@@ -6240,6 +6644,10 @@
     "t": "Invalid DISM command parameter."
   },
   {
+    "s": "Недавние файлы",
+    "t": "Recent files"
+  },
+  {
     "s": "Недопустимый ID «{0}»",
     "t": "Invalid ID “{0}”"
   },
@@ -6274,6 +6682,18 @@
   {
     "s": "Недоступно",
     "t": "Unavailable"
+  },
+  {
+    "s": "Недоступно, пока идёт другая системная операция (например, .NET Framework 3.5) — дождитесь её окончания.",
+    "t": "Unavailable while another system operation is running (for example, .NET Framework 3.5) — wait for it to finish."
+  },
+  {
+    "s": "Недоступно, пока идёт поиск обновлений — дождитесь его окончания.",
+    "t": "Unavailable while checking for updates — wait for it to finish."
+  },
+  {
+    "s": "Недоступно, пока идёт работа со скрытыми обновлениями (поиск, скрытие или возврат) — дождитесь её окончания.",
+    "t": "Unavailable while hidden updates are being processed (search, hide or restore) — wait for it to finish."
   },
   {
     "s": "Недоступно: не удалось получить состояние дисков.",
@@ -6320,12 +6740,28 @@
     "t": "Uncorrectable errors: {0}"
   },
   {
+    "s": "Некоторые настройки (например, секунды в часах) видны только после перезапуска проводника. Открытые окна папок закроются.",
+    "t": "Some settings (such as seconds in the clock) show up only after File Explorer restarts. Open folder windows will close."
+  },
+  {
     "s": "Немедленно перезагрузит Windows, чтобы завершить установку обновлений.",
     "t": "Restarts Windows immediately to finish installing updates."
   },
   {
+    "s": "Немецкий (de-de)",
+    "t": "German (de-de)"
+  },
+  {
+    "s": "Неподдерживаемый вид значения реестра: {0}",
+    "t": "Unsupported registry value type: {0}"
+  },
+  {
     "s": "Нестабильные секторы (ожидают переназначения): {0}",
     "t": "Unstable sectors (pending reallocation): {0}"
+  },
+  {
+    "s": "Нет",
+    "t": "No"
   },
   {
     "s": "Нет SHA256 для локального установщика",
@@ -6480,6 +6916,10 @@
     "t": "None of the package installers fit this system."
   },
   {
+    "s": "Никогда",
+    "t": "Never"
+  },
+  {
     "s": "Никто из запущенных программ этот файл не держит. Если он всё равно не удаляется — дело в правах доступа или файл занят на уровне драйвера.",
     "t": "None of the running apps is holding this file. If it still cannot be deleted, the cause is access permissions or the file is locked at the driver level."
   },
@@ -6518,6 +6958,10 @@
   {
     "s": "Новых патчей не найдено",
     "t": "No new updates found"
+  },
+  {
+    "s": "Ночной фиолет",
+    "t": "Night Violet"
   },
   {
     "s": "Нужен 1С, старым играм и программам. Включается штатно через DISM: файлы компонента Windows берёт из Центра обновления или с установочной флешки/ISO.",
@@ -6760,12 +7204,20 @@
     "t": "Disk image (*.iso)|*.iso"
   },
   {
+    "s": "Обратная связь",
+    "t": "Feedback"
+  },
+  {
     "s": "Обратная связь: {0}",
     "t": "Feedback: {0}"
   },
   {
     "s": "Общие",
     "t": "General"
+  },
+  {
+    "s": "Объединять окна одной программы в одну кнопку или показывать каждое окно с подписью.",
+    "t": "Combine windows of one app into a single button, or show each window with a label."
   },
   {
     "s": "Объём:",
@@ -6782,6 +7234,10 @@
   {
     "s": "Обычно синхронизация занимает несколько минут — повторите попытку позже.",
     "t": "Syncing usually takes a few minutes — try again later."
+  },
+  {
+    "s": "Обычные",
+    "t": "Normal"
   },
   {
     "s": "Обычный",
@@ -6950,6 +7406,10 @@
   {
     "s": "Остановить службы обновления Windows и очистить кэш загрузки? Службы будут перезапущены автоматически.",
     "t": "Stop the Windows Update services and clear the download cache? The services will be restarted automatically."
+  },
+  {
+    "s": "Остановить службы обновления Windows и очистить кэш загрузки? Службы, которые работали, будут запущены снова.",
+    "t": "Stop the Windows Update services and clear the download cache? The services that were running will be started again."
   },
   {
     "s": "Остановлено",
@@ -7192,6 +7652,10 @@
     "t": "Opens the current offline cache folder in File Explorer."
   },
   {
+    "s": "Открывает раздел «Панель задач» в параметрах Windows.",
+    "t": "Opens the “Taskbar” page in Windows Settings."
+  },
+  {
     "s": "Открытая программа удалённого доступа к компьютеру, можно подключаться через свой сервер.",
     "t": "Open-source remote desktop app; can connect through your own server."
   },
@@ -7310,6 +7774,10 @@
   {
     "s": "Отпустите файл, чтобы продолжить",
     "t": "Drop the file to continue"
+  },
+  {
+    "s": "Оттенок затемнён, чтобы подписи читались.",
+    "t": "The shade was darkened so labels stay readable."
   },
   {
     "s": "Отчёт и офлайн-кэш в файле ответа задаются относительно самого файла и не могут выходить за его папку.",
@@ -7660,6 +8128,42 @@
     "t": "The quick access bar is full (maximum {0})."
   },
   {
+    "s": "Панель задач",
+    "t": "Taskbar"
+  },
+  {
+    "s": "Панель задач и Пуск",
+    "t": "Taskbar and Start"
+  },
+  {
+    "s": "Панель задач и Пуск окрашиваются в цвет акцента. Работает при тёмном режиме Windows.",
+    "t": "The taskbar and Start take the accent color. Works in Windows dark mode."
+  },
+  {
+    "s": "Панель задач слева",
+    "t": "Taskbar on the left"
+  },
+  {
+    "s": "Панель задач у любого края экрана — родная настройка Windows 10. После применения проводник перезапустится.",
+    "t": "The taskbar at any edge of the screen — a built-in Windows 10 setting. Explorer restarts after applying."
+  },
+  {
+    "s": "Панель задач:",
+    "t": "Taskbar:"
+  },
+  {
+    "s": "Панель задач: «{0}» ещё держит другой раздел — значение оставлено как есть",
+    "t": "Taskbar: “{0}” is still held by another section — the value was left as is"
+  },
+  {
+    "s": "Панель на всех мониторах",
+    "t": "Taskbar on all displays"
+  },
+  {
+    "s": "Панель прячется за край экрана и появляется, когда к нему подводишь мышь.",
+    "t": "The taskbar hides behind the screen edge and appears when you move the mouse there."
+  },
+  {
     "s": "Папка «Автозагрузка»",
     "t": "“Startup” folder"
   },
@@ -7730,6 +8234,10 @@
   {
     "s": "Параметры 1–4:",
     "t": "Parameters 1–4:"
+  },
+  {
+    "s": "Параметры Windows",
+    "t": "Windows Settings"
   },
   {
     "s": "Параметры установки",
@@ -7810,6 +8318,14 @@
   {
     "s": "Перезагрузить сейчас",
     "t": "Restart now"
+  },
+  {
+    "s": "Перезапустить проводник",
+    "t": "Restart File Explorer"
+  },
+  {
+    "s": "Перезапустить проводник? Панель задач на пару секунд пропадёт, открытые окна папок закроются.",
+    "t": "Restart File Explorer? The taskbar will disappear for a couple of seconds, and open folder windows will close."
   },
   {
     "s": "Переключает вид окна между новым и прежним. Вернуться можно этой же кнопкой.",
@@ -7916,8 +8432,16 @@
     "t": "Density"
   },
   {
+    "s": "По данным OSPP.VBS из папки Office или службы лицензирования.",
+    "t": "According to OSPP.VBS from the Office folder or the licensing service."
+  },
+  {
     "s": "По данным последней фоновой проверки.",
     "t": "According to the latest background check."
+  },
+  {
+    "s": "По данным службы лицензирования Windows.",
+    "t": "According to the Windows licensing service."
   },
   {
     "s": "По документации Microsoft работает как «Агрессивный».",
@@ -7934,6 +8458,10 @@
   {
     "s": "По умолчанию оверлей сам скрывается, когда запущена игра с античитом (Vanguard, Easy Anti-Cheat, BattlEye, FACEIT и др.): античиты видят окна поверх игры.",
     "t": "By default the overlay hides itself when a game with anti-cheat starts (Vanguard, Easy Anti-Cheat, BattlEye, FACEIT, etc.): anti-cheat systems see windows on top of the game."
+  },
+  {
+    "s": "По центру",
+    "t": "Center"
   },
   {
     "s": "Повреждено хранилище компонентов Windows (не хватает сборки). Сначала выполните «Проверить системные файлы» в разделе «Ремонт».",
@@ -7964,6 +8492,14 @@
     "t": "Reloads the catalog from available sources after an error."
   },
   {
+    "s": "Повторно проверит состояние лицензии Windows.",
+    "t": "Rechecks the Windows license status."
+  },
+  {
+    "s": "Повторно проверит состояние лицензии установленного Microsoft Office.",
+    "t": "Rechecks the license status of the installed Microsoft Office."
+  },
+  {
     "s": "Повторно проверит состояние лицензий Windows и установленного Microsoft Office.",
     "t": "Rechecks the license status of Windows and the installed Microsoft Office."
   },
@@ -7982,6 +8518,10 @@
   {
     "s": "Повторно установит это приложение из доступного источника.",
     "t": "Reinstalls this app from an available source."
+  },
+  {
+    "s": "Погода и новости слева на панели. В новых сборках Windows эту настройку разрешает менять только окно «Параметры» — тогда откроем его.",
+    "t": "Weather and news on the left of the taskbar. In newer Windows builds only the Settings app may change this — in that case we'll open it."
   },
   {
     "s": "Подготовка ODT: {0}",
@@ -8032,6 +8572,10 @@
     "t": "Moves the selected source up in the order of install attempts."
   },
   {
+    "s": "Подписи, «интересные факты» и реклама поверх картинки экрана блокировки.",
+    "t": "Captions, “fun facts” and ads over the lock screen picture."
+  },
+  {
     "s": "Подпись Authenticode лаунчера: {0}",
     "t": "Launcher Authenticode signature: {0}"
   },
@@ -8078,6 +8622,14 @@
   {
     "s": "Подсказки Windows. Назойливые всплывающие советы.",
     "t": "Windows tips. Intrusive pop-up hints."
+  },
+  {
+    "s": "Подсказки и «популярное» из интернета в окне поиска. Отключается той же политикой, что у администраторов Windows.",
+    "t": "Suggestions and “trending” items from the internet in the search box. Turned off with the same policy Windows administrators use."
+  },
+  {
+    "s": "Подсказки, рекомендуемые приложения и предложения Microsoft в разделе «Рекомендуем».",
+    "t": "Tips, recommended apps and Microsoft offers in the “Recommended” section."
   },
   {
     "s": "Подсчёт завершён. Отметьте, что удалить, и нажмите «Очистить выбранное».",
@@ -8132,12 +8684,28 @@
     "t": "Later"
   },
   {
+    "s": "Поиск",
+    "t": "Search"
+  },
+  {
     "s": "Поиск Windows перестаёт искать в интернете через Bing и показывать веб-подсказки — только файлы и программы на ПК. Это политика: заодно пропадают подсказки недавних запросов в поиске Проводника.",
     "t": "Windows Search stops searching the web via Bing and showing web suggestions — only files and apps on the PC. This is a policy: it also removes recent search suggestions in File Explorer search."
   },
   {
     "s": "Поиск в Chocolatey превысил {0}с",
     "t": "Chocolatey search exceeded {0}s"
+  },
+  {
+    "s": "Поиск в интернете из Пуска",
+    "t": "Web search from Start"
+  },
+  {
+    "s": "Поиск значком, без виджетов и кнопки представления задач.",
+    "t": "Search as an icon, no widgets or Task view button."
+  },
+  {
+    "s": "Поиск значком, без виджетов, Copilot, чата и кнопки представления задач.",
+    "t": "Search as an icon, no widgets, Copilot, chat or Task View button."
   },
   {
     "s": "Поиск клиента на диске",
@@ -8216,8 +8784,24 @@
     "t": "Shows the activation status of Windows and Office. Ven4Tools does not activate software: use your own key or a digital license to activate."
   },
   {
+    "s": "Показывать",
+    "t": "Show"
+  },
+  {
     "s": "Показывать Венчика в оверлее: жарко, нормально или холодно — по температурам",
     "t": "Show Venchik in the overlay: hot, fine or cold — by temperatures"
+  },
+  {
+    "s": "Показывать в Пуске и списках переходов недавно открытые файлы.",
+    "t": "Show recently opened files in Start and jump lists."
+  },
+  {
+    "s": "Показывать все",
+    "t": "Show all"
+  },
+  {
+    "s": "Показывать все значки у часов, а не прятать часть под стрелку «^».",
+    "t": "Show all icons next to the clock instead of hiding some under the “^” arrow."
   },
   {
     "s": "Показывать оверлей в играх с античитом (на свой риск)",
@@ -8230,6 +8814,14 @@
   {
     "s": "Показывать это обновление снова",
     "t": "Show this update again"
+  },
+  {
+    "s": "Поле поиска",
+    "t": "Search box"
+  },
+  {
+    "s": "Поле поиска на панели занимает много места; можно оставить только значок.",
+    "t": "The search box takes up a lot of taskbar space; you can keep just the icon."
   },
   {
     "s": "Политика «Отключить Windows Copilot» и скрытие кнопки Copilot на панели задач. На новых сборках Copilot — отдельное приложение: его убирает пункт ниже. Действует после перезапуска Проводника.",
@@ -8272,8 +8864,24 @@
     "t": "Full-featured 3D suite: modeling, animation, rendering."
   },
   {
+    "s": "Полночь",
+    "t": "Midnight"
+  },
+  {
+    "s": "Полноэкранный рассказ о новинках Windows после крупного обновления.",
+    "t": "A full-screen tour of what's new after a major Windows update."
+  },
+  {
     "s": "Полный",
     "t": "Full"
+  },
+  {
+    "s": "Положение значков",
+    "t": "Icon alignment"
+  },
+  {
+    "s": "Положение панели задач",
+    "t": "Taskbar position"
   },
   {
     "s": "Положит в корень флешки файл, по которому установка Windows сама создаст локальную учётную запись и после первого входа запустит этот набор.",
@@ -8282,6 +8890,10 @@
   {
     "s": "Положит в папку кэша копию клиента, файл ответа и файл запуска: программы из кэша можно будет поставить на другом компьютере без интернета.",
     "t": "Puts a copy of the client, an answer file and a launch file into the cache folder: apps from the cache can then be installed on another computer without internet."
+  },
+  {
+    "s": "Полупрозрачные панель задач и Пуск. Без прозрачности слабым видеокартам чуть легче.",
+    "t": "Translucent taskbar and Start. Without transparency, weak graphics cards have it a bit easier."
   },
   {
     "s": "Получаю список источников…",
@@ -8330,6 +8942,10 @@
   {
     "s": "Популярный российский аудиоплеер: плейлисты, эквалайзер, интернет-радио.",
     "t": "Popular Russian audio player: playlists, equalizer, internet radio."
+  },
+  {
+    "s": "Поровну",
+    "t": "Balanced"
   },
   {
     "s": "Порядок важен: сначала преобразуйте системный диск в GPT (пункт ниже), и только потом в BIOS/UEFI выключите CSM/Legacy и включите UEFI. Если переключить режим раньше, Windows перестанет загружаться.",
@@ -8604,8 +9220,16 @@
     "t": "Why won't updates install? → Diagnostics"
   },
   {
+    "s": "Почта",
+    "t": "Mail"
+  },
+  {
     "s": "Права администратора",
     "t": "Administrator rights"
+  },
+  {
+    "s": "Правый щелчок по зависшей программе на панели — пункт «Завершить задачу», без диспетчера задач.",
+    "t": "Right-click a frozen program on the taskbar — an “End task” item, no Task Manager needed."
   },
   {
     "s": "Превышено время ожидания ответа winget при поиске по тегу.",
@@ -8616,7 +9240,19 @@
     "t": "winget search timed out."
   },
   {
+    "s": "Предлагать",
+    "t": "Suggest"
+  },
+  {
+    "s": "Предложения в «Параметрах»",
+    "t": "Suggestions in Settings"
+  },
+  {
     "s": "Предложения приложений в «Пуске»",
+    "t": "App suggestions in Start"
+  },
+  {
+    "s": "Предложения программ в Пуске",
     "t": "App suggestions in Start"
   },
   {
@@ -8642,6 +9278,10 @@
   {
     "s": "Пресеты",
     "t": "Presets"
+  },
+  {
+    "s": "При заполнении",
+    "t": "When full"
   },
   {
     "s": "Приложение Claude от Anthropic: чат с ИИ, работа с файлами и подключение инструментов.",
@@ -8688,8 +9328,20 @@
     "t": "Reapply"
   },
   {
+    "s": "Применить эти настройки",
+    "t": "Apply these settings"
+  },
+  {
     "s": "Применяет все пункты, которые ещё не применены. Прежние настройки запоминаются для отката.",
     "t": "Applies every item that isn't applied yet. Previous settings are saved so they can be restored."
+  },
+  {
+    "s": "Применяет выбранные значения. Прежние настройки запоминаются для отката.",
+    "t": "Applies the chosen values. The previous settings are saved for rollback."
+  },
+  {
+    "s": "Применяет выбранные тему, набор, ушки и положение панели. Прежние настройки запоминаются для отката.",
+    "t": "Applies the selected theme, preset, ears and taskbar position. Previous settings are saved so you can restore them."
   },
   {
     "s": "Применялся, но сейчас не действует",
@@ -9024,6 +9676,10 @@
     "t": "Checking…"
   },
   {
+    "s": "Проводник",
+    "t": "File Explorer"
+  },
+  {
     "s": "Проводник перезапустить не удалось. Изменения подействуют после выхода из учётной записи или перезагрузки.",
     "t": "Could not restart File Explorer. The changes will take effect after you sign out or restart."
   },
@@ -9062,6 +9718,10 @@
   {
     "s": "Продолжить",
     "t": "Continue"
+  },
+  {
+    "s": "Прозрачность",
+    "t": "Transparency"
   },
   {
     "s": "Произошла непредвиденная ошибка, приложение будет закрыто.\n\n{0}",
@@ -9184,8 +9844,36 @@
     "t": "Direct link unavailable: {0}"
   },
   {
+    "s": "Прятать",
+    "t": "Hide"
+  },
+  {
+    "s": "Прятать лишние",
+    "t": "Hide extra"
+  },
+  {
     "s": "Публикация:",
     "t": "Publication:"
+  },
+  {
+    "s": "Пуск",
+    "t": "Start"
+  },
+  {
+    "s": "Пуск без лишнего",
+    "t": "Clean Start"
+  },
+  {
+    "s": "Пуск запоминает, что запускается чаще, и выводит это наверх.",
+    "t": "Start remembers what you launch most often and puts it at the top."
+  },
+  {
+    "s": "Пуск ищет не только на компьютере, но и в Bing и открывает результаты в Edge. Можно оставить только поиск по компьютеру.",
+    "t": "Start searches not only your PC but also Bing, opening results in Edge. You can keep it to your PC only."
+  },
+  {
+    "s": "Пуск, поиск, экран блокировки и «Параметры» без рекламы, советов и подсказок Bing.",
+    "t": "Start, search, the lock screen and Settings without ads, tips or Bing suggestions."
   },
   {
     "s": "Путь задачи неизвестен.",
@@ -9256,6 +9944,10 @@
     "t": "Only the administrator of this computer can allow it to start."
   },
   {
+    "s": "Раскладка Пуска",
+    "t": "Start layout"
+  },
+  {
     "s": "Раскрывает разделы Windows: обновления, Office, лицензия и очистка.",
     "t": "Expands the Windows sections: updates, Office, license, and cleanup."
   },
@@ -9324,6 +10016,10 @@
     "t": "Turbo Boost mode"
   },
   {
+    "s": "Режим Windows",
+    "t": "Windows mode"
+  },
+  {
     "s": "Режим {0}",
     "t": "Mode {0}"
   },
@@ -9352,12 +10048,20 @@
     "t": "Results"
   },
   {
+    "s": "Результаты появятся после диагностики",
+    "t": "Results will appear after diagnostics"
+  },
+  {
     "s": "Реклама Microsoft 365 и учётной записи",
     "t": "Microsoft 365 and account ads"
   },
   {
     "s": "Реклама OneDrive в Проводнике",
     "t": "OneDrive ads in File Explorer"
+  },
+  {
+    "s": "Реклама и подсказки",
+    "t": "Ads and suggestions"
   },
   {
     "s": "Реклама и предложения в «Пуске», поиске, Проводнике и на экране блокировки, виджеты, Copilot, Recall, OneDrive.",
@@ -9370,6 +10074,10 @@
   {
     "s": "Реклама подписки Office 365.",
     "t": "Office 365 subscription ad."
+  },
+  {
+    "s": "Реклама программ из Microsoft Store среди значков Пуска.",
+    "t": "Microsoft Store app ads among the Start icons."
   },
   {
     "s": "Рекламный идентификатор",
@@ -9386,6 +10094,10 @@
   {
     "s": "Рекомендуемое место — %LOCALAPPDATA%\\Programs\\Ven4Tools: вне OneDrive и вне папок, защищённых Защитником Windows. Перенос копирует клиент, сверяет копию с оригиналом и только после этого удаляет старую папку. Настройки и данные не затрагиваются.",
     "t": "Recommended location — %LOCALAPPDATA%\\Programs\\Ven4Tools: outside OneDrive and outside folders protected by Microsoft Defender. Moving copies the client, verifies the copy against the original and only then deletes the old folder. Settings and data are not affected."
+  },
+  {
+    "s": "Рекомендуемое содержимое и предложения в окне «Параметры».",
+    "t": "Recommended content and suggestions in the Settings app."
   },
   {
     "s": "Релиз от {0}",
@@ -9424,6 +10136,10 @@
     "t": "Русский"
   },
   {
+    "s": "Русский (ru-ru)",
+    "t": "Russian (ru-ru)"
+  },
+  {
     "s": "Русский встроен в программу. Английский — отдельный языковой пакет: он скачивается при выборе и включается после перезапуска. Тот же выбор действует и для лаунчера.",
     "t": "Russian is built into the app. English is a separate language pack: it is downloaded when you select it and applied after a restart. The same choice applies to the launcher."
   },
@@ -9436,8 +10152,16 @@
     "t": "Manual proxy is temporarily disabled by the developer (signed update manifest) — the system proxy is in use now."
   },
   {
+    "s": "Рыжий кот",
+    "t": "Ginger Cat"
+  },
+  {
     "s": "Рядом с цифрами сидит Венчик: вытирает пот, когда процессор или видеокарта сильно греются, показывает лайк при нормальной температуре и мёрзнет в шарфе, когда компьютер почти без нагрузки.",
     "t": "Venchik sits next to the numbers: he wipes sweat when the CPU or graphics card gets very hot, gives a thumbs up at normal temperatures and shivers in a scarf when the computer is almost idle."
+  },
+  {
+    "s": "С секундами",
+    "t": "With seconds"
   },
   {
     "s": "СЕРВИС",
@@ -9516,6 +10240,10 @@
     "t": "Compares the installed client's files with the signed list of the published version. Does not touch settings or check the environment (antivirus, missing components)."
   },
   {
+    "s": "Сверху",
+    "t": "Top"
+  },
+  {
     "s": "Сверьтесь со списком Microsoft вручную (кнопка «Списки процессоров Microsoft»).",
     "t": "Compare with Microsoft's list manually (the “Microsoft processor lists” button)."
   },
@@ -9536,12 +10264,28 @@
     "t": "Light"
   },
   {
+    "s": "Светлые или тёмные панель задач, Пуск и центр уведомлений.",
+    "t": "Light or dark taskbar, Start and notification center."
+  },
+  {
+    "s": "Светлый",
+    "t": "Light"
+  },
+  {
     "s": "Свободно на {0}: {1}",
     "t": "Free on {0}: {1}"
   },
   {
     "s": "Свободное место: нет данных",
     "t": "Free space: no data"
+  },
+  {
+    "s": "Свой цвет",
+    "t": "Custom color"
+  },
+  {
+    "s": "Свой цвет…",
+    "t": "Custom color…"
   },
   {
     "s": "Сворачивать в трей при закрытии",
@@ -9586,6 +10330,10 @@
   {
     "s": "Сейчас: системный — как настроено в Windows. Ручной прокси временно отключён разработчиком.",
     "t": "Current: system — as configured in Windows. Manual proxy is temporarily disabled by the developer."
+  },
+  {
+    "s": "Секунды в часах",
+    "t": "Seconds in clock"
   },
   {
     "s": "Сервер вернул {0}: {1}",
@@ -9740,6 +10488,10 @@
     "t": "Downloading Windows updates"
   },
   {
+    "s": "Сколько места отдать закреплённым значкам, а сколько — рекомендациям.",
+    "t": "How much space goes to pinned icons and how much to recommendations."
+  },
+  {
     "s": "Сколько приложений показывать в каталоге:",
     "t": "How many apps to show in the catalog:"
   },
@@ -9820,6 +10572,10 @@
     "t": "No hidden apps."
   },
   {
+    "s": "Скрыть",
+    "t": "Hide"
+  },
+  {
     "s": "Скрыть QR-код",
     "t": "Hide QR code"
   },
@@ -9834,6 +10590,10 @@
   {
     "s": "Скрыть обновления",
     "t": "Hide updates"
+  },
+  {
+    "s": "Слева",
+    "t": "Left"
   },
   {
     "s": "Слежение за вводом",
@@ -9908,6 +10668,10 @@
     "t": "First download the apps you need to the cache (the cache folder can be right on a USB drive), then make the kit portable."
   },
   {
+    "s": "Снизу",
+    "t": "Bottom"
+  },
+  {
     "s": "Снимет все отметки. Установленные программы и пресеты не затрагиваются.",
     "t": "Clears all selections. Installed apps and presets are not affected."
   },
@@ -9968,6 +10732,14 @@
     "t": "Tips and suggestions"
   },
   {
+    "s": "Советы и реклама в Пуске",
+    "t": "Tips and ads in Start"
+  },
+  {
+    "s": "Советы при работе с Windows",
+    "t": "Tips while using Windows"
+  },
+  {
     "s": "Совместимый с MS Office редактор с облачной интеграцией.",
     "t": "MS Office-compatible editor with cloud integration."
   },
@@ -10018,6 +10790,10 @@
   {
     "s": "Создаст снапшот текущих настроек и выбранных данных под указанным именем.",
     "t": "Creates a snapshot of the current settings and selected data under the given name."
+  },
+  {
+    "s": "Сообщить о проблеме",
+    "t": "Report a problem"
   },
   {
     "s": "Сортировка: по версии",
@@ -10184,6 +10960,10 @@
     "t": "Method: {0}"
   },
   {
+    "s": "Справа",
+    "t": "Right"
+  },
+  {
     "s": "Спросит у DISM, включён ли компонент. Ничего не меняет.",
     "t": "Asks DISM whether the feature is enabled. Changes nothing."
   },
@@ -10206,6 +10986,10 @@
   {
     "s": "Ссылка должна начинаться с https:// (незашифрованный http:// не поддерживается — установщик по нему нечем защитить от подмены)",
     "t": "The link must start with https:// (unencrypted http:// is not supported — an installer sent over it cannot be protected from tampering)"
+  },
+  {
+    "s": "Ссылки",
+    "t": "Links"
   },
   {
     "s": "Ставить приложения без окна установщика (только источник winget)",
@@ -10234,6 +11018,10 @@
   {
     "s": "Сторонних записей: {0}, из них включено: {1}. {2}",
     "t": "Third-party entries: {0}, enabled: {1}. {2}"
+  },
+  {
+    "s": "Сторонних программ в автозагрузке нет",
+    "t": "No third-party apps in startup"
   },
   {
     "s": "Страница релиза",
@@ -10322,6 +11110,14 @@
   {
     "s": "Тема",
     "t": "Theme"
+  },
+  {
+    "s": "Тема панели",
+    "t": "Taskbar theme"
+  },
+  {
+    "s": "Тема панели: «{0}» ещё держит другой раздел — значение оставлено как есть",
+    "t": "Taskbar theme: “{0}” is still held by another section — the value was left as is"
   },
   {
     "s": "Тематические подсказки в поиске",
@@ -10416,8 +11212,24 @@
     "t": "Media type:     {0}"
   },
   {
+    "s": "Только значок",
+    "t": "Icon only"
+  },
+  {
+    "s": "Только компьютер",
+    "t": "PC only"
+  },
+  {
+    "s": "Только на главном",
+    "t": "Main display only"
+  },
+  {
     "s": "Только с обновлениями",
     "t": "With updates only"
+  },
+  {
+    "s": "Только там, где окно",
+    "t": "Only where the window is"
   },
   {
     "s": "Только уведомлять",
@@ -10438,6 +11250,14 @@
   {
     "s": "Том зашифрован BitLocker — шифрование забирает часть производительности, результат будет ниже возможностей накопителя.",
     "t": "The volume is encrypted with BitLocker — encryption costs some performance, so the result will be below what the drive can do."
+  },
+  {
+    "s": "Тонкая настройка",
+    "t": "Fine-tuning"
+  },
+  {
+    "s": "Тонкая настройка · {0} пунктов",
+    "t": "Fine-tuning · {0} settings"
   },
   {
     "s": "Точка восстановления",
@@ -10473,6 +11293,22 @@
   },
   {
     "s": "Тёмная",
+    "t": "Dark"
+  },
+  {
+    "s": "Тёмная с акцентом",
+    "t": "Dark with accent"
+  },
+  {
+    "s": "Тёмные панель и Пуск в цвете темы — всегда читаются.",
+    "t": "Dark taskbar and Start in the theme color — always readable."
+  },
+  {
+    "s": "Тёмные панель и Пуск, окрашенные в цвет акцента.",
+    "t": "Dark taskbar and Start in the accent color."
+  },
+  {
+    "s": "Тёмный",
     "t": "Dark"
   },
   {
@@ -10530,6 +11366,10 @@
   {
     "s": "Уведомлять и скачивать в фоне",
     "t": "Notify and download in background"
+  },
+  {
+    "s": "Угол «Показать рабочий стол»",
+    "t": "“Show desktop” corner"
   },
   {
     "s": "Удаление Office",
@@ -10670,6 +11510,10 @@
   {
     "s": "Уже установлено — пропущено",
     "t": "Already installed — skipped"
+  },
+  {
+    "s": "Узкая панель задач с маленькими значками.",
+    "t": "A narrow taskbar with small icons."
   },
   {
     "s": "Укажите имя учётной записи.",
@@ -11024,6 +11868,10 @@
     "t": "3D printing utility."
   },
   {
+    "s": "Ушки Венчика над «Пуском»",
+    "t": "Venchik's ears above Start"
+  },
+  {
     "s": "Файл дампа:",
     "t": "Dump file:"
   },
@@ -11080,12 +11928,36 @@
     "t": "The Windows answer file creates an account without a password. Confirm that you understand this, or clear the “Windows answer file” checkbox."
   },
   {
+    "s": "Файл отката панели задач сейчас не читается — изменения не применены, чтобы не потерять прежнее состояние.",
+    "t": "The taskbar revert file cannot be read right now — changes were not applied to avoid losing the previous state."
+  },
+  {
+    "s": "Файл отката панели задач сейчас не читается — повторите позже.",
+    "t": "The taskbar revert file cannot be read right now — try again later."
+  },
+  {
+    "s": "Файл отката персонализации сейчас не читается — оформление не применено, чтобы не потерять прежнее состояние.",
+    "t": "The personalization revert file cannot be read right now — the look was not applied to avoid losing the previous state."
+  },
+  {
+    "s": "Файл отката повреждён и сохранён как {0} — сначала проверьте его или удалите, чтобы начать заново",
+    "t": "The revert file is corrupted and was saved as {0} — check it first or delete it to start over"
+  },
+  {
     "s": "Файл повреждён или не является архивом настроек Ven4Tools.",
     "t": "The file is corrupted or is not a Ven4Tools settings archive."
   },
   {
     "s": "Файл подменён ссылкой, запись отменена: {0}",
     "t": "The file was replaced with a link, write canceled: {0}"
+  },
+  {
+    "s": "Файл состояния темы панели сейчас не читается — изменения не применены, чтобы не потерять прежнее состояние.",
+    "t": "The taskbar theme state file cannot be read right now — changes were not applied to avoid losing the previous state."
+  },
+  {
+    "s": "Файл состояния темы панели сейчас не читается — повторите позже.",
+    "t": "The taskbar theme state file cannot be read right now — try again later."
   },
   {
     "s": "Файл частичной загрузки изменился — докачка невозможна.",
@@ -11124,6 +11996,10 @@
     "t": "Files moved to the Recycle Bin on drive C."
   },
   {
+    "s": "Факты и советы на экране блокировки",
+    "t": "Facts and tips on the lock screen"
+  },
+  {
     "s": "Фоновая проверка выключена",
     "t": "Background check is off"
   },
@@ -11146,6 +12022,10 @@
   {
     "s": "Фоновая проверка обновлений Windows раз в 6 часов. Установка ни в одном из режимов автоматически не запускается.",
     "t": "Windows updates are checked in the background every 6 hours. Installation never starts automatically in either mode."
+  },
+  {
+    "s": "Французский (fr-fr)",
+    "t": "French (fr-fr)"
   },
   {
     "s": "Хеш установщика не совпал с ожидаемым — повреждённая загрузка или изменённый пакет.",
@@ -11184,6 +12064,26 @@
     "t": "Component store (WinSxS)"
   },
   {
+    "s": "Цвет",
+    "t": "Color"
+  },
+  {
+    "s": "Цвет акцента",
+    "t": "Accent color"
+  },
+  {
+    "s": "Цвет акцента на панели и в Пуске",
+    "t": "Accent color on taskbar and Start"
+  },
+  {
+    "s": "Цвета темы:",
+    "t": "Theme colors:"
+  },
+  {
+    "s": "Цветовая тема",
+    "t": "Color theme"
+  },
+  {
     "s": "Целостность нарушена",
     "t": "Integrity compromised"
   },
@@ -11220,6 +12120,10 @@
     "t": "Parts of updates that Windows keeps to share them with other computers."
   },
   {
+    "s": "Часто используемые программы",
+    "t": "Most used apps"
+  },
+  {
     "s": "Частота",
     "t": "Clock"
   },
@@ -11236,12 +12140,20 @@
     "t": "Some changes will take effect after File Explorer restarts.\n\nRestart File Explorer now? The taskbar and open folder windows will disappear for a few seconds; running apps will not close."
   },
   {
+    "s": "Часть настроек появится после перезапуска проводника. Открытые окна папок закроются. Перезапустить сейчас?",
+    "t": "Some settings will take effect after File Explorer restarts. Open folder windows will close. Restart now?"
+  },
+  {
     "s": "Часы ПК: {0}",
     "t": "PC clock: {0}"
   },
   {
     "s": "Часы компьютера {0} на {1} Из-за неверного времени не проходят защищённые соединения (сертификаты кажутся просроченными или ещё не действующими). Включите «Установить время автоматически» в параметрах Windows.",
     "t": "The computer clock is {0} by {1} Because of the wrong time, secure connections fail (certificates look expired or not yet valid). Turn on “Set time automatically” in Windows settings."
+  },
+  {
+    "s": "Часы на панели показывают секунды. Немного чаще будит процессор — на ноутбуке от батареи лучше без них.",
+    "t": "The taskbar clock shows seconds. Wakes the CPU a bit more often — on a laptop on battery, better without them."
   },
   {
     "s": "Через Центр обновления не получилось — попробуйте установочную флешку или ISO.",
@@ -11254,6 +12166,18 @@
   {
     "s": "Через прокси ни один источник не открылся, а напрямую — открылся: прокси, похоже, неисправен. Проверьте «Настройки → Прокси».",
     "t": "No source opened through the proxy, but they open directly: the proxy seems to be broken. Check “Settings → Proxy”."
+  },
+  {
+    "s": "Чистая панель",
+    "t": "Clean taskbar"
+  },
+  {
+    "s": "Читаемость подписей {0:0.0}:1",
+    "t": "Label readability {0:0.0}:1"
+  },
+  {
+    "s": "Читаемость подписей: {0:0.0}:1 · {1}",
+    "t": "Label readability: {0:0.0}:1 · {1}"
   },
   {
     "s": "Читаю автозагрузку: реестр, папки, планировщик заданий…",
@@ -11312,12 +12236,24 @@
     "t": "Built-in Windows test. Runs on restart, before the system loads; the result will appear here."
   },
   {
+    "s": "Щелчок в самый правый угол панели сворачивает все окна.",
+    "t": "Click the far-right corner of the taskbar to minimize all windows."
+  },
+  {
+    "s": "Экран «Добро пожаловать» после обновлений",
+    "t": "“Welcome” screen after updates"
+  },
+  {
     "s": "Экран блокировки",
     "t": "Lock screen"
   },
   {
     "s": "Экран приветствия после обновлений",
     "t": "Welcome screen after updates"
+  },
+  {
+    "s": "Экран с предложениями служб Microsoft, который Windows показывает после обновлений и при входе.",
+    "t": "A screen offering Microsoft services that Windows shows after updates and at sign-in."
   },
   {
     "s": "Экспорт",
@@ -11436,12 +12372,20 @@
     "t": "Yandex Music"
   },
   {
+    "s": "Японский (ja-jp)",
+    "t": "Japanese (ja-jp)"
+  },
+  {
     "s": "в каталоге нет пакета",
     "t": "no package in the catalog"
   },
   {
     "s": "в каталоге нет ссылки",
     "t": "no link in the catalog"
+  },
+  {
+    "s": "в манифесте нет номера выпуска (manifest_seq), а уже принят номер {0} — это повтор старого манифеста",
+    "t": "the manifest has no release number (manifest_seq), but number {0} was already accepted — this is a replay of an old manifest"
   },
   {
     "s": "в новой папке уже есть файлы",
@@ -11572,8 +12516,16 @@
     "t": "Storage Spaces"
   },
   {
+    "s": "для всех",
+    "t": "all users"
+  },
+  {
     "s": "для всех пользователей",
     "t": "for all users"
+  },
+  {
+    "s": "для пользователя",
+    "t": "per user"
   },
   {
     "s": "для установленной версии {0} не опубликован файловый манифест",
@@ -11722,6 +12674,10 @@
   {
     "s": "манифест CDN недоступен",
     "t": "CDN manifest unavailable"
+  },
+  {
+    "s": "манифест CDN отклонён: {0}",
+    "t": "CDN manifest rejected: {0}"
   },
   {
     "s": "манифест не получен ({0})",
@@ -11964,12 +12920,20 @@
     "t": "the new file could not be written to the launcher folder"
   },
   {
+    "s": "номер выпуска манифеста {0} меньше уже принятого {1} — это повтор старого манифеста",
+    "t": "manifest release number {0} is lower than the already accepted {1} — this is a replay of an old manifest"
+  },
+  {
     "s": "нужен драйвер датчиков",
     "t": "sensor driver needed"
   },
   {
     "s": "об/мин",
     "t": "RPM"
+  },
+  {
+    "s": "облачно",
+    "t": "cloudy"
   },
   {
     "s": "обновление",
@@ -12024,6 +12988,10 @@
     "t": "disabled (paranoid mode)"
   },
   {
+    "s": "отлично",
+    "t": "excellent"
+  },
+  {
     "s": "отстают",
     "t": "behind"
   },
@@ -12070,6 +13038,14 @@
   {
     "s": "перестал передавать данные",
     "t": "stopped sending data"
+  },
+  {
+    "s": "плохо",
+    "t": "poor"
+  },
+  {
+    "s": "по прямому IP {0} манифест отклонён: {1}",
+    "t": "manifest via direct IP {0} rejected: {1}"
   },
   {
     "s": "по прямому IP {0} подпись манифеста не подтверждена",
@@ -12396,6 +13372,10 @@
     "t": "the hash of the installed exe is not published"
   },
   {
+    "s": "хорошо",
+    "t": "good"
+  },
+  {
     "s": "целостность подтверждена, проверено файлов: {0}",
     "t": "integrity confirmed, files checked: {0}"
   },
@@ -12434,6 +13414,14 @@
   {
     "s": "ядро {0} · память {1}",
     "t": "core {0} · memory {1}"
+  },
+  {
+    "s": "— не отложен",
+    "t": "— not moved aside"
+  },
+  {
+    "s": "— не отложены",
+    "t": "— not moved aside"
   },
   {
     "s": "• Firefox, Chrome, Яндекс.Браузер",
@@ -12630,6 +13618,10 @@
   {
     "s": "ℹ️ На процессорах, которые сами управляют частотой (у Intel — Speed Shift, Core 6-го поколения и новее), режимы «Включён» и «Агрессивный» по документации Microsoft работают одинаково: заметная разница — только между «Отключён» и остальными.",
     "t": "ℹ️ On processors that manage their own frequency (Intel Speed Shift, 6th-generation Core and newer), the “Enabled” and “Aggressive” modes work the same according to Microsoft documentation: the noticeable difference is only between “Disabled” and the rest."
+  },
+  {
+    "s": "ℹ️ Перенос клиента доделан, старая папка оставлена из-за посторонних файлов",
+    "t": "ℹ️ Client move completed, the old folder was kept because it contains other files"
   },
   {
     "s": "ℹ️ Проверка папки клиента не выполнена: {0}",
@@ -13248,8 +14240,24 @@
     "t": "⚠️ {0} uninstalled, {1} not installed — the installation did not finish. The installer is kept; the “Install” button is available."
   },
   {
+    "s": "⚠️ {0}: отложенный файл отката не переименован — {1}",
+    "t": "⚠️ {0}: the set-aside revert file was not renamed — {1}"
+  },
+  {
     "s": "⚠️ {0}: офлайн режим, установщик не кэширован",
     "t": "⚠️ {0}: offline mode, installer not cached"
+  },
+  {
+    "s": "⚠️ {0}: файл отката испорчен ({1}) и отложен как {2}",
+    "t": "⚠️ {0}: revert file is corrupted ({1}) and was moved aside as {2}"
+  },
+  {
+    "s": "⚠️ {0}: файл отката не прочитан — {1}",
+    "t": "⚠️ {0}: revert file not read — {1}"
+  },
+  {
+    "s": "⚠️ {0}: файл отката не читается — «{1}» не применён, чтобы не потерять прежнее состояние.",
+    "t": "⚠️ {0}: revert file cannot be read — “{1}” was not applied to avoid losing the previous state."
   },
   {
     "s": "⚠️ Автообновление: версия {0} не найдена в свежем списке — пропуск",
@@ -13276,6 +14284,10 @@
     "t": "⚠️ The signed CDN manifest has no usable client info (version, link, SHA256) — version list unavailable"
   },
   {
+    "s": "⚠️ Витрина панели: обои не прочитаны — {0}",
+    "t": "⚠️ Taskbar preview: wallpaper not read — {0}"
+  },
+  {
     "s": "⚠️ Восстановление Office CC: {0}",
     "t": "⚠️ Office CC restore: {0}"
   },
@@ -13292,8 +14304,20 @@
     "t": "⚠️ Repair canceled: the folder now has version {0}, but the report was made for {1} — run the check again"
   },
   {
+    "s": "⚠️ Восстановление региона Office (CountryCode): {0}",
+    "t": "⚠️ Restoring the Office region (CountryCode): {0}"
+  },
+  {
+    "s": "⚠️ Восстановление региона Windows (Geo): {0}",
+    "t": "⚠️ Restoring the Windows region (Geo): {0}"
+  },
+  {
     "s": "⚠️ Восстановление региона из маркера: {0}",
     "t": "⚠️ Restoring the region from the marker: {0}"
+  },
+  {
+    "s": "⚠️ Временная копия установщика не удалена: {0} — {1}",
+    "t": "⚠️ Temporary installer copy not deleted: {0} — {1}"
   },
   {
     "s": "⚠️ Выбранная папка установки может мешать работе клиента: {0}\n{1}",
@@ -13330,6 +14354,10 @@
   {
     "s": "⚠️ Не обнаружена",
     "t": "⚠️ Not detected"
+  },
+  {
+    "s": "⚠️ Не открылись параметры панели задач — {0}",
+    "t": "⚠️ Could not open taskbar settings — {0}"
   },
   {
     "s": "⚠️ Не подействовали повторно: {0}. Возможно, эта версия Windows больше не даёт их отключить.",
@@ -13408,6 +14436,10 @@
     "t": "⚠️ Shortcut update interrupted: {0}"
   },
   {
+    "s": "⚠️ Очистка: {0}",
+    "t": "⚠️ Cleanup: {0}"
+  },
+  {
     "s": "⚠️ Ошибка",
     "t": "⚠️ Error"
   },
@@ -13428,12 +14460,40 @@
     "t": "⚠️ Failed to create the tray icon: {0}"
   },
   {
+    "s": "⚠️ Панель задач: Windows не дала изменить «{0}» — {1}",
+    "t": "⚠️ Taskbar: Windows did not allow changing “{0}” — {1}"
+  },
+  {
+    "s": "⚠️ Панель задач: {0}",
+    "t": "⚠️ Taskbar: {0}"
+  },
+  {
+    "s": "⚠️ Панель задач: не вернулось «{0}» — {1}",
+    "t": "⚠️ Taskbar: “{0}” was not restored — {1}"
+  },
+  {
+    "s": "⚠️ Панель задач: оригинал «{0}» в учёте владения не разобран — {1}",
+    "t": "⚠️ Taskbar: original of “{0}” in the ownership ledger could not be parsed — {1}"
+  },
+  {
+    "s": "⚠️ Панель задач: файл отката не прочитан — {0}",
+    "t": "⚠️ Taskbar: rollback file not read — {0}"
+  },
+  {
     "s": "⚠️ Папка клиента может мешать установке обновлений:\n{0}\n   Перенести клиент в безопасную папку: Настройки → «Перенести клиент».",
     "t": "⚠️ The client folder may interfere with installing updates:\n{0}\n   Move the client to a safe folder: Settings → “Move client”."
   },
   {
     "s": "⚠️ Персонализация: Windows не приняла «{0}» (код {1})",
     "t": "⚠️ Personalization: Windows did not accept \"{0}\" (code {1})"
+  },
+  {
+    "s": "⚠️ Персонализация: {0}",
+    "t": "⚠️ Personalization: {0}"
+  },
+  {
+    "s": "⚠️ Персонализация: в файле отката чужая запись «{0}\\{1}» — пропущена",
+    "t": "⚠️ Personalization: unexpected entry “{0}\\{1}” in the revert file — skipped"
   },
   {
     "s": "⚠️ Персонализация: не открыта картинка — {0}",
@@ -13476,8 +14536,16 @@
     "t": "⚠️ Integrity check did not run: {0}"
   },
   {
+    "s": "⚠️ Проводник не закрылся — {0}",
+    "t": "⚠️ File Explorer did not close — {0}"
+  },
+  {
     "s": "⚠️ Процесс установки не обнаружен — возможно Office уже установлен или завершился мгновенно",
     "t": "⚠️ Installer process not detected — Office may already be installed, or the installer exited instantly"
+  },
+  {
+    "s": "⚠️ Регион после установки Office вернулся не полностью — повторю при следующем запуске",
+    "t": "⚠️ The region was not fully restored after the Office installation — will retry on next start"
   },
   {
     "s": "⚠️ Сохранение маркера региона: {0}",
@@ -13496,6 +14564,10 @@
     "t": "⚠️ The old client folder was not deleted (files in use?) — the launcher will try on the next start: {0}"
   },
   {
+    "s": "⚠️ Старая папка клиента не удалена — в ней посторонние файлы, проверьте и уберите её сами: {0}\n{1}",
+    "t": "⚠️ The old client folder was not deleted — it contains other files, check and remove it yourself: {0}\n{1}"
+  },
+  {
     "s": "⚠️ Статус неизвестен",
     "t": "⚠️ Status unknown"
   },
@@ -13506,6 +14578,18 @@
   {
     "s": "⚠️ Таймаут ожидания — продолжаем без подтверждения",
     "t": "⚠️ Wait timed out — continuing without confirmation"
+  },
+  {
+    "s": "⚠️ Тема панели: не вернулось «{0}» — {1}",
+    "t": "⚠️ Taskbar theme: “{0}” not restored — {1}"
+  },
+  {
+    "s": "⚠️ Тема панели: не вернулось положение панели — {0}",
+    "t": "⚠️ Taskbar theme: taskbar position not restored — {0}"
+  },
+  {
+    "s": "⚠️ Тема панели: файл состояния не прочитан — {0}",
+    "t": "⚠️ Taskbar theme: state file not read — {0}"
   },
   {
     "s": "⚠️ Тихая установка не начата: уже идёт другая установка",
@@ -13526,6 +14610,42 @@
   {
     "s": "⚠️ Установка более старой версии подтверждена пользователем",
     "t": "⚠️ Installation of an older version confirmed by the user"
+  },
+  {
+    "s": "⚠️ Установленная версия клиента {0} отозвана — обновите клиент",
+    "t": "⚠️ Installed client version {0} has been revoked — update the client"
+  },
+  {
+    "s": "⚠️ Учёт владения реестром испорчен ({0}) и отложен как {1}",
+    "t": "⚠️ Registry ownership ledger is corrupted ({0}) and was moved aside as {1}"
+  },
+  {
+    "s": "⚠️ Учёт владения реестром не прочитан — {0}",
+    "t": "⚠️ Registry ownership ledger not read — {0}"
+  },
+  {
+    "s": "⚠️ Учёт владения реестром не сохранён — {0}",
+    "t": "⚠️ Registry ownership ledger not saved — {0}"
+  },
+  {
+    "s": "⚠️ Ушки Венчика не запустились сейчас — появятся после следующего входа в Windows",
+    "t": "⚠️ Venchik's ears did not start now — they will appear after the next Windows sign-in"
+  },
+  {
+    "s": "⚠️ Ушки Венчика не запустились — {0}",
+    "t": "⚠️ Venchik's ears did not start — {0}"
+  },
+  {
+    "s": "⚠️ Ушки Венчика: не выключились при откате — {0}",
+    "t": "⚠️ Venchik's ears: not turned off on restore — {0}"
+  },
+  {
+    "s": "⚠️ Ушки Венчика: прежняя копия не закрылась за 3 с",
+    "t": "⚠️ Venchik's ears: the previous instance did not close within 3 s"
+  },
+  {
+    "s": "⚠️ Ушки Венчика: сигнал закрытия — {0}",
+    "t": "⚠️ Venchik's ears: close signal — {0}"
   },
   {
     "s": "⚠️ Файл клиента {0} пропал или заблокирован вскоре после записи — проверяю, не антивирус ли это",
@@ -14016,8 +15136,16 @@
     "t": "✓ All Windows 11 requirements are met."
   },
   {
+    "s": "✓ Изменено Ven4Tools — можно вернуть",
+    "t": "✓ Changed by Ven4Tools — can be restored"
+  },
+  {
     "s": "✓ ПК подходит для Windows 11.",
     "t": "✓ This PC is compatible with Windows 11."
+  },
+  {
+    "s": "✓ Применена тема «{0}»",
+    "t": "✓ Theme “{0}” applied"
   },
   {
     "s": "✓ Применено",
@@ -14114,6 +15242,10 @@
   {
     "s": "❌ {0}: локальный установщик без SHA256 — запуск отклонён (fail-closed)",
     "t": "❌ {0}: local installer without SHA256 — launch rejected (fail-closed)"
+  },
+  {
+    "s": "❌ {0}: не удалось подготовить установщик к запуску — {1}",
+    "t": "❌ {0}: could not prepare the installer to run — {1}"
   },
   {
     "s": "❌ {0}: недопустимый ID «{1}» — установка отменена",
@@ -14408,6 +15540,22 @@
     "t": "❌ Error: could not load the catalog"
   },
   {
+    "s": "❌ Панель задач: {0}",
+    "t": "❌ Taskbar: {0}"
+  },
+  {
+    "s": "❌ Панель задач: настройки не прочитаны — {0}",
+    "t": "❌ Taskbar: settings not read — {0}"
+  },
+  {
+    "s": "❌ Панель задач: откат — {0}",
+    "t": "❌ Taskbar: restore — {0}"
+  },
+  {
+    "s": "❌ Перезапуск проводника: {0}",
+    "t": "❌ File Explorer restart: {0}"
+  },
+  {
     "s": "❌ Перенос клиента не выполнен: {0}",
     "t": "❌ Client move failed: {0}"
   },
@@ -14418,6 +15566,10 @@
   {
     "s": "❌ Персонализация: «{0}» — {1}",
     "t": "❌ Personalization: \"{0}\" — {1}"
+  },
+  {
+    "s": "❌ Персонализация: состояние не прочитано — {0}",
+    "t": "❌ Personalization: could not read the state — {0}"
   },
   {
     "s": "❌ Повтор не удался",
@@ -14664,6 +15816,10 @@
     "t": "\uD83C\uDFA8 Classic interface enabled"
   },
   {
+    "s": "\uD83C\uDFA8 Внешний вид",
+    "t": "\uD83C\uDFA8 Appearance"
+  },
+  {
     "s": "\uD83C\uDFA8 Графика",
     "t": "\uD83C\uDFA8 Graphics"
   },
@@ -14792,12 +15948,24 @@
     "t": "\uD83D\uDCBB Development"
   },
   {
+    "s": "\uD83D\uDCBD Здоровье дисков",
+    "t": "\uD83D\uDCBD Disk health"
+  },
+  {
+    "s": "\uD83D\uDCBD Здоровье дисков: дисков {0}, со SMART {1}",
+    "t": "\uD83D\uDCBD Disk health: disks {0}, with SMART {1}"
+  },
+  {
     "s": "\uD83D\uDCBD Место и файлы",
     "t": "\uD83D\uDCBD Space and files"
   },
   {
     "s": "\uD83D\uDCBD Освободить место на диске C",
     "t": "\uD83D\uDCBD Free up space on drive C"
+  },
+  {
+    "s": "\uD83D\uDCBD Счётчики надёжности диска {0} недоступны: {1}",
+    "t": "\uD83D\uDCBD Reliability counters for disk {0} unavailable: {1}"
   },
   {
     "s": "\uD83D\uDCBD Что тестируем",
@@ -15684,12 +16852,32 @@
     "t": "\uD83D\uDD27 Technologies used"
   },
   {
+    "s": "\uD83D\uDD27 К восстановлению {0} файлов ({1}), к удалению лишних {2}",
+    "t": "\uD83D\uDD27 Files to repair: {0} ({1}), extra files to delete: {2}"
+  },
+  {
     "s": "\uD83D\uDD27 Отключить быстрый запуск",
     "t": "\uD83D\uDD27 Disable Fast Startup"
   },
   {
+    "s": "\uD83D\uDD27 Проверить системные файлы",
+    "t": "\uD83D\uDD27 Check system files"
+  },
+  {
+    "s": "\uD83D\uDD27 Проверка версии {0}: {1}",
+    "t": "\uD83D\uDD27 Check of version {0}: {1}"
+  },
+  {
     "s": "\uD83D\uDD27 Проверка компонентов...",
     "t": "\uD83D\uDD27 Checking components..."
+  },
+  {
+    "s": "\uD83D\uDD27 Проверка целостности установленного клиента...",
+    "t": "\uD83D\uDD27 Checking the integrity of the installed client..."
+  },
+  {
+    "s": "\uD83D\uDD27 Проверка: {0}",
+    "t": "\uD83D\uDD27 Check: {0}"
   },
   {
     "s": "\uD83D\uDD27 Устранение проблем...",
@@ -15702,6 +16890,22 @@
   {
     "s": "\uD83D\uDD50 Время",
     "t": "\uD83D\uDD50 Time"
+  },
+  {
+    "s": "\uD83D\uDDA5 Готов ли ПК к Windows 11",
+    "t": "\uD83D\uDDA5 Is this PC ready for Windows 11"
+  },
+  {
+    "s": "\uD83D\uDDA5 Закрыто окно, открытое после установки «{0}»: {1}",
+    "t": "\uD83D\uDDA5 Closed a window opened after installing “{0}”: {1}"
+  },
+  {
+    "s": "\uD83D\uDDA5 Проверить",
+    "t": "\uD83D\uDDA5 Check"
+  },
+  {
+    "s": "\uD83D\uDDA5 Проверка готовности к Windows 11: {0}, не выполнено {1}, нет данных {2}",
+    "t": "\uD83D\uDDA5 Windows 11 readiness check: {0}, failed {1}, no data {2}"
   },
   {
     "s": "\uD83D\uDDA5️ Поведение приложения",
@@ -15960,6 +17164,14 @@
     "t": "\uD83E\uDDEA Experimental module. Sensors and the overlay work without a kernel driver, so they do not interfere with games with anti-cheat. That is why there are no CPU temperatures and clocks or motherboard fans yet. Tell us what you are missing and whether the module is worth developing further."
   },
   {
+    "s": "\uD83E\uDDED Панель задач и Пуск",
+    "t": "\uD83E\uDDED Taskbar and Start"
+  },
+  {
+    "s": "\uD83E\uDDF0 Быстрые проверки",
+    "t": "\uD83E\uDDF0 Quick checks"
+  },
+  {
     "s": "\uD83E\uDDF3 Перед переустановкой Windows…",
     "t": "\uD83E\uDDF3 Before reinstalling Windows…"
   },
@@ -16016,18 +17228,6 @@
     "t": "\uD83E\uDDFE File list of the installed version saved ({0} files) — the next update can be incremental"
   },
   {
-    "s": "\uD83E\uDE79 Проверить системные файлы",
-    "t": "\uD83E\uDE79 Check system files"
-  },
-  {
-    "s": "\uD83E\uDE7A Здоровье дисков",
-    "t": "\uD83E\uDE7A Disk health"
-  },
-  {
-    "s": "\uD83E\uDE7A Здоровье дисков: дисков {0}, со SMART {1}",
-    "t": "\uD83E\uDE7A Disk health: disks {0}, with SMART {1}"
-  },
-  {
     "s": "\uD83E\uDE7A К восстановлению {0} файлов ({1}), к удалению лишних {2}",
     "t": "\uD83E\uDE7A Files to repair: {0} ({1}), extra files to delete: {2}"
   },
@@ -16042,25 +17242,5 @@
   {
     "s": "\uD83E\uDE7A Проверка: {0}",
     "t": "\uD83E\uDE7A Check: {0}"
-  },
-  {
-    "s": "\uD83E\uDE7A Счётчики надёжности диска {0} недоступны: {1}",
-    "t": "\uD83E\uDE7A Reliability counters for disk {0} unavailable: {1}"
-  },
-  {
-    "s": "\uD83E\uDE9F Готов ли ПК к Windows 11",
-    "t": "\uD83E\uDE9F Is this PC ready for Windows 11"
-  },
-  {
-    "s": "\uD83E\uDE9F Закрыто окно, открытое после установки «{0}»: {1}",
-    "t": "\uD83E\uDE9F Closed a window opened after installing “{0}”: {1}"
-  },
-  {
-    "s": "\uD83E\uDE9F Проверить",
-    "t": "\uD83E\uDE9F Check"
-  },
-  {
-    "s": "\uD83E\uDE9F Проверка готовности к Windows 11: {0}, не выполнено {1}, нет данных {2}",
-    "t": "\uD83E\uDE9F Windows 11 readiness check: {0}, failed {1}, no data {2}"
   }
 ]

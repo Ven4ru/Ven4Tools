@@ -54,11 +54,13 @@
         <SolidColorBrush x:Key="StatusDangerForeground" Color="#06130D"/>
         <SolidColorBrush x:Key="StatusInfoForeground" Color="#06130D"/>
 
-        <!-- Стиль для GroupBox -->
+        <!-- Стиль для GroupBox — карточка с шапкой по общим правилам дизайна (05.11.2026):
+             угол 8, поле 16, промежуток между карточками 12, шапка 14 SemiBold. Левый край
+             шапки совпадает с левым краем содержимого (у обоих отступ 16). -->
         <Style TargetType="GroupBox">
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Padding" Value="16"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="GroupBox">
@@ -71,18 +73,18 @@
                                     Background="{DynamicResource CardBackground}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1,1,1,0"
-                                    CornerRadius="4,4,0,0"
-                                    Padding="8,4">
+                                    CornerRadius="8,8,0,0"
+                                    Padding="16,12,16,0">
                                 <TextBlock Text="{TemplateBinding Header}"
                                            Foreground="{DynamicResource HeaderForeground}"
-                                           FontWeight="Bold"
-                                           FontSize="13"/>
+                                           FontWeight="SemiBold"
+                                           FontSize="14"/>
                             </Border>
                             <Border Grid.Row="1"
                                     Background="{DynamicResource CardBackground}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1,0,1,1"
-                                    CornerRadius="0,0,4,4"
+                                    CornerRadius="0,0,8,8"
                                     Padding="{TemplateBinding Padding}">
                                 <ContentPresenter/>
                             </Border>
@@ -95,7 +97,7 @@
         <!-- Стиль для TextBlock -->
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
         </Style>
 
         <!-- Кнопка деструктивного действия (Удалить и т.п.): контур по умолчанию,
@@ -126,7 +128,13 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                               Margin="{TemplateBinding Padding}"/>
+                                               Margin="{TemplateBinding Padding}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -146,7 +154,7 @@
         <!-- Стиль для ComboBox -->
         <Style TargetType="ComboBox">
             <Setter Property="Height" Value="32"/>
-            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Margin" Value="0"/>
             <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="FontSize" Value="12"/>
@@ -156,7 +164,12 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
+                            <!-- Style={x:Null}: иначе на внутреннюю кнопку ложится неявный стиль
+                                 ToggleButton с Height=35 и Margin=3 — она выходила выше самого
+                                 списка (22–32), и нижняя граница рамки вместе со стрелкой
+                                 обрезалась («Последняя» в карточке каталога, «Диск установки»). -->
                             <ToggleButton x:Name="ToggleButton"
+                                          Style="{x:Null}"
                                           Grid.ColumnSpan="2"
                                           Background="{DynamicResource CardBackground}"
                                           BorderBrush="{DynamicResource BorderBrush}"
@@ -172,7 +185,7 @@
                                                   Fill="{DynamicResource TextPrimary}"
                                                   HorizontalAlignment="Right"
                                                   VerticalAlignment="Center"
-                                                  Margin="0,0,10,0"
+                                                  Margin="0,0,12,0"
                                                   Data="M 0 0 L 4 4 L 8 0 Z"/>
                                         </Border>
                                         <ControlTemplate.Triggers>
@@ -240,29 +253,52 @@
                              экземпляре CheckBox (пример — чекбокс строки каталога 20×20:
                              без этого клик рядом с краем увеличенной области проваливался
                              мимо, реальный CanExecute-хендлер не получал событие). -->
+                        <!-- Рамка неотмеченной отметки — TextSecondary, а не BorderBrush:
+                             BorderBrush рассчитан на разделители и в тёмных темах почти
+                             сливался с карточкой (около 1.2:1), пустую отметку было не
+                             разглядеть. Отмеченная — как в Windows: заливка акцентом и
+                             галочка контрастным к нему цветом. -->
                         <StackPanel Orientation="Horizontal" Background="Transparent">
                             <Border x:Name="CheckBorder"
-                                    Width="15" Height="15"
+                                    Width="16" Height="16"
                                     Background="{DynamicResource CardBackground}"
-                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderBrush="{DynamicResource TextSecondary}"
                                     BorderThickness="1" CornerRadius="3"
                                     VerticalAlignment="Center">
-                                <Path x:Name="Checkmark"
-                                      Data="M 2 7 L 6 11 L 13 3"
-                                      Stroke="{DynamicResource AccentColor}"
-                                      StrokeThickness="2"
-                                      StrokeStartLineCap="Round"
-                                      StrokeEndLineCap="Round"
-                                      Stretch="Uniform" Margin="2"
-                                      Visibility="Collapsed"/>
+                                <Grid>
+                                    <Path x:Name="Checkmark"
+                                          Data="M 2 7 L 6 11 L 13 3"
+                                          Stroke="{DynamicResource AccentForeground}"
+                                          StrokeThickness="2"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          Stretch="Uniform" Margin="2"
+                                          Visibility="Collapsed"/>
+                                    <!-- Третье состояние («выбраны не все» у «Выбрать все»). -->
+                                    <Rectangle x:Name="Indeterminate" Width="7" Height="2" RadiusX="1" RadiusY="1"
+                                               Fill="{DynamicResource AccentColor}" Visibility="Collapsed"/>
+                                </Grid>
                             </Border>
-                            <ContentPresenter Margin="6,0,0,0"
+                            <ContentPresenter Margin="8,0,0,0"
                                               VerticalAlignment="Center"
-                                              RecognizesAccessKey="True"/>
+                                              RecognizesAccessKey="True">
+                                <!-- Подпись берёт цвет у самой отметки (Foreground), а не у
+                                     неявного стиля TextBlock — см. комментарий у стиля Button. -->
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
                         </StackPanel>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Checkmark" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="CheckBorder" Property="Background" Value="{DynamicResource AccentColor}"/>
+                                <Setter TargetName="CheckBorder" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="{x:Null}">
+                                <Setter TargetName="Indeterminate" Property="Visibility" Value="Visible"/>
                                 <Setter TargetName="CheckBorder" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -278,10 +314,53 @@
         </Style>
 
         <!-- Стиль для RadioButton -->
+        <!-- Шаблон свой: у штатного круг залит белым, и на тёмных темах невыбранный
+             вариант выглядел так же, как выбранный (белая «точка» в каждом). Здесь
+             невыбранный — пустое кольцо цвета TextSecondary, выбранный — кольцо и точка
+             акцентом. -->
         <Style TargetType="RadioButton">
             <Setter Property="Margin" Value="0,2,0,2"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <StackPanel Orientation="Horizontal" Background="Transparent">
+                            <Grid Width="16" Height="16" VerticalAlignment="Center">
+                                <Ellipse x:Name="Ring" Fill="{DynamicResource CardBackground}"
+                                         Stroke="{DynamicResource TextSecondary}" StrokeThickness="1"/>
+                                <Ellipse x:Name="Dot" Width="8" Height="8" Fill="{DynamicResource AccentColor}"
+                                         Visibility="Collapsed"/>
+                            </Grid>
+                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Dot" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource AccentColor}"/>
+                                <Setter TargetName="Ring" Property="StrokeThickness" Value="1.5"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource AccentColor}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource AccentColor}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Стиль для Label -->
@@ -295,9 +374,12 @@
              вплотную к тексту, сколько бы отступа им ни задали в разметке. Значение по
              умолчанию оставлено нулевым намеренно — у кнопок-значков ширина задана
              жёстко, и общий отступ обрезал бы значок. -->
+        <!-- Высота 32 и нулевое внешнее поле — общие правила дизайна (05.11.2026): прежние
+             35 и 3 выбивали кнопки из сетки 4/8 и из одной высоты с полями ввода (32).
+             Промежуток между кнопками в ряду (8) задаёт сама разметка. -->
         <Style TargetType="Button">
-            <Setter Property="Height" Value="35"/>
-            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Margin" Value="0"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="12"/>
@@ -309,6 +391,16 @@
             <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
             <Setter Property="ToolTipService.BetweenShowDelay" Value="100"/>
             <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
+            <!-- ContentPresenter.Resources: надпись кнопки, заданная строкой (Content="…"),
+                 рисуется TextBlock'ом, который создаёт ContentPresenter. На такие TextBlock
+                 действует неявный стиль TextBlock из этого словаря с Foreground=TextPrimary,
+                 а сеттер стиля сильнее унаследованного цвета — поэтому Foreground кнопки
+                 (AccentForeground, StatusDangerForeground, цвет при наведении) до надписи
+                 не доходил: белый текст на ярком акценте «Бирюзовой», чёрный на синем
+                 «Светлой». Собственный пустой (кроме шрифта) стиль здесь перекрывает
+                 неявный, и надпись наследует цвет кнопки. На TextBlock'и, вложенные в
+                 Content разметкой страницы, он не действует — у них логический родитель
+                 сама кнопка. -->
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -317,7 +409,13 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              Margin="{TemplateBinding Padding}"/>
+                                              Margin="{TemplateBinding Padding}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -336,13 +434,149 @@
             </Setter>
         </Style>
 
+        <!-- Главное действие экрана (Primary, см. правило цвета в DesignTokens.xaml):
+             заливка акцентом темы и надпись AccentForeground — тёмная на светлом акценте,
+             белая на насыщенном (ThemeService.ReadableOn считает контраст по WCAG).
+             Отличия от обычной кнопки:
+             • при наведении акцент не меняется на другой цвет, а притемняется на 10 %
+               (у обычной кнопки наведение и есть «заливка акцентом»);
+             • выключенная кнопка теряет заливку: серая подложка и серая надпись, как у
+               выключенной кнопки Windows. Прежде у неё лишь падала непрозрачность, и
+               «Установить (0)» на бирюзовом акценте выглядела нажимаемой.
+             Цвет выключенного состояния ставится на элементы шаблона (Bd, cp), а не на
+             свойства кнопки: заливку многие кнопки задают атрибутом, и сеттер триггера
+             её бы не перекрыл. Надпись с числом задавать не вложенным TextBlock, а строкой:
+             Content="{Binding …}" ContentStringFormat="Установить ({0})" — тогда TextBlock создаёт
+             сам ContentPresenter и цвет выключенного состояния до него доходит. Вложенный TextBlock
+             с привязкой к (TextElement.Foreground) предка-ContentPresenter на снимках 05.11 рисовался
+             почти чёрным во всех темах (привязка не находила предка и давала цвет по умолчанию). -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentForeground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <Grid>
+                                <Border x:Name="Shade" Background="Black" Opacity="0" CornerRadius="3"/>
+                                <ContentPresenter x:Name="cp" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  TextElement.Foreground="{TemplateBinding Foreground}">
+                                    <ContentPresenter.Resources>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
+                                        </Style>
+                                    </ContentPresenter.Resources>
+                                </ContentPresenter>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Shade" Property="Opacity" Value="0.10"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Shade" Property="Opacity" Value="0.20"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Shade" Property="Opacity" Value="0"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceRaised}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                                <Setter TargetName="cp" Property="TextElement.Foreground" Value="{DynamicResource TextSecondary}"/>
+                                <!-- Без общей полупрозрачности: серой подложки SurfaceRaised и
+                                     надписи TextSecondary достаточно, чтобы кнопка читалась как
+                                     выключенная. Прежняя Opacity 0.7 смешивала надпись с фоном —
+                                     в «Светлой» контраст падал до 2,7:1, теперь от 4,9:1 (светлая)
+                                     до 8,5:1 (бирюзовая). -->
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Одиночная крупная кнопка рискованного действия («Применить выбранное» в Очистке,
+             «Удалить Office»): та же Primary, только заливка StatusDanger и надпись
+             StatusDangerForeground. Для повторяющихся кнопок в списках — DangerButtonStyle. -->
+        <Style x:Key="DangerFilledButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="{DynamicResource StatusDanger}"/>
+            <Setter Property="Foreground" Value="{DynamicResource StatusDangerForeground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource StatusDanger}"/>
+        </Style>
+
         <!-- Стиль для Expander -->
         <Style TargetType="Expander">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Margin" Value="0,0,0,3"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <!-- Свой шаблон (общие правила 05.11.2026): шеврон Segoe MDL2 12 px слева без круга,
+                 шапка не ниже 32, 8 до текста. Штатный шаблон рисовал белый круг со стрелкой, он
+                 спорил с текстом шапки на тёмных темах. Раскрывается только вниз — других
+                 направлений в клиенте нет. -->
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4" SnapsToDevicePixels="True">
+                            <DockPanel>
+                                <ToggleButton x:Name="HeaderSite" DockPanel.Dock="Top" Style="{x:Null}"
+                                              MinHeight="32" Cursor="Hand" Focusable="True"
+                                              HorizontalContentAlignment="Stretch"
+                                              Foreground="{TemplateBinding Foreground}"
+                                              Content="{TemplateBinding Header}"
+                                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                              IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border x:Name="HeaderBd" Background="Transparent" Padding="8,0"
+                                                    BorderBrush="Transparent" BorderThickness="1" CornerRadius="4">
+                                                <DockPanel VerticalAlignment="Center">
+                                                    <TextBlock x:Name="Chevron" DockPanel.Dock="Left" Text="&#xE76C;" Width="12"
+                                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12"
+                                                               VerticalAlignment="Center" TextAlignment="Center"
+                                                               Foreground="{DynamicResource TextSecondary}"/>
+                                                    <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                                                </DockPanel>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="Chevron" Property="Text" Value="&#xE70D;"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Chevron" Property="Foreground" Value="{DynamicResource AccentColor}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                                    <Setter TargetName="HeaderBd" Property="BorderBrush" Value="{DynamicResource AccentSoftBorder}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="ExpandSite" Visibility="Collapsed" Focusable="False"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </DockPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Стиль для TextBox — только Setter'ы, без кастомного шаблона.
@@ -350,6 +584,11 @@
              текста в .NET 8 WPF на Windows 11 (текст становился невидимым).
              Дефолтный шаблон WPF корректно уважает Background/Foreground из стиля. -->
         <Style TargetType="TextBox">
+            <!-- Однострочное поле — высота 32 и отступ 8, как у ComboBox и кнопок (общие правила
+                 05.11.2026). Многострочное (AcceptsReturn) — текст сверху, см. триггер. -->
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -357,6 +596,17 @@
             <Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="SelectionBrush" Value="{DynamicResource AccentColor}"/>
             <Style.Triggers>
+                <!-- Многострочное и переносящееся поле: текст от верхнего края, а не посередине
+                     высокого поля (журналы, коды наборов). Отступ 6 сверху ставит одну строку
+                     12-го шрифта по центру поля высотой 32. -->
+                <Trigger Property="AcceptsReturn" Value="True">
+                    <Setter Property="VerticalContentAlignment" Value="Top"/>
+                    <Setter Property="Padding" Value="8,6"/>
+                </Trigger>
+                <Trigger Property="TextWrapping" Value="Wrap">
+                    <Setter Property="VerticalContentAlignment" Value="Top"/>
+                    <Setter Property="Padding" Value="8,6"/>
+                </Trigger>
                 <Trigger Property="IsFocused" Value="True">
                     <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
                 </Trigger>
@@ -365,8 +615,8 @@
 
         <!-- Стиль для ToggleButton -->
         <Style TargetType="ToggleButton">
-            <Setter Property="Height" Value="35"/>
-            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Margin" Value="0"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -381,8 +631,15 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
+                            <!-- Надпись наследует Foreground кнопки — см. комментарий у стиля Button. -->
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              Margin="{TemplateBinding Padding}"/>
+                                              Margin="{TemplateBinding Padding}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -689,9 +946,11 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="14,7"/>
-            <Setter Property="Margin" Value="0,0,6,0"/>
+            <!-- Полужирный — только у надписи вкладки (TextElement.FontWeight на её ContentPresenter
+                 в шаблоне). Сеттер FontWeight на самом TabItem наследовался в содержимое вкладки:
+                 логический родитель контента — TabItem, и весь текст «Настроек» был полужирным. -->
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
@@ -703,10 +962,11 @@
                                     CornerRadius="8" Padding="{TemplateBinding Padding}">
                                 <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"
                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  TextElement.FontWeight="SemiBold"
                                                   TextElement.Foreground="{TemplateBinding Foreground}"/>
                             </Border>
                             <!-- Полоска под выбранной вкладкой ложится на общую линию под строкой. -->
-                            <Border x:Name="underline" Height="2" CornerRadius="1" Margin="10,0,10,-7"
+                            <Border x:Name="underline" Height="2" CornerRadius="1" Margin="12,0,12,-7"
                                     VerticalAlignment="Bottom" Background="{DynamicResource AccentColor}"
                                     Visibility="Hidden"/>
                         </Grid>
@@ -742,9 +1002,12 @@
         </Style>
 
         <!-- Стиль для ProgressBar -->
+        <!-- Без рамки: штатная светло-серая рамка на тёмной карточке выглядела пустой
+             белой полосой, даже когда полоса и должна быть пустой (0 %). -->
         <Style TargetType="ProgressBar">
             <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
         </ResourceDictionary>
     </Application.Resources>

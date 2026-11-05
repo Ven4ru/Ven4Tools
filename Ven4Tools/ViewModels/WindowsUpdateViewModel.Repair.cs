@@ -20,11 +20,32 @@ namespace Ven4Tools.ViewModels
         public RelayCommand ResetWindowsUpdateCommand { get; private set; } = null!;
         public RelayCommand OpenRepairLogsCommand { get; private set; } = null!;
 
+        // Идёт сброс Центра обновления: службы остановлены, папки переименовываются —
+        // поиск обновлений в это время запустил бы службу обратно посреди сброса.
+        private bool _isResettingWu;
+
         private string _repairStatusText = "";
         public string RepairStatusText { get => _repairStatusText; private set => SetField(ref _repairStatusText, value); }
 
         private bool _isRepairRunning;
-        public bool IsRepairRunning { get => _isRepairRunning; private set => SetField(ref _isRepairRunning, value); }
+        public bool IsRepairRunning
+        {
+            get => _isRepairRunning;
+            private set { if (SetField(ref _isRepairRunning, value)) OnPropertyChanged(nameof(ResetWindowsUpdateBlockedReason)); }
+        }
+
+        /// <summary>
+        /// Почему «Сбросить Центр обновления» сейчас недоступна — строка под кнопкой. Те же
+        /// условия, что у CanExecute команды и IsEnabled кнопки (IsSystemTaskIdle): сброс
+        /// останавливает wuauserv и оборвал бы поиск или скрытие обновлений. Пустая строка —
+        /// кнопка доступна либо идёт ремонт на этой же вкладке (там виден свой прогресс).
+        /// Уведомление о смене — из сеттеров IsSearching, IsHiding, IsSystemTaskRunning, IsRepairRunning.
+        /// </summary>
+        public string ResetWindowsUpdateBlockedReason =>
+            IsSearching ? "Недоступно, пока идёт поиск обновлений — дождитесь его окончания."
+            : IsHiding ? "Недоступно, пока идёт работа со скрытыми обновлениями (поиск, скрытие или возврат) — дождитесь её окончания."
+            : IsSystemTaskRunning && !IsRepairRunning ? "Недоступно, пока идёт другая системная операция (например, .NET Framework 3.5) — дождитесь её окончания."
+            : "";
 
         private double _repairProgress;
         public double RepairProgress { get => _repairProgress; private set => SetField(ref _repairProgress, value); }
@@ -35,7 +56,9 @@ namespace Ven4Tools.ViewModels
         private void InitRepairCommands()
         {
             RunSystemFileCheckCommand = RelayCommand.FromAsync(_ => RunSystemFileCheckAsync(), _ => !IsSystemTaskRunning);
-            ResetWindowsUpdateCommand = RelayCommand.FromAsync(_ => RunResetWindowsUpdateAsync(), _ => !IsSystemTaskRunning);
+            // Сброс останавливает wuauserv — во время поиска или скрытия он оборвал бы их.
+            ResetWindowsUpdateCommand = RelayCommand.FromAsync(_ => RunResetWindowsUpdateAsync(),
+                _ => !IsSystemTaskRunning && !IsSearching && !IsHiding);
             OpenRepairLogsCommand = new RelayCommand(_ => OpenRepairLogs());
         }
 
@@ -159,6 +182,7 @@ namespace Ven4Tools.ViewModels
                 caption, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
             if (answer != MessageBoxResult.Yes) return;
 
+            _isResettingWu = true;
             BeginSystemTask(cancellable: false);
             IsRepairRunning = true;
             IsRepairProgressIndeterminate = true;
@@ -171,6 +195,7 @@ namespace Ven4Tools.ViewModels
             }
             finally
             {
+                _isResettingWu = false;
                 IsRepairRunning = false;
                 IsRepairProgressIndeterminate = false;
                 EndSystemTask();

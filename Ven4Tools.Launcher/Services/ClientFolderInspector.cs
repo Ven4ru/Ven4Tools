@@ -17,8 +17,8 @@ namespace Ven4Tools.Launcher.Services
     ///
     /// Свои файлы верхнего уровня — те, что перечислены в Ven4Tools.deps.json (его
     /// .NET кладёт в каждую публикацию, и в нём все сборки и нативные файлы), плюс сам
-    /// exe и его служебные json. Подпапки — языковые папки .NET, Data (кэш каталога)
-    /// и lang (пакет перевода). Всё остальное считается чужим. Без deps.json (папка
+    /// exe и его служебные json. Подпапки — языковые папки .NET, Data (кэш каталога),
+    /// lang (пакет перевода) и Personalization (оформление «Венчик»). Всё остальное считается чужим. Без deps.json (папка
     /// повреждена или это не клиент) своими считаются только Ven4Tools.* и файлы
     /// среды .NET по расширению, а чужие exe — чужими.
     /// </summary>
@@ -40,9 +40,13 @@ namespace Ven4Tools.Launcher.Services
             ".dll", ".json", ".pdb", ".sig",
         };
 
+        // Personalization — файлы оформления «Венчик» (Ven4Tools.csproj кладёт их в
+        // публикацию с 7.0.0). Без неё папка любого клиента 7.x считалась «с чужим»:
+        // перенос отказывал, установка сохраняла прежнюю папку рядом, удаление
+        // оставляло Personalization на диске.
         private static readonly HashSet<string> OwnDirectories = new(StringComparer.OrdinalIgnoreCase)
         {
-            "Data", "lang", "runtimes", "Localization",
+            "Data", "lang", "runtimes", "Localization", "Personalization",
         };
 
         private readonly HashSet<string>? _listedFiles;

@@ -50,6 +50,9 @@
     <Resource Include="Resources\Mascots\*.png" />
     <Resource Include="Resources\Overlay\*.png" />
     <Resource Include="Resources\Splash\*.png" />
+    <!-- Знак программы на вкладке «О программе» (Image Source="/icon.ico"). Без этой
+         строки значок есть только у exe, а на вкладке вместо него пустое место 96 px. -->
+    <Resource Include="icon.ico" />
   </ItemGroup>
 
   <!-- «Персонализация»: файлы оформления «Венчик» лежат рядом с программой. Заставка —
@@ -57,11 +60,15 @@
   <ItemGroup>
     <None Include="Personalization\Venchik\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <ProjectReference Include="..\Ven4Tools.Screensaver\Ven4Tools.Screensaver.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
+    <!-- «Ушки Венчика» над «Пуском» — тоже .NET Framework 4.8, кладётся как VenchikEars.exe. -->
+    <ProjectReference Include="..\Ven4Tools.Ears\Ven4Tools.Ears.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
   </ItemGroup>
   <Target Name="CopyVenchikScreensaver" AfterTargets="ResolveProjectReferences">
     <ItemGroup>
       <_VenchikScr Include="$(MSBuildThisFileDirectory)..\Ven4Tools.Screensaver\bin\$(Configuration)\net48\Venchik.exe" />
       <None Include="@(_VenchikScr)" Link="Personalization\Venchik\Venchik.scr" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+      <_VenchikEars Include="$(MSBuildThisFileDirectory)..\Ven4Tools.Ears\bin\$(Configuration)\net48\VenchikEars.exe" />
+      <None Include="@(_VenchikEars)" Link="Personalization\Venchik\VenchikEars.exe" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
   </Target>
 

@@ -39,7 +39,11 @@ internal static class ClientManifestBuilder
         }
 
         var files = new List<ClientManifestFileEntry>();
-        foreach (string file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+        // Обход без ссылок (junction/symlink) — как у манифеста переноса: ссылка в
+        // папке клиента прерывает построение. Иначе файлы ЗА ссылкой попали бы в
+        // манифест как «лишние», и починка удалила бы их через ссылку — то есть
+        // чужие файлы вне папки клиента.
+        foreach (string file in ClientFolderManifest.EnumerateFilesNoLinks(root))
         {
             cancellationToken.ThrowIfCancellationRequested();
 

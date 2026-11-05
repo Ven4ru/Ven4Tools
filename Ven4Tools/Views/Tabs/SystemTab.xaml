@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:views="clr-namespace:Ven4Tools.Views"
              Background="{DynamicResource ContentBackground}">
-    <Grid Margin="20">
+    <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
         <StackPanel Margin="0,0,0,16">
             <TextBlock Text="Настройки" Style="{StaticResource PageTitleStyle}"/>
@@ -13,84 +13,89 @@
         <TabControl Grid.Row="1">
             <TabItem Header="Общие">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="8,12,8,8">
-            <GroupBox Header="Внешний вид" Margin="0,0,0,15">
-                <Grid Margin="8">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="230"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,12,8,8">
+            <GroupBox Header="🎨 Внешний вид" Margin="0,0,0,12">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="152"/><ColumnDefinition Width="232"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                     <TextBlock Text="Тема" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="cmbTheme" Grid.Column="1" SelectedValuePath="Tag" SelectedValue="{Binding ThemeTag, Mode=TwoWay}">
+                    <ComboBox x:Name="cmbTheme" Grid.Column="1" Margin="0" SelectedValuePath="Tag" SelectedValue="{Binding ThemeTag, Mode=TwoWay}">
                         <ComboBoxItem Content="Как на ven4tools.ru" Tag="web"/>
                         <ComboBoxItem Content="Бирюзовая" Tag="teal"/>
                         <ComboBoxItem Content="Тёмная" Tag="dark"/>
                         <ComboBoxItem Content="Светлая" Tag="light"/>
                     </ComboBox>
-                    <TextBlock Grid.Row="1" Text="Язык интерфейса" VerticalAlignment="Center" Margin="0,10,0,0"/>
-                    <ComboBox x:Name="cmbLanguage" Grid.Row="1" Grid.Column="1" Margin="3,10,3,3" SelectedValuePath="Tag" SelectedValue="{Binding LanguageTag, Mode=TwoWay}"
+                    <TextBlock Grid.Row="1" Text="Язык интерфейса" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                    <ComboBox x:Name="cmbLanguage" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" SelectedValuePath="Tag" SelectedValue="{Binding LanguageTag, Mode=TwoWay}"
                               ToolTip="Русский встроен в программу. Английский — отдельный языковой пакет: он скачивается при выборе и включается после перезапуска. Тот же выбор действует и для лаунчера.">
                         <ComboBoxItem Content="Автоматически" Tag="auto"/>
                         <ComboBoxItem Content="Русский" Tag="ru"/>
                         <ComboBoxItem Content="English" Tag="en"/>
                     </ComboBox>
-                    <TextBlock Grid.Row="2" Text="Анимации" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                    <TextBlock Grid.Row="2" Text="Анимации" VerticalAlignment="Center" Margin="0,12,0,0"/>
                     <CheckBox x:Name="chkReduceMotion" Grid.Row="2" Grid.Column="1" Content="Уменьшить анимации"
-                              Margin="3,10,3,3" IsChecked="{Binding ReduceMotion, Mode=TwoWay}"/>
-                    <StackPanel Grid.Column="2" Grid.RowSpan="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
-                        <Ellipse Width="18" Height="18" Fill="{DynamicResource StatusSuccess}" Margin="3"/><Ellipse Width="18" Height="18" Fill="{DynamicResource StatusInfo}" Margin="3"/>
-                        <Ellipse Width="18" Height="18" Fill="{DynamicResource StatusWarning}" Margin="3"/><Ellipse Width="18" Height="18" Fill="{DynamicResource StatusDanger}" Margin="3"/>
+                              Margin="0,12,0,0" IsChecked="{Binding ReduceMotion, Mode=TwoWay}"/>
+                    <!-- Образец цветов выбранной темы (не выбор): акцент крупнее и отделён,
+                         за ним цвета статусов. Без подписи кружки выглядели палитрой,
+                         в которой можно что-то выбрать. Стоит в строке темы — к ней и относится. -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="24,0,0,0">
+                        <TextBlock Text="Цвета темы:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource TextSecondary}"/>
+                        <Ellipse Width="22" Height="22" Fill="{DynamicResource AccentColor}" Stroke="{DynamicResource TextPrimary}" StrokeThickness="1.5" Margin="0,0,8,0"/>
+                        <Ellipse Width="16" Height="16" Fill="{DynamicResource StatusSuccess}" Margin="0,0,4,0"/><Ellipse Width="16" Height="16" Fill="{DynamicResource StatusInfo}" Margin="0,0,4,0"/>
+                        <Ellipse Width="16" Height="16" Fill="{DynamicResource StatusWarning}" Margin="0,0,4,0"/><Ellipse Width="16" Height="16" Fill="{DynamicResource StatusDanger}"/>
                     </StackPanel>
                 </Grid>
             </GroupBox>
 
             <!-- Уведомления -->
-            <GroupBox Header="🔔 Уведомления" Margin="0,0,0,15">
+            <GroupBox Header="🔔 Уведомления" Margin="0,0,0,12">
                 <StackPanel>
                     <CheckBox x:Name="chkNotifications" Content="Показывать уведомления о завершении установки"
-                              Margin="10" Foreground="{DynamicResource TextPrimary}" IsChecked="{Binding NotifyInstallComplete, Mode=TwoWay}"/>
+                              Margin="0" Foreground="{DynamicResource TextPrimary}" IsChecked="{Binding NotifyInstallComplete, Mode=TwoWay}"/>
                     <CheckBox x:Name="chkUpdateNotifications" Content="Проверять обновления при запуске"
-                              Margin="10" Foreground="{DynamicResource TextPrimary}" IsChecked="{Binding NotifyAppUpdates, Mode=TwoWay}"/>
+                              Margin="0,12,0,0" Foreground="{DynamicResource TextPrimary}" IsChecked="{Binding NotifyAppUpdates, Mode=TwoWay}"/>
                 </StackPanel>
             </GroupBox>
 
             <!-- Автообновление программ -->
-            <GroupBox Header="⬆ Автообновление программ" Margin="0,0,0,15">
-                <StackPanel Margin="10">
+            <GroupBox Header="⬆ Автообновление программ" Margin="0,0,0,12">
+                <StackPanel>
                     <CheckBox x:Name="chkAutoUpdateApps"
                               Content="Обновлять установленные программы автоматически"
                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"
                               IsChecked="{Binding AutoUpdateApps, Mode=TwoWay}"/>
                     <TextBlock Text="Выключено по умолчанию. Когда включено, клиент сам ставит обновления через winget, пока он запущен (в том числе свёрнутый в трей). Программы из списка исключений не трогает. Условия источников winget при этом принимаются автоматически. В параноидальном режиме автообновление не работает."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,0,0,10"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                               FontSize="12" Margin="0,0,0,12"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                         <TextBlock Text="Как часто:" Foreground="{DynamicResource TextPrimary}"
-                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
-                        <ComboBox x:Name="cmbAutoUpdateFrequency" Width="170" Margin="0"
+                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox x:Name="cmbAutoUpdateFrequency" Width="176" Margin="0"
                                   SelectedValuePath="Tag" SelectedValue="{Binding AutoUpdateFrequencyTag, Mode=TwoWay}">
                             <ComboBoxItem Content="Раз в неделю" Tag="weekly"/>
                             <ComboBoxItem Content="Раз в день" Tag="daily"/>
                         </ComboBox>
                     </StackPanel>
                     <TextBlock Text="Не обновлять (идентификаторы пакетов winget, по одному в строке — например Mozilla.Firefox):"
-                               TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
                     <TextBox x:Name="txtAutoUpdateExcluded" Height="70" AcceptsReturn="True" TextWrapping="NoWrap"
-                             VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="11" Padding="6,4"
+                             VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="11" Padding="8,4"
                              Text="{Binding AutoUpdateExcludedText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
                     <TextBlock x:Name="txtAutoUpdateStatus" Text="{Binding AutoUpdateStatusText}"
-                               Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,6,0,0"/>
+                               Foreground="{DynamicResource TextSecondary}" FontSize="12" Margin="0,8,0,0"/>
                 </StackPanel>
             </GroupBox>
 
             <!-- Установка приложений -->
-            <GroupBox Header="📦 Установка приложений" Margin="0,0,0,15">
-                <StackPanel Margin="10">
+            <GroupBox Header="📦 Установка приложений" Margin="0,0,0,12">
+                <StackPanel>
                     <CheckBox x:Name="chkSilentInstall"
                               Content="Ставить приложения без окна установщика (только источник winget)"
                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"
                               IsChecked="{Binding SilentInstall, Mode=TwoWay}"/>
                     <TextBlock Text="Добавляет winget флаг --silent. Действует только когда приложение ставится через winget, и только если сам пакет поддерживает тихий режим — иначе окно установщика всё равно появится. На установку через Chocolatey не влияет. Для прямых ссылок флаги тихого режима берутся из каталога, а этот флажок используется лишь как запасной вариант, когда в каталоге они не указаны."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,0,0,14"/>
+                               FontSize="12" Margin="0,0,0,16"/>
 
                     <CheckBox x:Name="chkRemoveDesktopShortcuts"
                               Content="Не создавать ярлыки на рабочем столе"
@@ -98,39 +103,39 @@
                               IsChecked="{Binding RemoveNewDesktopShortcuts, Mode=TwoWay}"/>
                     <TextBlock Text="После установки через Ven4Tools убирает с рабочего стола ярлыки, которые появились во время этой установки. Ярлыки, которые были раньше, не трогаются. Программа остаётся в меню «Пуск»."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,0,0,14"/>
+                               FontSize="12" Margin="0,0,0,16"/>
 
                     <TextBlock Text="Папка установки по умолчанию (только winget):"
-                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
+                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
                     <Grid Margin="0,0,0,4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="txtDefaultInstallFolder" Height="30" Margin="0,0,8,0"
+                        <TextBox x:Name="txtDefaultInstallFolder" Height="32" Margin="0,0,8,0"
                                  Background="{DynamicResource CardBackground}"
                                  Foreground="{DynamicResource TextPrimary}"
-                                 VerticalContentAlignment="Center" Padding="6,0"
+                                 VerticalContentAlignment="Center" Padding="8,0"
                                  ToolTip="Абсолютный путь на локальном диске, например D:\Programs. Пустое поле — winget выбирает папку сам."
                                  Text="{Binding DefaultInstallFolderText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
-                        <Button x:Name="btnBrowseDefaultInstallFolder" Content="📁" Width="34" Height="30"
+                        <Button x:Name="btnBrowseDefaultInstallFolder" Content="📁" Width="32" Height="32" Margin="0"
                                 ToolTip="Откроет выбор папки, которую winget будет получать как --location."
                                 Grid.Column="1" Command="{Binding BrowseDefaultInstallFolderCommand}"/>
                     </Grid>
                     <TextBlock Text="Передаётся winget как --location. Многие установщики этот параметр игнорируют и ставятся туда, куда заложено в самом пакете; приложения из Microsoft Store (msstore) его не поддерживают вовсе. Если в каталоге выбран несистемный диск установки, папка используется только когда она лежит на этом же диске — иначе подставляется «Program Files» выбранного диска. Путь должен быть абсолютным и локальным: сетевые пути и кавычки не принимаются. Пустое поле — winget выбирает папку сам."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,0,0,4"/>
+                               FontSize="12" Margin="0,0,0,4"/>
                     <TextBlock x:Name="txtDefaultInstallFolderStatus" Text="{Binding DefaultInstallFolderStatusText}"
-                               TextWrapping="Wrap" FontSize="11"
+                               TextWrapping="Wrap" FontSize="12"
                                Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="📚 Область каталога" Margin="0,0,0,15">
-                <StackPanel Margin="10">
+            <GroupBox Header="📚 Область каталога" Margin="0,0,0,12">
+                <StackPanel>
                     <TextBlock Text="Сколько приложений показывать в каталоге:"
-                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
-                    <ComboBox x:Name="cmbCatalogMode" Width="260" HorizontalAlignment="Left"
+                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
+                    <ComboBox x:Name="cmbCatalogMode" Width="264" Margin="0" HorizontalAlignment="Left"
                               SelectedValuePath="Tag" SelectedValue="{Binding CatalogModeTag, Mode=TwoWay}">
                         <ComboBoxItem Content="Базовый" Tag="basic"/>
                         <ComboBoxItem Content="Расширенный" Tag="extended"/>
@@ -138,15 +143,15 @@
                     </ComboBox>
                     <TextBlock Text="Выбор при первом запуске сохраняется навсегда, если не поменять его здесь. «Базовый» — только самые ходовые программы, «Полный» — весь каталог."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,4,0,0"/>
+                               FontSize="12" Margin="0,4,0,0"/>
                 </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="🛡️ Windows Update" Margin="0,0,0,15">
-                <StackPanel Margin="10">
+            <GroupBox Header="🛡️ Windows Update" Margin="0,0,0,12">
+                <StackPanel>
                     <TextBlock Text="Что делать с найденными обновлениями Windows:"
-                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
-                    <ComboBox x:Name="cmbWindowsUpdateMode" Width="300" HorizontalAlignment="Left"
+                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
+                    <ComboBox x:Name="cmbWindowsUpdateMode" Width="304" Margin="0" HorizontalAlignment="Left"
                               ToolTip="Фоновая проверка обновлений Windows раз в 6 часов. Установка ни в одном из режимов автоматически не запускается."
                               SelectedValuePath="Tag" SelectedValue="{Binding WindowsUpdateModeTag, Mode=TwoWay}">
                         <ComboBoxItem Content="Только уведомлять" Tag="NotifyOnly"/>
@@ -154,13 +159,13 @@
                     </ComboBox>
                     <TextBlock Text="«Только уведомлять» — клиент сообщает о найденных патчах, ничего не скачивая. «Уведомлять и скачивать в фоне» — патчи заранее загружаются в кэш Windows, и установка по кнопке на вкладке «Обновления Windows» стартует сразу, без ожидания загрузки. Устанавливаются патчи в обоих режимах только вручную."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,4,0,0"/>
+                               FontSize="12" Margin="0,4,0,0"/>
                 </StackPanel>
             </GroupBox>
 
             <!-- Таймауты -->
-            <GroupBox Header="⏱️ Таймауты" Margin="0,0,0,15">
-                <Grid Margin="10">
+            <GroupBox Header="⏱️ Таймауты" Margin="0,0,0,12">
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
@@ -174,30 +179,30 @@
                     <TextBlock Text="Таймаут загрузки каталога:" Grid.Row="0" Grid.Column="0"
                                Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                     <Slider x:Name="sliderCatalogTimeout" Grid.Row="0" Grid.Column="1"
-                            Minimum="3" Maximum="30" Value="{Binding CatalogTimeoutValue, Mode=TwoWay}" Margin="10,0"
+                            Minimum="3" Maximum="30" Value="{Binding CatalogTimeoutValue, Mode=TwoWay}" Margin="12,0" VerticalAlignment="Center"
                             Foreground="{DynamicResource AccentColor}"/>
                     <TextBlock x:Name="txtCatalogTimeout" Grid.Row="0" Grid.Column="2"
-                               Text="{Binding CatalogTimeoutText}" Foreground="{DynamicResource TextSecondary}"/>
+                               Text="{Binding CatalogTimeoutText}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
 
                     <TextBlock Text="Таймаут проверки доступности:" Grid.Row="1" Grid.Column="0"
-                               Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                               Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" Margin="0,12,0,0"/>
                     <Slider x:Name="sliderCheckTimeout" Grid.Row="1" Grid.Column="1"
-                            Minimum="5" Maximum="60" Value="{Binding CheckTimeoutValue, Mode=TwoWay}" Margin="10,10,10,0"
+                            Minimum="5" Maximum="60" Value="{Binding CheckTimeoutValue, Mode=TwoWay}" Margin="12,12,12,0" VerticalAlignment="Center"
                             Foreground="{DynamicResource AccentColor}"/>
                     <TextBlock x:Name="txtCheckTimeout" Grid.Row="1" Grid.Column="2"
-                               Text="{Binding CheckTimeoutText}" Foreground="{DynamicResource TextSecondary}" Margin="0,10,0,0"/>
+                               Text="{Binding CheckTimeoutText}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,12,0,0"/>
                 </Grid>
             </GroupBox>
             <!-- Обновления приложений -->
-            <GroupBox Header="🔔 Обновления приложений" Margin="0,0,0,15">
+            <GroupBox Header="🔔 Обновления приложений" Margin="0,0,0,12">
                 <StackPanel>
                     <Button x:Name="btnCheckUpdates" Content="🔍 Проверить обновления"
                             ToolTip="Проверит через winget доступные обновления приложений. Ничего не устанавливает."
-                            Height="35" Margin="10" HorizontalAlignment="Left" Width="200"
+                            Height="32" Padding="12,0" Margin="0" HorizontalAlignment="Left"
                             Command="{Binding CheckUpdatesCommand}"/>
-                    <TextBox x:Name="txtUpdatesLog" Text="{Binding UpdatesLogText, Mode=OneWay}" Margin="10,0,10,10" Height="100"
+                    <TextBox x:Name="txtUpdatesLog" Text="{Binding UpdatesLogText, Mode=OneWay}" Margin="0,12,0,0" Height="100"
                              Background="{DynamicResource CardBackground}" Foreground="{DynamicResource TextPrimary}"
-                             FontFamily="Consolas" FontSize="10" IsReadOnly="True"
+                             FontFamily="Consolas" FontSize="11" Padding="8,4" IsReadOnly="True"
                              VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
                 </StackPanel>
             </GroupBox>
@@ -219,28 +224,29 @@
                      VerticalAlignment="Stretch" на самом GroupBox (проверено диагностикой
                      с Background="Red" — под GroupBox оставалась пустая полоса вплоть до
                      низа вкладки); DockPanel + Border такой проблемы не имеет. -->
-                <Grid Margin="8,12,8,8">
+                <Grid Margin="0,12,8,8">
                     <Border Background="{DynamicResource CardBackground}"
                             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                             CornerRadius="8">
                         <DockPanel>
+                            <!-- Шапка — как у карточек GroupBox (общие правила роя, Р3): 14 SemiBold,
+                                 отступ 16,12,16,0, без линии-разделителя; левый край шапки = левый край содержимого. -->
                             <Border DockPanel.Dock="Top" Background="{DynamicResource CardBackground}"
-                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
-                                    CornerRadius="8,8,0,0" Padding="8,4">
+                                    CornerRadius="8,8,0,0" Padding="16,12,16,0">
                                 <TextBlock Text="🔀 Порядок источников установки"
                                            Foreground="{DynamicResource HeaderForeground}"
-                                           FontWeight="Bold" FontSize="13"/>
+                                           FontWeight="SemiBold" FontSize="14"/>
                             </Border>
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="10">
+                <StackPanel Margin="16">
                     <!-- Mode -->
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                         <RadioButton x:Name="rbSourceGlobal"
                                      Content="Единый для всего каталога"
                                      GroupName="SourceMode"
                                      Foreground="{DynamicResource TextPrimary}"
                                      IsChecked="{Binding IsGlobalSourceMode, Mode=TwoWay}"
-                                     Margin="0,0,20,0"/>
+                                     Margin="0,0,24,0"/>
                         <RadioButton x:Name="rbSourcePerCategory"
                                      Content="Выбрать приоритетный источник по категориям"
                                      GroupName="SourceMode"
@@ -249,38 +255,65 @@
                     </StackPanel>
 
                     <!-- Global order editor -->
-                    <Border x:Name="pnlGlobalOrder" Margin="0,0,0,10"
+                    <Border x:Name="pnlGlobalOrder" Margin="0,0,0,4"
                             Visibility="{Binding ShowGlobalOrderPanel, Converter={StaticResource BoolToVis}}">
-                        <Grid>
+                        <!-- Список не на всю ширину и ▲/▼ сразу справа от строк: на широком
+                             окне кнопки стояли у дальнего края, оторванные от списка. Строки —
+                             плашки с рамкой, чтобы было видно, что их порядок и есть настройка. -->
+                        <Grid HorizontalAlignment="Left" MaxWidth="460">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="360"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Border Background="{DynamicResource CardBackground}"
-                                    CornerRadius="8" Padding="4">
-                                <ListBox x:Name="lstSourceOrder"
-                                         ItemsSource="{Binding SourceItems}"
-                                         SelectedIndex="{Binding SelectedSourceIndex, Mode=TwoWay}"
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         Height="120"
-                                         SelectionMode="Single">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Label}"
-                                                       Foreground="{DynamicResource TextPrimary}"
-                                                       Padding="6,4" FontSize="13"/>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0">
+                            <ListBox x:Name="lstSourceOrder"
+                                     ItemsSource="{Binding SourceItems}"
+                                     SelectedIndex="{Binding SelectedSourceIndex, Mode=TwoWay}"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                     SelectionMode="Single">
+                                <ListBox.ItemContainerStyle>
+                                    <!-- Свой шаблон строки: системная подсветка выбора (голубая на
+                                         Windows 10) в тёмных темах выбивалась; выбранная строка — рамка
+                                         и подложка акцента темы. -->
+                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                        <Setter Property="Margin" Value="0,0,0,8"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <Border x:Name="row" Background="{DynamicResource SurfaceRaised}" BorderBrush="{DynamicResource BorderBrush}"
+                                                            BorderThickness="1" CornerRadius="4" Padding="12,8">
+                                                        <ContentPresenter/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="row" Property="BorderBrush" Value="{DynamicResource AccentSoftBorder}"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter TargetName="row" Property="Background" Value="{DynamicResource AccentSoftBackground}"/>
+                                                            <Setter TargetName="row" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Label}"
+                                                   Foreground="{DynamicResource TextPrimary}" FontSize="12"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,8">
                                 <Button x:Name="btnSrcUp" Content="▲" Width="32" Height="32"
                                         ToolTip="Поднимет выбранный источник выше в порядке попыток установки."
-                                        Margin="0,0,0,6" Command="{Binding MoveSourceUpCommand}"/>
+                                        Margin="0,0,0,8" Command="{Binding MoveSourceUpCommand}"/>
                                 <Button x:Name="btnSrcDown" Content="▼" Width="32" Height="32"
                                         ToolTip="Опустит выбранный источник ниже в порядке попыток установки."
-                                        Command="{Binding MoveSourceDownCommand}"/>
+                                        Margin="0" Command="{Binding MoveSourceDownCommand}"/>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -288,7 +321,8 @@
                     <!-- Per-category hint -->
                     <Border x:Name="pnlPerCategoryHint"
                             Visibility="{Binding ShowPerCategoryHint, Converter={StaticResource BoolToVis}}"
-                            Background="{DynamicResource CardBackground}" CornerRadius="8" Padding="12">
+                            Background="{DynamicResource CardBackground}" CornerRadius="8" Padding="12"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                         <TextBlock TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextSecondary}" FontSize="12">
                             <Run Text="После сохранения откройте вкладку "/>
@@ -299,15 +333,14 @@
                     </Border>
 
                     <!-- Save button -->
-                    <Button x:Name="btnSaveSourceOrder"
+                    <Button x:Name="btnSaveSourceOrder" Style="{StaticResource PrimaryButtonStyle}"
                             Content="💾 Сохранить и перепроверить доступность"
                             ToolTip="Сохранит порядок источников и заново проверит доступность приложений по новым правилам."
-                            Height="36" Margin="0,12,0,0"
-                            FontWeight="SemiBold"
+                            Height="32" Margin="0,12,0,0" Padding="16,0" HorizontalAlignment="Left"
                             Command="{Binding SaveSourceOrderCommand}"/>
 
-                    <TextBlock x:Name="txtSourceOrderStatus" Text="{Binding SourceOrderStatusText}" Margin="0,6,0,0"
-                               FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                    <TextBlock x:Name="txtSourceOrderStatus" Text="{Binding SourceOrderStatusText}" Margin="0,8,0,0"
+                               FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
                             </ScrollViewer>
                         </DockPanel>
@@ -316,10 +349,10 @@
             </TabItem>
             <TabItem Header="Офлайн и приватность">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="8,12,8,8">
+                    <StackPanel Margin="0,12,8,8">
             <!-- Офлайн режим -->
-            <GroupBox Header="🔌 Офлайн режим" Margin="0,0,0,15">
-                <StackPanel Margin="10">
+            <GroupBox Header="🔌 Офлайн режим" Margin="0,0,0,12">
+                <StackPanel>
                     <!-- Toggle -->
                     <CheckBox x:Name="chkOfflineMode"
                               Content="Принудительный офлайн режим (скрыть вкладки, требующие интернет)"
@@ -327,7 +360,7 @@
                               IsChecked="{Binding OfflineMode, Mode=TwoWay}"/>
                     <TextBlock Text="Без интернета вкладка Office скрывается автоматически. Этот флаг включает офлайн вручную и скрывает ещё и вкладку Сеть."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,0,0,14"/>
+                               FontSize="12" Margin="0,0,0,16"/>
 
                     <!-- Force online override -->
                     <CheckBox x:Name="chkForceOnlineMode"
@@ -336,7 +369,7 @@
                               IsChecked="{Binding ForceOnlineMode, Mode=TwoWay}"/>
                     <TextBlock Text="Всегда считать соединение активным (для сетей, где автоопределение ошибается). Игнорирует автодетект сети, чтобы онлайн-вкладки не скрывались при ложноотрицательном определении."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,0,0,14"/>
+                               FontSize="12" Margin="0,0,0,16"/>
 
                     <!-- Параноидальный режим -->
                     <CheckBox x:Name="chkParanoidMode"
@@ -345,40 +378,41 @@
                               IsChecked="{Binding ParanoidMode, Mode=TwoWay}"/>
                     <TextBlock Text="Блокирует отправку краш-отчётов, отзывов, фоновые проверки обновлений, а также всю диагностику на вкладке «Сеть» (пинг, проверка сервисов, DNS, определение публичного IP) — в том числе ручную. Лаунчер тоже сверяется с этим флажком и перестаёт предлагать опубликовать отчёт о сбое или о неудачных установках публичным issue на GitHub; уже отложенный отчёт при этом удаляется, а не ждёт на диске. Дополнительно перестают загружаться значки приложений, а индикатор доступности в каталоге становится серым («неизвестно») — и то, и другое требует обращения к сторонним сайтам. Загрузка самого каталога и скачивание/установка приложений продолжают работать."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,0,0,14"/>
+                               FontSize="12" Margin="0,0,0,16"/>
 
                     <!-- Connectivity status -->
-                    <Border x:Name="pnlConnStatus" CornerRadius="8" Padding="10,7" Margin="0,0,0,14"
+                    <Border x:Name="pnlConnStatus" CornerRadius="8" Padding="12,8" Margin="0,0,0,16"
                             Background="{Binding ConnStatusBackground}">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="txtConnIcon" Text="{Binding ConnIconText}" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="txtConnIcon" Text="{Binding ConnIconText}" Foreground="{Binding ConnIconBrush}" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock x:Name="txtConnStatus" Text="{Binding ConnStatusText}"
-                                       Foreground="{DynamicResource TextPrimary}" FontSize="13"
+                                       Foreground="{DynamicResource TextPrimary}" FontSize="12" FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Cache path -->
                     <TextBlock Text="Папка для кэширования установщиков:"
-                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,5"/>
-                    <Grid Margin="0,0,0,10">
+                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
+                    <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="txtOfflineCachePath" Height="30" Margin="0,0,8,0"
+                        <TextBox x:Name="txtOfflineCachePath" Height="32" Margin="0,0,8,0"
                                  Background="{DynamicResource CardBackground}"
                                  Foreground="{DynamicResource TextPrimary}"
-                                 VerticalContentAlignment="Center" Padding="6,0"
+                                 VerticalContentAlignment="Center" Padding="8,0"
                                  Text="{Binding OfflineCachePathText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
-                        <Button x:Name="btnBrowseCachePath" Content="📁" Width="34" Height="30"
+                        <Button x:Name="btnBrowseCachePath" Content="📁" Width="32" Height="32" Margin="0"
                                 ToolTip="Откроет выбор папки для хранения офлайн-кэша установщиков."
                                 Grid.Column="1" Command="{Binding BrowseCachePathCommand}"/>
                     </Grid>
 
                     <!-- Cache stats -->
                     <Border Background="{DynamicResource CardBackground}" CornerRadius="8"
-                            Padding="12,8" Margin="0,0,0,12">
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            Padding="12,8" Margin="0,0,0,16">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -388,10 +422,10 @@
                             <TextBlock x:Name="txtCacheStats" Text="{Binding CacheStatsText}"
                                        Foreground="{DynamicResource TextSecondary}" FontSize="12"
                                        VerticalAlignment="Center"/>
-                            <Button x:Name="btnOpenCacheFolder" Content="📂 Открыть" Width="90" Height="28"
+                            <Button x:Name="btnOpenCacheFolder" Content="📂 Открыть" Height="32" Padding="12,0"
                                     ToolTip="Откроет текущую папку офлайн-кэша в Проводнике."
                                     Grid.Column="1" Margin="0,0,8,0" Command="{Binding OpenCacheFolderCommand}"/>
-                            <Button x:Name="btnClearCache" Content="🗑️ Очистить" Width="90" Height="28"
+                            <Button x:Name="btnClearCache" Content="🗑️ Очистить" Height="32" Padding="12,0" Margin="0"
                                     ToolTip="После подтверждения удалит сохранённые установщики из офлайн-кэша."
                                     Grid.Column="2" Command="{Binding ClearCacheCommand}"/>
                         </Grid>
@@ -399,80 +433,104 @@
 
                     <!-- App selection for caching -->
                     <TextBlock Text="Выберите приложения для кэширования:"
-                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,6"/>
+                               Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
+                    <!-- Фильтр и «Все/Сброс» — над списком, а не внутри прокрутки (раньше
+                         уезжали вместе со строками). Список — в рамке, высота ровно на 12 строк
+                         по 24: при прокрутке к началу нижняя строка не обрезается пополам. -->
                     <Border Background="{DynamicResource CardBackground}" CornerRadius="8"
-                            Padding="8" Margin="0,0,0,10" MaxHeight="220">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="txtCacheAppFilter" Height="26" Margin="0,0,8,0"
-                                             Background="{DynamicResource ContentBackground}"
-                                             Foreground="{DynamicResource TextPrimary}"
-                                             VerticalContentAlignment="Center" Padding="6,0"
-                                             Tag="Поиск по названию..."
-                                             Text="{Binding CacheAppFilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                    <Button x:Name="btnCacheSelectAll" Content="Все" Width="44" Height="26"
-                                            ToolTip="Отметит все приложения, показанные в списке подготовки офлайн-кэша."
-                                            Grid.Column="1" Margin="0,0,6,0" Command="{Binding SelectAllCacheCommand}"/>
-                                    <Button x:Name="btnCacheSelectNone" Content="Сброс" Width="52" Height="26"
-                                            ToolTip="Снимет отметки со всех приложений для загрузки в кэш."
-                                            Grid.Column="2" Command="{Binding SelectNoneCacheCommand}"/>
-                                </Grid>
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            Padding="8" Margin="0,0,0,16">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="txtCacheAppFilter" Height="32" Margin="0,0,8,0"
+                                         Foreground="{DynamicResource TextPrimary}"
+                                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                         VerticalContentAlignment="Center" Padding="8,0"
+                                         Tag="Поиск по названию..."
+                                         Text="{Binding CacheAppFilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <!-- Подсказка в пустом поле — тот же приём, что у поиска
+                                         «Установленных»: фон-сеттер стиля, а не атрибут. -->
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                            <Setter Property="Background" Value="{DynamicResource ContentBackground}"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="Text" Value="">
+                                                    <Setter Property="Background">
+                                                        <Setter.Value>
+                                                            <VisualBrush Stretch="None" AlignmentX="Left">
+                                                                <VisualBrush.Visual>
+                                                                    <TextBlock Text="Поиск по названию..."
+                                                                               Foreground="{DynamicResource TextSecondary}" FontSize="12"
+                                                                               Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                                                </VisualBrush.Visual>
+                                                            </VisualBrush>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                                <Button x:Name="btnCacheSelectAll" Content="Все" Height="32" Padding="12,0"
+                                        ToolTip="Отметит все приложения, показанные в списке подготовки офлайн-кэша."
+                                        Grid.Column="1" Margin="0,0,8,0" Command="{Binding SelectAllCacheCommand}"/>
+                                <Button x:Name="btnCacheSelectNone" Content="Сброс" Height="32" Padding="12,0" Margin="0"
+                                        ToolTip="Снимет отметки со всех приложений для загрузки в кэш."
+                                        Grid.Column="2" Command="{Binding SelectNoneCacheCommand}"/>
+                            </Grid>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="288">
                                 <views:FlatItemsControl x:Name="listCacheApps" ItemsSource="{Binding FilteredCacheApps}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                            <CheckBox AutomationProperties.AutomationId="{Binding Id, StringFormat='chkCacheApp_{0}'}" Content="{Binding DisplayName}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                       Foreground="{DynamicResource TextPrimary}"
-                                                      Margin="2,2"/>
+                                                      Height="24" VerticalContentAlignment="Center" Margin="0"/>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </views:FlatItemsControl>
-                            </StackPanel>
-                        </ScrollViewer>
+                            </ScrollViewer>
+                        </StackPanel>
                     </Border>
 
-                    <!-- Download button + progress -->
-                    <Grid Margin="0,0,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Button x:Name="btnDownloadToCache" Height="36"
+                    <!-- Download button + progress. Кнопки по ширине надписи, а не во всю карточку:
+                         три полосы на 1000 px читались как поля ввода, а не как действия. -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <Button x:Name="btnDownloadToCache" Style="{StaticResource PrimaryButtonStyle}" Height="32" Padding="16,0"
                                 Content="⬇️ Скачать выбранные в кэш"
                                 ToolTip="Скачает установщики отмеченных приложений и проверит их перед сохранением для офлайн-установки."
-                                FontWeight="SemiBold" Command="{Binding DownloadToCacheCommand}"
-                                Margin="0,0,8,0"/>
-                        <Button x:Name="btnCancelCacheDownload" Height="36" Width="80"
-                                Content="⏹ Стоп" Grid.Column="1"
+                                Command="{Binding DownloadToCacheCommand}"
+                                Margin="0"/>
+                        <Button x:Name="btnCancelCacheDownload" Height="32" Padding="12,0" Margin="8,0,0,0"
+                                Content="⏹ Стоп"
                                 ToolTip="Остановит загрузку оставшихся установщиков. Уже проверенные файлы сохранятся в кэше."
                                 Visibility="{Binding ShowCancelCacheDownload, Converter={StaticResource BoolToVis}}"
                                 IsEnabled="{Binding CanCancelCacheDownload}"
                                 Command="{Binding CancelCacheDownloadCommand}"/>
-                    </Grid>
-                    <Button x:Name="btnBuildOfflineKit" Height="34" Margin="0,0,0,4"
+                    </StackPanel>
+                    <Button x:Name="btnBuildOfflineKit" Height="32" Padding="16,0" Margin="0,0,0,4" HorizontalAlignment="Left"
                             Content="💾 Сделать набор переносным (на флешку)"
                             ToolTip="Положит в папку кэша копию клиента, файл ответа и файл запуска: программы из кэша можно будет поставить на другом компьютере без интернета."
                             Command="{Binding BuildOfflineKitCommand}"/>
                     <TextBlock x:Name="txtOfflineKitStatus" Text="{Binding OfflineKitStatusText}" TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,8"/>
-                    <Button x:Name="btnReinstallKit" Height="34" Margin="0,0,0,8"
+                               Foreground="{DynamicResource TextSecondary}" FontSize="12" Margin="0,0,0,12"/>
+                    <Button x:Name="btnReinstallKit" Height="32" Padding="16,0" Margin="0,0,0,12" HorizontalAlignment="Left"
                             Content="🧳 Перед переустановкой Windows…"
                             ToolTip="Соберёт на флешку драйверы этого компьютера, профили Wi-Fi и список программ, чтобы вернуть их после переустановки."
                             Command="{Binding OpenReinstallKitCommand}"/>
 
                     <ProgressBar x:Name="progressCache" Height="6" Minimum="0" Maximum="100"
-                                 Value="{Binding CacheProgressValue, Mode=OneWay}" Margin="0,0,0,6"
+                                 Value="{Binding CacheProgressValue, Mode=OneWay}" Margin="0,0,0,8"
                                  Foreground="{DynamicResource AccentColor}"
                                  Background="{DynamicResource BorderBrush}"
                                  Visibility="{Binding ShowCacheProgress, Converter={StaticResource BoolToVis}}"/>
                     <TextBox x:Name="txtCacheLog" Text="{Binding CacheLogText, Mode=OneWay}" Height="80" Margin="0,0,0,0"
                              Background="{DynamicResource ContentBackground}"
-                             Foreground="{DynamicResource StatusSuccess}" FontFamily="Consolas" FontSize="10"
+                             Foreground="{DynamicResource StatusSuccess}" FontFamily="Consolas" FontSize="11" Padding="8,4"
                              IsReadOnly="True" TextWrapping="Wrap"
                              VerticalScrollBarVisibility="Auto"
                              Visibility="{Binding ShowCacheLog, Converter={StaticResource BoolToVis}}"/>
@@ -484,10 +542,10 @@
             </TabItem>
             <TabItem Header="Профиль и снимки">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="8,12,8,8">
+                    <StackPanel Margin="0,12,8,8">
             <!-- Поведение приложения -->
-            <GroupBox Header="🖥️ Поведение приложения" Margin="0,0,0,15">
-                <StackPanel Margin="10">
+            <GroupBox Header="🖥️ Поведение приложения" Margin="0,0,0,12">
+                <StackPanel>
                     <CheckBox x:Name="chkMinimizeToTray"
                               Content="Сворачивать в трей при закрытии"
                               Foreground="{DynamicResource TextPrimary}"
@@ -495,51 +553,51 @@
                               IsChecked="{Binding MinimizeToTray, Mode=TwoWay}"/>
                     <TextBlock Text="Окно скрывается в трей вместо закрытия. Двойной клик по иконке для открытия."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11"/>
+                               FontSize="12"/>
                 </StackPanel>
             </GroupBox>
 
             <!-- Перенос настроек -->
-            <GroupBox Header="💾 Перенос настроек" Margin="0,0,0,15">
-                <StackPanel Margin="10">
+            <GroupBox Header="💾 Перенос настроек" Margin="0,0,0,12">
+                <StackPanel>
                     <TextBlock Text="Профиль, пресеты, избранное и настройки сохраняются в один файл для переноса на другой компьютер. Данные не покидают устройство — файл переносится вручную."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,0,0,10"/>
+                               FontSize="12" Margin="0,0,0,12"/>
                     <StackPanel Orientation="Horizontal">
                         <Button x:Name="btnExportSettings" Content="📤 Экспорт настроек"
                                 ToolTip="Сохранит настройки Ven4Tools в выбранный архив (.zip)."
-                                Height="35" Width="180" Margin="0,0,10,0"
+                                Height="32" Padding="12,0" Margin="0,0,8,0"
                                 Command="{Binding ExportSettingsCommand}"/>
                         <Button x:Name="btnImportSettings" Content="📥 Импорт настроек"
                                 ToolTip="Загрузит настройки из сохранённого архива (.zip) и применит поддерживаемые параметры."
-                                Height="35" Width="180"
+                                Height="32" Padding="12,0" Margin="0"
                                 Command="{Binding ImportSettingsCommand}"/>
                     </StackPanel>
                     <TextBlock x:Name="txtTransferStatus" Text="{Binding TransferStatusText}" Margin="0,8,0,0"
-                               FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                               FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
             </GroupBox>
 
             <!-- Скрытые приложения -->
-            <GroupBox Header="🙈 Скрытые приложения" Margin="0,0,0,15">
-                <StackPanel Margin="10">
+            <GroupBox Header="🙈 Скрытые приложения" Margin="0,0,0,12">
+                <StackPanel>
                     <TextBlock Text="Приложения, скрытые из каталога кнопкой 🙈 в строке. Индивидуального списка нет — только массовый возврат всех сразу."
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,0,0,10"/>
+                               FontSize="12" Margin="0,0,0,12"/>
                     <Button x:Name="btnUnhideAllApps" Content="👁 Показать скрытые"
                             ToolTip="Вернёт в каталог все скрытые приложения."
-                            Height="35" Width="180" HorizontalAlignment="Left"
+                            Height="32" Padding="12,0" Margin="0" HorizontalAlignment="Left"
                             Command="{Binding UnhideAllAppsCommand}"/>
                     <TextBlock x:Name="txtHiddenAppsStatus" Text="{Binding HiddenAppsStatusText}" Margin="0,8,0,0"
-                               FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                               FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
             </GroupBox>
 
             <!-- Снапшоты конфигурации -->
-            <GroupBox Header="📸 Снапшоты конфигурации" Margin="0,0,0,15">
-                <StackPanel Margin="10">
+            <GroupBox Header="📸 Снапшоты конфигурации" Margin="0,0,0,12">
+                <StackPanel>
                     <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="11" Margin="0,0,0,10">
+                               FontSize="12" Margin="0,0,0,12">
                         Сохранение и повторное применение набора настроек на этой машине:
                         запоминает отмеченные твики раздела «Очистка» и локальные пресеты. Это не
                         отмена изменений — твики, применённые после создания снапшота,
@@ -548,18 +606,19 @@
 
                     <Button x:Name="btnSaveSnapshot" Content="📸 Сохранить снапшот"
                             ToolTip="Сохранит текущие твики очистки и пресеты, чтобы их можно было восстановить позже."
-                            Height="34" HorizontalAlignment="Left" Width="200"
-                            Margin="0,0,0,10" Command="{Binding SaveSnapshotCommand}"/>
+                            Height="32" Padding="12,0" HorizontalAlignment="Left"
+                            Margin="0,0,0,12" Command="{Binding SaveSnapshotCommand}"/>
 
                     <Border Background="{DynamicResource CardBackground}" CornerRadius="8"
-                            Padding="6" MaxHeight="260">
+                            Padding="4" MaxHeight="260"
+                            Visibility="{Binding ShowSnapshotsEmpty, Converter={StaticResource InverseBoolToVis}}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <views:FlatItemsControl x:Name="lstSnapshots" ItemsSource="{Binding Snapshots}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Margin="0,2" Padding="8,6"
+                                        <Border Margin="0,2" Padding="12,4"
                                                 Background="{DynamicResource ContentBackground}"
-                                                CornerRadius="6">
+                                                CornerRadius="4">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
@@ -571,14 +630,14 @@
                                                            TextWrapping="Wrap"
                                                            VerticalAlignment="Center"/>
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                    <Button Content="↺ Восстановить"
-                                                            Height="26" Padding="8,0"
-                                                            FontSize="11" Margin="6,0,0,0"
+                                                    <Button AutomationProperties.AutomationId="{Binding Info.Name, StringFormat='btnSnapshotRestore_{0}'}" Content="↺ Восстановить"
+                                                            Height="28" Padding="12,0"
+                                                            FontSize="12" Margin="8,0,0,0"
                                                             ToolTip="После подтверждения восстановит твики очистки и пресеты из этого снапшота."
                                                             Command="{Binding DataContext.RestoreSnapshotCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                             CommandParameter="{Binding}"/>
-                                                    <Button Content="✕"
-                                                            Width="26" Height="26" Padding="0"
+                                                    <Button AutomationProperties.AutomationId="{Binding Info.Name, StringFormat='btnSnapshotDelete_{0}'}" Content="✕"
+                                                            Width="28" Height="28" Padding="0"
                                                             FontSize="11" Margin="4,0,0,0"
                                                             Background="Transparent"
                                                             Foreground="{DynamicResource TextSecondary}"
@@ -597,12 +656,12 @@
 
                     <TextBlock x:Name="txtSnapshotsEmpty"
                                Text="Нет сохранённых снапшотов"
-                               FontSize="11" Margin="6,6,6,0"
+                               FontSize="12" Margin="0"
                                Foreground="{DynamicResource TextSecondary}"
                                Visibility="{Binding ShowSnapshotsEmpty, Converter={StaticResource BoolToVis}}"/>
 
                     <TextBlock x:Name="txtSnapshotStatus" Text="{Binding SnapshotStatusText}" Margin="0,8,0,0"
-                               FontSize="11" TextWrapping="Wrap"
+                               FontSize="12" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
             </GroupBox>

@@ -97,14 +97,21 @@ namespace Ven4Tools.Launcher
                 {
                     _clientProcess = clientProcess;
                     _watchdog?.Dispose();
-                    _watchdog = new WatchdogService(clientProcess);
-                    _watchdog.ClientFrozen += report => Dispatcher.Invoke(() => ShowCrashReport(report));
-                    _watchdog.ClientKilledWithoutCrash += report => Dispatcher.Invoke(() => ShowCrashReport(report));
+                    var watchdog = new WatchdogService(clientProcess);
+                    _watchdog = watchdog;
+                    watchdog.ClientFrozen += report => Dispatcher.Invoke(() => ShowCrashReport(report));
+                    watchdog.ClientKilledWithoutCrash += report => Dispatcher.Invoke(() => ShowCrashReport(report));
                     clientProcess.EnableRaisingEvents = true;
                     clientProcess.Exited += (_, _) =>
                     {
-                        var wd     = _watchdog;
-                        _watchdog  = null;
+                        // Сторож именно ЭТОГО процесса, а не текущее значение поля: если
+                        // за это время клиент запустили ещё раз, поле уже держит сторожа
+                        // нового процесса — раньше его забирали и освобождали здесь, а
+                        // ReportKill получал код выхода чужого процесса. Чужой (уже
+                        // освобождённый при повторном запуске) сторож не трогаем.
+                        var wd = System.Threading.Interlocked.CompareExchange(ref _watchdog, null, watchdog) == watchdog
+                            ? watchdog
+                            : null;
 
                         var crashPath = LauncherPaths.CrashReportPath;
                         bool hasFreshCrash = System.IO.File.Exists(crashPath) &&

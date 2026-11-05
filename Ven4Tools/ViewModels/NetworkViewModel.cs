@@ -15,7 +15,9 @@ namespace Ven4Tools.ViewModels
     public sealed class NetworkCheckResult : ViewModelBase
     {
         private string _text;
-        private string _iconText = "⬜";
+        // «○» (U+25CB, есть в самом Segoe UI) — «ещё не проверено». Прежний «⬜» выглядел
+        // ровно как квадрат-«тофу» на месте отсутствующего значка.
+        private string _iconText = "○";
         // До перехода на MVVM значки строк пинга и сервисов не задавали Foreground
         // в XAML явно — цвет наследовался от глобального Style TargetType="TextBlock"
         // (App.xaml), который ставит DynamicResource TextPrimary. Явный биндинг на IconBrush

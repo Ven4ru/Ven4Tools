@@ -353,7 +353,10 @@ namespace Ven4Tools.Services
         /// </summary>
         private static bool IsCatalogVersionAcceptable(int candidateVersion, string source)
         {
-            int lastSeen = CatalogVersionGuard.Load();
+            // Нижняя граница — не ниже встроенного каталога: он поставляется внутри подписанного
+            // exe, и после сброса счётчика (новый профиль, удалённый или битый catalog_guard.dat)
+            // иначе прошёл бы любой старый подписанный каталог из публичной истории.
+            int lastSeen = Math.Max(CatalogVersionGuard.Load(), EmbeddedCatalogVersion.Value);
             bool acceptable = IsVersionAcceptable(candidateVersion, lastSeen);
             if (!acceptable)
             {
@@ -460,6 +463,23 @@ namespace Ven4Tools.Services
         /// реальным набором приложений вместо пустого каталога. При отсутствии/ошибке
         /// ресурса возвращает пустой каталог, чтобы приложение не падало.
         /// </summary>
+        /// <summary>Версия встроенного каталога (0 — ресурса нет или он не читается).</summary>
+        private static readonly Lazy<int> EmbeddedCatalogVersion = new(() =>
+        {
+            try
+            {
+                using var stream = typeof(CatalogLoaderService).Assembly.GetManifestResourceStream("Ven4Tools.Resources.embedded_catalog.json");
+                if (stream == null) return 0;
+                using var reader = new StreamReader(stream);
+                return JsonConvert.DeserializeObject<MasterCatalog>(reader.ReadToEnd())?.Version ?? 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write($"[CatalogLoaderService] Версия встроенного каталога не прочитана: {ex.Message}");
+                return 0;
+            }
+        });
+
         private MasterCatalog LoadEmbeddedCatalog()
         {
             try

@@ -97,6 +97,8 @@ namespace Ven4Tools.Services
                         nic.NetworkInterfaceType != NetworkInterfaceType.Loopback)
                     {
                         var props = nic.GetIPProperties();
+                        if (IsDriverFilterInterface(nic.Name, nic.Description, props.UnicastAddresses.Count > 0))
+                            continue;
                         var ipv4 = props.UnicastAddresses
                             .FirstOrDefault(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
                         list.Add(new AdapterInfo
@@ -115,6 +117,32 @@ namespace Ven4Tools.Services
                 AppLogger.Write(ex, "[DiagnosticsService] Не удалось перечислить сетевые адаптеры");
             }
             return list;
+        }
+
+        // Признаки служебных фильтров драйвера (NDIS lightweight filters). Windows отдаёт их
+        // в списке интерфейсов отдельными «включёнными» строками вида
+        // «Ethernet-WFP Native MAC Layer LightWeight Filter-0000» или
+        // «Ethernet-QoS Packet Scheduler-0000»: это не адаптеры, а прослойки над настоящим.
+        private static readonly string[] DriverFilterMarkers =
+        {
+            "LightWeight Filter", "Packet Scheduler", "WFP ", "-WFP", "Filter Driver",
+        };
+
+        /// <summary>
+        /// Служебный фильтр драйвера, а не сетевой адаптер: у него нет ни одного IP-адреса
+        /// и в имени или описании есть признак фильтра. Интерфейс с адресом не отбрасывается
+        /// никогда — настоящий адаптер с необычным именем не должен пропасть из списка.
+        /// </summary>
+        public static bool IsDriverFilterInterface(string name, string? description, bool hasIpAddress)
+        {
+            if (hasIpAddress) return false;
+            foreach (var marker in DriverFilterMarkers)
+            {
+                if ((name ?? "").Contains(marker, StringComparison.OrdinalIgnoreCase) ||
+                    (description ?? "").Contains(marker, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
 
         // DNS-резолюция через System.Net.Dns — без внешних процессов и проблем с кодировкой

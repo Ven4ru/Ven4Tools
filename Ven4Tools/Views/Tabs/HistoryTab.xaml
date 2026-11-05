@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:views="clr-namespace:Ven4Tools.Views"
              Background="{DynamicResource ContentBackground}">
-    <Grid Margin="20">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -13,17 +13,18 @@
         <!-- Header -->
         <Grid Grid.Row="0" Margin="0,0,0,16">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="📋 История установок" FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource TextPrimary}"/>
+                <!-- Заголовок раздела — общий PageTitleStyle, без эмодзи: значок раздела уже
+                     есть в меню, а на Windows 10 эмодзи рисуется одноцветным глифом. -->
+                <TextBlock Text="История установок" Style="{StaticResource PageTitleStyle}" VerticalAlignment="Center"/>
                 <Border Background="{DynamicResource AccentColor}" CornerRadius="10"
-                        Padding="8,2" Margin="12,4,0,4" VerticalAlignment="Center">
+                        Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="txtHistoryCount" Text="{Binding HistoryCount}"
-                               FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentForeground}"/>
+                               FontSize="11" FontWeight="Bold" Foreground="{DynamicResource AccentForeground}"/>
                 </Border>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <CheckBox x:Name="chkSaveHistory" Content="Сохранять историю"
-                          VerticalAlignment="Center" Margin="0,0,14,0"
+                          VerticalAlignment="Center" Margin="0,0,16,0"
                           Foreground="{DynamicResource TextPrimary}"
                           ToolTip="Когда снято — новые установки не записываются в историю. Уже сохранённые записи остаются, удалить их можно кнопкой «Очистить»."
                           IsChecked="{Binding SaveHistory, Mode=TwoWay}"/>
@@ -50,10 +51,10 @@
                      Tag="🔍 Поиск в истории..."
                      TextChanged="TxtHistorySearch_TextChanged"/>
             <ToggleButton x:Name="togSuccessOnly" Grid.Column="1" Content="✅ Успешные"
-                          Height="32" Padding="10,0" Margin="0,0,6,0"
+                          Height="32" Padding="12,0" Margin="0,0,8,0"
                           IsChecked="{Binding SuccessOnly, Mode=TwoWay}"/>
             <ToggleButton x:Name="togFailOnly" Grid.Column="2" Content="❌ Неудачные"
-                          Height="32" Padding="10,0"
+                          Height="32" Padding="12,0" Margin="0"
                           IsChecked="{Binding FailOnly, Mode=TwoWay}"/>
         </Grid>
 
@@ -69,7 +70,8 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border Background="{DynamicResource CardBackground}"
-                            CornerRadius="8" Padding="12,8" Margin="0,0,0,4">
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            CornerRadius="8" Padding="16,8" Margin="0,0,0,8">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -81,12 +83,14 @@
                             <!-- Status icon -->
                             <TextBlock Grid.Column="0" Text="{Binding StatusIcon}"
                                        FontSize="16" VerticalAlignment="Center"
-                                       Margin="0,0,10,0"/>
+                                       Margin="0,0,12,0"/>
 
                             <!-- установлено Программа [дата] -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <!-- Главная строка: «установлено Firefox» -->
-                                <TextBlock FontFamily="Consolas" FontSize="13">
+                                <!-- Обычный шрифт, не моноширинный: Consolas по общим правилам — только
+                                     для путей, кодов и версий. -->
+                                <TextBlock FontSize="13">
                                     <Run Text="{Binding ActionVerb, Mode=OneWay}"
                                          Foreground="{DynamicResource TextSecondary}"/>
                                     <Run Text="{Binding AppName, Mode=OneWay}"
@@ -107,8 +111,9 @@
                             <!-- spacer -->
 
                             <!-- Reinstall -->
-                            <Button Grid.Column="3" Content="🔄"
-                                    Height="28" Width="36" FontSize="14"
+                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnHistoryReinstall_{0}'}" Grid.Column="3" Content="&#xE72C;"
+                                    ContentTemplate="{StaticResource IconGlyphTemplate}" AutomationProperties.Name="🔄"
+                                    Height="32" Width="32" Margin="0" FontSize="14"
                                     VerticalAlignment="Center"
                                     ToolTip="Повторно установит это приложение из доступного источника."
                                     Command="{Binding DataContext.ReinstallCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -118,5 +123,22 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </views:FlatItemsControl>
+
+        <!-- Пустой список: пояснение на месте записей, а не пустое серое поле. -->
+        <TextBlock Grid.Row="2" Text="Записей нет. Здесь появятся программы, установленные и удалённые через Ven4Tools."
+                   FontSize="13" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="480"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextSecondary}" IsHitTestVisible="False">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasItems, ElementName=lstHistory}" Value="False">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
     </Grid>
 </UserControl>

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Проверка в ВМ двух рискованных мест блока 1 «Панель задач» (дизайн 04.11.2026):
+       1) цветовые темы — запись акцента/режима/прозрачности тем же путём, что «Параметры», замер цвета
+          панели по пикселю и побайтный откат; 2) «Ушки Венчика» — поиск «Пуска» через UI Automation,
+          прозрачное окно над ним и движение за кнопкой. Клиент не нужен. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsTestProject>false</IsTestProject>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+  </PropertyGroup>
+</Project>

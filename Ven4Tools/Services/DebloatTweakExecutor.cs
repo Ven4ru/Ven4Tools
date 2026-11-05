@@ -28,7 +28,13 @@ namespace Ven4Tools.Services
             {
                 // Прежнее состояние запоминается до первой же правки — по нему твик
                 // потом возвращается кнопкой «Вернуть» (см. DebloatUndoService).
-                DebloatUndoService.Default.Capture(id, RegistryChangesOf(category, id), ServiceOf(category, id));
+                // Записать «как было» нельзя (файл отката испорчен и отложен или не читается) —
+                // твик с откатом не применяется: иначе потом вернуть его было бы не к чему.
+                if (!DebloatUndoService.Default.Capture(id, RegistryChangesOf(category, id), ServiceOf(category, id)))
+                {
+                    AppLogger.Write($"[Деблоатер] «{displayName}» не применён: нет надёжной записи отката");
+                    return false;
+                }
 
                 bool ok = category switch
                 {

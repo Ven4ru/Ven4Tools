@@ -28,7 +28,10 @@ namespace Ven4Tools.Services
             Timeout = Timeout.InfiniteTimeSpan,
             DefaultRequestHeaders = { { "User-Agent", "Ven4Tools" } }
         };
-        private const int IconSize = 20;
+        // Ширина декодирования — с запасом под крупнейшее место показа: значок на карточке
+        // каталога 22 px (при масштабе 150–200 % — 33–44 физических), в окне карточки
+        // приложения 72 px. Прежние 20 px растягивались и там и там — значки выглядели мыльными.
+        private const int IconSize = 64;
         private static readonly TimeSpan IconTimeout = TimeSpan.FromSeconds(3);
 
         // Дисковый кеш переживает перезапуск приложения — без него каждый старт клиента

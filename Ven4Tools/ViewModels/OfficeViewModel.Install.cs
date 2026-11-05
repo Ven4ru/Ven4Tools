@@ -59,7 +59,14 @@ namespace Ven4Tools.ViewModels
                 if (!TryOpenVerifiedInstaller(installerPath, ref installerHandle)) return;
 
                 // Шаг 2: регион Windows на время загрузки установщиком.
-                SaveRegion();
+                if (!SaveRegion())
+                {
+                    // Регион не меняли — откатывать нечего, regionChanged остаётся false.
+                    SetProgress(true, "❌ Ошибка установки", 0, "");
+                    MessageBox.Show("Не удалось сохранить текущий регион Windows, поэтому установка Office остановлена: без этой записи регион нельзя было бы вернуть после сбоя. Подробности — в журнале.",
+                        "Office", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
                 regionChanged = true; // до SetRegionUS — чтобы finally откатил даже при исключении внутри
                 SetRegionUS();
                 AppLogger.Write("🌎 Регион переключён на US (GeoID: 244, CountryCode: US)");
@@ -125,6 +132,12 @@ namespace Ven4Tools.ViewModels
                 {
                     IsInstalling = false;
                     CancelEnabled = false;
+                    // Сбой внутри наблюдения оставлял полосу в режиме «бегущей».
+                    ProgressIndeterminate = false;
+                    // Версию или язык переключили во время установки — оставшийся
+                    // установщик уже не для выбранного, повторно его не предлагаем.
+                    if (_downloadedFilePath != null && !DownloadMatchesSelection())
+                        TryDeleteDownloadedInstaller();
                     HasDownloadedInstaller = _downloadedFilePath != null && File.Exists(_downloadedFilePath);
                 });
             }

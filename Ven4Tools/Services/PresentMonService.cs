@@ -30,6 +30,12 @@ namespace Ven4Tools.Services
         private readonly Dictionary<int, Queue<(double At, double FrameMs)>> _frames = new();
         private readonly Dictionary<int, string> _names = new();
         private Process? _process;
+        // Копия exe в защищённом каталоге, из которой запущен счётчик (удаляется при остановке).
+        private string? _runCopy;
+        // Последняя неудача запуска: оверлей пробует перезапуск каждую секунду, а поиск файла
+        // и проверка подписи (с проверкой отзыва по сети) — не для UI-потока раз в секунду.
+        private DateTime _lastFailUtc = DateTime.MinValue;
+        private static readonly TimeSpan RetryPause = TimeSpan.FromSeconds(60);
         private readonly Stopwatch _clock = Stopwatch.StartNew();
 
         private PresentMonService() { }
@@ -83,15 +89,38 @@ namespace Ven4Tools.Services
             lock (_gate)
             {
                 if (_process is { HasExited: false }) return true;
+                if (DateTime.UtcNow - _lastFailUtc < RetryPause) return false;
                 string? exe = FindExecutable();
                 if (exe == null) return false;
-                if (!AuthenticodeVerifier.IsSignedByOrganization(exe, new[] { "Intel Corporation" }, out string error))
+                if (_process != null) { _process.Dispose(); _process = null; DeleteRunCopy(); }
+
+                // Установленный exe лежит в папке, куда пишет сам пользователь: проверка подписи
+                // по пути и запуск по тому же пути оставляли окно для подмены, а рядом можно
+                // было подложить DLL — с правами администратора клиента. Поэтому копия
+                // в защищённом каталоге: открыта на чтение без права записи от проверки до запуска.
+                string copy;
+                try
+                {
+                    copy = Helpers.InstallerTempDirectory.NewFilePath($"PresentMon_{Guid.NewGuid():N}.exe");
+                    File.Copy(exe, copy);
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Write($"[PresentMon] не запущен: не удалось подготовить копию — {ex.Message}");
+                    _lastFailUtc = DateTime.UtcNow;
+                    return false;
+                }
+                using var hold = new FileStream(copy, FileMode.Open, FileAccess.Read, FileShare.Read);
+                if (!AuthenticodeVerifier.IsSignedByOrganization(copy, new[] { "Intel Corporation" }, out string error))
                 {
                     AppLogger.Write($"[PresentMon] не запущен: подпись не подтверждена ({error})");
+                    hold.Dispose();
+                    TryDelete(copy);
+                    _lastFailUtc = DateTime.UtcNow;
                     return false;
                 }
 
-                var psi = new ProcessStartInfo(exe)
+                var psi = new ProcessStartInfo(copy)
                 {
                     UseShellExecute = false, CreateNoWindow = true,
                     RedirectStandardOutput = true, RedirectStandardError = true
@@ -106,8 +135,16 @@ namespace Ven4Tools.Services
 
                 _frames.Clear();
                 _names.Clear();
-                _process = Process.Start(psi);
-                if (_process == null) return false;
+                try { _process = Process.Start(psi); }
+                catch (Exception ex) { AppLogger.Write($"[PresentMon] не запущен: {ex.Message}"); _process = null; }
+                if (_process == null)
+                {
+                    hold.Dispose();
+                    TryDelete(copy);
+                    _lastFailUtc = DateTime.UtcNow;
+                    return false;
+                }
+                _runCopy = copy;
                 _process.OutputDataReceived += (_, e) => { if (e.Data != null) OnLine(e.Data); };
                 _process.ErrorDataReceived += (_, e) => { };
                 _process.BeginOutputReadLine();
@@ -126,8 +163,27 @@ namespace Ven4Tools.Services
                 catch (Exception ex) { AppLogger.Write(ex, "PresentMonService.Stop"); }
                 _process.Dispose();
                 _process = null;
+                DeleteRunCopy();
                 _frames.Clear();
                 AppLogger.Write("🎮 Счётчик FPS остановлен");
+            }
+        }
+
+        private void DeleteRunCopy()
+        {
+            if (_runCopy == null) return;
+            TryDelete(_runCopy);
+            _runCopy = null;
+        }
+
+        private static void TryDelete(string path)
+        {
+            // Процесс после Kill может держать файл ещё мгновение — несколько попыток.
+            for (int i = 0; i < 5; i++)
+            {
+                try { File.Delete(path); return; }
+                catch (Exception) when (i < 4) { Thread.Sleep(100); }
+                catch (Exception ex) { AppLogger.Write($"[PresentMon] копия не удалена: {ex.Message}"); }
             }
         }
 

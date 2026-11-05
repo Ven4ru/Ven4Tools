@@ -6,18 +6,73 @@
              Background="{DynamicResource ContentBackground}">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisUndo"/>
+        <!-- Фильтр категорий — «таблетки» того же вида, что вкладки Windows Update (стиль TabItem
+             в App.xaml): угол 8, SemiBold, высота 32 (Padding 12,7 + рамка — вровень с кнопками справа); выбранный — мягкий акцент и акцентная
+             надпись. Это по-прежнему RadioButton одной группы: фильтр в DebloaterTab.xaml.cs
+             читает IsChecked, AutomationId (x:Name) и роль для UI-тестов не меняются. -->
+        <Style x:Key="FilterPillStyle" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"
+                                              TextElement.FontWeight="SemiBold"
+                                              TextElement.Foreground="{TemplateBinding Foreground}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsMouseOver" Value="True"/>
+                        <Condition Property="IsChecked" Value="False"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Background" Value="{DynamicResource AccentHoverBackground}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                </MultiTrigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccentSoftBackground}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentSoftBorder}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
+                </Trigger>
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.45"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
-    <Grid Margin="20">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="🧹 Очистка Windows"
-                       FontSize="22" FontWeight="Bold"
-                       Foreground="{DynamicResource TextPrimary}"/>
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Очистка Windows" Style="{StaticResource PageTitleStyle}"/>
             <TextBlock TextWrapping="Wrap" Margin="0,4,0,0"
                        Foreground="{DynamicResource TextSecondary}" FontSize="12">
                 Удаление предустановленного мусора, рекламы и навязанного ИИ, настройка конфиденциальности.
@@ -35,23 +90,8 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,10">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                <Button x:Name="btnCheckDrift" Content="Проверить применённое" Height="30" Padding="10,0"
-                        ToolTip="Сверит применённые ранее твики с текущим состоянием Windows: крупные обновления часто возвращают отключённое."
-                        Margin="0,0,6,0" Command="{Binding CheckDriftCommand}"/>
-                <Button x:Name="btnDebloatSelectAll" Content="Все" Width="50" Height="30"
-                        ToolTip="Отметит все действия очистки, показанные текущим фильтром."
-                        Margin="0,0,6,0" Command="{Binding SelectAllCommand}"/>
-                <Button x:Name="btnDebloatSelectNone" Content="Сброс" Width="60" Height="30"
-                        ToolTip="Снимет отметки со всех действий очистки."
-                        Command="{Binding SelectNoneCommand}"/>
-            </StackPanel>
-        </Grid>
-
-        <!-- Filter tabs; над ними — полоса «обновление Windows вернуло отключённое» -->
-        <StackPanel Grid.Row="1" Margin="0,0,0,12">
-        <Border x:Name="driftBanner" CornerRadius="8" Padding="12,9" Margin="0,0,0,12"
+        <!-- Полоса «обновление Windows вернуло отключённое» — над строкой фильтров. -->
+        <Border x:Name="driftBanner" Grid.Row="0" CornerRadius="8" Padding="16,8" Margin="0,0,0,12"
                 Background="{DynamicResource CardBackground}"
                 BorderBrush="{DynamicResource StatusDanger}" BorderThickness="1"
                 Visibility="{Binding HasDrift, Converter={StaticResource BoolToVisUndo}}">
@@ -63,45 +103,62 @@
                 <TextBlock x:Name="txtDrift" Text="{Binding DriftText}" TextWrapping="Wrap" FontSize="12"
                            VerticalAlignment="Center" Foreground="{DynamicResource TextPrimary}"/>
                 <Button x:Name="btnReapplyDrifted" Grid.Column="1" Content="Применить заново"
-                        Height="30" Padding="12,0" Margin="12,0,0,0" VerticalAlignment="Center"
+                        Height="32" Padding="12,0" Margin="12,0,0,0" VerticalAlignment="Center"
                         ToolTip="Отметит переставшие действовать твики и применит их тем же путём, что и кнопка «Применить выбранное»."
                         IsEnabled="{Binding ApplyEnabled}"
                         Command="{Binding ReapplyDriftedCommand}"/>
             </Grid>
         </Border>
-        <StackPanel Orientation="Horizontal">
+
+        <!-- Фильтры слева и кнопки отметок справа — одной строкой: раньше кнопки занимали
+             отдельный ряд над фильтрами, и правая половина строки фильтров пустовала. -->
+        <Grid Grid.Row="1" Margin="0,0,0,4">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <WrapPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Top">
             <RadioButton x:Name="rbAll"      Content="Все"               GroupName="DebloatFilter"
-                         IsChecked="True"    Margin="0,0,14,0"
-                         Foreground="{DynamicResource TextPrimary}"
+                         IsChecked="True"    Style="{StaticResource FilterPillStyle}"
                          Checked="FilterChanged"/>
             <RadioButton x:Name="rbAds"      Content="📢 Реклама и ИИ"  GroupName="DebloatFilter"
-                         Margin="0,0,14,0"
+                         Style="{StaticResource FilterPillStyle}"
                          ToolTip="Реклама и предложения в «Пуске», поиске, Проводнике и на экране блокировки, виджеты, Copilot, Recall, OneDrive."
-                         Foreground="{DynamicResource TextPrimary}"
                          Checked="FilterChanged"/>
             <RadioButton x:Name="rbApps"     Content="📦 Приложения"    GroupName="DebloatFilter"
-                         Margin="0,0,14,0"
-                         Foreground="{DynamicResource TextPrimary}"
+                         Style="{StaticResource FilterPillStyle}"
                          Checked="FilterChanged"/>
             <RadioButton x:Name="rbPrivacy"  Content="🔒 Конфиденциальность" GroupName="DebloatFilter"
-                         Margin="0,0,14,0"
-                         Foreground="{DynamicResource TextPrimary}"
+                         Style="{StaticResource FilterPillStyle}"
                          Checked="FilterChanged"/>
             <RadioButton x:Name="rbServices" Content="⚙️ Службы"       GroupName="DebloatFilter"
-                         Foreground="{DynamicResource TextPrimary}"
+                         Style="{StaticResource FilterPillStyle}"
                          Checked="FilterChanged"/>
+        </WrapPanel>
+        <!-- Нижний отступ 8 — как у «таблеток» (их Margin 0,0,8,8): кнопки и фильтры на одной линии. -->
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,8">
+            <Button x:Name="btnCheckDrift" Content="Проверить применённое" Height="32" Padding="12,0"
+                    ToolTip="Сверит применённые ранее твики с текущим состоянием Windows: крупные обновления часто возвращают отключённое."
+                    Margin="0,0,8,0" Command="{Binding CheckDriftCommand}"/>
+            <Button x:Name="btnDebloatSelectAll" Content="Все" Height="32" Padding="12,0"
+                    ToolTip="Отметит все действия очистки, показанные текущим фильтром."
+                    Margin="0,0,8,0" Command="{Binding SelectAllCommand}"/>
+            <Button x:Name="btnDebloatSelectNone" Content="Сброс" Height="32" Padding="12,0"
+                    ToolTip="Снимет отметки со всех действий очистки."
+                    Margin="0" Command="{Binding SelectNoneCommand}"/>
         </StackPanel>
-        </StackPanel>
+        </Grid>
 
         <!-- Items list -->
         <Border Grid.Row="2" Background="{DynamicResource CardBackground}"
-                CornerRadius="10" Padding="4">
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                CornerRadius="8" Padding="4">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <views:FlatItemsControl x:Name="lstDebloat" ItemsSource="{Binding FilteredItems}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Padding="10,7" Margin="2,1"
-                                    CornerRadius="7">
+                            <Border Padding="12,8" Margin="0"
+                                    CornerRadius="4">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Setter Property="Background" Value="Transparent"/>
@@ -122,7 +179,7 @@
                                     </Grid.ColumnDefinitions>
                                     <!-- «Вернуть» видна только у твиков, для которых сохранено
                                          состояние до применения (реестр и службы). -->
-                                    <Button Grid.Column="3" Content="↩ Вернуть" Width="96" Height="26" Margin="8,0,0,0"
+                                    <Button Grid.Column="3" Content="↩ Вернуть" Width="96" Height="28" Margin="8,0,0,0"
                                             FontSize="11" VerticalAlignment="Center"
                                             AutomationProperties.AutomationId="{Binding Id, StringFormat='btnUndoTweak_{0}'}"
                                             ToolTip="Вернёт то, что было до применения этого твика: значения реестра и режим запуска службы. OneDrive — установит заново."
@@ -130,19 +187,21 @@
                                             IsEnabled="{Binding DataContext.ApplyEnabled, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             Command="{Binding DataContext.UndoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             CommandParameter="{Binding}"/>
+                                    <!-- Отметка — напротив первой строки (названия), а не по центру
+                                         всего блока: у пунктов с длинным описанием она «плясала». -->
                                     <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                              VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                              VerticalAlignment="Top" Margin="0,1,12,0"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Top">
                                         <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextPrimary}"/>
-                                        <TextBlock Text="{Binding Description}" FontSize="11"
+                                        <TextBlock Text="{Binding Description}" FontSize="12"
                                                    Foreground="{DynamicResource TextSecondary}"
                                                    TextWrapping="Wrap"/>
-                                        <TextBlock Text="Применялся, но сейчас не действует" FontSize="11"
+                                        <TextBlock Text="Применялся, но сейчас не действует" FontSize="12"
                                                    Foreground="{DynamicResource StatusDanger}"
                                                    Visibility="{Binding IsDrifted, Converter={StaticResource BoolToVisUndo}}"/>
                                     </StackPanel>
-                                    <Border Grid.Column="2" CornerRadius="5" Padding="7,3"
+                                    <Border Grid.Column="2" CornerRadius="4" Padding="8,2"
                                             VerticalAlignment="Center" Margin="8,0,0,0">
                                         <Border.Style>
                                             <Style TargetType="Border">
@@ -151,7 +210,7 @@
                                                         <Setter Property="Background" Value="#1B5E20"/>
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Risk}" Value="moderate">
-                                                        <Setter Property="Background" Value="#E65100"/>
+                                                        <Setter Property="Background" Value="#C44500"/>
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Risk}" Value="caution">
                                                         <Setter Property="Background" Value="#B71C1C"/>
@@ -159,7 +218,7 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
-                                        <TextBlock Text="{Binding RiskLabel}" FontSize="10" Foreground="White"/>
+                                        <TextBlock Text="{Binding RiskLabel}" FontSize="11" Foreground="White"/>
                                     </Border>
                                 </Grid>
                             </Border>
@@ -176,30 +235,29 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <StackPanel>
-                <ProgressBar x:Name="progressDebloat" Height="5" Minimum="0" Maximum="100"
+            <StackPanel Margin="0,0,8,0" VerticalAlignment="Center">
+                <ProgressBar x:Name="progressDebloat" Height="4" Minimum="0" Maximum="100"
                              Foreground="{DynamicResource AccentColor}"
                              Background="{DynamicResource BorderBrush}"
                              Value="{Binding ProgressValue, Mode=OneWay}"
-                             Visibility="{Binding ProgressVisible}" Margin="0,0,0,5"/>
-                <TextBlock x:Name="txtDebloatStatus" FontSize="11"
+                             Visibility="{Binding ProgressVisible}" Margin="0,0,0,4"/>
+                <TextBlock x:Name="txtDebloatStatus" FontSize="12" VerticalAlignment="Center"
                            Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"
                            Text="{Binding StatusText}"/>
             </StackPanel>
             <Button x:Name="btnCancelDebloat" Grid.Column="1"
                     Content="⏹ Отмена"
                     ToolTip="Остановит применение оставшихся действий. Уже выполненные изменения сохранятся."
-                    Height="38" Padding="16,0" FontWeight="SemiBold"
+                    Height="32" Padding="12,0"
                     Visibility="{Binding CancelVisible}"
                     IsEnabled="{Binding CancelEnabled}"
-                    Command="{Binding CancelCommand}" Margin="12,0,0,0"/>
-            <Button x:Name="btnApplyDebloat" Grid.Column="2"
+                    Command="{Binding CancelCommand}" Margin="16,0,0,0"/>
+            <Button x:Name="btnApplyDebloat" Style="{StaticResource DangerFilledButtonStyle}" Grid.Column="2"
                     Content="🧹 Применить выбранное"
                     ToolTip="После подтверждения создаст точку восстановления и применит выбранные изменения Windows."
-                    Height="38" Padding="16,0" FontWeight="SemiBold"
-                    Background="{DynamicResource StatusDanger}" Foreground="{DynamicResource StatusDangerForeground}"
+                    Height="32" Padding="16,0"
                     IsEnabled="{Binding ApplyEnabled}"
-                    Command="{Binding ApplyCommand}" Margin="12,0,0,0"/>
+                    Command="{Binding ApplyCommand}" Margin="8,0,0,0"/>
         </Grid>
         </Grid>
     </Grid>

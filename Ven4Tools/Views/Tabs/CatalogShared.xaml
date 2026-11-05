@@ -6,7 +6,7 @@
 
     <!-- Строка панели «Не нашли в каталоге? Поиск по источникам». -->
     <DataTemplate x:Key="SearchSuggestionTemplate" DataType="{x:Type vm:SearchSuggestionViewModel}">
-        <Button HorizontalAlignment="Left" Margin="0,1" Height="26" Padding="6,0"
+        <Button AutomationProperties.AutomationId="{Binding Name, StringFormat='btnSuggestion_{0}'}" HorizontalAlignment="Left" Margin="0" Height="28" Padding="8,0"
                 Background="Transparent" BorderThickness="0" Cursor="Hand"
                 FontSize="12" ToolTip="{Binding SourceLabel}"
                 AutomationProperties.Name="{Binding Name}"
@@ -14,11 +14,11 @@
                 Command="{Binding AddCommand}">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{Binding SourceLabel}" Foreground="{DynamicResource TextSecondary}"
-                           FontSize="10" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                           FontSize="11" Margin="0,0,8,0" VerticalAlignment="Center"/>
                 <TextBlock Text="➕  " Foreground="{DynamicResource AccentColor}" VerticalAlignment="Center"/>
                 <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
                 <TextBlock Text="{Binding Hint, StringFormat='  {0}'}" Foreground="{DynamicResource TextSecondary}"
-                           FontSize="10" VerticalAlignment="Center"/>
+                           FontSize="11" VerticalAlignment="Center"/>
             </StackPanel>
         </Button>
     </DataTemplate>
@@ -35,14 +35,14 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <TextBlock Text="{Binding AppName}"
-                       FontSize="11" Foreground="{DynamicResource TextPrimary}"
+                       FontSize="12" Foreground="{DynamicResource TextPrimary}"
                        TextTrimming="CharacterEllipsis"/>
             <TextBlock Text="{Binding Status}" Grid.Column="1"
-                       FontSize="10"
+                       FontSize="11" VerticalAlignment="Center"
                        Foreground="{Binding Outcome, Converter={StaticResource OutcomeToBrush}}"
-                       Margin="6,0,0,0"/>
+                       Margin="8,0,0,0"/>
             <ProgressBar Grid.Row="1" Grid.ColumnSpan="2"
-                         Height="4" Margin="0,3,0,0"
+                         Height="4" Margin="0,4,0,0"
                          Value="{Binding Percentage, Mode=OneWay}"
                          IsIndeterminate="{Binding IsIndeterminate}"
                          Background="{DynamicResource BorderBrush}"
@@ -53,9 +53,9 @@
     <!-- Строка списка сохранённых наборов (lstPresets). Цвет подложки строки задан
          стилем PresetRowBorderStyle в ресурсах вида (CatalogCardsView.xaml). -->
     <DataTemplate x:Key="PresetRowTemplate">
-        <Border Margin="0,2" Padding="8,6"
+        <Border Margin="0,0,0,4" Padding="8,4,4,4"
                 Style="{DynamicResource PresetRowBorderStyle}"
-                CornerRadius="6">
+                CornerRadius="4">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -67,23 +67,27 @@
                                Foreground="{DynamicResource TextPrimary}"
                                TextTrimming="CharacterEllipsis"/>
                     <TextBlock Text="{Binding AppCountLabel}"
-                               FontSize="10"
+                               FontSize="11"
                                Foreground="{DynamicResource TextSecondary}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="→" Width="26" Height="26" Padding="0" FontSize="13" Margin="2,0,0,0"
+                    <Button AutomationProperties.AutomationId="{Binding Id, StringFormat='btnPresetApply_{0}'}" Content="&#xE72A;" ContentTemplate="{StaticResource IconGlyphTemplate}" AutomationProperties.Name="→"
+                            Width="24" Height="24" Padding="0" FontSize="12" Margin="4,0,0,0"
                             ToolTip="Отметит в каталоге приложения из этого пресета. Установка не начнётся."
                             Command="{Binding DataContext.ApplyPresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                             CommandParameter="{Binding}"/>
-                    <Button Content="✏" Width="26" Height="26" Padding="0" FontSize="11" Margin="2,0,0,0"
+                    <Button AutomationProperties.AutomationId="{Binding Id, StringFormat='btnPresetRename_{0}'}" Content="&#xE70F;" ContentTemplate="{StaticResource IconGlyphTemplate}" AutomationProperties.Name="✏"
+                            Width="24" Height="24" Padding="0" FontSize="12" Margin="4,0,0,0"
                             ToolTip="Откроет изменение названия и описания этого пресета."
                             Command="{Binding DataContext.RenamePresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                             CommandParameter="{Binding}"/>
-                    <Button Content="↻" Width="26" Height="26" Padding="0" FontSize="12" Margin="2,0,0,0"
+                    <Button AutomationProperties.AutomationId="{Binding Id, StringFormat='btnPresetUpdate_{0}'}" Content="&#xE72C;" ContentTemplate="{StaticResource IconGlyphTemplate}" AutomationProperties.Name="↻"
+                            Width="24" Height="24" Padding="0" FontSize="12" Margin="4,0,0,0"
                             ToolTip="Отметит приложения пресета и подготовит перезапись его состава текущим выбором."
                             Command="{Binding DataContext.UpdateAppsPresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                             CommandParameter="{Binding}"/>
-                    <Button Content="✕" Width="26" Height="26" Padding="0" FontSize="11" Margin="2,0,0,0"
+                    <Button AutomationProperties.AutomationId="{Binding Id, StringFormat='btnPresetDelete_{0}'}" Content="&#xE711;" ContentTemplate="{StaticResource IconGlyphTemplate}" AutomationProperties.Name="✕"
+                            Width="24" Height="24" Padding="0" FontSize="11" Margin="4,0,0,0"
                             Background="Transparent" Foreground="{DynamicResource TextSecondary}" BorderThickness="0"
                             ToolTip="После подтверждения удалит этот пресет. Установленные приложения останутся."
                             Command="{Binding DataContext.DeletePresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"

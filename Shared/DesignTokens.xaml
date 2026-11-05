@@ -7,8 +7,10 @@
         единая роль = единый цвет во всех вкладках клиента:
 
         • Primary (Установить/Скачать/Обновить/Сохранить — главное действие, двигающее
-          пользователя вперёд по сценарию экрана): Background="{DynamicResource AccentColor}",
-          Foreground="{DynamicResource AccentForeground}".
+          пользователя вперёд по сценарию экрана, в том числе запуск главной проверки
+          раздела — «Запустить диагностику», «Запустить тест»): Style="{StaticResource
+          PrimaryButtonStyle}" (App.xaml) — заливка AccentColor, надпись AccentForeground,
+          серый вид в выключенном состоянии.
           ⚠️ Изменение 5.0. Аудит 2026-07-24 требовал ровно обратного — StaticResource
           BrandGreen, чтобы главная кнопка не меняла цвет вместе с темой и держала
           узнаваемость бренда. От этого правила отказались сознательно: обещание версии
@@ -22,12 +24,11 @@
           действие): единый цвет StatusDanger. Для повторяющихся кнопок в списках
           (десятки строк) — DangerButtonStyle (контур по умолчанию, сплошная заливка только
           на hover, см. App.xaml) — не создаёт «стену красного». Для одиночной крупной
-          CTA-кнопки экрана (например «Применить выбранное» в Очистке) — сплошная заливка
-          Background="{DynamicResource StatusDanger}",
-          Foreground="{DynamicResource StatusDangerForeground}" (тот же принцип
-          контрастной надписи на цветной заливке, что и у Primary).
+          CTA-кнопки экрана (например «Применить выбранное» в Очистке) — сплошная заливка,
+          Style="{StaticResource DangerFilledButtonStyle}" (StatusDanger +
+          StatusDangerForeground, тот же принцип контрастной надписи, что и у Primary).
         • Secondary (второстепенное действие: Отмена/Обновить каталог/Проверить доступность/
-          Проверить обновления/Запустить диагностику/переход на внешний ресурс): без
+          Проверить обновления/переход на внешний ресурс): без
           Background/Foreground-оverride — обычная кнопка (SurfaceRaised/CardBackground +
           BorderBrush, см. общий Style TargetType="Button" в App.xaml). Кнопки перехода на
           внешний сайт (активация, GitHub, обратная связь) тоже Secondary — они не меняют
@@ -54,14 +55,15 @@
                       Color="#000000" BlurRadius="20" ShadowDepth="4" Opacity="0.35"/>
 
     <Style x:Key="PageTitleStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI"/>
-        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
+        <!-- 22 SemiBold — заголовок раздела по общим правилам дизайна клиента (05.11.2026). -->
+        <Setter Property="FontSize" Value="22"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
 
     <Style x:Key="EyebrowStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Segoe UI Symbol, Segoe UI Emoji"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <!-- Подпись категории («ПРИЛОЖЕНИЯ», «ВЫБРАННЫЕ ПРИЛОЖЕНИЯ», «LAUNCHER»).
@@ -83,8 +85,9 @@
          App.xaml, и ссылка на неявный стиль Button разрешалась в системный — кнопка
          выходила светло-серой на тёмном окне. -->
     <Style x:Key="IconButtonStyle" TargetType="Button">
-        <Setter Property="Width" Value="34"/>
-        <Setter Property="Height" Value="34"/>
+        <!-- 32×32 — одна высота с обычными кнопками и полями (общие правила 05.11.2026). -->
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceRaised}"/>

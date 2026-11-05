@@ -32,12 +32,10 @@ namespace Ven4Tools.Services
             {
                 var chocoRun = await PackageManagerService.RunChocoInstallAsync(app.ChocoId, token, msg => Log(msg));
                 if (chocoRun.Ok)
-                    // Choco (RunChocoInstallAsync) не различает 0 и 3010 на возврате —
-                    // reboot здесь всегда false, честно (не выдумываем то, чего сейчас
-                    // не видно), в отличие от winget/elevated-путей, где это различие есть.
+                    // 3010/1641 — успех с перезагрузкой, как у winget и прямой ссылки.
                     return SourceAttempt.Finished(await ReportInstallOutcomeAsync(
                         app, appProgress, progress, outcomeCheckId, baseline,
-                        true, false, "choco", token));
+                        true, chocoRun.ExitCode is 3010 or 1641, "choco", token));
 
                 // -1 — синтетический признак «choco вообще не запускался» (невалидный
                 // ID, исполняемый файл не найден, таймаут, общее исключение) —

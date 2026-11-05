@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Ven4Bar</RootNamespace>
+    <AssemblyName>Ven4Bar</AssemblyName>
+    <Version>0.2.0</Version>
+    <Product>Ven4Bar</Product>
+    <Description>Своя панель задач Ven4Tools (заготовка)</Description>
+    <!-- WinForms нужен только для значка в трее; DPI задаётся манифестом для WPF. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Морда Венчика на кнопке «Пуск» (из D:\Ven4Motion\mascot-anim\ff_face.png, фон вырезан, 96×96) -->
+    <Resource Include="Resources\venchik-face.png" />
+  </ItemGroup>
+
+</Project>

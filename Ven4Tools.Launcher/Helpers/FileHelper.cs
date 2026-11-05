@@ -76,7 +76,7 @@ internal static class FileHelper
         var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
         try
         {
-            File.WriteAllBytes(tmp, content);
+            WriteDurable(tmp, content);
             File.Move(tmp, path, overwrite: true);
         }
         catch
@@ -86,21 +86,21 @@ internal static class FileHelper
         }
     }
 
-    public static void WriteAllTextAtomic(string path, string content)
+    // Кодировка та же, что у прежнего File.WriteAllText: UTF-8 без BOM.
+    public static void WriteAllTextAtomic(string path, string content) =>
+        WriteAllBytesAtomic(path, new System.Text.UTF8Encoding(false).GetBytes(content));
+
+    /// <summary>
+    /// Запись временного файла со сбросом на диск до переименования. Без Flush(true)
+    /// данные могут ещё лежать в кэше, когда переименование уже попало в журнал NTFS:
+    /// после отключения питания на месте файла оказывается пустой или нулевой файл —
+    /// ровно то, от чего атомарная запись должна защищать (настройки, журнал переноса
+    /// клиента). CreateNew: временное имя случайное, чужой файл под ним не ждём.
+    /// </summary>
+    private static void WriteDurable(string tmp, byte[] content)
     {
-        var dir = Path.GetDirectoryName(path)!;
-        Directory.CreateDirectory(dir);
-        EnsureNotRedirected(dir, path);
-        var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
-        try
-        {
-            File.WriteAllText(tmp, content);
-            File.Move(tmp, path, overwrite: true);
-        }
-        catch
-        {
-            try { File.Delete(tmp); } catch { }
-            throw;
-        }
+        using var stream = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        stream.Write(content, 0, content.Length);
+        stream.Flush(flushToDisk: true);
     }
 }

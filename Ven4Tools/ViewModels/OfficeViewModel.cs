@@ -34,6 +34,28 @@ namespace Ven4Tools.ViewModels
         private readonly string[] officeLanguages = { "ru-ru", "en-us", "de-de", "fr-fr", "es-es", "it-it", "zh-cn", "ja-jp" };
         public string[] OfficeLanguages => officeLanguages;
 
+        /// <summary>
+        /// Пункт списка «Язык Office»: код — то, что выбирается и уходит в загрузчик
+        /// (SelectedLanguage, как раньше), название — только для показа («Русский (ru-ru)»).
+        /// </summary>
+        public sealed record OfficeLanguageOption(string Code, string DisplayName);
+
+        /// <summary>
+        /// Те же коды, что <see cref="OfficeLanguages"/>, в том же порядке, с понятным названием.
+        /// Список в разметке привязан по SelectedValuePath="Code" к SelectedLanguage.
+        /// </summary>
+        public IReadOnlyList<OfficeLanguageOption> OfficeLanguageOptions { get; } =
+        [
+            new("ru-ru", "Русский (ru-ru)"),
+            new("en-us", "Английский, США (en-us)"),
+            new("de-de", "Немецкий (de-de)"),
+            new("fr-fr", "Французский (fr-fr)"),
+            new("es-es", "Испанский (es-es)"),
+            new("it-it", "Итальянский (it-it)"),
+            new("zh-cn", "Китайский упрощённый (zh-cn)"),
+            new("ja-jp", "Японский (ja-jp)"),
+        ];
+
         private readonly Dictionary<string, string> officeDirectLinks = new()
         {
             { "O365ProPlusRetail",       "https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365ProPlusRetail&platform=x64&language={0}&version=O16GA" },
@@ -104,6 +126,14 @@ namespace Ven4Tools.ViewModels
         private (string DisplayName, string ProductId) GetSelectedVersion() =>
             ResolveVersion(IsO2024Selected, IsO2021Selected, IsO2019Selected, IsO2016Selected);
 
+        // Для какой версии и языка скачан _downloadedFilePath.
+        private (string ProductId, string Lang)? _downloadedFor;
+
+        private bool DownloadMatchesSelection() =>
+            _downloadedFor is { } d
+            && d.ProductId == GetSelectedVersion().ProductId
+            && string.Equals(d.Lang, SelectedLanguage, StringComparison.OrdinalIgnoreCase);
+
         // ── Язык интерфейса ──────────────────────────────────────────────────
 
         private string _selectedLanguage;
@@ -129,6 +159,9 @@ namespace Ven4Tools.ViewModels
             ReplaceCommand.RaiseCanExecuteChanged();
 
             if (_downloadedFilePath == null) return;
+            // Во время установки файл занят запущенным установщиком — его судьбу решает
+            // finally установки (сверит с выбранными версией и языком).
+            if (IsInstalling) return;
 
             try { if (System.IO.File.Exists(_downloadedFilePath)) System.IO.File.Delete(_downloadedFilePath); } catch { }
             _downloadedFilePath = null;

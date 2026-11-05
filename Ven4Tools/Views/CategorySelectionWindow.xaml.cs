@@ -31,8 +31,9 @@ namespace Ven4Tools.Views
 
             // Подсвечиваем выбранную акцентом текущей темы, а не зашитым синим:
             // окно выбора профиля каталога открывается уже после ThemeService.Apply().
+            // Толщина рамки та же (2), что у невыбранных: при 3 содержимое выбранной
+            // карточки съезжало на пиксель внутрь относительно соседних.
             card.BorderBrush = BrushResolver.Resolve("AccentColor");
-            card.BorderThickness = new Thickness(3);
 
             btnContinue.IsEnabled = true;
         }

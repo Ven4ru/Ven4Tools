@@ -17,12 +17,49 @@ namespace Ven4Tools
         private const string ChevronDown = "";
         private const string ChevronUp = "";
 
+        /// <summary>
+        /// Окно 1280×900 на экране высотой 900 (ноутбуки 1280×800/900, ВМ) уходило низом под
+        /// панель задач, и «Центр активности» вместе с нижним краем разделов был не виден.
+        /// Размер по умолчанию ужимается до рабочей области, но не меньше MinWidth/MinHeight.
+        /// </summary>
+        private void FitToWorkArea()
+        {
+            var area = SystemParameters.WorkArea;
+            if (Width > area.Width) Width = System.Math.Max(MinWidth, area.Width);
+            if (Height > area.Height) Height = System.Math.Max(MinHeight, area.Height);
+        }
+
         /// <summary>Вызывается после смены раздела: шапка и раскрытие группы меню.</summary>
         private void OnNavigated(Button activeButton)
         {
-            txtHeaderTitle.Text = activeButton.Content as string ?? "Ven4Tools";
-            if (activeButton.Parent == pnlGroupWindows || activeButton == btnWindowsUpdateTab) ExpandGroup(pnlGroupWindows);
-            else if (activeButton.Parent == pnlGroupService) ExpandGroup(pnlGroupService);
+            string title = activeButton.Content as string ?? "Ven4Tools";
+            Button? group = null;
+            if (activeButton.Parent == pnlGroupWindows || activeButton == btnWindowsUpdateTab) group = btnGroupWindows;
+            else if (activeButton.Parent == pnlGroupService) group = btnGroupService;
+            SetHeaderPath(group?.Content as string, title);
+            if (group == btnGroupWindows) ExpandGroup(pnlGroupWindows);
+            else if (group == btnGroupService) ExpandGroup(pnlGroupService);
+        }
+
+        /// <summary>
+        /// Шапка показывает путь, а не повтор крупного заголовка раздела: «Windows › Очистка»,
+        /// «Сервис › Сеть». Группа — приглушённым цветом, раздел — основным; у разделов вне
+        /// групп остаётся одно название. Подписи берутся с кнопок меню — значит, уже в
+        /// языке интерфейса, новых строк перевода нет.
+        /// </summary>
+        private void SetHeaderPath(string? group, string title)
+        {
+            txtHeaderTitle.Inlines.Clear();
+            if (!string.IsNullOrEmpty(group))
+            {
+                var muted = new System.Windows.Documents.Run(group + "  ›  ");
+                muted.SetResourceReference(System.Windows.Documents.TextElement.ForegroundProperty, "TextSecondary");
+                muted.FontWeight = FontWeights.Normal;
+                txtHeaderTitle.Inlines.Add(muted);
+            }
+            txtHeaderTitle.Inlines.Add(new System.Windows.Documents.Run(title));
+            // Для экранного диктора и UI-проверок имя шапки — по-прежнему название раздела.
+            System.Windows.Automation.AutomationProperties.SetName(txtHeaderTitle, title);
         }
 
         private void ExpandGroup(StackPanel? group)

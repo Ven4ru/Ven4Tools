@@ -5,7 +5,7 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisStartup"/>
     </UserControl.Resources>
-    <Grid Margin="0,12,0,0">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -22,27 +22,28 @@
                 <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextSecondary}"
                            Text="Всё, что запускается вместе с Windows: разделы реестра Run и RunOnce, папки «Автозагрузка» и задачи планировщика при входе или запуске. Выключение — как в Диспетчере задач: запись остаётся на месте, включить обратно можно здесь же. Ничего не удаляется, службы не затрагиваются."/>
                 <TextBlock x:Name="txtStartupSummary" Text="{Binding Summary}" TextWrapping="Wrap" FontSize="12"
-                           Margin="0,6,0,0" Foreground="{DynamicResource TextPrimary}"/>
+                           Margin="0,8,0,0" Foreground="{DynamicResource TextPrimary}"/>
             </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="12,0,0,0">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="24,0,0,0">
                 <CheckBox x:Name="chkStartupShowSystem" Content="Показать системные"
                           ToolTip="Показать записи Microsoft и компонентов Windows. Выключать их без понятной причины не стоит."
-                          VerticalAlignment="Center" Margin="0,0,10,0"
+                          VerticalAlignment="Center" Margin="0,0,16,0"
                           Foreground="{DynamicResource TextPrimary}"
                           IsChecked="{Binding ShowSystem, Mode=TwoWay}"/>
-                <Button x:Name="btnStartupRefresh" Content="Обновить" Height="30" Padding="12,0"
+                <Button x:Name="btnStartupRefresh" Content="Обновить" Height="32" Padding="12,0" Margin="0"
                         ToolTip="Перечитать автозагрузку."
                         Command="{Binding RefreshCommand}"/>
             </StackPanel>
         </Grid>
 
         <!-- Список -->
-        <Border Grid.Row="1" Background="{DynamicResource CardBackground}" CornerRadius="10" Padding="4">
+        <Border Grid.Row="1" Background="{DynamicResource CardBackground}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="4">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <views:FlatItemsControl x:Name="lstStartup" ItemsSource="{Binding Items}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Padding="10,7" Margin="2,1" CornerRadius="7">
+                            <Border Padding="12,8" Margin="0" CornerRadius="4">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Setter Property="Background" Value="Transparent"/>
@@ -63,16 +64,16 @@
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimary}"/>
-                                            <Border CornerRadius="5" Padding="6,1" Margin="8,0,0,0" Background="{DynamicResource StatusInfo}"
+                                            <Border CornerRadius="4" Padding="8,1" Margin="8,0,0,0" Background="{DynamicResource StatusInfo}"
                                                     VerticalAlignment="Center"
                                                     Visibility="{Binding IsSystem, Converter={StaticResource BoolToVisStartup}}">
-                                                <TextBlock Text="Microsoft / системное" FontSize="10" Foreground="{DynamicResource StatusInfoForeground}"/>
+                                                <TextBlock Text="Microsoft / системное" FontSize="11" Foreground="{DynamicResource StatusInfoForeground}"/>
                                             </Border>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding Command}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                        <TextBlock Text="{Binding Command}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"
                                                    ToolTip="{Binding Command}"
                                                    Foreground="{DynamicResource TextSecondary}"/>
-                                        <TextBlock FontSize="11" TextTrimming="CharacterEllipsis"
+                                        <TextBlock FontSize="12" TextTrimming="CharacterEllipsis"
                                                    Foreground="{DynamicResource TextSecondary}"
                                                    ToolTip="{Binding Location}">
                                             <Run Text="Издатель:"/>
@@ -83,7 +84,7 @@
                                             <Run Text="{Binding Location, Mode=OneWay}"/>
                                         </TextBlock>
                                     </StackPanel>
-                                    <Border Grid.Column="1" CornerRadius="5" Padding="7,3"
+                                    <Border Grid.Column="1" CornerRadius="4" Padding="8,2"
                                             VerticalAlignment="Center" Margin="8,0,0,0">
                                         <Border.Style>
                                             <Style TargetType="Border">
@@ -97,9 +98,9 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
-                                        <TextBlock Text="{Binding StateLabel}" FontSize="10"/>
+                                        <TextBlock Text="{Binding StateLabel}" FontSize="11"/>
                                     </Border>
-                                    <Button Grid.Column="2" Content="{Binding ToggleText}" Width="96" Height="26" Margin="8,0,0,0"
+                                    <Button Grid.Column="2" Content="{Binding ToggleText}" Width="96" Height="28" Margin="8,0,0,0"
                                             FontSize="11" VerticalAlignment="Center"
                                             AutomationProperties.AutomationId="{Binding Name, StringFormat='btnStartupToggle_{0}'}"
                                             ToolTip="Выключит или включит запуск вместе с Windows. Запись не удаляется."
@@ -114,7 +115,47 @@
             </ScrollViewer>
         </Border>
 
-        <TextBlock x:Name="txtStartupStatus" Grid.Row="2" Margin="0,10,0,0" FontSize="11" TextWrapping="Wrap"
+        <!-- Пустой список: по центру короткая строка вместо голого прямоугольника.
+             Пока идёт чтение или после ошибки — та же строка состояния, что внизу. -->
+        <TextBlock x:Name="txtStartupEmpty" Grid.Row="1" Text="Сторонних программ в автозагрузке нет" IsHitTestVisible="False"
+                   FontSize="14" Foreground="{DynamicResource TextSecondary}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   TextWrapping="Wrap" MaxWidth="420" TextAlignment="Center">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Items.Count}" Value="0"/>
+                                <Condition Binding="{Binding StatusText}" Value=""/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+        <TextBlock x:Name="txtStartupEmptyStatus" Grid.Row="1" Text="{Binding StatusText}" IsHitTestVisible="False"
+                   FontSize="14" Foreground="{DynamicResource TextSecondary}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   TextWrapping="Wrap" MaxWidth="420" TextAlignment="Center">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Items.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding StatusText}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <TextBlock x:Name="txtStartupStatus" Grid.Row="2" Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap"
                    Foreground="{DynamicResource TextSecondary}" Text="{Binding StatusText}"/>
     </Grid>
 </UserControl>

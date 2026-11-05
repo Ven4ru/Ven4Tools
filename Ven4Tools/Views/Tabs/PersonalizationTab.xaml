@@ -1,72 +1,245 @@
 <UserControl x:Class="Ven4Tools.Views.Tabs.PersonalizationTab"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Ven4Tools.Views.Controls"
+             xmlns:views="clr-namespace:Ven4Tools.Views"
              Background="{DynamicResource ContentBackground}">
     <UserControl.Resources>
         <Style x:Key="PersonalCard" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="18,16"/>
-            <Setter Property="Margin" Value="0,0,14,14"/>
-            <Setter Property="Width" Value="320"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
         </Style>
-        <!-- Общий шаблон кнопки не учитывает Padding, поэтому поля вокруг подписи
-             задаются здесь: без них текст прилипает к рамке. -->
-        <DataTemplate x:Key="PersonalButtonText">
-            <TextBlock Text="{Binding}" Margin="14,0"
-                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ButtonBase}}"/>
-        </DataTemplate>
+        <!-- Поля вокруг подписи — Padding (общий шаблон кнопки его учитывает), а цвет
+             надпись наследует от кнопки сама (ContentPresenter.Resources в App.xaml).
+             Прежний ContentTemplate с привязкой к Foreground кнопки здесь мешал бы
+             главной кнопке: выключенная, она сереет, а надпись осталась бы цвета
+             AccentForeground — тёмной на тёмно-серой подложке. -->
         <Style x:Key="PersonalAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Height" Value="34"/>
+            <Setter Property="Height" Value="32"/>
             <Setter Property="Margin" Value="0,0,8,0"/>
-            <Setter Property="ContentTemplate" Value="{StaticResource PersonalButtonText}"/>
+            <Setter Property="Padding" Value="12,0"/>
+        </Style>
+        <!-- «Применить» — главное действие карточки: Primary с теми же размерами. -->
+        <Style x:Key="PersonalPrimary" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Padding" Value="12,0"/>
         </Style>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20,18,6,18">
-            <TextBlock Text="🐾 Персонализация" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+        <StackPanel Margin="24">
+            <TextBlock Text="Персонализация" Style="{StaticResource PageTitleStyle}"/>
             <TextBlock Text="Windows в стиле Венчика. Каждый пункт применяется отдельно и возвращается кнопкой «Вернуть как было»."
-                       TextWrapping="Wrap" Margin="0,4,0,14" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+                       TextWrapping="Wrap" Margin="0,4,0,16" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
 
             <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                <Button x:Name="btnApplyAll" Content="Применить всё" Style="{StaticResource PersonalAction}" Click="ApplyAll_Click"
+                <Button x:Name="btnApplyAll" Content="Применить всё" Style="{StaticResource PersonalPrimary}" Click="ApplyAll_Click"
                         ToolTip="Применяет все пункты, которые ещё не применены. Прежние настройки запоминаются для отката."/>
                 <Button x:Name="btnRevertAll" Content="Вернуть всё как было" Style="{StaticResource PersonalAction}" Click="RevertAll_Click"
                         ToolTip="Возвращает курсоры, обои, экран блокировки, звуки и заставку, какими они были до Ven4Tools."/>
             </StackPanel>
 
             <ItemsControl x:Name="lstParts">
+                <!-- Ровные колонки на всю ширину (как карточки каталога): правый край карточек
+                     совпадает с правым краем блока «Панель задач и Пуск» под ними. -->
                 <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                    <ItemsPanelTemplate><views:AdaptiveCardPanel MinItemWidth="296" Gap="12"/></ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
+                        <!-- DockPanel вместо StackPanel: состояние и кнопки прижаты к низу
+                             карточки. Карточки одного ряда WrapPanel тянутся до высоты самой
+                             высокой (с картинкой), и у карточки без картинки кнопки висели
+                             посередине, не на одной линии с соседними. -->
                         <Border Style="{StaticResource PersonalCard}">
-                            <StackPanel>
-                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-                                <TextBlock Text="{Binding Description}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,10"
+                            <DockPanel LastChildFill="False">
+                                <TextBlock DockPanel.Dock="Top" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                                <TextBlock DockPanel.Dock="Top" Text="{Binding Description}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,12"
                                            Foreground="{DynamicResource TextSecondary}"/>
-                                <Border CornerRadius="6" ClipToBounds="True" Margin="0,0,0,10" Visibility="{Binding PreviewVisibility}">
+                                <Border DockPanel.Dock="Top" CornerRadius="4" ClipToBounds="True" Margin="0,0,0,12" Visibility="{Binding PreviewVisibility}">
                                     <Image Source="{Binding Preview}" Height="150" Stretch="UniformToFill"/>
                                 </Border>
-                                <TextBlock Text="{Binding Status}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10"
-                                           Foreground="{Binding StatusBrush}"/>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="Применить" Style="{StaticResource PersonalAction}" Tag="{Binding}"
+                                <!-- Курсоры набора вместо обложки: без них карточка в одном ряду
+                                     с «Обоями» и «Экраном блокировки» зияла пустотой на высоту картинки. -->
+                                <Border DockPanel.Dock="Top" CornerRadius="4" Height="150" Margin="0,0,0,12"
+                                        Background="{DynamicResource ContentBackground}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                        Visibility="{Binding CursorPreviewVisibility}">
+                                    <ItemsControl ItemsSource="{Binding CursorPreviews}" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Image Source="{Binding}" Width="64" Height="64" Margin="8,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+                                    <Button Content="Применить" Style="{StaticResource PersonalPrimary}" Tag="{Binding}"
+                                            AutomationProperties.AutomationId="{Binding Part, StringFormat='btnPersonalApply_{0}'}"
                                             IsEnabled="{Binding CanApply}" Click="Apply_Click"
                                             ToolTip="Включает этот пункт оформления. Прежние настройки запоминаются для отката."/>
                                     <Button Content="Вернуть как было" Style="{StaticResource PersonalAction}" Tag="{Binding}"
+                                            AutomationProperties.AutomationId="{Binding Part, StringFormat='btnPersonalRevert_{0}'}"
                                             IsEnabled="{Binding IsApplied}" Click="Revert_Click"
                                             ToolTip="Возвращает этот пункт, каким он был до первого применения."/>
                                 </StackPanel>
-                            </StackPanel>
+                                <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"
+                                           Foreground="{Binding StatusBrush}"/>
+                            </DockPanel>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
+            <!-- Блок «Панель задач и Пуск» (дизайн 04.11.2026, вариант А «Витрина сверху»): живая витрина
+                 на обоях пользователя, цветовые темы, наборы картинкой, «Тонкая настройка» свёрнута. -->
+            <Border x:Name="taskbarSection" Background="{DynamicResource CardBackground}" BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="Панель задач и Пуск" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="Выберите тему и набор — витрина сразу покажет, как будет выглядеть панель на ваших обоях. Применяется только после «Применить», «Вернуть как было» возвращает всё, как было до Ven4Tools."
+                               TextWrapping="Wrap" Margin="0,4,0,12" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+
+                    <Border CornerRadius="8" ClipToBounds="True" Height="248">
+                        <controls:TaskbarPreview x:Name="preview" AutomationProperties.Name="Витрина панели задач"/>
+                    </Border>
+
+                    <TextBlock Text="Цветовая тема" FontSize="14" FontWeight="SemiBold" Margin="0,16,0,8" Foreground="{DynamicResource TextPrimary}"/>
+                    <ItemsControl x:Name="lstThemes">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Tag="{Binding}" Click="Theme_Click" AutomationProperties.AutomationId="{Binding Theme.Id, StringFormat='btnTaskbarTheme_{0}'}" Margin="0,0,8,8" Padding="0" Cursor="Hand" Style="{x:Null}" Height="Auto" FocusVisualStyle="{x:Null}"
+                                        Background="Transparent" BorderThickness="0" ToolTip="{Binding Tip}"
+                                        AutomationProperties.Name="{Binding Title}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <ContentPresenter/>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <StackPanel Width="76">
+                                        <Grid Width="52" Height="52" HorizontalAlignment="Center">
+                                            <Ellipse Stroke="{DynamicResource AccentColor}" StrokeThickness="2.5" Visibility="{Binding RingVisibility}"/>
+                                            <Ellipse Margin="5" Fill="{Binding BarBrush}" Stroke="{DynamicResource BorderBrush}" StrokeThickness="1"/>
+                                            <Ellipse Width="14" Height="14" Fill="{Binding AccentBrush}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,7,7"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding Title}" FontSize="11" TextAlignment="Center" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                   Foreground="{DynamicResource TextPrimary}"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <WrapPanel VerticalAlignment="Center">
+                        <Button x:Name="btnCustomColor" Content="Свой цвет…" Style="{StaticResource PersonalAction}" Click="CustomColor_Click" Margin="0,0,16,8"
+                                ToolTip="Любой цвет из палитры. Если белые подписи на нём будут плохо видны, Ven4Tools затемнит оттенок ровно настолько, чтобы читались."/>
+                        <CheckBox x:Name="chkTransparency" Content="Прозрачность" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,8"
+                                  Checked="TaskbarOption_Changed" Unchecked="TaskbarOption_Changed" Foreground="{DynamicResource TextPrimary}"
+                                  ToolTip="Полупрозрачные панель задач и Пуск. Без прозрачности слабым видеокартам чуть легче."/>
+                        <CheckBox x:Name="chkEars" Content="Ушки Венчика над «Пуском»" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,8"
+                                  Checked="TaskbarOption_Changed" Unchecked="TaskbarOption_Changed" Foreground="{DynamicResource TextPrimary}"
+                                  ToolTip="Над кнопкой «Пуск» появляются ушки Венчика в цвет панели. Клики проходят сквозь них, в полноэкранных играх и видео они прячутся."/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,8">
+                            <TextBlock Text="Панель задач:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource TextPrimary}"/>
+                            <ComboBox x:Name="cmbEdge" Width="120" Height="32" Margin="0" SelectionChanged="TaskbarEdge_Changed"
+                                      AutomationProperties.Name="Положение панели задач">
+                                <ComboBoxItem Content="Снизу" Tag="3"/>
+                                <ComboBoxItem Content="Сверху" Tag="1"/>
+                                <ComboBoxItem Content="Слева" Tag="0"/>
+                                <ComboBoxItem Content="Справа" Tag="2"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <Border x:Name="pillReadability" CornerRadius="12" Padding="12,4" VerticalAlignment="Center" Margin="0,0,0,8">
+                            <TextBlock x:Name="txtReadability" FontSize="11" FontWeight="SemiBold"/>
+                        </Border>
+                    </WrapPanel>
+                    <TextBlock x:Name="txtCustomNote" FontSize="12" Margin="0,0,0,8" Visibility="Collapsed" Foreground="{DynamicResource TextSecondary}"
+                               Text="Оттенок затемнён, чтобы подписи читались."/>
+
+                    <TextBlock Text="Готовые наборы" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,8" Foreground="{DynamicResource TextPrimary}"/>
+                    <ItemsControl x:Name="lstPresets">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><views:AdaptiveCardPanel MinItemWidth="232" Gap="12"/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button AutomationProperties.AutomationId="{Binding Title, StringFormat='btnTaskbarPreset_{0}'}" Tag="{Binding}" Click="Preset_Click" Margin="0" Padding="0" Cursor="Hand" Style="{x:Null}" Height="Auto" ToolTip="{Binding Description}"
+                                        AutomationProperties.Name="{Binding Title}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{DynamicResource ContentBackground}" BorderBrush="{Binding BorderBrush}" BorderThickness="{Binding BorderThick}"
+                                                    CornerRadius="8" Padding="8">
+                                                <ContentPresenter/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <StackPanel>
+                                        <Border CornerRadius="4" ClipToBounds="True" Height="88">
+                                            <controls:TaskbarPreview Wallpaper="{Binding Wallpaper}" Theme="{Binding Theme}" Centered="{Binding Centered}"
+                                                                     Search="{Binding Search}" TaskView="{Binding TaskView}" Widgets="{Binding Widgets}"
+                                                                     Labels="{Binding Labels}" StartMenu="{Binding StartMenu}" Ears="{Binding Ears}" SearchLight="{Binding SearchLight}"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,4" Foreground="{DynamicResource TextPrimary}"/>
+                                        <TextBlock Text="{Binding Description}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                        <Button x:Name="btnTaskbarApply" Content="Применить" Style="{StaticResource PersonalPrimary}" Click="TaskbarApply_Click"
+                                ToolTip="Применяет выбранные тему, набор, ушки и положение панели. Прежние настройки запоминаются для отката."/>
+                        <Button x:Name="btnTaskbarRevert" Content="Вернуть как было" Style="{StaticResource PersonalAction}" Click="TaskbarRevert_Click"
+                                ToolTip="Возвращает цвет, панель задач, Пуск и ушки, какими они были до Ven4Tools."/>
+                        <TextBlock x:Name="txtTaskbarStatus" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+                    </StackPanel>
+
+                    <Expander x:Name="expFine" Margin="0,16,0,0" Padding="8,0,8,8" Foreground="{DynamicResource TextPrimary}">
+                        <Expander.Header>
+                            <TextBlock x:Name="txtFineHeader" Text="Тонкая настройка" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                        </Expander.Header>
+                        <StackPanel Margin="0,12,0,0">
+                            <ItemsControl x:Name="lstTaskbar">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><views:AdaptiveCardPanel MinItemWidth="280" Gap="12"/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource PersonalCard}" Background="{DynamicResource ContentBackground}">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Group}" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                                                <TextBlock Text="{Binding Description}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,8"
+                                                           Foreground="{DynamicResource TextSecondary}"/>
+                                                <ComboBox AutomationProperties.AutomationId="{Binding Setting.Id, StringFormat='cmbTaskbar_{0}'}" ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedItem="{Binding Selected, Mode=TwoWay}" Height="32" Margin="0"/>
+                                                <TextBlock Text="{Binding Status}" FontSize="11" Margin="0,8,0,0" Foreground="{DynamicResource TextSecondary}"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <Button x:Name="btnTaskbarFineApply" Content="Применить эти настройки" Style="{StaticResource PersonalPrimary}" Click="TaskbarFineApply_Click"
+                                        ToolTip="Применяет выбранные значения. Прежние настройки запоминаются для отката."/>
+                                <Button x:Name="btnRestartExplorer" Content="Перезапустить проводник" Style="{StaticResource PersonalAction}" Click="RestartExplorer_Click"
+                                        ToolTip="Некоторые настройки (например, секунды в часах) видны только после перезапуска проводника. Открытые окна папок закроются."/>
+                                <Button x:Name="btnTaskbarSettings" Content="Параметры Windows" Style="{StaticResource PersonalAction}" Click="OpenTaskbarSettings_Click"
+                                        ToolTip="Открывает раздел «Панель задач» в параметрах Windows."/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

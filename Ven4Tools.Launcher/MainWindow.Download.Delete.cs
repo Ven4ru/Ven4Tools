@@ -103,7 +103,9 @@ namespace Ven4Tools.Launcher
                         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs"),
                         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu), "Programs")
                     };
-                    ClientShortcutCleaner.Clean(desktops, startMenuRoots);
+                    var keptShortcuts = ClientShortcutCleaner.Clean(desktops, startMenuRoots, _clientPath);
+                    foreach (string kept in keptShortcuts)
+                        AddLog($"   ℹ️ Ярлык оставлен — он ведёт не в папку клиента: {kept}");
                     AddLog("   ✅ Ярлыки клиента проверены");
 
                     try

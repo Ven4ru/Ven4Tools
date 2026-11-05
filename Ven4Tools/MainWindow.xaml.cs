@@ -28,6 +28,8 @@ namespace Ven4Tools
         private bool _feedbackShown = false;
         // Закрытие главного окна подтверждено (Closing не отменён) — см. окно отзыва.
         private bool _closeConfirmed;
+        // Выход подтверждён из меню трея (ForceExit) — Closing при Shutdown ничего не спрашивает.
+        private bool _exitConfirmed;
 
         private CatalogTab?    _catalogTab;
         private InstalledTab?  _installedTab;
@@ -65,6 +67,7 @@ namespace Ven4Tools
         public MainWindow()
         {
             InitializeComponent();
+            FitToWorkArea();
             // Три числа, как пишутся версии релизов: «6.5.1», а не «6.5.1.0».
             txtSidebarVersion.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "—";
             MotionService.Enabled = Environment.GetEnvironmentVariable("VEN4TOOLS_REDUCE_MOTION") != "1";
@@ -509,6 +512,18 @@ namespace Ven4Tools
 
         private void ForceExit()
         {
+            // «Выход» из меню трея обходил предупреждение окна (Window_Closing_Extended)
+            // и молча обрывал идущую установку. Тот же вопрос, что при закрытии окна.
+            if (!App.IsSilentRun && (_catalogTab?.IsInstalling == true || InstallationService.IsBusy)
+                && MessageBox.Show(
+                    "Идёт установка приложений.\n\nЗакрыть программу и прервать установку?",
+                    "Установка в процессе",
+                    MessageBoxButton.OKCancel,
+                    MessageBoxImage.Warning) != MessageBoxResult.OK)
+                return;
+            // Application.Shutdown тоже проходит через Closing окна, но отмену там WPF
+            // игнорирует: второй вопрос был бы лишним и ничего бы не решал.
+            _exitConfirmed = true;
             _tray.Dispose();
             ConnectivityMonitor.Stop();
             Application.Current.Shutdown();
@@ -520,7 +535,7 @@ namespace Ven4Tools
         {
             // Тихий режим завершается сам, по окончании установки: ни сворачивания в
             // трей, ни вопросов, ни окна отзыва при этом быть не должно.
-            if (App.IsSilentRun) return;
+            if (App.IsSilentRun || _exitConfirmed) return;
 
             // При сворачивании в трей окно не закрывается — установка продолжается,
             // предупреждение и окно отзыва не нужны. Если иконку создать не удалось

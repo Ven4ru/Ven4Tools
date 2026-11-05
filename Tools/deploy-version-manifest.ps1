@@ -14,8 +14,15 @@ version.json — единственный источник URL и SHA256 обн�
 Путь к локальному version.json с уже обновлённым содержимым (версия,
 zip_url/zip_sha256 клиента, setup_url/setup_sha256 лаунчера).
 
+Перед подписью скрипт сам ставит manifest_seq (номер выпуска, защита лаунчера от
+повтора старого манифеста) и дописывает отзыв из параметров -RevokeClient*.
+
 .EXAMPLE
 .\Tools\deploy-version-manifest.ps1 -VersionJsonPath .\version.json
+
+.EXAMPLE
+# Отозвать версию 6.1.0 и конкретный архив (по SHA256 файла и по содержимому):
+.\Tools\deploy-version-manifest.ps1 -VersionJsonPath .\version.json -RevokeClientVersion 6.1.0 -RevokeClientArchive .\Ven4Tools-Client-6.1.0.zip
 #>
 param(
     [Parameter(Mandatory = $true)]
@@ -27,20 +34,57 @@ param(
 
     # Разрешить публикацию манифеста, в котором версия клиента или лаунчера СТАРШЕ
     # уже опубликованной на CDN. Нужен только для осознанного отката релиза.
-    [switch]$AllowClientDowngrade
+    [switch]$AllowClientDowngrade,
+
+    # Отзыв клиента (дописывается в version.json до подписи, см. UpdateManifestSigner edit):
+    # версии — в revokedClientVersions, канонические хеши содержимого — в
+    # revokedClientCanonicalHashes, архивы целиком — SHA256 файла и sha256_canonical
+    # из их подписи.
+    [string[]]$RevokeClientVersion = @(),
+    [string[]]$RevokeClientCanonicalHash = @(),
+    [string[]]$RevokeClientArchive = @(),
+
+    # Разрешить публикацию манифеста, в котором НЕТ записи отзыва, уже опубликованной
+    # на CDN (осознанное снятие отзыва). Без ключа такой деплой отклоняется.
+    [switch]$AllowUnrevoke
 )
 
 $ErrorActionPreference = "Stop"
+
+# Windows PowerShell 5.1 (powershell -File): $PSScriptRoot в значении параметра по
+# умолчанию пуст, если в том же param()-блоке есть Mandatory-параметр, — путь
+# превращался в «\UpdateManifestSigner\...» от корня диска. Досчитываем здесь,
+# как в sign-client-archive.ps1.
+if (-not $PSBoundParameters.ContainsKey('SignerDll')) {
+    $SignerDll = Join-Path $PSScriptRoot "UpdateManifestSigner\bin\Release\net10.0\UpdateManifestSigner.dll"
+}
 
 if (-not (Test-Path $VersionJsonPath)) { throw "Не найден $VersionJsonPath" }
 if (-not (Test-Path $PrivateKeyPath)) {
     throw "Не найден приватный ключ подписи манифеста: $PrivateKeyPath. " +
           "Ключ не хранится в репозитории — он должен быть на этой машине отдельно."
 }
-if (-not (Test-Path $SignerDll)) {
-    Write-Host "UpdateManifestSigner не собран — собираю..."
+# Собираем всегда, а не только при отсутствии dll: старая сборка без режима edit
+# остановила бы деплой на шаге номера выпуска.
+if (-not $PSBoundParameters.ContainsKey('SignerDll') -or -not (Test-Path $SignerDll)) {
+    Write-Host "Собираю UpdateManifestSigner..."
     dotnet build "$PSScriptRoot\UpdateManifestSigner\UpdateManifestSigner.csproj" -c Release --nologo | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "UpdateManifestSigner не собрался." }
 }
+
+# ----------------------------------------------------------------------------
+# Номер выпуска и отзыв — до подписи
+# ----------------------------------------------------------------------------
+# manifest_seq растёт при КАЖДОЙ подписи: лаунчер помнит наибольший принятый номер и
+# отвергает манифест с меньшим (или без номера), так что повтор старого подписанного
+# version.json не откатит флаги, cdn_ip и отзыв. Файл переписывается с отступами,
+# UTF-8 без BOM.
+$editArgs = @('edit', $VersionJsonPath, '--seq', 'auto')
+foreach ($v in $RevokeClientVersion)       { $editArgs += @('--revoke-version', $v) }
+foreach ($h in $RevokeClientCanonicalHash) { $editArgs += @('--revoke-canonical', $h) }
+foreach ($a in $RevokeClientArchive)       { $editArgs += @('--revoke-archive', $a) }
+dotnet $SignerDll @editArgs
+if ($LASTEXITCODE -ne 0) { throw "Правка version.json (номер выпуска / отзыв) не удалась — подпись и заливка отменены." }
 
 # ----------------------------------------------------------------------------
 # Защита от отката манифеста
@@ -52,12 +96,30 @@ if (-not (Test-Path $SignerDll)) {
 # historicalClientArchives — деплой лаунчерного релиза из неё откатил бы всю
 # клиентскую часть манифеста, и клиенты 5.1.1 остались бы без манифеста своей версии.
 # Поймали руками, но полагаться на внимательность здесь нельзя.
-if (-not $AllowClientDowngrade) {
-    try {
-        $liveRaw = (Invoke-WebRequest "https://cdn.ven4tools.ru/version.json" -UseBasicParsing -TimeoutSec 20).Content
-        $live = $liveRaw | ConvertFrom-Json
-        $local = Get-Content $VersionJsonPath -Raw | ConvertFrom-Json
+try {
+    $liveRaw = (Invoke-WebRequest "https://cdn.ven4tools.ru/version.json" -UseBasicParsing -TimeoutSec 20).Content
+    $live = $liveRaw | ConvertFrom-Json
+    $local = Get-Content $VersionJsonPath -Raw | ConvertFrom-Json
 
+    # Номер выпуска обязан быть больше опубликованного: иначе лаунчеры, уже видевшие
+    # опубликованный, отвергнут новый манифест как повтор старого.
+    if ($null -ne $live.manifest_seq -and [long]$local.manifest_seq -le [long]$live.manifest_seq) {
+        throw "Отказ: manifest_seq локального манифеста ($($local.manifest_seq)) не больше опубликованного ($($live.manifest_seq)) — лаунчеры его отвергнут. Проверьте часы этой машины."
+    }
+
+    # Отзыв не снимается случайно: всё, что отозвано на CDN, должно остаться в локальном.
+    if (-not $AllowUnrevoke) {
+        foreach ($field in @('revokedClientHashes', 'revokedClientCanonicalHashes', 'revokedClientVersions')) {
+            $localList = @($local.$field | Where-Object { $_ } | ForEach-Object { "$_".Trim().ToLowerInvariant() })
+            foreach ($item in @($live.$field | Where-Object { $_ })) {
+                if ($localList -notcontains "$item".Trim().ToLowerInvariant()) {
+                    throw "Отказ: в локальном манифесте нет записи $field «$item», опубликованной на CDN — отзыв был бы снят. Осознанное снятие — ключ -AllowUnrevoke."
+                }
+            }
+        }
+    }
+
+    if (-not $AllowClientDowngrade) {
         foreach ($part in @(
             @{ Name = "клиента";  Live = $live.client.version;   Local = $local.client.version },
             @{ Name = "лаунчера"; Live = $live.launcher.version; Local = $local.launcher.version }
@@ -74,26 +136,25 @@ if (-not $AllowClientDowngrade) {
         }
         Write-Host "Проверка отката: ок (CDN client=$($live.client.version) launcher=$($live.launcher.version))"
     }
-    catch {
-        # CDN недоступен — сверять не с чем. Это не повод блокировать деплой:
-        # именно ради недоступного CDN манифест и переливают.
-        # Тип исключения сверяем по имени, а не через catch [тип]: Windows PowerShell 5.1
-        # бросает WebException, PowerShell 7 — HttpRequestException (или его наследника
-        # HttpResponseException) и TaskCanceledException по таймауту. Раньше ловился
-        # только первый, и в PowerShell 7 скрипт при недоступном CDN падал.
-        $networkTypes = @(
-            'System.Net.WebException',
-            'System.Net.Http.HttpRequestException',
-            'System.Threading.Tasks.TaskCanceledException',
-            'System.OperationCanceledException'
-        )
-        $isNetwork = $false
-        for ($t = $_.Exception.GetType(); $t; $t = $t.BaseType) {
-            if ($networkTypes -contains $t.FullName) { $isNetwork = $true; break }
-        }
-        if (-not $isNetwork) { throw }
-        Write-Warning "CDN недоступен, проверка отката пропущена: $($_.Exception.Message)"
+} catch {
+    # CDN недоступен — сверять не с чем. Это не повод блокировать деплой:
+    # именно ради недоступного CDN манифест и переливают.
+    # Тип исключения сверяем по имени, а не через catch [тип]: Windows PowerShell 5.1
+    # бросает WebException, PowerShell 7 — HttpRequestException (или его наследника
+    # HttpResponseException) и TaskCanceledException по таймауту. Раньше ловился
+    # только первый, и в PowerShell 7 скрипт при недоступном CDN падал.
+    $networkTypes = @(
+        'System.Net.WebException',
+        'System.Net.Http.HttpRequestException',
+        'System.Threading.Tasks.TaskCanceledException',
+        'System.OperationCanceledException'
+    )
+    $isNetwork = $false
+    for ($t = $_.Exception.GetType(); $t; $t = $t.BaseType) {
+        if ($networkTypes -contains $t.FullName) { $isNetwork = $true; break }
     }
+    if (-not $isNetwork) { throw }
+    Write-Warning "CDN недоступен, проверка отката пропущена: $($_.Exception.Message)"
 }
 
 $sigPath = "$VersionJsonPath.sig"

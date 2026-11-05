@@ -89,7 +89,16 @@ namespace Ven4Tools.ViewModels
             IsInstalling = true;
 
             // Шаг 1: точка восстановления. Отказ на вопросе — установка не начинается.
-            if (!await PrepareRestorePointAsync(unattended, silent, selected.Count))
+            // Сбой создания точки (WMI, служба восстановления) не должен оставить
+            // IsInstalling поднятым: кнопка «Установить» осталась бы выключенной до перезапуска.
+            bool prepared;
+            try { prepared = await PrepareRestorePointAsync(unattended, silent, selected.Count); }
+            catch
+            {
+                IsInstalling = false;
+                throw;
+            }
+            if (!prepared)
             {
                 IsInstalling = false;
                 return null;
@@ -288,9 +297,23 @@ namespace Ven4Tools.ViewModels
             {
                 token.ThrowIfCancellationRequested();
                 var startedUtc = DateTime.UtcNow;
-                var result = await _installService!.InstallAppAsync(
-                    row.App, _wingetSources, token, progress, SelectedInstallDrive, row.PinnedVersion, confirmPmInstall,
-                    skipIfInstalled: batchMode);
+                (bool Success, string Message, AppInstallProgress Progress) result;
+                try
+                {
+                    result = await _installService!.InstallAppAsync(
+                        row.App, _wingetSources, token, progress, SelectedInstallDrive, row.PinnedVersion, confirmPmInstall,
+                        skipIfInstalled: batchMode);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    // Исключение одной программы обрывало весь набор: оставшиеся не ставились,
+                    // а строка состояния застывала на «⏳ Установка». Считаем её неудачей и идём дальше.
+                    AppLogger.Write(ex, "CatalogViewModel.InstallBatchRow");
+                    tally.Failed++;
+                    lock (tally.RowsLock) tally.FailedRows.Add((row, ex.Message));
+                    InstallStatusText = $"⏳ Установка: {tally.Completed + tally.Failed}/{total} (✅ {tally.Completed} | ❌ {tally.Failed})";
+                    return;
+                }
                 if (batchMode && result.Success && result.Message != InstallationService.AlreadyInstalledSkippedMessage)
                     NewAppWindowCloser.ScheduleClose(startedUtc, row.DisplayName, Log);
                 if (result.Success)

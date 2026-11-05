@@ -114,8 +114,10 @@ namespace Ven4Tools.ViewModels
             var filtered = source;
 
             if (!string.IsNullOrEmpty(q))
-                filtered = filtered.Where(e => e.AppName.Contains(q, StringComparison.OrdinalIgnoreCase)
-                                            || e.Category.Contains(q, StringComparison.OrdinalIgnoreCase));
+                // «?? ""»: запись истории с "category": null (старый или правленный руками
+                // файл) роняла поиск NullReferenceException на каждом символе.
+                filtered = filtered.Where(e => (e.AppName ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)
+                                            || (e.Category ?? "").Contains(q, StringComparison.OrdinalIgnoreCase));
 
             if (successOnly && !failOnly) filtered = filtered.Where(e => e.Success);
             if (failOnly && !successOnly) filtered = filtered.Where(e => !e.Success);
@@ -177,8 +179,15 @@ namespace Ven4Tools.ViewModels
 
             AppLogger.Write($"🔄 Переустановка: {entry.AppName}...");
 
+            // В журнал — только смена текста статуса: отчёт о ходе приходит на каждый процент
+            // загрузки, и сотня одинаковых «📥 Скачивание...» затирала журнал ротацией.
+            string? lastStatus = null;
             var progress = new Progress<AppInstallProgress>(p =>
-                AppLogger.Write($"  {p.Status}"));
+            {
+                if (p.Status == lastStatus) return;
+                lastStatus = p.Status;
+                AppLogger.Write($"  {p.Status}");
+            });
 
             IsReinstalling = true;
             await InstallationService.InstallSemaphore.WaitAsync();

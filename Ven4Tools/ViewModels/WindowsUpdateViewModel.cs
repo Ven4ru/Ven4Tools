@@ -48,7 +48,7 @@ namespace Ven4Tools.ViewModels
         {
             _service = service;
             _driverPolicy = driverPolicy ?? WindowsUpdateDriverPolicy.Default;
-            CheckCommand = RelayCommand.FromAsync(_ => RunSearchAsync(), _ => !IsSearching && !IsInstalling && !IsHiding);
+            CheckCommand = RelayCommand.FromAsync(_ => RunSearchAsync(), _ => !IsSearching && !IsInstalling && !IsHiding && !_isResettingWu);
             InstallCommand = RelayCommand.FromAsync(_ => RunInstallAsync());
             ToggleCategoryCommand = new RelayCommand(p => ToggleCategory(p as WindowsUpdateCategoryNode));
             OpenDiagnosticsCommand = new RelayCommand(_ => GoToDiagnostics?.Invoke());
@@ -126,7 +126,7 @@ namespace Ven4Tools.ViewModels
         public bool IsSearching
         {
             get => _isSearching;
-            private set { if (SetField(ref _isSearching, value)) CheckCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isSearching, value)) { CheckCommand.RaiseCanExecuteChanged(); OnPropertyChanged(nameof(ResetWindowsUpdateBlockedReason)); } }
         }
 
         private bool _isInstalling;
@@ -195,49 +195,51 @@ namespace Ven4Tools.ViewModels
             // состояние поверх дерева, пока не появится финальный результат.
             ShowEmptyState = false;
 
-            if (!_service.IsServiceRunning())
-            {
-                // wuauserv в Windows запускается по требованию и в простое обычно
-                // остановлена — это штатное состояние, а не неисправность. Раньше здесь
-                // спрашивали «Запустить службу?», и вопрос всплывал почти при каждом
-                // открытии вкладки. Пользователь сам пришёл проверить обновления, поэтому
-                // служба запускается молча; сообщение — только если запустить её не
-                // удалось (например, тип запуска «Отключена» после твиков «Очистки»).
-                // Через Task.Run: TryStartService ждёт запуска службы до 30 секунд
-                // (ServiceController.WaitForStatus), на UI-потоке это полностью
-                // замороженное окно «не отвечает». Сам поиск обновлений уводится в пул
-                // тем же способом (WindowsUpdateComSource.SearchAsync).
-                bool started = await Task.Run(_service.TryStartService);
-                // Служба именно отключена (тип запуска «Отключена») — раньше вкладка
-                // только объясняла, что её нужно включить, и отправляла в services.msc.
-                // Предлагаем сделать это здесь же; без согласия ничего не меняем.
-                if (!started && await Task.Run(_service.IsServiceDisabled))
-                {
-                    var answer = MessageBox.Show(
-                        "Служба Windows Update отключена, поэтому проверить обновления нельзя.\n\n" +
-                        "Включить её (тип запуска «Вручную») и продолжить?",
-                        "Служба Windows Update", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (ct.IsCancellationRequested) return;
-                    if (answer == MessageBoxResult.Yes)
-                    {
-                        started = await Task.Run(() => _service.TryEnableService() && _service.TryStartService());
-                        if (started)
-                            AppLogger.Write("[WindowsUpdate] Служба wuauserv была отключена — включена (тип запуска «Вручную») по запросу пользователя");
-                    }
-                }
-                if (!started)
-                {
-                    StatusText = "❌ Не удалось запустить службу Windows Update — возможно, она отключена.";
-                    IsSearching = false;
-                    ShowEmptyStateInfo("Служба Windows Update недоступна",
-                        "Включите службу (тип запуска «Вручную» или «Автоматически») и нажмите «Проверить обновления»");
-                    return;
-                }
-                AppLogger.Write("[WindowsUpdate] Служба wuauserv была остановлена — запущена для проверки обновлений");
-            }
-
+            // Запуск службы — тоже внутри try: сбой ServiceController иначе оставлял
+            // IsSearching = true (см. общий catch ниже).
             try
             {
+                if (!_service.IsServiceRunning())
+                {
+                    // wuauserv в Windows запускается по требованию и в простое обычно
+                    // остановлена — это штатное состояние, а не неисправность. Раньше здесь
+                    // спрашивали «Запустить службу?», и вопрос всплывал почти при каждом
+                    // открытии вкладки. Пользователь сам пришёл проверить обновления, поэтому
+                    // служба запускается молча; сообщение — только если запустить её не
+                    // удалось (например, тип запуска «Отключена» после твиков «Очистки»).
+                    // Через Task.Run: TryStartService ждёт запуска службы до 30 секунд
+                    // (ServiceController.WaitForStatus), на UI-потоке это полностью
+                    // замороженное окно «не отвечает». Сам поиск обновлений уводится в пул
+                    // тем же способом (WindowsUpdateComSource.SearchAsync).
+                    bool started = await Task.Run(_service.TryStartService);
+                    // Служба именно отключена (тип запуска «Отключена») — раньше вкладка
+                    // только объясняла, что её нужно включить, и отправляла в services.msc.
+                    // Предлагаем сделать это здесь же; без согласия ничего не меняем.
+                    if (!started && await Task.Run(_service.IsServiceDisabled))
+                    {
+                        var answer = MessageBox.Show(
+                            "Служба Windows Update отключена, поэтому проверить обновления нельзя.\n\n" +
+                            "Включить её (тип запуска «Вручную») и продолжить?",
+                            "Служба Windows Update", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        if (ct.IsCancellationRequested) return;
+                        if (answer == MessageBoxResult.Yes)
+                        {
+                            started = await Task.Run(() => _service.TryEnableService() && _service.TryStartService());
+                            if (started)
+                                AppLogger.Write("[WindowsUpdate] Служба wuauserv была отключена — включена (тип запуска «Вручную») по запросу пользователя");
+                        }
+                    }
+                    if (!started)
+                    {
+                        StatusText = "❌ Не удалось запустить службу Windows Update — возможно, она отключена.";
+                        IsSearching = false;
+                        ShowEmptyStateInfo("Служба Windows Update недоступна",
+                            "Включите службу (тип запуска «Вручную» или «Автоматически») и нажмите «Проверить обновления»");
+                        return;
+                    }
+                    AppLogger.Write("[WindowsUpdate] Служба wuauserv была остановлена — запущена для проверки обновлений");
+                }
+
                 var result = await _service.SearchAsync(ct);
                 if (ct.IsCancellationRequested) return;
 
@@ -285,6 +287,16 @@ namespace Ven4Tools.ViewModels
             {
                 // Поиск был вытеснен новым запросом — просто выходим,
                 // новый поиск позаботится об обновлении UI.
+            }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                // Без этого IsSearching оставался true: «Проверить обновления» гасла до
+                // перезапуска клиента (FromAsync только пишет исключение в журнал).
+                AppLogger.Write(ex, "WindowsUpdateViewModel.RunSearchAsync");
+                IsSearching = false;
+                StatusText = $"❌ {ex.Message}";
+                ShowEmptyStateInfo("Не удалось получить список обновлений",
+                    "Подробности — в сообщении выше");
             }
         }
 
@@ -399,7 +411,19 @@ namespace Ven4Tools.ViewModels
                 StatusText = $"{p.Phase}: {p.CurrentTitle} ({p.CompletedCount}/{p.TotalCount}, {p.PercentComplete}%)";
             });
 
-            var outcome = await _service.InstallSelectedAsync(selectedIds, progress, CancellationToken.None);
+            WindowsUpdateInstallOutcome outcome;
+            try
+            {
+                outcome = await _service.InstallSelectedAsync(selectedIds, progress, CancellationToken.None);
+            }
+            catch
+            {
+                // Без сброса флага исключение (сбой COM) навсегда гасило «Проверить» и
+                // «Установить» до перезапуска клиента.
+                IsInstalling = false;
+                UpdateSelectionSummary();
+                throw;
+            }
 
             IsInstalling = false;
             if (!outcome.Success && outcome.Items.Count == 0)

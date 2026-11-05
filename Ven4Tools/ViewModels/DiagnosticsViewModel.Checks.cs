@@ -85,8 +85,18 @@ namespace Ven4Tools.ViewModels
         {
             if (IsClearingWuCache) return;
 
+            // Пока идёт операция с обновлениями (поиск, скачивание, установка), кэш
+            // занят ею — сервис очистку откажет. Говорим об этом сразу, до вопроса.
+            if (Services.WindowsUpdate.WindowsUpdateService.IsBusy || Services.WindowsUpdate.WindowsUpdateService.IsDownloadingInBackground)
+            {
+                ShowWuCacheBusy();
+                return;
+            }
+
+            // Запускаются снова только те службы, что работали до очистки, —
+            // обещать «перезапуск» всех нельзя.
             var confirm = MessageBox.Show(
-                "Остановить службы обновления Windows и очистить кэш загрузки? Службы будут перезапущены автоматически.",
+                "Остановить службы обновления Windows и очистить кэш загрузки? Службы, которые работали, будут запущены снова.",
                 "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (confirm != MessageBoxResult.Yes) return;
 
@@ -96,6 +106,13 @@ namespace Ven4Tools.ViewModels
                 await SystemHealthService.ClearWindowsUpdateCacheAsync();
                 AppLogger.Write("🧹 Кэш Windows Update очищен");
                 MessageBox.Show("✅ Кэш Windows Update очищен, службы перезапущены.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Сервис отказал: операция с обновлениями началась уже после вопроса.
+                // Это не нехватка прав — совет «запустите от имени администратора» здесь неверен.
+                AppLogger.Write($"❌ Ошибка очистки кэша Windows Update: {ex.Message}");
+                ShowWuCacheBusy();
             }
             catch (Exception ex)
             {
@@ -108,6 +125,10 @@ namespace Ven4Tools.ViewModels
                 IsClearingWuCache = false;
             }
         }
+
+        private static void ShowWuCacheBusy() =>
+            MessageBox.Show("Сейчас идёт установка (обновлений Windows или приложений). Дождитесь её завершения и повторите.",
+                "Windows Update", MessageBoxButton.OK, MessageBoxImage.Information);
 
         private async Task RunHardwareEventsCheckAsync()
         {

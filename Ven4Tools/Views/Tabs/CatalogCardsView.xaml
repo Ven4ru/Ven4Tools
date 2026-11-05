@@ -22,23 +22,23 @@
                 <Setter Property="Background" Value="{DynamicResource CardBackground}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="CornerRadius" Value="10"/>
-                <Setter Property="Padding" Value="14"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
                 <Setter Property="Margin" Value="0,0,0,12"/>
             </Style>
             <Style x:Key="SidePanelTitle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontSize" Value="14"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             </Style>
             <Style x:Key="SideHint" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
                 <Setter Property="TextWrapping" Value="Wrap"/>
             </Style>
             <Style x:Key="SideButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                 <Setter Property="Height" Value="32"/>
-                <Setter Property="Margin" Value="0,6,0,0"/>
+                <Setter Property="Margin" Value="0,8,0,0"/>
             </Style>
             <!-- Мелкая кнопка действия на карточке: значок без рамки. -->
             <Style x:Key="CardAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -50,6 +50,24 @@
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
             </Style>
+            <!-- Значок «скрыть» (глаз с чертой) для кнопки на карточке. В Segoe Fluent Icons он
+                 есть (ED1A), но в Segoe MDL2 Assets Windows 10 19045 — нет, а эмодзи 🙈 WPF рисует
+                 одноцветным силуэтом, похожим на дисковый телефон. Поэтому значок собран из двух
+                 глифов, которые есть в обоих шрифтах: глаз E7B3 и перечёркивающая черта E738.
+                 Цвет — у кнопки, как в IconGlyphTemplate. -->
+            <DataTemplate x:Key="HideGlyphTemplate">
+                <Grid>
+                    <TextBlock Text="&#xE7B3;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ButtonBase}}"/>
+                    <TextBlock Text="&#xE738;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                               RenderTransformOrigin="0.5,0.5"
+                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ButtonBase}}">
+                        <TextBlock.RenderTransform>
+                            <RotateTransform Angle="45"/>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </Grid>
+            </DataTemplate>
 
             <!-- Кнопка-категория — элемент списка с одиночным выбором: выбранная залита
                  акцентом, стрелки на клавиатуре переходят между категориями. Список, а не
@@ -57,7 +75,7 @@
                  вкладку пропадали узлы автоматизации, и категории переставали существовать
                  для программ чтения с экрана. У ListBoxItem узел свой и не теряется. -->
             <Style x:Key="CategoryChip" TargetType="ListBoxItem">
-                <Setter Property="Margin" Value="0,0,6,6"/>
+                <Setter Property="Margin" Value="0,0,8,8"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Background" Value="Transparent"/>
@@ -70,11 +88,14 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ListBoxItem">
-                            <Border Height="30" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="1" CornerRadius="15" Padding="12,0">
+                            <Border Height="32" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" CornerRadius="16" Padding="12,0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding Label}" Foreground="{TemplateBinding Foreground}" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding Count}" Foreground="{TemplateBinding Foreground}" Opacity="0.7" Margin="6,0,0,0"/>
+                                    <!-- Число отличается от названия начертанием, а не прозрачностью:
+                                         Opacity 0.7 на залитой акцентом выбранной категории опускала
+                                         контраст «138» ниже 4,5:1 (оценка интерфейса, 02-Catalog). -->
+                                    <TextBlock Text="{Binding Count}" Foreground="{TemplateBinding Foreground}" FontWeight="Normal" Margin="8,0,0,0"/>
                                 </StackPanel>
                             </Border>
                             <ControlTemplate.Triggers>
@@ -107,7 +128,7 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="CheckBox">
                             <Border x:Name="frame" Background="Transparent" BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="1" CornerRadius="7">
+                                    BorderThickness="1" CornerRadius="4">
                                 <TextBlock Text="{Binding SelectLabel}" FontSize="12" FontWeight="SemiBold"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                            Foreground="{DynamicResource TextPrimary}"/>
@@ -139,15 +160,15 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Margin="20,16,20,0">
+    <Grid Margin="24,16,24,0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="300"/>
         </Grid.ColumnDefinitions>
 
         <!-- Слева: поиск, категории, карточки -->
-        <DockPanel Grid.Column="0" Margin="0,0,14,0">
-            <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+        <DockPanel Grid.Column="0" Margin="0,0,16,0">
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -155,42 +176,42 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="txtSearch" Height="36" FontSize="13"
+                <TextBox x:Name="txtSearch" Height="32" FontSize="13"
                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                          Background="{DynamicResource CardBackground}"
                          Foreground="{DynamicResource TextPrimary}"
                          BorderBrush="{DynamicResource BorderBrush}"
-                         VerticalContentAlignment="Center" Padding="10,0"/>
+                         VerticalContentAlignment="Center" Padding="8,0"/>
                 <TextBlock Text="Поиск: название, описание или идентификатор пакета" FontSize="13"
                            Foreground="{DynamicResource TextSecondary}" Opacity="0.75"
-                           Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                           Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
                            Visibility="{Binding HasSearchText, Converter={StaticResource InverseBoolToVis}}"/>
                 <Button x:Name="btnClearSearch" Grid.Column="1" Content="&#xE711;" ContentTemplate="{StaticResource IconGlyphTemplate}"
-                        Width="36" Height="36" Margin="6,0,0,0"
+                        Width="32" Height="32" Margin="8,0,0,0"
                         ToolTip="Очистит строку поиска и снова покажет полный список текущей категории."
                         Command="{Binding ClearSearchCommand}"
                         Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVis}}"/>
                 <Button x:Name="btnFavoritesOnly" Grid.Column="2" Content="&#xE734;" ContentTemplate="{StaticResource IconGlyphTemplate}"
-                        Width="36" Height="36" Margin="6,0,0,0"
+                        Width="32" Height="32" Margin="8,0,0,0"
                         FontSize="16" ToolTip="Включит или выключит показ только избранных приложений."
                         Command="{Binding ToggleFavoritesOnlyCommand}"
                         Foreground="{Binding FavoritesOnlyBrush}"
                         Background="Transparent" BorderThickness="1"/>
-                <Button x:Name="btnHideInstalled" Grid.Column="3" Content="&#xED1A;" ContentTemplate="{StaticResource IconGlyphTemplate}"
-                        Width="36" Height="36" Margin="6,0,0,0"
+                <Button x:Name="btnHideInstalled" Grid.Column="3" Content="&#xE71C;" ContentTemplate="{StaticResource IconGlyphTemplate}"
+                        Width="32" Height="32" Margin="8,0,0,0"
                         FontSize="16" ToolTip="Включит или выключит скрытие уже установленных приложений из списка."
                         Command="{Binding ToggleHideInstalledCommand}"
                         Foreground="{Binding HideInstalledBrush}"
                         Background="Transparent" BorderThickness="1"/>
                 <Button x:Name="btnSortAlphabetically" Grid.Column="4" Content="&#xE8CB;" ContentTemplate="{StaticResource IconGlyphTemplate}"
-                        Width="36" Height="36" Margin="6,0,0,0"
+                        Width="32" Height="32" Margin="8,0,0,0"
                         FontSize="16" ToolTip="Включит или выключит сортировку приложений по алфавиту внутри категории."
                         Command="{Binding ToggleSortAlphabeticallyCommand}"
                         Foreground="{Binding SortAlphabeticallyBrush}"
                         Background="Transparent" BorderThickness="1"/>
             </Grid>
 
-            <ListBox x:Name="lstCategoryChips" DockPanel.Dock="Top" Margin="0,0,0,4"
+            <ListBox x:Name="lstCategoryChips" DockPanel.Dock="Top" Margin="0"
                      ItemsSource="{Binding CategoryChips}"
                      SelectedItem="{Binding ActiveCategoryChip, Mode=TwoWay}"
                      ItemContainerStyle="{StaticResource CategoryChip}"
@@ -210,16 +231,16 @@
             <Border DockPanel.Dock="Top"
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource StatusDanger}"
-                    BorderThickness="1" CornerRadius="8" Margin="0,0,0,10"
+                    BorderThickness="1" CornerRadius="8" Margin="0,0,0,12"
                     Visibility="{Binding CatalogErrorVisible, Converter={StaticResource BoolToVis}}">
-                <StackPanel Margin="12,10">
+                <StackPanel Margin="16,12">
                     <TextBlock Text="Каталог недоступен" Foreground="{DynamicResource StatusDanger}"
-                               FontSize="13" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                               FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"/>
                     <TextBlock Text="{Binding CatalogErrorDetail}" Style="{StaticResource SideHint}"/>
                     <Button x:Name="btnRetryLoadCatalog" Content="Повторить загрузку"
                             ToolTip="Повторно загрузит каталог из доступных источников после ошибки."
                             Command="{Binding RetryLoadCatalogCommand}"
-                            Margin="0,8,0,0" HorizontalAlignment="Left" Width="170" Height="30"/>
+                            Margin="0,8,0,0" HorizontalAlignment="Left" Padding="12,0" Height="32"/>
                 </StackPanel>
             </Border>
 
@@ -227,24 +248,27 @@
             <Border DockPanel.Dock="Top"
                     Background="{DynamicResource CardBackground}"
                     BorderBrush="{DynamicResource AccentColor}"
-                    BorderThickness="1" CornerRadius="8" Margin="0,0,0,10"
+                    BorderThickness="1" CornerRadius="8" Margin="0,0,0,12"
                     Visibility="{Binding ShowSuggestionsPanel, Converter={StaticResource BoolToVis}}">
-                <StackPanel Margin="12,10">
+                <StackPanel Margin="16,12">
                     <TextBlock Text="🔍 Не нашли в каталоге? Поиск по источникам:"
                                Foreground="{DynamicResource AccentColor}"
-                               FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                               FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4"/>
                     <views:FlatItemsControl ItemsSource="{Binding Suggestions}" ItemTemplate="{StaticResource SearchSuggestionTemplate}"/>
                     <TextBlock x:Name="txtWingetStatus" Text="{Binding SuggestionsStatus}"
-                               Foreground="{DynamicResource TextSecondary}" FontSize="11"
+                               Foreground="{DynamicResource TextSecondary}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
                                Visibility="{Binding SuggestionsStatus, Converter={StaticResource StringToVis}}"/>
                 </StackPanel>
             </Border>
 
+            <!-- Тонкая линия по верху прокручиваемой области: карточки уезжают под неё, а не
+                 обрезаются «в воздухе» под строкой «Загружено N приложений». -->
+            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,12,0,0">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <!-- Обычный ItemsControl намеренно: это список с группами (GroupStyle). Узел группы в WPF
                      берёт свои строки только у штатного узла списка, так что упрощённый узел
                      FlatItemsControl списку с группами ничего не даёт — подробно в FlatItemsControl.cs. -->
-                <ItemsControl x:Name="lstCatalogCards" ItemsSource="{Binding AppsView}" Margin="0,0,6,16">
+                <ItemsControl x:Name="lstCatalogCards" ItemsSource="{Binding AppsView}" Margin="0,0,8,16">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <views:AdaptiveCardPanel MinItemWidth="208" Gap="12"/>
@@ -261,18 +285,18 @@
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type GroupItem}">
-                                                <StackPanel Margin="0,0,0,18">
-                                                    <DockPanel Margin="0,0,0,10">
-                                                        <TextBlock DockPanel.Dock="Right" Text="{Binding ItemCount}" FontSize="12"
+                                                <StackPanel Margin="0,0,0,24">
+                                                    <DockPanel Margin="0,0,0,12" MinHeight="24">
+                                                        <TextBlock DockPanel.Dock="Right" Text="{Binding ItemCount}" FontSize="11"
                                                                    Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
                                                         <ContentControl Focusable="False"
                                                                         Content="{Binding Name, Converter={StaticResource CategoryHeaderConverter}}">
                                                             <ContentControl.ContentTemplate>
                                                                 <DataTemplate DataType="{x:Type vm:CategoryHeaderViewModel}">
                                                                     <StackPanel Orientation="Horizontal">
-                                                                        <TextBlock Text="{Binding HeaderText}" FontWeight="SemiBold" FontSize="15"
+                                                                        <TextBlock Text="{Binding HeaderText}" FontWeight="SemiBold" FontSize="14"
                                                                                    Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
-                                                                        <ComboBox Width="160" Height="24" FontSize="11" Margin="12,0,0,0"
+                                                                        <ComboBox AutomationProperties.AutomationId="{Binding CategoryName, StringFormat='cmbCategorySource_{0}'}" Width="160" Height="24" FontSize="11" Margin="12,0,0,0"
                                                                                   Visibility="{Binding ShowCombo, Converter={StaticResource BoolToVis}}"
                                                                                   ItemsSource="{Binding Options}" DisplayMemberPath="Label"
                                                                                   SelectedItem="{Binding Selected}"/>
@@ -292,7 +316,7 @@
                     </ItemsControl.GroupStyle>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:AppRowViewModel}">
-                            <Border CornerRadius="10" Padding="12" BorderThickness="1"
+                            <Border CornerRadius="8" Padding="16" BorderThickness="1"
                                     Background="{DynamicResource CardBackground}">
                                 <Border.Style>
                                     <Style TargetType="Border">
@@ -312,8 +336,11 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- Значок, название, версия и размер -->
-                                    <Grid Grid.Row="0">
+                                    <!-- Значок, название, версия и размер. Высота шапки постоянная
+                                         (две строки названия + строка версии): иначе у карточки с
+                                         названием в две строки описание и кнопки опускались ниже,
+                                         чем у соседей по ряду, и сетка «разъезжалась». -->
+                                    <Grid Grid.Row="0" Height="56">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
@@ -321,7 +348,7 @@
                                         </Grid.ColumnDefinitions>
                                         <!-- Щелчок по значку (или букве на его месте) открывает карточку
                                              приложения — так же, как щелчок по названию. -->
-                                        <Border Width="36" Height="36" CornerRadius="8" Margin="0,0,10,0"
+                                        <Border Width="36" Height="36" CornerRadius="8" Margin="0,0,12,0"
                                                 Background="{DynamicResource SurfaceRaised}" VerticalAlignment="Top" Cursor="Hand">
                                             <Border.InputBindings>
                                                 <MouseBinding MouseAction="LeftClick"
@@ -349,10 +376,17 @@
                                                 <Image Width="22" Height="22" Stretch="Uniform" Source="{Binding Icon}"/>
                                             </Grid>
                                         </Border>
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
-                                                       FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
-                                                       MaxHeight="36" TextTrimming="CharacterEllipsis"
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Top">
+                                            <!-- WrapWithOverflow, а не Wrap: перенос только между словами.
+                                                 При Wrap слово длиннее строки («Яндекс.Мессенджер»)
+                                                 рвалось посередине, и на вторую строку уходила одна
+                                                 буква; теперь оно обрезается многоточием. -->
+                                            <!-- Название — всегда TextPrimary; статус доступности ссылки показывает
+                                                 точка перед версией (решение владельца 05.11: цвет названия без
+                                                 пояснения читался «разнобоем»). Подсказка статуса — и у названия, и у точки. -->
+                                            <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource TextPrimary}"
+                                                       FontSize="14" FontWeight="SemiBold" TextWrapping="WrapWithOverflow"
+                                                       MaxHeight="38" TextTrimming="CharacterEllipsis"
                                                        HorizontalAlignment="Left"
                                                        ToolTip="{Binding StatusTooltip}" Cursor="Hand" Style="{StaticResource HoverUnderlineTextStyle}">
                                                 <TextBlock.InputBindings>
@@ -361,19 +395,30 @@
                                                                   CommandParameter="{Binding}"/>
                                                 </TextBlock.InputBindings>
                                             </TextBlock>
-                                            <TextBlock Text="{Binding CardMetaText}" FontSize="11" Margin="0,2,0,0"
-                                                       Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
+                                            <!-- Точка 8 px: цвет — RowBrush строки (зелёная — ссылка проверена, нейтральная
+                                                 TextSecondary — не проверялась/проверяется, красная — недоступна; у установленных —
+                                                 прежние «установлено»/«есть обновление»). -->
+                                            <DockPanel Margin="0,2,0,0">
+                                                <Ellipse x:Name="statusDot" DockPanel.Dock="Left" Width="8" Height="8" Margin="0,0,8,0"
+                                                         VerticalAlignment="Center" Fill="{Binding RowBrush}"
+                                                         ToolTip="{Binding StatusTooltip}"
+                                                         AutomationProperties.AutomationId="{Binding AppId, StringFormat='dotStatus_{0}'}"
+                                                         AutomationProperties.Name="{Binding StatusTooltip}"/>
+                                                <TextBlock Text="{Binding CardMetaText}" FontSize="11" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
                                             <!-- Блокировка по региону — отдельный значок. -->
-                                            <TextBlock Text="🌍" Width="20" Height="20" TextAlignment="Center" FontSize="12"
-                                                       VerticalAlignment="Center"
+                                            <TextBlock Text="&#xE774;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                       Width="24" Height="24" Padding="0,6,0,0" TextAlignment="Center" FontSize="12"
+                                                       VerticalAlignment="Center" AutomationProperties.Name="🌍"
                                                        Foreground="{DynamicResource StatusRegionBlocked}"
                                                        Visibility="{Binding ShowRegionBlockedGlyph, Converter={StaticResource BoolToVis}}"
                                                        ToolTip="{Binding RegionBlockedTooltip}"
                                                        ToolTipService.ShowDuration="20000"/>
-                                            <Button Content="{Binding FavoriteGlyph}" Style="{StaticResource CardAction}"
-                                                    FontSize="15" Foreground="Gold"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnFavorite_{0}'}" Content="{Binding FavoriteGlyph}" Style="{StaticResource CardAction}"
+                                                    FontSize="15" Foreground="{DynamicResource StatusWarning}"
                                                     ToolTip="{Binding FavoriteTooltip}"
                                                     Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"/>
@@ -381,8 +426,8 @@
                                     </Grid>
 
                                     <!-- Описание: щелчок открывает карточку приложения, как и по названию. -->
-                                    <TextBlock Grid.Row="1" Text="{Binding Description}" FontSize="11" Margin="0,8,0,0"
-                                               Height="30" VerticalAlignment="Top" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                    <TextBlock Grid.Row="1" Text="{Binding Description}" FontSize="12" Margin="0,8,0,0"
+                                               Height="32" VerticalAlignment="Top" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
                                                Foreground="{DynamicResource TextSecondary}" Cursor="Hand"
                                                ToolTip="{Binding Description}">
                                         <TextBlock.InputBindings>
@@ -394,42 +439,47 @@
 
                                     <!-- Версия и действия: видны только те, что применимы к этой программе. -->
                                     <DockPanel Grid.Row="2" Margin="0,8,0,8" Height="24" LastChildFill="False">
-                                        <ComboBox DockPanel.Dock="Left" Width="98" Height="22" Margin="0" FontSize="10"
+                                        <ComboBox AutomationProperties.AutomationId="{Binding AppId, StringFormat='cmbVersion_{0}'}" DockPanel.Dock="Left" Width="104" Height="24" Margin="0" FontSize="11"
                                                   VerticalAlignment="Center"
                                                   Visibility="{Binding ShowVersionCombo, Converter={StaticResource BoolToVis}}"
                                                   IsEnabled="{Binding IsVersionComboEnabled}"
                                                   ItemsSource="{Binding VersionOptions}"
                                                   SelectedItem="{Binding SelectedVersionOption}"/>
                                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                            <Button Content="{Binding IgnoreUpdateGlyph}" Style="{StaticResource CardAction}"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnIgnoreUpdate_{0}'}" Content="{Binding IgnoreUpdateGlyph}" Style="{StaticResource CardAction}"
                                                     ToolTip="{Binding IgnoreUpdateTooltip}"
                                                     Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
                                                     Command="{Binding DataContext.ToggleIgnoreUpdateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"/>
-                                            <Button Content="▶" Style="{StaticResource CardAction}"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnLaunch_{0}'}" Content="&#xE768;" ContentTemplate="{StaticResource IconGlyphTemplate}" Style="{StaticResource CardAction}"
+                                                    AutomationProperties.Name="▶"
                                                     Command="{Binding LaunchCommand}"
                                                     Visibility="{Binding CanLaunch, Converter={StaticResource BoolToVis}}"
                                                     Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
                                                     ToolTip="Запустит установленное приложение."/>
-                                            <TextBlock Text="🔒" Width="24" Height="24" Margin="4,0,0,0"
-                                                       TextAlignment="Center" FontSize="12" Opacity="0.65"
+                                            <TextBlock Text="&#xE72E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                       Width="24" Height="24" Margin="4,0,0,0" Padding="0,6,0,0"
+                                                       TextAlignment="Center" FontSize="12" AutomationProperties.Name="🔒"
                                                        Foreground="{DynamicResource TextSecondary}"
                                                        Visibility="{Binding ShowLaunchBlocked, Converter={StaticResource BoolToVis}}"
                                                        ToolTip="{Binding LaunchBlockedReason}"
                                                        ToolTipService.ShowDuration="20000"/>
-                                            <Button Content="🔄" Style="{StaticResource CardAction}"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnSuggestAlternative_{0}'}" Content="&#xE8AB;" ContentTemplate="{StaticResource IconGlyphTemplate}" Style="{StaticResource CardAction}"
+                                                    AutomationProperties.Name="🔄"
                                                     Command="{Binding DataContext.SuggestAlternativeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"
                                                     Visibility="{Binding ShowSuggestButton, Converter={StaticResource BoolToVis}}"
                                                     Background="{DynamicResource StatusWarning}" Foreground="{DynamicResource StatusWarningForeground}"
                                                     ToolTip="Откроет выбор другого источника установки для этого приложения."/>
-                                            <Button Content="❌" Style="{StaticResource CardAction}" FontSize="10"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnRemoveUserApp_{0}'}" Content="&#xE711;" ContentTemplate="{StaticResource IconGlyphTemplate}" Style="{StaticResource CardAction}" FontSize="10"
+                                                    AutomationProperties.Name="❌"
                                                     Command="{Binding DataContext.RemoveUserAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"
                                                     Visibility="{Binding IsUserAdded, Converter={StaticResource BoolToVis}}"
                                                     Background="{DynamicResource StatusDanger}" Foreground="{DynamicResource StatusDangerForeground}"
                                                     ToolTip="После подтверждения уберёт это добавленное вручную приложение из каталога. С компьютера оно не удаляется."/>
-                                            <Button Content="🙈" Style="{StaticResource CardAction}"
+                                            <Button AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnHideApp_{0}'}" Content="🙈" ContentTemplate="{StaticResource HideGlyphTemplate}" Style="{StaticResource CardAction}"
+                                                    AutomationProperties.Name="🙈"
                                                     Command="{Binding DataContext.HideAppCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"
                                                     Visibility="{Binding ShowHideButton, Converter={StaticResource BoolToVis}}"
@@ -447,6 +497,7 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
+            </Border>
         </DockPanel>
 
         <!-- Справа: набор, диск и ход установки, пресеты, инструменты -->
@@ -458,7 +509,7 @@
                             <TextBlock x:Name="txtSelectionBar" DockPanel.Dock="Right" VerticalAlignment="Center"
                                        Text="{Binding SelectedCount, StringFormat='Выбрано приложений: {0}'}"
                                        FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
-                            <TextBlock Text="Ваш набор" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="Ваш набор" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
                         </DockPanel>
 
                         <TextBlock Style="{StaticResource SideHint}" Margin="0,8,0,0"
@@ -472,11 +523,11 @@
                                                     AutomationProperties.Name="Ваш набор">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:AppRowViewModel}">
-                                        <Border Margin="0,0,0,4" Padding="10,0,2,0" CornerRadius="7" Height="30"
+                                        <Border Margin="0,0,0,4" Padding="8,0,2,0" CornerRadius="4" Height="28"
                                                 Background="{DynamicResource SurfaceRaised}">
                                             <DockPanel>
                                                 <Button DockPanel.Dock="Right" Content="&#xE711;" ContentTemplate="{StaticResource IconGlyphTemplate}"
-                                                        Width="26" Height="26" Margin="4,0,0,0" FontSize="10"
+                                                        Width="24" Height="24" Margin="4,0,0,0" FontSize="10"
                                                         Background="Transparent" BorderThickness="0"
                                                         AutomationProperties.AutomationId="{Binding AppId, StringFormat='btnSetRemove_{0}'}"
                                                         AutomationProperties.Name="{Binding DisplayName, StringFormat='Убрать из набора: {0}'}"
@@ -501,16 +552,16 @@
                             <TextBlock Text="Скачается" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
                         </DockPanel>
 
-                        <Button x:Name="btnInstall" Height="40" Margin="0,12,0,0"
-                                Background="{DynamicResource AccentColor}" Foreground="{DynamicResource AccentForeground}"
+                        <!-- Подпись — ContentStringFormat, а не вложенный TextBlock: надпись тогда
+                             создаёт сам ContentPresenter шаблона, и она наследует его цвет — серый
+                             TextSecondary у выключенной кнопки. Вложенный TextBlock с привязкой цвета
+                             к ContentPresenter на снимках рисовался почти чёрным: «Установить (0)»
+                             на тёмной подложке не читалась ни в одной тёмной теме. -->
+                        <Button x:Name="btnInstall" Style="{StaticResource PrimaryButtonStyle}" Height="40" Margin="0,12,0,0"
                                 Effect="{DynamicResource BrandAuraEffect}"
                                 ToolTip="Установит все отмеченные приложения по очереди. Для нескольких приложений будет предложена точка восстановления."
-                                Command="{Binding InstallSelectedCommand}">
-                            <!-- StringFormat на Button.Content (object) не срабатывает — подпись
-                                 форматирует вложенный TextBlock. -->
-                            <TextBlock Text="{Binding SelectedCount, StringFormat='Установить ({0})'}"
-                                       Foreground="{DynamicResource AccentForeground}"/>
-                        </Button>
+                                Command="{Binding InstallSelectedCommand}"
+                                Content="{Binding SelectedCount}" ContentStringFormat="Установить ({0})"/>
                         <!-- winget получает согласие с условиями источников в командной строке,
                              поэтому человек должен видеть, что именно он принимает. -->
                         <TextBlock x:Name="txtSourceTerms" TextWrapping="Wrap" FontSize="11" Margin="0,8,0,0"
@@ -533,11 +584,11 @@
                             <DockPanel Margin="0,4,0,0">
                                 <Button x:Name="btnCopySetCode" DockPanel.Dock="Right" Content="&#xE8C8;"
                                         ContentTemplate="{StaticResource IconGlyphTemplate}"
-                                        Width="30" Height="30" Margin="6,0,0,0"
+                                        Width="32" Height="32" Margin="8,0,0,0"
                                         ToolTip="Скопирует код набора. На другом компьютере его принимает кнопка «Набор с сайта»."
                                         Command="{Binding CopySelectionCodeCommand}"/>
                                 <TextBox x:Name="txtSetCode" Text="{Binding SelectionCode, Mode=OneWay}" IsReadOnly="True"
-                                         Height="30" FontFamily="Consolas" FontSize="11" Padding="6,0"
+                                         Height="32" FontFamily="Consolas" FontSize="11" Padding="8,0"
                                          VerticalContentAlignment="Center"
                                          Background="{DynamicResource ContentBackground}"
                                          Foreground="{DynamicResource AccentColor}"
@@ -550,19 +601,36 @@
                 <Border Style="{StaticResource SidePanel}">
                     <StackPanel>
                         <TextBlock Text="Диск установки" Style="{StaticResource SidePanelTitle}"/>
-                        <ComboBox x:Name="cmbAvailableDisks" Height="28" Margin="0,8,0,0"
+                        <ComboBox x:Name="cmbAvailableDisks" Height="32" Margin="0,8,0,0"
                                   ItemsSource="{Binding AvailableDisks}" DisplayMemberPath="Space"
                                   SelectedItem="{Binding SelectedDisk}"/>
-                        <TextBlock Text="{Binding SpaceStatus}" Style="{StaticResource SideHint}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding SpaceStatus}" Style="{StaticResource SideHint}" Margin="0,8,0,0"/>
                         <!-- Mode=OneWay обязателен: RangeBase.Value связывается TwoWay по умолчанию. -->
+                        <!-- Это полоса хода установки, а не занятости диска. Пока установка не
+                             шла (0 % и ничего не ставится), она скрыта: пустая полоса прямо под
+                             «Свободно: 32 ГБ / 62 ГБ» читалась как сломанный индикатор диска. -->
                         <ProgressBar x:Name="installProgressBar" Height="6" Margin="0,8,0,0" Minimum="0" Maximum="100"
-                                     Value="{Binding OverallProgressPercentage, Mode=OneWay}"/>
+                                     Value="{Binding OverallProgressPercentage, Mode=OneWay}">
+                            <ProgressBar.Style>
+                                <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsInstalling}" Value="False"/>
+                                                <Condition Binding="{Binding OverallProgressPercentage}" Value="0"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ProgressBar.Style>
+                        </ProgressBar>
                         <TextBlock x:Name="txtOverallStatus" Text="{Binding InstallStatusText}" Style="{StaticResource SideHint}"
-                                   HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                   Margin="0,4,0,0"/>
                         <!-- Ход установки растёт по числу строк и прокручивается вместе со всей
                              панелью: своя прокрутка давала вторую полосу рядом с полосой панели.
                              Без ScrollViewer в шаблоне колесо мыши доходит до панели. -->
-                        <ListBox x:Name="lstAppProgress" ItemsSource="{Binding InstallProgress}" Margin="0,6,0,0"
+                        <ListBox x:Name="lstAppProgress" ItemsSource="{Binding InstallProgress}" Margin="0,8,0,0"
                                  Background="Transparent"
                                  Foreground="{DynamicResource TextPrimary}"
                                  BorderThickness="0"
@@ -575,7 +643,7 @@
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                    <Setter Property="Padding" Value="2,3"/>
+                                    <Setter Property="Padding" Value="0,4"/>
                                 </Style>
                             </ListBox.ItemContainerStyle>
                         </ListBox>
@@ -588,11 +656,11 @@
                     <StackPanel>
                         <TextBlock Text="{Binding FailedInstallsHeader}" Style="{StaticResource SidePanelTitle}"/>
                         <TextBlock Text="Эти приложения не установились. Ниже — способ установки и причина; попытку можно повторить."
-                                   Style="{StaticResource SideHint}" Margin="0,6,0,6"/>
+                                   Style="{StaticResource SideHint}" Margin="0,8,0,8"/>
                         <views:FlatItemsControl x:Name="lstFailedInstalls" ItemsSource="{Binding FailedInstalls}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:FailedInstallViewModel}">
-                                    <Border Margin="0,2" Padding="8,6" CornerRadius="6"
+                                    <Border Margin="0,0,0,4" Padding="8" CornerRadius="4"
                                             Background="{DynamicResource SurfaceRaised}">
                                         <StackPanel>
                                             <TextBlock Text="{Binding DisplayName}"
@@ -600,18 +668,18 @@
                                                        Foreground="{DynamicResource TextPrimary}"
                                                        TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Text="{Binding MethodText}"
-                                                       FontSize="10" Margin="0,2,0,0"
+                                                       FontSize="11" Margin="0,2,0,0"
                                                        Foreground="{DynamicResource TextSecondary}"/>
                                             <TextBlock Text="{Binding Error}" ToolTip="{Binding Error}"
-                                                       FontSize="10" Margin="0,2,0,0" MaxHeight="52"
+                                                       FontSize="11" Margin="0,2,0,0" MaxHeight="60"
                                                        TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
                                                        Foreground="{DynamicResource StatusDanger}"/>
                                             <TextBlock Text="{Binding RetryStatus}"
-                                                       FontSize="10" Margin="0,4,0,0" TextWrapping="Wrap"
+                                                       FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource AccentColor}"
                                                        Visibility="{Binding RetryStatus, Converter={StaticResource StringToVis}}"/>
-                                            <Button Content="🔁 Повторить" Margin="0,5,0,0"
-                                                    HorizontalAlignment="Left" Width="110" Height="26" FontSize="11"
+                                            <Button AutomationProperties.AutomationId="{Binding DisplayName, StringFormat='btnRetryInstall_{0}'}" Content="🔁 Повторить" Margin="0,8,0,0"
+                                                    HorizontalAlignment="Left" Padding="12,0" Height="28" FontSize="12"
                                                     Command="{Binding RetryCommand}"
                                                     ToolTip="Повторит установку этого приложения тем же способом, что и обычная установка из каталога. Кнопка недоступна, пока идёт другая установка."/>
                                         </StackPanel>
@@ -631,8 +699,8 @@
                         <Button x:Name="btnPresetByCode" Content="📥 Набор с сайта" Style="{StaticResource SideButton}"
                                 Command="{Binding ImportPresetByCodeCommand}"
                                 ToolTip="Отметит приложения из набора, собранного на ven4tools.ru: вставьте код вида V4T:google-chrome,telegram. Разбирается на месте, без обращения к серверу."/>
-                        <views:FlatItemsControl x:Name="lstPresets" ItemsSource="{Binding Presets}" Margin="0,6,0,0" ItemTemplate="{StaticResource PresetRowTemplate}"/>
-                        <TextBlock Text="Нет сохранённых пресетов" Style="{StaticResource SideHint}" Margin="0,6,0,0"
+                        <views:FlatItemsControl x:Name="lstPresets" ItemsSource="{Binding Presets}" Margin="0,8,0,0" ItemTemplate="{StaticResource PresetRowTemplate}"/>
+                        <TextBlock Text="Нет сохранённых пресетов" Style="{StaticResource SideHint}" Margin="0,8,0,0"
                                    Visibility="{Binding PresetsEmpty, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                 </Border>
@@ -640,7 +708,7 @@
                 <!-- Редкие действия свёрнуты, чтобы не отвлекать от набора. -->
                 <Expander x:Name="expCatalogTools" Header="Инструменты каталога" IsExpanded="False"
                           AutomationProperties.AutomationId="expCatalogTools">
-                    <StackPanel Margin="10,4,10,10">
+                    <StackPanel Margin="12,0,12,12">
                         <Button x:Name="btnCheckUpdates" Content="Проверить обновления" Style="{StaticResource SideButton}"
                                 ToolTip="Проверит, доступны ли новые версии установленных приложений. Ничего не устанавливает."
                                 Command="{Binding CheckUpdatesCommand}"/>
@@ -650,8 +718,11 @@
                         <Button x:Name="btnRefreshAvailability" Content="Проверить доступность" Style="{StaticResource SideButton}"
                                 ToolTip="Повторно проверит, из каких источников сейчас можно скачать приложения."
                                 Command="{Binding RefreshAvailabilityCommand}"/>
-                        <Button x:Name="btnClearAllUserApps" Content="Очистить добавленные" Style="{StaticResource SideButton}"
-                                Foreground="{DynamicResource StatusDanger}"
+                        <!-- DangerButtonStyle вместо SideButton с красной надписью: у обычной кнопки
+                             при наведении заливка становится акцентом, и красный текст на ней не
+                             читался. Высота и отступ — как у соседних SideButton. -->
+                        <Button x:Name="btnClearAllUserApps" Content="Очистить добавленные" Style="{StaticResource DangerButtonStyle}"
+                                Height="32" Margin="0,8,0,0"
                                 ToolTip="После подтверждения удалит из каталога все приложения, добавленные пользователем."
                                 Command="{Binding ClearAllUserAppsCommand}"/>
                         <Button x:Name="btnSetFromInstalled" Content="Набор из установленного" Style="{StaticResource SideButton}"

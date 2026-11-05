@@ -84,17 +84,26 @@ internal static class FileHelper
     /// Откладывает нечитаемый файл данных в сторону (<c>имя.bad</c>), чтобы на его
     /// месте можно было начать заново, а содержимое осталось для разбора. Ошибки не
     /// бросает: не отложился — следующая запись просто заменит файл.
+    ///
+    /// <para>Прежний <c>имя.bad</c> не затирается: если он уже есть, новый испорченный файл
+    /// получает имя с отметкой времени (<c>имя.bad-ГГГГММДД-ЧЧММСС-ммм</c>). Возвращает путь,
+    /// куда файл отложен, или null.</para>
     /// </summary>
-    public static void SetAsideBroken(string path)
+    public static string? SetAsideBroken(string path)
     {
         try
         {
             EnsureNotRedirected(Path.GetDirectoryName(path)!, path);
-            File.Move(path, path + ".bad", overwrite: true);
+            var target = path + ".bad";
+            if (File.Exists(target))
+                target = path + ".bad-" + System.DateTime.Now.ToString("yyyyMMdd-HHmmss-fff", System.Globalization.CultureInfo.InvariantCulture);
+            File.Move(path, target, overwrite: false);
+            return target;
         }
         catch (System.Exception ex)
         {
             Services.AppLogger.Write($"[FileHelper] Испорченный файл не отложен: {ex.Message}");
+            return null;
         }
     }
 
@@ -105,7 +114,7 @@ internal static class FileHelper
         var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
         try
         {
-            File.WriteAllText(tmp, content);
+            WriteDurable(tmp, new System.Text.UTF8Encoding(false).GetBytes(content));
             File.Move(tmp, path, overwrite: true);
         }
         catch
@@ -122,7 +131,7 @@ internal static class FileHelper
         var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
         try
         {
-            await File.WriteAllTextAsync(tmp, content);
+            await WriteDurableAsync(tmp, new System.Text.UTF8Encoding(false).GetBytes(content));
             File.Move(tmp, path, overwrite: true);
         }
         catch
@@ -139,7 +148,7 @@ internal static class FileHelper
         var tmp = path + "." + Path.GetRandomFileName() + ".tmp";
         try
         {
-            await File.WriteAllBytesAsync(tmp, content);
+            await WriteDurableAsync(tmp, content);
             File.Move(tmp, path, overwrite: true);
         }
         catch
@@ -147,5 +156,25 @@ internal static class FileHelper
             try { File.Delete(tmp); } catch { }
             throw;
         }
+    }
+
+    /// <summary>
+    /// Запись временного файла со сбросом на диск до переименования (как в лаунчере). Без
+    /// Flush(true) данные могут ещё лежать в кэше, когда переименование уже попало в журнал
+    /// NTFS: после отключения питания на месте файла оказался бы пустой файл. Кодировка
+    /// текста — UTF-8 без BOM, как у прежнего File.WriteAllText.
+    /// </summary>
+    private static void WriteDurable(string tmp, byte[] content)
+    {
+        using var stream = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        stream.Write(content, 0, content.Length);
+        stream.Flush(flushToDisk: true);
+    }
+
+    private static async Task WriteDurableAsync(string tmp, byte[] content)
+    {
+        await using var stream = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, useAsync: true);
+        await stream.WriteAsync(content);
+        stream.Flush(flushToDisk: true);
     }
 }
