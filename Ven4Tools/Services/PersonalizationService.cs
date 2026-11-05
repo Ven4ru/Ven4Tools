@@ -143,7 +143,12 @@ namespace Ven4Tools.Services
 
             lock (_gate)
             {
-                var all = Load();
+                var all = Load(out bool readable);
+                // Испорченный файл отката отложен и не разобран, или файл не читается:
+                // снять «как было» сейчас значило бы запомнить уже оформление Венчика.
+                UndoFileGuard.ThrowIfBroken(_undoPath, Section);
+                if (!readable)
+                    throw new IOException("Файл отката персонализации сейчас не читается — оформление не применено, чтобы не потерять прежнее состояние.");
                 if (!all.ContainsKey(part.ToString()))
                 {
                     all[part.ToString()] = new UndoRecord { AppliedUtc = DateTime.UtcNow, Values = Snapshot(part) };
@@ -238,9 +243,9 @@ namespace Ven4Tools.Services
 
             lock (_gate)
             {
-                var all = Load();
-                all.Remove(part.ToString());
-                Save(all);
+                var all = Load(out bool readable);
+                // Не читается сейчас — не сохраняем поверх: пропали бы записи других пунктов.
+                if (readable && all.Remove(part.ToString())) Save(all);
             }
             AppLogger.Write($"🐾 Персонализация: возвращено «{part}»");
         }
@@ -307,27 +312,29 @@ namespace Ven4Tools.Services
             return len > 0 && len < sb.Capacity ? sb.ToString() : path;
         }
 
-        private Dictionary<string, UndoRecord> Load()
+        private const string Section = "Персонализация";
+
+        /// <summary>Испорченный файл отката отложен и не разобран — «Применить» отказывает. null — всё в порядке.</summary>
+        public string? BrokenBackup { get { lock (_gate) { Load(); return UndoFileGuard.Broken(_undoPath); } } }
+
+        /// <summary>
+        /// «Вернуть всё» при испорченном файле: вернуть по нему нечего. Отложенный файл
+        /// переименовывается (не удаляется), «Применить» снова работает. Возвращает
+        /// сообщение для пользователя или null, если испорченного файла нет.
+        /// </summary>
+        public string? AcknowledgeBroken()
         {
-            try
-            {
-                if (File.Exists(_undoPath))
-                    return JsonSerializer.Deserialize<Dictionary<string, UndoRecord>>(File.ReadAllText(_undoPath)) ?? new();
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write("⚠️ Персонализация: не прочитан файл отката — " + ex.Message);
-            }
-            return new();
+            lock (_gate) return UndoFileGuard.Acknowledge(_undoPath, Section);
         }
 
-        private void Save(Dictionary<string, UndoRecord> all)
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(_undoPath)!);
-            var tmp = _undoPath + ".tmp";
-            File.WriteAllText(tmp, JsonSerializer.Serialize(all, new JsonSerializerOptions { WriteIndented = true }));
-            File.Move(tmp, _undoPath, overwrite: true);
-        }
+        private Dictionary<string, UndoRecord> Load() => Load(out _);
+
+        /// <summary>Испорченный файл откладывается в .bad (см. <see cref="UndoFileGuard"/>).</summary>
+        private Dictionary<string, UndoRecord> Load(out bool readable) =>
+            UndoFileGuard.Load<Dictionary<string, UndoRecord>>(_undoPath, Section, out readable) ?? new();
+
+        private void Save(Dictionary<string, UndoRecord> all) =>
+            Helpers.FileHelper.WriteAllTextAtomic(_undoPath, JsonSerializer.Serialize(all, new JsonSerializerOptions { WriteIndented = true }));
     }
 
     /// <summary>Настоящий реестр и вызовы Windows.</summary>

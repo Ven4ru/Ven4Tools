@@ -91,16 +91,41 @@ namespace Ven4Tools.Services
 
         public static TaskbarThemeService Default { get; } = new(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "taskbar_theme.json"),
-            new WindowsThemeRegistry());
+            new WindowsThemeRegistry(),
+            RegistryOwnership.Default);
+
+        private const string Section = "Тема панели";
+        private const string OwnerPrefix = "theme:";
+        /// <summary>Владелец значений цвета в общем учёте.</summary>
+        private const string ColorOwner = OwnerPrefix + "color";
 
         private readonly string _statePath;
         private readonly IThemeRegistry _reg;
+        private readonly RegistryOwnership? _owners;
         private readonly object _lock = new();
 
-        public TaskbarThemeService(string statePath, IThemeRegistry reg)
+        /// <param name="owners">
+        /// Общий учёт владения значениями с «Очисткой» и «Панелью задач и Пуском» (у них общие
+        /// SystemUsesLightTheme, ColorPrevalence, EnableTransparency); null — без него.
+        /// </param>
+        public TaskbarThemeService(string statePath, IThemeRegistry reg, RegistryOwnership? owners = null)
         {
             _statePath = statePath;
             _reg = reg;
+            _owners = owners;
+        }
+
+        /// <summary>Испорченный файл состояния отложен и не разобран — «Применить» отказывает. null — всё в порядке.</summary>
+        public string? BrokenBackup { get { lock (_lock) { Load(out _); return UndoFileGuard.Broken(_statePath); } } }
+
+        /// <summary>Перед любой правкой: файл не испорчен и читается — иначе «как было» снялось бы с наших значений.</summary>
+        private State LoadForChange()
+        {
+            var st = Load(out bool readable);
+            UndoFileGuard.ThrowIfBroken(_statePath, Section);
+            if (!readable)
+                throw new IOException("Файл состояния темы панели сейчас не читается — изменения не применены, чтобы не потерять прежнее состояние.");
+            return st;
         }
 
         public bool IsWindows11 => _reg.Build >= 22000;
@@ -179,9 +204,10 @@ namespace Ven4Tools.Services
         {
             lock (_lock)
             {
-                var st = Load();
+                var st = LoadForChange();
                 if (st.ColorUndo.Count == 0)
                 {
+                    _owners?.Reconcile(OwnerPrefix, Array.Empty<string>());
                     foreach (var (k, n) in ThemeValues) st.ColorUndo[k + "\\" + n] = Snapshot(k, n);
                     // «Как было» — на диск до первой записи: сбой посередине не должен оставить
                     // реестр наполовину перекрашенным без возможности отката.
@@ -239,7 +265,7 @@ namespace Ven4Tools.Services
             {
                 var v = _reg.Read(StuckRects, "Settings");
                 if (v?.Data is not byte[] b || b.Length <= 12) return false;
-                var st = Load();
+                var st = LoadForChange();
                 if (st.LeftUndo == null)
                 {
                     st.LeftUndo = new RawValue(true, v.Value.Kind.ToString(), Convert.ToHexString(b));
@@ -277,6 +303,7 @@ namespace Ven4Tools.Services
         public void EnableEars(TaskbarTheme? theme)
         {
             var dst = EarsInstallPath;
+            lock (_lock) LoadForChange();   // испорченный файл — отказ до копирования и запуска
             Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
             StopEars();
             if (File.Exists(EarsSourcePath)) File.Copy(EarsSourcePath, dst, overwrite: true);
@@ -284,7 +311,7 @@ namespace Ven4Tools.Services
             var cmd = $"\"{dst}\" {args}".TrimEnd();
             lock (_lock)
             {
-                var st = Load();
+                var st = LoadForChange();
                 if (!st.Ears)
                 {
                     var old = _reg.Read(RunKey, EarsRunName);
@@ -308,8 +335,8 @@ namespace Ven4Tools.Services
             StopEars();
             lock (_lock)
             {
-                var st = Load();
-                if (!st.Ears) return;
+                var st = Load(out bool readable);
+                if (!readable || !st.Ears) return;
                 if (st.EarsRunExisted && st.EarsRunOld != null) _reg.Write(RunKey, EarsRunName, RegistryValueKind.String, st.EarsRunOld);
                 else _reg.Delete(RunKey, EarsRunName);
                 st.Ears = false; st.EarsRunExisted = false; st.EarsRunOld = null;
@@ -343,7 +370,10 @@ namespace Ven4Tools.Services
         // ── откат ────────────────────────────────────────────────────────
 
         /// <summary>Вернуть цвет, положение панели и ушки, как было до Ven4Tools. true — нужен перезапуск проводника.</summary>
-        public bool RevertAll()
+        public bool RevertAll() => RevertAll(out _);
+
+        /// <param name="message">Сообщение для строки состояния (например, «вернуть нечего» при испорченном файле); null — нет.</param>
+        public bool RevertAll(out string? message)
         {
             bool restart = false;
             // Сбой одного пункта не останавливает возврат остальных: что не вернулось,
@@ -352,13 +382,25 @@ namespace Ven4Tools.Services
             catch (Exception ex) { AppLogger.Write("⚠️ Ушки Венчика: не выключились при откате — " + ex.Message); }
             lock (_lock)
             {
-                var st = Load();
+                var st = Load(out bool readable);
+                // Файл был испорчен: вернуть по нему нечего — говорим честно, отложенный файл
+                // переименовываем (не удаляем), чтобы снова можно было применять.
+                message = UndoFileGuard.Acknowledge(_statePath, Section);
+                if (!readable) throw new IOException("Файл состояния темы панели сейчас не читается — повторите позже.");
+                _owners?.Reconcile(OwnerPrefix, st.ColorUndo.Count > 0 ? new[] { ColorOwner } : Array.Empty<string>());
                 foreach (var (path, v) in st.ColorUndo.ToList())
                 {
                     var i = path.LastIndexOf('\\');
+                    string key = path[..i], name = path[(i + 1)..];
                     try
                     {
-                        Restore(path[..i], path[(i + 1)..], v);
+                        // Значение ещё держит «Панель задач и Пуск» (режим, заливка, прозрачность):
+                        // реестр не трогаем, снимаем только своё владение.
+                        if (_owners?.HeldByOthers(key, name, ColorOwner) == true)
+                            AppLogger.Write($"Тема панели: «{name}» ещё держит другой раздел — значение оставлено как есть");
+                        else Restore(key, name, _owners?.Original(key, name) is { } original
+                            ? new RawValue(original.Exists, original.Kind, original.Data) : v);
+                        _owners?.Release(key, name, ColorOwner);
                         st.ColorUndo.Remove(path);
                     }
                     catch (Exception ex) { AppLogger.Write($"⚠️ Тема панели: не вернулось «{path}» — {ex.Message}"); }
@@ -375,52 +417,30 @@ namespace Ven4Tools.Services
             return restart;
         }
 
+        /// <summary>
+        /// «Как было» перед первой правкой, побайтно. Значение уже держит другой раздел — оригинал
+        /// из общего учёта, а не из реестра (там сейчас правка соседа).
+        /// </summary>
         private RawValue Snapshot(string key, string name)
         {
-            var v = _reg.Read(key, name);
-            if (v == null) return new RawValue(false, "", "");
-            var data = v.Value.Data switch
-            {
-                byte[] b => Convert.ToHexString(b),
-                int i => i.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                long l => l.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                var o => Convert.ToString(o, System.Globalization.CultureInfo.InvariantCulture) ?? "",
-            };
-            return new RawValue(true, v.Value.Kind.ToString(), data);
+            RegistryRaw ReadNow() => RegistryRaw.From(_reg.Read(key, name));
+            var raw = _owners?.Claim(key, name, ColorOwner, ReadNow) ?? ReadNow();
+            return new RawValue(raw.Exists, raw.Kind, raw.Data);
         }
 
         private void Restore(string key, string name, RawValue v)
         {
-            if (!v.Exists) { _reg.Delete(key, name); return; }
-            var kind = Enum.Parse<RegistryValueKind>(v.Kind);
-            object data = kind switch
-            {
-                RegistryValueKind.Binary => Convert.FromHexString(v.Data),
-                RegistryValueKind.DWord => int.Parse(v.Data, System.Globalization.CultureInfo.InvariantCulture),
-                RegistryValueKind.QWord => long.Parse(v.Data, System.Globalization.CultureInfo.InvariantCulture),
-                _ => v.Data,
-            };
-            _reg.Write(key, name, kind, data);
+            if (new RegistryRaw(v.Exists, v.Kind, v.Data).ToValue() is { } value) _reg.Write(key, name, value.Kind, value.Data);
+            else _reg.Delete(key, name);
         }
 
-        private State Load()
-        {
-            try
-            {
-                if (File.Exists(_statePath))
-                    return JsonSerializer.Deserialize<State>(File.ReadAllText(_statePath)) ?? new();
-            }
-            catch (Exception ex) { AppLogger.Write("⚠️ Тема панели: файл состояния не прочитан — " + ex.Message); }
-            return new();
-        }
+        private State Load() => Load(out _);
 
-        private void Save(State st)
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(_statePath)!);
-            var tmp = _statePath + ".tmp";
-            File.WriteAllText(tmp, JsonSerializer.Serialize(st, new JsonSerializerOptions { WriteIndented = true }));
-            File.Move(tmp, _statePath, overwrite: true);
-        }
+        /// <summary>Испорченный файл откладывается в .bad (см. <see cref="UndoFileGuard"/>).</summary>
+        private State Load(out bool readable) => UndoFileGuard.Load<State>(_statePath, Section, out readable) ?? new();
+
+        private void Save(State st) =>
+            Helpers.FileHelper.WriteAllTextAtomic(_statePath, JsonSerializer.Serialize(st, new JsonSerializerOptions { WriteIndented = true }));
     }
 
     public sealed class WindowsThemeRegistry : IThemeRegistry

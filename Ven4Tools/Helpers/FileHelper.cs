@@ -84,17 +84,26 @@ internal static class FileHelper
     /// Откладывает нечитаемый файл данных в сторону (<c>имя.bad</c>), чтобы на его
     /// месте можно было начать заново, а содержимое осталось для разбора. Ошибки не
     /// бросает: не отложился — следующая запись просто заменит файл.
+    ///
+    /// <para>Прежний <c>имя.bad</c> не затирается: если он уже есть, новый испорченный файл
+    /// получает имя с отметкой времени (<c>имя.bad-ГГГГММДД-ЧЧММСС-ммм</c>). Возвращает путь,
+    /// куда файл отложен, или null.</para>
     /// </summary>
-    public static void SetAsideBroken(string path)
+    public static string? SetAsideBroken(string path)
     {
         try
         {
             EnsureNotRedirected(Path.GetDirectoryName(path)!, path);
-            File.Move(path, path + ".bad", overwrite: true);
+            var target = path + ".bad";
+            if (File.Exists(target))
+                target = path + ".bad-" + System.DateTime.Now.ToString("yyyyMMdd-HHmmss-fff", System.Globalization.CultureInfo.InvariantCulture);
+            File.Move(path, target, overwrite: false);
+            return target;
         }
         catch (System.Exception ex)
         {
             Services.AppLogger.Write($"[FileHelper] Испорченный файл не отложен: {ex.Message}");
+            return null;
         }
     }
 

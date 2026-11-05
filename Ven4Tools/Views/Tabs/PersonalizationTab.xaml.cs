@@ -206,9 +206,13 @@ namespace Ven4Tools.Views.Tabs
                     : Tr("В Windows 11 родную панель задач нельзя переставить. Панель сверху, слева или справа — в своей панели Ven4Bar.");
 
                 RefreshPresets();
-                btnTaskbarRevert.IsEnabled = _taskbar.HasUndo || _themes.HasUndo;
+                // Испорченный файл отката: «Применить» отказывает, а «Вернуть» доступно —
+                // оно честно скажет, что вернуть нечего, и снимет отказ.
+                var broken = TaskbarBrokenMessage();
+                btnTaskbarRevert.IsEnabled = _taskbar.HasUndo || _themes.HasUndo || broken != null;
                 var applied = _themes.AppliedTheme;
-                txtTaskbarStatus.Text = applied != null ? string.Format(Tr("✓ Применена тема «{0}»"), Tr(applied.Title)) : "";
+                txtTaskbarStatus.Text = broken != null ? "⚠️ " + broken
+                    : applied != null ? string.Format(Tr("✓ Применена тема «{0}»"), Tr(applied.Title)) : "";
             }
             catch (Exception ex)
             {
@@ -345,8 +349,22 @@ namespace Ven4Tools.Views.Tabs
             RefreshTaskbarSelection();
         }
 
+        /// <summary>Отказ «Применить» раздела панели задач из-за испорченного файла отката; null — отказа нет.</summary>
+        private string? TaskbarBrokenMessage() =>
+            (_themes.BrokenBackup ?? _taskbar.BrokenBackup) is { } bad ? UndoFileGuard.BrokenMessage(bad) : null;
+
+        /// <summary>Файл отката испорчен — в журнал и в строку состояния, «Применить» не идёт.</summary>
+        private bool RefuseIfTaskbarUndoBroken()
+        {
+            if (TaskbarBrokenMessage() is not { } broken) return false;
+            AppLogger.Write("⚠️ Панель задач: " + broken);
+            RefreshTaskbar();   // строка состояния показывает отказ
+            return true;
+        }
+
         private async void TaskbarApply_Click(object sender, RoutedEventArgs e)
         {
+            if (RefuseIfTaskbarUndoBroken()) return;
             var theme = PreviewTheme();
             var preset = _selPreset is { ThemeOnly: false } ? _selPreset.Values : null;
             bool ears = chkEars.IsChecked == true && TaskbarThemeService.EarsAvailable;
@@ -368,6 +386,10 @@ namespace Ven4Tools.Views.Tabs
                     if (ears) _themes.EnableEars(theme); else _themes.DisableEars();
                     if (_themes.CanMoveLeft && edge != _themes.Edge && _themes.SetEdge(edge)) restart = true;
                 });
+            }
+            catch (UndoFileBrokenException)
+            {
+                // Уже в журнале; строку состояния обновит RefreshTaskbar ниже.
             }
             catch (Exception ex)
             {
@@ -407,9 +429,16 @@ namespace Ven4Tools.Views.Tabs
             var values = items.Where(i => i.Selected != null && i.Selected.Value != i.CurrentValue)
                 .ToDictionary(i => i.Setting.Id, i => i.Selected!.Value);
             if (values.Count == 0) return;
+            if (_taskbar.BrokenBackup is { } bad)
+            {
+                AppLogger.Write("⚠️ Панель задач: " + UndoFileGuard.BrokenMessage(bad));
+                RefreshTaskbar();
+                return;
+            }
             IsEnabled = false;
             TaskbarStartService.ApplyResult? result = null;
             try { result = await Task.Run(() => _taskbar.Apply(values)); }
+            catch (UndoFileBrokenException) { /* уже в журнале; состояние — в RefreshTaskbar */ }
             catch (Exception ex)
             {
                 AppLogger.Write("❌ Панель задач: " + ex.Message);
@@ -424,15 +453,19 @@ namespace Ven4Tools.Views.Tabs
             IsEnabled = false;
             bool restart = false;
             var blocked = new List<string>();
+            var messages = new List<string>();
             try
             {
                 await Task.Run(() =>
                 {
                     // Сначала тема (её «как было» снято раньше настроек), потом остальные настройки.
-                    restart |= _themes.RevertAll();
+                    restart |= _themes.RevertAll(out var themeMessage);
                     var r = _taskbar.RevertAll();
                     blocked.AddRange(r.Blocked);
                     restart |= r.NeedsExplorerRestart;
+                    // Файл отката был испорчен — «вернуть нечего», сказать об этом честно.
+                    if (themeMessage != null) messages.Add(themeMessage);
+                    if (r.Message != null) messages.Add(r.Message);
                 });
             }
             catch (Exception ex)
@@ -445,6 +478,7 @@ namespace Ven4Tools.Views.Tabs
                 IsEnabled = true;
                 _selTheme = null; _selPreset = null;
                 RefreshTaskbar();
+                if (messages.Count > 0) txtTaskbarStatus.Text = "↩ " + string.Join(" ", messages);
             }
             await AfterTaskbarChange(blocked, restart);
         }
@@ -482,7 +516,8 @@ namespace Ven4Tools.Views.Tabs
                 }).ToList();
                 lstParts.ItemsSource = items;
                 btnApplyAll.IsEnabled = items.Any(i => i.CanApply);
-                btnRevertAll.IsEnabled = items.Any(i => i.IsApplied);
+                // Испорченный файл отката: «Вернуть всё» доступно — скажет, что вернуть нечего, и снимет отказ.
+                btnRevertAll.IsEnabled = items.Any(i => i.IsApplied) || _service.BrokenBackup != null;
             }
             catch (Exception ex)
             {
@@ -514,8 +549,18 @@ namespace Ven4Tools.Views.Tabs
 
         private async Task RunAsync(IEnumerable<PersonalizationPart> parts, bool apply)
         {
+            // Испорченный файл отката: «Применить» отказывает с понятным сообщением (оно уже в журнале).
+            if (apply && _service.BrokenBackup is { } bad)
+            {
+                var message = UndoFileGuard.BrokenMessage(bad);
+                AppLogger.Write("⚠️ Персонализация: " + message);
+                MessageBox.Show(message, "Персонализация", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Refresh();
+                return;
+            }
             IsEnabled = false;
             var failed = new List<string>();
+            string? brokenMessage = null;
             try
             {
                 foreach (var part in parts)
@@ -523,6 +568,11 @@ namespace Ven4Tools.Views.Tabs
                     try
                     {
                         await Task.Run(() => { if (apply) _service.Apply(part); else _service.Revert(part); });
+                    }
+                    catch (UndoFileBrokenException ex)
+                    {
+                        brokenMessage = ex.Message;
+                        break;
                     }
                     catch (Exception ex)
                     {
@@ -536,6 +586,8 @@ namespace Ven4Tools.Views.Tabs
                 IsEnabled = true;
                 Refresh();
             }
+            if (brokenMessage != null)
+                MessageBox.Show(brokenMessage, "Персонализация", MessageBoxButton.OK, MessageBoxImage.Warning);
             if (failed.Count > 0)
                 MessageBox.Show(string.Format("Не получилось: {0}. Подробности — в журнале.", string.Join(", ", failed)),
                     "Персонализация", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -554,7 +606,19 @@ namespace Ven4Tools.Views.Tabs
         private async void ApplyAll_Click(object sender, RoutedEventArgs e) =>
             await RunAsync(Parts.Select(p => p.Part).Where(p => _service.IsAvailable(p) && !_service.IsApplied(p)), apply: true);
 
-        private async void RevertAll_Click(object sender, RoutedEventArgs e) =>
+        private async void RevertAll_Click(object sender, RoutedEventArgs e)
+        {
             await RunAsync(Parts.Select(p => p.Part).Where(_service.IsApplied), apply: false);
+            // Файл отката был испорчен: вернуть по нему нечего — говорим честно и снимаем отказ
+            // «Применить» (отложенный файл переименовывается, а не удаляется).
+            string? message = null;
+            try { message = _service.AcknowledgeBroken(); }
+            catch (Exception ex) { AppLogger.Write("⚠️ Персонализация: " + ex.Message); }
+            if (message != null)
+            {
+                Refresh();
+                MessageBox.Show(message, "Персонализация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
     }
 }
