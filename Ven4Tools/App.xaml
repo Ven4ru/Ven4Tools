@@ -479,7 +479,11 @@
                                 <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceRaised}"/>
                                 <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                 <Setter TargetName="cp" Property="TextElement.Foreground" Value="{DynamicResource TextSecondary}"/>
-                                <Setter Property="Opacity" Value="0.7"/>
+                                <!-- Без общей полупрозрачности: серой подложки SurfaceRaised и
+                                     надписи TextSecondary достаточно, чтобы кнопка читалась как
+                                     выключенная. Прежняя Opacity 0.7 смешивала надпись с фоном —
+                                     в «Светлой» контраст падал до 2,7:1, теперь от 4,9:1 (светлая)
+                                     до 8,5:1 (бирюзовая). -->
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

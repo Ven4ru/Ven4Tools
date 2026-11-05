@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -23,6 +24,9 @@ namespace Ven4Tools.Views.Tabs
             public string Description { get; init; } = "";
             public ImageSource? Preview { get; init; }
             public Visibility PreviewVisibility => Preview == null ? Visibility.Collapsed : Visibility.Visible;
+            /// <summary>Мини-превью курсоров набора (у карточки «Курсоры-лапы» нет картинки-обложки).</summary>
+            public IReadOnlyList<ImageSource>? CursorPreviews { get; init; }
+            public Visibility CursorPreviewVisibility => CursorPreviews is { Count: > 0 } ? Visibility.Visible : Visibility.Collapsed;
             public bool IsAvailable { get; init; }
             public bool IsApplied { get; init; }
             public bool CanApply => IsAvailable && !IsApplied;
@@ -477,6 +481,7 @@ namespace Ven4Tools.Views.Tabs
                     Title = p.Title,
                     Description = p.Description,
                     Preview = LoadPreview(_service.PreviewPath(p.Part)),
+                    CursorPreviews = p.Part == PersonalizationPart.Cursors ? CursorPreviewImages.Value : null,
                     IsAvailable = _service.IsAvailable(p.Part),
                     IsApplied = _service.IsApplied(p.Part),
                 }).ToList();
@@ -487,6 +492,47 @@ namespace Ven4Tools.Views.Tabs
             catch (Exception ex)
             {
                 AppLogger.Write("❌ Персонализация: состояние не прочитано — " + ex.Message);
+            }
+        }
+
+        // Курсоры читаются один раз за сеанс: файлы набора лежат в папке программы и не меняются.
+        private static readonly Lazy<IReadOnlyList<ImageSource>> CursorPreviewImages = new(() =>
+            new[] { "Arrow", "Hand", "Help" }
+                .Select(name => LoadCursorPreview(Path.Combine(AppContext.BaseDirectory, "Personalization", "Venchik",
+                    PersonalizationService.CursorFiles[name])))
+                .OfType<ImageSource>()
+                .ToList());
+
+        /// <summary>
+        /// Картинка курсора .cur для превью. Формат .cur совпадает с .ico, кроме поля типа
+        /// (2 вместо 1) и горячей точки на месте «плоскостей/глубины» в оглавлении кадров, —
+        /// поправляем их в копии байтов и отдаём IconBitmapDecoder; берём самый крупный кадр.
+        /// </summary>
+        private static ImageSource? LoadCursorPreview(string path)
+        {
+            try
+            {
+                if (!File.Exists(path)) return null;
+                var bytes = File.ReadAllBytes(path);
+                if (bytes.Length < 6 || bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 2) return null;
+                bytes[2] = 1;
+                int count = BitConverter.ToUInt16(bytes, 4);
+                for (int i = 0; i < count && 6 + 16 * i + 8 <= bytes.Length; i++)
+                {
+                    int o = 6 + 16 * i;
+                    bytes[o + 4] = 1; bytes[o + 5] = 0;   // плоскости
+                    bytes[o + 6] = 32; bytes[o + 7] = 0;  // глубина цвета
+                }
+                using var stream = new MemoryStream(bytes);
+                var decoder = new IconBitmapDecoder(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                var frame = decoder.Frames.OrderByDescending(f => f.PixelWidth).FirstOrDefault();
+                frame?.Freeze();
+                return frame;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write("⚠️ Персонализация: не открыта картинка — " + ex.Message);
+                return null;
             }
         }
 

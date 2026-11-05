@@ -31,7 +31,15 @@
                  FontSize="12" Focusable="False"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
 
-        <TextBlock Grid.Row="3" Text="Код набора — его принимает кнопка «Набор с сайта»"
+        <!-- Пустой набор: пояснение по центру на месте списка. -->
+        <Border x:Name="emptyInstalledSet" Grid.Row="2" Visibility="Collapsed"
+                Background="{DynamicResource CardBackground}" BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1" CornerRadius="6" Padding="18">
+            <TextBlock x:Name="txtInstalledSetEmpty" TextWrapping="Wrap" TextAlignment="Center"
+                       VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextPrimary}"/>
+        </Border>
+
+        <TextBlock x:Name="lblInstalledSetCode" Grid.Row="3" Text="Код набора — его принимает кнопка «Набор с сайта»"
                    FontSize="11" Foreground="{DynamicResource TextSecondary}" Margin="0,12,0,3"/>
         <TextBox x:Name="txtInstalledSetCode" Grid.Row="4" IsReadOnly="True"
                  Height="52" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"

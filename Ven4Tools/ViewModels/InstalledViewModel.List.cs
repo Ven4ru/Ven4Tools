@@ -87,7 +87,9 @@ namespace Ven4Tools.ViewModels
             string nameCol      = isRu ? "Имя"      : "Name";
             string idCol        = isRu ? "ИД"        : "Id";
             string versionCol   = isRu ? "Версия"    : "Version";
-            string availableCol = isRu ? "Доступна"  : "Available";
+            // Колонка «Доступна» в русском winget встречается в двух написаниях
+            // («Доступна» у новых сборок, «Доступно» у части старых).
+            string[] availableCols = isRu ? new[] { "Доступна", "Доступно" } : new[] { "Available" };
             string sourceCol    = isRu ? "Источник"  : "Source";
 
             // Убрать мусор до начала заголовка "Name"/"Имя" (ANSI-артефакты, отступы)
@@ -99,11 +101,22 @@ namespace Ven4Tools.ViewModels
             int colName      = 0;
             int colId        = header.IndexOf(idCol,        namePos, StringComparison.Ordinal) - offset;
             int colVersion   = header.IndexOf(versionCol,   namePos, StringComparison.Ordinal) - offset;
-            int colAvailable = header.IndexOf(availableCol, namePos, StringComparison.Ordinal) - offset;
+            int colAvailable = -1;
+            foreach (var key in availableCols)
+            {
+                int idx = header.IndexOf(key, namePos, StringComparison.Ordinal);
+                if (idx >= 0) { colAvailable = idx - offset; break; }
+            }
             int colSource    = header.IndexOf(sourceCol,    namePos, StringComparison.Ordinal) - offset;
             if (colId <= 0 || colVersion <= 0) return result;
-            if (colAvailable < 0) colAvailable = -1;
-            if (colSource    < 0) colSource    = -1;
+            if (colAvailable <= colVersion) colAvailable = -1;
+            if (colSource    <= colVersion) colSource    = -1;
+
+            // Конец колонки «Версия» — начало БЛИЖАЙШЕЙ следующей колонки. Когда ни у
+            // одного пакета нет обновления, winget (особенно старые сборки на Windows 10)
+            // вообще не выводит колонку Available, и прежний разбор брал версию до конца
+            // строки — в неё попадал «Источник» («2.2.28604.0  winget»).
+            int versionEnd = colAvailable >= 0 ? colAvailable : colSource;
 
             bool started = false;
             for (int i = headerIdx + 1; i < lines.Length; i++)
@@ -124,7 +137,7 @@ namespace Ven4Tools.ViewModels
 
                 string name      = Extract(line, colName,    colId);
                 string id        = Extract(line, colId,      colVersion);
-                string version   = Extract(line, colVersion, colAvailable >= 0 ? colAvailable : line.Length);
+                string version   = Extract(line, colVersion, versionEnd >= 0 ? versionEnd : line.Length);
                 string available = colAvailable >= 0 ? Extract(line, colAvailable, colSource >= 0 ? colSource : line.Length) : "";
                 string source    = colSource    >= 0 ? Extract(line, colSource,    line.Length) : "";
 

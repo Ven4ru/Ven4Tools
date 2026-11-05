@@ -23,6 +23,19 @@ namespace Ven4Tools.Views
             txtInstalledSetTitle.Text = $"Установлено из каталога: {set.Names.Count}";
             lstInstalledSet.ItemsSource = set.Names;
             txtInstalledSetCode.Text = set.Code;
+
+            // Пустой набор — то же окно в цветах темы с пояснением на месте списка, а не
+            // системный светлый MessageBox. Код, файл ответа и копирование здесь не нужны.
+            if (set.AppIds.Count == 0)
+            {
+                lstInstalledSet.Visibility = Visibility.Collapsed;
+                txtInstalledSetEmpty.Text = Tr("Среди программ каталога установленных не найдено.\n\nЕсли каталог открыт только что, дождитесь окончания проверки и повторите.");
+                emptyInstalledSet.Visibility = Visibility.Visible;
+                foreach (UIElement el in new UIElement[] { lblInstalledSetCode, txtInstalledSetCode, txtInstalledSetHint, btnSaveAnswerFile, btnCopyInstalledSetCode })
+                    el.Visibility = Visibility.Collapsed;
+                btnCloseInstalledSet.Margin = new Thickness(0);
+                Height = 300;
+            }
         }
 
         private void CopyCode_Click(object sender, RoutedEventArgs e)

@@ -111,14 +111,32 @@ namespace Ven4Tools.Views.Controls
             if (TaskView) items.Add(("taskview", -1));
             for (int i = 0; i < Apps.Length; i++) items.Add(("app", i));
 
+            // Подписи окон («Как в Windows 10») — только если помещаются. На миниатюре набора
+            // масштаб упирается в нижний предел, шрифт — в минимальные 6 pt, и подписи
+            // вместе с часами наезжали друг на друга: там остаются одни значки.
+            // Левая граница области уведомлений — та же арифметика, что в блоке часов ниже.
+            // Не хватает места на полные 70 — подпись сужается и обрезается многоточием,
+            // меньше 28 — подписей нет.
+            double trayLeft = W - (10 + 66 + 6 + 28 + 26 + 16) * u;
+            bool labels = Labels && !vert && 11.5 * u >= 6;
+            double labelW = 70 * u;
             double Len((string Kind, int App) it) => it.Kind switch
             {
                 "searchbox" => 200 * u,
-                "app" when Labels && !vert => ic + 70 * u,
+                "app" when labels => ic + labelW,
                 _ => ic,
             };
             double total = 0; foreach (var it in items) total += Len(it) + gap;
             total -= gap;
+            if (labels)
+            {
+                double appCount = Apps.Length;
+                double room = trayLeft - 8 * u - (Centered ? (W - total) / 2 : 10 * u) - (total - appCount * labelW);
+                labelW = Math.Min(70 * u, room / appCount);
+                if (labelW < 28 * u) labels = false;
+                total = 0; foreach (var it in items) total += Len(it) + gap;
+                total -= gap;
+            }
             double along = vert ? 10 * u : (Centered ? (W - total) / 2 : 10 * u);
             Point startCenter = default;
             foreach (var it in items)
@@ -155,13 +173,13 @@ namespace Ven4Tools.Views.Controls
                         if (on) dc.DrawRoundedRectangle(Solid(hov), null, cell, 6 * u, 6 * u);
                         var gl = new Rect(cell.Left + (ic - 22 * u) / 2, cell.Top + (ic - 22 * u) / 2, 22 * u, 22 * u);
                         dc.DrawRoundedRectangle(new LinearGradientBrush(ca, cb, 60), null, gl, 5 * u, 5 * u);
-                        if (Labels && !vert) Text(dc, name, new Point(cell.Left + ic, cell.Top + ic / 2), 11.5 * u, fg, false);
+                        if (labels) Text(dc, name, new Point(cell.Left + ic, cell.Top + ic / 2), 11.5 * u, fg, false, labelW - 4 * u);
                         var mark = on ? 16 * u : (it.App is 1 or 4 ? 6 * u : 0);
                         if (mark > 0)
                         {
                             var mc = on ? acc : dim;
                             var mr = vert ? new Rect(cell.Left + 1 * u, cell.Top + (ic - mark) / 2, 3 * u, mark)
-                                              : new Rect(cell.Left + (Labels ? cell.Width : ic) / 2 - mark / 2, cell.Bottom - 3.5 * u, mark, 3 * u);
+                                              : new Rect(cell.Left + (labels ? cell.Width : ic) / 2 - mark / 2, cell.Bottom - 3.5 * u, mark, 3 * u);
                             dc.DrawRoundedRectangle(Solid(mc), null, mr, 1.5 * u, 1.5 * u);
                         }
                         break;
@@ -175,8 +193,13 @@ namespace Ven4Tools.Views.Controls
                 var c0 = new Point(16 * u, bar.Top + bh / 2);
                 dc.DrawEllipse(Solid(Color.FromRgb(0xF5, 0xC5, 0x42)), null, new Point(c0.X + 7 * u, c0.Y - 3 * u), 6 * u, 6 * u);
                 dc.DrawRoundedRectangle(Solid(Color.FromRgb(0xCF, 0xD8, 0xE3)), null, new Rect(c0.X + 2 * u, c0.Y - 1 * u, 18 * u, 9 * u), 4.5 * u, 4.5 * u);
-                Text(dc, "+5°", new Point(c0.X + 26 * u, c0.Y - 6 * u), 11.5 * u, fg, false);
-                Text(dc, "облачно", new Point(c0.X + 26 * u, c0.Y + 7 * u), 10.5 * u, dim, false);
+                // На миниатюре (шрифт упёрся в минимум) — только температура, без «облачно».
+                if (10.5 * u >= 6)
+                {
+                    Text(dc, "+5°", new Point(c0.X + 26 * u, c0.Y - 6 * u), 11.5 * u, fg, false);
+                    Text(dc, "облачно", new Point(c0.X + 26 * u, c0.Y + 7 * u), 10.5 * u, dim, false);
+                }
+                else Text(dc, "+5°", new Point(c0.X + 26 * u, c0.Y), 11.5 * u, fg, false);
             }
 
             // область уведомлений и часы
@@ -184,8 +207,14 @@ namespace Ven4Tools.Views.Controls
             {
                 double x = W - 10 * u;
                 var clockW = 66 * u;
-                Text(dc, "15:24", new Point(x - clockW / 2, bar.Top + bh / 2 - 7 * u), 12 * u, fg, true);
-                Text(dc, DateTime.Today.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture), new Point(x - clockW / 2, bar.Top + bh / 2 + 8 * u), 11 * u, fg, true);
+                // Дата — только когда шрифт не упирается в минимальный размер: на миниатюре
+                // она шире своего места и залезала на значки трея. Тогда остаются одни часы.
+                if (11 * u >= 6)
+                {
+                    Text(dc, "15:24", new Point(x - clockW / 2, bar.Top + bh / 2 - 7 * u), 12 * u, fg, true);
+                    Text(dc, DateTime.Today.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture), new Point(x - clockW / 2, bar.Top + bh / 2 + 8 * u), 11 * u, fg, true);
+                }
+                else Text(dc, "15:24", new Point(x - clockW / 2, bar.Top + bh / 2), 12 * u, fg, true);
                 x -= clockW + 6 * u;
                 var p = new Pen(Solid(fg), 1.5 * u);
                 // батарея, громкость, сеть
@@ -255,11 +284,17 @@ namespace Ven4Tools.Views.Controls
             dc.DrawLine(p, new Point(c.X + r * .3, c.Y + r * .3), new Point(c.X + r * .95, c.Y + r * .95));
         }
 
-        private void Text(DrawingContext dc, string s, Point at, double size, Color col, bool center)
+        private void Text(DrawingContext dc, string s, Point at, double size, Color col, bool center, double maxWidth = 0)
         {
             // Текст рисуется мимо TextBlock — переводчик интерфейса его не видит, переводим здесь.
             var ft = new FormattedText(Tr(s), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"),
                 Math.Max(6, size), Solid(col), VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            if (maxWidth > 0)
+            {
+                ft.MaxTextWidth = maxWidth;
+                ft.MaxLineCount = 1;
+                ft.Trimming = TextTrimming.CharacterEllipsis;
+            }
             dc.DrawText(ft, new Point(center ? at.X - ft.Width / 2 : at.X, at.Y - ft.Height / 2));
         }
 

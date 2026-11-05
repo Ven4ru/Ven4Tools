@@ -64,16 +64,10 @@ namespace Ven4Tools.ViewModels
         {
             var set = InstalledSetBuilder.Build(
                 Apps.Where(a => !a.IsUserAdded).Select(a => (a.AppId, a.DisplayName, a.IsInstalled)));
-            if (set.AppIds.Count == 0)
-            {
-                MessageBox.Show(
-                    "Среди программ каталога установленных не найдено.\n\n" +
-                    "Если каталог открыт только что, дождитесь окончания проверки и повторите.",
-                    "Набор из установленного", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            Log($"📋 Набор из установленного: программ — {set.AppIds.Count}");
+            // Пустой набор окно показывает само — пояснением в цветах темы вместо
+            // системного MessageBox.
+            if (set.AppIds.Count > 0)
+                Log($"📋 Набор из установленного: программ — {set.AppIds.Count}");
             new Views.InstalledSetWindow(set) { Owner = OwnerWindowProvider?.Invoke() }.ShowDialog();
         });
 
