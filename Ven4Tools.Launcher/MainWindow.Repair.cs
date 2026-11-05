@@ -112,6 +112,13 @@ namespace Ven4Tools.Launcher
                 {
                     AddLog("⚠️ Права доступа к папке клиента ослаблены — файлы может изменить любой пользователь этого компьютера");
                 }
+                // Чужие файлы в папке клиента (её могли привязать вручную) починка не
+                // удаляет — и пишет, что именно оставила.
+                const int keptShown = 20;
+                foreach (string kept in report.KeptForeignFiles.Take(keptShown))
+                    AddLog($"   ℹ️ Не трогаю: {kept} — не похож на файл клиента");
+                if (report.KeptForeignFiles.Count > keptShown)
+                    AddLog($"   ℹ️ Не трогаю ещё посторонних файлов: {report.KeptForeignFiles.Count - keptShown}");
                 if (report.HasRepairableFindings && report.Plan != null)
                 {
                     AddLog($"🔧 К восстановлению {report.Plan.ToDownload.Count} файлов " +

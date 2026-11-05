@@ -37,6 +37,27 @@ public sealed class CdnVersionInfoDeserializationTests
 
         Assert.NotNull(info);
         Assert.Null(info!.RevokedClientHashes);
+        Assert.Null(info.RevokedClientCanonicalHashes);
+        Assert.Null(info.RevokedClientVersions);
+        Assert.Null(info.ManifestSeq);
         Assert.Null(info.HistoricalClientArchives);
+    }
+
+    [Fact]
+    public void Deserialize_ReadsCanonicalAndVersionRevocation()
+    {
+        var info = JsonSerializer.Deserialize<CdnVersionInfo>("""
+        {
+          "revokedClientHashes": ["aa"],
+          "revokedClientCanonicalHashes": ["bb"],
+          "revokedClientVersions": ["6.1.0"],
+          "manifest_seq": 1793952000
+        }
+        """)!;
+
+        Assert.Equal(["aa"], info.RevokedClientHashes);
+        Assert.Equal(["bb"], info.RevokedClientCanonicalHashes);
+        Assert.Equal(["6.1.0"], info.RevokedClientVersions);
+        Assert.Equal(1793952000, info.ManifestSeq);
     }
 }

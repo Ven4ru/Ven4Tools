@@ -53,11 +53,37 @@ if (args.Length == 4 && args[0] == "verify")
     return 0;
 }
 
+// edit-режим: правка полей, которые лаунчер проверяет при каждом получении
+// манифеста, — до подписи (подпись ставится на текст файла целиком, поэтому любое
+// новое поле входит в неё само). Ключ подписи здесь не нужен.
+//   --seq auto|<число>         manifest_seq — номер выпуска, защита от повтора старого
+//                              манифеста. auto = max(текущий + 1, время Unix в секундах).
+//   --revoke-version <версия>  добавить в revokedClientVersions
+//   --revoke-canonical <hex>   добавить в revokedClientCanonicalHashes
+//   --revoke-file-hash <hex>   добавить в revokedClientHashes
+//   --revoke-archive <zip>     отозвать конкретный архив: SHA256 файла → revokedClientHashes,
+//                              sha256_canonical из его _ven4tools_signature.json →
+//                              revokedClientCanonicalHashes (версию не отзывает).
+if (args.Length >= 2 && args[0] == "edit")
+{
+    try
+    {
+        return ManifestEditor.Run(args[1], args[2..]);
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Ошибка правки манифеста: {ex.Message}");
+        return 1;
+    }
+}
+
 if (args.Length != 2)
 {
     Console.Error.WriteLine("Usage:");
     Console.Error.WriteLine("  UpdateManifestSigner <version.json> <private-key.pem>");
     Console.Error.WriteLine("  UpdateManifestSigner verify <version.json> <version.json.sig> <public-key.pem>");
+    Console.Error.WriteLine("  UpdateManifestSigner edit <version.json> [--seq auto|N] [--revoke-version V]");
+    Console.Error.WriteLine("        [--revoke-canonical HEX] [--revoke-file-hash HEX] [--revoke-archive ZIP]");
     return 2;
 }
 

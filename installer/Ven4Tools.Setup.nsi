@@ -168,6 +168,9 @@ LangString TEXT_RemoveData ${LANG_ENGLISH} "Delete user data?$\r$\n$\r$\nThis re
 LangString TEXT_ExeBusy ${LANG_RUSSIAN} "Не удалось заменить файл лаунчера:$\r$\n$INSTDIR\${EXE_NAME}$\r$\n$\r$\nВозможно, лаунчер ещё работает (в том числе от имени администратора) или файл проверяет антивирус. Закройте Ven4Tools Launcher и запустите установку ещё раз."
 LangString TEXT_ExeBusy ${LANG_ENGLISH} "Could not replace the launcher file:$\r$\n$INSTDIR\${EXE_NAME}$\r$\n$\r$\nThe launcher may still be running (possibly as administrator), or an antivirus is scanning the file. Close Ven4Tools Launcher and run the setup again."
 
+LangString TEXT_OldWin10 ${LANG_RUSSIAN} "Эта Windows 10 давно не обновлялась (сборка $R3.$R4).$\r$\n$\r$\nVen4Tools на ней не запустится: в старых сборках Windows есть ошибка, из-за которой падают современные программы на .NET. Её исправляют обновления Windows.$\r$\n$\r$\nОткрыть Центр обновления Windows сейчас?$\r$\n«Нет» — продолжить установку."
+LangString TEXT_OldWin10 ${LANG_ENGLISH} "This Windows 10 has not been updated for a long time (build $R3.$R4).$\r$\n$\r$\nVen4Tools will not start on it: old Windows builds have a bug that crashes modern .NET apps. Windows updates fix it.$\r$\n$\r$\nOpen Windows Update now?$\r$\n“No” continues the installation."
+
 ; ============================================================================
 ; Параметры командной строки (режим самообновления)
 ; ============================================================================
@@ -216,6 +219,26 @@ Function .onInit
   ; Затем — окно выбора языка; в тихом режиме (/S, самообновление) его нет.
   Call ResolveLanguage
   !insertmacro MUI_LANGDLL_DISPLAY
+  Call CheckOldWindows10
+FunctionEnd
+
+; Windows 10 20H1–22H2 (сборки 19041–19045) без обновлений: программы на .NET 10 там падают
+; при запуске из-за ошибки теневого стека (CET), её исправляют обновления Windows. Проверено:
+; 19045.2965 — падает, 19045.6456 — работает. Установщик (не .NET) предупреждает заранее и
+; предлагает открыть Центр обновления; защиту CET в программе не отключаем. Тихий режим
+; (самообновление) не спрашивает: старый лаунчер на такой системе всё равно не запустился бы.
+!define CET_OK_UBR 6456
+Function CheckOldWindows10
+  IfSilent cet_done
+  ReadRegStr $R3 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuildNumber"
+  IntCmp $R3 19041 0 cet_done 0
+  IntCmp $R3 19045 0 0 cet_done
+  ReadRegDWORD $R4 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "UBR"
+  IntCmp $R4 ${CET_OK_UBR} cet_done 0 cet_done
+  MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(TEXT_OldWin10)" /SD IDNO IDNO cet_done
+  ExecShell "open" "ms-settings:windowsupdate"
+  Quit
+  cet_done:
 FunctionEnd
 
 Function ResolveLanguage
