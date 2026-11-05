@@ -381,7 +381,10 @@
                                                  При Wrap слово длиннее строки («Яндекс.Мессенджер»)
                                                  рвалось посередине, и на вторую строку уходила одна
                                                  буква; теперь оно обрезается многоточием. -->
-                                            <TextBlock Text="{Binding DisplayName}" Foreground="{Binding RowBrush}"
+                                            <!-- Название — всегда TextPrimary; статус доступности ссылки показывает
+                                                 точка перед версией (решение владельца 05.11: цвет названия без
+                                                 пояснения читался «разнобоем»). Подсказка статуса — и у названия, и у точки. -->
+                                            <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource TextPrimary}"
                                                        FontSize="14" FontWeight="SemiBold" TextWrapping="WrapWithOverflow"
                                                        MaxHeight="38" TextTrimming="CharacterEllipsis"
                                                        HorizontalAlignment="Left"
@@ -392,8 +395,18 @@
                                                                   CommandParameter="{Binding}"/>
                                                 </TextBlock.InputBindings>
                                             </TextBlock>
-                                            <TextBlock Text="{Binding CardMetaText}" FontSize="11" Margin="0,2,0,0"
-                                                       Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
+                                            <!-- Точка 8 px: цвет — RowBrush строки (зелёная — ссылка проверена, нейтральная
+                                                 TextSecondary — не проверялась/проверяется, красная — недоступна; у установленных —
+                                                 прежние «установлено»/«есть обновление»). -->
+                                            <DockPanel Margin="0,2,0,0">
+                                                <Ellipse x:Name="statusDot" DockPanel.Dock="Left" Width="8" Height="8" Margin="0,0,8,0"
+                                                         VerticalAlignment="Center" Fill="{Binding RowBrush}"
+                                                         ToolTip="{Binding StatusTooltip}"
+                                                         AutomationProperties.AutomationId="{Binding AppId, StringFormat='dotStatus_{0}'}"
+                                                         AutomationProperties.Name="{Binding StatusTooltip}"/>
+                                                <TextBlock Text="{Binding CardMetaText}" FontSize="11" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
                                             <!-- Блокировка по региону — отдельный значок. -->

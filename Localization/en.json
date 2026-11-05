@@ -780,6 +780,10 @@
     "t": "Microsoft: submit the file for analysis (Defender false positive)"
   },
   {
+    "s": "Office на этом компьютере не найден. Установить его можно в разделе «Office».",
+    "t": "Office was not found on this computer. You can install it in the “Office” section."
+  },
+  {
     "s": "Office уже установлен? Посмотрите состояние его лицензии.",
     "t": "Office already installed? Check its license status."
   },
@@ -3092,6 +3096,10 @@
     "t": "Network traffic analyzer: captures and dissects packets of hundreds of protocols."
   },
   {
+    "s": "Английский, США (en-us)",
+    "t": "English, US (en-us)"
+  },
+  {
     "s": "Анимации",
     "t": "Animations"
   },
@@ -3496,6 +3504,10 @@
     "t": "Release {0} has no Ven4Tools.Setup installer — update skipped."
   },
   {
+    "s": "В списке несколько записей с этим названием: так они различаются (архитектура или область установки).",
+    "t": "The list has several entries with this name: this is how they differ (architecture or install scope)."
+  },
+  {
     "s": "В экспериментальной версии температуры и частоты процессора не показываются: для них нужен драйвер ядра, а его мы пока не ставим, чтобы не мешать играм с античитом. Видеокарта, диски, загрузка процессора, FPS и оверлей работают.",
     "t": "In the experimental version CPU temperatures and clocks are not shown: they need a kernel driver, and we do not install it yet so as not to interfere with games with anti-cheat. Graphics card, disks, CPU load, FPS and the overlay work."
   },
@@ -3778,6 +3790,10 @@
   {
     "s": "Включён",
     "t": "Enabled"
+  },
+  {
+    "s": "Внешний IP",
+    "t": "External IP"
   },
   {
     "s": "Внешний вид",
@@ -5220,6 +5236,10 @@
     "t": "Exception"
   },
   {
+    "s": "Испанский (es-es)",
+    "t": "Spanish (es-es)"
+  },
+  {
     "s": "Использовать этот источник первым",
     "t": "Use this source first"
   },
@@ -5256,6 +5276,10 @@
     "t": "Catalog changelog"
   },
   {
+    "s": "История перезагрузок и сбоев, диски, ошибки Windows Update и аппаратные события за 7 дней.",
+    "t": "Restart and crash history, disks, Windows Update errors and hardware events for the last 7 days."
+  },
+  {
     "s": "История установок",
     "t": "Installation history"
   },
@@ -5282,6 +5306,10 @@
   {
     "s": "Источники",
     "t": "Sources"
+  },
+  {
+    "s": "Итальянский (it-it)",
+    "t": "Italian (it-it)"
   },
   {
     "s": "Итог проверки памяти читается при открытии раздела",
@@ -5402,6 +5430,10 @@
   {
     "s": "Категория:",
     "t": "Category:"
+  },
+  {
+    "s": "Китайский упрощённый (zh-cn)",
+    "t": "Chinese Simplified (zh-cn)"
   },
   {
     "s": "Классический двухпанельный файловый менеджер с архивами, FTP и плагинами.",
@@ -6652,6 +6684,18 @@
     "t": "Unavailable"
   },
   {
+    "s": "Недоступно, пока идёт другая системная операция (например, .NET Framework 3.5) — дождитесь её окончания.",
+    "t": "Unavailable while another system operation is running (for example, .NET Framework 3.5) — wait for it to finish."
+  },
+  {
+    "s": "Недоступно, пока идёт поиск обновлений — дождитесь его окончания.",
+    "t": "Unavailable while checking for updates — wait for it to finish."
+  },
+  {
+    "s": "Недоступно, пока идёт работа со скрытыми обновлениями (поиск, скрытие или возврат) — дождитесь её окончания.",
+    "t": "Unavailable while hidden updates are being processed (search, hide or restore) — wait for it to finish."
+  },
+  {
     "s": "Недоступно: не удалось получить состояние дисков.",
     "t": "Unavailable: could not get drive health."
   },
@@ -6702,6 +6746,10 @@
   {
     "s": "Немедленно перезагрузит Windows, чтобы завершить установку обновлений.",
     "t": "Restarts Windows immediately to finish installing updates."
+  },
+  {
+    "s": "Немецкий (de-de)",
+    "t": "German (de-de)"
   },
   {
     "s": "Неподдерживаемый вид значения реестра: {0}",
@@ -8384,8 +8432,16 @@
     "t": "Density"
   },
   {
+    "s": "По данным OSPP.VBS из папки Office или службы лицензирования.",
+    "t": "According to OSPP.VBS from the Office folder or the licensing service."
+  },
+  {
     "s": "По данным последней фоновой проверки.",
     "t": "According to the latest background check."
+  },
+  {
+    "s": "По данным службы лицензирования Windows.",
+    "t": "According to the Windows licensing service."
   },
   {
     "s": "По документации Microsoft работает как «Агрессивный».",
@@ -8434,6 +8490,14 @@
   {
     "s": "Повторно загрузит каталог из доступных источников после ошибки.",
     "t": "Reloads the catalog from available sources after an error."
+  },
+  {
+    "s": "Повторно проверит состояние лицензии Windows.",
+    "t": "Rechecks the Windows license status."
+  },
+  {
+    "s": "Повторно проверит состояние лицензии установленного Microsoft Office.",
+    "t": "Rechecks the license status of the installed Microsoft Office."
   },
   {
     "s": "Повторно проверит состояние лицензий Windows и установленного Microsoft Office.",
@@ -9984,6 +10048,10 @@
     "t": "Results"
   },
   {
+    "s": "Результаты появятся после диагностики",
+    "t": "Results will appear after diagnostics"
+  },
+  {
     "s": "Реклама Microsoft 365 и учётной записи",
     "t": "Microsoft 365 and account ads"
   },
@@ -10066,6 +10134,10 @@
   {
     "s": "Русский",
     "t": "Русский"
+  },
+  {
+    "s": "Русский (ru-ru)",
+    "t": "Russian (ru-ru)"
   },
   {
     "s": "Русский встроен в программу. Английский — отдельный языковой пакет: он скачивается при выборе и включается после перезапуска. Тот же выбор действует и для лаунчера.",
@@ -11952,6 +12024,10 @@
     "t": "Windows updates are checked in the background every 6 hours. Installation never starts automatically in either mode."
   },
   {
+    "s": "Французский (fr-fr)",
+    "t": "French (fr-fr)"
+  },
+  {
     "s": "Хеш установщика не совпал с ожидаемым — повреждённая загрузка или изменённый пакет.",
     "t": "The installer hash does not match the expected one — corrupted download or modified package."
   },
@@ -12296,6 +12372,10 @@
     "t": "Yandex Music"
   },
   {
+    "s": "Японский (ja-jp)",
+    "t": "Japanese (ja-jp)"
+  },
+  {
     "s": "в каталоге нет пакета",
     "t": "no package in the catalog"
   },
@@ -12436,8 +12516,16 @@
     "t": "Storage Spaces"
   },
   {
+    "s": "для всех",
+    "t": "all users"
+  },
+  {
     "s": "для всех пользователей",
     "t": "for all users"
+  },
+  {
+    "s": "для пользователя",
+    "t": "per user"
   },
   {
     "s": "для установленной версии {0} не опубликован файловый манифест",
@@ -17078,6 +17166,10 @@
   {
     "s": "\uD83E\uDDED Панель задач и Пуск",
     "t": "\uD83E\uDDED Taskbar and Start"
+  },
+  {
+    "s": "\uD83E\uDDF0 Быстрые проверки",
+    "t": "\uD83E\uDDF0 Quick checks"
   },
   {
     "s": "\uD83E\uDDF3 Перед переустановкой Windows…",

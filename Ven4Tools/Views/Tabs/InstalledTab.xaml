@@ -320,10 +320,25 @@
                                               Command="{Binding DataContext.RowSelectionChangedCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
 
                                     <!-- Название -->
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                               Foreground="{DynamicResource TextPrimary}"
-                                               FontSize="13" VerticalAlignment="Center"
-                                               TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
+                                    <!-- Название и плашка различия дублей (x64/x86/ARM64 или «для пользователя»/
+                                         «для всех»): две одинаковые строки «Microsoft Edge» иначе ничем не отличались. -->
+                                    <!-- HorizontalAlignment Left: плашка стоит сразу за названием, а не у правого
+                                         края колонки; длинное название при этом всё равно обрезается многоточием. -->
+                                    <DockPanel Grid.Column="1" Margin="0,0,8,0" LastChildFill="True" HorizontalAlignment="Left">
+                                        <Border DockPanel.Dock="Right" Margin="8,0,0,0" Padding="8,2" CornerRadius="4"
+                                                VerticalAlignment="Center"
+                                                Background="{DynamicResource SurfaceRaised}"
+                                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                                ToolTip="В списке несколько записей с этим названием: так они различаются (архитектура или область установки)."
+                                                Visibility="{Binding HasVariantTag, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="{Binding VariantTag}" FontSize="11"
+                                                       Foreground="{DynamicResource TextSecondary}"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding Name}"
+                                                   Foreground="{DynamicResource TextPrimary}"
+                                                   FontSize="13" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
 
                                     <!-- Версия -->
                                     <!-- Колонки версий по 136px с правым отступом 12px: при 95px

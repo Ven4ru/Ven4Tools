@@ -76,25 +76,40 @@ namespace Ven4Tools.ViewModels
             private set { if (SetField(ref _isCheckingStatus, value)) CheckStatusCommand.RaiseCanExecuteChanged(); }
         }
 
+        /// <summary>
+        /// Office не найден ни одним способом проверки — карточка Office показывает пояснение,
+        /// где его установить, вместо пустого «нет данных».
+        /// </summary>
+        private bool _isOfficeMissing;
+        public bool IsOfficeMissing { get => _isOfficeMissing; private set => SetField(ref _isOfficeMissing, value); }
+
+        /// <summary>
+        /// Проверка статуса. Параметр — какая карточка просит: "windows" или "office" проверяет
+        /// только своё, без параметра — обе (так было до разделения раздела на две карточки).
+        /// Одна команда, а не две: вкладка по-прежнему только показывает состояние, и тест
+        /// «нет команд активации» закрепляет ровно одну команду.
+        /// </summary>
         public RelayCommand CheckStatusCommand { get; }
 
         public ActivationViewModel()
         {
-            CheckStatusCommand = RelayCommand.FromAsync(async _ => await RunCheckStatusAsync(), _ => !IsCheckingStatus);
+            CheckStatusCommand = RelayCommand.FromAsync(async p => await RunCheckStatusAsync(p as string), _ => !IsCheckingStatus);
 
             // Цвета статусов держат ключ темы, но перечитать его должен кто-то
             // извне. Отписки нет: экземпляр ViewModel вкладки один на весь сеанс.
             ThemeService.ThemeChanged += RefreshThemeBrushes;
         }
 
-        private async Task RunCheckStatusAsync()
+        private async Task RunCheckStatusAsync(string? scope)
         {
             // Вкладка запускает проверку при каждом показе — две сразу не нужны.
             if (IsCheckingStatus) return;
             IsCheckingStatus = true;
             try
             {
-                await CheckActivationStatusCoreAsync();
+                bool windows = scope is null || string.Equals(scope, "windows", StringComparison.OrdinalIgnoreCase);
+                bool office = scope is null || string.Equals(scope, "office", StringComparison.OrdinalIgnoreCase);
+                await CheckActivationStatusCoreAsync(windows, office);
                 AppLogger.Write("🔄 Статус активации обновлён");
             }
             catch (Exception ex)
@@ -116,18 +131,18 @@ namespace Ven4Tools.ViewModels
         {
             if (IsCheckingStatus) return;
             IsCheckingStatus = true;
-            try { await CheckActivationStatusCoreAsync(); }
+            try { await CheckActivationStatusCoreAsync(windows: true, office: true); }
             finally { IsCheckingStatus = false; }
         }
 
-        private async Task CheckActivationStatusCoreAsync()
+        private async Task CheckActivationStatusCoreAsync(bool windows, bool office)
         {
             try
             {
-                WindowsStatusText = "Проверка...";
-                OfficeStatusText = "Проверка...";
+                if (windows) WindowsStatusText = "Проверка...";
+                if (office) OfficeStatusText = "Проверка...";
 
-                await Task.Run(() =>
+                if (windows) await Task.Run(() =>
                 {
                     try
                     {
@@ -181,7 +196,7 @@ namespace Ven4Tools.ViewModels
                 // открытии вкладки там, где OSPP.VBS нет, — окно замирало, а heartbeat
                 // для watchdog'а лаунчера на это время переставал писаться. Статусы
                 // метод выставляет сам через Dispatcher (SetOfficeStatusOnUI).
-                await Task.Run(CheckOfficeActivationAsync);
+                if (office) await Task.Run(CheckOfficeActivationAsync);
             }
             catch (Exception ex)
             {
@@ -298,6 +313,7 @@ namespace Ven4Tools.ViewModels
                 Application.Current?.Dispatcher.Invoke(() =>
                 {
                     OfficeStatusText = "⚠️ Ошибка";
+                    IsOfficeMissing = false;
                     SetOfficeStatusBrush("StatusWarning", Brushes.Orange);
                     AppLogger.Write($"❌ Ошибка проверки Office: {ex.Message}");
                 });
@@ -309,6 +325,7 @@ namespace Ven4Tools.ViewModels
             Application.Current?.Dispatcher.Invoke(() =>
             {
                 OfficeStatusText = text;
+                IsOfficeMissing = text == "❓ Office не обнаружен";
                 switch (isActivated)
                 {
                     case true:  SetOfficeStatusBrush("StatusSuccess", Brushes.LightGreen); break;

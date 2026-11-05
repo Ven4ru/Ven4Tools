@@ -500,7 +500,7 @@
                     <!-- Download button + progress. Кнопки по ширине надписи, а не во всю карточку:
                          три полосы на 1000 px читались как поля ввода, а не как действия. -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                        <Button x:Name="btnDownloadToCache" Height="32" Padding="16,0"
+                        <Button x:Name="btnDownloadToCache" Style="{StaticResource PrimaryButtonStyle}" Height="32" Padding="16,0"
                                 Content="⬇️ Скачать выбранные в кэш"
                                 ToolTip="Скачает установщики отмеченных приложений и проверит их перед сохранением для офлайн-установки."
                                 Command="{Binding DownloadToCacheCommand}"
@@ -610,7 +610,8 @@
                             Margin="0,0,0,12" Command="{Binding SaveSnapshotCommand}"/>
 
                     <Border Background="{DynamicResource CardBackground}" CornerRadius="8"
-                            Padding="4" MaxHeight="260">
+                            Padding="4" MaxHeight="260"
+                            Visibility="{Binding ShowSnapshotsEmpty, Converter={StaticResource InverseBoolToVis}}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <views:FlatItemsControl x:Name="lstSnapshots" ItemsSource="{Binding Snapshots}">
                                 <ItemsControl.ItemTemplate>
@@ -655,7 +656,7 @@
 
                     <TextBlock x:Name="txtSnapshotsEmpty"
                                Text="Нет сохранённых снапшотов"
-                               FontSize="12" Margin="0,4,0,0"
+                               FontSize="12" Margin="0"
                                Foreground="{DynamicResource TextSecondary}"
                                Visibility="{Binding ShowSnapshotsEmpty, Converter={StaticResource BoolToVis}}"/>
 

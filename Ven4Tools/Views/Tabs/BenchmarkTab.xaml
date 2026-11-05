@@ -146,16 +146,31 @@
                 <Border Background="{DynamicResource CardBackground}" CornerRadius="8" Padding="16" Margin="0,0,0,12"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                     <StackPanel>
-                        <StackPanel Orientation="Horizontal">
+                        <!-- Отчёт — рядом с запуском (раньше две кнопки лежали на фоне страницы под всеми карточками). -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
                             <Button x:Name="btnRunBenchmark" Style="{StaticResource PrimaryButtonStyle}" Content="{Binding RunButtonText}"
                                     Height="32" MinWidth="160" Padding="16,0" Margin="0"
                                     ToolTip="Создаст временный файл на выбранном томе и измерит чтение и запись. Тест может занять несколько минут."
                                     IsEnabled="{Binding IsRunEnabled}"
                                     Command="{Binding RunBenchmarkCommand}"/>
-                            <TextBlock x:Name="txtRunStatus" VerticalAlignment="Center" Margin="16,0,0,0"
+                            <Button x:Name="btnCopyReport" Grid.Column="1" Content="📋 Скопировать отчёт" Height="32" Padding="12,0"
+                                    Margin="8,0,0,0" IsEnabled="{Binding IsCopyReportEnabled}"
+                                    ToolTip="Скопирует результаты теста и сведения о накопителе в буфер обмена."
+                                    Command="{Binding CopyReportCommand}"/>
+                            <Button x:Name="btnSaveReport" Grid.Column="2" Content="💾 Сохранить в файл" Height="32" Padding="12,0" Margin="8,0,0,0"
+                                    IsEnabled="{Binding IsSaveReportEnabled}"
+                                    ToolTip="Откроет выбор файла и сохранит туда полный текстовый отчёт о тесте."
+                                    Command="{Binding SaveReportCommand}"/>
+                            <TextBlock x:Name="txtRunStatus" Grid.Column="3" VerticalAlignment="Center" Margin="16,0,0,0"
                                        Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"
                                        Text="{Binding RunStatusText}"/>
-                        </StackPanel>
+                        </Grid>
                         <ProgressBar x:Name="progressBenchmark" Height="6" Minimum="0" Maximum="100"
                                      Margin="0,12,0,0"
                                      Value="{Binding ProgressValue, Mode=OneWay}"
@@ -224,18 +239,6 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </GroupBox>
-
-                <!-- Отчёт -->
-                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                    <Button x:Name="btnCopyReport" Content="📋 Скопировать отчёт" Height="32" Padding="12,0"
-                            Margin="0,0,8,0" IsEnabled="{Binding IsCopyReportEnabled}"
-                            ToolTip="Скопирует результаты теста и сведения о накопителе в буфер обмена."
-                            Command="{Binding CopyReportCommand}"/>
-                    <Button x:Name="btnSaveReport" Content="💾 Сохранить в файл" Height="32" Padding="12,0" Margin="0"
-                            IsEnabled="{Binding IsSaveReportEnabled}"
-                            ToolTip="Откроет выбор файла и сохранит туда полный текстовый отчёт о тесте."
-                            Command="{Binding SaveReportCommand}"/>
-                </StackPanel>
 
             </StackPanel>
         </ScrollViewer>

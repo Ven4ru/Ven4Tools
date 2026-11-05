@@ -200,5 +200,19 @@ namespace Ven4Tools.Services
             ("Ошибки", Errors(d)),
             ("Аварийные отключения", Count(d.UnsafeShutdowns)),
         };
+
+        /// <summary>
+        /// Строки для карточки на экране: если диск не отдал ни одного показателя, таблица
+        /// из семи «нет данных» подряд не показывается — о том, что SMART недоступен, уже
+        /// говорит причина вердикта. Хотя бы одно значение есть — строки показываются все.
+        /// Текстовый отчёт берёт полный <see cref="Lines"/>.
+        /// </summary>
+        public static IReadOnlyList<(string Label, string Value)> CardLines(DiskHealthReading d)
+        {
+            var lines = Lines(d);
+            foreach (var (_, value) in lines)
+                if (value != NoData) return lines;
+            return Array.Empty<(string, string)>();
+        }
     }
 }

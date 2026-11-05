@@ -126,7 +126,7 @@ namespace Ven4Tools.ViewModels
         public bool IsSearching
         {
             get => _isSearching;
-            private set { if (SetField(ref _isSearching, value)) CheckCommand.RaiseCanExecuteChanged(); }
+            private set { if (SetField(ref _isSearching, value)) { CheckCommand.RaiseCanExecuteChanged(); OnPropertyChanged(nameof(ResetWindowsUpdateBlockedReason)); } }
         }
 
         private bool _isInstalling;

@@ -42,8 +42,15 @@
                     CornerRadius="8" Cursor="Hand"
                     MouseDown="Card_MouseDown" Tag="basic">
                 <StackPanel Margin="16,24,16,16">
-                    <TextBlock Text="🚀"
-                               FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                    <!-- Венчик из заставки (Resources/Splash, «радуется»): один кадр ленты 236×240, показан
+                         ровно вдвое меньше — без дробного масштабирования. -->
+                    <Rectangle Width="118" Height="120" HorizontalAlignment="Center" Margin="0,0,0,8"
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                        <Rectangle.Fill>
+                            <ImageBrush ImageSource="pack://application:,,,/Resources/Splash/venchik-cheer.png" Stretch="Fill"
+                                        ViewboxUnits="Absolute" Viewbox="0,480,236,240"/>
+                        </Rectangle.Fill>
+                    </Rectangle>
                     <TextBlock Text="Базовый"
                                FontSize="16" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
@@ -81,8 +88,15 @@
                     CornerRadius="8" Cursor="Hand"
                     MouseDown="Card_MouseDown" Tag="extended">
                 <StackPanel Margin="16,24,16,16">
-                    <TextBlock Text="⚙️"
-                               FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                    <!-- Венчик из заставки (Resources/Splash, «печатает»): один кадр ленты 236×240, показан
+                         ровно вдвое меньше — без дробного масштабирования. -->
+                    <Rectangle Width="118" Height="120" HorizontalAlignment="Center" Margin="0,0,0,8"
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                        <Rectangle.Fill>
+                            <ImageBrush ImageSource="pack://application:,,,/Resources/Splash/venchik-typing.png" Stretch="Fill"
+                                        ViewboxUnits="Absolute" Viewbox="0,0,236,240"/>
+                        </Rectangle.Fill>
+                    </Rectangle>
                     <TextBlock Text="Расширенный"
                                FontSize="16" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"
@@ -120,8 +134,15 @@
                     CornerRadius="8" Cursor="Hand"
                     MouseDown="Card_MouseDown" Tag="full">
                 <StackPanel Margin="16,24,16,16">
-                    <TextBlock Text="💎"
-                               FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                    <!-- Венчик из заставки (Resources/Splash, «чешет затылок»): один кадр ленты 236×240, показан
+                         ровно вдвое меньше — без дробного масштабирования. -->
+                    <Rectangle Width="118" Height="120" HorizontalAlignment="Center" Margin="0,0,0,8"
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                        <Rectangle.Fill>
+                            <ImageBrush ImageSource="pack://application:,,,/Resources/Splash/venchik-scratch.png" Stretch="Fill"
+                                        ViewboxUnits="Absolute" Viewbox="0,720,236,240"/>
+                        </Rectangle.Fill>
+                    </Rectangle>
                     <TextBlock Text="Полный"
                                FontSize="16" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimary}"

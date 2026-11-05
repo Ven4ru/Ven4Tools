@@ -25,6 +25,54 @@ namespace Ven4Tools.ViewModels
 
         public string Source    { get; set; } = "";
 
+        /// <summary>
+        /// Плашка у названия — только у программ, которые стоят в списке дважды и больше
+        /// (две «Microsoft Edge», по две «.NET Native»): архитектура «x64»/«x86»/«ARM64» или,
+        /// если она одинакова или неизвестна, область установки. Пусто — плашки нет.
+        /// Заполняет <see cref="InstalledViewModel.MarkVariants"/> после разбора списка.
+        /// </summary>
+        public string VariantTag { get; set; } = "";
+        public bool HasVariantTag => !string.IsNullOrEmpty(VariantTag);
+
+        /// <summary>
+        /// Архитектура из локального ID winget: «ARP\Machine\X64\…», «ARP\User\X86\…»,
+        /// «MSIX\Имя_версия_x64__издатель». У пакетов источников (Microsoft.Edge) её в
+        /// выводе winget list нет — null. Обрезанный многоточием ID тоже даёт null.
+        /// </summary>
+        public string? Architecture => ParseArchitecture(WingetId);
+
+        /// <summary>Область установки из «ARP\User\…» / «ARP\Machine\…»; у прочих ID — null.</summary>
+        public bool? IsUserScope =>
+            WingetId.StartsWith(@"ARP\User\", StringComparison.OrdinalIgnoreCase) ? true
+            : WingetId.StartsWith(@"ARP\Machine\", StringComparison.OrdinalIgnoreCase) ? false
+            : null;
+
+        internal static string? ParseArchitecture(string id)
+        {
+            if (string.IsNullOrEmpty(id) || id.Contains('…')) return null;
+            if (id.StartsWith(@"ARP\", StringComparison.OrdinalIgnoreCase))
+            {
+                var parts = id.Split('\\');
+                return parts.Length > 3 ? Normalize(parts[2]) : null;
+            }
+            if (id.StartsWith(@"MSIX\", StringComparison.OrdinalIgnoreCase))
+            {
+                // Полное имя пакета MSIX: Имя_Версия_Архитектура_Ресурс_Издатель.
+                var parts = id.Substring(5).Split('_');
+                return parts.Length > 2 ? Normalize(parts[2]) : null;
+            }
+            return null;
+
+            static string? Normalize(string a) => a.ToLowerInvariant() switch
+            {
+                "x64" => "x64",
+                "x86" => "x86",
+                "arm64" => "ARM64",
+                "arm" => "ARM",
+                _ => null // neutral и прочее — различия по архитектуре нет
+            };
+        }
+
         private bool _isSelected;
         public bool IsSelected
         {

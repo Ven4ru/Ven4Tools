@@ -22,13 +22,19 @@
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Button x:Name="btnRunDiagnostics" Style="{StaticResource PrimaryButtonStyle}" Content="🔍 Запустить диагностику"
                                 ToolTip="Проверит состояние системы, дисков, недавние сбои, Windows Update и аппаратные события. Ничего не исправляет автоматически."
                                 Height="32" Padding="16,0" Margin="0" HorizontalAlignment="Left" VerticalAlignment="Center"
                                 Command="{Binding RunDiagnosticsCommand}"/>
-                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <!-- Отчёт — рядом с запуском: раньше кнопка лежала одна на фоне страницы под всеми карточками. -->
+                        <Button x:Name="btnCopyFullReport" Grid.Column="1" Content="📤 Скопировать полный отчёт"
+                                ToolTip="Соберёт результаты диагностики в текстовый отчёт и скопирует его в буфер обмена."
+                                Height="32" Padding="12,0" Margin="8,0,0,0" VerticalAlignment="Center"
+                                Command="{Binding CopyFullReportCommand}"/>
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="16,0,0,0">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Ellipse x:Name="dotHealthBadge" Width="8" Height="8" Fill="{Binding HealthBadgeBrush}" Margin="0,0,8,0"
                                          VerticalAlignment="Center"/>
@@ -131,7 +137,8 @@
                         <TextBlock x:Name="txtSensorStatus" Text="{Binding SensorStatusText}" FontSize="12" Margin="0,4,0,0"
                                    Foreground="{DynamicResource TextSecondary}"/>
                         <TextBlock x:Name="txtSensorDriver" Text="{Binding SensorDriverText}" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,0"/>
+                                   Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,0"
+                                   Visibility="{Binding ShowSensorDriverText, Converter={StaticResource BoolToVis}}"/>
                         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                             <Button x:Name="btnInstallSensorDriver" Content="🌡 Добавить драйвер для датчиков процессора"
                                     ToolTip="После объяснения и подтверждения поставит драйвер PawnIO через winget и проверит его подпись. Без него температуры процессора не видны."
@@ -287,19 +294,34 @@
                     </StackPanel>
                 </GroupBox>
 
-                <!-- История перезагрузок и сбоев -->
-                <GroupBox Header="🔁 История перезагрузок и сбоев (7 дней)" Margin="0,0,0,12">
-                    <StackPanel x:Name="pnlRebootHistory">
-                        <TextBlock x:Name="txtRebootHistoryPlaceholder" Text="Нажмите «Запустить диагностику»"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   Visibility="{Binding ShowPlaceholders, Converter={StaticResource BoolToVis}}"/>
-                        <!-- Первая из карточек-заглушек: та же команда, что у кнопки вверху, —
-                             до неё отсюда далеко прокручивать. Остальные заглушки — только текст. -->
-                        <Button x:Name="btnRunDiagnosticsInline" Content="🔍 Запустить диагностику"
-                                Height="32" Padding="12,0" HorizontalAlignment="Left" Margin="0,8,0,0"
+                <!-- До первого запуска — одна общая заглушка вместо четырёх карточек с одной и той же
+                     фразой «Нажмите «Запустить диагностику»». Кнопка — та же команда, что вверху:
+                     до шапки отсюда далеко прокручивать. Карточки результатов ниже появляются после запуска. -->
+                <Border x:Name="pnlDiagnosticsPlaceholder" Background="{DynamicResource CardBackground}" CornerRadius="8" Padding="16" Margin="0,0,0,12"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                        Visibility="{Binding ShowPlaceholders, Converter={StaticResource BoolToVis}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Результаты появятся после диагностики" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="История перезагрузок и сбоев, диски, ошибки Windows Update и аппаратные события за 7 дней."
+                                       TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <Button x:Name="btnRunDiagnosticsInline" Grid.Column="1" Content="🔍 Запустить диагностику"
+                                Height="32" Padding="12,0" Margin="16,0,0,0" VerticalAlignment="Center"
                                 ToolTip="Проверит состояние системы, дисков, недавние сбои, Windows Update и аппаратные события. Ничего не исправляет автоматически."
-                                Visibility="{Binding ShowPlaceholders, Converter={StaticResource BoolToVis}}"
                                 Command="{Binding RunDiagnosticsCommand}"/>
+                    </Grid>
+                </Border>
+
+                <!-- История перезагрузок и сбоев -->
+                <GroupBox Header="🔁 История перезагрузок и сбоев (7 дней)" Margin="0,0,0,12"
+                          Visibility="{Binding ShowPlaceholders, Converter={StaticResource InverseBoolToVis}}">
+                    <StackPanel x:Name="pnlRebootHistory">
                         <TextBlock Text="{Binding RebootStatusRow.Text}" Foreground="{Binding RebootStatusRow.Foreground}"
                                    Visibility="{Binding ShowRebootStatusRow, Converter={StaticResource BoolToVis}}"/>
                         <ItemsControl ItemsSource="{Binding RebootCards}">
@@ -444,11 +466,9 @@
                 </GroupBox>
 
                 <!-- Диски -->
-                <GroupBox Header="💾 Диски" Margin="0,0,0,12">
+                <GroupBox Header="💾 Диски" Margin="0,0,0,12"
+                          Visibility="{Binding ShowPlaceholders, Converter={StaticResource InverseBoolToVis}}">
                     <StackPanel x:Name="pnlDisks">
-                        <TextBlock x:Name="txtDisksPlaceholder" Text="Нажмите «Запустить диагностику»"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   Visibility="{Binding ShowPlaceholders, Converter={StaticResource BoolToVis}}"/>
                         <ItemsControl ItemsSource="{Binding DiskRows}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -460,12 +480,10 @@
                 </GroupBox>
 
                 <!-- Обновления Windows -->
-                <GroupBox Header="🛡️ Ошибки Windows Update (7 дней)" Margin="0,0,0,12">
+                <GroupBox Header="🛡️ Ошибки Windows Update (7 дней)" Margin="0,0,0,12"
+                          Visibility="{Binding ShowPlaceholders, Converter={StaticResource InverseBoolToVis}}">
                     <StackPanel>
                         <StackPanel x:Name="pnlWindowsUpdateFailures">
-                            <TextBlock x:Name="txtWuPlaceholder" Text="Нажмите «Запустить диагностику»"
-                                       Foreground="{DynamicResource TextSecondary}"
-                                       Visibility="{Binding ShowPlaceholders, Converter={StaticResource BoolToVis}}"/>
                             <ItemsControl ItemsSource="{Binding WuRows}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -496,7 +514,8 @@
                 </GroupBox>
 
                 <!-- Аппаратные и драйверные события -->
-                <GroupBox Header="⚠️ Аппаратные и драйверные события (7 дней)" Margin="0,0,0,12">
+                <GroupBox Header="⚠️ Аппаратные и драйверные события (7 дней)" Margin="0,0,0,12"
+                          Visibility="{Binding ShowPlaceholders, Converter={StaticResource InverseBoolToVis}}">
                     <StackPanel>
                         <TextBlock x:Name="txtHardwareSummary" Text="{Binding HardwareSummaryText}"
                                    Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
@@ -562,12 +581,6 @@
                                  VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
                     </StackPanel>
                 </GroupBox>
-
-                <!-- Экспорт отчёта -->
-                <Button x:Name="btnCopyFullReport" Content="📤 Скопировать полный отчёт"
-                        ToolTip="Соберёт результаты диагностики в текстовый отчёт и скопирует его в буфер обмена."
-                        Height="32" Padding="12,0" HorizontalAlignment="Left" Margin="0,4,0,0"
-                        Command="{Binding CopyFullReportCommand}"/>
 
             </StackPanel>
         </ScrollViewer>

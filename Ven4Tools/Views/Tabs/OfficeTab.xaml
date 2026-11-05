@@ -96,13 +96,15 @@
             </GroupBox>
 
             <!-- Язык -->
-            <!-- Короткий код языка — поле не на всю ширину карточки. -->
+            <!-- Язык показывается названием с кодом («Русский (ru-ru)»), выбирается по коду —
+                 SelectedLanguage тот же, что прежде. Поле не на всю ширину карточки. -->
             <GroupBox Header="🌐 Язык Office">
                 <Grid>
                     <ComboBox x:Name="cmbOfficeLanguage" Height="32" Margin="0"
                               Width="320" HorizontalAlignment="Left"
-                              ItemsSource="{Binding OfficeLanguages}"
-                              SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
+                              ItemsSource="{Binding OfficeLanguageOptions}"
+                              DisplayMemberPath="DisplayName" SelectedValuePath="Code"
+                              SelectedValue="{Binding SelectedLanguage, Mode=TwoWay}"/>
                 </Grid>
             </GroupBox>
 

@@ -116,7 +116,7 @@ namespace Ven4Tools.ViewModels
                 VerdictText = $"{verdict.Icon} {verdict.Label}",
                 VerdictLevel = verdict.Level.ToString(),
                 ReasonsText = string.Join("\n", verdict.Reasons),
-                Lines = DiskHealthFormat.Lines(d).Select(l => new SensorLine(l.Label, l.Value)).ToList()
+                Lines = DiskHealthFormat.CardLines(d).Select(l => new SensorLine(l.Label, l.Value)).ToList()
             };
         }
 

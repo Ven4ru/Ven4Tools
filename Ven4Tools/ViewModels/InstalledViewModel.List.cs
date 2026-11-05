@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Ven4Tools.Services;
 
@@ -154,7 +155,43 @@ namespace Ven4Tools.ViewModels
                 });
             }
 
+            MarkVariants(result);
             return result;
+        }
+
+        /// <summary>
+        /// Плашка различия у строк-«дублей» (одно название встречается дважды и больше):
+        /// архитектура, если в группе она разная; иначе область установки, если разная;
+        /// иначе — архитектура, если известна у каждой строки (например, обе x64, но версии
+        /// разные). Строки без дубля плашки не получают — в обычном списке она была бы шумом.
+        /// </summary>
+        internal static void MarkVariants(List<InstalledApp> apps)
+        {
+            foreach (var group in apps.GroupBy(a => a.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                var rows = group.ToList();
+                if (rows.Count < 2) continue;
+
+                bool archDiffers = rows.All(r => r.Architecture != null)
+                                   && rows.Select(r => r.Architecture).Distinct().Count() > 1;
+                bool scopeDiffers = rows.All(r => r.IsUserScope != null)
+                                    && rows.Select(r => r.IsUserScope).Distinct().Count() > 1;
+
+                foreach (var r in rows)
+                {
+                    if (archDiffers)
+                        r.VariantTag = r.Architecture!;
+                    else if (scopeDiffers)
+                        r.VariantTag = r.IsUserScope == true ? "для пользователя" : "для всех";
+                    else
+                        r.VariantTag = r.Architecture ?? (r.IsUserScope switch
+                        {
+                            true => "для пользователя",
+                            false => "для всех",
+                            _ => ""
+                        });
+                }
+            }
         }
 
         private static string Extract(string line, int from, int to)

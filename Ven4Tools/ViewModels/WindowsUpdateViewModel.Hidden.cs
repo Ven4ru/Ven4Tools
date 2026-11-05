@@ -65,6 +65,7 @@ namespace Ven4Tools.ViewModels
             {
                 if (!SetField(ref _isHiding, value)) return;
                 CheckCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(ResetWindowsUpdateBlockedReason));
                 UpdateSelectionSummary();
                 UpdateUnhideEnabled();
             }

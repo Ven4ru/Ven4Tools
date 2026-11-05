@@ -143,33 +143,66 @@
                 </StackPanel>
             </GroupBox>
 
-            <!-- Внешний IP -->
-            <GroupBox Header="🌐 Внешний IP" Margin="0,0,0,12">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="IP: " Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="txtPublicIp" Text="{Binding PublicIpText}"
-                               Foreground="{DynamicResource TextPrimary}" FontFamily="JetBrains Mono, Consolas"
-                               FontSize="12" VerticalAlignment="Center" Margin="4,0,16,0"/>
-                    <Button x:Name="btnGetIp" Content="Определить" Height="32" Padding="12,0"
-                            ToolTip="Запросит у внешнего сервиса ваш текущий публичный IP-адрес. В параноидальном режиме запрос не выполняется."
-                            Command="{Binding GetIpCommand}"/>
-                </StackPanel>
-            </GroupBox>
-
-            <!-- DNS -->
-            <GroupBox Header="🔍 DNS" Margin="0,0,0,12">
+            <!-- Быстрые проверки: внешний IP, DNS и сброс сети — по строке на действие, кнопка справа.
+                 Раньше это были три карточки во всю ширину с одной кнопкой в каждой. -->
+            <GroupBox x:Name="grpQuickChecks" Header="🧰 Быстрые проверки" Margin="0,0,0,12">
                 <StackPanel>
-                    <Button x:Name="btnCheckDns" Content="🔍 Проверить DNS (google.com)" Height="32" Padding="12,0"
-                            ToolTip="Проверит, может ли Windows преобразовать имя google.com в IP-адрес. В параноидальном режиме проверка не выполняется."
-                            HorizontalAlignment="Left"
-                            Command="{Binding CheckDnsCommand}"/>
-                    <TextBlock x:Name="txtDnsResult" Text="{Binding DnsResultText}" Foreground="{DynamicResource TextSecondary}"
-                               FontSize="12" FontFamily="JetBrains Mono, Consolas"
-                               TextWrapping="Wrap" Margin="0,8,0,0"
-                               Visibility="{Binding DnsResultVisible, Converter={StaticResource BoolToVis}}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Внешний IP" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock x:Name="txtPublicIp" Text="{Binding PublicIpText}" Margin="0,2,0,0"
+                                       Foreground="{DynamicResource TextSecondary}" FontFamily="JetBrains Mono, Consolas"
+                                       FontSize="12" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Button x:Name="btnGetIp" Grid.Column="1" Content="Определить" Height="32" Padding="12,0" Margin="16,0,0,0"
+                                VerticalAlignment="Center"
+                                ToolTip="Запросит у внешнего сервиса ваш текущий публичный IP-адрес. В параноидальном режиме запрос не выполняется."
+                                Command="{Binding GetIpCommand}"/>
+                    </Grid>
+
+                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Margin="0,12,0,0" Padding="0,12,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="DNS" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                                <TextBlock x:Name="txtDnsResult" Text="{Binding DnsResultText}" Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="12" FontFamily="JetBrains Mono, Consolas"
+                                           TextWrapping="Wrap" Margin="0,2,0,0"
+                                           Visibility="{Binding DnsResultVisible, Converter={StaticResource BoolToVis}}"/>
+                            </StackPanel>
+                            <Button x:Name="btnCheckDns" Grid.Column="1" Content="🔍 Проверить DNS (google.com)" Height="32" Padding="12,0" Margin="16,0,0,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Проверит, может ли Windows преобразовать имя google.com в IP-адрес. В параноидальном режиме проверка не выполняется."
+                                    Command="{Binding CheckDnsCommand}"/>
+                        </Grid>
+                    </Border>
+
+                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Margin="0,12,0,0" Padding="0,12,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Сброс сети" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                                <TextBlock Text="Потребуются права администратора и перезагрузка" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextSecondary}" FontSize="12" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Button x:Name="btnResetNetwork" Grid.Column="1" Content="🔄 Сбросить сетевые настройки (winsock, IP)"
+                                    ToolTip="После подтверждения сбросит Winsock и параметры IP. Сеть временно отключится, может потребоваться перезагрузка."
+                                    Height="32" Padding="12,0" Margin="16,0,0,0" VerticalAlignment="Center"
+                                    Command="{Binding ResetNetworkCommand}"/>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </GroupBox>
-
             <!-- Сохранённые сети Wi-Fi (скрыт, если беспроводного адаптера нет) -->
             <GroupBox x:Name="grpWifiProfiles" Header="📶 Сохранённые сети Wi-Fi" Margin="0,0,0,12"
                       Visibility="{Binding WifiAvailable, Converter={StaticResource BoolToVis}}">
@@ -236,18 +269,6 @@
                         <TextBlock Text="{Binding WifiStatusText}" TextWrapping="Wrap" FontSize="12" Margin="12,0,0,0"
                                    VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
                     </StackPanel>
-                </StackPanel>
-            </GroupBox>
-
-            <!-- Инструменты -->
-            <GroupBox Header="⚙️ Инструменты" Margin="0">
-                <StackPanel>
-                    <Button x:Name="btnResetNetwork" Content="🔄 Сбросить сетевые настройки (winsock, IP)"
-                            ToolTip="После подтверждения сбросит Winsock и параметры IP. Сеть временно отключится, может потребоваться перезагрузка."
-                            Height="32" Padding="12,0" HorizontalAlignment="Left"
-                            Command="{Binding ResetNetworkCommand}"/>
-                    <TextBlock Text="Потребуются права администратора и перезагрузка"
-                               Foreground="{DynamicResource TextSecondary}" FontSize="12" Margin="0,8,0,0"/>
                 </StackPanel>
             </GroupBox>
 

@@ -25,6 +25,7 @@ namespace Ven4Tools.ViewModels
             {
                 if (!SetField(ref _isSystemTaskRunning, value)) return;
                 OnPropertyChanged(nameof(IsSystemTaskIdle));
+                OnPropertyChanged(nameof(ResetWindowsUpdateBlockedReason));
                 UpdateSelectionSummary();
                 CommandManagerRequery();
             }

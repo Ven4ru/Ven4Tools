@@ -28,6 +28,14 @@ namespace Ven4Tools.ViewModels
         private string _sensorDriverText = "";
         public string SensorDriverText { get => _sensorDriverText; private set => SetField(ref _sensorDriverText, value); }
 
+        /// <summary>
+        /// Показывать строку о драйвере. В экспериментальной сборке (драйвер не ставится)
+        /// её обычный текст повторял плашку эксперимента — тогда строка скрыта; остаётся
+        /// только если найден чужой драйвер датчиков (это новое сведение, а не повтор).
+        /// </summary>
+        private bool _showSensorDriverText;
+        public bool ShowSensorDriverText { get => _showSensorDriverText; private set => SetField(ref _showSensorDriverText, value); }
+
         private bool _showInstallSensorDriver;
         public bool ShowInstallSensorDriver { get => _showInstallSensorDriver; private set => SetField(ref _showInstallSensorDriver, value); }
 
@@ -253,6 +261,7 @@ namespace Ven4Tools.ViewModels
             bool installed = PawnIoDriver.IsInstalled();
             ShowInstallSensorDriver = PawnIoDriver.FeatureEnabled && !installed;
             ShowRemoveSensorDriver = PawnIoDriver.FeatureEnabled && installed;
+            ShowSensorDriverText = PawnIoDriver.FeatureEnabled || (installed && PawnIoDriver.IsRunning());
             if (!PawnIoDriver.FeatureEnabled)
             {
                 // Экспериментальный модуль: драйвер Ven4Tools не ставит и не трогает.

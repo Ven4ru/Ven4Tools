@@ -28,7 +28,24 @@ namespace Ven4Tools.ViewModels
         public string RepairStatusText { get => _repairStatusText; private set => SetField(ref _repairStatusText, value); }
 
         private bool _isRepairRunning;
-        public bool IsRepairRunning { get => _isRepairRunning; private set => SetField(ref _isRepairRunning, value); }
+        public bool IsRepairRunning
+        {
+            get => _isRepairRunning;
+            private set { if (SetField(ref _isRepairRunning, value)) OnPropertyChanged(nameof(ResetWindowsUpdateBlockedReason)); }
+        }
+
+        /// <summary>
+        /// Почему «Сбросить Центр обновления» сейчас недоступна — строка под кнопкой. Те же
+        /// условия, что у CanExecute команды и IsEnabled кнопки (IsSystemTaskIdle): сброс
+        /// останавливает wuauserv и оборвал бы поиск или скрытие обновлений. Пустая строка —
+        /// кнопка доступна либо идёт ремонт на этой же вкладке (там виден свой прогресс).
+        /// Уведомление о смене — из сеттеров IsSearching, IsHiding, IsSystemTaskRunning, IsRepairRunning.
+        /// </summary>
+        public string ResetWindowsUpdateBlockedReason =>
+            IsSearching ? "Недоступно, пока идёт поиск обновлений — дождитесь его окончания."
+            : IsHiding ? "Недоступно, пока идёт работа со скрытыми обновлениями (поиск, скрытие или возврат) — дождитесь её окончания."
+            : IsSystemTaskRunning && !IsRepairRunning ? "Недоступно, пока идёт другая системная операция (например, .NET Framework 3.5) — дождитесь её окончания."
+            : "";
 
         private double _repairProgress;
         public double RepairProgress { get => _repairProgress; private set => SetField(ref _repairProgress, value); }

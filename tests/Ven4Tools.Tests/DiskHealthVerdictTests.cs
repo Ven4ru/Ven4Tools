@@ -147,4 +147,20 @@ public sealed class DiskHealthVerdictTests
         Assert.Equal("нет данных", DiskHealthFormat.Wear(Ata(kind: DiskKind.SataSsd)));
         Assert.Equal("нет данных", DiskHealthFormat.Temperature(Ata(temp: null)));
     }
+
+    [Fact]
+    public void CardLines_NoValueAtAll_IsEmpty_ButReportKeepsAllLines()
+    {
+        var bare = new DiskHealthReading { Number = 0, Model = "Msft Virtual Disk", Kind = DiskKind.Other };
+        Assert.All(DiskHealthFormat.Lines(bare), l => Assert.Equal("нет данных", l.Value));
+        Assert.Empty(DiskHealthFormat.CardLines(bare));
+        Assert.Equal(7, DiskHealthFormat.Lines(bare).Count);
+    }
+
+    [Fact]
+    public void CardLines_AnyValue_KeepsAllLines()
+    {
+        var withTemp = new DiskHealthReading { Number = 1, Model = "X", Kind = DiskKind.Other, TemperatureC = 35 };
+        Assert.Equal(DiskHealthFormat.Lines(withTemp).Count, DiskHealthFormat.CardLines(withTemp).Count);
+    }
 }

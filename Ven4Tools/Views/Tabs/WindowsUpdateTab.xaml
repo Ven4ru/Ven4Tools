@@ -318,6 +318,21 @@
                                         IsEnabled="{Binding IsSystemTaskIdle}"
                                         ToolTip="После подтверждения остановит службы wuauserv, bits, cryptsvc, msiserver, переименует SoftwareDistribution и catroot2 в *.old-дата и запустит службы. Если служба не остановится — ничего не переименует."
                                         Command="{Binding ResetWindowsUpdateCommand}"/>
+                                <!-- Почему кнопка выключена (идёт поиск, работа со скрытыми, другая
+                                     системная операция) — у выключенной кнопки подсказка не всплывает. -->
+                                <TextBlock x:Name="txtResetWuBlockedReason" Text="{Binding ResetWindowsUpdateBlockedReason}"
+                                           FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"
+                                           Foreground="{DynamicResource TextSecondary}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ResetWindowsUpdateBlockedReason}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </StackPanel>
                         </GroupBox>
 
