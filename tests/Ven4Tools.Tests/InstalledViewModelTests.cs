@@ -250,5 +250,61 @@ namespace Ven4Tools.Tests
             Assert.True(app.IsUnknownSource);
             Assert.Equal("❓ Неизвестный", app.SourceDisplay);
         }
+
+        // Вывод winget list без колонки Available (ни у одного пакета нет обновления —
+        // так выглядит таблица у winget на Windows 10 22H2): версия не должна
+        // захватывать колонку «Источник».
+        [Fact]
+        public void ParseWingetList_БезКолонкиAvailable_ВерсияБезИсточника()
+        {
+            static string Row(string name, string id, string version, string source) =>
+                name.PadRight(40) + id.PadRight(42) + version.PadRight(17) + source;
+
+            string raw =
+                Row("Name", "Id", "Version", "Source") + "\r\n" +
+                new string('-', 105) + "\r\n" +
+                Row("Microsoft .Net Native Runtime Pac…", "Microsoft.NET.Native.Runtime.2.2", "2.2.28604.0", "winget") + "\r\n" +
+                Row("Cortana", "Microsoft.549981C3F5F10_8wekyb3d8bbwe", "4.2308.1005.0", "").TrimEnd() + "\r\n";
+
+            var apps = InstalledViewModel.ParseWingetList(raw);
+
+            Assert.Equal(2, apps.Count);
+            Assert.Equal("2.2.28604.0", apps[0].Version);
+            Assert.Equal("winget", apps[0].Source);
+            Assert.Equal("", apps[0].Available);
+            Assert.Equal("4.2308.1005.0", apps[1].Version);
+            Assert.Equal("", apps[1].Source);
+        }
+
+        [Fact]
+        public void ParseWingetList_РусскийБезКолонкиДоступна_ВерсияБезИсточника()
+        {
+            const string raw =
+                "Имя         ИД                     Версия       Источник\n" +
+                "--------------------------------------------------------\n" +
+                "Git         Git.Git                2.47.1       winget\n";
+
+            var apps = InstalledViewModel.ParseWingetList(raw);
+
+            Assert.Single(apps);
+            Assert.Equal("2.47.1", apps[0].Version);
+            Assert.Equal("winget", apps[0].Source);
+        }
+
+        [Fact]
+        public void ParseWingetList_СКолонкойAvailable_РазбираетВсеКолонки()
+        {
+            const string raw =
+                "Name         Id                     Version      Available    Source\n" +
+                "--------------------------------------------------------------------\n" +
+                "Git          Git.Git                2.47.1       2.48.0       winget\n";
+
+            var apps = InstalledViewModel.ParseWingetList(raw);
+
+            Assert.Single(apps);
+            Assert.Equal("2.47.1", apps[0].Version);
+            Assert.Equal("2.48.0", apps[0].Available);
+            Assert.Equal("winget", apps[0].Source);
+        }
     }
 }

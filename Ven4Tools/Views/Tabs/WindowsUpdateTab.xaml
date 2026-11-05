@@ -87,6 +87,14 @@
                                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     Command="{Binding OpenDiagnosticsCommand}"/>
                         </StackPanel>
+
+                        <!-- Идёт проверка: пустое состояние скрыто (это не «пусто»), и на месте
+                             дерева был голый прямоугольник — по центру та же строка состояния. -->
+                        <TextBlock x:Name="txtUpdatesSearching" Text="{Binding StatusText}" IsHitTestVisible="False"
+                                   FontSize="14" Foreground="{DynamicResource TextSecondary}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   TextWrapping="Wrap" MaxWidth="420" TextAlignment="Center"
+                                   Visibility="{Binding IsSearching, Converter={StaticResource BoolToVis}}"/>
                     </Grid>
 
                     <!-- Footer: выбор + установка -->
@@ -134,6 +142,23 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
+                    <!-- Пустой список (идёт поиск, скрытых нет, ошибка) — строка состояния ещё
+                         и по центру, а не только мелко над пустым прямоугольником. -->
+                    <TextBlock x:Name="txtHiddenEmpty" Grid.Row="1" Text="{Binding HiddenStatusText}" IsHitTestVisible="False"
+                               FontSize="14" Foreground="{DynamicResource TextSecondary}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               TextWrapping="Wrap" MaxWidth="420" TextAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HiddenUpdates.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <Border Grid.Row="2" Margin="0,12,0,0" Padding="12,8" Background="{DynamicResource CardBackground}"
                             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="7">
                         <Grid>

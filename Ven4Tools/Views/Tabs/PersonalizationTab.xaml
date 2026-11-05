@@ -62,6 +62,22 @@
                                 <Border DockPanel.Dock="Top" CornerRadius="6" ClipToBounds="True" Margin="0,0,0,10" Visibility="{Binding PreviewVisibility}">
                                     <Image Source="{Binding Preview}" Height="150" Stretch="UniformToFill"/>
                                 </Border>
+                                <!-- Курсоры набора вместо обложки: без них карточка в одном ряду
+                                     с «Обоями» и «Экраном блокировки» зияла пустотой на высоту картинки. -->
+                                <Border DockPanel.Dock="Top" CornerRadius="6" Height="150" Margin="0,0,0,10"
+                                        Background="{DynamicResource ContentBackground}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                        Visibility="{Binding CursorPreviewVisibility}">
+                                    <ItemsControl ItemsSource="{Binding CursorPreviews}" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Image Source="{Binding}" Width="64" Height="64" Margin="10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
                                 <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
                                     <Button Content="Применить" Style="{StaticResource PersonalPrimary}" Tag="{Binding}"
                                             AutomationProperties.AutomationId="{Binding Part, StringFormat='btnPersonalApply_{0}'}"

@@ -35,9 +35,14 @@
                     <TextBlock Grid.Row="2" Text="Анимации" VerticalAlignment="Center" Margin="0,10,0,0"/>
                     <CheckBox x:Name="chkReduceMotion" Grid.Row="2" Grid.Column="1" Content="Уменьшить анимации"
                               Margin="3,10,3,3" IsChecked="{Binding ReduceMotion, Mode=TwoWay}"/>
-                    <StackPanel Grid.Column="2" Grid.RowSpan="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
-                        <Ellipse Width="18" Height="18" Fill="{DynamicResource StatusSuccess}" Margin="3"/><Ellipse Width="18" Height="18" Fill="{DynamicResource StatusInfo}" Margin="3"/>
-                        <Ellipse Width="18" Height="18" Fill="{DynamicResource StatusWarning}" Margin="3"/><Ellipse Width="18" Height="18" Fill="{DynamicResource StatusDanger}" Margin="3"/>
+                    <!-- Образец цветов выбранной темы (не выбор): акцент крупнее и отделён,
+                         за ним цвета статусов. Без подписи кружки выглядели палитрой,
+                         в которой можно что-то выбрать. Стоит в строке темы — к ней и относится. -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+                        <TextBlock Text="Цвета темы:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource TextSecondary}"/>
+                        <Ellipse Width="22" Height="22" Fill="{DynamicResource AccentColor}" Stroke="{DynamicResource TextPrimary}" StrokeThickness="1.5" Margin="3,3,9,3"/>
+                        <Ellipse Width="16" Height="16" Fill="{DynamicResource StatusSuccess}" Margin="3"/><Ellipse Width="16" Height="16" Fill="{DynamicResource StatusInfo}" Margin="3"/>
+                        <Ellipse Width="16" Height="16" Fill="{DynamicResource StatusWarning}" Margin="3"/><Ellipse Width="16" Height="16" Fill="{DynamicResource StatusDanger}" Margin="3"/>
                     </StackPanel>
                 </Grid>
             </GroupBox>
@@ -251,30 +256,57 @@
                     <!-- Global order editor -->
                     <Border x:Name="pnlGlobalOrder" Margin="0,0,0,10"
                             Visibility="{Binding ShowGlobalOrderPanel, Converter={StaticResource BoolToVis}}">
-                        <Grid>
+                        <!-- Список не на всю ширину и ▲/▼ сразу справа от строк: на широком
+                             окне кнопки стояли у дальнего края, оторванные от списка. Строки —
+                             плашки с рамкой, чтобы было видно, что их порядок и есть настройка. -->
+                        <Grid HorizontalAlignment="Left" MaxWidth="460">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="360"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Border Background="{DynamicResource CardBackground}"
-                                    CornerRadius="8" Padding="4">
-                                <ListBox x:Name="lstSourceOrder"
-                                         ItemsSource="{Binding SourceItems}"
-                                         SelectedIndex="{Binding SelectedSourceIndex, Mode=TwoWay}"
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         Height="120"
-                                         SelectionMode="Single">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Label}"
-                                                       Foreground="{DynamicResource TextPrimary}"
-                                                       Padding="6,4" FontSize="13"/>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0">
+                            <ListBox x:Name="lstSourceOrder"
+                                     ItemsSource="{Binding SourceItems}"
+                                     SelectedIndex="{Binding SelectedSourceIndex, Mode=TwoWay}"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                     SelectionMode="Single">
+                                <ListBox.ItemContainerStyle>
+                                    <!-- Свой шаблон строки: системная подсветка выбора (голубая на
+                                         Windows 10) в тёмных темах выбивалась; выбранная строка — рамка
+                                         и подложка акцента темы. -->
+                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                        <Setter Property="Margin" Value="0,0,0,6"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <Border x:Name="row" Background="{DynamicResource SurfaceRaised}" BorderBrush="{DynamicResource BorderBrush}"
+                                                            BorderThickness="1" CornerRadius="6" Padding="10,7">
+                                                        <ContentPresenter/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="row" Property="BorderBrush" Value="{DynamicResource AccentSoftBorder}"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter TargetName="row" Property="Background" Value="{DynamicResource AccentSoftBackground}"/>
+                                                            <Setter TargetName="row" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Label}"
+                                                   Foreground="{DynamicResource TextPrimary}" FontSize="13"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,6">
                                 <Button x:Name="btnSrcUp" Content="▲" Width="32" Height="32"
                                         ToolTip="Поднимет выбранный источник выше в порядке попыток установки."
                                         Margin="0,0,0,6" Command="{Binding MoveSourceUpCommand}"/>
@@ -302,7 +334,7 @@
                     <Button x:Name="btnSaveSourceOrder" Style="{StaticResource PrimaryButtonStyle}"
                             Content="💾 Сохранить и перепроверить доступность"
                             ToolTip="Сохранит порядок источников и заново проверит доступность приложений по новым правилам."
-                            Height="36" Margin="0,12,0,0"
+                            Height="36" Margin="0,12,0,0" Padding="18,0" HorizontalAlignment="Left"
                             FontWeight="SemiBold"
                             Command="{Binding SaveSourceOrderCommand}"/>
 
@@ -400,40 +432,67 @@
                     <!-- App selection for caching -->
                     <TextBlock Text="Выберите приложения для кэширования:"
                                Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,6"/>
+                    <!-- Фильтр и «Все/Сброс» — над списком, а не внутри прокрутки (раньше
+                         уезжали вместе со строками). Список — в рамке, высота ровно на 12 строк
+                         по 24: при прокрутке к началу нижняя строка не обрезается пополам. -->
                     <Border Background="{DynamicResource CardBackground}" CornerRadius="8"
-                            Padding="8" Margin="0,0,0,10" MaxHeight="220">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="txtCacheAppFilter" Height="26" Margin="0,0,8,0"
-                                             Background="{DynamicResource ContentBackground}"
-                                             Foreground="{DynamicResource TextPrimary}"
-                                             VerticalContentAlignment="Center" Padding="6,0"
-                                             Tag="Поиск по названию..."
-                                             Text="{Binding CacheAppFilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                    <Button x:Name="btnCacheSelectAll" Content="Все" Width="44" Height="26"
-                                            ToolTip="Отметит все приложения, показанные в списке подготовки офлайн-кэша."
-                                            Grid.Column="1" Margin="0,0,6,0" Command="{Binding SelectAllCacheCommand}"/>
-                                    <Button x:Name="btnCacheSelectNone" Content="Сброс" Width="52" Height="26"
-                                            ToolTip="Снимет отметки со всех приложений для загрузки в кэш."
-                                            Grid.Column="2" Command="{Binding SelectNoneCacheCommand}"/>
-                                </Grid>
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            Padding="8" Margin="0,0,0,10">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="txtCacheAppFilter" Height="28" Margin="0,0,8,0"
+                                         Foreground="{DynamicResource TextPrimary}"
+                                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                         VerticalContentAlignment="Center" Padding="6,0"
+                                         Tag="Поиск по названию..."
+                                         Text="{Binding CacheAppFilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <!-- Подсказка в пустом поле — тот же приём, что у поиска
+                                         «Установленных»: фон-сеттер стиля, а не атрибут. -->
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                            <Setter Property="Background" Value="{DynamicResource ContentBackground}"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="Text" Value="">
+                                                    <Setter Property="Background">
+                                                        <Setter.Value>
+                                                            <VisualBrush Stretch="None" AlignmentX="Left">
+                                                                <VisualBrush.Visual>
+                                                                    <TextBlock Text="Поиск по названию..."
+                                                                               Foreground="{DynamicResource TextSecondary}" FontSize="12"
+                                                                               Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                                                </VisualBrush.Visual>
+                                                            </VisualBrush>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                                <Button x:Name="btnCacheSelectAll" Content="Все" Width="52" Height="28"
+                                        ToolTip="Отметит все приложения, показанные в списке подготовки офлайн-кэша."
+                                        Grid.Column="1" Margin="0,0,6,0" Command="{Binding SelectAllCacheCommand}"/>
+                                <Button x:Name="btnCacheSelectNone" Content="Сброс" Width="60" Height="28"
+                                        ToolTip="Снимет отметки со всех приложений для загрузки в кэш."
+                                        Grid.Column="2" Command="{Binding SelectNoneCacheCommand}"/>
+                            </Grid>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="288">
                                 <views:FlatItemsControl x:Name="listCacheApps" ItemsSource="{Binding FilteredCacheApps}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <CheckBox AutomationProperties.AutomationId="{Binding Id, StringFormat='chkCacheApp_{0}'}" Content="{Binding DisplayName}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                       Foreground="{DynamicResource TextPrimary}"
-                                                      Margin="2,2"/>
+                                                      Height="24" VerticalContentAlignment="Center" Margin="2,0"/>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </views:FlatItemsControl>
-                            </StackPanel>
-                        </ScrollViewer>
+                            </ScrollViewer>
+                        </StackPanel>
                     </Border>
 
                     <!-- Download button + progress -->

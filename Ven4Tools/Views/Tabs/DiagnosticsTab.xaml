@@ -279,6 +279,13 @@
                         <TextBlock x:Name="txtRebootHistoryPlaceholder" Text="Нажмите «Запустить диагностику»"
                                    Foreground="{DynamicResource TextSecondary}"
                                    Visibility="{Binding ShowPlaceholders, Converter={StaticResource BoolToVis}}"/>
+                        <!-- Первая из карточек-заглушек: та же команда, что у кнопки вверху, —
+                             до неё отсюда далеко прокручивать. Остальные заглушки — только текст. -->
+                        <Button x:Name="btnRunDiagnosticsInline" Content="🔍 Запустить диагностику"
+                                Height="32" Padding="14,0" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                ToolTip="Проверит состояние системы, дисков, недавние сбои, Windows Update и аппаратные события. Ничего не исправляет автоматически."
+                                Visibility="{Binding ShowPlaceholders, Converter={StaticResource BoolToVis}}"
+                                Command="{Binding RunDiagnosticsCommand}"/>
                         <TextBlock Text="{Binding RebootStatusRow.Text}" Foreground="{Binding RebootStatusRow.Foreground}"
                                    Visibility="{Binding ShowRebootStatusRow, Converter={StaticResource BoolToVis}}"/>
                         <ItemsControl ItemsSource="{Binding RebootCards}">
