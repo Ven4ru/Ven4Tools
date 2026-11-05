@@ -184,6 +184,16 @@ namespace Ven4Tools.ViewModels
                 return;
             }
 
+            // Файл отката был испорчен и отложен в .bad: пока его не разобрали, твики с
+            // откатом не применяются — иначе «как было» снялось бы уже с правок Ven4Tools.
+            if (selected.Any(i => DebloatTweakExecutor.IsUndoable(i.Category, i.Id))
+                && DebloatUndoService.Default.BrokenMessage is { } broken)
+            {
+                AppLogger.Write("⚠️ Очистка: " + broken);
+                StatusText = "⚠️ " + broken;
+                return;
+            }
+
             ApplyEnabled = false;
             ProgressVisible = Visibility.Visible;
             ProgressValue = 0;

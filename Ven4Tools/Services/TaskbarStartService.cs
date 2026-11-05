@@ -38,6 +38,17 @@ namespace Ven4Tools.Services
         bool AutoHide { get; set; }
         void NotifyChanged();
         void RestartExplorer();
+
+        /// <summary>Значение HKCU как есть (вид и данные); null — значения нет. По умолчанию — только DWORD.</summary>
+        (RegistryValueKind Kind, object Data)? ReadRaw(string key, string name) =>
+            ReadDword(key, name) is int v ? (RegistryValueKind.DWord, v) : null;
+
+        /// <summary>Записать значение с его видом (побайтный откат). По умолчанию — только DWORD.</summary>
+        void WriteRaw(string key, string name, RegistryValueKind kind, object data)
+        {
+            if (kind == RegistryValueKind.DWord && data is int v) WriteDword(key, name, v);
+            else throw new IOException($"Вид значения {kind} не поддерживается: {name}");
+        }
     }
 
     /// <summary>
@@ -184,21 +195,38 @@ namespace Ven4Tools.Services
         {
             public List<string> Blocked { get; } = new();
             public bool NeedsExplorerRestart { get; set; }
+            /// <summary>Сообщение для строки состояния (например, «вернуть нечего»); null — нет.</summary>
+            public string? Message { get; set; }
         }
 
         public static TaskbarStartService Default { get; } = new(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "taskbar_undo.json"),
-            new WindowsTaskbarSystem());
+            new WindowsTaskbarSystem(),
+            RegistryOwnership.Default);
+
+        private const string Section = "Панель задач";
+        private const string OwnerPrefix = "taskbar:";
 
         private readonly string _undoPath;
         private readonly ITaskbarSystem _system;
+        private readonly RegistryOwnership? _owners;
         private readonly object _lock = new();
 
-        public TaskbarStartService(string undoPath, ITaskbarSystem system)
+        /// <param name="owners">
+        /// Общий учёт владения значениями с «Очисткой» и темой панели; null — без него
+        /// (откат по своей записи, как раньше).
+        /// </param>
+        public TaskbarStartService(string undoPath, ITaskbarSystem system, RegistryOwnership? owners = null)
         {
             _undoPath = undoPath;
             _system = system;
+            _owners = owners;
         }
+
+        private static string Owner(TaskbarSetting s) => OwnerPrefix + s.Id;
+
+        /// <summary>Испорченный файл отката отложен и не разобран — «Применить» отказывает. null — всё в порядке.</summary>
+        public string? BrokenBackup { get { lock (_lock) { Load(out _); return UndoFileGuard.Broken(_undoPath); } } }
 
         public bool IsWindows11 => _system.Build >= 22000;
 
@@ -209,21 +237,34 @@ namespace Ven4Tools.Services
         public int Current(TaskbarSetting s) =>
             s.Id == AutoHideId ? (_system.AutoHide ? 1 : 0) : _system.ReadDword(s.Key, s.Name) ?? s.Default;
 
-        public bool HasUndo => Load().Count > 0;
+        public bool HasUndo => Load(out _).Count > 0;
 
-        public bool IsChanged(TaskbarSetting s) => Load().ContainsKey(s.Id);
+        public bool IsChanged(TaskbarSetting s) => Load(out _).ContainsKey(s.Id);
 
-        /// <summary>Применить выбранные значения; неизменившиеся пропускаются.</summary>
+        /// <summary>
+        /// Применить выбранные значения; неизменившиеся пропускаются. Испорченный файл отката
+        /// ещё не разобран — <see cref="UndoFileBrokenException"/>; файл не читается — <see cref="IOException"/>.
+        /// </summary>
         public ApplyResult Apply(IReadOnlyDictionary<string, int> values)
         {
             var result = new ApplyResult();
             lock (_lock)
             {
-                var undo = Load();
+                var undo = Load(out bool readable);
+                UndoFileGuard.ThrowIfBroken(_undoPath, Section);
+                if (!readable)
+                    throw new IOException("Файл отката панели задач сейчас не читается — изменения не применены, чтобы не потерять прежнее состояние.");
+                _owners?.Reconcile(OwnerPrefix, undo.Keys.Select(k => OwnerPrefix + k));
                 foreach (var (id, value) in values)
                 {
                     var s = Available.FirstOrDefault(x => x.Id == id);
-                    if (s == null || !s.Choices.Any(c => c.Value == value) || Current(s) == value) continue;
+                    if (s == null || !s.Choices.Any(c => c.Value == value)) continue;
+                    bool same = Current(s) == value;
+                    // Значение уже такое, потому что его выставил другой раздел («Очистка»):
+                    // берём его во владение и без записи — иначе откат того раздела вернул бы
+                    // исходное, хотя здесь человек выбрал именно это значение.
+                    bool adopt = same && s.Id != AutoHideId && !undo.ContainsKey(s.Id) && _owners?.IsHeld(s.Key, s.Name) == true;
+                    if (same && !adopt) continue;
                     // Прежнее состояние — только при первой правке, иначе «как было» станет нашим.
                     // На диск — до записи: при неожиданном сбое посередине откат уже сделанного не теряется.
                     if (!undo.ContainsKey(s.Id))
@@ -231,6 +272,7 @@ namespace Ven4Tools.Services
                         undo[s.Id] = Snapshot(s);
                         Save(undo);
                     }
+                    if (adopt) continue;
                     try
                     {
                         Write(s, value);
@@ -242,6 +284,7 @@ namespace Ven4Tools.Services
                         AppLogger.Write($"⚠️ Панель задач: Windows не дала изменить «{s.Title}» — {ex.Message}");
                         result.Blocked.Add(s.Title);
                         undo.Remove(s.Id);
+                        if (s.Id != AutoHideId) _owners?.Release(s.Key, s.Name, Owner(s));
                     }
                 }
                 Save(undo);
@@ -256,7 +299,12 @@ namespace Ven4Tools.Services
             var result = new ApplyResult();
             lock (_lock)
             {
-                var undo = Load();
+                var undo = Load(out bool readable);
+                // Файл отката был испорчен: вернуть по нему нечего — честно говорим об этом,
+                // а отложенный файл переименовываем (не удаляем), чтобы снова можно было применять.
+                result.Message = UndoFileGuard.Acknowledge(_undoPath, Section);
+                if (!readable) throw new IOException("Файл отката панели задач сейчас не читается — повторите позже.");
+                _owners?.Reconcile(OwnerPrefix, undo.Keys.Select(k => OwnerPrefix + k));
                 foreach (var (id, saved) in undo.ToList())
                 {
                     var s = All.FirstOrDefault(x => x.Id == id);
@@ -264,8 +312,12 @@ namespace Ven4Tools.Services
                     try
                     {
                         if (s.Id == AutoHideId) _system.AutoHide = saved.Value == 1;
-                        else if (saved.Existed) _system.WriteDword(s.Key, s.Name, saved.Value);
-                        else _system.DeleteValue(s.Key, s.Name);
+                        else if (_owners?.HeldByOthers(s.Key, s.Name, Owner(s)) == true)
+                            // Значение ещё держит «Очистка» или тема: реестр не трогаем,
+                            // снимаем только своё владение — оригинал вернёт последний владелец.
+                            AppLogger.Write($"Панель задач: «{s.Title}» ещё держит другой раздел — значение оставлено как есть");
+                        else Restore(s, saved, _owners?.Original(s.Key, s.Name));
+                        if (s.Id != AutoHideId) _owners?.Release(s.Key, s.Name, Owner(s));
                         if (s.NeedsExplorerRestart) result.NeedsExplorerRestart = true;
                         undo.Remove(id);
                     }
@@ -283,11 +335,41 @@ namespace Ven4Tools.Services
 
         public void RestartExplorer() => _system.RestartExplorer();
 
+        /// <summary>
+        /// «Как было» перед первой правкой. Значение уже держит другой раздел — оригинал берётся
+        /// из общего учёта, а не из реестра (там сейчас правка соседа).
+        /// </summary>
         private SavedValue Snapshot(TaskbarSetting s)
         {
             if (s.Id == AutoHideId) return new SavedValue { Existed = true, Value = _system.AutoHide ? 1 : 0 };
-            var v = _system.ReadDword(s.Key, s.Name);
-            return new SavedValue { Existed = v.HasValue, Value = v ?? 0 };
+            RegistryRaw ReadNow() => RegistryRaw.From(_system.ReadRaw(s.Key, s.Name));
+            var raw = _owners?.Claim(s.Key, s.Name, Owner(s), ReadNow) ?? ReadNow();
+            bool isDword = raw.TryGetDword(out int v);
+            return new SavedValue { Existed = isDword, Value = isDword ? v : 0 };
+        }
+
+        /// <summary>Возврат значения: по оригиналу из общего учёта (побайтно, с видом) или по своей записи.</summary>
+        private void Restore(TaskbarSetting s, SavedValue saved, RegistryRaw? original)
+        {
+            if (original != null)
+            {
+                (RegistryValueKind Kind, object Data)? value;
+                try { value = original.ToValue(); }
+                catch (Exception ex) when (ex is FormatException or ArgumentException or InvalidDataException or OverflowException)
+                {
+                    AppLogger.Write($"⚠️ Панель задач: оригинал «{s.Title}» в учёте владения не разобран — {ex.Message}");
+                    original = null;
+                    value = null;
+                }
+                if (original != null)
+                {
+                    if (value is { } v) _system.WriteRaw(s.Key, s.Name, v.Kind, v.Data);
+                    else _system.DeleteValue(s.Key, s.Name);
+                    return;
+                }
+            }
+            if (saved.Existed) _system.WriteDword(s.Key, s.Name, saved.Value);
+            else _system.DeleteValue(s.Key, s.Name);
         }
 
         private void Write(TaskbarSetting s, int value)
@@ -296,27 +378,12 @@ namespace Ven4Tools.Services
             else _system.WriteDword(s.Key, s.Name, value);
         }
 
-        private Dictionary<string, SavedValue> Load()
-        {
-            try
-            {
-                if (File.Exists(_undoPath))
-                    return JsonSerializer.Deserialize<Dictionary<string, SavedValue>>(File.ReadAllText(_undoPath)) ?? new();
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Write("⚠️ Панель задач: файл отката не прочитан — " + ex.Message);
-            }
-            return new();
-        }
+        /// <summary>Испорченный файл откладывается в .bad (см. <see cref="UndoFileGuard"/>).</summary>
+        private Dictionary<string, SavedValue> Load(out bool readable) =>
+            UndoFileGuard.Load<Dictionary<string, SavedValue>>(_undoPath, Section, out readable) ?? new();
 
-        private void Save(Dictionary<string, SavedValue> undo)
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(_undoPath)!);
-            var tmp = _undoPath + ".tmp";
-            File.WriteAllText(tmp, JsonSerializer.Serialize(undo, new JsonSerializerOptions { WriteIndented = true }));
-            File.Move(tmp, _undoPath, overwrite: true);
-        }
+        private void Save(Dictionary<string, SavedValue> undo) =>
+            Helpers.FileHelper.WriteAllTextAtomic(_undoPath, JsonSerializer.Serialize(undo, new JsonSerializerOptions { WriteIndented = true }));
     }
 
     public sealed class WindowsTaskbarSystem : ITaskbarSystem
@@ -367,6 +434,19 @@ namespace Ven4Tools.Services
         {
             using var k = Registry.CurrentUser.OpenSubKey(key, writable: true);
             k?.DeleteValue(name, throwOnMissingValue: false);
+        }
+
+        public (RegistryValueKind Kind, object Data)? ReadRaw(string key, string name)
+        {
+            using var k = Registry.CurrentUser.OpenSubKey(key);
+            var v = k?.GetValue(name, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
+            return v == null ? null : (k!.GetValueKind(name), v);
+        }
+
+        public void WriteRaw(string key, string name, RegistryValueKind kind, object data)
+        {
+            using var k = Registry.CurrentUser.CreateSubKey(key, writable: true);
+            k.SetValue(name, data, kind);
         }
 
         public bool AutoHide

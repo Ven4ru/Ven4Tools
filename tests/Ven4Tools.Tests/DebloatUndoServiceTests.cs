@@ -201,17 +201,27 @@ public sealed class DebloatUndoServiceTests : IDisposable
         Assert.True(_system.Has(PolicyPath, "AllowTelemetry"));
     }
 
+    /// <summary>
+    /// Испорченный файл откладывается в .bad, и пока его не разобрали, твик с откатом не
+    /// применяется: иначе «как было» снялось бы уже с правок Ven4Tools. Удалили .bad — снова можно.
+    /// </summary>
     [Fact]
-    public void ИспорченныйФайл_ОткладываетсяИНеМешаетНовымЗаписям()
+    public void ИспорченныйФайл_Откладывается_ИПрименениеОтказываетПокаЛежитBad()
     {
         Directory.CreateDirectory(_dir);
         File.WriteAllText(_path, "не json");
 
         _system.WriteDword(AdsPath, "Enabled", 1);
-        _undo.Capture("advertising_id", AdsTweak, service: null);
+        Assert.False(_undo.Capture("advertising_id", AdsTweak, service: null));
 
+        Assert.Empty(_undo.RecordedTweaks());
+        Assert.Equal("не json", File.ReadAllText(_path + ".bad"));
+        Assert.Equal(_path + ".bad", _undo.BrokenBackup);
+        Assert.Contains(".bad", _undo.BrokenMessage);
+
+        File.Delete(_path + ".bad");
+        Assert.True(_undo.Capture("advertising_id", AdsTweak, service: null));
         Assert.Equal(new[] { "advertising_id" }, _undo.RecordedTweaks());
-        Assert.True(File.Exists(_path + ".bad"));
     }
 
     [Fact]
