@@ -4,6 +4,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Ven4Tools.Linux.Models;
 using Ven4Tools.Linux.Services;
+using Ven4Tools.Linux.Views;
 using Ven4Tools.Services;
 
 namespace Ven4Tools.Linux;
@@ -23,24 +24,59 @@ public partial class MainWindow : Window
         ["dev"] = "Code editor, Git, Python, Node.js, Postman and a text editor.",
     };
 
-    private readonly string _allCategories = L.T("Все категории");
+    // Порядок категорий — как у кнопок-категорий клиента Windows; новые категории каталога встают в конец
+    private static readonly string[] CategoryOrder =
+    {
+        "Браузеры", "Офис", "Графика", "Разработка", "ИИ", "Мессенджеры", "Мультимедиа",
+        "Системные", "Система Linux", "Игровые сервисы", "Драйверпаки", "Компоненты", "Другое"
+    };
+
     private List<AppItem> _items = new();
     private LinuxPackageMap _map = new();
+    // Основной источник - каталог Linux; null - запасной путь через master.json + linux-packages.json
+    private LinuxCatalog? _linux;
+    private List<CatalogApp> _master = new();
+    // Названия программ каталога Windows - для строки «нет под Linux» в наборах
+    private Dictionary<string, string> _windowsNames = new();
     private string _catalogText = "";
-    private bool _busy;
+    // Выбранная категория: русское название из каталога, пустая строка — «Все»
+    private string _category = "";
+    private bool _chipsUpdating;
+    private readonly List<(Button Button, TabItem Tab)> _nav = new();
+
+    // Идёт установка, очистка или смена оформления: индикатор в шапке показывает это, как в клиенте Windows
+    private bool _busyFlag;
+    private bool Busy
+    {
+        get => _busyFlag;
+        set { _busyFlag = value; UpdateActivity(); }
+    }
 
     public MainWindow()
     {
         InitializeComponent();
         ApplyTexts();
         InitToolTabs();
+        BuildNav();
         // Шапка показывает название открытого раздела, как заголовок страницы в клиенте Windows
-        Tabs.SelectionChanged += (_, _) => TitleText.Text = (Tabs.SelectedItem as TabItem)?.Header as string ?? "";
+        Tabs.SelectionChanged += (_, _) =>
+        {
+            TitleText.Text = (Tabs.SelectedItem as TabItem)?.Header as string ?? "";
+            foreach (var (button, tab) in _nav) button.Classes.Set("active", ReferenceEquals(tab, Tabs.SelectedItem));
+            // «Работает» и свободное место — на момент открытия раздела, а не запуска программы
+            if (ReferenceEquals(Tabs.SelectedItem, SystemTab)) ShowSystemInfo();
+        };
         TitleText.Text = (Tabs.SelectedItem as TabItem)?.Header as string ?? "";
         SearchBox.TextChanged += (_, _) => ApplyFilter();
-        CategoryBox.SelectionChanged += (_, _) => ApplyFilter();
-        LinuxOnlyBox.IsCheckedChanged += (_, _) => ApplyFilter();
+        CategoryChips.SelectionChanged += (_, _) =>
+        {
+            if (_chipsUpdating || CategoryChips.SelectedItem is not CategoryChip chip) return;
+            _category = chip.Key;
+            ApplyFilter();
+        };
+        UnavailableBox.IsCheckedChanged += (_, _) => ApplyFilter();
         FavoritesOnlyBox.IsCheckedChanged += (_, _) => ApplyFilter();
+        ActivityToggle.IsCheckedChanged += (_, _) => UpdateActivityPanel();
         LanguageBox.SelectionChanged += OnLanguageChanged;
         Opened += async (_, _) => await LoadAsync();
     }
@@ -53,13 +89,28 @@ public partial class MainWindow : Window
         SetsTab.Header = L.T("Наборы");
         UpdatesTab.Header = L.T("Обновления");
         SettingsTab.Header = L.T("Настройки");
-        SearchBox.Watermark = L.T("Поиск программы");
-        LinuxOnlyBox.Content = L.T("Только доступные для Linux");
-        FavoritesOnlyBox.Content = L.T("Только избранное");
+        SearchBox.Watermark = L.T("Поиск: название или описание программы");
+        UnavailableBox.Content = L.T("Недоступные");
+        ToolTip.SetTip(UnavailableBox, L.T("Показать и программы, которые сейчас поставить нельзя"));
+        ToolTip.SetTip(FavoritesOnlyBox, L.T("Только избранное"));
+        ToolTip.SetTip(GearButton, L.T("Настройки"));
+        FlathubTitle.Text = L.T("Flathub не включён");
+        FlathubHint.Text = L.T("Большая часть программ ставится с Flathub. Система спросит пароль один раз.");
         FlatpakButton.Content = L.T("Включить Flathub");
+        SetPanelTitle.Text = L.T("Ваш набор");
+        SetPanelHint.Text = L.T("Добавьте программы из каталога — они установятся одна за другой без вопросов.");
+        SetPanelNote.Text = L.T("Flatpak ставит программы в ваш профиль без пароля. Для Snap система спросит пароль.");
         ClearSelectionButton.Content = L.T("Снять отметки");
+        PresetPanelTitle.Text = L.T("Наборы");
         PresetNameBox.Watermark = L.T("Название набора");
-        SavePresetButton.Content = L.T("Сохранить отмеченные как набор");
+        SavePresetButton.Content = L.T("Сохранить выбор");
+        OpenSetsButton.Content = L.T("Все наборы");
+        VersionText.Text = typeof(MainWindow).Assembly.GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "";
+        NetText.Text = L.T("Проверяю связь…");
+        GearIcon.Data = Icons.Gear;
+        FavoritesOnlyIcon.Data = Icons.StarFilled;
+        UpdateActivity();
+        UpdateActivityPanel();
         CheckUpdatesButton.Content = L.T("Проверить обновления");
         UpdateAllButton.Content = L.T("Обновить всё");
         UpdatesText.Text = L.T("Нажмите «Проверить обновления».");
@@ -69,10 +120,74 @@ public partial class MainWindow : Window
         ProfileHint.Text = L.T("Избранное и ваши наборы. Архив совместим с Ven4Tools для Windows.");
         ExportButton.Content = L.T("Экспорт профиля");
         ImportButton.Content = L.T("Импорт профиля");
-        LogLabel.Text = L.T("Журнал").ToUpperInvariant();
+        LogLabel.Text = L.T("Центр активности");
         LanguageBox.ItemsSource = new[] { "Русский", "English" };
         LanguageBox.SelectedIndex = L.IsEnglish ? 1 : 0;
         UpdateSelectionButton();
+    }
+
+    // ---------- Боковое меню, шапка, «Центр активности» ----------
+
+    private void BuildNav()
+    {
+        foreach (var (tab, icon) in new (TabItem, Avalonia.Media.Geometry)[]
+                 {
+                     (CatalogTab, Icons.Catalog), (SetsTab, Icons.Sets), (UpdatesTab, Icons.Updates),
+                     (LookTab, Icons.Look), (SystemTab, Icons.Computer), (AutostartTab, Icons.Autostart),
+                     (SettingsTab, Icons.Gear),
+                 })
+        {
+            // Настройки — под чертой, отдельно от разделов, как в клиенте Windows
+            if (ReferenceEquals(tab, SettingsTab))
+                NavPanel.Children.Add(new Border
+                {
+                    Height = 1, Margin = new Avalonia.Thickness(8, 10),
+                    Background = (Avalonia.Media.IBrush)this.FindResource("BorderBrush")!
+                });
+            var button = new Button
+            {
+                Classes = { "nav" },
+                Content = new StackPanel
+                {
+                    Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 12,
+                    Children =
+                    {
+                        new PathIcon { Data = icon, Width = 16, Height = 16 },
+                        new TextBlock { Text = tab.Header as string, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center }
+                    }
+                }
+            };
+            var target = tab;
+            button.Click += (_, _) => Tabs.SelectedItem = target;
+            button.Classes.Set("active", ReferenceEquals(tab, Tabs.SelectedItem));
+            NavPanel.Children.Add(button);
+            _nav.Add((button, tab));
+        }
+    }
+
+    private void OnOpenSettings(object? sender, RoutedEventArgs e) => Tabs.SelectedItem = SettingsTab;
+
+    private void OnOpenSets(object? sender, RoutedEventArgs e) => Tabs.SelectedItem = SetsTab;
+
+    private void UpdateActivity()
+    {
+        ActivityText.Text = Busy ? L.T("Идёт работа…") : L.T("Нет активных задач");
+        ActivityDot.Fill = (Avalonia.Media.IBrush)this.FindResource(Busy ? "AccentColor" : "TextSecondary")!;
+    }
+
+    private void UpdateActivityPanel()
+    {
+        var open = ActivityToggle.IsChecked == true;
+        LogBox.IsVisible = open;
+        ActivityChevron.Data = open ? Icons.ChevronDown : Icons.ChevronRight;
+    }
+
+    // Связь: каталог пришёл с сервера — интернет есть; из кэша или встроенный — нет
+    private void ShowNetwork(bool online)
+    {
+        NetText.Text = online ? L.T("Интернет доступен") : L.T("Нет связи с сервером");
+        NetText.Foreground = NetDot.Fill =
+            (Avalonia.Media.IBrush)this.FindResource(online ? "StatusSuccess" : "StatusWarning")!;
     }
 
     // ---------- Загрузка ----------
@@ -81,12 +196,28 @@ public partial class MainWindow : Window
     {
         try
         {
-            _map = CatalogLoader.LoadPackageMap();
-            var (catalog, source) = await CatalogLoader.LoadAsync(Log);
-            _catalogText = L.IsEnglish
-                ? $"Catalog v{catalog.Version} ({source}), apps: {catalog.Apps.Count}"
-                : $"Каталог v{catalog.Version} ({source}), программ: {catalog.Apps.Count}";
-            BuildItems(catalog.Apps);
+            _windowsNames = CatalogLoader.LoadWindowsNames();
+            string source;
+            if (await CatalogLoader.LoadLinuxAsync(Log) is { } linux)
+            {
+                _linux = linux.Catalog;
+                source = linux.Source;
+                _catalogText = L.IsEnglish
+                    ? $"Linux catalog v{_linux.Version} ({source}), apps: {_linux.Apps.Count}"
+                    : $"Каталог Linux v{_linux.Version} ({source}), программ: {_linux.Apps.Count}";
+            }
+            else
+            {
+                _map = CatalogLoader.LoadPackageMap();
+                var (catalog, masterSource) = await CatalogLoader.LoadAsync(Log);
+                _master = catalog.Apps;
+                source = masterSource;
+                _catalogText = L.IsEnglish
+                    ? $"Catalog v{catalog.Version} ({source}), apps: {catalog.Apps.Count}"
+                    : $"Каталог v{catalog.Version} ({source}), программ: {catalog.Apps.Count}";
+            }
+            ShowNetwork(CatalogLoader.ServerReachable);
+            BuildItems();
             await RefreshInstalledAsync();
             UpdateStatus();
         }
@@ -103,27 +234,55 @@ public partial class MainWindow : Window
         StatusLine.Text = L.IsEnglish
             ? $"{Distro.Name} · {_catalogText}, installable here: {ready}. Flatpak: {(Flatpak.IsAvailable ? "yes" : "no")}, Snap: {(Snap.IsAvailable ? "yes" : "no")}."
             : $"{Distro.Name} · {_catalogText}, можно поставить в этой системе: {ready}. Flatpak: {(Flatpak.IsAvailable ? "есть" : "нет")}, Snap: {(Snap.IsAvailable ? "есть" : "нет")}.";
-        FlatpakButton.IsVisible = !Flatpak.IsAvailable;
+        FlathubCard.IsVisible = !Flatpak.IsAvailable;
     }
 
-    private void BuildItems(List<CatalogApp> apps)
+    private void BuildItems()
     {
-        _items = apps.Select(a =>
-        {
-            _map.Apps.TryGetValue(a.Id, out var pkg);
-            return new AppItem
+        _items = _linux is not null
+            ? _linux.Apps.Select(FromLinux).ToList()
+            : _master.Select(a =>
             {
-                App = a, Package = pkg, Backend = PickBackend(pkg),
-                IsFavorite = UserData.Favorites.Contains(a.Id)
-            };
-        }).ToList();
+                _map.Apps.TryGetValue(a.Id, out var pkg);
+                return new AppItem { App = a, Package = pkg, Backend = PickBackend(pkg) };
+            }).ToList();
+        foreach (var i in _items) i.IsFavorite = IsFavorite(i);
 
-        var categories = _items.Select(i => i.Category).Where(c => c.Length > 0).Distinct().OrderBy(c => c, NameOrder).ToList();
-        categories.Insert(0, _allCategories);
-        CategoryBox.ItemsSource = categories;
-        CategoryBox.SelectedIndex = 0;
         ApplyFilter();
         BuildSets();
+    }
+
+    private static AppItem FromLinux(LinuxCatalogApp a)
+    {
+        var pkg = new LinuxPackage
+        {
+            Flatpak = a.Flatpak, FlatpakVerified = a.Official,
+            Snap = a.Snap, SnapPublisher = a.SnapPublisher, SnapClassic = a.SnapClassic
+        };
+        var unavailable = !string.Equals(a.Status, "ok", StringComparison.OrdinalIgnoreCase);
+        return new AppItem
+        {
+            App = new CatalogApp
+            {
+                Id = a.Id, Name = L.IsEnglish && a.NameEn is { Length: > 0 } en ? en : a.Name,
+                Category = a.Category, Description = a.Description, DescriptionEn = a.DescriptionEn
+            },
+            Package = pkg,
+            Backend = unavailable ? null : PickBackend(pkg),
+            Replaces = a.Replaces,
+            Unavailable = unavailable,
+            CheckedDate = a.Checked?.Date,
+            SnapOfficial = a.Snap is not null && a.Flatpak is null && a.Official,
+        };
+    }
+
+    // Избранное из клиента Windows хранит id каталога Windows: PeaZip отмечается, если отмечен 7-Zip
+    private static bool IsFavorite(AppItem i) => i.KnownIds.Any(UserData.Favorites.Contains);
+
+    private static int CategoryRank(string category)
+    {
+        var i = Array.IndexOf(CategoryOrder, category);
+        return i < 0 ? CategoryOrder.Length : i;
     }
 
     // Flatpak в приоритете: ставит без пароля и одинаково на любом дистрибутиве
@@ -155,18 +314,33 @@ public partial class MainWindow : Window
     private void ApplyFilter()
     {
         var q = SearchBox.Text?.Trim() ?? "";
-        var cat = CategoryBox.SelectedItem as string;
-        var linuxOnly = LinuxOnlyBox.IsChecked == true;
+        var showUnavailable = UnavailableBox.IsChecked == true;
         var favOnly = FavoritesOnlyBox.IsChecked == true;
 
-        AppList.ItemsSource = _items
-            .Where(i => !linuxOnly || i.Package is not null)
+        // Поиск и переключатели сужают каталог; категория выбирается уже среди найденного
+        var found = _items
+            .Where(i => showUnavailable || i.ShownByDefault)
             .Where(i => !favOnly || i.IsFavorite)
-            .Where(i => cat is null || cat == _allCategories || i.Category == cat)
             .Where(i => q.Length == 0
                         || i.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
                         || i.Description.Contains(q, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(i => i.Name, NameOrder)
+            .ToList();
+
+        // Кнопки-категории с числом программ, как у клиента Windows: «Все 58», «Браузеры 9»…
+        var byCategory = found.GroupBy(i => i.App.Category)
+            .OrderBy(g => CategoryRank(g.Key)).ThenBy(g => g.Key, NameOrder).ToList();
+        if (_category.Length > 0 && byCategory.All(g => g.Key != _category)) _category = "";
+        var chips = new List<CategoryChip> { new() { Key = "", Label = L.T("Все"), Count = found.Count } };
+        chips.AddRange(byCategory.Select(g => new CategoryChip { Key = g.Key, Label = L.T(g.Key), Count = g.Count() }));
+        _chipsUpdating = true;
+        CategoryChips.ItemsSource = chips;
+        CategoryChips.SelectedItem = chips.First(c => c.Key == _category);
+        _chipsUpdating = false;
+
+        // Карточки — группами по категориям, внутри группы по имени
+        GroupList.ItemsSource = byCategory
+            .Where(g => _category.Length == 0 || g.Key == _category)
+            .Select(g => new CatalogGroup { Header = L.T(g.Key), Items = g.OrderBy(i => i.Name, NameOrder).ToList() })
             .ToList();
     }
 
@@ -175,8 +349,10 @@ public partial class MainWindow : Window
     private void UpdateSelectionButton()
     {
         var n = _items.Count(i => i.IsSelected);
-        InstallSelectedButton.Content = L.T("Установить отмеченные") + (n > 0 ? $" ({n})" : "");
-        InstallSelectedButton.IsEnabled = n > 0 && !_busy;
+        InstallSelectedButton.Content = L.T("Установить") + $" ({n})";
+        InstallSelectedButton.IsEnabled = n > 0 && !Busy;
+        ClearSelectionButton.IsEnabled = n > 0;
+        SelCountText.Text = L.T("Выбрано: ") + n;
         SavePresetButton.IsEnabled = n > 0;
     }
 
@@ -190,7 +366,8 @@ public partial class MainWindow : Window
     {
         if ((sender as Button)?.DataContext is not AppItem item) return;
         item.IsFavorite = !item.IsFavorite;
-        if (item.IsFavorite) UserData.Favorites.Add(item.Id); else UserData.Favorites.Remove(item.Id);
+        if (item.IsFavorite) UserData.Favorites.Add(item.Id);
+        else foreach (var id in item.KnownIds) UserData.Favorites.Remove(id);
         UserData.SaveFavorites();
         if (FavoritesOnlyBox.IsChecked == true) ApplyFilter();
     }
@@ -211,8 +388,8 @@ public partial class MainWindow : Window
 
     private async Task RunQueueAsync(IReadOnlyCollection<AppItem> queue, bool remove)
     {
-        if (queue.Count == 0 || _busy) return;
-        _busy = true;
+        if (queue.Count == 0 || Busy) return;
+        Busy = true;
         foreach (var i in queue) i.IsBusy = true;
         UpdateSelectionButton();
         var names = string.Join(", ", queue.Select(i => i.Name));
@@ -233,7 +410,7 @@ public partial class MainWindow : Window
             try { await RefreshInstalledAsync(); }
             catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
             foreach (var i in queue) i.IsBusy = false;
-            _busy = false;
+            Busy = false;
             UpdateSelectionButton();
         }
     }
@@ -251,7 +428,7 @@ public partial class MainWindow : Window
             if (ok)
             {
                 // Источник у строк сменился - пересобираем список целиком
-                BuildItems(_items.Select(i => i.App).ToList());
+                BuildItems();
                 await RefreshInstalledAsync();
                 UpdateStatus();
             }
@@ -264,7 +441,12 @@ public partial class MainWindow : Window
 
     private void BuildSets()
     {
-        var byId = _items.ToDictionary(i => i.Id);
+        // Наборы клиента Windows и профили из него хранят id каталога Windows; замены (PeaZip вместо 7-Zip)
+        // находятся по полю replaces каталога Linux
+        var byId = new Dictionary<string, AppItem>(StringComparer.OrdinalIgnoreCase);
+        foreach (var i in _items) byId.TryAdd(i.Id, i);
+        foreach (var i in _items)
+            foreach (var r in i.Replaces) byId.TryAdd(r.Id, i);
         SetCard Card(string title, string description, IEnumerable<string> ids, UserPreset? preset)
         {
             var list = ids.Distinct().ToList();
@@ -275,9 +457,9 @@ public partial class MainWindow : Window
                 // Аналоги (Epic и GOG -> Heroic) ставятся одним пакетом, дубли убираются
                 Available = list.Where(id => byId.TryGetValue(id, out var i) && i.HasLinuxPackage)
                     .Select(id => byId[id]).DistinctBy(i => i.PackageId).ToList(),
-                Missing = list.Where(id => !byId.TryGetValue(id, out var i) || i.Package?.Flatpak is null && !i.HasLinuxPackage)
-                    .Select(id => byId.TryGetValue(id, out var i) ? i.Name : id).ToList(),
-                FlathubOnly = list.Where(id => byId.TryGetValue(id, out var i) && !i.HasLinuxPackage && i.Package?.Flatpak is not null)
+                Missing = list.Where(id => !byId.TryGetValue(id, out var i) || i.Unavailable || i.Package?.Flatpak is null && !i.HasLinuxPackage)
+                    .Select(id => byId.TryGetValue(id, out var i) ? i.Name : _windowsNames.GetValueOrDefault(id, id)).ToList(),
+                FlathubOnly = list.Where(id => byId.TryGetValue(id, out var i) && !i.Unavailable && !i.HasLinuxPackage && i.Package?.Flatpak is not null)
                     .Select(id => byId[id].LinuxName).ToList(),
                 UserPreset = preset
             };
@@ -358,8 +540,8 @@ public partial class MainWindow : Window
     private async void OnUpdateAll(object? sender, RoutedEventArgs e)
     {
         // Обновление и установка из каталога внахлёст дерутся за блокировку flatpak/snap.
-        if (_busy) return;
-        _busy = true;
+        if (Busy) return;
+        Busy = true;
         UpdateAllButton.IsEnabled = false;
         UpdateSelectionButton();
         Log(L.IsEnglish ? "--- Updating" : "--- Обновление");
@@ -373,7 +555,7 @@ public partial class MainWindow : Window
         catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
         finally
         {
-            _busy = false;
+            Busy = false;
             UpdateSelectionButton();
         }
         OnCheckUpdates(sender, e);
@@ -417,7 +599,7 @@ public partial class MainWindow : Window
         try
         {
             var (favs, presets) = UserData.ImportProfile(path);
-            foreach (var i in _items) i.IsFavorite = UserData.Favorites.Contains(i.Id);
+            foreach (var i in _items) i.IsFavorite = IsFavorite(i);
             BuildSets();
             ApplyFilter();
             Log(L.IsEnglish
@@ -427,10 +609,23 @@ public partial class MainWindow : Window
         catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
     }
 
-    private void Log(string line) =>
+    // Служебный вывод flatpak при установке («lseek error in child setup», склеивается без переводов строк);
+    // на результат не влияет и только забивает журнал
+    private const string FlatpakNoise = "lseek error in child setup";
+
+    private void Log(string line)
+    {
+        if (line.Contains(FlatpakNoise, StringComparison.Ordinal))
+        {
+            line = line.Replace(FlatpakNoise, "", StringComparison.Ordinal);
+            if (line.Trim().Trim('\r', '\n').Length == 0) return;
+        }
         Dispatcher.UIThread.Post(() =>
         {
             LogBox.Text += line + Environment.NewLine;
             LogBox.CaretIndex = LogBox.Text.Length;
+            // Свёрнутый «Центр активности» показывает последнюю строку
+            if (line.Trim().Length > 0) LastLogText.Text = line.Trim();
         });
+    }
 }

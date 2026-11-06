@@ -8,7 +8,7 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <RootNamespace>Ven4Tools.Linux</RootNamespace>
     <AssemblyName>ven4tools</AssemblyName>
-    <Version>0.1.0</Version>
+    <Version>7.1.0</Version>
     <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
@@ -27,6 +27,9 @@
     <!-- Встроенный каталог - запасной вариант, если сеть недоступна (подпись проверяется так же) -->
     <EmbeddedResource Include="..\..\Catalog\master.json" LogicalName="master.json" />
     <EmbeddedResource Include="..\..\Catalog\master.json.sig" LogicalName="master.json.sig" />
+    <!-- Каталог Linux - основной; linux-packages.json - запасное соответствие пакетов для master.json -->
+    <EmbeddedResource Include="..\..\Catalog\linux-catalog.json" LogicalName="linux-catalog.json" />
+    <EmbeddedResource Include="..\..\Catalog\linux-catalog.json.sig" LogicalName="linux-catalog.json.sig" />
     <EmbeddedResource Include="linux-packages.json" LogicalName="linux-packages.json" />
     <!-- «Персонализация»: те же обои и экран блокировки, что в клиенте Windows -->
     <EmbeddedResource Include="..\..\Ven4Tools\Personalization\Venchik\wallpaper.jpg" LogicalName="venchik/wallpaper.jpg" />
