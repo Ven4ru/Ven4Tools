@@ -204,7 +204,27 @@ namespace Ven4Tools.ClientUITests
             string? staleTitle = OpenCards(s).FirstOrDefault()?.Title;
             if (staleTitle != null) CloseCard(s);
 
+            string rowId = chk.Properties.AutomationId.ValueOrDefault ?? "";
+            // Мышиный клик попадает в то окно, что сверху в этой точке экрана. На
+            // свежей Win10 после входа Проводник сам открывает «Быстрый доступ» поверх
+            // клиента — клик уходил в Проводник (06.11, Win10 22H2). Поднимаем клиент.
+            s.MainWindow.SetForeground();
             name!.Click(); // реальный мышиный клик → MouseBinding LeftClick → OpenCardCommand
+            var card = FindCardWindow(s, T, staleTitle);
+            if (card != null || rowId.Length == 0) return card;
+
+            // Первый класс набора на свежей Windows попадает на перестройку списка после
+            // первой проверки доступности: клик приходится по контейнеру, который в этот
+            // момент пересоздаётся, и пропадает. Один повтор по той же строке, найденной
+            // заново по её AutomationId, — не подмена приложения (06.11, Win10 22H2).
+            var again = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.CheckBox))
+                .FirstOrDefault(c => (c.Properties.AutomationId.ValueOrDefault ?? "") == rowId);
+            var againName = again == null ? null
+                : (reresolveFragment != null ? NameTextByAppTitle(s, expectedTitleFragment ?? reresolveFragment) : null)
+                  ?? NameTextForCheckBox(again);
+            if (againName == null) return null;
+            s.MainWindow.SetForeground();
+            againName.Click();
             return FindCardWindow(s, T, staleTitle);
         }
 

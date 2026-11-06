@@ -121,13 +121,16 @@ namespace Ven4Tools.ClientUITests
             search!.Click();
             search.AsTextBox().Enter(query);
 
+            // Сам клиент ждёт ответа winget до WingetService.UiCallTimeout (60 с): сразу после
+            // запуска winget занят проверкой версий всего каталога, и поиск отвечает за
+            // 20–40 с. С прежними 20 секундами тест на чистой ВМ всегда уходил в Inconclusive.
             var wingetLabel = Retry.WhileNull(
                 () => s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.Text).And(cf.ByName("📦 Winget")))
                                    .FirstOrDefault(),
-                timeout: TimeSpan.FromSeconds(20), interval: TimeSpan.FromMilliseconds(500), throwOnTimeout: false).Result;
+                timeout: TimeSpan.FromSeconds(65), interval: TimeSpan.FromMilliseconds(500), throwOnTimeout: false).Result;
             if (wingetLabel == null)
             {
-                Assert.Inconclusive("Раздел «📦 Winget» не появился за 20с (сеть/winget недоступны в моменте).");
+                Assert.Inconclusive("Раздел «📦 Winget» не появился за 65 с (сеть/winget недоступны в моменте).");
                 return;
             }
 

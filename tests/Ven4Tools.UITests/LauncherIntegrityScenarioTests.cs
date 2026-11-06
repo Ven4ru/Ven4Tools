@@ -4,6 +4,10 @@ using FlaUI.Core.Definitions;
 using FlaUI.Core.Tools;
 using FlaUI.UIA3;
 using System.Diagnostics;
+using System.IO.Compression;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text.Json;
 using System.Linq;
 using Xunit;
 
@@ -90,50 +94,54 @@ public sealed class LauncherIntegrityScenarioTests : IDisposable
             .Invoke();
     }
 
-    // --- Паттерны А и Б: подтверждены живым прогоном 02.09.2026, в наборе — заглушки ---
+    // --- Паттерны А и Б: живая публикация клиента с CDN ---
     //
-    // Оба сценария требуют, чтобы лаунчер получил ПОДПИСАННЫЙ файловый манифест
-    // синтетической публикации, которую создал тест. Чистого способа это сделать нет,
-    // и обходить защиту ради теста нельзя — вот что мешает:
+    // Синтетическую публикацию для этих сценариев подписать нечем: приватный ключ
+    // манифеста вне репозитория, а локальный сервер лаунчер не примет (только https и
+    // доверенные хосты). Ослаблять ни подпись, ни список хостов ради теста нельзя.
     //
-    // 1. Подпись. ClientManifestVerifier несёт зашитый публичный ключ, приватная
-    //    половина — вне репозитория (Tools/deploy-client-manifest.ps1). Подписать
-    //    манифест тестовой публикации нечем, а подсунуть тесту приватный ключ автора
-    //    значило бы связать набор тестов с ключом продакшена.
-    // 2. Хост. ClientManifestFetcher отказывает ещё раньше подписи: манифест и файлы
-    //    качаются только с https и только с доверенных хостов (DownloadValidator).
-    //    Локальный HttpListener отбраковывается по обоим признакам сразу.
-    //
-    // Обойти это можно было бы только тестовым «окном» в самом лаунчере — переменной
-    // окружения, подменяющей ключ или адрес манифеста. Такое окно уехало бы к
-    // пользователям в том же самом exe и дало бы любому, кто может выставить
-    // переменную окружения, право положить произвольные файлы внутрь папки клиента.
-    // Существующий VEN4TOOLS_UI_TEST такой ценой не обходится: он только ОТКЛЮЧАЕТ
-    // действия, а не включает опасные.
-    //
-    // Что покрыто вместо этого: решение «починимо / переустанавливать целиком»
-    // проверяется на уровне юнитов на настоящем ClientDeltaPlanner
-    // (ClientIntegrityCheckerTests.Check_DamagedFile_ReportsRepairable,
-    // Check_TooManyDifferences_RecommendsFullReinstall,
-    // Repair_AppliesPlanWhenFindingsAreRepairable, Repair_FullReinstallCase_DoesNothingItself).
-    // Непокрытым остаётся именно живой стык: UI-текст и видимость кнопки «Исправить».
-    //
-    // Чтобы снять Skip, нужен способ отдать лаунчеру подписанный манифест тестовой
-    // публикации, не ослабляя ни проверку подписи, ни список доверенных хостов в
-    // поставляемом пользователям exe.
+    // Поэтому эталон здесь настоящий: текущая опубликованная сборка клиента. Тест
+    // скачивает её архив с CDN (сверяя SHA256 из version.json), раскладывает в
+    // песочницу так же, как это делает установка, портит часть файлов и нажимает
+    // «Проверить». Лаунчер сам берёт подписанный файловый манифест этой версии с CDN —
+    // ровно тем путём, каким это происходит у пользователя. Нужна сеть.
 
     /// <summary>
-    /// Паттерн А: испорчено 45% файлов публикации (порог
-    /// ClientDeltaPlanner.MinimumUnchangedShare пройден). Проверка обязана показать
+    /// Паттерн А: испорчено около 40% файлов публикации (порог
+    /// ClientDeltaPlanner.MinimumUnchangedShare = 0,5 пройден: целыми остаются ~60%). Проверка обязана показать
     /// «Найдены расхождения с опубликованной версией» и предложить «Исправить», а
     /// починка — докачать недостающее и закончиться статусом «✅ Исправлено —
-    /// целостность клиента подтверждена». Живьём пройдено 02.09.2026 на установленном
-    /// клиенте 5.0.0 (210 из 467 файлов испорчено, после починки все 467 совпали по SHA256).
+    /// целостность клиента подтверждена».
     /// </summary>
-    [Fact(Skip = "Нужен подписанный манифест синтетической публикации; чистого пути нет — см. комментарий выше.")]
+    [Fact]
     public void RepairableDamage_IsFixedInPlace()
     {
-        Assert.Fail("Заглушка: фикстура подписанного манифеста тестовой публикации недоступна.");
+        var damaged = InstallPublishedClient(damageShare: 0.40);
+
+        Window window = StartLauncher();
+        Window settings = OpenSettings(window);
+
+        string status = RunIntegrityCheck(settings);
+        Assert.Equal("Найдены расхождения с опубликованной версией", status);
+        Assert.True(RepairButtonIsOffered(settings), "Кнопка «Исправить» не предложена для починимых расхождений.");
+
+        settings.FindFirstDescendant(condition => condition.ByAutomationId("btnRepairIntegrity"))!
+            .AsButton()
+            .Invoke();
+        string final = WaitForFinalStatus(settings, RepairTimeout, "Восстановление", InProgressStatus);
+
+        Assert.False(_application!.HasExited, "Починка завершила лаунчер.");
+        Assert.Equal("✅ Исправлено — целостность клиента подтверждена", final);
+        foreach (var (relative, original) in damaged)
+        {
+            string path = Path.Combine(ClientPath, relative);
+            Assert.True(File.Exists(path), $"После починки нет файла {relative}.");
+            Assert.True(File.ReadAllBytes(path).AsSpan().SequenceEqual(original), $"После починки файл {relative} не совпал с опубликованным.");
+        }
+
+        settings.FindFirstDescendant(condition => condition.ByAutomationId("btnCloseSettings"))!
+            .AsButton()
+            .Invoke();
     }
 
     /// <summary>
@@ -141,13 +149,30 @@ public sealed class LauncherIntegrityScenarioTests : IDisposable
     /// невыгодна, и лаунчер обязан НЕ предлагать её вовсе: статус «Слишком много
     /// расхождений с опубликованной версией — переустановите клиент полностью через
     /// обычное обновление», деталь с долей совпавших файлов, кнопка «Исправить»
-    /// скрыта (Visibility.Collapsed, а не просто недоступна). Живьём пройдено
-    /// 02.09.2026: 443 из 467 файлов испорчено, «совпало лишь 24 из 467 файлов (5%)».
+    /// скрыта (Visibility.Collapsed, а не просто недоступна).
     /// </summary>
-    [Fact(Skip = "Нужен подписанный манифест синтетической публикации; чистого пути нет — см. комментарий выше.")]
+    [Fact]
     public void UnrepairableDamage_OffersFullReinstallOnly()
     {
-        Assert.Fail("Заглушка: фикстура подписанного манифеста тестовой публикации недоступна.");
+        InstallPublishedClient(damageShare: 0.95);
+
+        Window window = StartLauncher();
+        Window settings = OpenSettings(window);
+
+        string status = RunIntegrityCheck(settings);
+
+        Assert.False(_application!.HasExited, "Проверка сильно повреждённого клиента завершила лаунчер.");
+        Assert.Equal(
+            "Слишком много расхождений с опубликованной версией — переустановите клиент полностью через обычное обновление",
+            status);
+        Assert.Contains("совпало", DetailText(settings), StringComparison.OrdinalIgnoreCase);
+        Assert.False(
+            RepairButtonIsOffered(settings),
+            "Кнопка «Исправить» предложена, хотя пофайловая починка невыгодна.");
+
+        settings.FindFirstDescendant(condition => condition.ByAutomationId("btnCloseSettings"))!
+            .AsButton()
+            .Invoke();
     }
 
     public void Dispose()
@@ -300,6 +325,136 @@ public sealed class LauncherIntegrityScenarioTests : IDisposable
         AutomationElement? repair = settings.FindFirstDescendant(
             condition => condition.ByAutomationId("btnRepairIntegrity"));
         return repair is not null && !repair.IsOffscreen;
+    }
+
+    // Починка докачивает испорченные файлы с CDN и перепроверяет всю папку.
+    private static readonly TimeSpan RepairTimeout = TimeSpan.FromMinutes(10);
+
+    private const string VersionManifestUrl = "https://cdn.ven4tools.ru/version.json";
+
+    private static readonly object PublishedArchiveLock = new();
+    private static string? _publishedArchive;
+
+    /// <summary>
+    /// Раскладывает текущую опубликованную сборку клиента в папку клиента песочницы и
+    /// портит указанную долю файлов (исполняемый файл не трогается): каждый четвёртый
+    /// из выбранных удаляется, остальные переписываются. Возвращает исходное
+    /// содержимое испорченных файлов — после починки оно обязано вернуться.
+    /// </summary>
+    private List<(string Relative, byte[] Original)> InstallPublishedClient(double damageShare)
+    {
+        string archive = PublishedClientArchive();
+        Directory.CreateDirectory(ClientPath);
+        using (ZipArchive zip = ZipFile.OpenRead(archive))
+        {
+            foreach (ZipArchiveEntry entry in zip.Entries)
+            {
+                // Запись подписи установка не распаковывает (SafeZipExtractor), и
+                // проверка её не считает (ClientManifestBuilder) — песочница как у пользователя.
+                if (entry.Name.Length == 0 || entry.FullName == "_ven4tools_signature.json")
+                {
+                    continue;
+                }
+                string target = Path.GetFullPath(Path.Combine(ClientPath, entry.FullName));
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                entry.ExtractToFile(target, overwrite: true);
+            }
+        }
+
+        string[] files = Directory.GetFiles(ClientPath, "*", SearchOption.AllDirectories)
+            .Select(path => Path.GetRelativePath(ClientPath, path))
+            .Where(relative => !string.Equals(relative, "Ven4Tools.exe", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(relative => relative, StringComparer.Ordinal)
+            .ToArray();
+        int toDamage = (int)Math.Ceiling(files.Length * damageShare);
+        var damaged = new List<(string, byte[])>();
+        // Равномерно по списку, а не первые N: порча не должна собраться в одной папке.
+        for (int index = 0; index < toDamage; index++)
+        {
+            string relative = files[(int)((long)index * files.Length / toDamage)];
+            string path = Path.Combine(ClientPath, relative);
+            byte[] original = File.ReadAllBytes(path);
+            damaged.Add((relative, original));
+            if (index % 4 == 0)
+            {
+                File.Delete(path);
+            }
+            else
+            {
+                File.WriteAllText(path, $"испорчено тестом целостности, файл №{index}");
+            }
+        }
+        return damaged;
+    }
+
+    /// <summary>
+    /// Архив текущей опубликованной версии клиента, один на весь прогон: скачивается
+    /// с CDN и сверяется с zip_sha256 из version.json. Без сети тест падает с понятной
+    /// причиной — проверять живой стык с эталоном не на чем.
+    /// </summary>
+    private static string PublishedClientArchive()
+    {
+        lock (PublishedArchiveLock)
+        {
+            if (_publishedArchive is not null && File.Exists(_publishedArchive))
+            {
+                return _publishedArchive;
+            }
+
+            using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+            using JsonDocument manifest = JsonDocument.Parse(http.GetStringAsync(VersionManifestUrl).GetAwaiter().GetResult());
+            JsonElement client = manifest.RootElement.GetProperty("client");
+            string version = client.GetProperty("version").GetString()!;
+            string zipUrl = client.GetProperty("zip_url").GetString()!;
+            string expectedSha = client.GetProperty("zip_sha256").GetString()!;
+
+            string cacheDir = Path.Combine(Path.GetTempPath(), "Ven4Tools.UI.PublishedClient");
+            Directory.CreateDirectory(cacheDir);
+            string path = Path.Combine(cacheDir, $"Ven4Tools-Client-{version}.zip");
+            if (!File.Exists(path) || !Sha256Matches(path, expectedSha))
+            {
+                string partial = path + ".part";
+                using (Stream source = http.GetStreamAsync(zipUrl).GetAwaiter().GetResult())
+                using (FileStream target = File.Create(partial))
+                {
+                    source.CopyTo(target);
+                }
+                File.Move(partial, path, overwrite: true);
+            }
+            Assert.True(Sha256Matches(path, expectedSha), $"Скачанный архив клиента {version} не совпал по SHA256 с version.json.");
+            _publishedArchive = path;
+            return path;
+        }
+    }
+
+    private static bool Sha256Matches(string path, string expected)
+    {
+        using FileStream stream = File.OpenRead(path);
+        return string.Equals(Convert.ToHexString(SHA256.HashData(stream)), expected, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Ждёт итогового статуса после действия, проходящего через промежуточные
+    /// («Восстановление...», затем повторная «Проверка...»).
+    /// </summary>
+    private static string WaitForFinalStatus(Window settings, TimeSpan timeout, params string[] inProgressPrefixes)
+    {
+        DateTime deadline = DateTime.UtcNow + timeout;
+        string status = "";
+        // Обработчик меняет текст не мгновенно — без паузы прочитали бы прежний вердикт.
+        Thread.Sleep(1000);
+        while (DateTime.UtcNow < deadline)
+        {
+            status = StatusText(settings);
+            if (status.Length > 0 && !inProgressPrefixes.Any(prefix => status.StartsWith(prefix, StringComparison.Ordinal)))
+            {
+                return status;
+            }
+            Thread.Sleep(500);
+        }
+
+        throw new InvalidOperationException(
+            $"Действие не завершилось за {timeout.TotalMinutes:F0} мин (последний статус: «{status}»).");
     }
 }
 
