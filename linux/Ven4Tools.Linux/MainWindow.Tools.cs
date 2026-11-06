@@ -16,10 +16,16 @@ public partial class MainWindow
         LookTab.Header = L.T("Персонализация");
         SystemTab.Header = L.T("Система");
         AutostartTab.Header = L.T("Автозагрузка");
+        LookHeading.Text = L.T("Персонализация");
         LookIntro.Text = L.T("Оформление рабочего стола под Венчика. Всё возвращается как было одной кнопкой.");
+        LookApplyAll.Content = L.T("Применить всё");
+        LookRevertAll.Content = L.T("Вернуть всё как было");
         WallpaperTitle.Text = L.T("Обои");
+        WallpaperHint.Text = L.T("Венчик ночью в компьютерном классе. Левая половина тёмная — значки на рабочем столе хорошо видны.");
         LockTitle.Text = L.T("Экран блокировки");
+        LockHint.Text = L.T("Спящий Венчик на экране блокировки.");
         CursorsTitle.Text = L.T("Курсоры-лапы");
+        CursorsHint.Text = L.T("Указатель — стрелка в полоску, как шерсть Венчика, на ссылках — лапка с подушечками.");
         SoundsTitle.Text = L.T("Звуки Венчика");
         SoundsHint.Text = L.T("Сведения, предупреждение, ошибка, уведомление, подключение и отключение устройства. Нажмите, чтобы послушать.");
         WallpaperApply.Content = LockApply.Content = CursorsApply.Content = SoundsApply.Content = L.T("Применить");
@@ -82,12 +88,14 @@ public partial class MainWindow
         {
             var supported = Personalization.IsSupported(part);
             var applied = Personalization.HasUndo(part);
-            apply.IsEnabled = supported && !_busy;
-            revert.IsEnabled = applied && !_busy;
+            apply.IsEnabled = supported && !Busy;
+            revert.IsEnabled = applied && !Busy;
             state.Text = !supported ? L.T("Этот рабочий стол пока не поддерживается.")
                 : applied ? L.T("Применено. Прежнее оформление сохранено.")
                 : L.T("Сейчас стоит ваше оформление.");
         }
+        LookApplyAll.IsEnabled = !Busy && LookParts.Any(p => Personalization.IsSupported(p) && !Personalization.HasUndo(p));
+        LookRevertAll.IsEnabled = !Busy && LookParts.Any(Personalization.HasUndo);
         // Экран блокировки в Linux показывает обои рабочего стола (см. Personalization.IsSupported)
         LockState.Text = L.T("Здесь экран блокировки показывает обои рабочего стола: поставьте обои с Венчиком.");
         // На X11 (Cinnamon, MATE) курсор панели и рабочего стола меняется только с новым сеансом
@@ -97,14 +105,43 @@ public partial class MainWindow
                 : "В уже открытых программах курсор сменится после их перезапуска.");
     }
 
+    private static readonly LookPart[] LookParts = { LookPart.Cursors, LookPart.Wallpaper, LookPart.LockScreen, LookPart.Sounds };
+
+    // «Применить всё»: только то, что этот рабочий стол поддерживает и что ещё не применено
+    private async void OnLookApplyAll(object? sender, RoutedEventArgs e) =>
+        await RunLookAllAsync(LookParts.Where(p => Personalization.IsSupported(p) && !Personalization.HasUndo(p)), revert: false);
+
+    private async void OnLookRevertAll(object? sender, RoutedEventArgs e) =>
+        await RunLookAllAsync(LookParts.Where(Personalization.HasUndo), revert: true);
+
+    private async Task RunLookAllAsync(IEnumerable<LookPart> parts, bool revert)
+    {
+        if (Busy) return;
+        Busy = true;
+        UpdateLookState();
+        var ok = true;
+        try
+        {
+            foreach (var part in parts.ToList())
+                ok &= revert ? await Personalization.RevertAsync(part, Log) : await Personalization.ApplyAsync(part, Log);
+            Log(L.T(ok ? "Готово." : "Не получилось, подробности выше."));
+        }
+        catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
+        finally
+        {
+            Busy = false;
+            UpdateLookState();
+        }
+    }
+
     private async void OnLookApply(object? sender, RoutedEventArgs e) => await RunLookAsync(sender, revert: false);
 
     private async void OnLookRevert(object? sender, RoutedEventArgs e) => await RunLookAsync(sender, revert: true);
 
     private async Task RunLookAsync(object? sender, bool revert)
     {
-        if (_busy || sender is not Button { Tag: string tag } || !Enum.TryParse<LookPart>(tag, out var part)) return;
-        _busy = true;
+        if (Busy || sender is not Button { Tag: string tag } || !Enum.TryParse<LookPart>(tag, out var part)) return;
+        Busy = true;
         try
         {
             var ok = revert ? await Personalization.RevertAsync(part, Log) : await Personalization.ApplyAsync(part, Log);
@@ -113,7 +150,7 @@ public partial class MainWindow
         catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
         finally
         {
-            _busy = false;
+            Busy = false;
             UpdateLookState();
         }
     }
@@ -155,8 +192,8 @@ public partial class MainWindow
     private async void OnCleanupRun(object? sender, RoutedEventArgs e)
     {
         var selected = _cleanup.Where(i => i.IsSelected).ToList();
-        if (_busy || selected.Count == 0) return;
-        _busy = true;
+        if (Busy || selected.Count == 0) return;
+        Busy = true;
         CleanupRunButton.IsEnabled = false;
         try
         {
@@ -164,7 +201,7 @@ public partial class MainWindow
             Log(L.T(ok ? "Готово." : "Не получилось, подробности выше."));
         }
         catch (Exception ex) { Log(L.T("Ошибка: ") + ex.Message); }
-        finally { _busy = false; }
+        finally { Busy = false; }
         ShowSystemInfo();
         OnCleanupScan(sender, e);
     }

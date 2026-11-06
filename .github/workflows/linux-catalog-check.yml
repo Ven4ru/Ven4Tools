@@ -1,0 +1,72 @@
+name: Проверка каталога Linux
+
+# Честная проверка Catalog/linux-catalog.json: каждая Flatpak-программа ставится
+# на чистой Ubuntu (flatpak install --user), проверяется flatpak info и удаляется;
+# Snap-программы сверяются с магазином Snap. Итог — обновлённый каталог
+# (status/checked) и отчёт, оба — артефактом.
+#
+# Каталог этот workflow НЕ правит и не подписывает: приватного ключа подписи у CI
+# нет, а linux-catalog.json без валидной .sig программа отвергает. Обновлённый
+# каталог владелец просматривает, подписывает Tools/CatalogSigner и коммитит сам.
+
+on:
+  schedule:
+    # Каждый день, 02:43 UTC (05:43 МСК).
+    - cron: '43 2 * * *'
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Только эти id через запятую (пусто — все)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-catalog-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Установка каждой программы на чистой системе
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Flatpak и Flathub
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q flatpak
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: Освобождение места на раннере
+        # Большие программы (Steam, LibreOffice, Blender) со средами занимают гигабайты
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Проверка
+        env:
+          ONLY: ${{ github.event.inputs.only }}
+        run: |
+          python3 Tools/LinuxCatalog/linux_catalog_check.py \
+            --catalog Catalog/linux-catalog.json \
+            --out "$RUNNER_TEMP/linux-catalog.json" \
+            --report "$RUNNER_TEMP/linux-catalog-report.md" \
+            --only "$ONLY"
+          cat "$RUNNER_TEMP/linux-catalog-report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Отчёт и обновлённый каталог
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-catalog-check
+          path: |
+            ${{ runner.temp }}/linux-catalog.json
+            ${{ runner.temp }}/linux-catalog-report.md
+          retention-days: 30

@@ -17,6 +17,10 @@
 Catalog/master.json -text
 Catalog/master.json.sig -text
 
+# Подписанный каталог Linux-версии: та же схема, что у master.json.
+Catalog/linux-catalog.json -text
+Catalog/linux-catalog.json.sig -text
+
 # Подписанные уведомления лаунчера: та же схема, что и у каталога выше.
 # notifications.json раздаётся лаунчеру напрямую с raw.githubusercontent.com,
 # то есть проверяются ровно те байты, что лежат в git-объекте (LF). Без -text

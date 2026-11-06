@@ -20,6 +20,7 @@
     <SolidColorBrush x:Key="StatusSuccess" Color="#4ADE80" />
     <SolidColorBrush x:Key="StatusWarning" Color="#FBBF24" />
     <SolidColorBrush x:Key="StatusDanger" Color="#F87171" />
+    <SolidColorBrush x:Key="StatusInfo" Color="#38BDF8" />
   </Application.Resources>
 
   <Application.Styles>
@@ -47,9 +48,193 @@
       <Setter Property="Background" Value="#26C6DA" />
       <Setter Property="Foreground" Value="{StaticResource AccentForeground}" />
     </Style>
-    <Style Selector="Button">
-      <Setter Property="CornerRadius" Value="5" />
+    <!-- Обычная кнопка, как у клиента Windows: тёмная подложка, тонкая рамка, полужирный текст;
+         при наведении рамка становится акцентной -->
+    <Style Selector="Button, ToggleButton">
+      <Setter Property="CornerRadius" Value="7" />
       <Setter Property="Padding" Value="14,7" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Background" Value="{StaticResource RaisedBackground}" />
+      <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+    </Style>
+    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#1A2330" />
+      <Setter Property="BorderBrush" Value="{StaticResource AccentColor}" />
+      <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+    </Style>
+    <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter, ToggleButton:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource CardBackground}" />
+      <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+      <Setter Property="Foreground" Value="#5E6B80" />
+    </Style>
+    <Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource AccentSoftBackground}" />
+      <Setter Property="BorderBrush" Value="{StaticResource AccentColor}" />
+      <Setter Property="Foreground" Value="{StaticResource AccentColor}" />
+    </Style>
+
+    <!-- Пункт бокового меню: значок и название, выбранный подсвечен акцентом -->
+    <Style Selector="Button.nav">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Height" Value="40" />
+      <Setter Property="Padding" Value="13,0" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="CornerRadius" Value="5" />
+    </Style>
+    <Style Selector="Button.nav:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource AccentHoverBackground}" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.nav.active">
+      <Setter Property="Background" Value="{StaticResource AccentSoftBackground}" />
+      <Setter Property="Foreground" Value="{StaticResource AccentColor}" />
+    </Style>
+    <Style Selector="Button.nav.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource AccentSoftBackground}" />
+      <Setter Property="Foreground" Value="{StaticResource AccentColor}" />
+    </Style>
+
+    <!-- Квадратная кнопка-значок рядом с поиском и в шапке -->
+    <Style Selector="Button.icon, ToggleButton.icon">
+      <Setter Property="Width" Value="36" />
+      <Setter Property="Height" Value="36" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- «Добавить» во всю ширину карточки: отметка программы для «Ваш набор» -->
+    <Style Selector="ToggleButton.setToggle, Button.cardWide">
+      <Setter Property="Height" Value="32" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ToggleButton.setToggle:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+    </Style>
+
+    <!-- Заголовок «Центра активности»: строка во всю ширину без подложки -->
+    <Style Selector="ToggleButton.activity">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="12,8" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="ToggleButton.activity:checked /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.activity:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+    </Style>
+
+    <!-- Звезда избранного на карточке: значок без рамки -->
+    <Style Selector="Button.star">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="2,0" />
+      <Setter Property="FontSize" Value="15" />
+      <Setter Property="Foreground" Value="Gold" />
+    </Style>
+    <Style Selector="Button.star:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="Gold" />
+    </Style>
+
+    <!-- Кнопка-категория: скруглённая, выбранная залита акцентом (CategoryChip клиента Windows) -->
+    <Style Selector="ListBox.chips ListBoxItem">
+      <Setter Property="Margin" Value="0,0,6,6" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="Chip" Height="30" CornerRadius="15" Padding="12,0" BorderThickness="1"
+                  Background="Transparent" BorderBrush="{StaticResource BorderBrush}">
+            <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center"
+                              Foreground="{StaticResource TextSecondary}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="ListBox.chips ListBoxItem:pointerover /template/ Border#Chip">
+      <Setter Property="BorderBrush" Value="{StaticResource AccentColor}" />
+    </Style>
+    <Style Selector="ListBox.chips ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+    </Style>
+    <Style Selector="ListBox.chips ListBoxItem:selected /template/ Border#Chip">
+      <Setter Property="Background" Value="{StaticResource AccentColor}" />
+      <Setter Property="BorderBrush" Value="{StaticResource AccentColor}" />
+    </Style>
+    <Style Selector="ListBox.chips ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{StaticResource AccentForeground}" />
+    </Style>
+
+    <!-- Карточка программы; отмеченная для «Ваш набор» обведена акцентом -->
+    <Style Selector="Border.appCard">
+      <Setter Property="Background" Value="{StaticResource CardBackground}" />
+      <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="12" />
+    </Style>
+    <Style Selector="Border.appCard.selected">
+      <Setter Property="BorderBrush" Value="{StaticResource AccentColor}" />
+    </Style>
+    <!-- Цвет названия — состояние, как RowBrush клиента Windows: зелёный — можно поставить,
+         голубой — уже установлено, приглушённый — в этой системе не ставится -->
+    <Style Selector="TextBlock.appName">
+      <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+    </Style>
+    <Style Selector="TextBlock.appName.available">
+      <Setter Property="Foreground" Value="{StaticResource StatusSuccess}" />
+    </Style>
+    <Style Selector="TextBlock.appName.installed">
+      <Setter Property="Foreground" Value="{StaticResource StatusInfo}" />
+    </Style>
+    <!-- Блок правой панели («Ваш набор», «Наборы»), как SidePanel клиента -->
+    <Style Selector="Border.side">
+      <Setter Property="Background" Value="{StaticResource CardBackground}" />
+      <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="14" />
+    </Style>
+    <Style Selector="TextBlock.hint">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="Background" Value="{StaticResource CardBackground}" />
+      <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+    </Style>
+    <!-- Акцентная кнопка ещё раз после общих: в Avalonia при равных селекторах побеждает поздний стиль -->
+    <Style Selector="Button.accent">
+      <Setter Property="Background" Value="{StaticResource AccentColor}" />
+      <Setter Property="BorderBrush" Value="{StaticResource AccentColor}" />
+      <Setter Property="Foreground" Value="{StaticResource AccentForeground}" />
+    </Style>
+    <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#26C6DA" />
+      <Setter Property="BorderBrush" Value="#26C6DA" />
+      <Setter Property="Foreground" Value="{StaticResource AccentForeground}" />
+    </Style>
+    <Style Selector="Button.accent:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#0E4A54" />
+      <Setter Property="BorderBrush" Value="#0E4A54" />
+      <Setter Property="Foreground" Value="#7FA9B0" />
     </Style>
 
     <!-- Карточки: подложка CardBackground и тонкая рамка -->

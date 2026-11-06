@@ -78,7 +78,14 @@ public static class Autostart
         || f.ContainsKey("X-GNOME-AutoRestart")
         || f.ContainsKey("X-GNOME-Autostart-Phase")
         || f.ContainsKey("OnlyShowIn")
-        || (f.GetValueOrDefault("Exec") ?? "").StartsWith("/usr/libexec/");
+        || (f.GetValueOrDefault("Exec") ?? "").StartsWith("/usr/libexec/")
+        || IsVmGuestAgent(f.GetValueOrDefault("Exec") ?? "");
+
+    // Агенты гостевых дополнений виртуальных машин (Fedora ставит VBoxClient из коробки и на обычный ПК):
+    // вне своей ВМ они сразу выходят, а в списке выглядят как непонятная программа.
+    private static bool IsVmGuestAgent(string exec) =>
+        new[] { "VBoxClient", "vmware-user", "spice-vdagent", "qemu-ga" }
+            .Any(n => Path.GetFileName(exec.Split(' ')[0]).StartsWith(n, StringComparison.OrdinalIgnoreCase));
 
     private static bool ShownIn(Dictionary<string, string> f, string[] desktop)
     {

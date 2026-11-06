@@ -1,0 +1,1488 @@
+{
+  "kind": "ven4tools-linux-catalog",
+  "version": 2,
+  "lastUpdated": "2026-11-06",
+  "comment": "Каталог Ven4Tools для Linux. Каждая программа проверяется установкой на чистой системе (Tools/LinuxCatalog). status=unavailable — последняя проверка не прошла; replaces — какие программы каталога Windows она заменяет.",
+  "apps": [
+    {
+      "id": "alpaca",
+      "name": "Alpaca",
+      "category": "ИИ",
+      "description": "Чат с локальными нейросетями на вашем компьютере: Ollama уже внутри, работает без облака.",
+      "descriptionEn": "Chat with local AI models on your computer: Ollama is built in, no cloud needed.",
+      "replaces": [
+        "ollama"
+      ],
+      "flatpak": "com.jeffser.Alpaca",
+      "publisher": "Jeffry Samuel Eduarte Rojas",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "anydesk",
+      "name": "AnyDesk",
+      "category": "Системные",
+      "description": "Быстрый и надёжный клиент для удалённого доступа к компьютеру.",
+      "descriptionEn": "Fast and reliable client for remote access to a computer.",
+      "replaces": [],
+      "flatpak": "com.anydesk.Anydesk",
+      "publisher": "AnyDesk Software GmbH",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "audacity",
+      "name": "Audacity",
+      "category": "Мультимедиа",
+      "description": "Бесплатный редактор аудио для записи и обработки звука.",
+      "descriptionEn": "Free audio editor for recording and processing sound.",
+      "replaces": [],
+      "flatpak": "org.audacityteam.Audacity",
+      "publisher": "Muse Group",
+      "official": false,
+      "snap": "audacity",
+      "snapPublisher": "Snapcrafters",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "bitwarden",
+      "name": "Bitwarden",
+      "category": "Системные",
+      "description": "Менеджер паролей с синхронизацией между компьютером и телефоном.",
+      "descriptionEn": "Password manager that syncs between your computer and phone.",
+      "replaces": [],
+      "flatpak": "com.bitwarden.desktop",
+      "publisher": "Bitwarden Inc.",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "bleachbit",
+      "name": "BleachBit",
+      "category": "Системные",
+      "description": "Очистка кэшей и временных файлов браузеров и программ.",
+      "descriptionEn": "Cleans caches and temporary files of browsers and apps.",
+      "replaces": [],
+      "flatpak": "org.bleachbit.BleachBit",
+      "publisher": "Andrew Ziem and contributors",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "blender",
+      "name": "Blender",
+      "category": "Графика",
+      "description": "Полноценный 3D-пакет: моделирование, анимация, рендеринг.",
+      "descriptionEn": "Full-featured 3D suite: modeling, animation, rendering.",
+      "replaces": [],
+      "flatpak": "org.blender.Blender",
+      "publisher": "Blender Foundation",
+      "official": false,
+      "snap": "blender",
+      "snapPublisher": "Blender Foundation",
+      "snapClassic": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "bottles",
+      "name": "Bottles",
+      "category": "Система Linux",
+      "description": "Запуск Windows-программ и игр через Wine: каждая в своей «бутылке» с нужными настройками.",
+      "descriptionEn": "Run Windows software and games with Wine, each in its own isolated bottle.",
+      "replaces": [],
+      "flatpak": "com.usebottles.bottles",
+      "publisher": "The Bottles Contributors",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "brave",
+      "name": "Brave Browser",
+      "category": "Браузеры",
+      "description": "Браузер с фокусом на приватность и встроенным блокировщиком рекламы.",
+      "descriptionEn": "Privacy-focused browser with a built-in ad blocker.",
+      "replaces": [],
+      "flatpak": "com.brave.Browser",
+      "publisher": "Brave Software",
+      "official": true,
+      "snap": "brave",
+      "snapPublisher": "Brave Software",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "calibre",
+      "name": "Calibre",
+      "category": "Офис",
+      "description": "Библиотека электронных книг: чтение, конвертация форматов и загрузка на читалки.",
+      "descriptionEn": "E-book library: reading, format conversion, and sending to e-readers.",
+      "replaces": [],
+      "flatpak": "com.calibre_ebook.calibre",
+      "publisher": "Kovid Goyal",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "czkawka",
+      "name": "Czkawka",
+      "category": "Системные",
+      "description": "Поиск дубликатов, похожих фото, пустых папок и больших файлов.",
+      "descriptionEn": "Finds duplicates, similar photos, empty folders and big files.",
+      "replaces": [],
+      "flatpak": "com.github.qarmin.czkawka",
+      "publisher": "Rafał Mikrut",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "dbeaver",
+      "name": "DBeaver Community",
+      "category": "Разработка",
+      "description": "Универсальный клиент баз данных: PostgreSQL, MySQL, SQLite, SQL Server и десятки других.",
+      "descriptionEn": "Universal database client: PostgreSQL, MySQL, SQLite, SQL Server, and dozens more.",
+      "replaces": [],
+      "flatpak": "io.dbeaver.DBeaverCommunity",
+      "publisher": "DBeaver Corporation",
+      "official": false,
+      "snap": "dbeaver-ce",
+      "snapPublisher": "DBeaver",
+      "snapClassic": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "deja-dup",
+      "name": "Déjà Dup",
+      "category": "Системные",
+      "description": "Резервные копии папок по расписанию: на диск, в сеть или в облако.",
+      "descriptionEn": "Scheduled backups of your folders to a drive, network share or cloud.",
+      "replaces": [],
+      "flatpak": "org.gnome.DejaDup",
+      "publisher": "Michael Terry",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "discord",
+      "name": "Discord",
+      "category": "Мессенджеры",
+      "description": "Голосовой и текстовый чат для геймеров и сообществ.",
+      "descriptionEn": "Voice and text chat for gamers and communities.",
+      "replaces": [],
+      "flatpak": "com.discordapp.Discord",
+      "publisher": "Discord Inc.",
+      "official": true,
+      "snap": "discord",
+      "snapPublisher": "Snapcrafters",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "disk-usage",
+      "name": "Анализатор дисков",
+      "category": "Системные",
+      "description": "Карта занятого места: какие папки съели диск.",
+      "descriptionEn": "Disk usage map: which folders take up the space.",
+      "replaces": [
+        {
+          "id": "wiztree",
+          "name": "WizTree"
+        }
+      ],
+      "flatpak": "org.gnome.baobab",
+      "publisher": "The GNOME Project",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06",
+      "nameEn": "Disk Usage Analyzer"
+    },
+    {
+      "id": "drawio",
+      "name": "draw.io",
+      "category": "Офис",
+      "description": "Создание диаграмм, схем и визуализаций.",
+      "descriptionEn": "Creation of diagrams, flowcharts, and visualizations.",
+      "replaces": [],
+      "flatpak": "com.jgraph.drawio.desktop",
+      "publisher": "JGraph",
+      "official": false,
+      "snap": "drawio",
+      "snapPublisher": "draw.io",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "easyeffects",
+      "name": "Easy Effects",
+      "category": "Мультимедиа",
+      "description": "Эквалайзер и звуковые эффекты для всей системы: шумоподавление микрофона, басы, громкость.",
+      "descriptionEn": "System-wide equalizer and audio effects: mic noise reduction, bass and loudness.",
+      "replaces": [],
+      "flatpak": "com.github.wwmm.easyeffects",
+      "publisher": "Wellington Wallace",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "element",
+      "name": "Element",
+      "category": "Мессенджеры",
+      "description": "Децентрализованный мессенджер на базе Matrix.",
+      "descriptionEn": "Decentralized messenger based on Matrix.",
+      "replaces": [],
+      "flatpak": "im.riot.Riot",
+      "publisher": "Element Creations Ltd",
+      "official": false,
+      "snap": "element-desktop",
+      "snapPublisher": "Ken VanDine",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "extension-manager",
+      "name": "Extension Manager",
+      "category": "Система Linux",
+      "description": "Поиск, установка и настройка расширений рабочего стола GNOME без браузера.",
+      "descriptionEn": "Browse, install and configure GNOME Shell extensions without a browser.",
+      "replaces": [],
+      "flatpak": "com.mattjakeman.ExtensionManager",
+      "publisher": "Matthew Jakeman",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "filezilla",
+      "name": "FileZilla",
+      "category": "Разработка",
+      "description": "Популярный клиент FTP и SFTP для загрузки файлов на сайты и серверы.",
+      "descriptionEn": "Popular FTP and SFTP client for uploading files to websites and servers.",
+      "replaces": [],
+      "flatpak": "org.filezillaproject.Filezilla",
+      "publisher": "Tim Kosse",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "firefox",
+      "name": "Mozilla Firefox",
+      "category": "Браузеры",
+      "description": "Быстрый, безопасный и приватный браузер с открытым исходным кодом.",
+      "descriptionEn": "Fast, secure, and private open-source browser.",
+      "replaces": [],
+      "flatpak": "org.mozilla.firefox",
+      "publisher": "Mozilla",
+      "official": true,
+      "snap": "firefox",
+      "snapPublisher": "Mozilla",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "flameshot",
+      "name": "Flameshot",
+      "category": "Системные",
+      "description": "Скриншоты с подписями, стрелками и размытием, загрузка в буфер обмена или файл.",
+      "descriptionEn": "Screenshots with text, arrows and blur, saved to the clipboard or a file.",
+      "replaces": [
+        {
+          "id": "sharex",
+          "name": "ShareX"
+        },
+        {
+          "id": "greenshot",
+          "name": "Greenshot"
+        }
+      ],
+      "flatpak": "org.flameshot.Flameshot",
+      "publisher": "Flameshot Developers",
+      "official": true,
+      "snap": "flameshot",
+      "snapPublisher": "Jeremy Borgman",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "flatseal",
+      "name": "Flatseal",
+      "category": "Система Linux",
+      "description": "Права Flatpak-программ: доступ к файлам, сети и устройствам — посмотреть и поменять.",
+      "descriptionEn": "Review and change permissions of Flatpak apps: files, network and devices.",
+      "replaces": [],
+      "flatpak": "com.github.tchx84.Flatseal",
+      "publisher": "Martin Abente Lahaye",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "free-download-manager",
+      "name": "Free Download Manager",
+      "category": "Другое",
+      "description": "Менеджер загрузок: ускорение и докачка, торренты, расписание.",
+      "descriptionEn": "Download manager: acceleration and resuming, torrents, scheduling.",
+      "replaces": [],
+      "flatpak": "org.freedownloadmanager.Manager",
+      "publisher": "FreeDownloadManager Team",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "freecad",
+      "name": "FreeCAD",
+      "category": "Графика",
+      "description": "Бесплатная параметрическая САПР для 3D-моделирования деталей и чертежей.",
+      "descriptionEn": "Free parametric CAD for 3D modeling of parts and drawings.",
+      "replaces": [],
+      "flatpak": "org.freecad.FreeCAD",
+      "publisher": "The FreeCAD Team",
+      "official": true,
+      "snap": "freecad",
+      "snapPublisher": "FreeCAD",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "fsearch",
+      "name": "FSearch",
+      "category": "Системные",
+      "description": "Мгновенный поиск файлов по имени по всем дискам.",
+      "descriptionEn": "Instant file search by name across all drives.",
+      "replaces": [
+        {
+          "id": "everything",
+          "name": "Everything"
+        }
+      ],
+      "flatpak": "io.github.cboxdoerfer.FSearch",
+      "publisher": "Christian Boxdörfer",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "gear-lever",
+      "name": "Gear Lever",
+      "category": "Система Linux",
+      "description": "Программы в формате AppImage: добавляет в меню, обновляет и удаляет.",
+      "descriptionEn": "AppImage apps: adds them to the menu, updates and removes them.",
+      "replaces": [],
+      "flatpak": "it.mijorus.gearlever",
+      "publisher": "Lorenzo Paderi",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "gimp",
+      "name": "GIMP",
+      "category": "Графика",
+      "description": "Мощный бесплатный редактор изображений, альтернатива Photoshop.",
+      "descriptionEn": "Powerful free image editor, an alternative to Photoshop.",
+      "replaces": [],
+      "flatpak": "org.gimp.GIMP",
+      "publisher": "The GIMP team",
+      "official": true,
+      "snap": "gimp",
+      "snapPublisher": "GIMP team",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "github-desktop",
+      "name": "GitHub Desktop",
+      "category": "Разработка",
+      "description": "Официальный клиент GitHub для работы с репозиториями.",
+      "descriptionEn": "Official GitHub client for working with repositories.",
+      "replaces": [],
+      "flatpak": "io.github.shiftey.Desktop",
+      "publisher": "shiftkey",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "google-chrome",
+      "name": "Google Chrome",
+      "category": "Браузеры",
+      "description": "Самый популярный браузер с интеграцией сервисов Google.",
+      "descriptionEn": "The most popular browser, integrated with Google services.",
+      "replaces": [],
+      "flatpak": "com.google.Chrome",
+      "publisher": "Google",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "gpt4all",
+      "name": "GPT4All",
+      "category": "ИИ",
+      "description": "Языковые модели прямо на ПК, в том числе для работы со своими документами.",
+      "descriptionEn": "Language models on your PC, including chatting with your own documents.",
+      "replaces": [],
+      "flatpak": "io.gpt4all.gpt4all",
+      "publisher": "Nomic-ai",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "handbrake",
+      "name": "HandBrake",
+      "category": "Мультимедиа",
+      "description": "Конвертер видео с поддержкой большинства форматов.",
+      "descriptionEn": "Video converter with support for most formats.",
+      "replaces": [],
+      "flatpak": "fr.handbrake.ghb",
+      "publisher": "HandBrake Team",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "heroic",
+      "name": "Heroic Games Launcher",
+      "category": "Игровые сервисы",
+      "description": "Лаунчер игр Epic Games и GOG: вход в аккаунт, установка и запуск игр через Wine и Proton.",
+      "descriptionEn": "Launcher for Epic Games and GOG: sign in, install and run games with Wine and Proton.",
+      "replaces": [
+        {
+          "id": "epic-games",
+          "name": "Epic Games Launcher"
+        },
+        {
+          "id": "gog-galaxy",
+          "name": "GOG Galaxy"
+        }
+      ],
+      "flatpak": "com.heroicgameslauncher.hgl",
+      "publisher": "Heroic Games Launcher",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "impression",
+      "name": "Impression",
+      "category": "Системные",
+      "description": "Запись образа системы на флешку — загрузочный USB в пару нажатий.",
+      "descriptionEn": "Writes a system image to a USB stick: a bootable drive in a few clicks.",
+      "replaces": [
+        {
+          "id": "rufus",
+          "name": "Rufus"
+        }
+      ],
+      "flatpak": "io.gitlab.adhami3310.Impression",
+      "publisher": "Khaleel Al-Adhami",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "inkscape",
+      "name": "Inkscape",
+      "category": "Графика",
+      "description": "Профессиональный редактор векторной графики SVG.",
+      "descriptionEn": "Professional SVG vector graphics editor.",
+      "replaces": [],
+      "flatpak": "org.inkscape.Inkscape",
+      "publisher": "The Inkscape Community",
+      "official": true,
+      "snap": "inkscape",
+      "snapPublisher": "Inkscape Project",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "itch",
+      "name": "itch.io",
+      "category": "Игровые сервисы",
+      "description": "Платформа инди-игр. Тысячи бесплатных и платных игр без региональных ограничений.",
+      "descriptionEn": "Indie game platform. Thousands of free and paid games with no regional restrictions.",
+      "replaces": [],
+      "flatpak": "io.itch.itch",
+      "publisher": "itch.io",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "jan",
+      "name": "Jan",
+      "category": "ИИ",
+      "description": "Локальный ИИ-ассистент: скачивает модели и отвечает без интернета.",
+      "descriptionEn": "Local AI assistant: downloads models and answers offline.",
+      "replaces": [
+        "lm-studio"
+      ],
+      "flatpak": "ai.jan.Jan",
+      "publisher": "Menlo Research Pte. Ltd.",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "joplin",
+      "name": "Joplin",
+      "category": "Офис",
+      "description": "Открытое приложение для заметок и списков дел в Markdown с синхронизацией и шифрованием.",
+      "descriptionEn": "Open-source Markdown notes and to-do app with sync and encryption.",
+      "replaces": [],
+      "flatpak": "net.cozic.joplin_desktop",
+      "publisher": "laurent22",
+      "official": false,
+      "snap": "joplin-desktop",
+      "snapPublisher": "James Carroll",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "kdenlive",
+      "name": "Kdenlive",
+      "category": "Мультимедиа",
+      "description": "Бесплатный многодорожечный видеоредактор с эффектами и переходами.",
+      "descriptionEn": "Free multitrack video editor with effects and transitions.",
+      "replaces": [],
+      "flatpak": "org.kde.kdenlive",
+      "publisher": "KDE",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "keepassxc",
+      "name": "KeePassXC",
+      "category": "Системные",
+      "description": "Открытый менеджер паролей: зашифрованная база хранится у вас, без облака.",
+      "descriptionEn": "Open-source password manager: the encrypted database stays with you, no cloud.",
+      "replaces": [],
+      "flatpak": "org.keepassxc.KeePassXC",
+      "publisher": "KeePassXC Team",
+      "official": true,
+      "snap": "keepassxc",
+      "snapPublisher": "Jonathan White",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "krita",
+      "name": "Krita",
+      "category": "Графика",
+      "description": "Цифровая живопись и иллюстрации. Поддержка графических планшетов.",
+      "descriptionEn": "Digital painting and illustration. Supports graphics tablets.",
+      "replaces": [],
+      "flatpak": "org.kde.krita",
+      "publisher": "Krita Foundation",
+      "official": true,
+      "snap": "krita",
+      "snapPublisher": "Stichting Krita Foundation",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "libreoffice",
+      "name": "LibreOffice",
+      "category": "Офис",
+      "description": "Бесплатный офисный пакет с полным аналогом Word, Excel, PowerPoint.",
+      "descriptionEn": "Free office suite with full equivalents of Word, Excel, and PowerPoint.",
+      "replaces": [],
+      "flatpak": "org.libreoffice.LibreOffice",
+      "publisher": "The Document Foundation",
+      "official": true,
+      "snap": "libreoffice",
+      "snapPublisher": "Canonical",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "librewolf",
+      "name": "LibreWolf",
+      "category": "Браузеры",
+      "description": "Firefox-форк с максимальной приватностью и без телеметрии.",
+      "descriptionEn": "Firefox fork with maximum privacy and no telemetry.",
+      "replaces": [],
+      "flatpak": "io.gitlab.librewolf-community",
+      "publisher": "LibreWolf Community",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "localsend",
+      "name": "LocalSend",
+      "category": "Системные",
+      "description": "Передача файлов между компьютером и телефоном по локальной сети без интернета.",
+      "descriptionEn": "Transfer files between a computer and a phone over the local network without internet.",
+      "replaces": [],
+      "flatpak": "org.localsend.localsend_app",
+      "publisher": "Tien Do Nam",
+      "official": true,
+      "snap": "localsend",
+      "snapPublisher": "Tien Do Nam",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "lunacy",
+      "name": "Lunacy",
+      "category": "Графика",
+      "description": "Российский аналог Figma от Icons8. Дизайн интерфейсов, прототипирование, работает офлайн.",
+      "descriptionEn": "Russian alternative to Figma from Icons8. Interface design, prototyping, works offline.",
+      "replaces": [],
+      "flatpak": "com.icons8.Lunacy",
+      "publisher": "Icons8",
+      "official": true,
+      "snap": "lunacy",
+      "snapPublisher": "Icons8",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "lutris",
+      "name": "Lutris",
+      "category": "Игровые сервисы",
+      "description": "Единая библиотека игр: ставит и запускает игры из разных магазинов и эмуляторов.",
+      "descriptionEn": "One game library that installs and runs games from many stores and emulators.",
+      "replaces": [],
+      "flatpak": "net.lutris.Lutris",
+      "publisher": "Lutris Team",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "mediainfo",
+      "name": "MediaInfo",
+      "category": "Мультимедиа",
+      "description": "Технические данные видео- и аудиофайлов: кодеки, битрейт, разрешение, дорожки.",
+      "descriptionEn": "Technical details of video and audio files: codecs, bitrate, resolution, tracks.",
+      "replaces": [],
+      "flatpak": "net.mediaarea.MediaInfo",
+      "publisher": "MediaArea.net SARL",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "microsoft-edge",
+      "name": "Microsoft Edge",
+      "category": "Браузеры",
+      "description": "Современный браузер от Microsoft на базе Chromium.",
+      "descriptionEn": "Modern Chromium-based browser from Microsoft.",
+      "replaces": [],
+      "flatpak": "com.microsoft.Edge",
+      "publisher": "Microsoft Corporation",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "mission-center",
+      "name": "Mission Center",
+      "category": "Система Linux",
+      "description": "Диспетчер задач: загрузка процессора, памяти, дисков, сети и видеокарты, список процессов.",
+      "descriptionEn": "Task manager: CPU, memory, disk, network and GPU usage plus the process list.",
+      "replaces": [],
+      "flatpak": "io.missioncenter.MissionCenter",
+      "publisher": "Mission Center Developers",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "newelle",
+      "name": "Newelle",
+      "category": "ИИ",
+      "description": "ИИ-ассистент для рабочего стола: чат с разными нейросетями, локальными и облачными.",
+      "descriptionEn": "Desktop AI assistant: chat with different models, local or cloud.",
+      "replaces": [],
+      "flatpak": "io.github.qwersyk.Newelle",
+      "publisher": "Qwersyk",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "nodejs",
+      "name": "Node.js",
+      "category": "Разработка",
+      "description": "JavaScript-среда для разработки серверных приложений.",
+      "descriptionEn": "JavaScript runtime for building server-side applications.",
+      "replaces": [],
+      "snap": "node",
+      "snapPublisher": "OpenJS Foundation",
+      "snapClassic": true,
+      "publisher": "OpenJS Foundation",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "snap-info"
+      }
+    },
+    {
+      "id": "obs-studio",
+      "name": "OBS Studio",
+      "category": "Мультимедиа",
+      "description": "Запись видео и стриминг с профессиональными настройками.",
+      "descriptionEn": "Video recording and streaming with professional settings.",
+      "replaces": [],
+      "flatpak": "com.obsproject.Studio",
+      "publisher": "OBS Project",
+      "official": true,
+      "snap": "obs-studio",
+      "snapPublisher": "Snapcrafters",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "obsidian",
+      "name": "Obsidian",
+      "category": "Офис",
+      "description": "База знаний и заметки в Markdown с двусвязными ссылками.",
+      "descriptionEn": "Knowledge base and Markdown notes with bidirectional links.",
+      "replaces": [],
+      "flatpak": "md.obsidian.Obsidian",
+      "publisher": "Obsidian",
+      "official": true,
+      "snap": "obsidian",
+      "snapPublisher": "Obsidian",
+      "snapClassic": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "onlyoffice",
+      "name": "ONLYOFFICE",
+      "category": "Офис",
+      "description": "Совместимый с MS Office редактор с облачной интеграцией.",
+      "descriptionEn": "MS Office-compatible editor with cloud integration.",
+      "replaces": [],
+      "flatpak": "org.onlyoffice.desktopeditors",
+      "publisher": "ONLYOFFICE",
+      "official": true,
+      "snap": "onlyoffice-desktopeditors",
+      "snapPublisher": "Ascensio System SIA",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "opera",
+      "name": "Opera",
+      "category": "Браузеры",
+      "description": "Браузер со встроенным блокировщиком рекламы и мессенджерами в боковой панели.",
+      "descriptionEn": "Browser with a built-in ad blocker and messengers in the sidebar.",
+      "replaces": [],
+      "flatpak": "com.opera.Opera",
+      "publisher": "Opera",
+      "official": false,
+      "snap": "opera",
+      "snapPublisher": "Opera",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "parabolic",
+      "name": "Parabolic",
+      "category": "Мультимедиа",
+      "description": "Скачивание видео и аудио с сайтов в нужном качестве (на основе yt-dlp).",
+      "descriptionEn": "Download video and audio from websites in the quality you choose (based on yt-dlp).",
+      "replaces": [],
+      "flatpak": "org.nickvision.tubeconverter",
+      "publisher": "Nickvision",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "peazip",
+      "name": "PeaZip",
+      "category": "Системные",
+      "description": "Архиватор: открывает и создаёт 7z, ZIP, RAR и ещё около 200 форматов.",
+      "descriptionEn": "Archiver that opens and creates 7z, ZIP, RAR and about 200 other formats.",
+      "replaces": [
+        {
+          "id": "7zip",
+          "name": "7-Zip"
+        }
+      ],
+      "flatpak": "io.github.peazip.PeaZip",
+      "publisher": "Giorgio Tani",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "pika-backup",
+      "name": "Pika Backup",
+      "category": "Системные",
+      "description": "Резервные копии с дедупликацией: занимают мало места, восстанавливаются по дате.",
+      "descriptionEn": "Deduplicated backups that take little space and restore by date.",
+      "replaces": [],
+      "flatpak": "org.gnome.World.PikaBackup",
+      "publisher": "Small Mammal Collective",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "pinta",
+      "name": "Pinta",
+      "category": "Графика",
+      "description": "Простой графический редактор со слоями и эффектами, как Paint.NET.",
+      "descriptionEn": "Simple image editor with layers and effects, similar to Paint.NET.",
+      "replaces": [
+        {
+          "id": "paint-net",
+          "name": "Paint.NET"
+        }
+      ],
+      "flatpak": "com.github.PintaProject.Pinta",
+      "publisher": "Jonathan Pobst",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "postman",
+      "name": "Postman",
+      "category": "Разработка",
+      "description": "Платформа для тестирования API и работы с запросами.",
+      "descriptionEn": "Platform for API testing and working with requests.",
+      "replaces": [],
+      "flatpak": "com.getpostman.Postman",
+      "publisher": "Postman Inc.",
+      "official": false,
+      "snap": "postman",
+      "snapPublisher": "Postman, Inc.",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "powershell",
+      "name": "PowerShell 7",
+      "category": "Разработка",
+      "description": "Новая кроссплатформенная версия PowerShell для скриптов и автоматизации.",
+      "descriptionEn": "The new cross-platform version of PowerShell for scripting and automation.",
+      "replaces": [],
+      "snap": "powershell",
+      "snapPublisher": "Canonical",
+      "snapClassic": true,
+      "publisher": "Canonical",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "snap-info"
+      }
+    },
+    {
+      "id": "prism-launcher",
+      "name": "Prism Launcher",
+      "category": "Игровые сервисы",
+      "description": "Открытый лаунчер Minecraft: разные версии и сборки модов рядом, без конфликтов.",
+      "descriptionEn": "Open-source Minecraft launcher: different versions and modpacks side by side without conflicts.",
+      "replaces": [],
+      "flatpak": "org.prismlauncher.PrismLauncher",
+      "publisher": "Prism Launcher Contributors",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "protonup-qt",
+      "name": "ProtonUp-Qt",
+      "category": "Игровые сервисы",
+      "description": "Ставит свежие Proton-GE и Wine-GE для Steam, Lutris и Heroic — больше игр запускается.",
+      "descriptionEn": "Installs Proton-GE and Wine-GE for Steam, Lutris and Heroic so more games run.",
+      "replaces": [],
+      "flatpak": "net.davidotek.pupgui2",
+      "publisher": "DavidoTek",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "putty",
+      "name": "PuTTY",
+      "category": "Разработка",
+      "description": "SSH и Telnet клиент для подключения к серверам.",
+      "descriptionEn": "SSH and Telnet client for connecting to servers.",
+      "replaces": [],
+      "flatpak": "uk.org.greenend.chiark.sgtatham.putty",
+      "publisher": "Simon Tatham",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "qbittorrent",
+      "name": "qBittorrent",
+      "category": "Другое",
+      "description": "Бесплатный торрент-клиент без рекламы со встроенным поиском.",
+      "descriptionEn": "Free ad-free torrent client with built-in search.",
+      "replaces": [],
+      "flatpak": "org.qbittorrent.qBittorrent",
+      "publisher": "The qBittorrent Project",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "rustdesk",
+      "name": "RustDesk",
+      "category": "Системные",
+      "description": "Открытая программа удалённого доступа к компьютеру, можно подключаться через свой сервер.",
+      "descriptionEn": "Open-source remote desktop app; can connect through your own server.",
+      "replaces": [],
+      "flatpak": "com.rustdesk.RustDesk",
+      "publisher": "RustDesk",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "slack",
+      "name": "Slack",
+      "category": "Мессенджеры",
+      "description": "Корпоративный мессенджер с интеграциями.",
+      "descriptionEn": "Business messenger with integrations.",
+      "replaces": [],
+      "flatpak": "com.slack.Slack",
+      "publisher": "Slack Technologies Inc.",
+      "official": false,
+      "snap": "slack",
+      "snapPublisher": "Slack",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "spotify",
+      "name": "Spotify",
+      "category": "Мультимедиа",
+      "description": "Музыкальный стриминг: миллионы треков, подкасты и плейлисты.",
+      "descriptionEn": "Music streaming: millions of tracks, podcasts and playlists.",
+      "replaces": [],
+      "flatpak": "com.spotify.Client",
+      "publisher": "Spotify",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "steam",
+      "name": "Steam",
+      "category": "Игровые сервисы",
+      "description": "Крупнейший игровой магазин и платформа для игр.",
+      "descriptionEn": "The largest game store and gaming platform.",
+      "replaces": [],
+      "flatpak": "com.valvesoftware.Steam",
+      "publisher": "Valve Corporation",
+      "official": false,
+      "snap": "steam",
+      "snapPublisher": "Canonical",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "tailscale",
+      "name": "Tailscale",
+      "category": "Системные",
+      "description": "Защищённая частная сеть между своими устройствами: доступ к домашнему или рабочему компьютеру без проброса портов.",
+      "descriptionEn": "Secure private network between your devices: access your home or work computer without port forwarding.",
+      "replaces": [],
+      "snap": "tailscale",
+      "snapPublisher": "Canonical",
+      "snapClassic": false,
+      "publisher": "Canonical",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "snap-info"
+      }
+    },
+    {
+      "id": "teams-for-linux",
+      "name": "Teams for Linux",
+      "category": "Мессенджеры",
+      "description": "Неофициальный клиент Microsoft Teams для Linux: чаты, звонки и встречи.",
+      "descriptionEn": "Unofficial Microsoft Teams client for Linux: chats, calls and meetings.",
+      "replaces": [
+        {
+          "id": "microsoft-teams",
+          "name": "Microsoft Teams"
+        }
+      ],
+      "flatpak": "com.github.IsmaelMartinez.teams_for_linux",
+      "publisher": "Ismael Martinez",
+      "official": true,
+      "snap": "teams-for-linux",
+      "snapPublisher": "Ismael Martinez Ramos",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "teamspeak",
+      "name": "TeamSpeak",
+      "category": "Мессенджеры",
+      "description": "Голосовая связь с низкой задержкой для игр и сообществ на своих или публичных серверах.",
+      "descriptionEn": "Low-latency voice chat for gaming and communities on your own or public servers.",
+      "replaces": [],
+      "flatpak": "com.teamspeak.TeamSpeak",
+      "publisher": "TeamSpeak Systems, Inc.",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "telegram",
+      "name": "Telegram Desktop",
+      "category": "Мессенджеры",
+      "description": "Быстрый и безопасный мессенджер с облачными хранилищами.",
+      "descriptionEn": "Fast and secure messenger with cloud storage.",
+      "replaces": [],
+      "flatpak": "org.telegram.desktop",
+      "publisher": "Telegram FZ-LLC",
+      "official": true,
+      "snap": "telegram-desktop",
+      "snapPublisher": "Telegram FZ-LLC",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "thunderbird",
+      "name": "Mozilla Thunderbird",
+      "category": "Офис",
+      "description": "Бесплатный почтовый клиент от Mozilla: несколько ящиков, календарь и контакты.",
+      "descriptionEn": "Free email client from Mozilla: multiple accounts, calendar, and contacts.",
+      "replaces": [],
+      "flatpak": "org.mozilla.thunderbird_esr",
+      "publisher": "MZLA Technologies, part of the Mozilla Foundation",
+      "official": true,
+      "snap": "thunderbird",
+      "snapPublisher": "Canonical",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "vlc",
+      "name": "VLC Media Player",
+      "category": "Мультимедиа",
+      "description": "Универсальный плеер, воспроизводящий все форматы.",
+      "descriptionEn": "Versatile player that plays all formats.",
+      "replaces": [],
+      "flatpak": "org.videolan.VLC",
+      "publisher": "VideoLAN et al.",
+      "official": false,
+      "snap": "vlc",
+      "snapPublisher": "VideoLAN",
+      "snapClassic": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "vscode",
+      "name": "Visual Studio Code",
+      "category": "Разработка",
+      "description": "Легкий, но мощный редактор кода от Microsoft.",
+      "descriptionEn": "Lightweight yet powerful code editor from Microsoft.",
+      "replaces": [],
+      "flatpak": "com.visualstudio.code",
+      "publisher": "Microsoft Corporation",
+      "official": false,
+      "snap": "code",
+      "snapPublisher": "Visual Studio Code",
+      "snapClassic": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "warehouse",
+      "name": "Warehouse",
+      "category": "Система Linux",
+      "description": "Управление Flatpak-программами: версии, данные, очистка остатков удалённых программ.",
+      "descriptionEn": "Manage Flatpak apps: versions, user data and leftovers of removed apps.",
+      "replaces": [],
+      "flatpak": "io.github.flattool.Warehouse",
+      "publisher": "Heliguy",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      },
+      "added": "2026-11-06"
+    },
+    {
+      "id": "wireshark",
+      "name": "Wireshark",
+      "category": "Разработка",
+      "description": "Анализатор сетевого трафика: захват и разбор пакетов сотен протоколов.",
+      "descriptionEn": "Network traffic analyzer: captures and dissects packets of hundreds of protocols.",
+      "replaces": [],
+      "flatpak": "org.wireshark.Wireshark",
+      "publisher": "The Wireshark developer community",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "wps-office",
+      "name": "WPS Office",
+      "category": "Офис",
+      "description": "Офисный пакет с интерфейсом в духе MS Office: документы, таблицы и презентации.",
+      "descriptionEn": "Office suite with an MS Office-like interface: documents, spreadsheets, and presentations.",
+      "replaces": [],
+      "flatpak": "com.wps.Office",
+      "publisher": "Kingsoft Office Corporation",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "xnview",
+      "name": "XnView MP",
+      "category": "Графика",
+      "description": "Просмотрщик и конвертер изображений с поддержкой 500+ форматов.",
+      "descriptionEn": "Image viewer and converter with support for 500+ formats.",
+      "replaces": [],
+      "flatpak": "com.xnview.XnViewMP",
+      "publisher": "Pierre-e Gougelet",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "yandex-browser",
+      "name": "Яндекс.Браузер",
+      "category": "Браузеры",
+      "description": "Браузер с Алисой, умной лентой и встроенными сервисами Яндекса.",
+      "descriptionEn": "Browser with Alice, a smart feed, and built-in Yandex services.",
+      "replaces": [],
+      "flatpak": "ru.yandex.Browser",
+      "publisher": "Yandex",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "zen-browser",
+      "name": "Zen Browser",
+      "category": "Браузеры",
+      "description": "Браузер на базе Firefox с вертикальными вкладками и разделением окна.",
+      "descriptionEn": "Firefox-based browser with vertical tabs and split view.",
+      "replaces": [],
+      "flatpak": "app.zen_browser.zen",
+      "publisher": "Zen Team",
+      "official": true,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    },
+    {
+      "id": "zoom",
+      "name": "Zoom Workplace",
+      "category": "Мессенджеры",
+      "description": "Видеоконференции, вебинары и командная работа.",
+      "descriptionEn": "Video conferencing, webinars, and team collaboration.",
+      "replaces": [],
+      "flatpak": "us.zoom.Zoom",
+      "publisher": "zoom.us",
+      "official": false,
+      "status": "ok",
+      "checked": {
+        "date": "2026-11-06",
+        "result": "flathub-api"
+      }
+    }
+  ]
+}

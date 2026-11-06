@@ -2,112 +2,221 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:m="using:Ven4Tools.Linux.Models"
         xmlns:s="using:Ven4Tools.Linux.Services"
+        xmlns:v="using:Ven4Tools.Linux.Views"
         x:Class="Ven4Tools.Linux.MainWindow"
         Width="1180" Height="800" MinWidth="900" MinHeight="560">
   <Window.Resources>
-    <!-- Разделы - слева столбиком, как боковое меню клиента Windows (NavButtonStyle в Ven4Tools/MainWindow.xaml) -->
-    <ControlTheme x:Key="SideNav" TargetType="TabControl">
-      <Setter Property="ItemsPanel">
-        <ItemsPanelTemplate><StackPanel Spacing="2" /></ItemsPanelTemplate>
-      </Setter>
+    <!-- Разделы переключает боковое меню (NavPanel), у самого TabControl полосы вкладок нет:
+         она скрыта, но остаётся в дереве, чтобы вкладки создавались как обычно -->
+    <ControlTheme x:Key="PagesOnly" TargetType="TabControl">
       <Setter Property="Template">
         <ControlTemplate>
-          <Grid ColumnDefinitions="212,*">
-            <Border Background="{StaticResource SidebarBackground}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
-              <DockPanel Margin="12,0">
-                <Panel DockPanel.Dock="Top" Height="80">
-                  <Border Width="3" Height="40" HorizontalAlignment="Left" Background="{StaticResource AccentColor}" CornerRadius="2" />
-                  <StackPanel VerticalAlignment="Center" Margin="15,0,0,0">
-                    <TextBlock FontSize="19" FontWeight="Bold">
-                      <Run Text="Ven4" /><Run Text="Tools" Foreground="{StaticResource AccentColor}" />
-                    </TextBlock>
-                    <TextBlock Text="LINUX TOOLKIT" Classes="eyebrow" Margin="0,3,0,0" />
-                  </StackPanel>
-                </Panel>
-                <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" Margin="0,4,0,0" />
-              </DockPanel>
-            </Border>
-            <ContentPresenter Grid.Column="1" Name="PART_SelectedContentHost" Margin="28,88,28,186"
+          <Panel>
+            <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" IsVisible="False" />
+            <ContentPresenter Name="PART_SelectedContentHost"
                               Content="{TemplateBinding SelectedContent}" ContentTemplate="{TemplateBinding SelectedContentTemplate}" />
-          </Grid>
+          </Panel>
         </ControlTemplate>
       </Setter>
-    </ControlTheme>
-    <ControlTheme x:Key="{x:Type TabItem}" TargetType="TabItem">
-      <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="FontSize" Value="13" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Template">
-        <ControlTemplate>
-          <Border Name="Root" Height="40" CornerRadius="5" Background="{TemplateBinding Background}" Padding="13,0">
-            <ContentPresenter Content="{TemplateBinding Header}" VerticalAlignment="Center"
-                              Foreground="{TemplateBinding Foreground}" />
-          </Border>
-        </ControlTemplate>
-      </Setter>
-      <Style Selector="^:pointerover">
-        <Setter Property="Background" Value="{StaticResource AccentHoverBackground}" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
-      </Style>
-      <Style Selector="^:selected">
-        <Setter Property="Background" Value="{StaticResource AccentSoftBackground}" />
-        <Setter Property="Foreground" Value="{StaticResource AccentColor}" />
-      </Style>
     </ControlTheme>
   </Window.Resources>
 
-  <Grid ColumnDefinitions="212,*" RowDefinitions="88,*,170">
+  <Grid ColumnDefinitions="212,*">
 
-    <TabControl x:Name="Tabs" Grid.ColumnSpan="2" Grid.RowSpan="3" Theme="{StaticResource SideNav}">
+    <!-- Боковое меню, как у клиента Windows: логотип, разделы со значками, внизу связь и версия -->
+    <Border Background="{StaticResource SidebarBackground}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+      <DockPanel Margin="12,0">
+        <Panel DockPanel.Dock="Top" Height="80">
+          <Border Width="3" Height="40" HorizontalAlignment="Left" Background="{StaticResource AccentColor}" CornerRadius="2" />
+          <StackPanel VerticalAlignment="Center" Margin="15,0,0,0">
+            <TextBlock FontSize="19" FontWeight="Bold">
+              <Run Text="Ven4" /><Run Text="Tools" Foreground="{StaticResource AccentColor}" />
+            </TextBlock>
+            <TextBlock Text="LINUX TOOLKIT" FontSize="10" FontWeight="SemiBold" LetterSpacing="1.2"
+                       Foreground="{StaticResource AccentColor}" Margin="0,3,0,0" />
+          </StackPanel>
+        </Panel>
+        <Border DockPanel.Dock="Bottom" Margin="0,0,0,12" Padding="10,7" CornerRadius="6"
+                Background="#0F1D1A" BorderBrush="#1F3A33" BorderThickness="1">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Ellipse x:Name="NetDot" Width="7" Height="7" Fill="{StaticResource TextSecondary}" VerticalAlignment="Center" />
+            <TextBlock x:Name="NetText" Grid.Column="1" FontSize="11" Margin="7,0,6,0" VerticalAlignment="Center"
+                       Foreground="{StaticResource StatusSuccess}" TextTrimming="CharacterEllipsis" />
+            <TextBlock x:Name="VersionText" Grid.Column="2" FontSize="10" FontFamily="monospace" VerticalAlignment="Center"
+                       Foreground="{StaticResource TextSecondary}" />
+          </Grid>
+        </Border>
+        <StackPanel x:Name="NavPanel" Spacing="2" Margin="0,4,0,0" />
+      </DockPanel>
+    </Border>
 
-      <!-- Каталог -->
+    <DockPanel Grid.Column="1">
+      <!-- Шапка: название раздела, индикатор задач и шестерёнка настроек -->
+      <Border DockPanel.Dock="Top" Height="56" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,0">
+        <Grid ColumnDefinitions="*,Auto,Auto">
+          <TextBlock x:Name="TitleText" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <Border Grid.Column="1" Padding="10,7" CornerRadius="6" VerticalAlignment="Center"
+                  Background="#0F2A30" BorderBrush="#16404A" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" Spacing="7">
+              <Ellipse x:Name="ActivityDot" Width="6" Height="6" Fill="{StaticResource TextSecondary}" VerticalAlignment="Center" />
+              <TextBlock x:Name="ActivityText" FontSize="11" VerticalAlignment="Center" />
+            </StackPanel>
+          </Border>
+          <Button x:Name="GearButton" Grid.Column="2" Classes="icon" Margin="8,0,0,0" Click="OnOpenSettings">
+            <PathIcon x:Name="GearIcon" Width="16" Height="16" />
+          </Button>
+        </Grid>
+      </Border>
+
+      <!-- «Центр активности»: журнал операций, по умолчанию свёрнут, как у клиента Windows -->
+      <Border DockPanel.Dock="Bottom" Classes="side" Margin="20,0,20,12" Padding="0">
+        <StackPanel>
+          <ToggleButton x:Name="ActivityToggle" Classes="activity">
+            <Grid ColumnDefinitions="Auto,Auto,*">
+              <PathIcon x:Name="ActivityChevron" Width="10" Height="10" VerticalAlignment="Center" />
+              <TextBlock x:Name="LogLabel" Grid.Column="1" FontSize="12" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center" />
+              <TextBlock x:Name="LastLogText" Grid.Column="2" FontSize="11" Margin="12,0,0,0" VerticalAlignment="Center"
+                         Foreground="{StaticResource TextSecondary}" TextTrimming="CharacterEllipsis" />
+            </Grid>
+          </ToggleButton>
+          <TextBox x:Name="LogBox" IsVisible="False" Height="150" Margin="10,0,10,10" IsReadOnly="True" AcceptsReturn="True"
+                   Background="Transparent" BorderThickness="0" TextWrapping="Wrap" FontFamily="monospace" FontSize="11"
+                   Foreground="{StaticResource TextSecondary}" />
+        </StackPanel>
+      </Border>
+
+    <TabControl x:Name="Tabs" Theme="{StaticResource PagesOnly}" Margin="20,14,20,12">
+
+      <!-- Каталог: поиск, категории, карточки и справа «Ваш набор» -->
       <TabItem x:Name="CatalogTab">
-        <Grid RowDefinitions="Auto,*,Auto">
-          <Grid ColumnDefinitions="*,200,Auto,Auto,Auto" Margin="0,0,0,8">
-            <TextBox x:Name="SearchBox" Grid.Column="0" />
-            <ComboBox x:Name="CategoryBox" Grid.Column="1" Margin="8,0,0,0" HorizontalAlignment="Stretch" />
-            <CheckBox x:Name="LinuxOnlyBox" Grid.Column="2" Margin="12,0,0,0" IsChecked="True" />
-            <CheckBox x:Name="FavoritesOnlyBox" Grid.Column="3" Margin="12,0,0,0" />
-            <Button x:Name="FlatpakButton" Grid.Column="4" Margin="8,0,0,0" IsVisible="False" Click="OnSetupFlatpak" />
-          </Grid>
-
-          <ListBox x:Name="AppList" Grid.Row="1">
-            <ListBox.ItemTemplate>
-              <DataTemplate x:DataType="m:AppItem">
-                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="0,2">
-                  <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" IsEnabled="{Binding CanSelect}"
-                            VerticalAlignment="Center" Click="OnSelectionChanged" />
-                  <Button Grid.Column="1" Content="{Binding FavoriteGlyph}" Click="OnToggleFavorite"
-                          Background="Transparent" FontSize="18" Padding="6,0" VerticalAlignment="Center"
-                          Foreground="{StaticResource StatusWarning}" />
-                  <StackPanel Grid.Column="2" Spacing="2" Margin="6,0,0,0">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="15" />
-                      <TextBlock Text="{Binding Category}" Opacity="0.55" VerticalAlignment="Bottom" />
-                    </StackPanel>
-                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Opacity="0.85" />
-                    <TextBlock Text="{Binding AlternativeText}" IsVisible="{Binding HasAlternative}"
-                               Foreground="{StaticResource StatusWarning}" />
-                    <TextBlock Text="{Binding SourceText}" FontSize="12" Opacity="0.55" />
+        <Grid ColumnDefinitions="*,280">
+          <DockPanel Margin="0,0,14,0">
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,10">
+              <TextBox x:Name="SearchBox" Height="36" VerticalContentAlignment="Center" />
+              <ToggleButton x:Name="FavoritesOnlyBox" Grid.Column="1" Classes="icon" Margin="6,0,0,0">
+                <PathIcon x:Name="FavoritesOnlyIcon" Width="16" Height="16" />
+              </ToggleButton>
+              <ToggleButton x:Name="UnavailableBox" Grid.Column="2" Height="36" Margin="6,0,0,0" Padding="12,0"
+                            VerticalContentAlignment="Center" IsChecked="False" />
+            </Grid>
+            <ListBox x:Name="CategoryChips" DockPanel.Dock="Top" Classes="chips" Margin="0,0,0,4" SelectionMode="Single"
+                     Background="Transparent" Padding="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+              <ListBox.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+              </ListBox.ItemsPanel>
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="m:CategoryChip">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Count}" FontSize="12" Opacity="0.7" Margin="6,0,0,0" />
                   </StackPanel>
-                  <TextBlock Grid.Column="3" Text="{Binding StatusText}" Foreground="{StaticResource StatusSuccess}"
-                             VerticalAlignment="Center" Margin="12,0" />
-                  <Button Grid.Column="4" Content="{Binding ActionText}" IsEnabled="{Binding CanAct}"
-                          MinWidth="110" HorizontalContentAlignment="Center" VerticalAlignment="Center"
-                          Click="OnAppAction" />
-                </Grid>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="StatusLine" DockPanel.Dock="Top" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Foreground="{StaticResource TextSecondary}" />
 
-          <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,*,220,Auto" Margin="0,8,0,0">
-            <Button x:Name="InstallSelectedButton" Grid.Column="0" Classes="accent" Click="OnInstallSelected" />
-            <Button x:Name="ClearSelectionButton" Grid.Column="1" Margin="8,0,0,0" Click="OnClearSelection" />
-            <TextBox x:Name="PresetNameBox" Grid.Column="3" />
-            <Button x:Name="SavePresetButton" Grid.Column="4" Margin="8,0,0,0" Click="OnSavePreset" />
-          </Grid>
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+              <ItemsControl x:Name="GroupList" Margin="0,0,8,8">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="m:CatalogGroup">
+                    <StackPanel Margin="0,0,0,18">
+                      <DockPanel Margin="0,0,0,10">
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding CountText}" FontSize="12" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondary}" />
+                        <TextBlock Text="{Binding Header}" FontSize="15" FontWeight="SemiBold" />
+                      </DockPanel>
+                      <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate><v:AdaptiveCardPanel MinItemWidth="190" Gap="12" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="m:AppItem">
+                            <Border Classes="appCard" Classes.selected="{Binding IsSelected}">
+                              <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                  <Border Width="36" Height="36" CornerRadius="8" Margin="0,0,10,0" VerticalAlignment="Top"
+                                          Background="{StaticResource RaisedBackground}">
+                                    <TextBlock Text="{Binding Monogram}" FontSize="15" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Foreground="{StaticResource TextSecondary}" />
+                                  </Border>
+                                  <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                               Classes="appName" Classes.available="{Binding IsAvailable}"
+                                               Classes.installed="{Binding IsInstalled}" />
+                                    <TextBlock Text="{Binding MetaText}" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
+                                               Foreground="{StaticResource TextSecondary}" ToolTip.Tip="{Binding SourceText}" />
+                                  </StackPanel>
+                                  <Button Grid.Column="2" Classes="star" VerticalAlignment="Top" Click="OnToggleFavorite">
+                                    <PathIcon Data="{Binding FavoriteIcon}" Width="15" Height="15" Foreground="Gold" />
+                                  </Button>
+                                </Grid>
+                                <TextBlock Grid.Row="1" Text="{Binding Description}" FontSize="11" Margin="0,8,0,0" Height="30"
+                                           TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" VerticalAlignment="Top"
+                                           Foreground="{StaticResource TextSecondary}" ToolTip.Tip="{Binding Description}" />
+                                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Height="18" Margin="0,4,0,4">
+                                  <TextBlock Text="{Binding AlternativeText}" IsVisible="{Binding HasAlternative}" FontSize="11"
+                                             TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                             Foreground="{StaticResource StatusWarning}" />
+                                  <TextBlock Grid.Column="1" Text="{Binding StatusText}" IsVisible="{Binding HasStatus}" FontSize="11"
+                                             Margin="6,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource StatusSuccess}" />
+                                </Grid>
+                                <Panel Grid.Row="3">
+                                  <ToggleButton Classes="setToggle" IsVisible="{Binding IsNotInstalled}" IsChecked="{Binding IsSelected}"
+                                                IsEnabled="{Binding CanSelect}" Content="{Binding SelectLabel}" Click="OnSelectionChanged" />
+                                  <Button Classes="cardWide" IsVisible="{Binding IsInstalled}" Content="{Binding ActionText}"
+                                          IsEnabled="{Binding CanAct}" Click="OnAppAction" />
+                                </Panel>
+                              </Grid>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </DockPanel>
+
+          <!-- Справа: Flathub (если не включён), «Ваш набор» и сохранение набора -->
+          <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="12">
+              <Border x:Name="FlathubCard" Classes="side" IsVisible="False" BorderBrush="{StaticResource StatusWarning}">
+                <StackPanel Spacing="8">
+                  <TextBlock x:Name="FlathubTitle" FontSize="13" FontWeight="SemiBold" />
+                  <TextBlock x:Name="FlathubHint" Classes="hint" />
+                  <Button x:Name="FlatpakButton" Classes="accent" Height="34" HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnSetupFlatpak" />
+                </StackPanel>
+              </Border>
+              <Border Classes="side">
+                <StackPanel Spacing="6">
+                  <DockPanel>
+                    <TextBlock x:Name="SelCountText" DockPanel.Dock="Right" FontSize="11" VerticalAlignment="Center"
+                               Foreground="{StaticResource TextSecondary}" />
+                    <TextBlock x:Name="SetPanelTitle" FontSize="16" FontWeight="SemiBold" />
+                  </DockPanel>
+                  <TextBlock x:Name="SetPanelHint" Classes="hint" />
+                  <Button x:Name="InstallSelectedButton" Classes="accent" Height="40" Margin="0,6,0,0" HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnInstallSelected" />
+                  <Button x:Name="ClearSelectionButton" Height="30" HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnClearSelection" />
+                  <TextBlock x:Name="SetPanelNote" Classes="hint" Margin="0,4,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Classes="side">
+                <StackPanel Spacing="6">
+                  <TextBlock x:Name="PresetPanelTitle" FontSize="13" FontWeight="SemiBold" />
+                  <TextBox x:Name="PresetNameBox" />
+                  <Button x:Name="SavePresetButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnSavePreset" />
+                  <Button x:Name="OpenSetsButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnOpenSets" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
         </Grid>
       </TabItem>
 
@@ -155,60 +264,69 @@
         </Grid>
       </TabItem>
 
-      <!-- Персонализация -->
+
+      <!-- Персонализация: заголовок, «Применить всё / Вернуть всё как было» и карточки, как в клиенте Windows -->
       <TabItem x:Name="LookTab">
-        <ScrollViewer>
-          <StackPanel Spacing="10">
-            <TextBlock x:Name="LookIntro" TextWrapping="Wrap" Opacity="0.85" />
-            <WrapPanel>
-              <Border Classes="card" Padding="12" Margin="0,0,12,12" Width="380">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="8" Margin="0,0,8,8">
+            <TextBlock x:Name="LookHeading" FontSize="22" FontWeight="Bold" />
+            <TextBlock x:Name="LookIntro" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}" />
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,8">
+              <Button x:Name="LookApplyAll" Click="OnLookApplyAll" />
+              <Button x:Name="LookRevertAll" Click="OnLookRevertAll" />
+            </StackPanel>
+            <v:AdaptiveCardPanel MinItemWidth="260" Gap="12">
+              <Border Classes="side" Padding="18">
                 <StackPanel Spacing="8">
-                  <Image x:Name="WallpaperPreview" Height="190" Stretch="UniformToFill" />
-                  <TextBlock x:Name="WallpaperTitle" FontSize="16" FontWeight="SemiBold" />
-                  <TextBlock x:Name="WallpaperState" FontSize="12" Opacity="0.7" />
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="WallpaperApply" Tag="Wallpaper" Classes="accent" Click="OnLookApply" />
-                    <Button x:Name="WallpaperRevert" Tag="Wallpaper" Click="OnLookRevert" />
-                  </StackPanel>
-                </StackPanel>
-              </Border>
-              <Border Classes="card" Padding="12" Margin="0,0,12,12" Width="380">
-                <StackPanel Spacing="8">
-                  <Image x:Name="LockPreview" Height="190" Stretch="UniformToFill" />
-                  <TextBlock x:Name="LockTitle" FontSize="16" FontWeight="SemiBold" />
-                  <TextBlock x:Name="LockState" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="LockApply" Tag="LockScreen" Classes="accent" Click="OnLookApply" />
-                    <Button x:Name="LockRevert" Tag="LockScreen" Click="OnLookRevert" />
-                  </StackPanel>
-                </StackPanel>
-              </Border>
-              <Border Classes="card" Padding="12" Margin="0,0,12,12" Width="380">
-                <StackPanel Spacing="8">
-                  <Border Height="190" Background="#F4F6F8" CornerRadius="4">
-                    <Image x:Name="CursorsPreview" Margin="16" Stretch="Uniform" />
+                  <TextBlock x:Name="CursorsTitle" FontSize="15" FontWeight="SemiBold" />
+                  <TextBlock x:Name="CursorsHint" Classes="hint" FontSize="12" />
+                  <Border Height="140" Background="#F4F6F8" CornerRadius="4">
+                    <Image x:Name="CursorsPreview" Margin="12" Stretch="Uniform" />
                   </Border>
-                  <TextBlock x:Name="CursorsTitle" FontSize="16" FontWeight="SemiBold" />
-                  <TextBlock x:Name="CursorsState" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="CursorsApply" Tag="Cursors" Classes="accent" Click="OnLookApply" />
+                  <TextBlock x:Name="CursorsState" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <WrapPanel>
+                    <Button x:Name="CursorsApply" Tag="Cursors" Margin="0,0,8,0" Click="OnLookApply" />
                     <Button x:Name="CursorsRevert" Tag="Cursors" Click="OnLookRevert" />
-                  </StackPanel>
+                  </WrapPanel>
                 </StackPanel>
               </Border>
-              <Border Classes="card" Padding="12" Margin="0,0,12,12" Width="380">
+              <Border Classes="side" Padding="18">
                 <StackPanel Spacing="8">
-                  <TextBlock x:Name="SoundsTitle" FontSize="16" FontWeight="SemiBold" />
-                  <TextBlock x:Name="SoundsHint" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}" />
-                  <WrapPanel x:Name="SoundButtons" />
-                  <TextBlock x:Name="SoundsState" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="SoundsApply" Tag="Sounds" Classes="accent" Click="OnLookApply" />
-                    <Button x:Name="SoundsRevert" Tag="Sounds" Click="OnLookRevert" />
-                  </StackPanel>
+                  <TextBlock x:Name="WallpaperTitle" FontSize="15" FontWeight="SemiBold" />
+                  <TextBlock x:Name="WallpaperHint" Classes="hint" FontSize="12" />
+                  <Image x:Name="WallpaperPreview" Height="140" Stretch="UniformToFill" />
+                  <TextBlock x:Name="WallpaperState" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <WrapPanel>
+                    <Button x:Name="WallpaperApply" Tag="Wallpaper" Margin="0,0,8,0" Click="OnLookApply" />
+                    <Button x:Name="WallpaperRevert" Tag="Wallpaper" Click="OnLookRevert" />
+                  </WrapPanel>
                 </StackPanel>
               </Border>
-            </WrapPanel>
+              <Border Classes="side" Padding="18">
+                <StackPanel Spacing="8">
+                  <TextBlock x:Name="LockTitle" FontSize="15" FontWeight="SemiBold" />
+                  <TextBlock x:Name="LockHint" Classes="hint" FontSize="12" />
+                  <Image x:Name="LockPreview" Height="140" Stretch="UniformToFill" />
+                  <TextBlock x:Name="LockState" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <WrapPanel>
+                    <Button x:Name="LockApply" Tag="LockScreen" Margin="0,0,8,0" Click="OnLookApply" />
+                    <Button x:Name="LockRevert" Tag="LockScreen" Click="OnLookRevert" />
+                  </WrapPanel>
+                </StackPanel>
+              </Border>
+              <Border Classes="side" Padding="18">
+                <StackPanel Spacing="8">
+                  <TextBlock x:Name="SoundsTitle" FontSize="15" FontWeight="SemiBold" />
+                  <TextBlock x:Name="SoundsHint" Classes="hint" FontSize="12" />
+                  <WrapPanel x:Name="SoundButtons" />
+                  <TextBlock x:Name="SoundsState" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <WrapPanel>
+                    <Button x:Name="SoundsApply" Tag="Sounds" Margin="0,0,8,0" Click="OnLookApply" />
+                    <Button x:Name="SoundsRevert" Tag="Sounds" Click="OnLookRevert" />
+                  </WrapPanel>
+                </StackPanel>
+              </Border>
+            </v:AdaptiveCardPanel>
           </StackPanel>
         </ScrollViewer>
       </TabItem>
@@ -277,19 +395,6 @@
         </StackPanel>
       </TabItem>
     </TabControl>
-
-    <!-- Шапка раздела: название открытого раздела и строка состояния -->
-    <StackPanel Grid.Column="1" Grid.Row="0" Margin="28,18,28,0" Spacing="4" VerticalAlignment="Top">
-      <TextBlock x:Name="TitleText" Classes="pageTitle" />
-      <TextBlock x:Name="StatusLine" Foreground="{StaticResource TextSecondary}" FontSize="12" TextWrapping="Wrap" MaxHeight="34" />
-    </StackPanel>
-
-    <Border Grid.Column="1" Grid.Row="2" Classes="card" Margin="28,0,28,16" Padding="12,8">
-      <DockPanel>
-        <TextBlock x:Name="LogLabel" DockPanel.Dock="Top" Classes="eyebrow" Margin="0,0,0,6" />
-        <TextBox x:Name="LogBox" IsReadOnly="True" AcceptsReturn="True" Background="Transparent" BorderThickness="0"
-                 TextWrapping="Wrap" FontFamily="monospace" FontSize="11" Foreground="{StaticResource TextSecondary}" />
-      </DockPanel>
-    </Border>
+    </DockPanel>
   </Grid>
 </Window>
