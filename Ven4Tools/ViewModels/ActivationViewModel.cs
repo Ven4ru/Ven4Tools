@@ -157,16 +157,16 @@ namespace Ven4Tools.ViewModels
 
                                 if (name.Contains("Windows", StringComparison.OrdinalIgnoreCase))
                                 {
+                                    var (text, activated) = DescribeWindowsLicense(status);
                                     Application.Current?.Dispatcher.Invoke(() =>
                                     {
-                                        WindowsStatusText = status switch
+                                        WindowsStatusText = text;
+                                        switch (activated)
                                         {
-                                            1 => "✅ Активирована",
-                                            0 => "❌ Не активирована",
-                                            _ => "⚠️ Неизвестно"
-                                        };
-                                        if (status == 1) SetWindowsStatusBrush("StatusSuccess", Brushes.LightGreen);
-                                        else             SetWindowsStatusBrush("StatusDanger", Brushes.LightCoral);
+                                            case true:  SetWindowsStatusBrush("StatusSuccess", Brushes.LightGreen); break;
+                                            case false: SetWindowsStatusBrush("StatusDanger", Brushes.LightCoral); break;
+                                            default:    SetWindowsStatusBrush("StatusWarning", Brushes.Orange); break;
+                                        }
                                     });
                                     return;
                                 }
@@ -287,7 +287,9 @@ namespace Ven4Tools.ViewModels
                         name.Contains("Microsoft 365", StringComparison.OrdinalIgnoreCase))
                     {
                         int status = Convert.ToInt32(obj["LicenseStatus"]);
-                        SetOfficeStatusOnUI(status == 1 ? "✅ Активирован" : "❌ Не активирован", status == 1);
+                        // Пробные периоды (2, 3, 6) — как в ветке OSPP выше, а не «не активирован».
+                        if (status is 2 or 3 or 6) SetOfficeStatusOnUI("⚠️ Пробный период", null);
+                        else SetOfficeStatusOnUI(status == 1 ? "✅ Активирован" : "❌ Не активирован", status == 1);
                         return;
                     }
                 }
@@ -319,6 +321,23 @@ namespace Ven4Tools.ViewModels
                 });
             }
         }
+
+        /// <summary>
+        /// Текст и цвет по коду LicenseStatus из SoftwareLicensingProduct. Раньше различались
+        /// только 1 и 0, а всё остальное становилось «⚠️ Неизвестно» — в том числе 5
+        /// («уведомление»: срок активации истёк, Windows не активирована — самый частый случай
+        /// на практике) и пробные периоды. activated: true — зелёный, false — красный,
+        /// null — жёлтый (не ошибка, но и не активирована окончательно).
+        /// </summary>
+        internal static (string Text, bool? Activated) DescribeWindowsLicense(int status) => status switch
+        {
+            1 => ("✅ Активирована", true),
+            0 => ("❌ Не активирована", false),
+            5 => ("❌ Не активирована — Windows показывает напоминания об активации", false),
+            4 => ("❌ Не прошла проверку подлинности", false),
+            2 or 3 or 6 => ("⚠️ Пробный период — активация ещё не выполнена", null),
+            _ => ("⚠️ Неизвестно", null)
+        };
 
         private void SetOfficeStatusOnUI(string text, bool? isActivated)
         {

@@ -295,6 +295,21 @@ public sealed class WindowsVersionInfoTests
         Assert.Equal(expected, WindowsVersionInfo.FixProductName(name, build));
 
     [Theory]
+    [InlineData("Windows 11 Pro", "25H2", 26200, 8037, "Windows 11 Pro 25H2 (сборка 26200.8037)")]
+    [InlineData("Windows 10 Pro", "22H2", 19045, 2965, "Windows 10 Pro 22H2 (сборка 19045.2965)")]
+    [InlineData("Windows 10 Enterprise LTSC 2021", "", 19044, 0, "Windows 10 Enterprise LTSC 2021 (сборка 19044)")]
+    public void FormatLabel(string name, string displayVersion, int build, int ubr, string expected) =>
+        Assert.Equal(expected, WindowsVersionInfo.FormatLabel(name, displayVersion, build, ubr));
+
+    [Fact]
+    public void ReadCurrentLabel_NamesWindowsAndBuild_NotKernelString()
+    {
+        string label = WindowsVersionInfo.ReadCurrentLabel();
+        Assert.StartsWith("Windows", label);
+        Assert.Contains("сборка " + Environment.OSVersion.Version.Build, label);
+    }
+
+    [Theory]
     [InlineData("2026-10 Cumulative Update for Windows 11, version 25H2 for x64-based Systems (KB5070000)", true)]
     [InlineData("2026-10 Накопительное обновление для Windows 10 Version 22H2 для систем на базе процессоров x64 (KB5070001)", true)]
     [InlineData("2026-09 Cumulative Update Preview for Windows 11 Version 24H2 for x64-based Systems (KB5069999)", true)]

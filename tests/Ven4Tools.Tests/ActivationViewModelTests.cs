@@ -79,6 +79,23 @@ public class ActivationViewModelTests
         Assert.True(vm.CheckStatusCommand.CanExecute(null));
     }
 
+    [Theory]
+    [InlineData(1, "✅ Активирована", true)]
+    [InlineData(0, "❌ Не активирована", false)]
+    [InlineData(5, "❌ Не активирована — Windows показывает напоминания об активации", false)]
+    [InlineData(4, "❌ Не прошла проверку подлинности", false)]
+    [InlineData(2, "⚠️ Пробный период — активация ещё не выполнена", null)]
+    [InlineData(3, "⚠️ Пробный период — активация ещё не выполнена", null)]
+    [InlineData(6, "⚠️ Пробный период — активация ещё не выполнена", null)]
+    [InlineData(42, "⚠️ Неизвестно", null)]
+    public void DescribeWindowsLicense_КаждыйКодLicenseStatus_СвойТекст(int status, string text, bool? activated)
+    {
+        var described = ActivationViewModel.DescribeWindowsLicense(status);
+
+        Assert.Equal(text, described.Text);
+        Assert.Equal(activated, described.Activated);
+    }
+
     [Fact]
     public void CreateLicensingSearcher_СтроитЗапросПоSoftwareLicensingProduct()
     {
