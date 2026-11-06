@@ -39,7 +39,7 @@ public static class L
         ["Временно недоступна"] = "Temporarily unavailable",
         ["проверка"] = "checked",
         ["официальная сборка"] = "official build",
-        ["официальная"] = "official",
+        ["авторская"] = "official",
         ["сообщество"] = "community",
         ["Недоступна"] = "Unavailable",
         ["Вместо: "] = "Replaces: ",
@@ -112,6 +112,7 @@ public static class L
         ["Подпись встроенного каталога не сошлась"] = "Built-in catalog signature mismatch",
         ["Кэш каталога не записался: "] = "Catalog cache was not saved: ",
         ["Каталог v{0} старее принятого v{1}, источник пропущен: "] = "Catalog v{0} is older than accepted v{1}, source skipped: ",
+        ["Каталог по этому адресу не читается, источник пропущен: "] = "The catalog at this address cannot be read, source skipped: ",
         // Категории каталога
         ["Браузеры"] = "Browsers",
         ["Графика"] = "Graphics",
