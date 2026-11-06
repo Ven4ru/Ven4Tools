@@ -54,7 +54,8 @@ public static class CatalogLoader
 
     public static async Task<(MasterCatalog Catalog, string Source)> LoadAsync(Action<string> log)
     {
-        var (json, source) = await LoadSignedAsync(Master, Master.Sources, k => k is null, log);
+        var (json, source) = await LoadSignedAsync(Master, Master.Sources, k => k is null,
+            j => JsonSerializer.Deserialize<MasterCatalog>(j) is not null, log);
         return (JsonSerializer.Deserialize<MasterCatalog>(json) ?? new MasterCatalog(), source);
     }
 
@@ -67,7 +68,8 @@ public static class CatalogLoader
             sources.Insert(0, extra);
         try
         {
-            var (json, source) = await LoadSignedAsync(Linux, sources.ToArray(), k => k == LinuxCatalog.KindValue, log);
+            var (json, source) = await LoadSignedAsync(Linux, sources.ToArray(), k => k == LinuxCatalog.KindValue,
+                j => JsonSerializer.Deserialize<LinuxCatalog>(j) is { Apps.Count: > 0 }, log);
             var catalog = JsonSerializer.Deserialize<LinuxCatalog>(json);
             return catalog is null ? null : (catalog, source);
         }
@@ -97,9 +99,10 @@ public static class CatalogLoader
     }
 
     private static async Task<(string Json, string Source)> LoadSignedAsync(
-        Spec spec, string[] sources, Func<string?, bool> kindOk, Action<string> log)
+        Spec spec, string[] sources, Func<string?, bool> kindOk, Func<string, bool> parses, Action<string> log)
     {
-        var lastSeen = ReadGuard(spec);
+        // Каталог, вшитый в эту сборку, - нижняя граница: устаревшая копия в сети его не перебивает
+        var lastSeen = Math.Max(ReadGuard(spec), EmbeddedVersion(spec, kindOk));
         foreach (var url in sources)
         {
             try
@@ -122,6 +125,12 @@ public static class CatalogLoader
                     log(string.Format(L.T("Каталог v{0} старее принятого v{1}, источник пропущен: "), probe.Version, lastSeen) + url);
                     continue;
                 }
+                if (!TryParse(parses, json))
+                {
+                    // Подпись верна, но вид каталога эта версия программы не понимает - пробуем следующий источник
+                    log(L.T("Каталог по этому адресу не читается, источник пропущен: ") + url);
+                    continue;
+                }
                 ServerReachable = true;
                 SaveCache(spec, json, sig, probe.Version, log);
                 return (json, new Uri(url).Host);
@@ -134,7 +143,8 @@ public static class CatalogLoader
             }
         }
 
-        if (TryReadCache(spec, kindOk) is { } cached)
+        if (TryReadCache(spec, kindOk) is { } cached && TryParse(parses, cached)
+            && (JsonSerializer.Deserialize<KindProbe>(cached)?.Version ?? 0) >= EmbeddedVersion(spec, kindOk))
             return (cached, L.T("кэш"));
 
         var embeddedJson = ReadResource(spec.File);
@@ -143,6 +153,25 @@ public static class CatalogLoader
             || !kindOk((JsonSerializer.Deserialize<KindProbe>(embeddedJson) ?? new KindProbe()).Kind))
             throw new InvalidOperationException(L.T("Подпись встроенного каталога не сошлась"));
         return (embeddedJson, L.T("встроенный"));
+    }
+
+    private static bool TryParse(Func<string, bool> parses, string json)
+    {
+        try { return parses(json); }
+        catch { return false; }
+    }
+
+    // Версия встроенного каталога, если его подпись и вид в порядке; иначе 0
+    private static int EmbeddedVersion(Spec spec, Func<string?, bool> kindOk)
+    {
+        try
+        {
+            var json = ReadResource(spec.File);
+            if (!CatalogSignatureVerifier.Verify(json, ReadResource(spec.File + ".sig"))) return 0;
+            var probe = JsonSerializer.Deserialize<KindProbe>(json) ?? new KindProbe();
+            return kindOk(probe.Kind) ? probe.Version : 0;
+        }
+        catch { return 0; }
     }
 
     private static string CachePath(Spec spec) => Path.Combine(AppPaths.Cache, spec.File);

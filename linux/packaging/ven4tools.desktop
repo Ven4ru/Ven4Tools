@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Ven4Tools
+GenericName=Program catalog
+GenericName[ru]=Каталог программ
+Comment=Install popular programs from Flathub in one click, Venchik desktop personalization
+Comment[ru]=Установка популярных программ с Flathub в один клик, оформление рабочего стола с Венчиком
+Exec=/opt/ven4tools/ven4tools
+Icon=ven4tools
+Terminal=false
+Categories=Settings;PackageManager;
+Keywords=install;flatpak;flathub;catalog;программы;установка;
+StartupWMClass=ven4tools

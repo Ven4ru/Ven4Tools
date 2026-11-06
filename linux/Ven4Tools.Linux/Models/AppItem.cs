@@ -62,13 +62,13 @@ public sealed class AppItem : INotifyPropertyChanged
         };
 
     // Строка под названием на карточке: откуда ставится, коротко. Полный идентификатор — в подсказке (SourceText)
-    // На узкой карточке — коротко: «Flathub · официальная», «Недоступна · 05.11»
+    // На узкой карточке — коротко: «Flathub · авторская», «Недоступна · 05.11»
     public string MetaText => Unavailable
         ? L.T("Недоступна") + (CheckedDate is { Length: >= 10 } d ? $" · {d[8..10]}.{d[5..7]}" : "")
         : Backend switch
         {
-            BackendKind.Flatpak => "Flathub · " + (Package!.FlatpakVerified ? L.T("официальная") : L.T("сообщество")),
-            BackendKind.Snap => "Snap · " + (SnapOfficial ? L.T("официальная") : L.T("сообщество")) +
+            BackendKind.Flatpak => "Flathub · " + (Package!.FlatpakVerified ? L.T("авторская") : L.T("сообщество")),
+            BackendKind.Snap => "Snap · " + (SnapOfficial ? L.T("авторская") : L.T("сообщество")) +
                                 (Package!.SnapClassic ? " · classic" : ""),
             _ => Package is null ? L.T("Нет версии для Linux")
                 : Package.Flatpak is not null ? L.T("Есть на Flathub") : L.T("Нужен Snap")

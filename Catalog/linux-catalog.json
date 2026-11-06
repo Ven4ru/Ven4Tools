@@ -1,6 +1,6 @@
 {
   "kind": "ven4tools-linux-catalog",
-  "version": 2,
+  "version": 4,
   "lastUpdated": "2026-11-06",
   "comment": "Каталог Ven4Tools для Linux. Каждая программа проверяется установкой на чистой системе (Tools/LinuxCatalog). status=unavailable — последняя проверка не прошла; replaces — какие программы каталога Windows она заменяет.",
   "apps": [
@@ -11,7 +11,10 @@
       "description": "Чат с локальными нейросетями на вашем компьютере: Ollama уже внутри, работает без облака.",
       "descriptionEn": "Chat with local AI models on your computer: Ollama is built in, no cloud needed.",
       "replaces": [
-        "ollama"
+        {
+          "id": "ollama",
+          "name": "Ollama"
+        }
       ],
       "flatpak": "com.jeffser.Alpaca",
       "publisher": "Jeffry Samuel Eduarte Rojas",
@@ -19,7 +22,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -35,7 +38,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -54,7 +57,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -70,7 +73,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -87,7 +90,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -107,7 +110,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -123,7 +126,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -143,7 +146,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -159,7 +162,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -175,7 +178,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -195,7 +198,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -211,7 +214,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -231,7 +234,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -252,7 +255,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06",
       "nameEn": "Disk Usage Analyzer"
@@ -273,7 +276,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -289,7 +292,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -309,7 +312,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -325,7 +328,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -342,7 +345,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -361,7 +364,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -389,7 +392,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -405,7 +408,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -422,7 +425,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -441,7 +444,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -462,7 +465,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -478,7 +481,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -498,7 +501,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -514,7 +517,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -530,7 +533,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -546,7 +549,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -562,7 +565,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -587,7 +590,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -608,7 +611,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -628,7 +631,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -644,7 +647,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -654,7 +657,10 @@
       "description": "Локальный ИИ-ассистент: скачивает модели и отвечает без интернета.",
       "descriptionEn": "Local AI assistant: downloads models and answers offline.",
       "replaces": [
-        "lm-studio"
+        {
+          "id": "lm-studio",
+          "name": "LM Studio"
+        }
       ],
       "flatpak": "ai.jan.Jan",
       "publisher": "Menlo Research Pte. Ltd.",
@@ -662,7 +668,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -681,7 +687,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -697,7 +703,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -716,7 +722,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -735,7 +741,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -754,7 +760,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -770,7 +776,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -789,7 +795,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -808,7 +814,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -824,7 +830,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -841,7 +847,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -857,7 +863,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -873,7 +879,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -890,7 +896,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -908,7 +914,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "snap-info"
+        "result": "snap-info-ok"
       }
     },
     {
@@ -927,7 +933,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -946,7 +952,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -965,7 +971,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -984,7 +990,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1000,7 +1006,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -1022,7 +1028,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1038,7 +1044,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -1060,7 +1066,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -1080,7 +1086,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1098,7 +1104,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "snap-info"
+        "result": "snap-info-ok"
       }
     },
     {
@@ -1114,7 +1120,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1130,7 +1136,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -1147,7 +1153,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1163,7 +1169,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1179,7 +1185,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1198,7 +1204,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1214,7 +1220,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -1234,7 +1240,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1252,7 +1258,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "snap-info"
+        "result": "snap-info-ok"
       }
     },
     {
@@ -1276,7 +1282,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1289,10 +1295,10 @@
       "flatpak": "com.teamspeak.TeamSpeak",
       "publisher": "TeamSpeak Systems, Inc.",
       "official": false,
-      "status": "ok",
+      "status": "unavailable",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "установка не прошла: файл программы на сервере TeamSpeak не найден (404), Fedora 44 и проверка с сервера в РФ"
       }
     },
     {
@@ -1311,7 +1317,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1330,7 +1336,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1349,7 +1355,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1368,7 +1374,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1384,7 +1390,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       },
       "added": "2026-11-06"
     },
@@ -1401,7 +1407,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1417,7 +1423,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1433,7 +1439,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1449,7 +1455,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1465,7 +1471,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     },
     {
@@ -1481,7 +1487,7 @@
       "status": "ok",
       "checked": {
         "date": "2026-11-06",
-        "result": "flathub-api"
+        "result": "install-ok"
       }
     }
   ]

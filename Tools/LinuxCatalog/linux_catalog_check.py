@@ -62,13 +62,23 @@ def check_flatpak(app, install):
     code, d = http_json(f'https://flathub.org/api/v2/appstream/{fid}?locale=en')
     if code == 404:
         return 'unavailable', 'нет на Flathub (404)', {}
-    if code != 200 or d is None:
-        return None, f'Flathub не ответил ({code})', {}
+    api_ok = code == 200 and d is not None
+    if not api_ok:
+        # Сайт Flathub не ответил (бывает, что он недоступен, а репозиторий dl.flathub.org работает):
+        # сведения берём из самого репозитория, подтверждение разработчика в этом случае не проверяется
+        if not install:
+            return None, f'Flathub не ответил ({code})', {}
+        rc, out = run(['flatpak', 'remote-info', '--user', 'flathub', fid], timeout=300)
+        if rc != 0:
+            if 'not found' in out.lower() or 'nothing matches' in out.lower():
+                return 'unavailable', 'нет в репозитории Flathub', {}
+            return None, f'Flathub не ответил ({code}), репозиторий тоже: {out.splitlines()[-1][:120] if out else rc}', {}
+        d = {'is_eol': 'end-of-life' in out.lower()}
     md = d.get('metadata') or {}
     info = {'developer': d.get('developer_name') or '', 'verified': bool(md.get('flathub::verification::verified'))}
     if d.get('is_eol'):
         return 'unavailable', 'снят с поддержки на Flathub (EOL)', info
-    if app.get('official') and not info['verified']:
+    if api_ok and app.get('official') and not info['verified']:
         # Подтверждённый автором пакет перестал быть подтверждённым — возможна смена владельца
         return 'unavailable', 'разработчик на Flathub больше не подтверждён', info
     if not install:
@@ -84,7 +94,7 @@ def check_flatpak(app, install):
     run(['flatpak', 'uninstall', '--user', '-y', '--noninteractive', fid])
     if not installed:
         return 'unavailable', 'после установки пакет не найден (flatpak info)', info
-    return 'ok', 'install-ok', info
+    return 'ok', 'install-ok' if api_ok else 'install-ok (сайт Flathub не ответил, данные из репозитория)', info
 
 
 def check_snap(app):
@@ -103,6 +113,47 @@ def check_snap(app):
     return 'ok', 'snap-info-ok', info
 
 
+STR_FIELDS = ('id', 'name', 'category', 'description', 'descriptionEn')
+OPT_STR_FIELDS = ('nameEn', 'flatpak', 'snap', 'snapPublisher', 'publisher', 'status')
+BOOL_FIELDS = ('official', 'snapClassic')
+
+
+def validate(cat):
+    """Вид каталога — ровно тот, что читает программа (Models/CatalogModels.cs)."""
+    out = []
+    if cat.get('kind') != 'ven4tools-linux-catalog':
+        out.append('kind должен быть ven4tools-linux-catalog')
+    if not isinstance(cat.get('version'), int):
+        out.append('version должен быть числом')
+    ids = set()
+    for i, x in enumerate(cat.get('apps') or []):
+        where = f'apps[{i}] {x.get("id", "?")}'
+        for k in STR_FIELDS:
+            if not isinstance(x.get(k), str) or not x.get(k):
+                out.append(f'{where}: {k} — нужна непустая строка')
+        for k in OPT_STR_FIELDS:
+            if k in x and x[k] is not None and not isinstance(x[k], str):
+                out.append(f'{where}: {k} — нужна строка')
+        for k in BOOL_FIELDS:
+            if k in x and not isinstance(x[k], bool):
+                out.append(f'{where}: {k} — нужно true/false')
+        if not x.get('flatpak') and not x.get('snap'):
+            out.append(f'{where}: нет ни flatpak, ни snap')
+        for r in x.get('replaces') or []:
+            if not isinstance(r, dict) or not isinstance(r.get('id'), str) or not isinstance(r.get('name'), str):
+                out.append(f'{where}: replaces — нужны объекты {{"id", "name"}}')
+                break
+        ch = x.get('checked')
+        if ch is not None and (not isinstance(ch, dict) or not isinstance(ch.get('date'), str) or not isinstance(ch.get('result'), str)):
+            out.append(f'{where}: checked — нужен объект {{"date", "result"}}')
+        if x.get('status', 'ok') not in ('ok', 'unavailable'):
+            out.append(f'{where}: status — ok или unavailable')
+        if x.get('id') in ids:
+            out.append(f'{where}: id повторяется')
+        ids.add(x.get('id'))
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--catalog', required=True)
@@ -117,6 +168,11 @@ def main():
     raw = open(a.catalog, encoding='utf-8').read()
     cat = json.loads(raw)
     apps = cat['apps']
+    problems = validate(cat)
+    if problems:
+        # Каталог неверного вида программа не примет и молча возьмёт каталог Windows
+        print('Каталог не прошёл проверку формата:\n  ' + '\n  '.join(problems), file=sys.stderr)
+        return 3
     only = {x.strip() for x in a.only.split(',') if x.strip()}
     todo = [x for x in apps if not only or x['id'] in only]
     if a.limit:

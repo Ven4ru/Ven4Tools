@@ -136,7 +136,7 @@
                             <Border Classes="appCard" Classes.selected="{Binding IsSelected}">
                               <Grid RowDefinitions="Auto,Auto,Auto,Auto">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
-                                  <Border Width="36" Height="36" CornerRadius="8" Margin="0,0,10,0" VerticalAlignment="Top"
+                                  <Border Width="32" Height="32" CornerRadius="8" Margin="0,0,8,0" VerticalAlignment="Top"
                                           Background="{StaticResource RaisedBackground}">
                                     <TextBlock Text="{Binding Monogram}" FontSize="15" FontWeight="SemiBold"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -146,7 +146,7 @@
                                     <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                                Classes="appName" Classes.available="{Binding IsAvailable}"
                                                Classes.installed="{Binding IsInstalled}" />
-                                    <TextBlock Text="{Binding MetaText}" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
+                                    <TextBlock Text="{Binding MetaText}" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
                                                Foreground="{StaticResource TextSecondary}" ToolTip.Tip="{Binding SourceText}" />
                                   </StackPanel>
                                   <Button Grid.Column="2" Classes="star" VerticalAlignment="Top" Click="OnToggleFavorite">

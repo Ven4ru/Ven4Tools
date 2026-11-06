@@ -1,0 +1,25 @@
+# Maintainer: Ven4Tools <ven4ru@users.noreply.github.com>
+pkgname=ven4tools-bin
+pkgver=7.1.0
+pkgrel=1
+pkgdesc="Program catalog with one-click Flathub installs, sets, updates and Venchik personalization (beta)"
+arch=('x86_64')
+url="https://ven4tools.ru"
+license=('MIT')
+depends=('icu' 'fontconfig' 'glibc')
+optdepends=('flatpak: install programs from Flathub'
+            'snapd: install programs from the Snap store')
+provides=('ven4tools')
+conflicts=('ven4tools')
+options=('!strip' '!debug')
+source=("https://github.com/Ven4ru/Ven4Tools/releases/download/linux-v${pkgver}/Ven4Tools-Linux-${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+package() {
+  cd "ven4tools-${pkgver}"
+  install -Dm755 ven4tools "${pkgdir}/opt/ven4tools/ven4tools"
+  install -Dm644 ven4tools.desktop "${pkgdir}/usr/share/applications/ven4tools.desktop"
+  install -Dm644 ven4tools.png "${pkgdir}/usr/share/icons/hicolor/256x256/apps/ven4tools.png"
+  install -d "${pkgdir}/usr/bin"
+  ln -s /opt/ven4tools/ven4tools "${pkgdir}/usr/bin/ven4tools"
+}
