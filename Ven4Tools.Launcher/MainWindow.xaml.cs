@@ -87,9 +87,15 @@ namespace Ven4Tools.Launcher
             };
             _isUiTestMode = Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1";
 
+            // Песочница UI-тестов: данные и клиент — СОСЕДНИЕ папки внутри корня теста.
+            // Раньше данными был сам корень, а клиент — его подпапкой Install: для
+            // InstallPathGuard это «клиент внутри папки данных», и любая запись в клиента
+            // (починка «Исправить», установка) в тестовом режиме отменялась окном
+            // «Небезопасный путь установки», которого тест не видит (06.11).
+            string uiTestRoot = Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST_ROOT")
+                ?? Path.Combine(Path.GetTempPath(), "Ven4Tools.UI.Tests");
             string appData = _isUiTestMode
-                ? Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST_ROOT")
-                    ?? Path.Combine(Path.GetTempPath(), "Ven4Tools.UI.Tests")
+                ? Path.Combine(uiTestRoot, "Data")
                 : Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "Ven4Tools");
@@ -111,7 +117,7 @@ namespace Ven4Tools.Launcher
 
             if (string.IsNullOrEmpty(_installPath))
                 _installPath = _isUiTestMode
-                    ? Path.Combine(appData, "Install")
+                    ? Path.Combine(uiTestRoot, "Install")
                     : ResolveInitialInstallRoot();
 
             _clientPath = ResolveClientPath();
