@@ -345,6 +345,7 @@ public sealed class LauncherIntegrityScenarioTests : IDisposable
     {
         string archive = PublishedClientArchive();
         Directory.CreateDirectory(ClientPath);
+        string root = Path.GetFullPath(ClientPath) + Path.DirectorySeparatorChar;
         using (ZipArchive zip = ZipFile.OpenRead(archive))
         {
             foreach (ZipArchiveEntry entry in zip.Entries)
@@ -355,7 +356,12 @@ public sealed class LauncherIntegrityScenarioTests : IDisposable
                 {
                     continue;
                 }
-                string target = Path.GetFullPath(Path.Combine(ClientPath, entry.FullName));
+                string target = Path.GetFullPath(Path.Combine(root, entry.FullName));
+                // Как SafeZipExtractor: запись не может выйти за папку клиента (zip-slip).
+                if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidDataException($"Запись архива выходит за папку клиента: {entry.FullName}");
+                }
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 entry.ExtractToFile(target, overwrite: true);
             }
