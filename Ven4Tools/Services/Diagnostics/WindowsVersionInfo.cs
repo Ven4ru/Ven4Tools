@@ -31,6 +31,40 @@ namespace Ven4Tools.Services.Diagnostics
         }
 
         /// <summary>
+        /// Понятная строка версии для «Информации о системе» и отчётов: «Windows 11 Pro 25H2
+        /// (сборка 26200.8037)» вместо «Microsoft Windows NT 10.0.26200.0» из Environment.OSVersion,
+        /// по которой ни выпуск, ни версию, ни номер обновления не узнать.
+        /// </summary>
+        internal static string ReadCurrentLabel()
+        {
+            string productName = "", displayVersion = "";
+            int build = 0, ubr = 0;
+            try
+            {
+                using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
+                if (key != null)
+                {
+                    productName = key.GetValue("ProductName")?.ToString() ?? "";
+                    displayVersion = key.GetValue("DisplayVersion")?.ToString() ?? key.GetValue("ReleaseId")?.ToString() ?? "";
+                    int.TryParse(key.GetValue("CurrentBuildNumber")?.ToString() ?? key.GetValue("CurrentBuild")?.ToString(), out build);
+                    if (key.GetValue("UBR") is int u) ubr = u;
+                }
+            }
+            catch
+            {
+                // Реестр недоступен — ниже вернём хотя бы строку .NET.
+            }
+            if (build == 0) return Environment.OSVersion.VersionString;
+            return FormatLabel(FixProductName(productName, build), displayVersion, build, ubr);
+        }
+
+        internal static string FormatLabel(string productName, string? displayVersion, int build, int ubr)
+        {
+            string head = string.IsNullOrWhiteSpace(displayVersion) ? productName : $"{productName} {displayVersion.Trim()}";
+            return ubr > 0 ? $"{head} (сборка {build}.{ubr})" : $"{head} (сборка {build})";
+        }
+
+        /// <summary>
         /// Заголовок из журнала Windows Update — накопительное обновление самой Windows?
         /// «2026-10 Cumulative Update for Windows 11, version 25H2 …», «… Накопительное
         /// обновление для Windows 10 Version 22H2 …», в том числе Preview. Накопительные

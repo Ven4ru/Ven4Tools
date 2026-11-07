@@ -2692,6 +2692,14 @@
     "t": "{0} (interface revision cannot be detected)"
   },
   {
+    "s": "{0} (сборка {1})",
+    "t": "{0} (build {1})"
+  },
+  {
+    "s": "{0} (сборка {1}.{2})",
+    "t": "{0} (build {1}.{2})"
+  },
+  {
     "s": "{0} --version вернул код {1}",
     "t": "{0} --version returned code {1}"
   },
@@ -14528,6 +14536,10 @@
     "t": "⚠️ Trial period"
   },
   {
+    "s": "⚠️ Пробный период — активация ещё не выполнена",
+    "t": "⚠️ Trial period — not activated yet"
+  },
+  {
     "s": "⚠️ Проверка не завершилась",
     "t": "⚠️ Check did not finish"
   },
@@ -15286,6 +15298,14 @@
   {
     "s": "❌ Не активирована",
     "t": "❌ Not activated"
+  },
+  {
+    "s": "❌ Не активирована — Windows показывает напоминания об активации",
+    "t": "❌ Not activated — Windows shows activation reminders"
+  },
+  {
+    "s": "❌ Не прошла проверку подлинности",
+    "t": "❌ Failed genuine validation"
   },
   {
     "s": "❌ Не удалось вернуть полностью: {0} — подробности в журнале",

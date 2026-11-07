@@ -117,6 +117,20 @@ namespace Ven4Tools.Services
 
         private static readonly System.Collections.Generic.Dictionary<string, string> _packageWingetCache = new();
         private static readonly object _packageWingetCacheLock = new();
+        private static readonly System.Collections.Generic.Dictionary<string, DateTime> _rejectedWinget = new(StringComparer.OrdinalIgnoreCase);
+        // Отказ проверки подписи держим недолго: 06.11 на Windows 10 22H2 он был временным — Store в этот
+        // момент сам обновлял App Installer, и через минуту тот же файл проверялся успешно.
+        private static readonly TimeSpan RejectedWingetRetry = TimeSpan.FromSeconds(30);
+
+        private static string FileStamp(string path)
+        {
+            try
+            {
+                var info = new FileInfo(path);
+                return $"{path}|{info.LastWriteTimeUtc.Ticks}|{info.Length}";
+            }
+            catch { return path; }
+        }
 
         /// <summary>
         /// Находит winget.exe внутри пакета Microsoft.DesktopAppInstaller под
@@ -158,11 +172,20 @@ namespace Ven4Tools.Services
                     }
                     catch { continue; }
 
+                    // Отказ проверки по тому же файлу (путь + время записи + размер) не
+                    // повторяем RejectedWingetRetry секунд: 06.11 на Windows 10 22H2 без обновлений один и тот же
+                    // winget.exe проверялся заново на каждый вызов — 209 раз за секунду
+                    // под этой блокировкой, по строке журнала на каждый. Обновление пакета
+                    // меняет путь или файл — тогда проверяем заново.
+                    string stamp = FileStamp(exePath);
+                    if (_rejectedWinget.TryGetValue(stamp, out var rejectedAt) && DateTime.UtcNow - rejectedAt < RejectedWingetRetry) continue;
+
                     if (AuthenticodeVerifier.IsSignedByMicrosoft(exePath, out string error))
                     {
                         _packageWingetCache[arch] = exePath;
                         return exePath;
                     }
+                    _rejectedWinget[stamp] = DateTime.UtcNow;
                     AppLogger.Write($"[TrustedExecutablePaths] ⚠ {exePath}: подпись не подтверждена ({error}) — пропускаю эту версию пакета");
                 }
 
@@ -287,6 +310,7 @@ namespace Ven4Tools.Services
             lock (_packageWingetCacheLock)
             {
                 _packageWingetCache.Clear();
+                _rejectedWinget.Clear();
             }
             InvalidateAclCache(Path.Combine(LocalAppDataDir, "Microsoft", "WindowsApps"));
         }

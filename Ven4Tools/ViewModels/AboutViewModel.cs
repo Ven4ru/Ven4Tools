@@ -105,7 +105,7 @@ namespace Ven4Tools.ViewModels
         {
             try
             {
-                var osVersion = Environment.OSVersion.VersionString;
+                var osVersion = Services.Diagnostics.WindowsVersionInfo.ReadCurrentLabel();
                 var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "—";
 
                 var title = Uri.EscapeDataString($"Обратная связь: {appVersion}");
@@ -138,7 +138,7 @@ namespace Ven4Tools.ViewModels
         {
             try
             {
-                var osVersion = Environment.OSVersion.VersionString;
+                var osVersion = Services.Diagnostics.WindowsVersionInfo.ReadCurrentLabel();
                 var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "—";
 
                 string lastLogs = GetLastLogLines();

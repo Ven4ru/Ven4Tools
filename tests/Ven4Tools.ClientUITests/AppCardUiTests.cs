@@ -101,15 +101,35 @@ namespace Ven4Tools.ClientUITests
             var search = GetSearchBox(s);
             search.Focus();
             var tb = search.AsTextBox();
-            tb.Enter(query); // ValuePattern.SetValue → SearchText (UpdateSourceTrigger=PropertyChanged)
+            // Text = ValuePattern.SetValue, без клавиатуры. Enter() печатает с клавиатуры, и буквы
+            // уходили в окно с фокусом: на Win10 после входа это системная панель «Сети» поверх
+            // клиента — поле поиска оставалось пустым (06.11, Win10 22H2).
+            tb.Text = query; // → SearchText (UpdateSourceTrigger=PropertyChanged)
             System.Threading.Thread.Sleep(300);
 
-            return Retry.WhileNull(
-                () => s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.CheckBox))
-                        .FirstOrDefault(c => (c.Properties.AutomationId.ValueOrDefault ?? "")
-                            .Contains("chkApp_" + expectIdFragment, StringComparison.OrdinalIgnoreCase)),
-                timeout: TimeSpan.FromSeconds(12), interval: TimeSpan.FromMilliseconds(400),
-                throwOnTimeout: false).Result;
+            // Строка с нужным chkApp_ есть в дереве и без фильтра: плитки каталога не
+            // виртуализированы. Годится только строка в пределах окна — иначе мышь упирается
+            // в край экрана и кликает мимо (06.11, Win10 22H2: запрос не дошёл до поля, список
+            // остался полным, Telegram стоял на Y=5512 при экране 900, клик ушёл на Y=899).
+            AutomationElement? FindVisible()
+            {
+                var win = s.MainWindow.BoundingRectangle;
+                return s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.CheckBox))
+                    .FirstOrDefault(c => (c.Properties.AutomationId.ValueOrDefault ?? "")
+                                             .Contains("chkApp_" + expectIdFragment, StringComparison.OrdinalIgnoreCase)
+                                         && win.Contains(c.BoundingRectangle.Center()));
+            }
+
+            var row = Retry.WhileNull(FindVisible, timeout: TimeSpan.FromSeconds(6),
+                interval: TimeSpan.FromMilliseconds(400), throwOnTimeout: false).Result;
+            if (row != null) return row;
+
+            // Запрос не применился — вводим его ещё раз.
+            tb.Text = "";
+            System.Threading.Thread.Sleep(300);
+            tb.Text = query;
+            return Retry.WhileNull(FindVisible, timeout: TimeSpan.FromSeconds(12),
+                interval: TimeSpan.FromMilliseconds(400), throwOnTimeout: false).Result;
         }
 
         private static AutomationElement? NameTextForCheckBox(AutomationElement chk)
@@ -204,7 +224,27 @@ namespace Ven4Tools.ClientUITests
             string? staleTitle = OpenCards(s).FirstOrDefault()?.Title;
             if (staleTitle != null) CloseCard(s);
 
+            string rowId = chk.Properties.AutomationId.ValueOrDefault ?? "";
+            // Мышиный клик попадает в то окно, что сверху в этой точке экрана. На
+            // свежей Win10 после входа Проводник сам открывает «Быстрый доступ» поверх
+            // клиента — клик уходил в Проводник (06.11, Win10 22H2). Поднимаем клиент.
+            s.MainWindow.SetForeground();
             name!.Click(); // реальный мышиный клик → MouseBinding LeftClick → OpenCardCommand
+            var card = FindCardWindow(s, T, staleTitle);
+            if (card != null || rowId.Length == 0) return card;
+
+            // Первый класс набора на свежей Windows попадает на перестройку списка после
+            // первой проверки доступности: клик приходится по контейнеру, который в этот
+            // момент пересоздаётся, и пропадает. Один повтор по той же строке, найденной
+            // заново по её AutomationId, — не подмена приложения (06.11, Win10 22H2).
+            var again = s.MainWindow.FindAllDescendants(cf => cf.ByControlType(ControlType.CheckBox))
+                .FirstOrDefault(c => (c.Properties.AutomationId.ValueOrDefault ?? "") == rowId);
+            var againName = again == null ? null
+                : (reresolveFragment != null ? NameTextByAppTitle(s, expectedTitleFragment ?? reresolveFragment) : null)
+                  ?? NameTextForCheckBox(again);
+            if (againName == null) return null;
+            s.MainWindow.SetForeground();
+            againName.Click();
             return FindCardWindow(s, T, staleTitle);
         }
 
@@ -277,7 +317,7 @@ namespace Ven4Tools.ClientUITests
                 var chk = SearchForRow(s, "Telegram", "telegram");
                 Assert.IsNotNull(chk, "Поиск «Telegram» не дал строки каталога (chkApp_telegram).");
 
-                var card = OpenCard(s, chk!);
+                var card = OpenCard(s, chk!, "telegram", "Telegram");
                 Assert.IsNotNull(card, "Карточка приложения не открылась после клика по имени.");
 
                 var btns = CardButtonNames(card!);
@@ -302,7 +342,7 @@ namespace Ven4Tools.ClientUITests
             {
                 var chk = SearchForRow(s, "Telegram", "telegram");
                 Assert.IsNotNull(chk, "Поиск «Telegram» не дал строки для теста Esc.");
-                var card = OpenCard(s, chk!);
+                var card = OpenCard(s, chk!, "telegram", "Telegram");
                 Assert.IsNotNull(card, "Карточка не открылась — нечего закрывать по Esc.");
                 opened = true;
 
@@ -329,7 +369,7 @@ namespace Ven4Tools.ClientUITests
                 // CanLaunch, а не на факте установки).
                 var chk = SearchForRow(s, "Telegram", "telegram");
                 Assert.IsNotNull(chk, "Поиск «Telegram» не дал строки.");
-                var card = OpenCard(s, chk!);
+                var card = OpenCard(s, chk!, "telegram", "Telegram");
                 Assert.IsNotNull(card, "Карточка не открылась.");
 
                 var btns = CardButtonNames(card!);

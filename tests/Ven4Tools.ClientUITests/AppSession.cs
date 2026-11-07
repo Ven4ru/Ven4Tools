@@ -26,7 +26,13 @@ namespace Ven4Tools.ClientUITests
     {
         public const string MainWindowTitle = "Ven4Tools";
 
-        private static readonly TimeSpan LaunchTimeout = TimeSpan.FromSeconds(15);
+        /// <summary>
+        /// Первый запуск клиента на свежей Windows — около 25 секунд (антивирус
+        /// проверяет сотни файлов самодостаточной сборки, холодный старт .NET); каждый
+        /// следующий — 2–3 секунды. С прежними 15 секундами первый по порядку класс
+        /// тестов (AppCardUiTests) на чистой ВМ целиком уходил в Inconclusive.
+        /// </summary>
+        private static readonly TimeSpan LaunchTimeout = TimeSpan.FromSeconds(60);
 
         /// <summary>
         /// Сколько UI Automation ждёт ответа окна на один запрос. По умолчанию — две

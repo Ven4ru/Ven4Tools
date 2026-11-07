@@ -15,7 +15,7 @@ namespace Ven4Tools.ViewModels
         {
             try
             {
-                string osVersion  = Environment.OSVersion.VersionString;
+                string osVersion  = Services.Diagnostics.WindowsVersionInfo.ReadCurrentLabel();
                 var version       = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                 string appVersion = version?.ToString() ?? "—";
 
