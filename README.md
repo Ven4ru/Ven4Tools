@@ -23,6 +23,14 @@
 
 <p align="center">
 
+Ven4Tools есть в официальном каталоге Microsoft — winget:
+
+```powershell
+winget install Ven4ru.Ven4Tools
+```
+
+или одной командой PowerShell:
+
 ```powershell
 $t="$env:TEMP\v4t.ps1";irm ven4tools.ru/install.ps1 -OutFile $t;&$t
 ```
