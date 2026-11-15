@@ -120,8 +120,16 @@
     "t": "   ℹ️ Client folder not found"
   },
   {
+    "s": "   ℹ️ Персонализация: клиент не найден — откатывать нечем",
+    "t": "   ℹ️ Personalization: client not found — nothing to restore"
+  },
+  {
     "s": "   ℹ️ Ярлык оставлен — он ведёт не в папку клиента: {0}",
     "t": "   ℹ️ Shortcut kept — it does not point to the client folder: {0}"
+  },
+  {
+    "s": "   ↩ Персонализация возвращена, как было до Ven4Tools",
+    "t": "   ↩ Personalization restored to how it was before Ven4Tools"
   },
   {
     "s": "   ↳ Описание и дата релиза недоступны — их даёт только GitHub",
@@ -170,6 +178,14 @@
   {
     "s": "   ⚠️ Папка клиента: {0}",
     "t": "   ⚠️ Client folder: {0}"
+  },
+  {
+    "s": "   ⚠️ Персонализация вернулась не полностью — подробности в журнале клиента",
+    "t": "   ⚠️ Personalization was not fully restored — see the client log for details"
+  },
+  {
+    "s": "   ⚠️ Персонализация не возвращена: откат отменён или не запустился",
+    "t": "   ⚠️ Personalization not restored: the revert was canceled or did not start"
   },
   {
     "s": "   ⚠️ Реестр: {0}",
@@ -1340,6 +1356,10 @@
     "t": "[App] Unfinished kit installation: the user declined to continue"
   },
   {
+    "s": "[App] Откат персонализации не выполнен",
+    "t": "[App] Personalization revert failed"
+  },
+  {
     "s": "[App] Отчёт о сбое удалён без отправки: включён параноидальный режим",
     "t": "[App] Crash report deleted without sending: paranoid mode is on"
   },
@@ -2274,6 +2294,34 @@
   {
     "s": "[Очистка] Список пакетов Appx не получен: тайм-аут или отмена",
     "t": "[Cleanup] Could not get the Appx package list: timeout or cancellation"
+  },
+  {
+    "s": "[Персонализация] Клиент после отката не завершён: {0}",
+    "t": "[Personalization] Client was not closed after the revert: {0}"
+  },
+  {
+    "s": "[Персонализация] Настройки лаунчера не прочитаны: {0}",
+    "t": "[Personalization] Could not read launcher settings: {0}"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением не запустился: {0}",
+    "t": "[Personalization] Revert before removal did not start: {0}"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением не уложился в 3 минуты",
+    "t": "[Personalization] Revert before removal did not finish within 3 minutes"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением отменён в окне контроля учётных записей",
+    "t": "[Personalization] Revert before removal was canceled at the UAC prompt"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением: клиент не найден — откатывать нечем",
+    "t": "[Personalization] Revert before removal: client not found — nothing to restore"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением: код {0}",
+    "t": "[Personalization] Revert before removal: code {0}"
   },
   {
     "s": "[Подлинность] {0}",
@@ -3378,6 +3426,10 @@
   {
     "s": "Будет удалено:\n• Папка клиента: {0}\n• Ярлыки на рабочем столе\n• Ярлыки в меню Пуск\n• Запись автозапуска в реестре\n\nНастройки и логи лаунчера сохраняются.\n\nПродолжить?",
     "t": "The following will be removed:\n• Client folder: {0}\n• Desktop shortcuts\n• Start menu shortcuts\n• Autostart entry in the registry\n\nLauncher settings and logs are kept.\n\nContinue?"
+  },
+  {
+    "s": "Будет удалено:\n• Папка клиента: {0}\n• Ярлыки на рабочем столе\n• Ярлыки в меню Пуск\n• Запись автозапуска в реестре\n\nОформление Windows из «Персонализации» (тема панели задач, ушки, «Свой Пуск», курсоры, обои, звуки) вернётся, каким было до Ven4Tools.\n\nНастройки и логи лаунчера сохраняются.\n\nПродолжить?",
+    "t": "The following will be removed:\n• Client folder: {0}\n• Desktop shortcuts\n• Start menu shortcuts\n• Autostart entry in the registry\n\nWindows appearance from “Personalization” (taskbar theme, ears, “Venchik's Start”, cursors, wallpaper, sounds) will return to how it was before Ven4Tools.\n\nLauncher settings and logs are kept.\n\nContinue?"
   },
   {
     "s": "Будет установлено приложений: {0}.\n\nСоздать точку восстановления Windows перед установкой?",
@@ -8456,6 +8508,10 @@
     "t": "Personalization"
   },
   {
+    "s": "Персонализация: {0}",
+    "t": "Personalization: {0}"
+  },
+  {
     "s": "Персональные советы по данным диагностики",
     "t": "Tailored tips based on diagnostic data"
   },
@@ -11196,6 +11252,10 @@
     "t": "Taskbar theme"
   },
   {
+    "s": "Тема панели задач и ушки Венчика",
+    "t": "Taskbar theme and Venchik's ears"
+  },
+  {
     "s": "Тема панели: «{0}» ещё держит другой раздел — значение оставлено как есть",
     "t": "Taskbar theme: “{0}” is still held by another section — the value was left as is"
   },
@@ -13756,6 +13816,10 @@
     "t": "↩ Reverted: {0}"
   },
   {
+    "s": "↩ Персонализация: откат всех изменений",
+    "t": "↩ Personalization: reverting all changes"
+  },
+  {
     "s": "↩️ Перенос клиента был прерван — клиент остаётся в прежней папке, недоделанная копия убрана",
     "t": "↩️ The client move was interrupted — the client stays in its previous folder, the incomplete copy was removed"
   },
@@ -14528,6 +14592,14 @@
     "t": "⚠️ Shortcut update interrupted: {0}"
   },
   {
+    "s": "⚠️ Откат персонализации: «{0}» вернулся не полностью",
+    "t": "⚠️ Personalization revert: “{0}” was not fully restored"
+  },
+  {
+    "s": "⚠️ Откат персонализации: «{0}» — {1}",
+    "t": "⚠️ Personalization revert: “{0}” — {1}"
+  },
+  {
     "s": "⚠️ Очистка: {0}",
     "t": "⚠️ Cleanup: {0}"
   },
@@ -14586,6 +14658,10 @@
   {
     "s": "⚠️ Персонализация: в файле отката чужая запись «{0}\\{1}» — пропущена",
     "t": "⚠️ Personalization: unexpected entry “{0}\\{1}” in the revert file — skipped"
+  },
+  {
+    "s": "⚠️ Персонализация: не вернулось — {0}",
+    "t": "⚠️ Personalization: not restored — {0}"
   },
   {
     "s": "⚠️ Персонализация: не открыта картинка — {0}",
@@ -15274,6 +15350,10 @@
   {
     "s": "✓ ПК подходит для Windows 11.",
     "t": "✓ This PC is compatible with Windows 11."
+  },
+  {
+    "s": "✓ Персонализация: всё возвращено, как было до Ven4Tools",
+    "t": "✓ Personalization: everything restored to how it was before Ven4Tools"
   },
   {
     "s": "✓ Применена тема «{0}»",

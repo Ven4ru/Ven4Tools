@@ -40,6 +40,17 @@ namespace Ven4Tools
             // Язык — до первого сообщения: даже отказ в запуске показывается на выбранном языке.
             try { LocalizationService.Start(); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось определить язык интерфейса"); }
 
+            // Откат всей «Персонализации» без окон — так его зовёт лаунчер перед удалением данных
+            // (деинсталлятор). До проверки единственного экземпляра: клиент к этому моменту закрыт.
+            if (Array.Exists(e.Args, a => string.Equals(a, PersonalizationRevert.Switch, StringComparison.OrdinalIgnoreCase)))
+            {
+                int code;
+                try { code = PersonalizationRevert.Default.RevertAll().ExitCode; }
+                catch (Exception ex) { AppLogger.Write(ex, "[App] Откат персонализации не выполнен"); code = 1; }
+                Shutdown(code);
+                return;
+            }
+
             // Задание тихого режима разбирается до всего остального: ошибка в нём не
             // должна заканчиваться открытым окном, которого сценарий установки не ждёт.
             bool silentRequested = Array.Exists(e.Args, a => string.Equals(a, "--silent", StringComparison.OrdinalIgnoreCase));

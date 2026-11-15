@@ -164,8 +164,8 @@ LangString NAME_SecChoco     ${LANG_ENGLISH} "Install Chocolatey (optional)"
 LangString NAME_UninstallLink ${LANG_RUSSIAN} "Удалить ${APP_NAME}"
 LangString NAME_UninstallLink ${LANG_ENGLISH} "Uninstall ${APP_NAME}"
 
-LangString TEXT_RemoveData ${LANG_RUSSIAN} "Удалить пользовательские данные?$\r$\n$\r$\nБудут удалены: логи, настройки и сохранённая сессия.$\r$\nПапка: ${DATA_DIR}$\r$\n$\r$\nПапка клиента Ven4Tools, если она находится вне этой папки (по умолчанию — в %LOCALAPPDATA%\Programs\Ven4Tools, у установок до версии 3.12 — в «Документах»), не удаляется — её можно удалить кнопкой «Удалить клиент» в лаунчере до деинсталляции."
-LangString TEXT_RemoveData ${LANG_ENGLISH} "Delete user data?$\r$\n$\r$\nThis removes logs, settings and the saved session.$\r$\nFolder: ${DATA_DIR}$\r$\n$\r$\nThe Ven4Tools client folder, if it is outside this folder (by default it is in %LOCALAPPDATA%\Programs\Ven4Tools, or in Documents for installs made before version 3.12), is not removed — you can remove it with the “Uninstall client” button in the launcher before uninstalling."
+LangString TEXT_RemoveData ${LANG_RUSSIAN} "Удалить пользовательские данные?$\r$\n$\r$\nБудут удалены: логи, настройки и сохранённая сессия.$\r$\nПапка: ${DATA_DIR}$\r$\n$\r$\nПеред этим оформление Windows из «Персонализации» (тема панели задач, ушки, «Свой Пуск», курсоры, обои, звуки) вернётся, каким было до Ven4Tools — Windows может спросить разрешение.$\r$\n$\r$\nПапка клиента Ven4Tools, если она находится вне этой папки (по умолчанию — в %LOCALAPPDATA%\Programs\Ven4Tools, у установок до версии 3.12 — в «Документах»), не удаляется — её можно удалить кнопкой «Удалить клиент» в лаунчере до деинсталляции."
+LangString TEXT_RemoveData ${LANG_ENGLISH} "Delete user data?$\r$\n$\r$\nThis removes logs, settings and the saved session.$\r$\nFolder: ${DATA_DIR}$\r$\n$\r$\nBefore that, the Windows look changed in Personalization (taskbar theme, ears, Venchik's Start, cursors, wallpaper, sounds) is restored to how it was before Ven4Tools — Windows may ask for permission.$\r$\n$\r$\nThe Ven4Tools client folder, if it is outside this folder (by default it is in %LOCALAPPDATA%\Programs\Ven4Tools, or in Documents for installs made before version 3.12), is not removed — you can remove it with the “Uninstall client” button in the launcher before uninstalling."
 
 LangString TEXT_ExeBusy ${LANG_RUSSIAN} "Не удалось заменить файл лаунчера:$\r$\n$INSTDIR\${EXE_NAME}$\r$\n$\r$\nВозможно, лаунчер ещё работает (в том числе от имени администратора) или файл проверяет антивирус. Закройте Ven4Tools Launcher и запустите установку ещё раз."
 LangString TEXT_ExeBusy ${LANG_ENGLISH} "Could not replace the launcher file:$\r$\n$INSTDIR\${EXE_NAME}$\r$\n$\r$\nThe launcher may still be running (possibly as administrator), or an antivirus is scanning the file. Close Ven4Tools Launcher and run the setup again."
@@ -180,6 +180,7 @@ LangString TEXT_OldWin10 ${LANG_ENGLISH} "This Windows 10 has not been updated f
 Var UpdateMode   ; "1" — тихое самообновление (/UPDATE)
 Var WaitPid      ; PID процесса лаунчера, завершения которого ждём (/WAITPID=)
 Var Relaunch     ; "1" — перезапустить лаунчер после установки (/RELAUNCH)
+Var RemoveData   ; "1" — при удалении стереть пользовательские данные (перед этим — откат «Персонализации»)
 
 Function .onInit
   StrCpy $UpdateMode "0"
@@ -712,11 +713,28 @@ Function un.onInit
 FunctionEnd
 
 Section "Uninstall"
+  ; Пользовательские данные — спрашиваем явно и ДО удаления файлов: в данных лежат файлы
+  ; «как было» для «Персонализации», и перед их удалением её нужно откатить, пока лаунчер
+  ; и клиент ещё на месте. При тихой деинсталляции (/S) по умолчанию НЕ удаляем (/SD IDNO).
+  StrCpy $RemoveData "0"
+  MessageBox MB_YESNO|MB_ICONQUESTION "$(TEXT_RemoveData)" /SD IDNO IDNO ask_done
+    StrCpy $RemoveData "1"
+  ask_done:
+
   ; Закрываем лаунчер и клиент, чтобы файлы и папки не были заняты
   nsExec::Exec 'taskkill /f /im "${EXE_NAME}"'
   Pop $0
   nsExec::Exec 'taskkill /f /im "${CLIENT_EXE}"'
   Pop $0
+
+  ; Данные удаляются — сначала вернуть всю «Персонализацию» (тема панели задач, ушки, «Свой Пуск»,
+  ; курсоры, обои, экран блокировки, звуки, заставка, их автозапуски), каким всё было до Ven4Tools.
+  ; Откат делает клиент (нужны права администратора), лаунчер находит его по своим настройкам.
+  ; Не вышло (клиента нет, отказ в запросе прав) — удаление продолжается, причина в журнале лаунчера.
+  StrCmp $RemoveData "1" 0 revert_done
+    IfFileExists "$INSTDIR\${EXE_NAME}" 0 revert_done
+      ExecWait '"$INSTDIR\${EXE_NAME}" --revert-personalization' $0
+  revert_done:
   ; «Ушки Венчика» («Персонализация» клиента) работают копией из профиля и стартуют автозапуском:
   ; без клиента выключить их было бы негде.
   nsExec::Exec 'taskkill /f /im "VenchikEars.exe"'
@@ -765,13 +783,12 @@ Section "Uninstall"
   ; Папка установки (удалится, только если пуста — лишнего не трогаем)
   RMDir "$INSTDIR"
 
-  ; Пользовательские данные — спрашиваем явно.
-  ; При тихой деинсталляции (/S) по умолчанию НЕ удаляем (/SD IDNO).
+  ; Пользовательские данные — по ответу в начале удаления.
   ; Клиент по умолчанию ставится в %LOCALAPPDATA%\Programs\Ven4Tools (до 3.12 — в «Документы»)
   ; или в папку, выбранную в лаунчере,
   ; а не в ${DATA_DIR} — обещать его удаление здесь нельзя: удаляется только то,
   ; что лежит внутри этой папки (клиент — лишь при старой раскладке рядом с лаунчером).
-  MessageBox MB_YESNO|MB_ICONQUESTION "$(TEXT_RemoveData)" /SD IDNO IDNO skip_data
+  StrCmp $RemoveData "1" 0 skip_data
     RMDir /r "${DATA_DIR}"
     ; Настройки, закреплённые программы и кэш «Своего Пуска»
     RMDir /r "$LOCALAPPDATA\Ven4Start"
