@@ -249,7 +249,7 @@
                     <TextBlock Text="Свой Пуск Венчика" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
                     <TextBlock Text="Отдельное меню программ в стиле Венчика: закреплённые программы, все программы со значками, поиск и кнопки питания. Цвета берутся из темы панели задач. Родной Пуск Windows не меняется. Открывается сочетанием Ctrl+Alt+Пробел или значком Венчика в трее."
                                TextWrapping="Wrap" Margin="0,4,0,12" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
-                    <CheckBox x:Name="chkStartWinKey" Content="Открывать клавишей Win" VerticalAlignment="Center" Margin="0,0,0,12"
+                    <CheckBox x:Name="chkStartWinKey" Content="Открывать клавишей Win" IsChecked="True" VerticalAlignment="Center" Margin="0,0,0,12"
                               AutomationProperties.AutomationId="chkStartWinKey" Foreground="{DynamicResource TextPrimary}"
                               ToolTip="Одиночное нажатие Win открывает «Свой Пуск» вместо родного. Сочетания Win+R, Win+E и другие работают как обычно, в полноэкранных играх клавиша не перехватывается."/>
                     <WrapPanel>
