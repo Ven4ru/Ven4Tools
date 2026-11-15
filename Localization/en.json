@@ -1396,12 +1396,24 @@
     "t": "[BugCheck] Dictionary resource not found: {0}"
   },
   {
+    "s": "[CatalogLoaderService] В кэше каталог другого вида ({0}) — не используется",
+    "t": "[CatalogLoaderService] Cached catalog is of a different kind ({0}) — not used"
+  },
+  {
     "s": "[CatalogLoaderService] Версия встроенного каталога не прочитана: {0}",
     "t": "[CatalogLoaderService] Could not read the built-in catalog version: {0}"
   },
   {
+    "s": "[CatalogLoaderService] Встроенный каталог другого вида ({0}) — не используется",
+    "t": "[CatalogLoaderService] Built-in catalog is of a different kind ({0}) — not used"
+  },
+  {
     "s": "[CatalogLoaderService] Встроенный каталог не найден среди ресурсов сборки",
     "t": "[CatalogLoaderService] Built-in catalog not found in assembly resources"
+  },
+  {
+    "s": "[CatalogLoaderService] Источник отдал каталог другого вида ({0}) — отклонён: {1}",
+    "t": "[CatalogLoaderService] Source returned a catalog of a different kind ({0}) — rejected: {1}"
   },
   {
     "s": "[CatalogLoaderService] Не удалось загрузить каталог из сети — переход на кэш/встроенный: {0}",
@@ -13198,6 +13210,10 @@
   {
     "s": "самое горячее ядро {0}",
     "t": "hottest core {0}"
+  },
+  {
+    "s": "сборка",
+    "t": "build"
   },
   {
     "s": "сеанс",
