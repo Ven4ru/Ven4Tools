@@ -16,6 +16,7 @@
 import argparse
 import datetime as dt
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -75,7 +76,9 @@ def check_flatpak(app, install):
             return None, f'Flathub не ответил ({code}), репозиторий тоже: {out.splitlines()[-1][:120] if out else rc}', {}
         d = {'is_eol': 'end-of-life' in out.lower()}
     md = d.get('metadata') or {}
-    info = {'developer': d.get('developer_name') or '', 'verified': bool(md.get('flathub::verification::verified'))}
+    # Значения metadata во Flathub API — строки: bool("false") было бы True
+    info = {'developer': d.get('developer_name') or '',
+            'verified': str(md.get('flathub::verification::verified')).lower() == 'true'}
     if d.get('is_eol'):
         return 'unavailable', 'снят с поддержки на Flathub (EOL)', info
     if api_ok and app.get('official') and not info['verified']:
@@ -116,6 +119,8 @@ def check_snap(app):
 STR_FIELDS = ('id', 'name', 'category', 'description', 'descriptionEn')
 OPT_STR_FIELDS = ('nameEn', 'flatpak', 'snap', 'snapPublisher', 'publisher', 'status')
 BOOL_FIELDS = ('official', 'snapClassic')
+FLATPAK_ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]*')
+SNAP_NAME = re.compile(r'[a-z0-9][a-z0-9-]*')
 
 
 def validate(cat):
@@ -139,6 +144,12 @@ def validate(cat):
                 out.append(f'{where}: {k} — нужно true/false')
         if not x.get('flatpak') and not x.get('snap'):
             out.append(f'{where}: нет ни flatpak, ни snap')
+        # Те же шаблоны, что в программе (PackageBackends.cs): иначе одна неверная запись
+        # роняет в программе всю очередь установки Flatpak или Snap
+        if isinstance(x.get('flatpak'), str) and x['flatpak'] and not FLATPAK_ID.fullmatch(x['flatpak']):
+            out.append(f'{where}: flatpak — недопустимый идентификатор')
+        if isinstance(x.get('snap'), str) and x['snap'] and not SNAP_NAME.fullmatch(x['snap']):
+            out.append(f'{where}: snap — недопустимое имя')
         for r in x.get('replaces') or []:
             if not isinstance(r, dict) or not isinstance(r.get('id'), str) or not isinstance(r.get('name'), str):
                 out.append(f'{where}: replaces — нужны объекты {{"id", "name"}}')
