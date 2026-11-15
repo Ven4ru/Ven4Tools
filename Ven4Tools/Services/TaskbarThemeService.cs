@@ -205,14 +205,16 @@ namespace Ven4Tools.Services
             lock (_lock)
             {
                 var st = LoadForChange();
-                if (st.ColorUndo.Count == 0)
-                {
-                    _owners?.Reconcile(OwnerPrefix, Array.Empty<string>());
-                    foreach (var (k, n) in ThemeValues) st.ColorUndo[k + "\\" + n] = Snapshot(k, n);
-                    // «Как было» — на диск до первой записи: сбой посередине не должен оставить
-                    // реестр наполовину перекрашенным без возможности отката.
-                    Save(st);
-                }
+                if (st.ColorUndo.Count == 0) _owners?.Reconcile(OwnerPrefix, Array.Empty<string>());
+                // «Как было» — по каждому значению, которого ещё нет в файле: после частичного
+                // отката (одно значение не вернулось и осталось в файле) остальные уже вернулись,
+                // и их нужно запомнить заново, иначе следующий откат вернул бы только оставшееся.
+                bool snapped = false;
+                foreach (var (k, n) in ThemeValues)
+                    if (!st.ColorUndo.ContainsKey(k + "\\" + n)) { st.ColorUndo[k + "\\" + n] = Snapshot(k, n); snapped = true; }
+                // На диск до первой записи: сбой посередине не должен оставить
+                // реестр наполовину перекрашенным без возможности отката.
+                if (snapped) Save(st);
                 _reg.Write(Accent, "AccentPalette", RegistryValueKind.Binary, BuildPalette(t));
                 _reg.Write(Accent, "AccentColorMenu", RegistryValueKind.DWord, Abgr(t.Accent));
                 _reg.Write(Accent, "StartColorMenu", RegistryValueKind.DWord, Abgr(t.Bar));
