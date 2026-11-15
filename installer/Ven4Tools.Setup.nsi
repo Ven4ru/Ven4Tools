@@ -607,6 +607,16 @@ Section "$(NAME_SecMain)" SEC_MAIN
   Delete "$INSTDIR\install-winget.pending"
   Delete "$INSTDIR\install-chocolatey.pending"
 
+!ifndef WIN10_LEGACY
+  ; Обычная сборка поверх версии для Windows 10 без обновлений: продолжение после обновления
+  ; Windows обычный лаунчер не выполняет — запись автозапуска (запускала бы лаунчер при каждом
+  ; входе), отметки и скачанный пакет обновления (~730 МБ) больше не нужны.
+  DeleteRegValue HKCU "${RUN_KEY}" "Ven4ToolsAfterWindowsUpdate"
+  RMDir /r "${DATA_DIR}\Launcher\windows-update"
+  Delete "${DATA_DIR}\Launcher\windows-update-pending.txt"
+  Delete "${DATA_DIR}\Launcher\windows-update-offer.txt"
+!endif
+
   ; Ярлыки: рабочий стол + меню «Пуск» (только при обычной установке —
   ; тихое самообновление не воссоздаёт удалённые пользователем ярлыки)
   CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}" "" "$INSTDIR\${EXE_NAME}" 0
@@ -707,7 +717,13 @@ Section "Uninstall"
   Pop $0
   nsExec::Exec 'taskkill /f /im "${CLIENT_EXE}"'
   Pop $0
+  ; «Ушки Венчика» («Персонализация» клиента) работают копией из профиля и стартуют автозапуском:
+  ; без клиента выключить их было бы негде.
+  nsExec::Exec 'taskkill /f /im "VenchikEars.exe"'
+  Pop $0
   Sleep 500
+  Delete "${DATA_DIR}\Personalization\VenchikEars.exe"
+  RMDir "${DATA_DIR}\Personalization"
 
   ; Файлы лаунчера (включая возможный бэкап незавершённого самообновления)
   Delete "$INSTDIR\${EXE_NAME}"
@@ -729,6 +745,13 @@ Section "Uninstall"
 
   ; Реестр: автозапуск, запись в «Программы и компоненты», выбор языка
   DeleteRegValue HKCU "${RUN_KEY}" "${RUN_VALUE}"
+  DeleteRegValue HKCU "${RUN_KEY}" "Ven4ToolsEars"
+  ; Продолжение установки после обновления Windows (версия для Windows 10 без обновлений):
+  ; обычная сборка эту запись не снимает, а удалённый лаунчер её уже не выполнит.
+  DeleteRegValue HKCU "${RUN_KEY}" "Ven4ToolsAfterWindowsUpdate"
+  RMDir /r "${DATA_DIR}\Launcher\windows-update"
+  Delete "${DATA_DIR}\Launcher\windows-update-pending.txt"
+  Delete "${DATA_DIR}\Launcher\windows-update-offer.txt"
   DeleteRegKey   HKCU "${UNINST_KEY}"
   DeleteRegValue HKCU "${LANG_KEY}" "${LANG_VALUE}"
   DeleteRegValue HKCU "${LANG_KEY}" "${UPDATE_RESULT_VALUE}"
