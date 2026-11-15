@@ -62,6 +62,8 @@
     <ProjectReference Include="..\Ven4Tools.Screensaver\Ven4Tools.Screensaver.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
     <!-- «Ушки Венчика» над «Пуском» — тоже .NET Framework 4.8, кладётся как VenchikEars.exe. -->
     <ProjectReference Include="..\Ven4Tools.Ears\Ven4Tools.Ears.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
+    <!-- «Свой Пуск» (Ven4Start, блок 2) — тоже .NET Framework 4.8, кладётся как Ven4Start.exe. -->
+    <ProjectReference Include="..\Shelf\Ven4Start\Ven4Start.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
   </ItemGroup>
   <Target Name="CopyVenchikScreensaver" AfterTargets="ResolveProjectReferences">
     <ItemGroup>
@@ -69,6 +71,8 @@
       <None Include="@(_VenchikScr)" Link="Personalization\Venchik\Venchik.scr" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
       <_VenchikEars Include="$(MSBuildThisFileDirectory)..\Ven4Tools.Ears\bin\$(Configuration)\net48\VenchikEars.exe" />
       <None Include="@(_VenchikEars)" Link="Personalization\Venchik\VenchikEars.exe" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+      <_Ven4Start Include="$(MSBuildThisFileDirectory)..\Shelf\Ven4Start\bin\$(Configuration)\net48\Ven4Start.exe" />
+      <None Include="@(_Ven4Start)" Link="Personalization\Venchik\Ven4Start.exe" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
   </Target>
 

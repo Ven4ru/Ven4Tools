@@ -4844,6 +4844,10 @@
     "t": "Closes the window. Selections in the catalog are not changed."
   },
   {
+    "s": "Закрывает «Свой Пуск» и убирает его из автозапуска, как было до Ven4Tools.",
+    "t": "Closes “Venchik's Start” and removes it from autostart, as it was before Ven4Tools."
+  },
+  {
     "s": "Закрыть",
     "t": "Close"
   },
@@ -5456,6 +5460,10 @@
     "t": "Chinese Simplified (zh-cn)"
   },
   {
+    "s": "Кладёт «Свой Пуск» в папку профиля, добавляет в автозапуск и запускает. Прежняя запись автозапуска запоминается для отката.",
+    "t": "Copies “Venchik's Start” to the profile folder, adds it to autostart and launches it. The previous autostart entry is saved for restoring."
+  },
+  {
     "s": "Классический двухпанельный файловый менеджер с архивами, FTP и плагинами.",
     "t": "Classic two-pane file manager with archives, FTP, and plugins."
   },
@@ -5852,6 +5860,10 @@
     "t": "Game library manager. Combines Steam, GOG, itch.io, and other platforms in one interface."
   },
   {
+    "s": "Меню не открылось — подробности в журнале",
+    "t": "Menu did not open — see the log for details"
+  },
+  {
     "s": "Мессенджеры",
     "t": "Messengers"
   },
@@ -6242,6 +6254,14 @@
   {
     "s": "Не получать драйверы через Windows Update?\n\nБудет включена политика «Не включать драйверы в обновления качества Windows». Это снижает вероятность, что Windows Update вернёт старый драйвер видеокарты поверх нового, но не гарантирует: политика работает не во всех случаях, а драйверы для нового оборудования Windows может ставить и сама.\n\nСвежие драйверы придётся ставить вручную — с сайта производителя.\nВыключить можно здесь же, прежнее значение вернётся.",
     "t": "Stop getting drivers via Windows Update?\n\nThe “Do not include drivers with Windows Updates” policy will be enabled. This makes it less likely that Windows Update puts an old graphics driver back over a newer one, but does not guarantee it: the policy does not work in all cases, and Windows may install drivers for new hardware on its own.\n\nYou will have to install fresh drivers manually — from the manufacturer's website.\nYou can turn this off right here, and the previous value will be restored."
+  },
+  {
+    "s": "Не получилось включить «Свой Пуск». Подробности — в журнале.",
+    "t": "Failed to enable “Venchik's Start”. See the log for details."
+  },
+  {
+    "s": "Не получилось выключить «Свой Пуск». Подробности — в журнале.",
+    "t": "Failed to disable “Venchik's Start”. See the log for details."
   },
   {
     "s": "Не получилось изменить настройки. Подробности — в журнале.",
@@ -7300,6 +7320,10 @@
     "t": "The overlay is a small window in the corner of the screen on top of a game: FPS, CPU and graphics card temperature and load. Clicks pass through it, nothing is injected into the game. Visible in windowed and borderless fullscreen modes."
   },
   {
+    "s": "Одиночное нажатие Win открывает «Свой Пуск» вместо родного. Сочетания Win+R, Win+E и другие работают как обычно, в полноэкранных играх клавиша не перехватывается.",
+    "t": "A single Win press opens “Venchik's Start” instead of the built-in one. Win+R, Win+E and other shortcuts work as usual; the key is not intercepted in full-screen games."
+  },
+  {
     "s": "Однократно",
     "t": "Once"
   },
@@ -7446,6 +7470,10 @@
   {
     "s": "Ответ {0} превышает допустимый размер ({1} байт)",
     "t": "Response from {0} exceeds the allowed size ({1} bytes)"
+  },
+  {
+    "s": "Отдельное меню программ в стиле Венчика: закреплённые программы, все программы со значками, поиск и кнопки питания. Цвета берутся из темы панели задач. Родной Пуск Windows не меняется. Открывается сочетанием Ctrl+Alt+Пробел или значком Венчика в трее.",
+    "t": "A separate app menu in Venchik style: pinned apps, all apps with icons, search and power buttons. Colors come from the taskbar theme. The built-in Windows Start is not changed. Opens with Ctrl+Alt+Space or the Venchik icon in the tray."
   },
   {
     "s": "Отзыв о Ven4Tools {0}",
@@ -7676,6 +7704,10 @@
     "t": "Opens the “Taskbar” page in Windows Settings."
   },
   {
+    "s": "Открывать клавишей Win",
+    "t": "Open with the Win key"
+  },
+  {
     "s": "Открытая программа удалённого доступа к компьютеру, можно подключаться через свой сервер.",
     "t": "Open-source remote desktop app; can connect through your own server."
   },
@@ -7706,6 +7738,10 @@
   {
     "s": "Открыть «Установленные приложения»",
     "t": "Open “Installed apps”"
+  },
+  {
+    "s": "Открыть меню",
+    "t": "Open menu"
   },
   {
     "s": "Открыть на GitHub",
@@ -8182,6 +8218,10 @@
   {
     "s": "Панель прячется за край экрана и появляется, когда к нему подводишь мышь.",
     "t": "The taskbar hides behind the screen edge and appears when you move the mouse there."
+  },
+  {
+    "s": "Папка {0} — ссылка на другое место, «Свой Пуск» туда не копируется.",
+    "t": "The {0} folder is a link to another location, so “Venchik's Start” is not copied there."
   },
   {
     "s": "Папка «Автозагрузка»",
@@ -8794,6 +8834,10 @@
   {
     "s": "Показать системные",
     "t": "Show system"
+  },
+  {
+    "s": "Показывает «Свой Пуск» сейчас.",
+    "t": "Shows “Venchik's Start” now."
   },
   {
     "s": "Показывает или скрывает оверлей. То же делает сочетание Ctrl+Shift+O — оно работает, пока Ven4Tools запущен, даже свёрнутый в трей.",
@@ -9708,6 +9752,10 @@
     "t": "{0} is already closed."
   },
   {
+    "s": "Программа «Свой Пуск» не найдена в папке Ven4Tools.",
+    "t": "“Venchik's Start” was not found in the Ven4Tools folder."
+  },
+  {
     "s": "Программа занята другим приложением — закройте его и повторите установку.",
     "t": "The app is in use by another application. Close it and try the installation again."
   },
@@ -10298,6 +10346,18 @@
   {
     "s": "Свободное место: нет данных",
     "t": "Free space: no data"
+  },
+  {
+    "s": "Свой Пуск",
+    "t": "Venchik's Start"
+  },
+  {
+    "s": "Свой Пуск Венчика",
+    "t": "Venchik's own Start menu"
+  },
+  {
+    "s": "Свой Пуск: обновляю копию программы после обновления Ven4Tools",
+    "t": "Venchik's Start: updating the app copy after the Ven4Tools update"
   },
   {
     "s": "Свой цвет",
@@ -11972,6 +12032,10 @@
     "t": "The file was replaced with a link, write canceled: {0}"
   },
   {
+    "s": "Файл состояния «Своего Пуска» сейчас не читается — изменения не применены, чтобы не потерять прежнее состояние.",
+    "t": "The “Venchik's Start” state file cannot be read right now — changes were not applied to avoid losing the previous state."
+  },
+  {
     "s": "Файл состояния темы панели сейчас не читается — изменения не применены, чтобы не потерять прежнее состояние.",
     "t": "The taskbar theme state file cannot be read right now — changes were not applied to avoid losing the previous state."
   },
@@ -12006,6 +12070,10 @@
   {
     "s": "Файлы программы заняты — закройте её и повторите установку.",
     "t": "The app's files are in use. Close it and try the installation again."
+  },
+  {
+    "s": "Файлы программы не найдены",
+    "t": "App files not found"
   },
   {
     "s": "Файлы сохранены",
@@ -14576,6 +14644,30 @@
     "t": "⚠️ The region was not fully restored after the Office installation — will retry on next start"
   },
   {
+    "s": "⚠️ Свой Пуск не запустился сейчас — появится после следующего входа в Windows",
+    "t": "⚠️ Venchik's Start did not start now — it will appear after the next Windows sign-in"
+  },
+  {
+    "s": "⚠️ Свой Пуск: копия не обновилась — {0}",
+    "t": "⚠️ Venchik's Start: the copy was not updated — {0}"
+  },
+  {
+    "s": "⚠️ Свой Пуск: меню не открылось — {0}",
+    "t": "⚠️ Venchik's Start: the menu did not open — {0}"
+  },
+  {
+    "s": "⚠️ Свой Пуск: прежняя копия не закрылась за 3 с",
+    "t": "⚠️ Venchik's Start: the previous instance did not close within 3 s"
+  },
+  {
+    "s": "⚠️ Свой Пуск: сигнал закрытия — {0}",
+    "t": "⚠️ Venchik's Start: close signal — {0}"
+  },
+  {
+    "s": "⚠️ Свой Пуск: сигнал открытия меню — {0}",
+    "t": "⚠️ Venchik's Start: open menu signal — {0}"
+  },
+  {
     "s": "⚠️ Сохранение маркера региона: {0}",
     "t": "⚠️ Saving the region marker: {0}"
   },
@@ -15160,6 +15252,18 @@
     "t": "✓ In set"
   },
   {
+    "s": "✓ Включён — Ctrl+Alt+Пробел",
+    "t": "✓ Enabled — Ctrl+Alt+Space"
+  },
+  {
+    "s": "✓ Включён — клавиша Win и Ctrl+Alt+Пробел",
+    "t": "✓ Enabled — Win key and Ctrl+Alt+Space"
+  },
+  {
+    "s": "✓ Включён — появится после следующего входа в Windows",
+    "t": "✓ Enabled — will appear after the next Windows sign-in"
+  },
+  {
     "s": "✓ Все требования Windows 11 выполнены.",
     "t": "✓ All Windows 11 requirements are met."
   },
@@ -15646,6 +15750,18 @@
   {
     "s": "❌ Сбой установки (код {0})",
     "t": "❌ Installation failed (code {0})"
+  },
+  {
+    "s": "❌ Свой Пуск: {0}",
+    "t": "❌ Venchik's Start: {0}"
+  },
+  {
+    "s": "❌ Свой Пуск: выключение — {0}",
+    "t": "❌ Venchik's Start: disabling — {0}"
+  },
+  {
+    "s": "❌ Свой Пуск: состояние не прочитано — {0}",
+    "t": "❌ Venchik's Start: state not read — {0}"
   },
   {
     "s": "❌ Служба Windows Update не запущена — список скрытых недоступен.",
