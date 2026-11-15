@@ -338,6 +338,14 @@ namespace Ven4Tools.Services
             var (json, signature) = verified.Value;
             var catalog = Deserialize(json);
 
+            // Каталог Linux подписан тем же ключом: подпись верна, но это не master.json.
+            // Без этой проверки он поднял бы защиту от отката, и настоящий каталог отклонялся бы.
+            if (!catalog.IsWindowsCatalog)
+            {
+                AppLogger.Write($"[CatalogLoaderService] Источник отдал каталог другого вида ({catalog.Kind}) — отклонён: {url}");
+                return null;
+            }
+
             if (!IsCatalogVersionAcceptable(catalog.Version, source))
                 return null;
 
@@ -412,6 +420,11 @@ namespace Ven4Tools.Services
                 var signature = await File.ReadAllTextAsync(LocalSignaturePath, ct);
                 if (!CatalogSignatureVerifier.Verify(json, signature)) return null;
                 var catalog = Deserialize(json);
+                if (!catalog.IsWindowsCatalog)
+                {
+                    AppLogger.Write($"[CatalogLoaderService] В кэше каталог другого вида ({catalog.Kind}) — не используется");
+                    return null;
+                }
                 // Кэш в переносимом/непривилегированном режиме лежит в user-writable
                 // папке — применяем ту же защиту от отката, что и к сетевым источникам.
                 if (!IsCatalogVersionAcceptable(catalog.Version, "cache")) return null;
@@ -491,10 +504,14 @@ namespace Ven4Tools.Services
                     using var reader = new StreamReader(stream);
                     var json = reader.ReadToEnd();
                     var catalog = Deserialize(json);
-                    catalog.Source = "embedded";
-                    return catalog;
+                    if (catalog.IsWindowsCatalog)
+                    {
+                        catalog.Source = "embedded";
+                        return catalog;
+                    }
+                    AppLogger.Write($"[CatalogLoaderService] Встроенный каталог другого вида ({catalog.Kind}) — не используется");
                 }
-                AppLogger.Write("[CatalogLoaderService] Встроенный каталог не найден среди ресурсов сборки");
+                else AppLogger.Write("[CatalogLoaderService] Встроенный каталог не найден среди ресурсов сборки");
             }
             catch (Exception ex)
             {
