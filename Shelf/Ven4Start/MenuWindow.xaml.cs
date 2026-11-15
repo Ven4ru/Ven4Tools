@@ -240,7 +240,7 @@ public partial class MenuWindow : Window
         if (q.Length > 0)
         {
             items = _all
-                .Where(a => a.Name.Contains(q, StringComparison.CurrentCultureIgnoreCase))
+                .Where(a => System.Globalization.CultureInfo.CurrentCulture.CompareInfo.IndexOf(a.Name, q, System.Globalization.CompareOptions.IgnoreCase) >= 0)
                 .OrderBy(a => a.Name.StartsWith(q, StringComparison.CurrentCultureIgnoreCase) ? 0 : 1)
                 .ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase);
         }

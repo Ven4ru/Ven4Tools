@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Text.Json;
+using System.Runtime.Serialization;
 using System.Windows.Media;
 using Microsoft.Win32;
 
@@ -30,17 +30,23 @@ internal sealed record StartTheme(string Id, bool Dark, string Bar, string Accen
         try
         {
             var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools", "taskbar_theme.json");
-            if (File.Exists(path))
+            if (File.Exists(path) && JsonFile.Read<ThemeFile>(path) is { } f)
             {
-                using var doc = JsonDocument.Parse(File.ReadAllText(path));
-                var id = doc.RootElement.TryGetProperty("ThemeId", out var t) ? t.GetString() : null;
-                if (id == "custom" && doc.RootElement.TryGetProperty("CustomColor", out var c) && c.GetString() is { } hex)
+                if (f.ThemeId == "custom" && f.CustomColor is { } hex)
                     return new("custom", true, Darken(hex), hex, hex);
-                foreach (var th in All) if (th.Id == id) return th;
+                foreach (var th in All) if (th.Id == f.ThemeId) return th;
             }
         }
         catch { /* нет файла или он битый — тема по умолчанию */ }
         return All[0];
+    }
+
+    /// <summary>Из файла состояния темы клиента нужны только эти два поля; остальные пропускаются.</summary>
+    [DataContract]
+    private sealed class ThemeFile
+    {
+        [DataMember(Name = "ThemeId")] public string? ThemeId { get; set; }
+        [DataMember(Name = "CustomColor")] public string? CustomColor { get; set; }
     }
 
     public static Color C(string hex) => (Color)ColorConverter.ConvertFromString(hex);
