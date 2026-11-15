@@ -721,8 +721,12 @@ Section "Uninstall"
   ; без клиента выключить их было бы негде.
   nsExec::Exec 'taskkill /f /im "VenchikEars.exe"'
   Pop $0
+  ; Так же «Свой Пуск» (Ven4Start).
+  nsExec::Exec 'taskkill /f /im "Ven4Start.exe"'
+  Pop $0
   Sleep 500
   Delete "${DATA_DIR}\Personalization\VenchikEars.exe"
+  Delete "${DATA_DIR}\Personalization\Ven4Start.exe"
   RMDir "${DATA_DIR}\Personalization"
 
   ; Файлы лаунчера (включая возможный бэкап незавершённого самообновления)
@@ -746,6 +750,7 @@ Section "Uninstall"
   ; Реестр: автозапуск, запись в «Программы и компоненты», выбор языка
   DeleteRegValue HKCU "${RUN_KEY}" "${RUN_VALUE}"
   DeleteRegValue HKCU "${RUN_KEY}" "Ven4ToolsEars"
+  DeleteRegValue HKCU "${RUN_KEY}" "Ven4ToolsStart"
   ; Продолжение установки после обновления Windows (версия для Windows 10 без обновлений):
   ; обычная сборка эту запись не снимает, а удалённый лаунчер её уже не выполнит.
   DeleteRegValue HKCU "${RUN_KEY}" "Ven4ToolsAfterWindowsUpdate"
@@ -768,5 +773,7 @@ Section "Uninstall"
   ; что лежит внутри этой папки (клиент — лишь при старой раскладке рядом с лаунчером).
   MessageBox MB_YESNO|MB_ICONQUESTION "$(TEXT_RemoveData)" /SD IDNO IDNO skip_data
     RMDir /r "${DATA_DIR}"
+    ; Настройки, закреплённые программы и кэш «Своего Пуска»
+    RMDir /r "$LOCALAPPDATA\Ven4Start"
   skip_data:
 SectionEnd
