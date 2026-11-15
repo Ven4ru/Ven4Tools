@@ -137,4 +137,14 @@ internal static class Native
     [DllImport("advapi32.dll", SetLastError = true)] public static extern bool AdjustTokenPrivileges(IntPtr token, bool disableAll, ref TOKEN_PRIVILEGES newState, uint len, IntPtr prev, IntPtr retLen);
     [DllImport("kernel32.dll")] public static extern IntPtr GetCurrentProcess();
     [DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr h);
+
+    // ---------- свой цикл сообщений (поток хука клавиатуры) ----------
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MSG { public IntPtr hwnd; public uint message; public IntPtr wParam; public IntPtr lParam; public uint time; public POINT pt; }
+
+    public const uint WM_QUIT = 0x0012;
+
+    [DllImport("user32.dll")] public static extern int GetMessage(out MSG msg, IntPtr hWnd, uint min, uint max);
+    [DllImport("user32.dll")] public static extern bool PostThreadMessage(uint threadId, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
 }
