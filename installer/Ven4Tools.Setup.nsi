@@ -28,6 +28,8 @@
 ;   4 — версия нового exe не совпала с ожидаемой; 5 — файл лаунчера занят.
 ;   Тот же код с версией пишется в HKCU\Software\Ven4Tools, LauncherUpdateResult:
 ;   лаунчер сообщает итог при следующем запуске.
+;   Тихая установка (/S без /UPDATE — winget, install.ps1) на Windows 10 19041–19045
+;   без обновлений (UBR < 6456) завершается кодом 6: обычная версия там не запустится.
 ; ============================================================================
 
 Unicode true
@@ -233,16 +235,24 @@ FunctionEnd
 ; при запуске из-за ошибки теневого стека (CET), её исправляют обновления Windows. Проверено:
 ; 19045.2965 — падает, 19045.6456 — работает. Обычный установщик (не .NET) предупреждает
 ; заранее и предлагает открыть Центр обновления или скачать версию для Windows 10 без
-; обновлений (лаунчер собран без CET_COMPAT, /DWIN10_LEGACY). Тихий режим (самообновление)
-; не спрашивает: лаунчер обновляется установщиком своей же версии.
+; обновлений (лаунчер собран без CET_COMPAT, /DWIN10_LEGACY). Самообновление (/UPDATE)
+; не проверяется: лаунчер обновляется установщиком своей же редакции. Тихая установка
+; (/S — winget, install.ps1) завершается кодом 6 — спросить некого, а «успех» был бы ложным.
 !define CET_OK_UBR 6456
 Function CheckOldWindows10
-  IfSilent cet_done
+  ; Самообновление (/UPDATE) не проверяем: лаунчер обновляется установщиком своей же редакции.
+  StrCmp $UpdateMode "1" cet_done
   ReadRegStr $R3 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuildNumber"
   IntCmp $R3 19041 0 cet_done 0
   IntCmp $R3 19045 0 0 cet_done
   ReadRegDWORD $R4 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "UBR"
   IntCmp $R4 ${CET_OK_UBR} cet_done 0 cet_done
+  ; Тихая установка (winget, install.ps1, /S): спросить некого, а «успех» дал бы программу, которая
+  ; не запускается. Завершаемся кодом 6 — winget и скрипты покажут ошибку установки.
+  IfSilent 0 cet_ask
+    SetErrorLevel 6
+    Abort
+  cet_ask:
   MessageBox MB_YESNOCANCEL|MB_ICONEXCLAMATION "$(TEXT_OldWin10)" /SD IDCANCEL IDYES cet_open_update IDNO cet_open_legacy
   Goto cet_done
   cet_open_update:
