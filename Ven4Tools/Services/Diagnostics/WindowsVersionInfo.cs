@@ -61,7 +61,9 @@ namespace Ven4Tools.Services.Diagnostics
         internal static string FormatLabel(string productName, string? displayVersion, int build, int ubr)
         {
             string head = string.IsNullOrWhiteSpace(displayVersion) ? productName : $"{productName} {displayVersion.Trim()}";
-            return ubr > 0 ? $"{head} (сборка {build}.{ubr})" : $"{head} (сборка {build})";
+            // Строка собирается в коде и уходит в «Информацию о системе» и формы GitHub — перевод по ключу её не поймает.
+            string word = Tr("сборка");
+            return ubr > 0 ? $"{head} ({word} {build}.{ubr})" : $"{head} ({word} {build})";
         }
 
         /// <summary>

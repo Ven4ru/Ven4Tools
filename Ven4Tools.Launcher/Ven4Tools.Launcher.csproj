@@ -9,10 +9,12 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>Ven4Tools.Launcher</AssemblyName>
+    <!-- Одно имя продукта у клиента, лаунчера и установщика — условие подписи кода. -->
+    <Product>Ven4Tools</Product>
     <!-- AssemblyVersion/FileVersion намеренно не заданы отдельно: SDK выводит их из
          Version. CI (launcher-release.yml) передаёт -p:Version=X.Y.Z — раньше это не
          долетало до FileVersion/AssemblyVersion, т.к. литералы здесь их перебивали. -->
-    <Version>3.14.1</Version>
+    <Version>3.15.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     
     <!-- Self-contained single file -->

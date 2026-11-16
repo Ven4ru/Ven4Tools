@@ -14,6 +14,17 @@ namespace Ven4Tools.Models
 
         public List<CatalogChangelogEntry> Changelog { get; set; } = new List<CatalogChangelogEntry>();
 
+        /// <summary>
+        /// Вид каталога. У master.json поля нет; каталог Linux подписан тем же ключом и помечен
+        /// «ven4tools-linux-catalog» — Windows-клиент такой каталог не принимает (<see cref="IsWindowsCatalog"/>).
+        /// </summary>
+        [JsonProperty("kind", NullValueHandling = NullValueHandling.Ignore)]
+        public string? Kind { get; set; }
+
+        /// <summary>Каталог для Windows-клиента: без поля kind (так выглядит master.json).</summary>
+        [JsonIgnore]
+        public bool IsWindowsCatalog => string.IsNullOrEmpty(Kind);
+
         [JsonIgnore]
         public string Source { get; set; } = "online";
     }

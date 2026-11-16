@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 
 namespace Ven4Start;
 
@@ -27,7 +26,7 @@ internal static class Pins
         {
             if (File.Exists(FilePath))
                 // null в испорченном файле ронял меню (ContainsKey(null)); повторы — двойные плитки.
-                return (JsonSerializer.Deserialize<List<string?>>(File.ReadAllText(FilePath)) ?? new())
+                return (JsonFile.Read<List<string?>>(FilePath) ?? new())
                     .Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p!)
                     .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         }
@@ -46,8 +45,7 @@ internal static class Pins
     {
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(pins));
+            JsonFile.Write(FilePath, pins);
         }
         catch (Exception ex) { App.Log("закреплённые не сохранены", ex); }
     }

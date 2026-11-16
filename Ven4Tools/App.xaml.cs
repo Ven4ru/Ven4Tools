@@ -40,6 +40,17 @@ namespace Ven4Tools
             // Язык — до первого сообщения: даже отказ в запуске показывается на выбранном языке.
             try { LocalizationService.Start(); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось определить язык интерфейса"); }
 
+            // Откат всей «Персонализации» без окон — так его зовёт лаунчер перед удалением данных
+            // (деинсталлятор). До проверки единственного экземпляра: клиент к этому моменту закрыт.
+            if (Array.Exists(e.Args, a => string.Equals(a, PersonalizationRevert.Switch, StringComparison.OrdinalIgnoreCase)))
+            {
+                int code;
+                try { code = PersonalizationRevert.Default.RevertAll().ExitCode; }
+                catch (Exception ex) { AppLogger.Write(ex, "[App] Откат персонализации не выполнен"); code = 1; }
+                Shutdown(code);
+                return;
+            }
+
             // Задание тихого режима разбирается до всего остального: ошибка в нём не
             // должна заканчиваться открытым окном, которого сценарий установки не ждёт.
             bool silentRequested = Array.Exists(e.Args, a => string.Equals(a, "--silent", StringComparison.OrdinalIgnoreCase));
@@ -125,6 +136,9 @@ namespace Ven4Tools
                 // провал здесь = регион пользователя остаётся подменённым без следа
                 // в журнале, диагностировать нечем.
                 try { OfficeRegionRecoveryService.Recover(); } catch (Exception ex) { AppLogger.Write(ex, "[App] Не удалось восстановить регион Windows после Office"); }
+                // «Свой Пуск» работает копией из профиля: после обновления клиента её надо заменить новой версией.
+                // В фоне — копирование и ожидание закрытия прежней копии не задерживают старт.
+                _ = System.Threading.Tasks.Task.Run(StartMenuService.Default.RefreshCopyIfStale);
                 // Краш-репорт прошлого сеанса отправляется только с явного согласия пользователя.
                 // В тихом режиме спросить некого — вопрос откладывается до обычного запуска.
                 if (!IsSilentRun)

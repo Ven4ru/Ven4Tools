@@ -29,6 +29,22 @@ Write-Host "  Ven4Tools  |  ven4tools.ru" -ForegroundColor Cyan
 Write-Host ""
 
 try {
+    # Windows 10 20H1–22H2 (сборки 19041–19045) без обновлений: Ven4Tools на .NET 10 там падает
+    # при запуске (ошибка теневого стека CET, её исправляют обновления Windows; 19045.6456 — уже
+    # работает). Установщик предупреждает об этом окном, но отсюда он идёт тихо (/S) и окна не
+    # покажет — без этой проверки человек получил бы «Готово!» и программу, которая не стартует.
+    $cv = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -ErrorAction SilentlyContinue
+    $winBuild = [int]$cv.CurrentBuildNumber
+    $winUbr = [int]$cv.UBR
+    if ($winBuild -ge 19041 -and $winBuild -le 19045 -and $winUbr -lt 6456) {
+        Write-Host "  Эта Windows 10 давно не обновлялась (сборка $winBuild.$winUbr)." -ForegroundColor Yellow
+        Write-Host "  Обычная версия Ven4Tools на ней не запустится: ошибку исправляют обновления Windows." -ForegroundColor Yellow
+        Write-Host "  Обновите Windows (Параметры -> Центр обновления Windows) или скачайте версию" -ForegroundColor Yellow
+        Write-Host "  для Windows 10 без обновлений: https://ven4tools.ru/?scene=download#legacy-win10" -ForegroundColor Yellow
+        Write-Host ""
+        if ($runAsFile) { exit 1 } else { return }
+    }
+
     # Версия уже установленного лаунчера (если есть) — берём с самого exe,
     # не из реестра: значение в реестре пишет тот же установщик и оно всегда
     # синхронно с exe, но чтение файла не зависит от того, успела ли прошлая

@@ -120,8 +120,20 @@
     "t": "   ℹ️ Client folder not found"
   },
   {
+    "s": "   ℹ️ Персонализация: клиент не найден — откатывать нечем",
+    "t": "   ℹ️ Personalization: client not found — nothing to restore"
+  },
+  {
+    "s": "   ℹ️ Персонализация: клиент старой версии не умеет откатывать — обновите клиент, чтобы вернуть оформление",
+    "t": "   ℹ️ Personalization: this client version cannot restore it — update the client to bring the Windows look back"
+  },
+  {
     "s": "   ℹ️ Ярлык оставлен — он ведёт не в папку клиента: {0}",
     "t": "   ℹ️ Shortcut kept — it does not point to the client folder: {0}"
+  },
+  {
+    "s": "   ↩ Персонализация возвращена, как было до Ven4Tools",
+    "t": "   ↩ Personalization restored to how it was before Ven4Tools"
   },
   {
     "s": "   ↳ Описание и дата релиза недоступны — их даёт только GitHub",
@@ -170,6 +182,14 @@
   {
     "s": "   ⚠️ Папка клиента: {0}",
     "t": "   ⚠️ Client folder: {0}"
+  },
+  {
+    "s": "   ⚠️ Персонализация вернулась не полностью — подробности в журнале клиента",
+    "t": "   ⚠️ Personalization was not fully restored — see the client log for details"
+  },
+  {
+    "s": "   ⚠️ Персонализация не возвращена: откат отменён или не запустился",
+    "t": "   ⚠️ Personalization not restored: the revert was canceled or did not start"
   },
   {
     "s": "   ⚠️ Реестр: {0}",
@@ -1340,6 +1360,10 @@
     "t": "[App] Unfinished kit installation: the user declined to continue"
   },
   {
+    "s": "[App] Откат персонализации не выполнен",
+    "t": "[App] Personalization revert failed"
+  },
+  {
     "s": "[App] Отчёт о сбое удалён без отправки: включён параноидальный режим",
     "t": "[App] Crash report deleted without sending: paranoid mode is on"
   },
@@ -1396,12 +1420,24 @@
     "t": "[BugCheck] Dictionary resource not found: {0}"
   },
   {
+    "s": "[CatalogLoaderService] В кэше каталог другого вида ({0}) — не используется",
+    "t": "[CatalogLoaderService] Cached catalog is of a different kind ({0}) — not used"
+  },
+  {
     "s": "[CatalogLoaderService] Версия встроенного каталога не прочитана: {0}",
     "t": "[CatalogLoaderService] Could not read the built-in catalog version: {0}"
   },
   {
+    "s": "[CatalogLoaderService] Встроенный каталог другого вида ({0}) — не используется",
+    "t": "[CatalogLoaderService] Built-in catalog is of a different kind ({0}) — not used"
+  },
+  {
     "s": "[CatalogLoaderService] Встроенный каталог не найден среди ресурсов сборки",
     "t": "[CatalogLoaderService] Built-in catalog not found in assembly resources"
+  },
+  {
+    "s": "[CatalogLoaderService] Источник отдал каталог другого вида ({0}) — отклонён: {1}",
+    "t": "[CatalogLoaderService] Source returned a catalog of a different kind ({0}) — rejected: {1}"
   },
   {
     "s": "[CatalogLoaderService] Не удалось загрузить каталог из сети — переход на кэш/встроенный: {0}",
@@ -2262,6 +2298,38 @@
   {
     "s": "[Очистка] Список пакетов Appx не получен: тайм-аут или отмена",
     "t": "[Cleanup] Could not get the Appx package list: timeout or cancellation"
+  },
+  {
+    "s": "[Персонализация] Клиент после отката не завершён: {0}",
+    "t": "[Personalization] Client was not closed after the revert: {0}"
+  },
+  {
+    "s": "[Персонализация] Настройки лаунчера не прочитаны: {0}",
+    "t": "[Personalization] Could not read launcher settings: {0}"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением не запустился: {0}",
+    "t": "[Personalization] Revert before removal did not start: {0}"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением не уложился в 3 минуты",
+    "t": "[Personalization] Revert before removal did not finish within 3 minutes"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением отменён в окне контроля учётных записей",
+    "t": "[Personalization] Revert before removal was canceled at the UAC prompt"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением: клиент не найден — откатывать нечем",
+    "t": "[Personalization] Revert before removal: client not found — nothing to restore"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением: клиент старше 7.2.0 не умеет откатывать без окна — пропущено",
+    "t": "[Personalization] Revert before removal: clients older than 7.2.0 cannot revert without a window — skipped"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением: код {0}",
+    "t": "[Personalization] Revert before removal: code {0}"
   },
   {
     "s": "[Подлинность] {0}",
@@ -3366,6 +3434,10 @@
   {
     "s": "Будет удалено:\n• Папка клиента: {0}\n• Ярлыки на рабочем столе\n• Ярлыки в меню Пуск\n• Запись автозапуска в реестре\n\nНастройки и логи лаунчера сохраняются.\n\nПродолжить?",
     "t": "The following will be removed:\n• Client folder: {0}\n• Desktop shortcuts\n• Start menu shortcuts\n• Autostart entry in the registry\n\nLauncher settings and logs are kept.\n\nContinue?"
+  },
+  {
+    "s": "Будет удалено:\n• Папка клиента: {0}\n• Ярлыки на рабочем столе\n• Ярлыки в меню Пуск\n• Запись автозапуска в реестре\n\nОформление Windows из «Персонализации» (тема панели задач, ушки, «Свой Пуск», курсоры, обои, звуки) вернётся, каким было до Ven4Tools.\n\nНастройки и логи лаунчера сохраняются.\n\nПродолжить?",
+    "t": "The following will be removed:\n• Client folder: {0}\n• Desktop shortcuts\n• Start menu shortcuts\n• Autostart entry in the registry\n\nWindows appearance from “Personalization” (taskbar theme, ears, “Venchik's Start”, cursors, wallpaper, sounds) will return to how it was before Ven4Tools.\n\nLauncher settings and logs are kept.\n\nContinue?"
   },
   {
     "s": "Будет установлено приложений: {0}.\n\nСоздать точку восстановления Windows перед установкой?",
@@ -4832,6 +4904,10 @@
     "t": "Closes the window. Selections in the catalog are not changed."
   },
   {
+    "s": "Закрывает «Свой Пуск» и убирает его из автозапуска, как было до Ven4Tools.",
+    "t": "Closes “Venchik's Start” and removes it from autostart, as it was before Ven4Tools."
+  },
+  {
     "s": "Закрыть",
     "t": "Close"
   },
@@ -5444,6 +5520,10 @@
     "t": "Chinese Simplified (zh-cn)"
   },
   {
+    "s": "Кладёт «Свой Пуск» в папку профиля, добавляет в автозапуск и запускает. Прежняя запись автозапуска запоминается для отката.",
+    "t": "Copies “Venchik's Start” to the profile folder, adds it to autostart and launches it. The previous autostart entry is saved for restoring."
+  },
+  {
     "s": "Классический двухпанельный файловый менеджер с архивами, FTP и плагинами.",
     "t": "Classic two-pane file manager with archives, FTP, and plugins."
   },
@@ -5840,6 +5920,10 @@
     "t": "Game library manager. Combines Steam, GOG, itch.io, and other platforms in one interface."
   },
   {
+    "s": "Меню не открылось — подробности в журнале",
+    "t": "Menu did not open — see the log for details"
+  },
+  {
     "s": "Мессенджеры",
     "t": "Messengers"
   },
@@ -6230,6 +6314,14 @@
   {
     "s": "Не получать драйверы через Windows Update?\n\nБудет включена политика «Не включать драйверы в обновления качества Windows». Это снижает вероятность, что Windows Update вернёт старый драйвер видеокарты поверх нового, но не гарантирует: политика работает не во всех случаях, а драйверы для нового оборудования Windows может ставить и сама.\n\nСвежие драйверы придётся ставить вручную — с сайта производителя.\nВыключить можно здесь же, прежнее значение вернётся.",
     "t": "Stop getting drivers via Windows Update?\n\nThe “Do not include drivers with Windows Updates” policy will be enabled. This makes it less likely that Windows Update puts an old graphics driver back over a newer one, but does not guarantee it: the policy does not work in all cases, and Windows may install drivers for new hardware on its own.\n\nYou will have to install fresh drivers manually — from the manufacturer's website.\nYou can turn this off right here, and the previous value will be restored."
+  },
+  {
+    "s": "Не получилось включить «Свой Пуск». Подробности — в журнале.",
+    "t": "Failed to enable “Venchik's Start”. See the log for details."
+  },
+  {
+    "s": "Не получилось выключить «Свой Пуск». Подробности — в журнале.",
+    "t": "Failed to disable “Venchik's Start”. See the log for details."
   },
   {
     "s": "Не получилось изменить настройки. Подробности — в журнале.",
@@ -7288,6 +7380,10 @@
     "t": "The overlay is a small window in the corner of the screen on top of a game: FPS, CPU and graphics card temperature and load. Clicks pass through it, nothing is injected into the game. Visible in windowed and borderless fullscreen modes."
   },
   {
+    "s": "Одиночное нажатие Win открывает «Свой Пуск» вместо родного. Сочетания Win+R, Win+E и другие работают как обычно, в полноэкранных играх клавиша не перехватывается.",
+    "t": "A single Win press opens “Venchik's Start” instead of the built-in one. Win+R, Win+E and other shortcuts work as usual; the key is not intercepted in full-screen games."
+  },
+  {
     "s": "Однократно",
     "t": "Once"
   },
@@ -7434,6 +7530,10 @@
   {
     "s": "Ответ {0} превышает допустимый размер ({1} байт)",
     "t": "Response from {0} exceeds the allowed size ({1} bytes)"
+  },
+  {
+    "s": "Отдельное меню программ в стиле Венчика: закреплённые программы, все программы со значками, поиск и кнопки питания. Цвета берутся из темы панели задач. Родной Пуск Windows не меняется. Открывается сочетанием Ctrl+Alt+Пробел или значком Венчика в трее.",
+    "t": "A separate app menu in Venchik style: pinned apps, all apps with icons, search and power buttons. Colors come from the taskbar theme. The built-in Windows Start is not changed. Opens with Ctrl+Alt+Space or the Venchik icon in the tray."
   },
   {
     "s": "Отзыв о Ven4Tools {0}",
@@ -7664,6 +7764,10 @@
     "t": "Opens the “Taskbar” page in Windows Settings."
   },
   {
+    "s": "Открывать клавишей Win",
+    "t": "Open with the Win key"
+  },
+  {
     "s": "Открытая программа удалённого доступа к компьютеру, можно подключаться через свой сервер.",
     "t": "Open-source remote desktop app; can connect through your own server."
   },
@@ -7694,6 +7798,10 @@
   {
     "s": "Открыть «Установленные приложения»",
     "t": "Open “Installed apps”"
+  },
+  {
+    "s": "Открыть меню",
+    "t": "Open menu"
   },
   {
     "s": "Открыть на GitHub",
@@ -8172,6 +8280,10 @@
     "t": "The taskbar hides behind the screen edge and appears when you move the mouse there."
   },
   {
+    "s": "Папка {0} — ссылка на другое место, «Свой Пуск» туда не копируется.",
+    "t": "The {0} folder is a link to another location, so “Venchik's Start” is not copied there."
+  },
+  {
     "s": "Папка «Автозагрузка»",
     "t": "“Startup” folder"
   },
@@ -8402,6 +8514,10 @@
   {
     "s": "Персонализация",
     "t": "Personalization"
+  },
+  {
+    "s": "Персонализация: {0}",
+    "t": "Personalization: {0}"
   },
   {
     "s": "Персональные советы по данным диагностики",
@@ -8782,6 +8898,10 @@
   {
     "s": "Показать системные",
     "t": "Show system"
+  },
+  {
+    "s": "Показывает «Свой Пуск» сейчас.",
+    "t": "Shows “Venchik's Start” now."
   },
   {
     "s": "Показывает или скрывает оверлей. То же делает сочетание Ctrl+Shift+O — оно работает, пока Ven4Tools запущен, даже свёрнутый в трей.",
@@ -9696,6 +9816,10 @@
     "t": "{0} is already closed."
   },
   {
+    "s": "Программа «Свой Пуск» не найдена в папке Ven4Tools.",
+    "t": "“Venchik's Start” was not found in the Ven4Tools folder."
+  },
+  {
     "s": "Программа занята другим приложением — закройте его и повторите установку.",
     "t": "The app is in use by another application. Close it and try the installation again."
   },
@@ -10286,6 +10410,18 @@
   {
     "s": "Свободное место: нет данных",
     "t": "Free space: no data"
+  },
+  {
+    "s": "Свой Пуск",
+    "t": "Venchik's Start"
+  },
+  {
+    "s": "Свой Пуск Венчика",
+    "t": "Venchik's own Start menu"
+  },
+  {
+    "s": "Свой Пуск: обновляю копию программы после обновления Ven4Tools",
+    "t": "Venchik's Start: updating the app copy after the Ven4Tools update"
   },
   {
     "s": "Свой цвет",
@@ -11124,6 +11260,10 @@
     "t": "Taskbar theme"
   },
   {
+    "s": "Тема панели задач и ушки Венчика",
+    "t": "Taskbar theme and Venchik's ears"
+  },
+  {
     "s": "Тема панели: «{0}» ещё держит другой раздел — значение оставлено как есть",
     "t": "Taskbar theme: “{0}” is still held by another section — the value was left as is"
   },
@@ -11960,6 +12100,10 @@
     "t": "The file was replaced with a link, write canceled: {0}"
   },
   {
+    "s": "Файл состояния «Своего Пуска» сейчас не читается — изменения не применены, чтобы не потерять прежнее состояние.",
+    "t": "The “Venchik's Start” state file cannot be read right now — changes were not applied to avoid losing the previous state."
+  },
+  {
     "s": "Файл состояния темы панели сейчас не читается — изменения не применены, чтобы не потерять прежнее состояние.",
     "t": "The taskbar theme state file cannot be read right now — changes were not applied to avoid losing the previous state."
   },
@@ -11994,6 +12138,10 @@
   {
     "s": "Файлы программы заняты — закройте её и повторите установку.",
     "t": "The app's files are in use. Close it and try the installation again."
+  },
+  {
+    "s": "Файлы программы не найдены",
+    "t": "App files not found"
   },
   {
     "s": "Файлы сохранены",
@@ -12688,6 +12836,10 @@
     "t": "CDN manifest rejected: {0}"
   },
   {
+    "s": "манифест другой редакции ({0}, ожидалась {1})",
+    "t": "manifest of a different edition ({0}, expected {1})"
+  },
+  {
     "s": "манифест не получен ({0})",
     "t": "manifest not received ({0})"
   },
@@ -13200,6 +13352,10 @@
     "t": "hottest core {0}"
   },
   {
+    "s": "сборка",
+    "t": "build"
+  },
+  {
     "s": "сеанс",
     "t": "session"
   },
@@ -13670,6 +13826,10 @@
   {
     "s": "↩ Возвращено: {0}",
     "t": "↩ Reverted: {0}"
+  },
+  {
+    "s": "↩ Персонализация: откат всех изменений",
+    "t": "↩ Personalization: reverting all changes"
   },
   {
     "s": "↩️ Перенос клиента был прерван — клиент остаётся в прежней папке, недоделанная копия убрана",
@@ -14444,6 +14604,14 @@
     "t": "⚠️ Shortcut update interrupted: {0}"
   },
   {
+    "s": "⚠️ Откат персонализации: «{0}» вернулся не полностью",
+    "t": "⚠️ Personalization revert: “{0}” was not fully restored"
+  },
+  {
+    "s": "⚠️ Откат персонализации: «{0}» — {1}",
+    "t": "⚠️ Personalization revert: “{0}” — {1}"
+  },
+  {
     "s": "⚠️ Очистка: {0}",
     "t": "⚠️ Cleanup: {0}"
   },
@@ -14504,6 +14672,10 @@
     "t": "⚠️ Personalization: unexpected entry “{0}\\{1}” in the revert file — skipped"
   },
   {
+    "s": "⚠️ Персонализация: не вернулось — {0}",
+    "t": "⚠️ Personalization: not restored — {0}"
+  },
+  {
     "s": "⚠️ Персонализация: не открыта картинка — {0}",
     "t": "⚠️ Personalization: couldn't open the picture — {0}"
   },
@@ -14558,6 +14730,30 @@
   {
     "s": "⚠️ Регион после установки Office вернулся не полностью — повторю при следующем запуске",
     "t": "⚠️ The region was not fully restored after the Office installation — will retry on next start"
+  },
+  {
+    "s": "⚠️ Свой Пуск не запустился сейчас — появится после следующего входа в Windows",
+    "t": "⚠️ Venchik's Start did not start now — it will appear after the next Windows sign-in"
+  },
+  {
+    "s": "⚠️ Свой Пуск: копия не обновилась — {0}",
+    "t": "⚠️ Venchik's Start: the copy was not updated — {0}"
+  },
+  {
+    "s": "⚠️ Свой Пуск: меню не открылось — {0}",
+    "t": "⚠️ Venchik's Start: the menu did not open — {0}"
+  },
+  {
+    "s": "⚠️ Свой Пуск: прежняя копия не закрылась за 3 с",
+    "t": "⚠️ Venchik's Start: the previous instance did not close within 3 s"
+  },
+  {
+    "s": "⚠️ Свой Пуск: сигнал закрытия — {0}",
+    "t": "⚠️ Venchik's Start: close signal — {0}"
+  },
+  {
+    "s": "⚠️ Свой Пуск: сигнал открытия меню — {0}",
+    "t": "⚠️ Venchik's Start: open menu signal — {0}"
   },
   {
     "s": "⚠️ Сохранение маркера региона: {0}",
@@ -15144,6 +15340,18 @@
     "t": "✓ In set"
   },
   {
+    "s": "✓ Включён — Ctrl+Alt+Пробел",
+    "t": "✓ Enabled — Ctrl+Alt+Space"
+  },
+  {
+    "s": "✓ Включён — клавиша Win и Ctrl+Alt+Пробел",
+    "t": "✓ Enabled — Win key and Ctrl+Alt+Space"
+  },
+  {
+    "s": "✓ Включён — появится после следующего входа в Windows",
+    "t": "✓ Enabled — will appear after the next Windows sign-in"
+  },
+  {
     "s": "✓ Все требования Windows 11 выполнены.",
     "t": "✓ All Windows 11 requirements are met."
   },
@@ -15154,6 +15362,10 @@
   {
     "s": "✓ ПК подходит для Windows 11.",
     "t": "✓ This PC is compatible with Windows 11."
+  },
+  {
+    "s": "✓ Персонализация: всё возвращено, как было до Ven4Tools",
+    "t": "✓ Personalization: everything restored to how it was before Ven4Tools"
   },
   {
     "s": "✓ Применена тема «{0}»",
@@ -15630,6 +15842,18 @@
   {
     "s": "❌ Сбой установки (код {0})",
     "t": "❌ Installation failed (code {0})"
+  },
+  {
+    "s": "❌ Свой Пуск: {0}",
+    "t": "❌ Venchik's Start: {0}"
+  },
+  {
+    "s": "❌ Свой Пуск: выключение — {0}",
+    "t": "❌ Venchik's Start: disabling — {0}"
+  },
+  {
+    "s": "❌ Свой Пуск: состояние не прочитано — {0}",
+    "t": "❌ Venchik's Start: state not read — {0}"
   },
   {
     "s": "❌ Служба Windows Update не запущена — список скрытых недоступен.",

@@ -47,13 +47,24 @@ public partial class App : Application
         // (язык сменили, а пакет не успел скачаться): тогда коротко ждём загрузку, но
         // не в проверках интерфейса и не в режиме командной строки — там окон нет.
         bool noWindow = Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1"
-            || Array.Exists(e.Args, a => a.StartsWith("--install-from=", StringComparison.OrdinalIgnoreCase));
+            || Array.Exists(e.Args, a => a.StartsWith("--install-from=", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(a, Services.PersonalizationRevertRunner.Switch, StringComparison.OrdinalIgnoreCase));
         try { Services.LauncherLanguage.Start(noWindow ? TimeSpan.Zero : TimeSpan.FromSeconds(4)); }
         catch (Exception ex) { Services.LauncherLog.Write($"[Язык] Не удалось определить язык интерфейса: {ex.Message}"); }
 
         if (Environment.GetEnvironmentVariable("VEN4TOOLS_UI_TEST") == "1")
         {
             base.OnStartup(e);
+            return;
+        }
+
+        // Откат «Персонализации» перед удалением данных (зовёт деинсталлятор) — без окон и без
+        // мьютекса единственного экземпляра: лаунчер к этому моменту закрыт деинсталлятором.
+        if (Array.Exists(e.Args, a => string.Equals(a, Services.PersonalizationRevertRunner.Switch, StringComparison.OrdinalIgnoreCase)))
+        {
+            int code = Services.PersonalizationRevertRunner.Run(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools"));
+            Shutdown(code);
             return;
         }
 

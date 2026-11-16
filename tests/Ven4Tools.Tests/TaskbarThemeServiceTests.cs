@@ -153,6 +153,26 @@ public sealed class TaskbarThemeServiceTests : IDisposable
         Assert.False(svc.HasUndo);
     }
 
+    // Частичный откат, затем снова «Применить»: вернувшиеся значения запоминаются заново,
+    // и следующий откат возвращает всё, а не только то, что не вернулось в первый раз.
+    [Fact]
+    public void ApplyAfterPartialRevert_SnapshotsRestoredValuesAgain()
+    {
+        var reg = Windows();
+        var before = reg.Dump();
+        var svc = Make(reg);
+        svc.ApplyTheme(TaskbarThemeService.Themes.First(t => t.Id == "cherry"));
+        reg.FailOn = "AccentColorMenu";
+        svc.RevertAll();
+        Assert.Single(svc.Current.ColorUndo);
+        reg.FailOn = null;
+        svc.ApplyTheme(TaskbarThemeService.Themes.First(t => t.Id == "sea"));
+        Assert.Equal(TaskbarThemeService.ThemeValues.Length, svc.Current.ColorUndo.Count);
+        svc.RevertAll();
+        Assert.Equal(before, reg.Dump());
+        Assert.False(svc.HasUndo);
+    }
+
     [Fact]
     public void AppliedTheme_SurvivesRestart()
     {

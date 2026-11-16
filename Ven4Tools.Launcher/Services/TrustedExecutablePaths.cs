@@ -140,9 +140,11 @@ namespace Ven4Tools.Launcher.Services
                     // клиента (06.11: 209 повторных проверок за секунду на Win10 22H2).
                     string stamp = FileStamp(exePath);
                     if (_rejectedWinget.TryGetValue(stamp, out var rejectedAt) && DateTime.UtcNow - rejectedAt < RejectedWingetRetry) continue;
-                    if (!AuthenticodeVerifier.IsSignedByMicrosoft(exePath, out _))
+                    if (!AuthenticodeVerifier.IsSignedByMicrosoft(exePath, out string error))
                     {
                         _rejectedWinget[stamp] = DateTime.UtcNow;
+                        // Как в клиенте: одна строка на отказ (повтор по тому же файлу отсечён выше).
+                        LauncherLog.Write($"[TrustedExecutablePaths] ⚠ {exePath}: подпись не подтверждена ({error}) — пропускаю эту версию пакета");
                         continue;
                     }
 
@@ -350,7 +352,7 @@ namespace Ven4Tools.Launcher.Services
         /// <summary>
         /// Строгая проверка: право записи есть у кого-то, кроме SYSTEM, администраторов,
         /// CREATOR OWNER и TrustedInstaller. Для каталогов, которые обязаны быть
-        /// системными (пакет winget, chocolateyin) — там запись самим пользователем
+        /// системными (пакет winget, chocolatey\bin) — там запись самим пользователем
         /// как раз и есть признак подмены.
         /// </summary>
         internal static bool IsDirectoryAclCompromised(string dirPath) =>

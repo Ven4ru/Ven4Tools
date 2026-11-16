@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Ven4Start;
 
@@ -10,11 +11,17 @@ namespace Ven4Start;
 /// посылаем через SendInput не назначенную клавишу (0xE8) — для оболочки это
 /// «Win+что-то», и родной Пуск не открывается. Хук снимается системой сам,
 /// если процесс завершится или упадёт.
+///
+/// Хук живёт в своём потоке со своим циклом сообщений, а не в потоке окна: пока окно занято
+/// (построение списка, сборка мусора), каждое нажатие клавиши в системе ждало бы хук, а после
+/// LowLevelHooksTimeout Windows молча снимает его — и Win перестал бы открывать меню.
 /// </summary>
 internal sealed class WinKeyHook : IDisposable
 {
     private readonly Native.LowLevelKeyboardProc _proc; // держим ссылку, чтобы GC не собрал делегат
     private readonly Action _onSingleWin;
+    private readonly Thread _thread;
+    private uint _threadId;
     private IntPtr _hook;
     private bool _winDown;
     private bool _combo;
@@ -25,7 +32,20 @@ internal sealed class WinKeyHook : IDisposable
     {
         _onSingleWin = onSingleWin;
         _proc = Callback;
-        _hook = Native.SetWindowsHookEx(Native.WH_KEYBOARD_LL, _proc, Native.GetModuleHandle(null), 0);
+        using var ready = new ManualResetEventSlim();
+        _thread = new Thread(() =>
+        {
+            _threadId = Native.GetCurrentThreadId();
+            _hook = Native.SetWindowsHookEx(Native.WH_KEYBOARD_LL, _proc, Native.GetModuleHandle(null), 0);
+            ready.Set();
+            if (_hook == IntPtr.Zero) return;
+            // Хук вызывается в этом потоке, пока он ждёт сообщений; WM_QUIT из Dispose завершает цикл.
+            while (Native.GetMessage(out _, IntPtr.Zero, 0, 0) > 0) { }
+            Native.UnhookWindowsHookEx(_hook);
+            _hook = IntPtr.Zero;
+        }) { IsBackground = true, Name = "Ven4Start.WinKey" };
+        _thread.Start();
+        ready.Wait(TimeSpan.FromSeconds(2));
     }
 
     private IntPtr Callback(int nCode, IntPtr wParam, IntPtr lParam)
@@ -77,10 +97,10 @@ internal sealed class WinKeyHook : IDisposable
 
     public void Dispose()
     {
-        if (_hook != IntPtr.Zero)
+        if (_threadId != 0 && _thread.IsAlive)
         {
-            Native.UnhookWindowsHookEx(_hook);
-            _hook = IntPtr.Zero;
+            Native.PostThreadMessage(_threadId, Native.WM_QUIT, IntPtr.Zero, IntPtr.Zero);
+            _thread.Join(TimeSpan.FromSeconds(1));
         }
     }
 }

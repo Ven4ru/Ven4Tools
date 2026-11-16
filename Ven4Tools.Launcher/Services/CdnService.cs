@@ -150,7 +150,8 @@ namespace Ven4Tools.Launcher.Services
         {
             string json = await BoundedHttpText.GetStringAsync(client, VersionUrl, token);
             string signature = await BoundedHttpText.GetStringAsync(client, VersionSignatureUrl, token);
-            var info = AcceptFresh(ParseVerified(json, signature), ManifestSequenceGuard.Default, out string? staleReason);
+            var info = AcceptFresh(ParseVerified(json, signature), ManifestEdition.ExpectedFor(VersionUrl),
+                ManifestSequenceGuard.Default, out string? staleReason);
             if (info != null) LauncherProxy.ApplyManifestFlags(info.LauncherFlags);
             return (info, staleReason);
         }
@@ -163,10 +164,22 @@ namespace Ven4Tools.Launcher.Services
         /// Покрыто unit-тестами.
         /// </summary>
         internal static CdnVersionInfo? AcceptFresh(
-            CdnVersionInfo? verified, ManifestSequenceGuard guard, out string? staleReason)
+            CdnVersionInfo? verified, ManifestSequenceGuard guard, out string? staleReason) =>
+            AcceptFresh(verified, ManifestEdition.Regular, guard, out staleReason);
+
+        /// <param name="expectedEdition">Редакция, которую ждёт адрес манифеста (<see cref="ManifestEdition.ExpectedFor"/>).
+        /// Манифест чужой редакции отвергается ДО учёта номера выпуска: иначе обычный манифест,
+        /// по ошибке выкладки оказавшийся в /legacy/, поднял бы номер и заблокировал настоящий.</param>
+        internal static CdnVersionInfo? AcceptFresh(
+            CdnVersionInfo? verified, string expectedEdition, ManifestSequenceGuard guard, out string? staleReason)
         {
             staleReason = null;
             if (verified == null) return null;
+            if (!ManifestEdition.Matches(verified.Edition, expectedEdition))
+            {
+                staleReason = $"манифест другой редакции ({ManifestEdition.Of(verified.Edition)}, ожидалась {expectedEdition})";
+                return null;
+            }
             return guard.TryAccept(verified.ManifestSeq, out staleReason) ? verified : null;
         }
 

@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text.Json;
+using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,6 +13,14 @@ namespace Ven4Start;
 public sealed record AppEntry(string Name, string ParsingName)
 {
     public override string ToString() => Name;
+}
+
+/// <summary>Запись кэша apps.json (тот же вид, что писала прежняя версия: Name, ParsingName).</summary>
+[DataContract]
+internal sealed class AppCacheItem
+{
+    [DataMember(Name = "Name")] public string? Name { get; set; }
+    [DataMember(Name = "ParsingName")] public string? ParsingName { get; set; }
 }
 
 /// <summary>
@@ -68,9 +77,9 @@ internal static class ShellApps
                 // роняли меню при старте (null в поиске, повтор ключа в словаре).
                 var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var list = new List<AppEntry>();
-                foreach (var a in JsonSerializer.Deserialize<List<AppEntry?>>(File.ReadAllText(CacheFile)) ?? new())
-                    if (a != null && !string.IsNullOrWhiteSpace(a.Name) && !string.IsNullOrWhiteSpace(a.ParsingName) && seen.Add(a.ParsingName))
-                        list.Add(a);
+                foreach (var a in JsonFile.Read<List<AppCacheItem?>>(CacheFile) ?? new())
+                    if (a != null && !string.IsNullOrWhiteSpace(a.Name) && !string.IsNullOrWhiteSpace(a.ParsingName) && seen.Add(a.ParsingName!))
+                        list.Add(new AppEntry(a.Name!, a.ParsingName!));
                 return list;
             }
         }
@@ -82,8 +91,7 @@ internal static class ShellApps
     {
         try
         {
-            Directory.CreateDirectory(CacheDir);
-            File.WriteAllText(CacheFile, JsonSerializer.Serialize(list));
+            JsonFile.Write(CacheFile, list.Select(a => new AppCacheItem { Name = a.Name, ParsingName = a.ParsingName }).ToList());
         }
         catch (Exception ex) { App.Log("кэш списка программ не сохранён", ex); }
     }
@@ -129,8 +137,8 @@ internal static class ShellApps
                 {
                     string? name = GetName(item, SIGDN_NORMALDISPLAY);
                     string? parsing = GetName(item, SIGDN_PARENTRELATIVEPARSING);
-                    if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(parsing) && seen.Add(parsing))
-                        result.Add(new AppEntry(name, parsing));
+                    if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(parsing) && seen.Add(parsing!))
+                        result.Add(new AppEntry(name!, parsing!));
                 }
                 catch { /* пропускаем элемент, который не отдал имя */ }
                 finally { Marshal.ReleaseComObject(item); }

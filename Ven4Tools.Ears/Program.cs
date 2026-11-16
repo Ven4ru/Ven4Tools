@@ -40,6 +40,10 @@ namespace Ven4Tools.Ears
             using var quit = new EventWaitHandle(false, EventResetMode.AutoReset, QuitEvent);
             // Сигнал, который прежняя копия так и не забрала, — устаревший: иначе новая копия закрыла бы сама себя.
             if (owned) quit.Reset();
+            // Ошибка в потоке окна не должна показывать человеку окно WinForms с трассой стека:
+            // ушки стартуют автозапуском при каждом входе в Windows. В журнал (если задан --log) — и работаем дальше.
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += (_, e) => Log("ошибка: " + e.Exception.GetType().Name + ": " + e.Exception.Message);
             Application.EnableVisualStyles();
             var form = new EarsForm(inner);
             // Ждать сигнал — только когда у окна есть дескриптор: раньше BeginInvoke до создания окна

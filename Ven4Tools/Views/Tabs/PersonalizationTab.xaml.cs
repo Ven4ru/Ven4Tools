@@ -53,6 +53,9 @@ namespace Ven4Tools.Views.Tabs
             InitializeComponent();
             Refresh();
             RefreshTaskbar();
+            RefreshStartMenu();
+            chkStartWinKey.Checked += (_, _) => UpdateStartEnable();
+            chkStartWinKey.Unchecked += (_, _) => UpdateStartEnable();
             // Цвета статусов, рамок наборов и плашки читаемости — разовые снимки ресурса
             // (FindResource), сами о смене темы клиента они не узнают. Отписки нет:
             // экземпляр вкладки один на весь сеанс (как у ViewModel других вкладок).
@@ -501,6 +504,92 @@ namespace Ven4Tools.Views.Tabs
         {
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ms-settings:taskbar") { UseShellExecute = true }); }
             catch (Exception ex) { AppLogger.Write("⚠️ Не открылись параметры панели задач — " + ex.Message); }
+        }
+
+        // ── Свой Пуск (блок 2) ───────────────────────────────────────────
+
+        private readonly StartMenuService _startMenu = StartMenuService.Default;
+        private StartMenuService.State _startState = new();
+        private string? _startBroken;
+        private bool _startAvailable;
+
+        private void RefreshStartMenu()
+        {
+            // Зовётся из конструктора и из finally обработчиков: сбой чтения не должен ронять вкладку.
+            try
+            {
+                _startAvailable = StartMenuService.Available;
+                _startState = _startMenu.Current;
+                _startBroken = _startMenu.BrokenBackup;
+                if (_startState.Enabled) chkStartWinKey.IsChecked = _startState.WinKey;
+                btnStartShow.IsEnabled = _startState.Enabled;
+                // Испорченный файл состояния: «Включить» отказывает, а «Выключить» доступно —
+                // скажет, что вернуть нечего, и снимет отказ.
+                btnStartDisable.IsEnabled = _startState.Enabled || _startBroken != null;
+                txtStartStatus.Text = _startBroken != null ? "⚠️ " + UndoFileGuard.BrokenMessage(_startBroken)
+                    : !_startAvailable ? "Файлы программы не найдены"
+                    : _startState.Enabled ? (_startState.WinKey ? "✓ Включён — клавиша Win и Ctrl+Alt+Пробел" : "✓ Включён — Ctrl+Alt+Пробел")
+                    : "Выключен";
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write("❌ Свой Пуск: состояние не прочитано — " + ex.Message);
+            }
+            UpdateStartEnable();
+        }
+
+        /// <summary>«Включить» доступно, пока «Свой Пуск» выключен или выбран другой режим клавиши Win.</summary>
+        private void UpdateStartEnable() =>
+            btnStartEnable.IsEnabled = _startAvailable && _startBroken == null
+                && (!_startState.Enabled || (chkStartWinKey.IsChecked == true) != _startState.WinKey);
+
+        private async void StartMenuEnable_Click(object sender, RoutedEventArgs e)
+        {
+            bool winKey = chkStartWinKey.IsChecked == true;
+            IsEnabled = false;
+            bool started = true;
+            try { started = await Task.Run(() => _startMenu.Enable(winKey)); }
+            catch (UndoFileBrokenException)
+            {
+                // Уже в журнале; строку состояния обновит RefreshStartMenu ниже.
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Write("❌ Свой Пуск: " + ex.Message);
+                MessageBox.Show("Не получилось включить «Свой Пуск». Подробности — в журнале.", "Свой Пуск Венчика", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            finally
+            {
+                IsEnabled = true;
+                RefreshStartMenu();
+            }
+            if (!started) txtStartStatus.Text = "✓ Включён — появится после следующего входа в Windows";
+        }
+
+        private async void StartMenuShow_Click(object sender, RoutedEventArgs e)
+        {
+            bool shown = false;
+            try { shown = await Task.Run(_startMenu.ShowMenu); }
+            catch (Exception ex) { AppLogger.Write("⚠️ Свой Пуск: меню не открылось — " + ex.Message); }
+            if (!shown) txtStartStatus.Text = "Меню не открылось — подробности в журнале";
+        }
+
+        private async void StartMenuDisable_Click(object sender, RoutedEventArgs e)
+        {
+            IsEnabled = false;
+            string? message = null;
+            try { await Task.Run(() => _startMenu.Revert(out message)); }
+            catch (Exception ex)
+            {
+                AppLogger.Write("❌ Свой Пуск: выключение — " + ex.Message);
+                MessageBox.Show("Не получилось выключить «Свой Пуск». Подробности — в журнале.", "Свой Пуск Венчика", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            finally
+            {
+                IsEnabled = true;
+                RefreshStartMenu();
+                if (message != null) txtStartStatus.Text = "↩ " + message;
+            }
         }
 
         private void Refresh()

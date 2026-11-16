@@ -16,7 +16,10 @@ public partial class App : Application
     private Forms.NotifyIcon? _tray;
     private MenuWindow? _menu;
     private EventWaitHandle? _show;
+    private EventWaitHandle? _quit;
     private const string ShowEvent = @"Local\Ven4Start.Show";
+    /// <summary>Сигнал закрыться — так клиент Ven4Tools выключает «Свой Пуск» и обновляет файл программы.</summary>
+    private const string QuitEvent = @"Local\Ven4Start.Quit";
 
     private static readonly string LogFile = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Start", "crash.log");
@@ -38,6 +41,8 @@ public partial class App : Application
         }
         _show = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEvent);
         new Thread(() => { while (_show.WaitOne()) Dispatcher.BeginInvoke(new Action(ShowMenu)); }) { IsBackground = true, Name = "Ven4Start.Show" }.Start();
+        _quit = new EventWaitHandle(false, EventResetMode.AutoReset, QuitEvent);
+        new Thread(() => { if (_quit.WaitOne()) Dispatcher.BeginInvoke(new Action(ExitApp)); }) { IsBackground = true, Name = "Ven4Start.Quit" }.Start();
 
         // «Сторож»: родной Пуск мы не трогаем вообще, поэтому падение ничего не ломает.
         // Хук клавиатуры система снимает сама при завершении процесса; здесь — только журнал

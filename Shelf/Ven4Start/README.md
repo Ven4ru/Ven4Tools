@@ -1,6 +1,7 @@
-# Свой Пуск (Ven4Start) — заготовка «на полку»
+# Свой Пуск (Ven4Start) — блок 2 «Персонализации»
 
-Отдельный exe (.NET 10, WPF), в клиент Ven4Tools **не встроен**. Своё меню программ поверх
+Отдельный exe (.NET Framework 4.8, WPF); клиент Ven4Tools кладёт его рядом с собой и включает
+в «Персонализации» (`StartMenuService`). Своё меню программ поверх
 Windows: родной Пуск не трогается вообще, в explorer ничего не внедряется. Используются
 только документированные Windows API.
 
@@ -52,7 +53,8 @@ dotnet build -c Release
 ```
 
 SDK берётся из `global.json` в корне репозитория. Результат:
-`Shelf\Ven4Start\bin\Release\net10.0-windows\Ven4Start.exe`.
+`Shelf\Ven4Start\bin\Release\net48\Ven4Start.exe`. Клиент собирает программу сам (ссылка на проект
+в `Ven4Tools.csproj`) и кладёт рядом с собой как `Personalization\Venchik\Ven4Start.exe`.
 
 Запуск: `Ven4Start.exe` (горячая клавиша Ctrl+Alt+Пробел) или `Ven4Start.exe --win-key`.
 

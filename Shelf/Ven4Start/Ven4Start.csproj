@@ -1,8 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- «Свой Пуск» (Персонализация, блок 2). Как ушки и заставка — под .NET Framework 4.8: он есть в любой
+       Windows 10 и 11, программа не тянет среду выполнения .NET 10 и не задета проблемой CET необновлённой
+       Windows 10. Клиент кладёт её рядом с собой как Personalization\Venchik\Ven4Start.exe и при включении
+       копирует в %LOCALAPPDATA%\Ven4Tools\Personalization (папка клиента меняется при обновлении). -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -11,14 +16,22 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>Ven4Start</AssemblyName>
     <RootNamespace>Ven4Start</RootNamespace>
-    <Version>0.2.0</Version>
-    <Product>Свой Пуск (Ven4Start)</Product>
-    <Description>Заготовка своего меню «Пуск» для Ven4Tools</Description>
-    <InvariantGlobalization>false</InvariantGlobalization>
-    <SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
-    <!-- WPF-приложение: DPI задаётся манифестом, предупреждение WinForms тут не к месту -->
-    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <Version>0.3.0</Version>
+    <Product>Ven4Tools</Product>
+    <AssemblyTitle>Свой Пуск — Ven4Tools</AssemblyTitle>
+    <Description>Своё меню «Пуск» в стиле Венчика</Description>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Морда Венчика: шапка меню и значок в трее (та же картинка, что на «Пуске» Ven4Bar) -->

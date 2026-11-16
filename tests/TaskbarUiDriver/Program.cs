@@ -13,7 +13,7 @@ using Microsoft.Win32;
 
 namespace TaskbarUiDriver;
 
-// TaskbarUiDriver.exe <папка отчёта> <путь к Ven4Tools.exe>
+// TaskbarUiDriver.exe <папка отчёта> <путь к Ven4Tools.exe> [<путь к Ven4Tools.Launcher.exe>]
 internal static class Program
 {
     static string Out = "";
@@ -27,6 +27,7 @@ internal static class Program
     static int Main(string[] args)
     {
         Out = args[0]; var exe = args[1];
+        if (args.Length > 2) LauncherExe = args[2];
         Directory.CreateDirectory(Out);
         try { Run(exe); }
         catch (Exception ex) { Check(false, "исключение " + ex); Shot("ошибка"); }
@@ -55,6 +56,7 @@ internal static class Program
         (@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "EnableTransparency"),
         (@"Software\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3", "Settings"),
         (@"Software\Microsoft\Windows\CurrentVersion\Run", "Ven4ToolsEars"),
+        (@"Software\Microsoft\Windows\CurrentVersion\Run", "Ven4ToolsStart"),
         (@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "TaskbarAl"),
         (@"Software\Microsoft\Windows\CurrentVersion\Search", "SearchboxTaskbarMode"),
         (@"Software\Microsoft\Windows\CurrentVersion\Search", "BingSearchEnabled"),
@@ -211,9 +213,148 @@ internal static class Program
         Minimize(win); Thread.Sleep(2500);
         Shot("11_рабочий_стол_после_отката");
         Check(Win11 || TaskbarEdge() == 3, "панель снова внизу");
+        Restore(win);
 
+        StartMenuCard(win);
+
+        // Единый откат (деинсталлятор, «Удалить клиент»): тема с ушками и «Свой Пуск» включены —
+        // клиент с ключом --revert-personalization возвращает всё без окон.
+        ScrollTo(win, section);
+        Invoke(Find(win, "Венчик", ControlType.Button)); Thread.Sleep(600);
+        Invoke(apply); Thread.Sleep(7000); Dialogs("Нет");
+        var startEnable = win.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "btnStartEnable"));
+        ScrollTo(win, startEnable);
+        Invoke(startEnable); Thread.Sleep(6000);
+        Check(Process.GetProcessesByName("VenchikEars").Length == 1 && Process.GetProcessesByName("Ven4Start").Length == 1, "перед общим откатом работают ушки и «Свой Пуск»");
+        Check(RegDump() != before, "перед общим откатом реестр изменён");
         foreach (var p in Process.GetProcessesByName("Ven4Tools")) { try { p.CloseMainWindow(); p.WaitForExit(5000); if (!p.HasExited) p.Kill(); } catch { } }
+        Thread.Sleep(2000);
+
+        int code = RunAndWait(exe, "--revert-personalization", 120);
+        Thread.Sleep(Win11 ? 2000 : 6000);
+        Check(code == 0, $"Ven4Tools.exe --revert-personalization: код {code}");
+        var afterAll = RegDump();
+        Check(afterAll == before, "общий откат клиента вернул реестр побайтно" + (afterAll == before ? "" : " — после: " + afterAll));
+        Check(Process.GetProcessesByName("VenchikEars").Length == 0 && Process.GetProcessesByName("Ven4Start").Length == 0, "после общего отката ушки и «Свой Пуск» закрыты");
+        Shot("30_после_общего_отката");
+
+        if (LauncherExe != null) LauncherRevert(exe, before);
     }
+
+    /// <summary>Путь к Ven4Tools.Launcher.exe (третий аргумент) — проверка ключа лаунчера; null — пропустить.</summary>
+    static string? LauncherExe;
+
+    /// <summary>
+    /// Лаунчер с --revert-personalization находит клиент по launcher_settings.json и запускает его с тем же ключом
+    /// (так его зовёт деинсталлятор при удалении данных).
+    /// </summary>
+    static void LauncherRevert(string clientExe, string before)
+    {
+        var data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
+        var settings = Path.Combine(data, "launcher_settings.json");
+        // На стенде может стоять свой лаунчер с клиентом другой версии: его настройки откладываются
+        // на время проверки и возвращаются в конце, лаунчер проверки смотрит на проверяемый клиент.
+        var saved = settings + ".v4t-test-backup";
+        bool hadSettings = File.Exists(settings);
+        try
+        {
+            if (hadSettings) File.Copy(settings, saved, overwrite: true);
+            File.WriteAllText(settings, "{\"ClientPath\":" + System.Text.Json.JsonSerializer.Serialize(Path.GetDirectoryName(clientExe)) + "}");
+            // Состояние уже чистое (общий откат клиентом прошёл): здесь проверяется сама цепочка —
+            // лаунчер находит клиент по настройкам, запускает его с ключом и получает код 0, ничего не ломая.
+            int code = RunAndWait(LauncherExe!, "--revert-personalization", 180);
+            Check(code == 0, $"Ven4Tools.Launcher.exe --revert-personalization: код {code}");
+            Check(RegDump() == before, "после отката через лаунчер реестр как до проверки");
+        }
+        finally
+        {
+            try
+            {
+                if (hadSettings) { File.Copy(saved, settings, overwrite: true); File.Delete(saved); }
+                else File.Delete(settings);
+            }
+            catch (Exception ex) { Log("настройки лаунчера не возвращены: " + ex.Message); }
+        }
+    }
+
+    static int RunAndWait(string file, string args, int sec)
+    {
+        using var p = Process.Start(new ProcessStartInfo(file, args) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(file)! })!;
+        if (!p.WaitForExit(sec * 1000)) { Log($"{Path.GetFileName(file)} {args}: не завершился за {sec} с"); try { p.Kill(); } catch { } return -1; }
+        return p.ExitCode;
+    }
+
+    /// <summary>Карточка «Свой Пуск Венчика»: Win по умолчанию, включение без прав администратора, меню, режим Win, выключение.</summary>
+    static void StartMenuCard(AutomationElement win)
+    {
+        const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+        string? RunValue() { using var k = Registry.CurrentUser.OpenSubKey(RunKey); return k?.GetValue("Ven4ToolsStart") as string; }
+
+        // Border в дереве UI Automation не виден — карточку узнаём по заголовку.
+        var card = Find(win, "Свой Пуск Венчика", ControlType.Text);
+        Check(card != null, "карточка «Свой Пуск Венчика» есть");
+        var enable = win.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "btnStartEnable"));
+        var show = win.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "btnStartShow"));
+        var disable = win.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "btnStartDisable"));
+        var winKey = win.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "chkStartWinKey"));
+        ScrollTo(win, enable);
+        Shot("20_свой_пуск_исходно", win);
+        bool Toggled() => winKey != null && winKey.TryGetCurrentPattern(TogglePattern.Pattern, out var tp) && ((TogglePattern)tp).Current.ToggleState == ToggleState.On;
+        Check(Toggled(), "«Открывать клавишей Win» включено по умолчанию");
+        Check(enable != null && enable.Current.IsEnabled, "«Включить» доступно");
+        Check(show != null && !show.Current.IsEnabled && disable != null && !disable.Current.IsEnabled, "до включения «Открыть меню» и «Выключить» неактивны");
+
+        Invoke(enable); Thread.Sleep(6000);
+        var run = RunValue();
+        Check(run != null && run.Contains("Ven4Start.exe") && run.Contains("--win-key"), "автозапуск прописан с клавишей Win: " + run);
+        var procs = Process.GetProcessesByName("Ven4Start");
+        Check(procs.Length == 1, $"«Свой Пуск» запущен одной копией ({procs.Length})");
+        if (procs.Length == 1) Check(IsElevated(procs[0]) == false, "«Свой Пуск» работает без прав администратора");
+        Shot("21_свой_пуск_включён", win);
+
+        Invoke(show); Thread.Sleep(2500);
+        Check(Process.GetProcessesByName("Ven4Start").FirstOrDefault() is { } sp && HasVisibleWindow(sp.Id), "«Открыть меню» показывает меню");
+        Shot("22_меню_свой_пуск");
+        SetForegroundWindow(GetShellWindow()); Thread.Sleep(1200);   // меню закрывается при потере фокуса
+
+        // Режим без клавиши Win: «Включить» снова доступно и перезапускает программу.
+        if (winKey != null && winKey.TryGetCurrentPattern(TogglePattern.Pattern, out var tgl)) ((TogglePattern)tgl).Toggle();
+        Thread.Sleep(600);
+        Check(enable!.Current.IsEnabled, "после смены режима «Включить» снова доступно");
+        Invoke(enable); Thread.Sleep(6000);
+        run = RunValue();
+        Check(run != null && !run.Contains("--win-key"), "автозапуск без клавиши Win: " + run);
+        Check(Process.GetProcessesByName("Ven4Start").Length == 1, "после перевключения — одна копия");
+        if (winKey != null && winKey.TryGetCurrentPattern(TogglePattern.Pattern, out tgl)) ((TogglePattern)tgl).Toggle();   // вернуть по умолчанию
+
+        Invoke(disable); Thread.Sleep(5000);
+        Check(RunValue() == null, "«Выключить» убрал автозапуск");
+        Check(Process.GetProcessesByName("Ven4Start").Length == 0, "«Выключить» закрыл «Свой Пуск»");
+        Shot("23_свой_пуск_выключен", win);
+    }
+
+    [DllImport("kernel32.dll")] static extern IntPtr OpenProcess(uint access, bool inherit, int pid);
+    [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr h);
+    [DllImport("advapi32.dll")] static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
+    [DllImport("advapi32.dll")] static extern bool GetTokenInformation(IntPtr token, int cls, out int info, int len, out int ret);
+
+    /// <summary>Повышен ли процесс (TokenElevation); null — не удалось узнать.</summary>
+    static bool? IsElevated(Process p)
+    {
+        var h = OpenProcess(0x1000, false, p.Id);   // PROCESS_QUERY_LIMITED_INFORMATION
+        if (h == IntPtr.Zero) return null;
+        try
+        {
+            if (!OpenProcessToken(h, 0x0008, out var tok)) return null;   // TOKEN_QUERY
+            try { return GetTokenInformation(tok, 20, out int elevated, 4, out _) ? elevated != 0 : null; }
+            finally { CloseHandle(tok); }
+        }
+        finally { CloseHandle(h); }
+    }
+
+    static bool HasVisibleWindow(int pid) =>
+        AutomationElement.RootElement.FindAll(TreeScope.Children, new PropertyCondition(AutomationElement.ProcessIdProperty, pid))
+            .Cast<AutomationElement>().Any(e => { try { return !e.Current.IsOffscreen && e.Current.BoundingRectangle.Width > 200; } catch { return false; } });
 
     // ---------- UI Automation ----------
     static T? Wait<T>(Func<T?> f, int sec) where T : class

@@ -240,6 +240,32 @@
                     </Expander>
                 </StackPanel>
             </Border>
+
+            <!-- Блок 2 «Персонализации» — «Свой Пуск» (Ven4Start): отдельная маленькая программа,
+                 родной Пуск не меняется. Включение, режим клавиши Win, открыть сейчас, выключить. -->
+            <Border x:Name="startMenuSection" Background="{DynamicResource CardBackground}" BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="Свой Пуск Венчика" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="Отдельное меню программ в стиле Венчика: закреплённые программы, все программы со значками, поиск и кнопки питания. Цвета берутся из темы панели задач. Родной Пуск Windows не меняется. Открывается сочетанием Ctrl+Alt+Пробел или значком Венчика в трее."
+                               TextWrapping="Wrap" Margin="0,4,0,12" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+                    <CheckBox x:Name="chkStartWinKey" Content="Открывать клавишей Win" IsChecked="True" VerticalAlignment="Center" Margin="0,0,0,12"
+                              AutomationProperties.AutomationId="chkStartWinKey" Foreground="{DynamicResource TextPrimary}"
+                              ToolTip="Одиночное нажатие Win открывает «Свой Пуск» вместо родного. Сочетания Win+R, Win+E и другие работают как обычно, в полноэкранных играх клавиша не перехватывается."/>
+                    <WrapPanel>
+                        <Button x:Name="btnStartEnable" Content="Включить" Style="{StaticResource PersonalPrimary}" Click="StartMenuEnable_Click"
+                                AutomationProperties.AutomationId="btnStartEnable"
+                                ToolTip="Кладёт «Свой Пуск» в папку профиля, добавляет в автозапуск и запускает. Прежняя запись автозапуска запоминается для отката."/>
+                        <Button x:Name="btnStartShow" Content="Открыть меню" Style="{StaticResource PersonalAction}" Click="StartMenuShow_Click"
+                                AutomationProperties.AutomationId="btnStartShow"
+                                ToolTip="Показывает «Свой Пуск» сейчас."/>
+                        <Button x:Name="btnStartDisable" Content="Выключить" Style="{StaticResource PersonalAction}" Click="StartMenuDisable_Click"
+                                AutomationProperties.AutomationId="btnStartDisable"
+                                ToolTip="Закрывает «Свой Пуск» и убирает его из автозапуска, как было до Ven4Tools."/>
+                        <TextBlock x:Name="txtStartStatus" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

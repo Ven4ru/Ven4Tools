@@ -64,6 +64,8 @@ if (args.Length == 4 && args[0] == "verify")
 //   --revoke-archive <zip>     отозвать конкретный архив: SHA256 файла → revokedClientHashes,
 //                              sha256_canonical из его _ven4tools_signature.json →
 //                              revokedClientCanonicalHashes (версию не отзывает).
+//   --edition regular|win10legacy  редакция манифеста: legacy/version.json — win10legacy
+//                              (лаунчер 3.15+ не примет манифест чужой редакции); regular убирает поле.
 if (args.Length >= 2 && args[0] == "edit")
 {
     try
@@ -83,7 +85,7 @@ if (args.Length != 2)
     Console.Error.WriteLine("  UpdateManifestSigner <version.json> <private-key.pem>");
     Console.Error.WriteLine("  UpdateManifestSigner verify <version.json> <version.json.sig> <public-key.pem>");
     Console.Error.WriteLine("  UpdateManifestSigner edit <version.json> [--seq auto|N] [--revoke-version V]");
-    Console.Error.WriteLine("        [--revoke-canonical HEX] [--revoke-file-hash HEX] [--revoke-archive ZIP]");
+    Console.Error.WriteLine("        [--revoke-canonical HEX] [--revoke-file-hash HEX] [--revoke-archive ZIP] [--edition regular|win10legacy]");
     return 2;
 }
 

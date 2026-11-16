@@ -28,6 +28,8 @@
 ;   4 — версия нового exe не совпала с ожидаемой; 5 — файл лаунчера занят.
 ;   Тот же код с версией пишется в HKCU\Software\Ven4Tools, LauncherUpdateResult:
 ;   лаунчер сообщает итог при следующем запуске.
+;   Тихая установка (/S без /UPDATE — winget, install.ps1) на Windows 10 19041–19045
+;   без обновлений (UBR < 6456) завершается кодом 6: обычная версия там не запустится.
 ; ============================================================================
 
 Unicode true
@@ -80,14 +82,16 @@ ShowUninstDetails show
 BrandingText "Ven4Tools — ven4tools.ru"
 
 ; --- Метаданные exe-файла установщика ---
+; ProductName — «Ven4Tools», как у клиента и лаунчера (условие подписи кода). APP_NAME
+; не трогаем: от него зависят папка установки, ярлыки и запись в «Программах и компонентах».
 VIProductVersion "${VERSION}.0"
-VIAddVersionKey /LANG=1049 "ProductName"     "${APP_NAME}"
+VIAddVersionKey /LANG=1049 "ProductName"     "Ven4Tools"
 VIAddVersionKey /LANG=1049 "ProductVersion"  "${VERSION}"
 VIAddVersionKey /LANG=1049 "FileVersion"     "${VERSION}.0"
 VIAddVersionKey /LANG=1049 "FileDescription" "Установщик ${APP_NAME}"
 VIAddVersionKey /LANG=1049 "CompanyName"     "${PUBLISHER}"
 VIAddVersionKey /LANG=1049 "LegalCopyright"  "© ${PUBLISHER}"
-VIAddVersionKey /LANG=1033 "ProductName"     "${APP_NAME}"
+VIAddVersionKey /LANG=1033 "ProductName"     "Ven4Tools"
 VIAddVersionKey /LANG=1033 "ProductVersion"  "${VERSION}"
 VIAddVersionKey /LANG=1033 "FileVersion"     "${VERSION}.0"
 VIAddVersionKey /LANG=1033 "FileDescription" "${APP_NAME} Setup"
@@ -164,8 +168,8 @@ LangString NAME_SecChoco     ${LANG_ENGLISH} "Install Chocolatey (optional)"
 LangString NAME_UninstallLink ${LANG_RUSSIAN} "Удалить ${APP_NAME}"
 LangString NAME_UninstallLink ${LANG_ENGLISH} "Uninstall ${APP_NAME}"
 
-LangString TEXT_RemoveData ${LANG_RUSSIAN} "Удалить пользовательские данные?$\r$\n$\r$\nБудут удалены: логи, настройки и сохранённая сессия.$\r$\nПапка: ${DATA_DIR}$\r$\n$\r$\nПапка клиента Ven4Tools, если она находится вне этой папки (по умолчанию — в %LOCALAPPDATA%\Programs\Ven4Tools, у установок до версии 3.12 — в «Документах»), не удаляется — её можно удалить кнопкой «Удалить клиент» в лаунчере до деинсталляции."
-LangString TEXT_RemoveData ${LANG_ENGLISH} "Delete user data?$\r$\n$\r$\nThis removes logs, settings and the saved session.$\r$\nFolder: ${DATA_DIR}$\r$\n$\r$\nThe Ven4Tools client folder, if it is outside this folder (by default it is in %LOCALAPPDATA%\Programs\Ven4Tools, or in Documents for installs made before version 3.12), is not removed — you can remove it with the “Uninstall client” button in the launcher before uninstalling."
+LangString TEXT_RemoveData ${LANG_RUSSIAN} "Удалить пользовательские данные?$\r$\n$\r$\nБудут удалены: логи, настройки и сохранённая сессия.$\r$\nПапка: ${DATA_DIR}$\r$\n$\r$\nПеред этим оформление Windows из «Персонализации» (тема панели задач, ушки, «Свой Пуск», курсоры, обои, звуки) вернётся, каким было до Ven4Tools — Windows может спросить разрешение.$\r$\n$\r$\nПапка клиента Ven4Tools, если она находится вне этой папки (по умолчанию — в %LOCALAPPDATA%\Programs\Ven4Tools, у установок до версии 3.12 — в «Документах»), не удаляется — её можно удалить кнопкой «Удалить клиент» в лаунчере до деинсталляции."
+LangString TEXT_RemoveData ${LANG_ENGLISH} "Delete user data?$\r$\n$\r$\nThis removes logs, settings and the saved session.$\r$\nFolder: ${DATA_DIR}$\r$\n$\r$\nBefore that, the Windows look changed in Personalization (taskbar theme, ears, Venchik's Start, cursors, wallpaper, sounds) is restored to how it was before Ven4Tools — Windows may ask for permission.$\r$\n$\r$\nThe Ven4Tools client folder, if it is outside this folder (by default it is in %LOCALAPPDATA%\Programs\Ven4Tools, or in Documents for installs made before version 3.12), is not removed — you can remove it with the “Uninstall client” button in the launcher before uninstalling."
 
 LangString TEXT_ExeBusy ${LANG_RUSSIAN} "Не удалось заменить файл лаунчера:$\r$\n$INSTDIR\${EXE_NAME}$\r$\n$\r$\nВозможно, лаунчер ещё работает (в том числе от имени администратора) или файл проверяет антивирус. Закройте Ven4Tools Launcher и запустите установку ещё раз."
 LangString TEXT_ExeBusy ${LANG_ENGLISH} "Could not replace the launcher file:$\r$\n$INSTDIR\${EXE_NAME}$\r$\n$\r$\nThe launcher may still be running (possibly as administrator), or an antivirus is scanning the file. Close Ven4Tools Launcher and run the setup again."
@@ -180,6 +184,7 @@ LangString TEXT_OldWin10 ${LANG_ENGLISH} "This Windows 10 has not been updated f
 Var UpdateMode   ; "1" — тихое самообновление (/UPDATE)
 Var WaitPid      ; PID процесса лаунчера, завершения которого ждём (/WAITPID=)
 Var Relaunch     ; "1" — перезапустить лаунчер после установки (/RELAUNCH)
+Var RemoveData   ; "1" — при удалении стереть пользовательские данные (перед этим — откат «Персонализации»)
 
 Function .onInit
   StrCpy $UpdateMode "0"
@@ -230,16 +235,24 @@ FunctionEnd
 ; при запуске из-за ошибки теневого стека (CET), её исправляют обновления Windows. Проверено:
 ; 19045.2965 — падает, 19045.6456 — работает. Обычный установщик (не .NET) предупреждает
 ; заранее и предлагает открыть Центр обновления или скачать версию для Windows 10 без
-; обновлений (лаунчер собран без CET_COMPAT, /DWIN10_LEGACY). Тихий режим (самообновление)
-; не спрашивает: лаунчер обновляется установщиком своей же версии.
+; обновлений (лаунчер собран без CET_COMPAT, /DWIN10_LEGACY). Самообновление (/UPDATE)
+; не проверяется: лаунчер обновляется установщиком своей же редакции. Тихая установка
+; (/S — winget, install.ps1) завершается кодом 6 — спросить некого, а «успех» был бы ложным.
 !define CET_OK_UBR 6456
 Function CheckOldWindows10
-  IfSilent cet_done
+  ; Самообновление (/UPDATE) не проверяем: лаунчер обновляется установщиком своей же редакции.
+  StrCmp $UpdateMode "1" cet_done
   ReadRegStr $R3 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuildNumber"
   IntCmp $R3 19041 0 cet_done 0
   IntCmp $R3 19045 0 0 cet_done
   ReadRegDWORD $R4 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "UBR"
   IntCmp $R4 ${CET_OK_UBR} cet_done 0 cet_done
+  ; Тихая установка (winget, install.ps1, /S): спросить некого, а «успех» дал бы программу, которая
+  ; не запускается. Завершаемся кодом 6 — winget и скрипты покажут ошибку установки.
+  IfSilent 0 cet_ask
+    SetErrorLevel 6
+    Abort
+  cet_ask:
   MessageBox MB_YESNOCANCEL|MB_ICONEXCLAMATION "$(TEXT_OldWin10)" /SD IDCANCEL IDYES cet_open_update IDNO cet_open_legacy
   Goto cet_done
   cet_open_update:
@@ -607,6 +620,16 @@ Section "$(NAME_SecMain)" SEC_MAIN
   Delete "$INSTDIR\install-winget.pending"
   Delete "$INSTDIR\install-chocolatey.pending"
 
+!ifndef WIN10_LEGACY
+  ; Обычная сборка поверх версии для Windows 10 без обновлений: продолжение после обновления
+  ; Windows обычный лаунчер не выполняет — запись автозапуска (запускала бы лаунчер при каждом
+  ; входе), отметки и скачанный пакет обновления (~730 МБ) больше не нужны.
+  DeleteRegValue HKCU "${RUN_KEY}" "Ven4ToolsAfterWindowsUpdate"
+  RMDir /r "${DATA_DIR}\Launcher\windows-update"
+  Delete "${DATA_DIR}\Launcher\windows-update-pending.txt"
+  Delete "${DATA_DIR}\Launcher\windows-update-offer.txt"
+!endif
+
   ; Ярлыки: рабочий стол + меню «Пуск» (только при обычной установке —
   ; тихое самообновление не воссоздаёт удалённые пользователем ярлыки)
   CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${EXE_NAME}" "" "$INSTDIR\${EXE_NAME}" 0
@@ -702,12 +725,39 @@ Function un.onInit
 FunctionEnd
 
 Section "Uninstall"
+  ; Пользовательские данные — спрашиваем явно и ДО удаления файлов: в данных лежат файлы
+  ; «как было» для «Персонализации», и перед их удалением её нужно откатить, пока лаунчер
+  ; и клиент ещё на месте. При тихой деинсталляции (/S) по умолчанию НЕ удаляем (/SD IDNO).
+  StrCpy $RemoveData "0"
+  MessageBox MB_YESNO|MB_ICONQUESTION "$(TEXT_RemoveData)" /SD IDNO IDNO ask_done
+    StrCpy $RemoveData "1"
+  ask_done:
+
   ; Закрываем лаунчер и клиент, чтобы файлы и папки не были заняты
   nsExec::Exec 'taskkill /f /im "${EXE_NAME}"'
   Pop $0
   nsExec::Exec 'taskkill /f /im "${CLIENT_EXE}"'
   Pop $0
+
+  ; Данные удаляются — сначала вернуть всю «Персонализацию» (тема панели задач, ушки, «Свой Пуск»,
+  ; курсоры, обои, экран блокировки, звуки, заставка, их автозапуски), каким всё было до Ven4Tools.
+  ; Откат делает клиент (нужны права администратора), лаунчер находит его по своим настройкам.
+  ; Не вышло (клиента нет, отказ в запросе прав) — удаление продолжается, причина в журнале лаунчера.
+  StrCmp $RemoveData "1" 0 revert_done
+    IfFileExists "$INSTDIR\${EXE_NAME}" 0 revert_done
+      ExecWait '"$INSTDIR\${EXE_NAME}" --revert-personalization' $0
+  revert_done:
+  ; «Ушки Венчика» («Персонализация» клиента) работают копией из профиля и стартуют автозапуском:
+  ; без клиента выключить их было бы негде.
+  nsExec::Exec 'taskkill /f /im "VenchikEars.exe"'
+  Pop $0
+  ; Так же «Свой Пуск» (Ven4Start).
+  nsExec::Exec 'taskkill /f /im "Ven4Start.exe"'
+  Pop $0
   Sleep 500
+  Delete "${DATA_DIR}\Personalization\VenchikEars.exe"
+  Delete "${DATA_DIR}\Personalization\Ven4Start.exe"
+  RMDir "${DATA_DIR}\Personalization"
 
   ; Файлы лаунчера (включая возможный бэкап незавершённого самообновления)
   Delete "$INSTDIR\${EXE_NAME}"
@@ -729,6 +779,14 @@ Section "Uninstall"
 
   ; Реестр: автозапуск, запись в «Программы и компоненты», выбор языка
   DeleteRegValue HKCU "${RUN_KEY}" "${RUN_VALUE}"
+  DeleteRegValue HKCU "${RUN_KEY}" "Ven4ToolsEars"
+  DeleteRegValue HKCU "${RUN_KEY}" "Ven4ToolsStart"
+  ; Продолжение установки после обновления Windows (версия для Windows 10 без обновлений):
+  ; обычная сборка эту запись не снимает, а удалённый лаунчер её уже не выполнит.
+  DeleteRegValue HKCU "${RUN_KEY}" "Ven4ToolsAfterWindowsUpdate"
+  RMDir /r "${DATA_DIR}\Launcher\windows-update"
+  Delete "${DATA_DIR}\Launcher\windows-update-pending.txt"
+  Delete "${DATA_DIR}\Launcher\windows-update-offer.txt"
   DeleteRegKey   HKCU "${UNINST_KEY}"
   DeleteRegValue HKCU "${LANG_KEY}" "${LANG_VALUE}"
   DeleteRegValue HKCU "${LANG_KEY}" "${UPDATE_RESULT_VALUE}"
@@ -737,13 +795,14 @@ Section "Uninstall"
   ; Папка установки (удалится, только если пуста — лишнего не трогаем)
   RMDir "$INSTDIR"
 
-  ; Пользовательские данные — спрашиваем явно.
-  ; При тихой деинсталляции (/S) по умолчанию НЕ удаляем (/SD IDNO).
+  ; Пользовательские данные — по ответу в начале удаления.
   ; Клиент по умолчанию ставится в %LOCALAPPDATA%\Programs\Ven4Tools (до 3.12 — в «Документы»)
   ; или в папку, выбранную в лаунчере,
   ; а не в ${DATA_DIR} — обещать его удаление здесь нельзя: удаляется только то,
   ; что лежит внутри этой папки (клиент — лишь при старой раскладке рядом с лаунчером).
-  MessageBox MB_YESNO|MB_ICONQUESTION "$(TEXT_RemoveData)" /SD IDNO IDNO skip_data
+  StrCmp $RemoveData "1" 0 skip_data
     RMDir /r "${DATA_DIR}"
+    ; Настройки, закреплённые программы и кэш «Своего Пуска»
+    RMDir /r "$LOCALAPPDATA\Ven4Start"
   skip_data:
 SectionEnd

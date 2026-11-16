@@ -109,6 +109,9 @@ public static class CatalogLoader
             {
                 var json = await Http.GetStringAsync(url);
                 var sig = await Http.GetStringAsync(url + ".sig");
+                // Сервер ответил: дальше каталог может быть отклонён (подпись, вид, откат),
+                // но это уже не «нет связи с сервером»
+                ServerReachable = true;
                 if (!CatalogSignatureVerifier.Verify(json, sig))
                 {
                     log(L.T("Подпись каталога не сошлась: ") + url);
@@ -131,7 +134,6 @@ public static class CatalogLoader
                     log(L.T("Каталог по этому адресу не читается, источник пропущен: ") + url);
                     continue;
                 }
-                ServerReachable = true;
                 SaveCache(spec, json, sig, probe.Version, log);
                 return (json, new Uri(url).Host);
             }
