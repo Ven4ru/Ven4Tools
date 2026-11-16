@@ -17,6 +17,9 @@ internal static class ManifestEditor
     internal const string RevokedVersionsField = "revokedClientVersions";
     internal const string RevokedCanonicalField = "revokedClientCanonicalHashes";
     internal const string RevokedFileHashesField = "revokedClientHashes";
+    /// <summary>Редакция манифеста (лаунчер: ManifestEdition). Нет поля — обычная.</summary>
+    internal const string EditionField = "edition";
+    private static readonly string[] Editions = { "regular", "win10legacy" };
 
     private const string SignatureEntryName = "_ven4tools_signature.json";
 
@@ -54,6 +57,15 @@ internal static class ManifestEditor
                     break;
                 case "--revoke-archive":
                     RevokeArchive(root, value);
+                    break;
+                case "--edition":
+                    string edition = value.Trim().ToLowerInvariant();
+                    if (Array.IndexOf(Editions, edition) < 0)
+                        throw new ArgumentException($"неизвестная редакция «{value}» — допустимо: {string.Join(", ", Editions)}");
+                    // Обычная — без поля: прежние манифесты и лаунчеры до 3.15 читают его так же.
+                    if (edition == "regular") root.Remove(EditionField);
+                    else root[EditionField] = edition;
+                    Console.WriteLine($"{EditionField} = {edition}");
                     break;
                 default:
                     throw new ArgumentException($"неизвестный параметр {option}");

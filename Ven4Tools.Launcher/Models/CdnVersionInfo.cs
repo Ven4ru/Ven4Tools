@@ -58,6 +58,14 @@ namespace Ven4Tools.Launcher.Models
         [JsonPropertyName("manifest_seq")]
         public long? ManifestSeq { get; set; }
 
+        // Редакция манифеста: нет поля — обычная, «win10legacy» — для Windows 10 без
+        // обновлений (cdn.ven4tools.ru/legacy/version.json). Оба манифеста подписаны одним
+        // ключом, и без этого поля обычный манифест, по ошибке выкладки оказавшийся в
+        // /legacy/, обновил бы лаунчер редакции на сборку с CET (и наоборот). Проверка —
+        // ManifestEdition, до учёта номера выпуска.
+        [JsonPropertyName("edition")]
+        public string? Edition { get; set; }
+
         [JsonPropertyName("historicalClientArchives")]
         public List<HistoricalClientArchive>? HistoricalClientArchives { get; set; }
 

@@ -12828,6 +12828,10 @@
     "t": "CDN manifest rejected: {0}"
   },
   {
+    "s": "манифест другой редакции ({0}, ожидалась {1})",
+    "t": "manifest of a different edition ({0}, expected {1})"
+  },
+  {
     "s": "манифест не получен ({0})",
     "t": "manifest not received ({0})"
   },

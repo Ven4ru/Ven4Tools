@@ -60,6 +60,13 @@ if (-not $PSBoundParameters.ContainsKey('SignerDll')) {
 }
 
 if (-not (Test-Path $VersionJsonPath)) { throw "Не найден $VersionJsonPath" }
+# Скрипт выкладывает только обычный манифест (cdn.ven4tools.ru/version.json). Манифест версии
+# для Windows 10 без обновлений (поле edition = win10legacy) сюда не попадает: лаунчер 3.15+
+# его здесь отвергнет, а старые лаунчеры обновились бы на сборку без CET.
+$editionProbe = (Get-Content $VersionJsonPath -Raw | ConvertFrom-Json).edition
+if ($editionProbe -and $editionProbe -ne 'regular') {
+    throw "Отказ: в $VersionJsonPath редакция «$editionProbe» — это не обычный манифест. Манифест legacy выкладывается Tools/build-win10legacy.ps1."
+}
 if (-not (Test-Path $PrivateKeyPath)) {
     throw "Не найден приватный ключ подписи манифеста: $PrivateKeyPath. " +
           "Ключ не хранится в репозитории — он должен быть на этой машине отдельно."
