@@ -74,6 +74,17 @@ public sealed class PersonalizationRevertTests : IDisposable
         Assert.Equal(2, PersonalizationRevertRunner.RunFor(null));
     }
 
+    // Клиент до 7.2 ключа не знает и открыл бы обычное окно — лаунчер его не запускает (код 5).
+    [Fact]
+    public void Launcher_OldOrUnversionedClient_IsNotStarted()
+    {
+        var dir = Path.Combine(_dir, "old-client");
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "Ven4Tools.exe"), "не exe — версии нет");
+        Assert.False(PersonalizationRevertRunner.ClientSupportsRevert(Path.Combine(dir, "Ven4Tools.exe")));
+        Assert.Equal(5, PersonalizationRevertRunner.RunFor(dir));
+    }
+
     [Fact]
     public void ClientAndLauncher_UseTheSameSwitch()
     {

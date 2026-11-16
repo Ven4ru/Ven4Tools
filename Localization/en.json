@@ -124,6 +124,10 @@
     "t": "   ℹ️ Personalization: client not found — nothing to restore"
   },
   {
+    "s": "   ℹ️ Персонализация: клиент старой версии не умеет откатывать — обновите клиент, чтобы вернуть оформление",
+    "t": "   ℹ️ Personalization: this client version cannot restore it — update the client to bring the Windows look back"
+  },
+  {
     "s": "   ℹ️ Ярлык оставлен — он ведёт не в папку клиента: {0}",
     "t": "   ℹ️ Shortcut kept — it does not point to the client folder: {0}"
   },
@@ -2318,6 +2322,10 @@
   {
     "s": "[Персонализация] Откат перед удалением: клиент не найден — откатывать нечем",
     "t": "[Personalization] Revert before removal: client not found — nothing to restore"
+  },
+  {
+    "s": "[Персонализация] Откат перед удалением: клиент старше 7.2.0 не умеет откатывать без окна — пропущено",
+    "t": "[Personalization] Revert before removal: clients older than 7.2.0 cannot revert without a window — skipped"
   },
   {
     "s": "[Персонализация] Откат перед удалением: код {0}",

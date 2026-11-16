@@ -14,12 +14,31 @@ namespace Ven4Tools.Launcher.Services
     /// в HKLM): лаунчер находит его по своим настройкам и запускает с тем же ключом, без окон.
     /// Коды возврата: 0 — всё возвращено; 1 — что-то не вернулось (журнал клиента);
     /// 2 — клиент не найден; 3 — не запустился (в том числе отказ в окне контроля учётных записей);
-    /// 4 — не уложился во время.
+    /// 4 — не уложился во время; 5 — клиент старше 7.2.0 и ключа не знает (откат не запускается).
     /// </summary>
     internal static class PersonalizationRevertRunner
     {
         public const string Switch = "--revert-personalization";
         private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(3);
+
+        /// <summary>Первая версия клиента с ключом <see cref="Switch"/>.</summary>
+        internal static readonly Version FirstClientWithSwitch = new(7, 2, 0);
+
+        /// <summary>
+        /// Знает ли клиент ключ отката. Клиент до 7.2 его не знает и вместо отката открыл бы обычное
+        /// окно — деинсталлятор ждал бы, пока человек его закроет (найдено на стенде 17.11). Версия —
+        /// из свойств exe; нет версии или она не читается — считаем старым.
+        /// </summary>
+        internal static bool ClientSupportsRevert(string exe)
+        {
+            try
+            {
+                var info = FileVersionInfo.GetVersionInfo(exe);
+                var v = new Version(info.FileMajorPart, info.FileMinorPart, info.FileBuildPart);
+                return v >= FirstClientWithSwitch;
+            }
+            catch (Exception) { return false; }
+        }
 
         /// <summary>Режим командной строки: папка клиента — из настроек лаунчера в <paramref name="dataFolder"/>.</summary>
         public static int Run(string dataFolder) =>
@@ -33,6 +52,11 @@ namespace Ven4Tools.Launcher.Services
             {
                 LauncherLog.Write("[Персонализация] Откат перед удалением: клиент не найден — откатывать нечем");
                 return 2;
+            }
+            if (!ClientSupportsRevert(exe))
+            {
+                LauncherLog.Write("[Персонализация] Откат перед удалением: клиент старше 7.2.0 не умеет откатывать без окна — пропущено");
+                return 5;
             }
             try
             {
