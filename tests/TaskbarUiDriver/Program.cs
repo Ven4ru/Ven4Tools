@@ -252,17 +252,29 @@ internal static class Program
     {
         var data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ven4Tools");
         var settings = Path.Combine(data, "launcher_settings.json");
-        bool created = !File.Exists(settings);
+        // На стенде может стоять свой лаунчер с клиентом другой версии: его настройки откладываются
+        // на время проверки и возвращаются в конце, лаунчер проверки смотрит на проверяемый клиент.
+        var saved = settings + ".v4t-test-backup";
+        bool hadSettings = File.Exists(settings);
         try
         {
-            if (created) File.WriteAllText(settings, "{\"ClientPath\":" + System.Text.Json.JsonSerializer.Serialize(Path.GetDirectoryName(clientExe)) + "}");
+            if (hadSettings) File.Copy(settings, saved, overwrite: true);
+            File.WriteAllText(settings, "{\"ClientPath\":" + System.Text.Json.JsonSerializer.Serialize(Path.GetDirectoryName(clientExe)) + "}");
             // Состояние уже чистое (общий откат клиентом прошёл): здесь проверяется сама цепочка —
             // лаунчер находит клиент по настройкам, запускает его с ключом и получает код 0, ничего не ломая.
             int code = RunAndWait(LauncherExe!, "--revert-personalization", 180);
             Check(code == 0, $"Ven4Tools.Launcher.exe --revert-personalization: код {code}");
             Check(RegDump() == before, "после отката через лаунчер реестр как до проверки");
         }
-        finally { if (created) { try { File.Delete(settings); } catch (Exception ex) { Log("настройки лаунчера проверки не удалены: " + ex.Message); } } }
+        finally
+        {
+            try
+            {
+                if (hadSettings) { File.Copy(saved, settings, overwrite: true); File.Delete(saved); }
+                else File.Delete(settings);
+            }
+            catch (Exception ex) { Log("настройки лаунчера не возвращены: " + ex.Message); }
+        }
     }
 
     static int RunAndWait(string file, string args, int sec)
@@ -278,7 +290,8 @@ internal static class Program
         const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
         string? RunValue() { using var k = Registry.CurrentUser.OpenSubKey(RunKey); return k?.GetValue("Ven4ToolsStart") as string; }
 
-        var card = Wait(() => win.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "startMenuSection")), 10);
+        // Border в дереве UI Automation не виден — карточку узнаём по заголовку.
+        var card = Find(win, "Свой Пуск Венчика", ControlType.Text);
         Check(card != null, "карточка «Свой Пуск Венчика» есть");
         var enable = win.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "btnStartEnable"));
         var show = win.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "btnStartShow"));
