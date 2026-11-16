@@ -64,7 +64,9 @@
     <ProjectReference Include="..\Ven4Tools.Screensaver\Ven4Tools.Screensaver.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
     <!-- «Ушки Венчика» над «Пуском» — тоже .NET Framework 4.8, кладётся как VenchikEars.exe. -->
     <ProjectReference Include="..\Ven4Tools.Ears\Ven4Tools.Ears.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
-    <!-- «Свой Пуск» (Ven4Start, блок 2) — тоже .NET Framework 4.8, кладётся как Ven4Start.exe. -->
+    <!-- «Свой Пуск» (Ven4Start, блок 2) — тоже .NET Framework 4.8, кладётся как Ven4Start.exe.
+         Проект обязан быть в Ven4Tools.sln (как ушки): иначе при сборке решения MSBuild снимает с него
+         конфигурацию, собирает Debug, а копируется bin\$(Configuration) — чистая сборка падала (MSB3030). -->
     <ProjectReference Include="..\Shelf\Ven4Start\Ven4Start.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" />
   </ItemGroup>
   <Target Name="CopyVenchikScreensaver" AfterTargets="ResolveProjectReferences">
